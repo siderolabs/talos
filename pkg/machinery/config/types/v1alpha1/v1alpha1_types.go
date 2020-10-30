@@ -19,10 +19,13 @@ package v1alpha1
 import (
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
+	humanize "github.com/dustin/go-humanize"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )
@@ -94,7 +97,6 @@ var (
 			DiskPartitions: []*DiskPartition{
 				{
 					DiskMountPoint: "/var/mnt/extra",
-					DiskSize:       100000000,
 				},
 			},
 		},
@@ -867,11 +869,52 @@ type MachineDisk struct {
 	DiskPartitions []*DiskPartition `yaml:"partitions,omitempty"`
 }
 
+// DiskSize partition size in bytes.
+type DiskSize uint64
+
+// MarshalYAML write as human readable string.
+func (ds DiskSize) MarshalYAML() (interface{}, error) {
+	if ds%DiskSize(1000) == 0 {
+		bytesString := humanize.Bytes(uint64(ds))
+		// ensure that stringifying bytes as human readable string
+		// doesn't lose precision
+		parsed, err := humanize.ParseBytes(bytesString)
+		if err == nil && parsed == uint64(ds) {
+			return bytesString, nil
+		}
+	}
+
+	return uint64(ds), nil
+}
+
+// UnmarshalYAML read from human readable string.
+func (ds *DiskSize) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var size string
+
+	if err := unmarshal(&size); err != nil {
+		return err
+	}
+
+	s, err := humanize.ParseBytes(size)
+	if err != nil {
+		return err
+	}
+
+	*ds = DiskSize(s)
+
+	return nil
+}
+
 // DiskPartition represents the options for a device partition.
 type DiskPartition struct {
 	//   description: |
-	//     This size of the partition in bytes.
-	DiskSize uint64 `yaml:"size,omitempty"`
+	//     This size of partition: either bytes or human readable representation.
+	//   examples:
+	//     - name: Human readable representation.
+	//       value: DiskSize(100000000)
+	//     - name: Precise value in bytes.
+	//       value: 1024 * 1024 * 1024
+	DiskSize DiskSize `yaml:"size,omitempty"`
 	//   description:
 	//     Where to mount the partition.
 	DiskMountPoint string `yaml:"mountpoint,omitempty"`
@@ -880,12 +923,29 @@ type DiskPartition struct {
 // Env represents a set of environment variables.
 type Env = map[string]string
 
+// FileMode represents file's permissions.
+type FileMode os.FileMode
+
+// String convert file mode to octal string.
+func (fm FileMode) String() string {
+	return "0o" + strconv.FormatUint(uint64(fm), 8)
+}
+
+// MarshalYAML encodes as octal value.
+func (fm FileMode) MarshalYAML() (interface{}, error) {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!int",
+		Value: fm.String(),
+	}, nil
+}
+
 // MachineFile represents a file to write to disk.
 type MachineFile struct {
 	//   description: The contents of file.
 	FileContent string `yaml:"content"`
 	//   description: The file's permissions in octal.
-	FilePermissions os.FileMode `yaml:"permissions"`
+	FilePermissions FileMode `yaml:"permissions"`
 	//   description: The path of the file.
 	FilePath string `yaml:"path"`
 	//   description: The operation to use

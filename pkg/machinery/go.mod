@@ -6,6 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/containerd/containerd v1.3.6
 	github.com/containerd/go-cni v1.0.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/golang/protobuf v1.4.2
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
