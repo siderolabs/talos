@@ -26,7 +26,6 @@ FROM ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl
 FROM ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi
 FROM ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns
 FROM ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc
-FROM ghcr.io/talos-systems/socat:${PKGS} AS pkg-socat
 FROM ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs
 FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
@@ -378,7 +377,6 @@ COPY --from=pkg-musl / /rootfs
 COPY --from=pkg-open-iscsi / /rootfs
 COPY --from=pkg-open-isns / /rootfs
 COPY --from=pkg-runc / /rootfs
-COPY --from=pkg-socat / /rootfs
 COPY --from=pkg-xfsprogs / /rootfs
 COPY --from=pkg-util-linux /lib/libblkid.* /rootfs/lib/
 COPY --from=pkg-util-linux /lib/libuuid.* /rootfs/lib/
