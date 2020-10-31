@@ -220,6 +220,7 @@ local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": loc
 local lint = Step("lint", depends_on=[check_dirty]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
 local images = Step("images", depends_on=[installer], environment={"REGISTRY": local_registry});
+local iso = Step('iso', depends_on=[images], environment={"REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
@@ -299,6 +300,7 @@ local default_steps = [
   lint,
   talosctl_cni_bundle,
   images,
+  iso,
   unit_tests,
   unit_tests_race,
   coverage,
@@ -489,6 +491,7 @@ local release = {
       '_out/gcp.tar.gz',
       '_out/initramfs-amd64.xz',
       '_out/initramfs-arm64.xz',
+      '_out/talos-amd64.iso',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
       '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',
@@ -504,7 +507,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images.name, push.name, release_notes.name]
+  depends_on: [kernel.name, iso.name, boot.name, talosctl_cni_bundle.name, images.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
