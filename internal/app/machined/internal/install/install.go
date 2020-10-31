@@ -69,7 +69,8 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 	// platform name, this should be determined in the installer container.
 	var config *string
 	if config = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
-		return fmt.Errorf("no config option was found")
+		c := "none"
+		config = &c
 	}
 
 	upgrade := strconv.FormatBool(options.Upgrade)

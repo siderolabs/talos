@@ -35,7 +35,7 @@ func (v *VMware) Name() string {
 func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
-		return nil, fmt.Errorf("no config option was found")
+		return nil, fmt.Errorf("%s not found", constants.KernelParamConfig)
 	}
 
 	if *option == constants.ConfigGuestInfo {
