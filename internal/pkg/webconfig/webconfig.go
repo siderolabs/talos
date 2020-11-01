@@ -7,21 +7,19 @@ package webconfig
 import (
 	"context"
 	"crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
-	ttls "github.com/talos-systems/crypto/tls"
 	"github.com/talos-systems/crypto/x509"
 	tnet "github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
@@ -104,14 +102,6 @@ func (s *Server) Stop() {
 
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Scheme != "https" {
-		r.URL.Scheme = "https"
-
-		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
-
-		return
-	}
-
 	switch r.Method {
 	case "GET":
 		s.handleGet(w, r)
@@ -193,6 +183,16 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request) {
 	s.Stop()
 }
 
+func redirect(w http.ResponseWriter, req *http.Request) {
+	url := "https://" + req.Host + req.URL.Path
+
+	if len(req.URL.RawQuery) > 0 {
+		url += "?" + req.URL.RawQuery
+	}
+
+	http.Redirect(w, req, url, http.StatusPermanentRedirect)
+}
+
 // Run executes the configuration receiver, returning any configuration it receives.
 func (s *Server) Run(ctx context.Context) ([]byte, error) {
 	if s.returnSignal == nil {
@@ -217,7 +217,7 @@ func (s *Server) Run(ctx context.Context) ([]byte, error) {
 	}
 
 	go func() {
-		if err = s.svr.ListenAndServe(); err != nil {
+		if err = http.ListenAndServe(":80", http.HandlerFunc(redirect)); err != nil {
 			s.logger.Println("webconfig: HTTP service stopped:", err)
 		}
 
@@ -232,11 +232,13 @@ func (s *Server) Run(ctx context.Context) ([]byte, error) {
 		s.Stop()
 	}()
 
-	fmt.Println("Webconfig started.  You may POST a configuration to:")
+	s.logger.Println("Webconfig started. You may POST a configuration to:")
 
 	for _, ip := range ips {
-		fmt.Printf("\t%s\n", ip.String())
+		s.logger.Printf("\thttps://%s\n", ip.String())
 	}
+
+	s.logger.Println("You may also visit any of the above in your browser.")
 
 	<-s.returnSignal
 
@@ -247,7 +249,7 @@ func (s *Server) Run(ctx context.Context) ([]byte, error) {
 func Run(ctx context.Context, logger *log.Logger, mode config.RuntimeMode) ([]byte, error) {
 	s := new(Server)
 	s.mode = mode
-	s.logger = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Llongfile)
+	s.logger = logger
 
 	s.logger.Println("starting webconfig")
 
@@ -255,41 +257,25 @@ func Run(ctx context.Context, logger *log.Logger, mode config.RuntimeMode) ([]by
 }
 
 func genKeypair(ips []net.IP) (*tls.Config, error) {
-	ca, err := x509.NewSelfSignedCertificateAuthority()
+	ca, err := x509.NewSelfSignedCertificateAuthority(x509.RSA(true))
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate self-signed CA: %w", err)
 	}
 
 	ips = append(ips, net.ParseIP("127.0.0.1"), net.ParseIP("::1"))
 
-	generator, err := gen.NewLocalGenerator(ca.KeyPEM, ca.CrtPEM)
+	keypair, err := x509.NewKeyPair(ca, x509.RSA(true), x509.IPAddresses(ips))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create local certificate generator: %w", err)
+		return nil, err
 	}
 
-	provider, err := ttls.NewRenewingCertificateProvider(generator, []string{"localhost"}, ips)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create local certificate provider: %w", err)
-	}
+	pool := stdx509.NewCertPool()
+	pool.AppendCertsFromPEM(ca.CrtPEM)
 
-	caProvider, err := provider.GetCA()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tlsConfig, err := ttls.New(
-		ttls.WithClientAuthType(ttls.ServerOnly),
-		ttls.WithCACertPEM(caProvider),
-		ttls.WithServerCertificateProvider(provider),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate tlsconfig: %w", err)
-	}
-
-	// We need a broader set of ciphers to interact with browsers.
-	tlsConfig.CipherSuites = make([]uint16, len(tls.CipherSuites()))
-	for _, s := range tls.CipherSuites() {
-		tlsConfig.CipherSuites = append(tlsConfig.CipherSuites, s.ID)
+	tlsConfig := &tls.Config{
+		RootCAs:      pool,
+		MinVersion:   tls.VersionTLS12,
+		Certificates: []tls.Certificate{*keypair.Certificate},
 	}
 
 	return tlsConfig, nil
