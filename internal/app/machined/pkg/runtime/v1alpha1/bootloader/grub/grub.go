@@ -46,11 +46,15 @@ set fallback="{{ . }}"
 {{- end }}
 set timeout=0
 
+insmod all_video
+
 terminal_input console
 terminal_output console
 
 {{ range $label := .Labels -}}
 menuentry "{{ $label.Root }}" {
+	set gfxmode=auto
+	set gfxpayload=text
   linux {{ $label.Kernel }} {{ $label.Append }}
   initrd {{ $label.Initrd }}
 }
