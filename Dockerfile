@@ -19,7 +19,6 @@ FROM ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables
 FROM ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl
 FROM ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
 FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
-FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
 FROM ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2
 FROM ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio
 FROM ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl
@@ -27,8 +26,6 @@ FROM ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi
 FROM ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns
 FROM ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc
 FROM ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs
-FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
-FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
 FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
