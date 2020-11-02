@@ -12,6 +12,11 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "common/common.proto";
 
+service MaintenanceService {
+  rpc ApplyConfiguration(ApplyConfigurationRequest)
+      returns(ApplyConfigurationResponse);
+}
+
 // The machine service definition.
 service MachineService {
   rpc ApplyConfiguration(ApplyConfigurationRequest)

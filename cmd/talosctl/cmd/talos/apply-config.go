@@ -17,6 +17,7 @@ import (
 
 var applyConfigCmdFlags struct {
 	filename string
+	insecure bool
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -39,11 +40,37 @@ var applyConfigCmd = &cobra.Command{
 			return fmt.Errorf("no configuration data read")
 		}
 
+		if applyConfigCmdFlags.insecure {
+			ctx := context.Background()
+
+			if len(Nodes) != 1 {
+				return fmt.Errorf("insecure mode requires one and only one node, got %d", len(Nodes))
+			}
+
+			addr := Nodes[0]
+
+			c, err := client.NewInsecureTokenClient(ctx, addr)
+			if err != nil {
+				return err
+			}
+
+			//nolint: errcheck
+			defer c.Close()
+
+			if _, err := c.ApplyConfigurationInsecure(ctx, &machineapi.ApplyConfigurationRequest{
+				Data: cfgBytes,
+			}); err != nil {
+				return fmt.Errorf("error applying new configuration: %s", err)
+			}
+
+			return nil
+		}
+
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data: cfgBytes,
 			}); err != nil {
-				return fmt.Errorf("error applyinh new configuration: %s", err)
+				return fmt.Errorf("error applying new configuration: %s", err)
 			}
 
 			return nil
@@ -52,7 +79,8 @@ var applyConfigCmd = &cobra.Command{
 }
 
 func init() {
-	applyConfigCmd.Flags().StringVar(&applyConfigCmdFlags.filename, "f", "", "the filename of the updated configuration")
+	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
+	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 
 	addCommand(applyConfigCmd)
 }

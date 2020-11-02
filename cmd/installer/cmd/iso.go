@@ -26,7 +26,7 @@ insmod all_video
 terminal_input console
 terminal_output console
 
-menuentry "Talos Interactive Installer" {
+menuentry "Talos ISO" {
 	set gfxmode=auto
 	set gfxpayload=text
 	linux /boot/vmlinuz page_poison=1 slab_nomerge slub_debug=P pti=on panic=0 consoleblank=0 earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal
