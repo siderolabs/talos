@@ -44,6 +44,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
@@ -52,7 +53,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/webconfig"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/images"
@@ -431,9 +431,11 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			b, e := fetchConfig(fetchCtx, r)
 			if errors.Is(e, perrors.ErrNoConfigSource) {
-				b, e = receiveConfigViaWebconfig(ctx, logger, r)
+				logger.Println("starting maintenance service")
+
+				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
-					return fmt.Errorf("failed to receive config via webconfig: %w", err)
+					return fmt.Errorf("failed to receive config via maintenance service: %w", err)
 				}
 			}
 
@@ -550,24 +552,24 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 	return b, nil
 }
 
-func receiveConfigViaWebconfig(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
-	cfgBytes, err := webconfig.Run(ctx, logger, r.State().Platform().Mode())
+func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+	cfgBytes, err := maintenance.Run(ctx, logger, r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to receive config via webconfig: %w", err)
+		return nil, fmt.Errorf("maintenance service failed: %w", err)
 	}
 
 	provider, err := configloader.NewFromBytes(cfgBytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create config provider from webconfig bytes: %w", err)
+		return nil, fmt.Errorf("failed to create config provider: %w", err)
 	}
 
 	if err = provider.Validate(r.State().Platform().Mode()); err != nil {
-		return nil, fmt.Errorf("failed to validate config received from webconfig: %w", err)
+		return nil, fmt.Errorf("failed to validate config: %w", err)
 	}
 
 	processedBytes, err := provider.Bytes()
 	if err != nil {
-		return nil, fmt.Errorf("failed to export validated webconfig to bytes: %w", err)
+		return nil, fmt.Errorf("failed to export validated config: %w", err)
 	}
 
 	return processedBytes, nil

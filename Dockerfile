@@ -579,7 +579,7 @@ RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
+# RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
