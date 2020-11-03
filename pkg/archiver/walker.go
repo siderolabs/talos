@@ -6,6 +6,7 @@ package archiver
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,13 +68,13 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 
 	info, err := os.Lstat(rootPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to stat symlink: %w", err)
 	}
 
 	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 		rootPath, err = filepath.EvalSymlinks(rootPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to evaluate symlink: %w", err)
 		}
 	}
 

@@ -6,6 +6,7 @@
 package kubeconfig
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -14,7 +15,7 @@ import (
 func DefaultPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to determine home directory: %w", err)
 	}
 
 	return filepath.Join(home, ".kube/config"), nil

@@ -77,7 +77,7 @@ func (g *Grub) Labels() (current, next string, err error) {
 			return current, next, nil
 		}
 
-		return "", "", err
+		return "", "", fmt.Errorf("failed to read %q: %w", GrubConfig, err)
 	}
 
 	re := regexp.MustCompile(`^set default="(.*)"`)
@@ -101,7 +101,7 @@ func (g *Grub) Labels() (current, next string, err error) {
 		return "", "", fmt.Errorf("unknown grub menuentry: %q", current)
 	}
 
-	return current, next, err
+	return current, next, nil
 }
 
 // Install implements the Bootloader interface. It sets up grub with the
@@ -128,7 +128,7 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 
 	blk, err := util.DevnameFromPartname(dev.Path)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dev name from partition name: %w", err)
 	}
 
 	loopDevice := strings.HasPrefix(blk, "loop")
@@ -175,7 +175,7 @@ func (g *Grub) Default(label string) (err error) {
 	var b []byte
 
 	if b, err = ioutil.ReadFile(GrubConfig); err != nil {
-		return err
+		return fmt.Errorf("failed to read %q: %w", GrubConfig, err)
 	}
 
 	re := regexp.MustCompile(`^set default="(.*)"`)
@@ -192,18 +192,18 @@ func writeCfg(path string, grubcfg *Cfg) (err error) {
 	t := template.Must(template.New("grub").Parse(grubCfgTpl))
 
 	if err = t.Execute(wr, grubcfg); err != nil {
-		return err
+		return fmt.Errorf("failed to render grub.cfg: %w", err)
 	}
 
 	dir := filepath.Dir(path)
 	if err = os.MkdirAll(dir, os.ModeDir); err != nil {
-		return err
+		return fmt.Errorf("failed to crete %q: %w", dir, err)
 	}
 
 	log.Printf("writing %s to disk", path)
 
 	if err = ioutil.WriteFile(path, wr.Bytes(), 0o600); err != nil {
-		return err
+		return fmt.Errorf("failed to write %s: %w", path, err)
 	}
 
 	return nil

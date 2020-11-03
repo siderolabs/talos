@@ -79,7 +79,7 @@ func (handler *fileLogHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser,
 
 	f, err := os.OpenFile(handler.path, os.O_RDONLY, 0)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open %q: %w", handler.path, err)
 	}
 
 	if opt.TailLines != nil {

@@ -50,7 +50,7 @@ func NewBootLoader(diskImage string) (*BootLoader, error) {
 
 	b.diskF, err = os.Open(diskImage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open bootloader: %w", err)
 	}
 
 	return b, nil
@@ -104,7 +104,7 @@ func (b *BootLoader) Close() error {
 
 	if b.diskF != nil {
 		if err := b.diskF.Close(); err != nil {
-			return err
+			return fmt.Errorf("failed to close bootloader: %w", err)
 		}
 
 		b.diskF = nil
@@ -177,7 +177,7 @@ func (b *BootLoader) findLabel() (label string, err error) {
 
 	buf := new(bytes.Buffer)
 	if _, err = buf.ReadFrom(cfg); err != nil {
-		return label, err
+		return label, fmt.Errorf("failed to read syslinux.cfg: %w", err)
 	}
 
 	re := regexp.MustCompile(`^DEFAULT\s(.*)`)

@@ -40,7 +40,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		request.Name,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create cluster provisioner state: %w", err)
 	}
 
 	fmt.Fprintln(options.LogWriter, "uncompressing kernel")
@@ -95,7 +95,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	err = state.Save()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to save cluster state: %w", err)
 	}
 
 	return state, nil

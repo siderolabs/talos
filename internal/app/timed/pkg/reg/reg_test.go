@@ -104,7 +104,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 func fakeTimedRPC() (net.Listener, error) {
 	tmpfile, err := ioutil.TempFile("", "timed")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create temporary file: %w", err)
 	}
 
 	return factory.NewListener(

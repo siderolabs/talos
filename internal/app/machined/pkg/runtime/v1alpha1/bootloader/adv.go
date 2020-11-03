@@ -61,12 +61,12 @@ func NewMeta() (meta *Meta, err error) {
 
 	f, err = probe.GetPartitionWithName(constants.MetaPartitionLabel)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get partition %q: %w", constants.MetaPartitionLabel, err)
 	}
 
 	adv, err := NewADV(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to crate ADV: %w", err)
 	}
 
 	return &Meta{
@@ -82,12 +82,12 @@ func (m *Meta) Read(b []byte) (int, error) {
 func (m *Meta) Write() (int, error) {
 	offset, err := m.File.Seek(-2*AdvSize, io.SeekEnd)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to seek to end of ADV: %w", err)
 	}
 
 	n, err := m.File.WriteAt(m.ADV, offset)
 	if err != nil {
-		return n, err
+		return n, fmt.Errorf("failed to write to ADV: %w", err)
 	}
 
 	if n != 2*AdvSize {
@@ -135,14 +135,14 @@ func (m *Meta) Revert() (err error) {
 func NewADV(r io.ReadSeeker) (adv ADV, err error) {
 	_, err = r.Seek(-2*AdvSize, io.SeekEnd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to seek to end of ADV: %w", err)
 	}
 
 	b := make([]byte, 2*AdvSize)
 
 	_, err = io.ReadFull(r, b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read ADV: %w", err)
 	}
 
 	adv = b

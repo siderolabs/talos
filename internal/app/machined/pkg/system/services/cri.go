@@ -93,7 +93,7 @@ func (c *CRI) HealthFunc(runtime.Runtime) health.Check {
 
 		resp, err := client.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
-			return err
+			return fmt.Errorf("health check failed: %w", err)
 		}
 
 		if resp.Status != grpc_health_v1.HealthCheckResponse_SERVING {

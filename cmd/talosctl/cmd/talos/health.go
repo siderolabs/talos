@@ -140,7 +140,7 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 	}
 
 	if err := client.CloseSend(); err != nil {
-		return err
+		return fmt.Errorf("failed to send direction of stream: %w", err)
 	}
 
 	for {
@@ -150,7 +150,7 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 				return nil
 			}
 
-			return err
+			return fmt.Errorf("failed to receive health check message: %w", err)
 		}
 
 		if msg.GetMetadata().GetError() != "" {

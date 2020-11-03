@@ -28,12 +28,12 @@ func RunContext(ctx context.Context, name string, args ...string) (string, error
 
 	stdout, err := circbuf.NewBuffer(MaxStderrLen)
 	if err != nil {
-		return stdout.String(), err
+		return stdout.String(), fmt.Errorf("failed to create stdout buffer: %w", err)
 	}
 
 	stderr, err := circbuf.NewBuffer(MaxStderrLen)
 	if err != nil {
-		return stdout.String(), err
+		return stdout.String(), fmt.Errorf("failed to create stderr buffer: %w", err)
 	}
 
 	cmd.Stdout = stdout

@@ -69,10 +69,10 @@ func (g *RemoteGenerator) Certificate(in *securityapi.CertificateRequest) (resp 
 
 	resp, err = g.client.Certificate(ctx, in)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get identity certificate: %w", err)
 	}
 
-	return resp, err
+	return resp, nil
 }
 
 // Identity creates an identity certificate via the security API.
@@ -83,7 +83,7 @@ func (g *RemoteGenerator) Identity(csr *x509.CertificateSigningRequest) (ca, crt
 
 	ca, crt, err = g.poll(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to poll for identity certificate: %w", err)
 	}
 
 	return ca, crt, nil

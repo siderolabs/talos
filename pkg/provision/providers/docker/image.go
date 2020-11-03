@@ -22,7 +22,7 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 	// format (e.g. domain/repo/image:tag).
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse image name %q: %w", image, err)
 	}
 
 	image = ref.String()
@@ -41,7 +41,7 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 
 	images, err := p.client.ImageList(ctx, types.ImageListOptions{Filters: filters})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get images: %w", err)
 	}
 
 	if len(images) == 0 {
@@ -50,14 +50,14 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 		var reader io.ReadCloser
 
 		if reader, err = p.client.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
-			return err
+			return fmt.Errorf("failed to pull image %q: %w", image, err)
 		}
 
 		// nolint: errcheck
 		defer reader.Close()
 
 		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
-			return err
+			return fmt.Errorf("failed to copy: %w", err)
 		}
 	}
 

@@ -51,7 +51,7 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 	if err := srv.Send(&clusterapi.HealthCheckProgress{
 		Message: fmt.Sprintf("discovered nodes: %s", &clusterState),
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to send health check progress: %w", err)
 	}
 
 	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), &healthReporter{srv: srv})
@@ -103,7 +103,7 @@ func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.K
 
 	if len(cluster.controlPlaneNodes) == 0 {
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
-			return err
+			return fmt.Errorf("failed to create Kubernetes client: %w", err)
 		}
 
 		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.MasterIPs(ctx); err != nil {
@@ -113,11 +113,11 @@ func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.K
 
 	if len(cluster.workerNodes) == 0 {
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
-			return err
+			return fmt.Errorf("failed to create Kubernetes client: %w", err)
 		}
 
 		if cluster.workerNodes, err = k8sProvider.KubeHelper.WorkerIPs(ctx); err != nil {
-			return err
+			return fmt.Errorf("failed to determin worker IPs: %w", err)
 		}
 	}
 

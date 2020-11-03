@@ -49,7 +49,7 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 
 	u, err := url.Parse(*option)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse URL %q: %w", *option, err)
 	}
 
 	values := u.Query()
@@ -60,12 +60,12 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 			case "uuid":
 				s, err := smbios.New()
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to get SMBIOS info: %w", err)
 				}
 
 				uuid, err := s.SystemInformation().UUID()
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to get system UUID: %w", err)
 				}
 
 				values.Set("uuid", uuid.String())

@@ -5,6 +5,8 @@
 package makefs
 
 import (
+	"fmt"
+
 	"github.com/talos-systems/talos/pkg/cmd"
 )
 
@@ -22,5 +24,5 @@ func VFAT(partname string, setters ...Option) error {
 
 	_, err := cmd.Run("mkfs.vfat", args...)
 
-	return err
+	return fmt.Errorf("failed to run mkfs.vfat: %w", err)
 }

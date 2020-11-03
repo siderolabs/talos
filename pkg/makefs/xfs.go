@@ -15,7 +15,7 @@ import (
 func XFSGrow(partname string) error {
 	_, err := cmd.Run("xfs_growfs", "-d", partname)
 
-	return err
+	return fmt.Errorf("failed to run xfs_growfs: %w", err)
 }
 
 // XFS creates a XFS filesystem on the specified partition.
@@ -41,5 +41,5 @@ func XFS(partname string, setters ...Option) error {
 
 	_, err := cmd.Run("mkfs.xfs", args...)
 
-	return err
+	return fmt.Errorf("failed to run mkfs.xfs: %w", err)
 }

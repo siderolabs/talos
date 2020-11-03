@@ -21,10 +21,10 @@ type Merger clientcmdapi.Config
 func Load(path string) (*Merger, error) {
 	config, err := clientcmd.LoadFromFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 	}
 
-	return (*Merger)(config), err
+	return (*Merger)(config), nil
 }
 
 // MergeOptions controls Merge process.

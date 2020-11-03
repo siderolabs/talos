@@ -40,22 +40,22 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 	cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
 
 	if err = cmdline.AppendAll(p.KernelArgs().Strings()); err != nil {
-		return err
+		return fmt.Errorf("failed to append platform kernel args: %w", err)
 	}
 
 	if err = cmdline.AppendAll(opts.ExtraKernelArgs); err != nil {
-		return err
+		return fmt.Errorf("failed to append user supplied kernel args: %w", err)
 	}
 
 	cmdline.AppendDefaults()
 
 	i, err := NewInstaller(cmdline, seq, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create installer: %w", err)
 	}
 
 	if err = i.Install(seq); err != nil {
-		return err
+		return fmt.Errorf("installation failed: %w", err)
 	}
 
 	log.Printf("installation of %s complete", version.Tag)
@@ -141,10 +141,10 @@ func (i *Installer) probeBootPartition() error {
 
 	var err error
 
-	// anyways run the Labels() to get the defaults initialized
+	// Always run the Labels() to get the defaults initialized.
 	i.Current, i.Next, err = i.bootloader.Labels()
 
-	return err
+	return fmt.Errorf("failed to determine bootloader labels: %w", err)
 }
 
 // Install fetches the necessary data locations and copies or extracts
@@ -164,7 +164,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {
-		return err
+		return fmt.Errorf("failed to mount system mountpoints: %w", err)
 	}
 
 	defer func() {
@@ -180,7 +180,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		for _, target := range targets {
 			// Handle the download and extraction of assets.
 			if err = target.Save(); err != nil {
-				return err
+				return fmt.Errorf("failed to save target %q assets: %w", target.Device, err)
 			}
 		}
 	}
@@ -217,14 +217,14 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	if err = i.bootloader.Install(i.Current, grubcfg, seq); err != nil {
-		return err
+		return fmt.Errorf("failed to install bootloader: %w", err)
 	}
 
 	if seq == runtime.SequenceUpgrade {
 		var meta *bootloader.Meta
 
 		if meta, err = bootloader.NewMeta(); err != nil {
-			return err
+			return fmt.Errorf("failed to get meta: %w", err)
 		}
 
 		//nolint: errcheck
@@ -235,7 +235,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 
 		if _, err = meta.Write(); err != nil {
-			return err
+			return fmt.Errorf("failed to write metadata: %w", err)
 		}
 	}
 

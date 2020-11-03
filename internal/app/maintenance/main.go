@@ -53,7 +53,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 
 	listener, err := factory.NewListener(factory.Port(constants.ApidPort))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create listener: %w", err)
 	}
 
 	defer server.GracefulStop()

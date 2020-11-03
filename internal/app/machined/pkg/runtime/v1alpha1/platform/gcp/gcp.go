@@ -100,7 +100,7 @@ func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		}
 	}
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.

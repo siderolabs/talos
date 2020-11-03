@@ -99,7 +99,7 @@ func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
 	var buf bytes.Buffer
 
 	if err := toml.NewEncoder(&buf).Encode(&ctrdCfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create encode containerd config: %w", err)
 	}
 
 	// CRI plugin doesn't support merging configs for plugins across files,

@@ -23,14 +23,14 @@ import (
 func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	expectedNodes := cluster.Nodes()
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list nodes: %w", err)
 	}
 
 	var actualNodes []string
@@ -59,14 +59,14 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	expectedNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list nodes: %w", err)
 	}
 
 	var actualNodes []string
@@ -102,7 +102,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		LabelSelector: "k8s-app in (kube-apiserver,kube-scheduler,kube-controller-manager)",
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list control plane daemonsets: %w", err)
 	}
 
 	for _, ds := range daemonsets.Items {
@@ -156,12 +156,12 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list nodes: %q", err)
 	}
 
 	var notReadyNodes []string
@@ -189,12 +189,12 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list nodes: %w", err)
 	}
 
 	var notSchedulableNodes []string
@@ -218,14 +218,14 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list pods: %w", err)
 	}
 
 	if len(pods.Items) == 0 {

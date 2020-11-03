@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -34,7 +35,7 @@ func destroy(ctx context.Context) error {
 
 	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get cluster: %w", err)
 	}
 
 	return provisioner.Destroy(ctx, cluster)

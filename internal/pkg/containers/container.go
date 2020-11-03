@@ -73,7 +73,7 @@ func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines in
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_RDONLY, 0)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("failed to open %q: %w", logFile, err)
 		}
 
 		if tailLines >= 0 {
@@ -104,7 +104,7 @@ func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines in
 
 	f, err := os.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to open %q: %w", filename, err)
 	}
 
 	return stream.NewChunker(ctx, f), f, nil

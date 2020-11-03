@@ -147,7 +147,7 @@ func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	}
 
 	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return addrs, err
+		return addrs, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	type IPAddress struct {
@@ -166,7 +166,7 @@ func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 
 	interfaceAddresses := interfaces{}
 	if err = json.Unmarshal(body, &interfaceAddresses); err != nil {
-		return addrs, err
+		return addrs, fmt.Errorf("failed to unmarshal network interfaces: %w", err)
 	}
 
 	for _, iface := range interfaceAddresses {
@@ -179,7 +179,7 @@ func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		}
 	}
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.

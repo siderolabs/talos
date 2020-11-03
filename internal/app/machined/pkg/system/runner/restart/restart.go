@@ -125,7 +125,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 
 		errStop := r.wrappedRunner.Stop()
 		if errStop != nil {
-			return errStop
+			return fmt.Errorf("failed to stop: %q", errStop)
 		}
 
 		switch r.opts.Type {

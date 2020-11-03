@@ -58,7 +58,7 @@ func (s *APIBoostrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to wait for API: %w", err)
 	}
 
 	fmt.Fprintln(out, "bootstrapping cluster")

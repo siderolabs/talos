@@ -68,7 +68,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	if nodeReq.Config != nil {
 		cfg, err := nodeReq.Config.String()
 		if err != nil {
-			return provision.NodeInfo{}, err
+			return provision.NodeInfo{}, fmt.Errorf("failed to convert config to string: %w", err)
 		}
 
 		env = append(env, "USERDATA="+base64.StdEncoding.EncodeToString([]byte(cfg)))

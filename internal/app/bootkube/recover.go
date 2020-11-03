@@ -106,6 +106,6 @@ func aesTransformer(clusterConfig config.ClusterConfig) (recovery.TransformerFro
 
 		value, _, e := transformer.TransformFromStorage(value, nil)
 
-		return value, e
+		return value, fmt.Errorf("failed to transform aescbc encrypted secret: %w", e)
 	}, nil
 }

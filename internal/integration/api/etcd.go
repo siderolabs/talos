@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -133,7 +134,7 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 		_, err = suite.Client.MachineClient.Reboot(nodeCtx, &empty.Empty{})
 
-		return err
+		return fmt.Errorf("failed to reboot machine %q: %w", node, err)
 	}, 10*time.Minute)
 }
 

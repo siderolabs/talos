@@ -97,7 +97,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 func DHCPd(ifName string, ip net.IP, statePath string) error {
 	server, err := server4.NewServer(ifName, nil, handler(ip, statePath), server4.WithDebugLogger())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create dhcp server: %w", err)
 	}
 
 	return server.Serve()
@@ -114,7 +114,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dhcpLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open dhcp log file: %w", err)
 	}
 
 	defer logFile.Close() //nolint: errcheck

@@ -256,7 +256,7 @@ func (n *NetworkInterface) waitForLinkToBeUp(linkDev *net.Interface) error {
 		return nil
 	})
 
-	return err
+	return fmt.Errorf("failed to wait for link to be up: %w", err)
 }
 
 // Addressing handles the address method for a configured interface ( dhcp/static ).
@@ -334,7 +334,7 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 	var err error
 
 	if err = method.Discover(context.Background(), link); err != nil {
-		return err
+		return fmt.Errorf("failed to discover link %q: %w", link.Name, err)
 	}
 
 	// Set link MTU if we got a response

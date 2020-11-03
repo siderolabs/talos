@@ -95,7 +95,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesResponse, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return reply, err
+		return reply, fmt.Errorf("failed to get interfaces: %w", err)
 	}
 
 	resp := &networkapi.Interfaces{}
@@ -103,7 +103,7 @@ func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *n
 	for _, iface := range ifaces {
 		ifaceaddrs, err := iface.Addrs()
 		if err != nil {
-			return reply, err
+			return reply, fmt.Errorf("failed to get addresses for interface %q: %w", iface.Name, err)
 		}
 
 		addrs := make([]string, 0, len(ifaceaddrs))
@@ -193,7 +193,7 @@ func (r *Registrator) Watch(in *healthapi.HealthWatchRequest, srv healthapi.Heal
 			}
 
 			if err = srv.Send(resp); err != nil {
-				return err
+				return fmt.Errorf("failed to send health check response: %w", err)
 			}
 		}
 	}

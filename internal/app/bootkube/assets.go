@@ -36,13 +36,13 @@ func generateAssets(config config.Provider) (err error) {
 	if err = os.RemoveAll(constants.AssetsDirectory); err != nil {
 		// Ignore if the directory does not exist
 		if !errors.Is(err, os.ErrNotExist) {
-			return err
+			return fmt.Errorf("failed to remove all assets: %w", err)
 		}
 	}
 
 	peerCrt, err := ioutil.ReadFile(constants.KubernetesEtcdPeerCert)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read %q: %w", constants.KubernetesEtcdPeerCert, err)
 	}
 
 	block, _ := pem.Decode(peerCrt)
@@ -57,7 +57,7 @@ func generateAssets(config config.Provider) (err error) {
 
 	caCrt, err := ioutil.ReadFile(constants.KubernetesEtcdCACert)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read %q: %w", constants.KubernetesEtcdCACert, err)
 	}
 
 	block, _ = pem.Decode(caCrt)
@@ -72,7 +72,7 @@ func generateAssets(config config.Provider) (err error) {
 
 	peerKey, err := ioutil.ReadFile(constants.KubernetesEtcdPeerKey)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read %q: %w", constants.KubernetesEtcdPeerKey, err)
 	}
 
 	block, _ = pem.Decode(peerKey)
@@ -85,9 +85,11 @@ func generateAssets(config config.Provider) (err error) {
 		return fmt.Errorf("failed to parse client key: %w", err)
 	}
 
-	etcdServer, err := url.Parse("https://127.0.0.1:2379")
+	etcdURL := "https://127.0.0.1:2379"
+
+	etcdServer, err := url.Parse(etcdURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse %q: %w", etcdURL, err)
 	}
 
 	podCIDRs, err := splitCIDRs(config.Cluster().Network().PodCIDR())
@@ -157,7 +159,7 @@ func generateAssets(config config.Provider) (err error) {
 	}
 
 	if err = asset.Render(constants.AssetsDirectory, conf); err != nil {
-		return err
+		return fmt.Errorf("failed to render assets: %w", err)
 	}
 
 	// If "custom" is the CNI, we expect the user to supply one or more urls that point to CNI yamls

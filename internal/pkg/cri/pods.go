@@ -21,7 +21,7 @@ func (c *Client) RunPodSandbox(ctx context.Context, config *runtimeapi.PodSandbo
 		RuntimeHandler: runtimeHandler,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to run pods sandbox: %w", err)
 	}
 
 	if resp.PodSandboxId == "" {
@@ -76,7 +76,7 @@ func (c *Client) PodSandboxStatus(ctx context.Context, podSandBoxID string) (*ru
 		Verbose:      true,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed get pod sandbox status: %w", err)
 	}
 
 	return resp.Status, resp.Info, nil
@@ -166,12 +166,12 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 
 			// TODO(andrewrynhard): Can we set the timeout dynamically?
 			if err = client.StopContainer(ctx, container.Id, 30); err != nil {
-				return err
+				return fmt.Errorf("failed to stop container %q: %w", container.Id, err)
 			}
 
 			if stopAction == StopAndRemove {
 				if err = client.RemoveContainer(ctx, container.Id); err != nil {
-					return err
+					return fmt.Errorf("failed to remove container %q: %w", container.Id, err)
 				}
 			}
 
@@ -182,16 +182,16 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 	}
 
 	if err = g.Wait(); err != nil {
-		return err
+		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
 
 	if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
-		return err
+		return fmt.Errorf("failed to stop pod sandbox %q: %w", pod.Id, err)
 	}
 
 	if stopAction == StopAndRemove {
 		if err = client.RemovePodSandbox(ctx, pod.Id); err != nil {
-			return err
+			return fmt.Errorf("failed to remove pod sandbox %q: %w", pod.Id, err)
 		}
 	}
 

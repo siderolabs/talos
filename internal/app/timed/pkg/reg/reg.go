@@ -126,7 +126,7 @@ func (r *Registrator) Watch(in *healthapi.HealthWatchRequest, srv healthapi.Heal
 			}
 
 			if err := srv.Send(resp); err != nil {
-				return err
+				return fmt.Errorf("failed to send health check response: %w", err)
 			}
 		}
 	}

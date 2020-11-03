@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -44,7 +45,7 @@ func init() {
 func runImageCmd() (err error) {
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new platform: %w", err)
 	}
 
 	log.Printf("creating image for %s", p.Name())
@@ -53,13 +54,13 @@ func runImageCmd() (err error) {
 
 	img, err := pkg.CreateRawDisk()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create RAW disk: %w", err)
 	}
 
 	log.Print("attaching loopback device ")
 
 	if options.Disk, err = pkg.Loattach(img); err != nil {
-		return err
+		return fmt.Errorf("failed to attach loopback: %w", err)
 	}
 
 	defer func() {

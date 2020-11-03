@@ -334,7 +334,7 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 
 	machinedLog, err = c.Runtime().Logging().ServiceLog("machined").Writer()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create task log: %w", err)
 	}
 
 	defer machinedLog.Close() //nolint: errcheck

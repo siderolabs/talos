@@ -60,7 +60,7 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 
 	i.client, err = containerd.New(opt.containerdAddress)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create containerd client: %w", err)
 	}
 
 	i.nsctx = namespaces.WithNamespace(ctx, namespace)
@@ -77,7 +77,7 @@ func (i *inspector) Close() error {
 func (i *inspector) Images() (map[string]string, error) {
 	images, err := i.client.ListImages(i.nsctx, "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list images: %w", err)
 	}
 
 	// create a map[sha]name for easier lookups later
@@ -269,7 +269,7 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 
 	containers, err := i.client.Containers(i.nsctx, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get containers: %w", err)
 	}
 
 	if len(containers) == 0 {
@@ -379,7 +379,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 func (i *inspector) GetProcessStderr(id string) (string, error) {
 	task, err := i.client.TaskService().Get(i.nsctx, &tasks.GetRequest{ContainerID: id})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get task: %w", err)
 	}
 
 	return task.Process.Stderr, nil
@@ -389,5 +389,5 @@ func (i *inspector) GetProcessStderr(id string) (string, error) {
 func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
 	_, err := i.client.TaskService().Kill(i.nsctx, &tasks.KillRequest{ContainerID: id, Signal: uint32(signal)})
 
-	return err
+	return fmt.Errorf("failed to kill task: %w", err)
 }

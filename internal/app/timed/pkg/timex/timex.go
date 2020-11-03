@@ -6,6 +6,7 @@
 package timex
 
 import (
+	"fmt"
 	"strings"
 	"syscall"
 )
@@ -104,5 +105,5 @@ func (state State) String() string {
 func Adjtimex(buf *syscall.Timex) (state State, err error) {
 	st, err := syscall.Adjtimex(buf)
 
-	return State(st), err
+	return State(st), fmt.Errorf("failed to execute adjtimex: %w", err)
 }

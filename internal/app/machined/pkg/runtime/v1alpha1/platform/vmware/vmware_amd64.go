@@ -42,7 +42,7 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to verify virtual world: %w", err)
 		}
 
 		if !ok {

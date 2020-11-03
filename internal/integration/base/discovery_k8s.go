@@ -8,6 +8,7 @@ package base
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -51,7 +52,7 @@ func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, e
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list nodes: %w", err)
 	}
 
 	result := &infoWrapper{}

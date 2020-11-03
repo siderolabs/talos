@@ -40,7 +40,7 @@ func show(ctx context.Context) error {
 
 	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get cluster: %w", err)
 	}
 
 	return showCluster(cluster)

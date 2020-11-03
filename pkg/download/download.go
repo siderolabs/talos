@@ -59,7 +59,7 @@ func WithHeaders(headers map[string]string) Option {
 func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
-		return b, err
+		return b, fmt.Errorf("failed to parse URL %q: %w", endpoint, err)
 	}
 
 	if u.Scheme == "file" {
@@ -75,7 +75,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 	var req *http.Request
 
 	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
-		return b, err
+		return b, fmt.Errorf("failed to create request with context: %w", err)
 	}
 
 	for k, v := range dlOpts.Headers {
@@ -105,7 +105,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 		b64, err = base64.StdEncoding.DecodeString(string(b))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to decode config: %w", err)
 		}
 
 		b = b64
@@ -119,7 +119,7 @@ func download(req *http.Request) (data []byte, err error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return data, err
+		return data, fmt.Errorf("http request failed: %w", err)
 	}
 	// nolint: errcheck
 	defer resp.Body.Close()
@@ -133,7 +133,7 @@ func download(req *http.Request) (data []byte, err error) {
 		return data, fmt.Errorf("read config: %s", err.Error())
 	}
 
-	return data, err
+	return data, nil
 }
 
 func init() {

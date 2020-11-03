@@ -21,7 +21,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
 	if err = mount.Move(mountpoints, prefix); err != nil {
-		return err
+		return fmt.Errorf("failed to move mounts: %w", err)
 	}
 
 	log.Printf("changing working directory into %s", prefix)
@@ -80,7 +80,7 @@ func recursiveDelete(fd int) error {
 
 	names, err := dir.Readdirnames(-1)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read directory %q: %w", dir.Name(), err)
 	}
 
 	for _, name := range names {
@@ -96,7 +96,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error
 	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
 	if err != nil {
 		if err := unix.Unlinkat(parentFd, childName, 0); err != nil {
-			return err
+			return fmt.Errorf("failed to unlink: %w", err)
 		}
 	} else {
 		// nolint: errcheck
@@ -112,7 +112,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error
 			return err
 		}
 		if err := unix.Unlinkat(parentFd, childName, unix.AT_REMOVEDIR); err != nil {
-			return err
+			return fmt.Errorf("failed to unlink: %w", err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func getDev(fd int) (dev uint64, err error) {
 	var stat unix.Stat_t
 
 	if err := unix.Fstat(fd, &stat); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to fstat: %w", err)
 	}
 
 	return stat.Dev, nil

@@ -357,12 +357,12 @@ func create(ctx context.Context) (err error) {
 
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create cluster: %w", err)
 	}
 
 	// Create and save the talosctl configuration file.
 	if err = saveConfig(configBundle.TalosConfig()); err != nil {
-		return err
+		return fmt.Errorf("failed to save CLI config: %w", err)
 	}
 
 	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
@@ -373,7 +373,7 @@ func create(ctx context.Context) (err error) {
 			provisioner.CrashDump(ctx, cluster, os.Stderr)
 		}
 
-		return err
+		return fmt.Errorf("failed to permform post-cluster creation tasks: %w", err)
 	}
 
 	return showCluster(cluster)

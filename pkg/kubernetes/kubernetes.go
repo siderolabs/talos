@@ -44,7 +44,7 @@ func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 
 	config, err = clientcmd.BuildConfigFromFlags("", constants.KubeletKubeconfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build Kubernetes client config: %w", err)
 	}
 
 	if config.Timeout == 0 {
@@ -55,7 +55,7 @@ func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create clientset for given config: %w", err)
 	}
 
 	return &Client{clientset}, nil
@@ -67,7 +67,7 @@ func NewForConfig(config *restclient.Config) (client *Client, err error) {
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create clientset for given config: %w", err)
 	}
 
 	return &Client{clientset}, nil
@@ -93,7 +93,7 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create clientset for given config: %w", err)
 	}
 
 	return &Client{clientset}, nil
@@ -146,7 +146,7 @@ func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *u
 func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 	endpoints, err := h.CoreV1().Endpoints("default").Get(ctx, "kubernetes", metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get endpoints of kubernetes service: %w", err)
 	}
 
 	addrs = []string{}
@@ -164,7 +164,7 @@ func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 	resp, err := h.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list IPs: %w", err)
 	}
 
 	addrs = []string{}
@@ -190,7 +190,7 @@ func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error) {
 	n, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get node %q: %w", name, err)
 	}
 
 	// The node may appear to have no labels at first, so we check for the

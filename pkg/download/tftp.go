@@ -32,7 +32,7 @@ func (t *tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 	c, err := tftp.NewClient(addr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create tftp client: %w", err)
 	}
 
 	w, err := c.Receive(req.URL.Path, "octet")
@@ -44,7 +44,7 @@ func (t *tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 
 	written, err := w.WriteTo(buf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write to config from TFTP response: %w", err)
 	}
 
 	if expected, ok := w.(tftp.IncomingTransfer).Size(); ok {

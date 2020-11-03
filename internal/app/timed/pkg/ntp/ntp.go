@@ -152,5 +152,5 @@ func adjustTime(offset time.Duration) error {
 
 	log.Println(buf.String())
 
-	return err
+	return nil
 }

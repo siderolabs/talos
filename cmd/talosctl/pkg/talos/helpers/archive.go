@@ -34,7 +34,7 @@ func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
 				break
 			}
 
-			return nil, err
+			return nil, fmt.Errorf("failed to advance to the next entry in the archive: %w", err)
 		}
 
 		hdrPath := safepath.CleanPath(hdr.Name)

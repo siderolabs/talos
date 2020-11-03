@@ -50,7 +50,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	stateDirectoryPath, err := cluster.StatePath()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to determine state directory: %w", err)
 	}
 
 	return os.RemoveAll(stateDirectoryPath)

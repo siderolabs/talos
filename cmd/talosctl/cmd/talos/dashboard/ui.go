@@ -6,6 +6,7 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
 
 	ui "github.com/gizak/termui/v3"
 
@@ -51,7 +52,7 @@ type UI struct {
 //nolint: gocyclo
 func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
 	if err := ui.Init(); err != nil {
-		return err
+		return fmt.Errorf("failed to initialize the UI: %w", err)
 	}
 	defer ui.Close()
 

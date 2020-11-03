@@ -7,6 +7,7 @@ package check
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -15,12 +16,12 @@ import (
 func ApidReadyAssertion(ctx context.Context, cluster ClusterInfo) error {
 	cli, err := cluster.Client()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create cluster client: %w", err)
 	}
 
 	nodesCtx := client.WithNodes(ctx, cluster.Nodes()...)
 
 	_, err = cli.Version(nodesCtx)
 
-	return err
+	return fmt.Errorf("failed to get version: %w", err)
 }

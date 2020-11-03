@@ -8,6 +8,7 @@ package archiver
 import (
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 )
 
@@ -34,7 +35,7 @@ func TarGz(ctx context.Context, rootPath string, output io.Writer, walkerOptions
 func UntarGz(ctx context.Context, input io.Reader, rootPath string) error {
 	zr, err := gzip.NewReader(input)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 
 	//nolint: errcheck
@@ -42,7 +43,7 @@ func UntarGz(ctx context.Context, input io.Reader, rootPath string) error {
 
 	err = Untar(ctx, zr, rootPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to untar %q: %w", rootPath, err)
 	}
 
 	return zr.Close()

@@ -45,22 +45,25 @@ func (k *KubernetesClient) Kubeconfig(ctx context.Context) ([]byte, error) {
 	}
 
 	k.kubeconfig, err = client.Kubeconfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubeconfig: %w", err)
+	}
 
-	return k.kubeconfig, err
+	return k.kubeconfig, nil
 }
 
 // K8sRestConfig returns *rest.Config (parsed kubeconfig).
 func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, error) {
 	kubeconfig, err := k.Kubeconfig(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get kubeconfig: %w", err)
 	}
 
 	config, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 		return clientcmd.Load(kubeconfig)
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load kubeconfig: %w", err)
 	}
 
 	// patch timeout

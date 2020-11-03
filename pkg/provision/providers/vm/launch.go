@@ -102,7 +102,7 @@ func NewHTTPServer(gatewayAddr net.IP, port int, config []byte, controller Contr
 	}
 
 	if err = httpServer.AddFile("config.yaml", config); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add config.yaml to http server: %q", err)
 	}
 
 	if controller != nil {

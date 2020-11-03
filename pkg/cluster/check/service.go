@@ -25,7 +25,7 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service string, states ...string) error {
 	cli, err := cluster.Client()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create cluster client: %w", err)
 	}
 
 	// by default, we check all control plane nodes. if some nodes don't have that service running,
@@ -35,7 +35,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get service info: %w", err)
 	}
 
 	if len(servicesInfo) == 0 {
@@ -80,7 +80,7 @@ func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service st
 
 	cli, err := cluster.Client()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create cluster client: %w", err)
 	}
 
 	var nodes []string

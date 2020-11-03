@@ -168,7 +168,7 @@ func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) 
 
 	_, err := io.Copy(out, in)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy: %w", err)
 	}
 
 	if chanErr != nil {

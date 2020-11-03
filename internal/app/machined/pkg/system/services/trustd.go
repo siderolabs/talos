@@ -79,7 +79,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	b, err := r.Config().Bytes()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert config to bytes: %w", err)
 	}
 
 	stdin := bytes.NewReader(b)

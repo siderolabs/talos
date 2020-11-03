@@ -7,6 +7,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 
 	"github.com/docker/docker/client"
@@ -28,7 +29,7 @@ func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 
 	p.client, err = client.NewEnvClient()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create docker client: %w", err)
 	}
 
 	return p, nil

@@ -95,7 +95,7 @@ func (s *Server) Register(obj *grpc.Server) {
 // ApplyConfiguration implements machine.MachineServer.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
 	if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to set config in runtime: %w", err)
 	}
 
 	go func() {
@@ -568,7 +568,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		}
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to send file info: %w", err)
 		}
 	}
 
@@ -602,7 +602,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				},
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to send disk usage info: %w", err)
 			}
 
 			continue
@@ -618,7 +618,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				},
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to send disk usage info: %w", err)
 			}
 
 			continue
@@ -947,7 +947,7 @@ func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io
 
 	container, err := inspector.Container(req.Id)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to inspect container %q: %w", req.Id, err)
 	}
 
 	if container == nil {
@@ -1054,13 +1054,13 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 					}
 
 					if err = l.Send(msg); err != nil {
-						return err
+						return fmt.Errorf("failed to sent event: %w", err)
 					}
 				}
 			}
 		}()
 	}, opts...); err != nil {
-		return err
+		return fmt.Errorf("failed to watch events: %w", err)
 	}
 
 	return <-errCh
@@ -1107,7 +1107,7 @@ func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 
 	task, err := container.NewTask(containerdctx, cio.NullIO)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create installer task: %w", err)
 	}
 
 	//nolint: errcheck
@@ -1115,18 +1115,18 @@ func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 
 	exitStatusC, err := task.Wait(containerdctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to wait for installer task: %w", err)
 	}
 
 	if err = task.Start(containerdctx); err != nil {
-		return err
+		return fmt.Errorf("failed to start installer task: %w", err)
 	}
 
 	status := <-exitStatusC
 
 	code, _, err := status.Result()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get installer status: %w", err)
 	}
 
 	if code != 0 {
@@ -1149,7 +1149,7 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 	if err != nil {
 		// fatal error
 		if pods == nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get pods: %w", err)
 		}
 		// TODO: only some failed, need to handle it better via client
 		log.Println(err.Error())
@@ -1197,7 +1197,7 @@ func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *ma
 	if err != nil {
 		// fatal error
 		if pods == nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get pods: %w", err)
 		}
 		// TODO: only some failed, need to handle it better via client
 		log.Println(err.Error())
@@ -1246,7 +1246,7 @@ func (s *Server) Restart(ctx context.Context, in *machine.RestartRequest) (*mach
 
 	container, err := inspector.Container(in.Id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to inspect container %q: %w", in.Id, err)
 	}
 
 	if container == nil {
@@ -1293,7 +1293,7 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 		select {
 		case <-ctx.Done():
 			if err = reader.Close(); err != nil {
-				return err
+				return fmt.Errorf("failed to close /dev/kmsg reader: %w", err)
 			}
 		case packet, ok := <-ch:
 			if !ok {
@@ -1314,7 +1314,7 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 			}
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to send data: %w", err)
 			}
 		}
 	}

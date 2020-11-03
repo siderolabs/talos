@@ -6,6 +6,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
@@ -50,15 +51,18 @@ func (l *Local) GetConnection(ctx context.Context) (context.Context, *grpc.Clien
 	}
 
 	var err error
+
+	target := "unix:" + l.socketPath
+
 	l.conn, err = grpc.DialContext(
 		ctx,
-		"unix:"+l.socketPath,
+		target,
 		grpc.WithInsecure(),
 		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
 
 	)
 
-	return outCtx, l.conn, err
+	return outCtx, l.conn, fmt.Errorf("failed to dial %q: %w", target, err)
 }
 
 // AppendInfo is called to enhance response from the backend with additional data.

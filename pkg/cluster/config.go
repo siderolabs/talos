@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -59,7 +60,7 @@ func (c *ConfigClientProvider) Client(endpoints ...string) (*client.Client, erro
 func (c *ConfigClientProvider) Close() error {
 	for _, cli := range c.clients {
 		if err := cli.Close(); err != nil {
-			return err
+			return fmt.Errorf("failed to close cluster client: %w", err)
 		}
 	}
 

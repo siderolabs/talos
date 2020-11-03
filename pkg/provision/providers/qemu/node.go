@@ -81,7 +81,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 		nodeConfig, err = nodeReq.Config.String()
 		if err != nil {
-			return provision.NodeInfo{}, err
+			return provision.NodeInfo{}, fmt.Errorf("failed to config to string: %w", err)
 		}
 	}
 

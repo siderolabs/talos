@@ -6,6 +6,7 @@ package dashboard
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -88,7 +89,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.Hostname(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get hostname of machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -109,7 +110,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.LoadAvg(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get load average of machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -130,7 +131,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.Version(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get version of machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -151,7 +152,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.Memory(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get memory of machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -172,7 +173,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.SystemStat(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get system stats of machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -193,7 +194,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.CPUInfo(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get CPU info for machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -214,7 +215,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.NetworkDeviceStats(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get network device stats for machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -235,7 +236,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.DiskStats(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get disk stats for machine: %w", err)
 			}
 
 			resultLock.Lock()
@@ -256,7 +257,7 @@ func (source *APISource) gather() *data.Data {
 		func() error {
 			resp, err := source.MachineClient.Processes(source.ctx, &empty.Empty{})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get processes for machine: %w", err)
 			}
 
 			resultLock.Lock()

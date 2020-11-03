@@ -111,7 +111,7 @@ func archiveFile(ctx context.Context, tw io.Writer, fi FileItem, fp *os.File) er
 				break
 			}
 
-			return err
+			return fmt.Errorf("failed to read file: %w", err)
 		}
 
 		select {
@@ -128,7 +128,7 @@ func archiveFile(ctx context.Context, tw io.Writer, fi FileItem, fp *os.File) er
 				return nil
 			}
 
-			return err
+			return fmt.Errorf("failed to write to archive: %w", err)
 		}
 	}
 

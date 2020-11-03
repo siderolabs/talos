@@ -288,7 +288,7 @@ func (m *Manifest) Execute() (err error) {
 func (m *Manifest) checkMounts(device Device) error {
 	matches, err := filepath.Glob("/proc/*/mountinfo")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find matches: %w", err)
 	}
 
 	for _, path := range matches {
@@ -398,20 +398,20 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		// delete all partitions which are not skipped
 		for _, part := range pt.Partitions() {
 			if _, ok := keepPartitions[part.Label()]; !ok {
-				log.Printf("deleting partition %s", part.Label())
+				log.Printf("deleting partition %q", part.Label())
 
 				if err = pt.Delete(part); err != nil {
-					return err
+					return fmt.Errorf("failed to delete partition %q: %w", part.Label(), err)
 				}
 			}
 		}
 
 		if err = pt.Write(); err != nil {
-			return err
+			return fmt.Errorf("failed to write partition table: %w", err)
 		}
 
 		if err = bd.RereadPartitionTable(); err != nil {
-			return err
+			return fmt.Errorf("failed to re-read partition table on %q: %w", bd.Device().Name(), err)
 		}
 	}
 
@@ -419,7 +419,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	pt, err = bd.PartitionTable()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read partition table on %q: %w", bd.Device().Name(), err)
 	}
 
 	for i, target := range targets {
@@ -429,7 +429,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	}
 
 	if err = pt.Write(); err != nil {
-		return err
+		return fmt.Errorf("failed to write partition table on %q: %w", bd.Device().Name(), err)
 	}
 
 	if err = bd.RereadPartitionTable(); err != nil {
@@ -635,12 +635,12 @@ func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.Blo
 
 	part, err := pt.InsertAt(pos, t.Size, opts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to insert partition: %w", err)
 	}
 
 	t.PartitionName, err = util.PartPath(t.Device, int(part.No()))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to set partition name: %w", err)
 	}
 
 	log.Printf("created %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())

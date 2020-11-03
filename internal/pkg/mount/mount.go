@@ -269,7 +269,7 @@ func (p *Point) Unmount() (err error) {
 func (p *Point) IsMounted() (bool, error) {
 	f, err := os.Open("/proc/mounts")
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to open /proc/mounts: %w", err)
 	}
 
 	defer f.Close() //nolint: errcheck
@@ -309,7 +309,7 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 	var devname string
 
 	if devname, err = util.DevnameFromPartname(p.Source()); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to get dev name from partition name: %w", err)
 	}
 
 	bd, err := blockdevice.Open("/dev/" + devname)
@@ -322,18 +322,18 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 
 	pt, err := bd.PartitionTable()
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to read partition table on %q: %w", bd.Device().Name(), err)
 	}
 
 	if err := pt.Repair(); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to repair partition table on %q: %w", bd.Device().Name(), err)
 	}
 
 	for _, partition := range pt.Partitions() {
 		if partition.Label() == constants.EphemeralPartitionLabel {
 			resized, err := pt.Resize(partition)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("failed to resize partition table on %q: %w", bd.Device().Name(), err)
 			}
 
 			if !resized {
@@ -343,7 +343,7 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 	}
 
 	if err := pt.Write(); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to write partition table: %w", err)
 	}
 
 	return true, nil

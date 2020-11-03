@@ -154,12 +154,12 @@ func (a *AWS) Mode() runtime.Mode {
 func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSHostnameEndpoint, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create hostname request for %q: %w", AWSHostnameEndpoint, err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to determine hostname from %q: %w", AWSHostnameEndpoint, err)
 	}
 	// nolint: errcheck
 	defer resp.Body.Close()
@@ -201,7 +201,7 @@ func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 
 	addrs = append(addrs, net.ParseIP(string(body)))
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.

@@ -27,17 +27,17 @@ func run() (err error) {
 	// Mount the pseudo devices.
 	pseudo, err := mount.PseudoMountPoints()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get pseudo mount points: %w", err)
 	}
 
 	if err = mount.Mount(pseudo); err != nil {
-		return err
+		return fmt.Errorf("failed to mount pseudo mount points: %w", err)
 	}
 
 	// Setup logging to /dev/kmsg.
 	err = kmsg.SetupLogger(nil, "[talos] [initramfs]", nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to setup kmsg logger: %w", err)
 	}
 
 	log.Printf("booting Talos %s", version.Tag)
@@ -47,18 +47,18 @@ func run() (err error) {
 
 	squashfs, err := mount.SquashfsMountPoints(constants.NewRoot)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get squashfs mount points: %w", err)
 	}
 
 	if err = mount.Mount(squashfs); err != nil {
-		return err
+		return fmt.Errorf("failed to mount squashfs mount points: %w", err)
 	}
 
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
 	if err = switchroot.Switch(constants.NewRoot, pseudo); err != nil {
-		return err
+		return fmt.Errorf("failed to switch_root: %w", err)
 	}
 
 	return nil

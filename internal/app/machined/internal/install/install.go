@@ -42,7 +42,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create containerd client: %w", err)
 	}
 
 	var img containerd.Image
@@ -57,7 +57,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 	}
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get image %q: %w", ref, err)
 	}
 
 	mounts := []specs.Mount{
@@ -112,7 +112,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	container, err := client.NewContainer(ctx, "upgrade", containerOpts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create container: %w", err)
 	}
 
 	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
@@ -128,7 +128,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	t, err := container.NewTask(ctx, creator)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create %q task: %w", "upgrade", err)
 	}
 
 	if err = t.Start(ctx); err != nil {

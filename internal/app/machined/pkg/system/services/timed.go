@@ -86,7 +86,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	b, err := r.Config().Bytes()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert config to bytes: %w", err)
 	}
 
 	stdin := bytes.NewReader(b)
@@ -145,7 +145,7 @@ func (n *Timed) HealthFunc(runtime.Runtime) health.Check {
 
 		nClient := healthapi.NewHealthClient(conn)
 		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {
-			return err
+			return fmt.Errorf("health ready check failed: %w", err)
 		}
 
 		if readyResp.Messages[0].Status != healthapi.ReadyCheck_READY {
@@ -153,7 +153,7 @@ func (n *Timed) HealthFunc(runtime.Runtime) health.Check {
 		}
 
 		if hcResp, err = nClient.Check(ctx, &empty.Empty{}); err != nil {
-			return err
+			return fmt.Errorf("health check failed: %w", err)
 		}
 
 		if hcResp.Messages[0].Status == healthapi.HealthCheck_SERVING {

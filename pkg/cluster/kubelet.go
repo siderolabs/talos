@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 
 	k8s "k8s.io/client-go/kubernetes"
 
@@ -28,7 +29,7 @@ func (k *KubernetesFromKubeletClient) K8sClient(ctx context.Context) (*k8s.Clien
 
 	var err error
 	if k.KubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
 	}
 
 	k.clientset = k.KubeHelper.Clientset

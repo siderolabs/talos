@@ -36,7 +36,7 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 		if err := config.Validate(mode); err != nil {
-			return err
+			return fmt.Errorf("config is invalid: %w", err)
 		}
 
 		fmt.Printf("%s is valid for %s mode\n", validateConfigArg, validateModeArg)

@@ -103,7 +103,7 @@ type EventStream interface {
 func (event *Event) ToMachineEvent() (*machine.Event, error) {
 	value, err := proto.Marshal(event.Payload)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal protobuf message: %w", err)
 	}
 
 	return &machine.Event{

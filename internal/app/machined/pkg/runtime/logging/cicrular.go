@@ -54,7 +54,7 @@ func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (
 			circular.WithMaxCapacity(MaxCapacity),
 			circular.WithSafetyGap(SafetyGap))
 		if err != nil {
-			return nil, err // only configuration issue might raise error
+			return nil, fmt.Errorf("failed to create log buffer for %q: %w", id, err) // only configuration issue might raise error
 		}
 
 		buf, _ = manager.buffers.LoadOrStore(id, b)

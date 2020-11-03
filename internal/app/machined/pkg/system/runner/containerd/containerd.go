@@ -62,12 +62,12 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 
 	c.client, err = containerd.New(c.opts.ContainerdAddress)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create containerd client: %w", err)
 	}
 
 	image, err := c.client.GetImage(c.ctx, c.opts.ContainerImage)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get image %q: %w", c.opts.ContainerImage, err)
 	}
 
 	// See if there's previous container/snapshot to clean up
@@ -100,7 +100,7 @@ func (c *containerdRunner) Close() error {
 	if c.container != nil {
 		err := c.container.Delete(c.ctx, containerd.WithSnapshotCleanup)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete container: %w", err)
 		}
 	}
 
@@ -256,7 +256,7 @@ func (c *containerdRunner) StdinReader() (io.Reader, error) {
 	}
 
 	if _, err := c.opts.Stdin.Seek(0, 0); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to seek stdin: %w", err)
 	}
 
 	c.stdinCloser = &stdinCloser{
@@ -278,5 +278,5 @@ func (s *stdinCloser) Read(p []byte) (int, error) {
 		close(s.closer)
 	}
 
-	return n, err
+	return n, fmt.Errorf("failed to read stdin: %w", err)
 }

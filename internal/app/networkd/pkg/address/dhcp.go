@@ -188,7 +188,7 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	// debug logging option
 	cli, err := nclient4.New(d.NetIf.Name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create dhcp client: %w", err)
 	}
 
 	// nolint: errcheck
@@ -199,8 +199,8 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 		// TODO: Make this a well defined error so we can make it not fatal
 		log.Println("failed dhcp request for", d.NetIf.Name)
 
-		return nil, err
+		return nil, fmt.Errorf("failed dhcp request for %q: %w", d.NetIf.Name, err)
 	}
 
-	return lease.ACK, err
+	return lease.ACK, nil
 }

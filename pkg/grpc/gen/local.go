@@ -5,6 +5,8 @@
 package gen
 
 import (
+	"fmt"
+
 	"github.com/talos-systems/crypto/x509"
 )
 
@@ -27,7 +29,7 @@ func (g *LocalGenerator) Identity(csr *x509.CertificateSigningRequest) (ca, crt 
 
 	c, err = x509.NewCertificateFromCSRBytes(g.caCrt, g.caKey, csr.X509CertificateRequestPEM)
 	if err != nil {
-		return ca, crt, err
+		return ca, crt, fmt.Errorf("failed to create certificate from CSR: %w", err)
 	}
 
 	crt = c.X509CertificatePEM

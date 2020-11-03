@@ -17,7 +17,7 @@ func DialUnix() func(context.Context, string) (net.Conn, error) {
 	return func(ctx context.Context, addr string) (net.Conn, error) {
 		u, err := url.Parse(addr)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse URL: %w", err)
 		}
 
 		if u.Scheme != "unix" {

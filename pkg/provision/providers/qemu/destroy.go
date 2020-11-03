@@ -26,7 +26,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 	fmt.Fprintln(options.LogWriter, "stopping VMs")
 
 	if err := p.DestroyNodes(cluster.Info(), &options); err != nil {
-		return err
+		return fmt.Errorf("failed to destroy nodes: %w", err)
 	}
 
 	state, ok := cluster.(*vm.State)
@@ -56,7 +56,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	stateDirectoryPath, err := cluster.StatePath()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to determine state directory: %w", err)
 	}
 
 	return os.RemoveAll(stateDirectoryPath)

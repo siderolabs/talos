@@ -21,7 +21,7 @@ func (filename file) Wait(ctx context.Context) error {
 		}
 
 		if !os.IsNotExist(err) {
-			return err
+			return fmt.Errorf("failed to stat %q: %w", string(filename), err)
 		}
 
 		select {

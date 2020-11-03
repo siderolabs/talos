@@ -21,7 +21,7 @@ const Window = 4096
 func SeekLines(r io.ReadSeeker, lines int) error {
 	offset, err := r.Seek(0, io.SeekEnd)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to seek to beginning: %w", err)
 	}
 
 	readOffset := offset - Window
@@ -39,14 +39,14 @@ func SeekLines(r io.ReadSeeker, lines int) error {
 	for skippedLines < lines && readSize > 0 {
 		_, err = r.Seek(readOffset, io.SeekStart)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to seek to offset from start: %w", err)
 		}
 
 		var n int
 
 		n, err = r.Read(buf[:readSize])
 		if err != nil {
-			return err
+			return fmt.Errorf("faile to read: %w", err)
 		}
 
 		if int64(n) != readSize {
@@ -89,5 +89,5 @@ func SeekLines(r io.ReadSeeker, lines int) error {
 
 	_, err = r.Seek(readOffset, io.SeekStart)
 
-	return err
+	return fmt.Errorf("failed to offset from start: %w", err)
 }

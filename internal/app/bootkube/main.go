@@ -42,7 +42,7 @@ func run() error {
 
 	config, err := configloader.NewFromStdin()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load config from stdin: %w", err)
 	}
 
 	if *recover {

@@ -32,7 +32,7 @@ func NewTLSConfig(config config.Provider, endpoints []string) (*TLSConfig, error
 
 	dnsNames, err := net.DNSNames()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to determine DNS names: %w", err)
 	}
 
 	for _, san := range config.Machine().Security().CertSANs() {
@@ -60,7 +60,7 @@ func NewTLSConfig(config config.Provider, endpoints []string) (*TLSConfig, error
 		ips,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create renewing certficate provider: %w", err)
 	}
 
 	return tlsConfig, nil

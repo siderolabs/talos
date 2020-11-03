@@ -64,14 +64,14 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err error) {
 	err = conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to wait for %q: %w", i.options.containerdAddress, err)
 	}
 
 	ctx = namespaces.WithNamespace(ctx, i.namespace)
 
 	client, err := containerd.New(i.options.containerdAddress)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create containerd client: %w", err)
 	}
 	// nolint: errcheck
 	defer client.Close()

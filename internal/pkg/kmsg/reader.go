@@ -72,7 +72,7 @@ func NewReader(options ...Option) (Reader, error) {
 
 	r.f, err = os.OpenFile("/dev/kmsg", os.O_RDONLY, 0)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
 
 	if r.options.tail {

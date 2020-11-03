@@ -80,7 +80,11 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
 	)
 
-	return outCtx, a.conn, err
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to dial: %w", err)
+	}
+
+	return outCtx, a.conn, nil
 }
 
 // AppendInfo is called to enhance response from the backend with additional data.

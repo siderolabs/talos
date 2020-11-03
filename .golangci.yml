@@ -126,7 +126,6 @@ linters:
     - nestif
     - exhaustivestruct
     - errorlint
-    - wrapcheck
   disable-all: false
   fast: false
 

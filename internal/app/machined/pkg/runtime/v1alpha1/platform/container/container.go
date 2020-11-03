@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -36,7 +37,7 @@ func (c *Container) Configuration(context.Context) ([]byte, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
 	return decoded, nil

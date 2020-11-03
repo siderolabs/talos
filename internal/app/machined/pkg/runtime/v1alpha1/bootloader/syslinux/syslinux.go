@@ -60,19 +60,19 @@ type Syslinux struct{}
 func Prepare(dev string) (err error) {
 	b, err := ioutil.ReadFile(gptmbrbin)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read %q: %w", gptmbrbin, err)
 	}
 
 	f, err := os.OpenFile(dev, os.O_WRONLY|unix.O_CLOEXEC, os.ModeDevice)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open %q: %w", dev, err)
 	}
 
 	// nolint: errcheck
 	defer f.Close()
 
 	if _, err := f.Write(b); err != nil {
-		return err
+		return fmt.Errorf("failed to write %q: %w", gptmbrbin, err)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func Labels() (current, next string, err error) {
 			return current, "", nil
 		}
 
-		return "", "", err
+		return "", "", fmt.Errorf("failed to read %q: %w", SyslinuxConfig, err)
 	}
 
 	re := regexp.MustCompile(`^DEFAULT\s(.*)`)
@@ -151,7 +151,7 @@ func Labels() (current, next string, err error) {
 		return "", "", fmt.Errorf("unknown syslinux label: %q", current)
 	}
 
-	return current, next, err
+	return current, next, nil
 }
 
 // Default sets the default syslinx label.

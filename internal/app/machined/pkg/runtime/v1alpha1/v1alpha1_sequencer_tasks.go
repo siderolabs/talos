@@ -72,7 +72,7 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 
 		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create machine logger: %w", err)
 		}
 
 		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
@@ -444,7 +444,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			logger.Printf("storing config in memory")
 
 			if err = r.SetConfig(b); err != nil {
-				return err
+				return fmt.Errorf("failed to set config in runtime: %w", err)
 			}
 
 			return nil
@@ -467,11 +467,11 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		b, err := cfg.Bytes()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to convert config to bytes: %w", err)
 		}
 
 		if err = r.SetConfig(b); err != nil {
-			return err
+			return fmt.Errorf("failed to commit config to runtime: %w", err)
 		}
 
 		return nil
@@ -486,7 +486,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		hostname, err := r.State().Platform().Hostname(saveCtx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get hostname from platform: %w", err)
 		}
 
 		if hostname != nil {
@@ -510,7 +510,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		b, err = r.Config().Bytes()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to convert config to bytes: %w", err)
 		}
 
 		return ioutil.WriteFile(constants.ConfigPath, b, 0o600)
@@ -521,7 +521,7 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 	var b []byte
 
 	if b, err = r.State().Platform().Configuration(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get config from platform: %w", err)
 	}
 
 	// Detect if config is a gzip archive and unzip it if so
@@ -634,7 +634,7 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		defer cancel()
 
 		if err = system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
-			return err
+			return fmt.Errorf("failed to wait for service to be up: %w", err)
 		}
 
 		return nil
@@ -1285,7 +1285,7 @@ func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		// We MUST close this in order to avoid EBUSY.
 		if err = r.State().Machine().Close(); err != nil {
-			return err
+			return fmt.Errorf("failed to close machine state: %w", err)
 		}
 
 		// TODO(andrewrynhard): This should be more dynamic. If we ever change the
