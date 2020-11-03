@@ -191,6 +191,8 @@ aws ec2 run-instances \
     --security-group-ids $SECURITY_GROUP
 ```
 
+> Make a note of the resulting `PrivateIpAddress` from the init and controlplane nodes for later use.
+
 #### Create the Worker Nodes
 
 ```bash
@@ -215,13 +217,13 @@ aws elbv2 create-target-group \
     --vpc-id $VPC
 ```
 
-Now, using the target group's ARN, register the control plane nodes:
+Now, using the target group's ARN, and the **PrivateIpAddress** from the instances that you created :
 
 ```bash
 aws elbv2 register-targets \
     --region $REGION \
     --target-group-arn $TARGET_GROUP_ARN \
-    --targets Id=$CP_NODE_1  Id=$CP_NODE_2  Id=$CP_NODE_3
+    --targets Id=$CP_NODE_1_IP  Id=$CP_NODE_2_IP  Id=$CP_NODE_3_IP
 ```
 
 Using the ARNs of the load balancer and target group from previous steps, create the listener:
