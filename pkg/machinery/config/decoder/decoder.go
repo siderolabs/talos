@@ -22,7 +22,7 @@ var (
 	ErrMissingKind = errors.New("missing kind")
 	// ErrMissingSpec indicates that the manifest is missing a spec.
 	ErrMissingSpec = errors.New("missing spec")
-	// ErrMissingSpecConent indicates that the manifest spec is empty
+	// ErrMissingSpecConent indicates that the manifest spec is empty.
 	ErrMissingSpecConent = errors.New("missing spec content")
 )
 

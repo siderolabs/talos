@@ -122,6 +122,11 @@ linters:
     - gomnd
     - goerr113
     - nestif
+    - gci
+    - nlreturn
+    - exhaustivestruct
+    - errorlint
+    - wrapcheck
   disable-all: false
   fast: false
 

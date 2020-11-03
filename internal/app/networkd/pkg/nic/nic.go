@@ -33,9 +33,9 @@ import (
 const (
 	// ref: https://tools.ietf.org/html/rfc791
 
-	// MinimumMTU is the lowest allowed MTU for an interface
+	// MinimumMTU is the lowest allowed MTU for an interface.
 	MinimumMTU = 68
-	// MaximumMTU is the highest allowed MTU for an interface
+	// MaximumMTU is the highest allowed MTU for an interface.
 	MaximumMTU = 65536
 )
 

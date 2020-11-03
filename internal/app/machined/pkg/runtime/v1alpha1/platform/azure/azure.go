@@ -28,7 +28,7 @@ import (
 const (
 	// AzureUserDataEndpoint is the local endpoint for the config.
 	// By specifying format=text and drilling down to the actual key we care about
-	// we get a base64 encoded config response
+	// we get a base64 encoded config response.
 	AzureUserDataEndpoint = "http://169.254.169.254/metadata/instance/compute/customData?api-version=2019-06-01&format=text"
 	// AzureHostnameEndpoint is the local endpoint for the hostname.
 	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2019-06-01&format=text"

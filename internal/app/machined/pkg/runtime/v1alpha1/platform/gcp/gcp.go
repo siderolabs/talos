@@ -22,9 +22,9 @@ import (
 // Ref: https://cloud.google.com/compute/docs/storing-retrieving-metadata
 // ex, curl -H "Metadata-Flavor: Google" 'http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/?recursive=true'
 const (
-	// GCUserDataEndpoint is the local metadata endpoint inside of DO
+	// GCUserDataEndpoint is the local metadata endpoint inside of DO.
 	GCUserDataEndpoint = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/user-data"
-	// GCExternalIPEndpoint displays all external addresses associated with the instance
+	// GCExternalIPEndpoint displays all external addresses associated with the instance.
 	GCExternalIPEndpoint = "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/?recursive=true"
 )
 

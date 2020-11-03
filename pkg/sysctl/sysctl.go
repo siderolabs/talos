@@ -28,5 +28,5 @@ func ReadSystemProperty(prop *SystemProperty) ([]byte, error) {
 
 // Path returns the path to the systctl file under /proc/sys.
 func (prop *SystemProperty) Path() string {
-	return path.Join("/proc/sys", strings.Replace(prop.Key, ".", "/", -1))
+	return path.Join("/proc/sys", strings.ReplaceAll(prop.Key, ".", "/"))
 }
