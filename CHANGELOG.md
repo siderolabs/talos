@@ -1,6 +1,45 @@
 
+<a name="v0.7.0-beta.0"></a>
+## [v0.7.0-beta.0](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.8...v0.7.0-beta.0) (2020-11-03)
+
+### Chore
+
+* update golangci-lint
+* remove duplicate packages
+* remove unused binaries
+
+### Docs
+
+* fix AWS guides
+* address small nits
+* update config reference docs
+* add redirect for /docs/latest
+* fix small CSS issues
+
+### Feat
+
+* upgrade kernel to v5.9.3
+* upgrade packages
+* add ISO support
+* add webconfig service
+* build talosctl-cni-bundle, use it in talosctl for QEMU
+* skip resizing ephemeral partition if not required
+* allow specifying user-disks in talosctl cluster create
+
+### Fix
+
+* remove log.Fatal from maintenance service
+* address issues in webconfig
+* prevent blind mode boot
+* read/write human readable representations for bytes and octals
+
+### Refactor
+
+* use gRPC for interactive installation
+
+
 <a name="v0.7.0-alpha.8"></a>
-## [v0.7.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.7...v0.7.0-alpha.8) (2020-10-29)
+## [v0.7.0-alpha.8](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.7...v0.7.0-alpha.8) (2020-10-30)
 
 ### Chore
 
@@ -43,6 +82,10 @@
 * stop ignoring `EINVAL` on mount
 * implement preserving contents of partition on install
 * correctly calculate output width in colored health reporter
+
+### Release
+
+* **v0.7.0-alpha.8:** prepare release
 
 ### Test
 
