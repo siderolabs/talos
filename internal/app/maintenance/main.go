@@ -94,26 +94,26 @@ func genTLSConfig(ips []net.IP) (*tls.Config, error) {
 
 	dnsNames, err := tnet.DNSNames()
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to get DNS names: %w", err)
 	}
 
 	var generator ttls.Generator
 
 	generator, err = gen.NewLocalGenerator(ca.KeyPEM, ca.CrtPEM)
 	if err != nil {
-		log.Fatalln("failed to create local generator provider:", err)
+		return nil, fmt.Errorf("failed to create local generator provider: %w", err)
 	}
 
 	var provider ttls.CertificateProvider
 
 	provider, err = ttls.NewRenewingCertificateProvider(generator, dnsNames, ips)
 	if err != nil {
-		log.Fatalln("failed to create local certificate provider:", err)
+		return nil, fmt.Errorf("failed to create local certificate provider: %w", err)
 	}
 
 	caProvider, err := provider.GetCA()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get CA: %w", err)
 	}
 
 	tlsConfig, err := ttls.New(
