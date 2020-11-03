@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	// DigitalOceanExternalIPEndpoint displays all external addresses associated with the instance
+	// DigitalOceanExternalIPEndpoint displays all external addresses associated with the instance.
 	DigitalOceanExternalIPEndpoint = "http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address"
 	// DigitalOceanHostnameEndpoint is the local endpoint for the hostname.
 	DigitalOceanHostnameEndpoint = "http://169.254.169.254/metadata/v1/hostname"

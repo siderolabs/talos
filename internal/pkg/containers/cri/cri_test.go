@@ -29,9 +29,9 @@ import (
 
 const (
 	busyboxImage = "docker.io/library/busybox:1.30.1"
-	// busyboxImageDigest = "sha256:64f5d945efcc0f39ab11b3cd4ba403cc9fefe1fa3613123ca016cf3708e8cafb"
-	// pauseImage         = "k8s.gcr.io/pause:3.1"
-	// pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e"
+	// busyboxImageDigest = "sha256:64f5d945efcc0f39ab11b3cd4ba403cc9fefe1fa3613123ca016cf3708e8cafb".
+	// pauseImage         = "k8s.gcr.io/pause:3.1".
+	// pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e".
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {

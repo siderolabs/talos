@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -33,8 +34,28 @@ func init() {
 	flag.Parse()
 }
 
+//nolint: gocyclo
 func run() error {
-	if err := os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
+	util.InitLogs()
+
+	defer util.FlushLogs()
+
+	config, err := configloader.NewFromStdin()
+	if err != nil {
+		return err
+	}
+
+	if *recover {
+		if err = recoverAssets(config); err != nil {
+			return fmt.Errorf("error recovering assets: %w", err)
+		}
+	} else {
+		if err = generateAssets(config); err != nil {
+			return fmt.Errorf("error generating assets: %w", err)
+		}
+	}
+
+	if err = os.MkdirAll(constants.ManifestsDirectory, 0o644); err != nil {
 		return err
 	}
 
@@ -97,25 +118,6 @@ func run() error {
 }
 
 func main() {
-	util.InitLogs()
-
-	defer util.FlushLogs()
-
-	config, err := configloader.NewFromStdin()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if *recover {
-		if err := recoverAssets(config); err != nil {
-			log.Fatalf("error recovering assets: %s", err)
-		}
-	} else {
-		if err := generateAssets(config); err != nil {
-			log.Fatalf("error generating assets: %s", err)
-		}
-	}
-
 	if err := run(); err != nil {
 		log.Fatalf("bootkube failed: %s", err)
 	}

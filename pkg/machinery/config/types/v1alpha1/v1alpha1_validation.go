@@ -24,33 +24,33 @@ import (
 )
 
 var (
-	// General
+	// General.
 
-	// ErrRequiredSection denotes a section is required
+	// ErrRequiredSection denotes a section is required.
 	ErrRequiredSection = errors.New("required config section")
-	// ErrInvalidVersion denotes that the config file version is invalid
+	// ErrInvalidVersion denotes that the config file version is invalid.
 	ErrInvalidVersion = errors.New("invalid config version")
 
-	// Security
+	// Security.
 
-	// ErrInvalidCert denotes that the certificate specified is invalid
+	// ErrInvalidCert denotes that the certificate specified is invalid.
 	ErrInvalidCert = errors.New("certificate is invalid")
-	// ErrInvalidCertType denotes that the certificate type is invalid
+	// ErrInvalidCertType denotes that the certificate type is invalid.
 	ErrInvalidCertType = errors.New("certificate type is invalid")
 
-	// Services
+	// Services.
 
-	// ErrUnsupportedCNI denotes that the specified CNI is invalid
+	// ErrUnsupportedCNI denotes that the specified CNI is invalid.
 	ErrUnsupportedCNI = errors.New("unsupported CNI driver")
-	// ErrInvalidTrustdToken denotes that a trustd token has not been specified
+	// ErrInvalidTrustdToken denotes that a trustd token has not been specified.
 	ErrInvalidTrustdToken = errors.New("trustd token is invalid")
 
-	// Networking
+	// Networking.
 
 	// ErrBadAddressing denotes that an incorrect combination of network
-	// address methods have been specified
+	// address methods have been specified.
 	ErrBadAddressing = errors.New("invalid network device addressing method")
-	// ErrInvalidAddress denotes that a bad address was provided
+	// ErrInvalidAddress denotes that a bad address was provided.
 	ErrInvalidAddress = errors.New("invalid network address")
 )
 

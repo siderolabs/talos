@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	// AWSExternalIPEndpoint displays all external addresses associated with the instance
+	// AWSExternalIPEndpoint displays all external addresses associated with the instance.
 	AWSExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
 	// AWSHostnameEndpoint is the local EC2 endpoint for the hostname.
 	AWSHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"

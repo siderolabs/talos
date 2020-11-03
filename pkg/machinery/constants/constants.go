@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	// DefaultKernelVersion is the default Linux kernel version
+	// DefaultKernelVersion is the default Linux kernel version.
 	DefaultKernelVersion = "5.8.16-talos"
 
-	// KernelParamConfig is the kernel parameter name for specifying the URL
+	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
 	KernelParamConfig = "talos.config"
 
@@ -29,14 +29,14 @@ const (
 	KernelParamHostname = "talos.hostname"
 
 	// KernelParamDefaultInterface is the kernel parameter for specifying the
-	// initial interface used to bootstrap the node
+	// initial interface used to bootstrap the node.
 	KernelParamDefaultInterface = "talos.interface"
 
 	// KernelParamShutdown is the kernel parameter for specifying the
-	// shutdown type (halt/poweroff)
+	// shutdown type (halt/poweroff).
 	KernelParamShutdown = "talos.shutdown"
 
-	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos
+	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos.
 	KernelParamNetworkInterfaceIgnore = "talos.network.interface.ignore"
 
 	// KernelParamPanic is the kernel parameter name for specifying the time to wait until rebooting after kernel panic (0 disables reboot).
@@ -134,19 +134,19 @@ const (
 	// KubernetesEtcdPeerKey is the path to the etcd CA private key.
 	KubernetesEtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
 
-	// KubernetesEtcdServerCert defines etcd's server certificate name
+	// KubernetesEtcdServerCert defines etcd's server certificate name.
 	KubernetesEtcdServerCert = EtcdPKIPath + "/" + "client.crt"
 
-	// KubernetesEtcdServerKey defines etcd's server key name
+	// KubernetesEtcdServerKey defines etcd's server key name.
 	KubernetesEtcdServerKey = EtcdPKIPath + "/" + "client.key"
 
-	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic
+	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic.
 	KubernetesEtcdListenClientPort = "2379"
 
-	// KubernetesAPIServerEtcdClientCert defines apiserver's etcd client certificate name
+	// KubernetesAPIServerEtcdClientCert defines apiserver's etcd client certificate name.
 	KubernetesAPIServerEtcdClientCert = DefaultCertificatesDir + "/" + "apiserver-etcd-client.crt"
 
-	// KubernetesAPIServerEtcdClientKey defines apiserver's etcd client key name
+	// KubernetesAPIServerEtcdClientKey defines apiserver's etcd client key name.
 	KubernetesAPIServerEtcdClientKey = DefaultCertificatesDir + "/" + "apiserver-etcd-client.key"
 
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
@@ -207,10 +207,10 @@ const (
 	// DefaultEtcdVersion is the default target version of etcd.
 	DefaultEtcdVersion = "v3.4.12"
 
-	// EtcdRootTalosKey is the root etcd key for Talos-specific storage
+	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
 
-	// EtcdTalosEtcdUpgradeMutex is the etcd mutex prefix to be used to set an etcd upgrade lock
+	// EtcdTalosEtcdUpgradeMutex is the etcd mutex prefix to be used to set an etcd upgrade lock.
 	EtcdTalosEtcdUpgradeMutex = EtcdRootTalosKey + ":etcdUpgradeMutex"
 
 	// EtcdImage is the reposistory for the etcd image.
@@ -300,7 +300,7 @@ const (
 	// InitramfsAssetPath is the path to the initramfs on disk.
 	InitramfsAssetPath = "/usr/install/" + InitramfsAsset
 
-	// RootfsAsset defines a well known name for our rootfs filename
+	// RootfsAsset defines a well known name for our rootfs filename.
 	RootfsAsset = "rootfs.sqsh"
 
 	// DefaultCertificateValidityDuration is the default duration for a certificate.

@@ -105,21 +105,21 @@ func runISOCmd() error {
 
 	from, err := os.Open(out)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	// nolint: errcheck
 	defer from.Close()
 
 	to, err := os.OpenFile(filepath.Join(outputArg, filepath.Base(out)), os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	// nolint: errcheck
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	return nil
