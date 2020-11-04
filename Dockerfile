@@ -606,7 +606,7 @@ RUN markdownlint \
     --ignore '**/CODE_OF_CONDUCT.md' \
     --ignore '**/node_modules/**' \
     --ignore '**/hack/chglog/**' \
-    --ignore 'website/content/docs/*/Reference/*'
+    --ignore 'website/content/docs/*/Reference/*' .
 RUN find . \
     -name '*.md' \
     -not -path './LICENCE.md' \
