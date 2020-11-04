@@ -6,7 +6,7 @@
 !internal
 !pkg
 !vendor
-!web
+!website
 !.golangci.yml
 !.markdownlint.json
 !go.mod

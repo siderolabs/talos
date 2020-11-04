@@ -16,7 +16,7 @@ For these reasons, Talos has a number of features unique to it:
 
 Talos can be deployed on container, cloud, virtualized, and bare metal platforms.
 
-## Why Talos?
+## Why Talos
 
 In having less, Talos offers more.
 Security.
