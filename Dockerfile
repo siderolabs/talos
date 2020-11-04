@@ -594,14 +594,28 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 # The markdownlint target performs linting on Markdown files.
 
 FROM node:14.5.0-alpine AS lint-markdown
+RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
 RUN npm i -g textlint-rule-one-sentence-per-line@1.0.2
 WORKDIR /src
-COPY .markdownlint.json .
 COPY . .
-RUN markdownlint --ignore "**/node_modules/**" --ignore '**/hack/chglog/**' .
-RUN find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/website/content/docs/v0.7/Talosctl/*' | xargs textlint --rule one-sentence-per-line --stdin-filename
+RUN markdownlint \
+    --ignore '**/LICENCE.md' \
+    --ignore '**/CHANGELOG.md' \
+    --ignore '**/CODE_OF_CONDUCT.md' \
+    --ignore '**/node_modules/**' \
+    --ignore '**/hack/chglog/**' \
+    --ignore 'website/content/docs/*/Reference/*'
+RUN find . \
+    -name '*.md' \
+    -not -path './LICENCE.md' \
+    -not -path './CHANGELOG.md' \
+    -not -path './CODE_OF_CONDUCT.md' \
+    -not -path '*/node_modules/*' \
+    -not -path './hack/chglog/**' \
+    -not -path './website/content/docs/*/Reference/*' \
+    | xargs textlint --rule one-sentence-per-line --stdin-filename
 
 # The docs target generates documentation.
 
