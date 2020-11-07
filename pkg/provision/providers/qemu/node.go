@@ -21,7 +21,6 @@ import (
 	"github.com/google/uuid"
 	multierror "github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
@@ -75,11 +74,12 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
-	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 
 	var nodeConfig string
 
 	if nodeReq.Config != nil {
+		cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
+
 		nodeConfig, err = nodeReq.Config.String()
 		if err != nil {
 			return provision.NodeInfo{}, err
@@ -161,16 +161,11 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	// no need to wait here, as cmd has all the Stdin/out/err via *os.File
 
-	nodeType := machine.TypeUnknown
-	if nodeReq.Config != nil {
-		nodeType = nodeReq.Config.Machine().Type()
-	}
-
 	nodeInfo := provision.NodeInfo{
 		ID:   pidPath,
 		UUID: nodeUUID,
 		Name: nodeReq.Name,
-		Type: nodeType,
+		Type: nodeReq.Type,
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,

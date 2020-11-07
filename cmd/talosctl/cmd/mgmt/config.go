@@ -113,35 +113,8 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	for _, t := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin} {
-		name := strings.ToLower(t.String()) + ".yaml"
-		fullFilePath := filepath.Join(outputDir, name)
-
-		var configString string
-
-		switch t { //nolint: exhaustive
-		case machine.TypeInit:
-			configString, err = configBundle.Init().String()
-			if err != nil {
-				return err
-			}
-		case machine.TypeControlPlane:
-			configString, err = configBundle.ControlPlane().String()
-			if err != nil {
-				return err
-			}
-		case machine.TypeJoin:
-			configString, err = configBundle.Join().String()
-			if err != nil {
-				return err
-			}
-		}
-
-		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
-			return err
-		}
-
-		fmt.Printf("created %s\n", fullFilePath)
+	if err = configBundle.Write(outputDir, machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+		return err
 	}
 
 	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later

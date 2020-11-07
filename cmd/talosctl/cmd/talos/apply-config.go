@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 
@@ -47,9 +48,9 @@ var applyConfigCmd = &cobra.Command{
 				return fmt.Errorf("insecure mode requires one and only one node, got %d", len(Nodes))
 			}
 
-			addr := Nodes[0]
-
-			c, err := client.NewInsecureTokenClient(ctx, addr)
+			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
+				InsecureSkipVerify: true,
+			}), client.WithEndpoints(Nodes...))
 			if err != nil {
 				return err
 			}

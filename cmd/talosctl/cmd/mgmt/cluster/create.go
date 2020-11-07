@@ -34,6 +34,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
@@ -79,6 +80,7 @@ var (
 	customCNIUrl            string
 	crashdumpOnFailure      bool
 	skipKubeconfig          bool
+	skipInjectingConfig     bool
 )
 
 // createCmd represents the cluster up command.
@@ -287,6 +289,18 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
+	if skipInjectingConfig {
+		types := []machine.Type{machine.TypeControlPlane, machine.TypeJoin}
+
+		if withInitNode {
+			types = append([]machine.Type{machine.TypeInit}, types...)
+		}
+
+		if err = configBundle.Write(".", types...); err != nil {
+			return err
+		}
+	}
+
 	// Add talosconfig to provision options so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
@@ -296,6 +310,7 @@ func create(ctx context.Context) (err error) {
 
 		nodeReq := provision.NodeRequest{
 			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
+			Type:     machine.TypeControlPlane,
 			IP:       ips[i],
 			Memory:   memory,
 			NanoCPUs: nanoCPUs,
@@ -306,17 +321,16 @@ func create(ctx context.Context) (err error) {
 			nodeReq.Ports = []string{"50000:50000/tcp", "6443:6443/tcp"}
 		}
 
-		if withInitNode {
-			if i == 0 {
-				cfg = configBundle.Init()
-			} else {
-				cfg = configBundle.ControlPlane()
-			}
+		if withInitNode && i == 0 {
+			cfg = configBundle.Init()
+			nodeReq.Type = machine.TypeInit
 		} else {
 			cfg = configBundle.ControlPlane()
 		}
 
-		nodeReq.Config = cfg
+		if !skipInjectingConfig {
+			nodeReq.Config = cfg
+		}
 
 		request.Nodes = append(request.Nodes, nodeReq)
 	}
@@ -324,14 +338,21 @@ func create(ctx context.Context) (err error) {
 	for i := 1; i <= workers; i++ {
 		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
 
+		var cfg config.Provider
+
+		if !skipInjectingConfig {
+			cfg = configBundle.Join()
+		}
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:     name,
+				Type:     machine.TypeJoin,
 				IP:       ips[masters+i-1],
 				Memory:   memory,
 				NanoCPUs: nanoCPUs,
 				Disks:    disks,
-				Config:   configBundle.Join(),
+				Config:   cfg,
 			})
 	}
 
@@ -575,5 +596,6 @@ func init() {
 	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
 	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
+	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
 	Cmd.AddCommand(createCmd)
 }
