@@ -98,6 +98,7 @@ talosctl cluster create [flags]
       --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1])
       --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for
       --registry-mirror strings                 list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --skip-injecting-config                   skip injecting config from embedded metadata server, write config files to current directory
       --skip-kubeconfig                         skip merging kubeconfig from the created cluster
       --user-disk strings                       list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
       --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")

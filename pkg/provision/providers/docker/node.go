@@ -63,20 +63,26 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 
 //nolint: gocyclo
 func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, options *provision.Options) (provision.NodeInfo, error) {
-	cfg, err := nodeReq.Config.String()
-	if err != nil {
-		return provision.NodeInfo{}, err
+	env := []string{"PLATFORM=container"}
+
+	if nodeReq.Config != nil {
+		cfg, err := nodeReq.Config.String()
+		if err != nil {
+			return provision.NodeInfo{}, err
+		}
+
+		env = append(env, "USERDATA="+base64.StdEncoding.EncodeToString([]byte(cfg)))
 	}
 
 	// Create the container config.
 	containerConfig := &container.Config{
 		Hostname: nodeReq.Name,
 		Image:    clusterReq.Image,
-		Env:      []string{"PLATFORM=container", "USERDATA=" + base64.StdEncoding.EncodeToString([]byte(cfg))},
+		Env:      env,
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": clusterReq.Name,
-			"talos.type":         nodeReq.Config.Machine().Type().String(),
+			"talos.type":         nodeReq.Type.String(),
 		},
 		Volumes: map[string]struct{}{
 			"/var/lib/containerd": {},
@@ -110,16 +116,14 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 	// Mutate the container configurations based on the node type.
 
-	if nodeReq.Config.Machine().Type() == machine.TypeInit || nodeReq.Config.Machine().Type() == machine.TypeControlPlane {
+	if nodeReq.Type == machine.TypeInit || nodeReq.Type == machine.TypeControlPlane {
 		portsToOpen := nodeReq.Ports
 
 		if len(options.DockerPorts) > 0 {
 			portsToOpen = append(portsToOpen, options.DockerPorts...)
 		}
 
-		var generatedPortMap portMap
-
-		generatedPortMap, err = genPortMap(portsToOpen, options.DockerPortsHostIP)
+		generatedPortMap, err := genPortMap(portsToOpen, options.DockerPortsHostIP)
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}
@@ -160,7 +164,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	nodeInfo := provision.NodeInfo{
 		ID:   info.ID,
 		Name: info.Name,
-		Type: nodeReq.Config.Machine().Type(),
+		Type: nodeReq.Type,
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,

@@ -312,6 +312,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("master-%d", i+1),
+				Type:     machine.TypeControlPlane,
 				IP:       ips[i],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
@@ -328,6 +329,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("worker-%d", i),
+				Type:     machine.TypeJoin,
 				IP:       ips[suite.spec.MasterNodes+i-1],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,

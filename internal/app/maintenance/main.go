@@ -21,7 +21,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/maintenance/server"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/gen"
-	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -42,13 +41,9 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	s := server.New(r, logger, cfgCh)
 
 	// Start the server.
-
-	creds := basic.NewTokenCredentials("")
-
 	server := factory.NewServer(
 		s,
 		factory.WithDefaultLog(),
-		factory.WithUnaryInterceptor(creds.UnaryInterceptor()),
 		factory.ServerOptions(
 			grpc.Creds(
 				credentials.NewTLS(tlsConfig),
