@@ -91,6 +91,7 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	s.mu.Lock()
 	if s.terminating {
 		s.mu.Unlock()
+
 		return nil
 	}
 
@@ -200,6 +201,7 @@ func (s *singleton) Shutdown() {
 	s.mu.Lock()
 	if s.terminating {
 		s.mu.Unlock()
+
 		return
 	}
 
@@ -217,6 +219,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 	s.mu.Lock()
 	if s.terminating {
 		s.mu.Unlock()
+
 		return nil
 	}
 
@@ -234,6 +237,7 @@ func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...st
 	s.mu.Lock()
 	if s.terminating {
 		s.mu.Unlock()
+
 		return nil
 	}
 

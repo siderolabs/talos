@@ -195,6 +195,7 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 			msg, err = logsStream.Recv()
 			if err != nil {
 				errCh <- err
+
 				return
 			}
 

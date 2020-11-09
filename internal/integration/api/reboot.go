@@ -94,6 +94,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 				}
 
 				initialBootID.Store(node, bootIDBefore)
+
 				return nil
 			}()
 		}(node)

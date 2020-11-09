@@ -86,6 +86,7 @@ func TestParseMachineType(t *testing.T) {
 			got, err := machine.ParseType(tt.args.t)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseMachineType() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

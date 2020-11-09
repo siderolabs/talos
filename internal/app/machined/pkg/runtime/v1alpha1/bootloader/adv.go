@@ -167,6 +167,7 @@ func (a ADV) ReadTag(t uint8) (val string, ok bool) {
 		if tag != t {
 			// Jump to the next tag.
 			i += 2 + size
+
 			continue
 		}
 
@@ -201,6 +202,7 @@ func (a ADV) SetTag(t uint8, val string) (ok bool) {
 		if tag != AdvEnd {
 			// Jump to the next tag.
 			i += 2 + size
+
 			continue
 		}
 
@@ -241,6 +243,7 @@ func (a ADV) DeleteTag(t uint8) (ok bool) {
 		if tag != t {
 			// Jump to the next tag.
 			i += 2 + size
+
 			continue
 		}
 

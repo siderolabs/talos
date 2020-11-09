@@ -299,6 +299,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	select {
 	case err := <-done:
 		suite.Assert().Failf("task should be running", "error: %s", err)
+
 		return
 	default:
 	}
@@ -318,6 +319,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	select {
 	case err = <-done:
 		suite.Assert().Failf("task should be running", "error: %s", err)
+
 		return
 	default:
 	}

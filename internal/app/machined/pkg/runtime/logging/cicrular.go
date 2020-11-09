@@ -133,6 +133,7 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 		err := tail.SeekLines(r, *opt.TailLines)
 		if err != nil {
 			r.Close() //nolint: errcheck
+
 			return nil, fmt.Errorf("error tailing log: %w", err)
 		}
 	}

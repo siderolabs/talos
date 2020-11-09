@@ -64,6 +64,7 @@ func Test_parse(t *testing.T) {
 			got, err := parse(tt.args.msgs, tt.args.event)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if got != tt.want {

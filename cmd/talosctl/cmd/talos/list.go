@@ -73,6 +73,7 @@ var lsCmd = &cobra.Command{
 
 							return nil
 						}
+
 						return fmt.Errorf("error streaming results: %s", err)
 					}
 
@@ -83,11 +84,13 @@ var lsCmd = &cobra.Command{
 
 					if info.Metadata != nil && info.Metadata.Error != "" {
 						fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
+
 						continue
 					}
 
 					if info.Error != "" {
 						fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
+
 						continue
 					}
 
@@ -111,6 +114,7 @@ var lsCmd = &cobra.Command{
 					if err == io.EOF || status.Code(err) == codes.Canceled {
 						return w.Flush()
 					}
+
 					return fmt.Errorf("error streaming results: %s", err)
 				}
 
@@ -121,11 +125,13 @@ var lsCmd = &cobra.Command{
 
 				if info.Error != "" {
 					fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
+
 					continue
 				}
 
 				if info.Metadata != nil && info.Metadata.Error != "" {
 					fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
+
 					continue
 				}
 

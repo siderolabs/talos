@@ -103,6 +103,7 @@ func TestIntegration(t *testing.T) {
 
 		if failFast && t.Failed() {
 			t.Log("fastfail mode enabled, aborting on first failure")
+
 			break
 		}
 	}

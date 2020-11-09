@@ -67,6 +67,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 		if reqs[i].Config.Machine().Type() == machine.TypeInit {
 			if found {
 				err = fmt.Errorf("duplicate init node in requests")
+
 				return
 			}
 

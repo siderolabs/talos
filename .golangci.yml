@@ -123,7 +123,6 @@ linters:
     - goerr113
     - nestif
     - gci
-    - nlreturn
     - exhaustivestruct
     - errorlint
     - wrapcheck

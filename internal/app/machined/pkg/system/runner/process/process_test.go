@@ -177,6 +177,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	select {
 	case <-done:
 		suite.Assert().Fail("task should be running")
+
 		return
 	default:
 	}
@@ -190,6 +191,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	select {
 	case <-done:
 		suite.Assert().Fail("task should be running")
+
 		return
 	default:
 	}

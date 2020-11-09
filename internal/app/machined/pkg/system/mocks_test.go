@@ -110,6 +110,7 @@ func (m *MockRunner) Close() error {
 
 func (m *MockRunner) Run(eventSink events.Recorder) error {
 	eventSink(events.StateRunning, "Running")
+
 	return <-m.exitCh
 }
 

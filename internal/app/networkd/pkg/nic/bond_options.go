@@ -15,6 +15,7 @@ import (
 func WithBond(o bool) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Bonded = o
+
 		return nil
 	}
 }
@@ -30,6 +31,7 @@ func WithSubInterface(o ...string) Option {
 			for _, subif := range n.SubInterfaces {
 				if ifname == subif.Name {
 					found = true
+
 					break
 				}
 			}
@@ -102,6 +104,7 @@ func WithLACPRate(o string) Option {
 func WithUpDelay(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_UPDELAY), o)
+
 		return err
 	}
 }
@@ -111,6 +114,7 @@ func WithUpDelay(o uint32) Option {
 func WithDownDelay(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_DOWNDELAY), o)
+
 		return err
 	}
 }
@@ -120,6 +124,7 @@ func WithDownDelay(o uint32) Option {
 func WithMIIMon(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_MIIMON), o)
+
 		return err
 	}
 }
@@ -144,6 +149,7 @@ func WithUseCarrier(o bool) Option {
 func WithARPInterval(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_ARP_INTERVAL), o)
+
 		return err
 	}
 }
@@ -231,6 +237,7 @@ func WithFailOverMAC(o string) Option {
 func WithResendIGMP(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_RESEND_IGMP), o)
+
 		return err
 	}
 }
@@ -240,6 +247,7 @@ func WithResendIGMP(o uint32) Option {
 func WithNumPeerNotif(o uint8) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint8(uint16(IFLA_BOND_NUM_PEER_NOTIF), o)
+
 		return err
 	}
 }
@@ -249,6 +257,7 @@ func WithNumPeerNotif(o uint8) Option {
 func WithAllSlavesActive(o uint8) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint8(uint16(IFLA_BOND_ALL_SLAVES_ACTIVE), o)
+
 		return err
 	}
 }
@@ -258,6 +267,7 @@ func WithAllSlavesActive(o uint8) Option {
 func WithMinLinks(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_MIN_LINKS), o)
+
 		return err
 	}
 }
@@ -267,6 +277,7 @@ func WithMinLinks(o uint32) Option {
 func WithLPInterval(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_LP_INTERVAL), o)
+
 		return err
 	}
 }
@@ -276,6 +287,7 @@ func WithLPInterval(o uint32) Option {
 func WithPacketsPerSlave(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_PACKETS_PER_SLAVE), o)
+
 		return err
 	}
 }
@@ -299,6 +311,7 @@ func WithADSelect(o string) Option {
 func WithADActorSysPrio(o uint16) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint16(uint16(IFLA_BOND_AD_ACTOR_SYS_PRIO), o)
+
 		return err
 	}
 }
@@ -307,6 +320,7 @@ func WithADActorSysPrio(o uint16) Option {
 func WithADUserPortKey(o uint16) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint16(uint16(IFLA_BOND_AD_USER_PORT_KEY), o)
+
 		return err
 	}
 }
@@ -316,6 +330,7 @@ func WithADUserPortKey(o uint16) Option {
 func WithTLBDynamicLB(o uint8) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint8(uint16(IFLA_BOND_TLB_DYNAMIC_LB), o)
+
 		return err
 	}
 }
@@ -327,6 +342,7 @@ func WithTLBDynamicLB(o uint8) Option {
 func WithPeerNotifyDelay(o uint32) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.BondSettings.Uint32(uint16(IFLA_BOND_PEER_NOTIF_DELAY), o)
+
 		return err
 	}
 }

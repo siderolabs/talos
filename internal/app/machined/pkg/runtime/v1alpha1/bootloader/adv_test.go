@@ -50,6 +50,7 @@ func TestNewADV(t *testing.T) {
 			gotAdv, err := NewADV(tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewADV() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(gotAdv, tt.wantAdv) {

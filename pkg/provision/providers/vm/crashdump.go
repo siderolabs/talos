@@ -21,18 +21,21 @@ func (p *Provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 	state, ok := cluster.(*State)
 	if !ok {
 		fmt.Fprintf(out, "error inspecting firecracker state, %#+v\n", cluster)
+
 		return
 	}
 
 	statePath, err := state.StatePath()
 	if err != nil {
 		fmt.Fprintf(out, "error getting cluster state path: %s", err)
+
 		return
 	}
 
 	logFiles, err := filepath.Glob(filepath.Join(statePath, "*.log"))
 	if err != nil {
 		fmt.Fprintf(out, "error finding log paths: %s\n", err)
+
 		return
 	}
 
@@ -44,6 +47,7 @@ func (p *Provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 		f, err := os.Open(logFile)
 		if err != nil {
 			fmt.Fprintf(out, "error opening file: %s\n", err)
+
 			continue
 		}
 

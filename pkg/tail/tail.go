@@ -73,6 +73,7 @@ func SeekLines(r io.ReadSeeker, lines int) error {
 
 		if skippedLines == lines {
 			readOffset += int64(n) + 1
+
 			break
 		}
 

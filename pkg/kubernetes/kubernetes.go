@@ -214,6 +214,7 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 		for _, taint := range n.Spec.Taints {
 			if taint.Key == constants.LabelNodeRoleMaster && taint.Value == "true" {
 				taintFound = true
+
 				break
 			}
 		}
@@ -382,6 +383,7 @@ func (h *Client) Drain(node string) error {
 			for _, ref := range p.ObjectMeta.OwnerReferences {
 				if ref.Kind == "DaemonSet" {
 					log.Printf("skipping DaemonSet pod %s\n", p.GetName())
+
 					return
 				}
 			}

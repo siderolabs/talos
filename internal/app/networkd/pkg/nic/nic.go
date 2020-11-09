@@ -85,6 +85,7 @@ func New(setters ...Option) (*NetworkInterface, error) {
 	conn, err := rtnl.Dial(nil)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return nil, result.ErrorOrNil()
 	}
 
@@ -94,6 +95,7 @@ func New(setters ...Option) (*NetworkInterface, error) {
 	nlConn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return nil, result.ErrorOrNil()
 	}
 
@@ -118,6 +120,7 @@ func (n *NetworkInterface) Create() error {
 	iface, err := net.InterfaceByName(n.Name)
 	if err == nil {
 		n.Link = iface
+
 		return err
 	}
 
@@ -156,12 +159,14 @@ func (n *NetworkInterface) CreateSub() error {
 
 		if err == nil {
 			vlan.Link = iface
+
 			continue
 		}
 
 		data, err := vlan.VlanSettings.Encode()
 		if err != nil {
 			log.Println("failed to encode vlan link parameters: " + err.Error())
+
 			continue
 		}
 
@@ -171,12 +176,14 @@ func (n *NetworkInterface) CreateSub() error {
 
 		if err = n.createSubLink(name, info, &masterIdx); err != nil {
 			log.Println("failed to create vlan link " + err.Error())
+
 			return err
 		}
 
 		iface, err = net.InterfaceByName(name)
 		if err != nil {
 			log.Println("failed to get vlan interface ")
+
 			return err
 		}
 
@@ -350,6 +357,7 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 		for _, addr := range addrs {
 			if method.Address().String() == addr.String() {
 				addressExists = true
+
 				break
 			}
 		}

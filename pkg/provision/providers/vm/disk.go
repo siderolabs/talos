@@ -55,6 +55,7 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 
 	if len(diskPaths) == 0 {
 		err = fmt.Errorf("node request must have at least one disk defined to be used as primary disk")
+
 		return
 	}
 

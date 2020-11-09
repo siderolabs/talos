@@ -62,6 +62,7 @@ func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, e
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == v1.NodeInternalIP {
 				address = nodeAddress.Address
+
 				break
 			}
 		}

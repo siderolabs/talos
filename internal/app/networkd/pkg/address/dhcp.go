@@ -199,6 +199,7 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
 		log.Println("failed dhcp request for", d.NetIf.Name)
+
 		return nil, err
 	}
 

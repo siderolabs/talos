@@ -49,7 +49,7 @@ type Device struct {
 
 // Target represents an installation partition.
 //
-//nolint: go-lint
+//nolint: golint, maligned
 type Target struct {
 	Device string
 
@@ -707,16 +707,19 @@ func (t *Target) Save() (err error) {
 
 			if _, err = io.Copy(destFile, sourceFile); err != nil {
 				log.Printf("failed to copy %s to %s\n", sourceFile.Name(), destFile.Name())
+
 				return err
 			}
 
 			if err = destFile.Close(); err != nil {
 				log.Printf("failed to close %s", destFile.Name())
+
 				return err
 			}
 
 			if err = sourceFile.Close(); err != nil {
 				log.Printf("failed to close %s", sourceFile.Name())
+
 				return err
 			}
 

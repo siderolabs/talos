@@ -184,6 +184,7 @@ func altNamesFromURLs(urls []string) *tlsutil.AltNames {
 		ip := net.ParseIP(u)
 		if ip != nil {
 			an.IPs = append(an.IPs, ip)
+
 			continue
 		}
 
@@ -205,6 +206,7 @@ func fetchManifests(urls []string, headers map[string]string) error {
 		pwd, err := os.Getwd()
 		if err != nil {
 			result = multierror.Append(result, err)
+
 			continue
 		}
 
@@ -240,6 +242,7 @@ func fetchManifests(urls []string, headers map[string]string) error {
 
 		if err = client.Get(); err != nil {
 			result = multierror.Append(result, fmt.Errorf("error fetching manifest by URL %q: %w", url, err))
+
 			continue
 		}
 	}

@@ -116,6 +116,7 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 		} {
 			if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
 				msg = eventType
+
 				break
 			}
 		}
@@ -127,6 +128,7 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 
 		if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
 			log.Printf("failed to unmarshal message: %v", err) // TODO: this should be fixed to return errors
+
 			continue
 		}
 

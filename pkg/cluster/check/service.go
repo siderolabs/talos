@@ -54,6 +54,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 
 		if len(serviceInfo.Service.Events.Events) == 0 {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))
+
 			continue
 		}
 
@@ -117,17 +118,20 @@ func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service st
 
 		if len(serviceInfo.Service.Events.Events) == 0 {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))
+
 			continue
 		}
 
 		lastEvent := serviceInfo.Service.Events.Events[len(serviceInfo.Service.Events.Events)-1]
 		if lastEvent.State != "Running" {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service %q not in expected state %q: current state [%s] %s", node, service, "Running", lastEvent.State, lastEvent.Msg))
+
 			continue
 		}
 
 		if !serviceInfo.Service.GetHealth().GetHealthy() {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service is not healthy: %s", node, service))
+
 			continue
 		}
 	}

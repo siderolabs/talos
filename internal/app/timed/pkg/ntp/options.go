@@ -35,6 +35,7 @@ func defaultOptions() *NTP {
 func WithServer(o string) Option {
 	return func(n *NTP) (err error) {
 		n.Server = o
+
 		return err
 	}
 }

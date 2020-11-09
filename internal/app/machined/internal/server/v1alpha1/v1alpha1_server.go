@@ -274,7 +274,7 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 
 // Upgrade initiates an upgrade.
 //
-// nolint: dupl gocyclo
+// nolint: dupl, gocyclo
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
 	var mu *concurrency.Mutex
 
@@ -310,6 +310,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 
 		if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
 			mu.Unlock(ctx) // nolint: errcheck
+
 			return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 		}
 	}
@@ -785,6 +786,7 @@ func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.Mo
 		f, err := os.Stat(mountpoint)
 		if err != nil {
 			multiErr = multierror.Append(multiErr, err)
+
 			continue
 		}
 
@@ -794,6 +796,7 @@ func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.Mo
 
 		if err := unix.Statfs(mountpoint, &stat); err != nil {
 			multiErr = multierror.Append(multiErr, err)
+
 			continue
 		}
 

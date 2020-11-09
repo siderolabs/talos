@@ -44,6 +44,7 @@ func TestToMiddleEndian(t *testing.T) {
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ToMiddleEndian() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 
@@ -81,6 +82,7 @@ func TestFromMiddleEndian(t *testing.T) {
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FromMiddleEndian() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 

@@ -61,6 +61,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit {
 			initNodeAddress = node.PrivateIP.String()
+
 			break
 		}
 	}
@@ -75,6 +76,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 			// due to the bug with etcd cluster build for the init node after Reset(), skip resetting first node
 			// there's no problem if bootstrap API was used, so this check only protects legacy init nodes
 			suite.T().Log("Skipping init node", node, "due to known issue with etcd")
+
 			continue
 		}
 

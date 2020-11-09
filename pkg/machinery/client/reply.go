@@ -77,6 +77,7 @@ func FilterMessages(resp interface{}, err error) (interface{}, error) {
 		if metadataField.IsNil() {
 			// missing metadata, skip the field
 			i++
+
 			continue
 		}
 
@@ -97,6 +98,7 @@ func FilterMessages(resp interface{}, err error) (interface{}, error) {
 		if errorField.IsZero() {
 			// no error, leave it as is
 			i++
+
 			continue
 		}
 

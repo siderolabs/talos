@@ -85,6 +85,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
+
 		return
 	}
 

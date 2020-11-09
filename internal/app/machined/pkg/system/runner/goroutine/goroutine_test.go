@@ -146,6 +146,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
 			// nolint: errcheck
 			_, _ = logger.Write([]byte("Test 1\nTest 2\n"))
+
 			return nil
 		}, runner.WithLoggingManager(suite.loggingManager))
 

@@ -27,6 +27,7 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 
 	if device.Ignore() || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface()) {
 		opts = append(opts, nic.WithIgnore())
+
 		return device.Interface(), opts, err
 	}
 

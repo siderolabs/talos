@@ -77,6 +77,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 				for _, nodeAddress := range node.Status.Addresses {
 					if nodeAddress.Type == v1.NodeInternalIP {
 						actualNodes = append(actualNodes, nodeAddress.Address)
+
 						break
 					}
 				}
@@ -136,6 +137,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 				if cond.Type == v1.PodReady {
 					if cond.Status != v1.ConditionTrue {
 						notReadyPods = append(notReadyPods, pod.Name)
+
 						break
 					}
 				}
@@ -169,6 +171,7 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 			if cond.Type == v1.NodeReady {
 				if cond.Status != v1.ConditionTrue {
 					notReadyNodes = append(notReadyNodes, node.Name)
+
 					break
 				}
 			}
@@ -199,6 +202,7 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 	for _, node := range nodes.Items {
 		if node.Spec.Unschedulable {
 			notSchedulableNodes = append(notSchedulableNodes, node.Name)
+
 			break
 		}
 	}
@@ -237,6 +241,7 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 			if cond.Type == v1.PodReady {
 				if cond.Status == v1.ConditionTrue {
 					ready = true
+
 					break
 				}
 			}

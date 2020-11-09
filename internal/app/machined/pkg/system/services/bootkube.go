@@ -107,6 +107,7 @@ func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err e
 
 	if state != events.StateFinished {
 		log.Println("bootkube run did not complete successfully. skipping etcd update")
+
 		return nil
 	}
 

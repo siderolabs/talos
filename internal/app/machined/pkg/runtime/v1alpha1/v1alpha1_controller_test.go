@@ -32,6 +32,7 @@ func TestNewController(t *testing.T) {
 			got, err := NewController(tt.args.b)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewController() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -362,6 +363,7 @@ func TestController_phases(t *testing.T) {
 			got, err := c.phases(tt.args.seq, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Controller.phases() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
