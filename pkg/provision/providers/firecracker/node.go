@@ -91,8 +91,18 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
-	cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 	cmdline.Append("talos.hostname", nodeReq.Name)
+
+	var nodeConfig string
+
+	if nodeReq.Config != nil {
+		cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
+
+		nodeConfig, err = nodeReq.Config.String()
+		if err != nil {
+			return provision.NodeInfo{}, err
+		}
+	}
 
 	ones, _ := clusterReq.Network.CIDR.Mask.Size()
 
@@ -144,11 +154,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	defer logFile.Close() //nolint: errcheck
 
-	nodeConfig, err := nodeReq.Config.String()
-	if err != nil {
-		return provision.NodeInfo{}, err
-	}
-
 	launchConfig := LaunchConfig{
 		FirecrackerConfig:   cfg,
 		Config:              nodeConfig,
@@ -192,7 +197,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	nodeInfo := provision.NodeInfo{
 		ID:   pidPath,
 		Name: nodeReq.Name,
-		Type: nodeReq.Config.Machine().Type(),
+		Type: nodeReq.Type,
 
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
