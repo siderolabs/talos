@@ -129,6 +129,7 @@ func (b *BootLoader) findBootPartition() error {
 		// TODO: should we do better matching here
 		if part.No() == 1 {
 			bootPartition = part
+
 			break
 		}
 	}

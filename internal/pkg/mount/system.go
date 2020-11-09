@@ -43,6 +43,7 @@ func SystemMountPointsForDevice(devpath string) (mountpoints *Points, err error)
 			if name == constants.BootPartitionLabel {
 				// A bootloader is not always required.
 				log.Println("WARNING: no boot partition was found")
+
 				continue
 			}
 

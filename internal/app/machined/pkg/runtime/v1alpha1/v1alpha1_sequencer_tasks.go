@@ -831,6 +831,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 		if pt != nil {
 			if len(pt.Partitions()) > 0 {
 				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
+
 				continue
 			}
 		}
@@ -921,11 +922,13 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			case "overwrite":
 				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 			case "append":
 				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
@@ -934,23 +937,27 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				existingFileContents, err = ioutil.ReadFile(f.Path())
 				if err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
 				content = string(existingFileContents) + "\n" + f.Content()
 			default:
 				result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path(), f.Op()))
+
 				continue
 			}
 
 			if filepath.Dir(f.Path()) == constants.ManifestsDirectory {
 				if err = ioutil.WriteFile(f.Path(), []byte(content), f.Permissions()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
 				if err = os.Chmod(f.Path(), f.Permissions()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
@@ -979,16 +986,19 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 			if err = os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
 			if err = ioutil.WriteFile(p, []byte(content), f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
 			if err = os.Chmod(p, f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
@@ -1328,6 +1338,7 @@ func dumpMounts(logger *log.Logger) {
 	mounts, err := os.Open("/proc/mounts")
 	if err != nil {
 		logger.Printf("failed to read mounts: %s", err)
+
 		return
 	}
 
@@ -1467,6 +1478,7 @@ func SyncNonVolatileStorageBuffers() {
 		select {
 		case <-syncdone:
 			log.Printf("sync done")
+
 			return
 		case <-time.After(time.Second):
 		}

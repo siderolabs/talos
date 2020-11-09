@@ -29,6 +29,7 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 	cli, err := s.Client()
 	if err != nil {
 		fmt.Fprintf(out, "error creating crashdump: %s\n", err)
+
 		return
 	}
 
@@ -42,6 +43,7 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 			services, err := cli.ServiceList(nodeCtx)
 			if err != nil {
 				fmt.Fprintf(out, "error getting services: %s\n", err)
+
 				return
 			}
 
@@ -50,12 +52,14 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 					stream, err := cli.Logs(nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, 100)
 					if err != nil {
 						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
+
 						continue
 					}
 
 					r, errCh, err := client.ReadStream(stream)
 					if err != nil {
 						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
+
 						continue
 					}
 

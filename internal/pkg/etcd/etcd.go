@@ -218,6 +218,7 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 	for _, m := range resp.Members {
 		if m.Name == hostname {
 			member = m
+
 			break
 		}
 	}

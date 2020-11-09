@@ -62,6 +62,7 @@ func Decompress(r io.Reader) (io.ReadCloser, error) {
 		start = bytes.Index(head, matcher.magic)
 		if start != -1 {
 			decompress = matcher.reader
+
 			break
 		}
 	}

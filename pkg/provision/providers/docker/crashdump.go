@@ -20,6 +20,7 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 	containers, err := p.listNodes(ctx, cluster.Info().ClusterName)
 	if err != nil {
 		fmt.Fprintf(out, "error listing containers: %s\n", err)
+
 		return
 	}
 
@@ -34,6 +35,7 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 		})
 		if err != nil {
 			fmt.Fprintf(out, "error querying container logs: %s\n", err)
+
 			continue
 		}
 

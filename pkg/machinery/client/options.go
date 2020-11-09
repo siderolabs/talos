@@ -35,6 +35,7 @@ type OptionFunc func(*Options) error
 func WithConfig(cfg *config.Config) OptionFunc {
 	return func(o *Options) error {
 		o.config = cfg
+
 		return nil
 	}
 }
@@ -54,6 +55,7 @@ func WithContextName(name string) OptionFunc {
 func WithConfigContext(cfg *config.Context) OptionFunc {
 	return func(o *Options) error {
 		o.configContext = cfg
+
 		return nil
 	}
 }
@@ -62,6 +64,7 @@ func WithConfigContext(cfg *config.Context) OptionFunc {
 func WithGRPCDialOptions(opts ...grpc.DialOption) OptionFunc {
 	return func(o *Options) error {
 		o.grpcDialOptions = append(o.grpcDialOptions, opts...)
+
 		return nil
 	}
 }
@@ -70,6 +73,7 @@ func WithGRPCDialOptions(opts ...grpc.DialOption) OptionFunc {
 func WithTLSConfig(tlsConfig *tls.Config) OptionFunc {
 	return func(o *Options) error {
 		o.tlsConfig = tlsConfig
+
 		return nil
 	}
 }
@@ -78,6 +82,7 @@ func WithTLSConfig(tlsConfig *tls.Config) OptionFunc {
 func WithEndpoints(endpoints ...string) OptionFunc {
 	return func(o *Options) error {
 		o.endpointsOverride = endpoints
+
 		return nil
 	}
 }

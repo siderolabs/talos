@@ -79,6 +79,7 @@ func NewReader(options ...Option) (Reader, error) {
 		_, err = r.f.Seek(0, os.SEEK_END)
 		if err != nil {
 			r.f.Close() //nolint: errcheck
+
 			return nil, fmt.Errorf("error seeking to the tail of kmsg: %w", err)
 		}
 	}

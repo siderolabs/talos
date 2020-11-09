@@ -39,6 +39,7 @@ func StartACPIListener() (err error) {
 	if errors.Is(err, os.ErrNotExist) {
 		// nolint: errcheck
 		conn.Close()
+
 		return fmt.Errorf(acpiGenlFamilyName+" not available: %w", err)
 	}
 
@@ -53,6 +54,7 @@ func StartACPIListener() (err error) {
 	if err = conn.JoinGroup(id); err != nil {
 		// nolint: errcheck
 		conn.Close()
+
 		return err
 	}
 
@@ -89,6 +91,7 @@ func parse(msgs []genetlink.Message, event string) (bool, error) {
 		ad, err := netlink.NewAttributeDecoder(msg.Data)
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("failed to create attribute decoder: %w", err))
+
 			continue
 		}
 

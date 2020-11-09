@@ -114,6 +114,7 @@ func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca, crt []by
 			resp, err = g.Certificate(in)
 			if err != nil {
 				log.Println(err)
+
 				continue
 			}
 

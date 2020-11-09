@@ -77,6 +77,7 @@ func (n *NTP) Query() (resp *ntp.Response, err error) {
 		resp, err = ntp.Query(n.Server)
 		if err != nil {
 			log.Printf("query error: %v", err)
+
 			return retry.ExpectedError(err)
 		}
 

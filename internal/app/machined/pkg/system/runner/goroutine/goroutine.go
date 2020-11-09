@@ -84,6 +84,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	w, err = r.opts.LoggingManager.ServiceLog(r.id).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
+
 		return
 	}
 	// nolint: errcheck

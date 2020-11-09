@@ -50,6 +50,7 @@ func WithVlanDhcp(id uint16) Option {
 		for _, vlan := range n.Vlans {
 			if vlan.ID == id {
 				vlan.AddressMethod = append(vlan.AddressMethod, &address.DHCP{})
+
 				return nil
 			}
 		}
@@ -64,6 +65,7 @@ func WithVlanCIDR(id uint16, cidr string, routeList []config.Route) Option {
 		for _, vlan := range n.Vlans {
 			if vlan.ID == id {
 				vlan.AddressMethod = append(vlan.AddressMethod, &address.Static{CIDR: cidr, RouteList: routeList})
+
 				return nil
 			}
 		}

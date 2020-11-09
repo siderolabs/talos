@@ -78,12 +78,14 @@ func IsEC2() (b bool) {
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("failed to download PKCS7 signature: %d\n", resp.StatusCode)
+
 		return
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
+
 		return
 	}
 
@@ -93,24 +95,28 @@ func IsEC2() (b bool) {
 	pemBlock, _ := pem.Decode(data)
 	if pemBlock == nil {
 		log.Println("failed to decode PEM block")
+
 		return
 	}
 
 	p7, err := pkcs7.Parse(pemBlock.Bytes)
 	if err != nil {
 		log.Printf("failed to parse PKCS7 signature: %v\n", err)
+
 		return
 	}
 
 	pemBlock, _ = pem.Decode([]byte(AWSPublicCertificate))
 	if pemBlock == nil {
 		log.Println("failed to decode PEM block")
+
 		return
 	}
 
 	certificate, err := x509.ParseCertificate(pemBlock.Bytes)
 	if err != nil {
 		log.Printf("failed to parse X509 certificate: %v\n", err)
+
 		return
 	}
 
@@ -119,6 +125,7 @@ func IsEC2() (b bool) {
 	err = p7.Verify()
 	if err != nil {
 		log.Printf("failed to verify PKCS7 signature: %v", err)
+
 		return
 	}
 

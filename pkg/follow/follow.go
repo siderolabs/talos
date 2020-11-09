@@ -66,6 +66,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 	select {
 	case <-r.ctx.Done():
 		err = io.EOF
+
 		return
 	default:
 	}
@@ -79,6 +80,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		select {
 		case <-r.ctx.Done():
 			err = io.EOF
+
 			return
 		case err = <-r.notifyCh:
 			if err != nil {
@@ -94,6 +96,7 @@ func (r *Reader) Close() error {
 
 	if r.closed {
 		r.mu.Unlock()
+
 		return nil
 	}
 

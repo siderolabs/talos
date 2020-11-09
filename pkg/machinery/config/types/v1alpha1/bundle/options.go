@@ -32,6 +32,7 @@ func DefaultOptions() Options {
 func WithExistingConfigs(configPath string) Option {
 	return func(o *Options) error {
 		o.ExistingConfigs = configPath
+
 		return nil
 	}
 }
@@ -40,6 +41,7 @@ func WithExistingConfigs(configPath string) Option {
 func WithInputOptions(inputOpts *InputOptions) Option {
 	return func(o *Options) error {
 		o.InputOptions = inputOpts
+
 		return nil
 	}
 }

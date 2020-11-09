@@ -79,6 +79,7 @@ func New(config config.Provider) (*Networkd, error) {
 			name, opts, err := buildOptions(device, config.Machine().Network().Hostname())
 			if err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
@@ -102,6 +103,7 @@ func New(config config.Provider) (*Networkd, error) {
 	localInterfaces, err := net.Interfaces()
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return &Networkd{}, result.ErrorOrNil()
 	}
 
@@ -110,6 +112,7 @@ func New(config config.Provider) (*Networkd, error) {
 	filtered, err := filterInterfaces(localInterfaces)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return &Networkd{}, result.ErrorOrNil()
 	}
 
@@ -145,6 +148,7 @@ func New(config config.Provider) (*Networkd, error) {
 		netif, err := nic.New(opts...)
 		if err != nil {
 			result = multierror.Append(result, err)
+
 			continue
 		}
 
@@ -160,6 +164,7 @@ func New(config config.Provider) (*Networkd, error) {
 		for _, subif := range netif.SubInterfaces {
 			if _, ok := interfaces[subif.Name]; !ok {
 				result = multierror.Append(result, fmt.Errorf("bond subinterface %s does not exist", subif.Name))
+
 				continue
 			}
 

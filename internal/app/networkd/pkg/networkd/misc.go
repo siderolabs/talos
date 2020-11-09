@@ -84,6 +84,7 @@ func writeResolvConf(resolvers []string) (err error) {
 
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
 			log.Println("failed to add some resolver to resolvconf:", resolver)
+
 			return err
 		}
 	}

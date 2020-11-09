@@ -42,6 +42,7 @@ var versionCmd = &cobra.Command{
 		}
 
 		fmt.Println("Server:")
+
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer
 

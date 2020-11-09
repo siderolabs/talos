@@ -124,6 +124,7 @@ func (zh *zombieHunter) reapLoop() {
 
 		if err != nil {
 			log.Printf("zombie reaper error in wait4: %s", err)
+
 			return
 		}
 

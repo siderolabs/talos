@@ -69,6 +69,7 @@ func (suite *CommonSuite) SetupSuite() {
 
 		if file.Mode&os.ModeSymlink != 0 {
 			suite.Require().NoError(os.Symlink(string(file.Contents), filepath.Join(suite.tmpDir, file.Path)))
+
 			continue
 		}
 

@@ -86,6 +86,7 @@ func (handler *fileLogHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser,
 		err = tail.SeekLines(f, *opt.TailLines)
 		if err != nil {
 			f.Close() //nolint: errcheck
+
 			return nil, fmt.Errorf("error tailing log: %w", err)
 		}
 	}

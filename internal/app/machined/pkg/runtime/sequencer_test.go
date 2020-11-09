@@ -129,6 +129,7 @@ func TestParseSequence(t *testing.T) {
 			gotSeq, err := runtime.ParseSequence(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseSequence() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if gotSeq != tt.wantSeq {

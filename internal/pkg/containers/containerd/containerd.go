@@ -216,6 +216,7 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 
 					if sandbox, found := infraSpec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; found {
 						cp.Sandbox = sandbox
+
 						break
 					}
 				}
@@ -320,6 +321,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		cp, err := i.containerInfo(cntr, imageList, false)
 		if err != nil {
 			multiErr = multierror.Append(multiErr, err)
+
 			continue
 		}
 
@@ -386,5 +388,6 @@ func (i *inspector) GetProcessStderr(id string) (string, error) {
 // Kill sends signal to container task.
 func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
 	_, err := i.client.TaskService().Kill(i.nsctx, &tasks.KillRequest{ContainerID: id, Signal: uint32(signal)})
+
 	return err
 }

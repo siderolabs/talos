@@ -32,6 +32,7 @@ func EnforceKSPPKernelParameters() error {
 		var val *string
 		if val = procfs.ProcCmdline().Get(values.Key()).First(); val == nil {
 			result = multierror.Append(result, fmt.Errorf("KSPP kernel parameter %s is required", values.Key()))
+
 			continue
 		}
 

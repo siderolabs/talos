@@ -59,6 +59,7 @@ captures ownership and permission bits.`,
 
 			if localPath == "-" {
 				_, err = io.Copy(os.Stdout, r)
+
 				return err
 			}
 

@@ -207,6 +207,7 @@ func (a *Azure) configFromCD() ([]byte, error) {
 			// Mount and slurp xml from disk
 			if err = unix.Mount(filepath.Join("/dev", dev.Name()), mnt, "udf", unix.MS_RDONLY, ""); err != nil {
 				fmt.Printf("unable to mount %s, possibly not udf: %s", dev.Name(), err.Error())
+
 				continue
 			}
 

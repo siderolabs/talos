@@ -85,6 +85,7 @@ func (suite *DmesgSuite) TestStreaming() {
 			msg, err := dmesgStream.Recv()
 			if err != nil {
 				errCh <- err
+
 				return
 			}
 

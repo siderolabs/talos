@@ -111,6 +111,7 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	// service not running, suppress event
 	if svcrunner.state != events.StateRunning {
 		svcrunner.mu.Unlock()
+
 		return
 	}
 
@@ -211,6 +212,7 @@ func (svcrunner *ServiceRunner) Start() {
 	if condition != nil {
 		if err := svcrunner.waitFor(ctx, condition); err != nil {
 			svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
+
 			return
 		}
 	}
@@ -219,6 +221,7 @@ func (svcrunner *ServiceRunner) Start() {
 
 	if err := svcrunner.service.PreFunc(ctx, svcrunner.runtime); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
+
 		return
 	}
 
@@ -227,11 +230,13 @@ func (svcrunner *ServiceRunner) Start() {
 	runnr, err := svcrunner.service.Runner(svcrunner.runtime)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to create runner: %v", err)
+
 		return
 	}
 
 	if runnr == nil {
 		svcrunner.UpdateState(events.StateSkipped, "Service skipped")
+
 		return
 	}
 
@@ -246,6 +251,7 @@ func (svcrunner *ServiceRunner) Start() {
 
 	if err := svcrunner.service.PostFunc(svcrunner.runtime, state); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
+
 		return
 	}
 }

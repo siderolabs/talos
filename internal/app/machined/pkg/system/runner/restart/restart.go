@@ -148,6 +148,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 		select {
 		case <-r.stop:
 			eventSink(events.StateStopping, "Aborting restart sequence")
+
 			return nil
 		case <-time.After(r.opts.RestartInterval):
 		}

@@ -28,6 +28,7 @@ type Static struct {
 // the necessary configuration data is supplied via config.
 func (s *Static) Discover(ctx context.Context, link *net.Interface) error {
 	s.NetIf = link
+
 	return nil
 }
 
@@ -55,6 +56,7 @@ func (s *Static) Address() *net.IPNet {
 func (s *Static) Mask() net.IPMask {
 	// nolint: errcheck
 	_, ipnet, _ := net.ParseCIDR(s.CIDR)
+
 	return ipnet.Mask
 }
 

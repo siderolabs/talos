@@ -31,6 +31,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 		db, err := LoadIPAMRecords(statePath)
 		if err != nil {
 			log.Printf("failed loading the IPAM db: %s", err)
+
 			return
 		}
 
@@ -41,6 +42,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 		match, ok := db[m.ClientHWAddr.String()]
 		if !ok {
 			log.Printf("no match for MAC: %s", m.ClientHWAddr.String())
+
 			return
 		}
 
@@ -55,6 +57,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 		)
 		if err != nil {
 			log.Printf("failure building response: %s", err)
+
 			return
 		}
 
@@ -79,6 +82,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 			resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 		default:
 			log.Printf("unhandled message type: %v", mt)
+
 			return
 		}
 

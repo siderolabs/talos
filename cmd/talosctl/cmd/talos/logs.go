@@ -64,6 +64,7 @@ var logsCmd = &cobra.Command{
 					if err != nil {
 						return err
 					}
+
 					continue
 				}
 
@@ -167,6 +168,7 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 		if data.Metadata != nil && data.Metadata.Error != "" {
 			// errors are delivered OOB
 			slicer.respCh <- data
+
 			continue
 		}
 
