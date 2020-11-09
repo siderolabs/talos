@@ -7,15 +7,12 @@ package main
 import (
 	"flag"
 	"log"
-
 	stdlibnet "net"
 
+	"github.com/talos-systems/crypto/tls"
+	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	"github.com/talos-systems/net"
-
-	"github.com/talos-systems/crypto/tls"
 
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
 	"github.com/talos-systems/talos/pkg/grpc/factory"

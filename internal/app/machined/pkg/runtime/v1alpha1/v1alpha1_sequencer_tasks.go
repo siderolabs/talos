@@ -23,17 +23,15 @@ import (
 	"text/template"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"golang.org/x/sys/unix"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
-
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/talos-systems/go-procfs/procfs"
-	"github.com/talos-systems/go-retry/retry"
-
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/talos-systems/go-retry/retry"
+	"go.etcd.io/etcd/clientv3"
+	"golang.org/x/sys/unix"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"

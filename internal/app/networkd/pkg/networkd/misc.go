@@ -14,9 +14,8 @@ import (
 	"text/template"
 
 	"github.com/jsimonetti/rtnetlink"
-	"golang.org/x/sys/unix"
-
 	talosnet "github.com/talos-systems/net"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )

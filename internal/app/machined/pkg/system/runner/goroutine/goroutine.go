@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
-
 	stdlibruntime "runtime"
+	"sync"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"

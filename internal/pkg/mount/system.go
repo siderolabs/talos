@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"log"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

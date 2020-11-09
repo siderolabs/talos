@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"

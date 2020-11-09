@@ -15,10 +15,9 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"google.golang.org/grpc"
-
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"google.golang.org/grpc"
 
 	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
 )

@@ -17,10 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sys/unix"
-
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"

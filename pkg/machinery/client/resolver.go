@@ -9,9 +9,8 @@ import (
 	"math/rand"
 	"strings"
 
-	"google.golang.org/grpc/resolver"
-
 	"github.com/talos-systems/net"
+	"google.golang.org/grpc/resolver"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

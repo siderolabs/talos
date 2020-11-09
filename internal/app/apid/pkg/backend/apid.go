@@ -10,13 +10,12 @@ import (
 	"sync"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
-
-	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/constants"

@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/loopback"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"

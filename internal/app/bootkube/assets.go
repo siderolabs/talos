@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/bootkube/pkg/tlsutil"
 	"github.com/talos-systems/bootkube-plugin/pkg/asset"
-
 	tnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/internal/app/bootkube/images"

@@ -13,12 +13,10 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"golang.org/x/sys/unix"
-
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
-
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"

@@ -11,9 +11,8 @@ import (
 	"os"
 	"path"
 
-	"google.golang.org/grpc"
-
 	"github.com/talos-systems/crypto/x509"
+	"google.golang.org/grpc"
 
 	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
 	"github.com/talos-systems/talos/pkg/machinery/config"

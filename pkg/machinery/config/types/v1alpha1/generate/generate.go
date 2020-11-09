@@ -7,16 +7,14 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
+	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
 	"net"
 	"net/url"
 	"time"
 
-	stdlibx509 "crypto/x509"
-
 	"github.com/talos-systems/crypto/x509"
-
 	tnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/internal/cis"

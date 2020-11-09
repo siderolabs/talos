@@ -16,10 +16,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
-
-	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"

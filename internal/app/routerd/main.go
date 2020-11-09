@@ -7,9 +7,8 @@ package main
 import (
 	"log"
 
-	"google.golang.org/grpc"
-
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/routerd/pkg/director"
 	"github.com/talos-systems/talos/pkg/grpc/factory"

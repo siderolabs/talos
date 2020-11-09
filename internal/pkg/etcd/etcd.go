@@ -12,15 +12,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 	"go.etcd.io/etcd/pkg/transport"
 	"google.golang.org/grpc"
-
-	"github.com/talos-systems/crypto/x509"
-
-	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/pkg/kubernetes"

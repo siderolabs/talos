@@ -10,11 +10,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/talos-systems/grpc-proxy/proxy"
 )
 
 // Router wraps grpc-proxy StreamDirector.

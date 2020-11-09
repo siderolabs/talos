@@ -20,11 +20,10 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
-	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/pkg/machinery/constants"

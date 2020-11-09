@@ -13,9 +13,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/hashicorp/go-multierror"
-
 	valid "github.com/asaskevich/govalidator"
+	"github.com/hashicorp/go-multierror"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
