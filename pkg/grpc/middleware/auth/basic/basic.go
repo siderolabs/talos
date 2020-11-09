@@ -8,10 +8,9 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	"github.com/talos-systems/net"
 )
 
 // Credentials describes an authorization method.

@@ -14,10 +14,9 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"

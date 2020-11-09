@@ -7,9 +7,8 @@ package encoder_test
 import (
 	"testing"
 
-	yaml "gopkg.in/yaml.v3"
-
 	"github.com/stretchr/testify/suite"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 )

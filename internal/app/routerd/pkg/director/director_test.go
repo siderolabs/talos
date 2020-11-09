@@ -9,9 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/internal/app/routerd/pkg/director"
 )

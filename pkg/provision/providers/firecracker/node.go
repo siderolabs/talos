@@ -18,9 +18,8 @@ import (
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	multierror "github.com/hashicorp/go-multierror"
-	"k8s.io/apimachinery/pkg/util/json"
-
 	"github.com/talos-systems/go-procfs/procfs"
+	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"

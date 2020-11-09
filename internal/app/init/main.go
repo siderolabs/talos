@@ -13,9 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount"

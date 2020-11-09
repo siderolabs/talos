@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"google.golang.org/grpc"
-
 	"github.com/talos-systems/crypto/x509"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"

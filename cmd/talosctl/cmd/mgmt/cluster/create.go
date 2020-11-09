@@ -20,9 +20,8 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/clientcmd"
-
 	talosnet "github.com/talos-systems/net"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"

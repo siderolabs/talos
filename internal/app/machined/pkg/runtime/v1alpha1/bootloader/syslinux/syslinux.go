@@ -16,12 +16,12 @@ import (
 	"regexp"
 	"text/template"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-
-	"golang.org/x/sys/unix"
 )
 
 const syslinuxCfgTpl = `DEFAULT {{ .Default }}

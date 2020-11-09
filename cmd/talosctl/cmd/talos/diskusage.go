@@ -11,11 +11,10 @@ import (
 	"os"
 	"text/tabwriter"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	humanize "github.com/dustin/go-humanize"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"

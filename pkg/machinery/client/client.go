@@ -19,15 +19,13 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	grpctls "github.com/talos-systems/crypto/tls"
+	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	grpctls "github.com/talos-systems/crypto/tls"
-
-	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"

@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	"context"
+	stdlibx509 "crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -15,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	stdlibx509 "crypto/x509"
-
+	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,9 +28,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/talos-systems/crypto/x509"
-	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

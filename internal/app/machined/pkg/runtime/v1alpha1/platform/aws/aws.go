@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/fullsailor/pkcs7"
-
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

@@ -9,9 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	yaml "gopkg.in/yaml.v3"
-
 	"github.com/containernetworking/cni/libcni"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/provision"
 )

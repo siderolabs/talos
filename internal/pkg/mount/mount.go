@@ -13,11 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/makefs"

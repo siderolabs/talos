@@ -17,13 +17,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table"
 	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/mount"

@@ -6,14 +6,12 @@
 package provider
 
 import (
-	"fmt"
-
 	stdlibtls "crypto/tls"
+	"fmt"
 	stdlibnet "net"
 
-	"github.com/talos-systems/net"
-
 	"github.com/talos-systems/crypto/tls"
+	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/machinery/config"

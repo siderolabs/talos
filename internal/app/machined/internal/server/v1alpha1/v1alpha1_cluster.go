@@ -9,12 +9,11 @@ import (
 	"fmt"
 	"strings"
 
-	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/conditions"
+	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // HealthCheck implements the cluster.ClusterServer interface.

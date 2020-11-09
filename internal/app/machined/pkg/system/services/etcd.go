@@ -6,28 +6,26 @@ package services
 
 import (
 	"context"
+	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	stdlibnet "net"
 	"os"
 	goruntime "runtime"
 	"strings"
 	"time"
 
-	stdlibx509 "crypto/x509"
-	stdlibnet "net"
-
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"go.etcd.io/etcd/clientv3"
-
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
+	"go.etcd.io/etcd/clientv3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
