@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -144,24 +143,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
-
-	return c, nil
-}
-
-// NewInsecureTokenClient returns a new Client configured with an empty basic
-// token credentials.
-func NewInsecureTokenClient(ctx context.Context, addr string, opts ...grpc.DialOption) (c *Client, err error) {
-	c = new(Client)
-
-	addr = net.FormatAddress(addr)
-
-	creds := basic.NewTokenCredentials("")
-
-	c.conn, err = basic.NewConnection(addr, constants.ApidPort, creds)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create client connection: %w", err)
-	}
-
 	c.MaintenanceServiceClient = machineapi.NewMaintenanceServiceClient(c.conn)
 
 	return c, nil

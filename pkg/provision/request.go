@@ -86,11 +86,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 // MasterNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Config == nil {
-			continue
-		}
-
-		if reqs[i].Config.Machine().Type() == machine.TypeInit || reqs[i].Config.Machine().Type() == machine.TypeControlPlane {
+		if reqs[i].Type == machine.TypeInit || reqs[i].Type == machine.TypeControlPlane {
 			nodes = append(nodes, reqs[i])
 		}
 	}
@@ -101,11 +97,7 @@ func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Config == nil {
-			continue
-		}
-
-		if reqs[i].Config.Machine().Type() == machine.TypeJoin {
+		if reqs[i].Type == machine.TypeJoin {
 			nodes = append(nodes, reqs[i])
 		}
 	}
@@ -137,6 +129,7 @@ type NodeRequest struct {
 	Name   string
 	IP     net.IP
 	Config config.Provider
+	Type   machine.Type
 
 	// Share of CPUs, in 1e-9 fractions
 	NanoCPUs int64

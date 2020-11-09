@@ -123,6 +123,10 @@ COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
 COPY --from=generate /pkg/machinery/config ./pkg/machinery/config
 RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
+WORKDIR /src/pkg/machinery
+RUN go list -mod=readonly all >/dev/null
+RUN ! go mod tidy -v 2>&1 | grep .
+WORKDIR /src
 
 # The init target builds the init binary.
 
@@ -579,7 +583,7 @@ RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache/go-build --mount=type=cache,target=/.cache/golangci-lint golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-# RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
+RUN --mount=type=cache,target=/.cache/go-build importvet github.com/talos-systems/talos/...
 RUN find . -name '*.pb.go' | xargs rm
 RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
