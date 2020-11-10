@@ -2,7 +2,13 @@
 title: Upgrading Kubernetes
 ---
 
-## Kubernetes
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Kubeconfig
 
 In order to edit the control plane, we will need a working `kubectl` config.
 If you don't already have one, you can get one by running:

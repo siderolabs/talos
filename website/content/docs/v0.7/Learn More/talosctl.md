@@ -7,6 +7,12 @@ The `talosctl` tool packs a lot of power into a small package.
 It acts as a reference implementation for the Talos API, but it also handles a lot of
 conveniences for the use of Talos and its clusters.
 
+### Video Walkthrough
+
+To see some live examples of talosctl usage, view the following video:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pl0l_K_3Y6o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Client Configuration
 
 Talosctl configuration is located in `$XDG_CONFIG_HOME/talos/config.yaml` if `$XDG_CONFIG_HOME` is defined.

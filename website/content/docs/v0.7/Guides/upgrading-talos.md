@@ -5,7 +5,13 @@ title: Upgrading Talos
 Talos upgrades are effected by an API call.
 The `talosctl` CLI utility will facilitate this, or you can use the automatic upgrade features provided by the [talos controller manager](https://github.com/talos-systems/talos-controller-manager).
 
-## talosctl upgrade
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## `talosctl` Upgrade
 
 To manually upgrade a Talos node, you will specify the node's IP address and the
 installer container image for the version of Talos to which you wish to upgrade.
@@ -23,7 +29,7 @@ There is an option to this command: `--preserve`, which can be used to explicitl
 In most cases, it is correct to just let Talos perform its default action.
 However, if you are running a single-node control-plane, you will want to make sure that `--preserve=true`.
 
-## Talos controller manager
+## Talos Controller Manager
 
 The Talos Controller Manager can coordinate upgrades of your nodes
 automatically.  

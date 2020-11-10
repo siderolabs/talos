@@ -2,6 +2,12 @@
 title: Upgrading Talos
 ---
 
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Talos
 
 In an effort to create more production ready clusters, Talos will now taint control plane nodes as unschedulable.
