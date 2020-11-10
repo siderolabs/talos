@@ -27,27 +27,27 @@ export default {
     return {
       casts: [
         { title: "Cluster", src: "/cluster-create.cast", cols: 109, rows: 29 },
-        { title: "Services", src: "/osctl-services.cast", cols: 109, rows: 29 },
-        { title: "Routes", src: "/osctl-routes.cast", cols: 109, rows: 29 },
+        { title: "Services", src: "/talosctl-services.cast", cols: 109, rows: 29 },
+        { title: "Routes", src: "/talosctl-routes.cast", cols: 109, rows: 29 },
         {
           title: "Interfaces",
-          src: "/osctl-interfaces.cast",
+          src: "/talosctl-interfaces.cast",
           cols: 109,
           rows: 29,
         },
         {
           title: "Containers",
-          src: "/osctl-containers.cast",
+          src: "/talosctl-containers.cast",
           cols: 109,
           rows: 29,
         },
         {
           title: "Processes",
-          src: "/osctl-processes.cast",
+          src: "/talosctl-processes.cast",
           cols: 109,
           rows: 29,
         },
-        { title: "Mounts", src: "/osctl-mounts.cast", cols: 109, rows: 29 },
+        { title: "Mounts", src: "/talosctl-mounts.cast", cols: 109, rows: 29 },
       ],
     };
   },
