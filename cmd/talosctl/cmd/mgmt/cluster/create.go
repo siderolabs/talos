@@ -543,7 +543,7 @@ func getDisks() ([]*provision.Disk, error) {
 
 func trimVersion(version string) string {
 	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
-	return regexp.MustCompile(`(-\d+-g[0-9a-f]+(-dirty)?)$`).ReplaceAllString(version, "")
+	return regexp.MustCompile(`(-\d+(-g[0-9a-f]+)?(-dirty)?)$`).ReplaceAllString(version, "")
 }
 
 func init() {
