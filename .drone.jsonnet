@@ -143,17 +143,13 @@ local docker = {
 local setup_ci = {
   name: 'setup-ci',
   image: 'autonomy/build-container:latest',
+  pull: "always",
   privileged: true,
 
   commands: [
-    'sleep 5', // Give docker enough time to start.
-    'apk add coreutils',
-    'docker buildx create --driver docker-container --platform linux/amd64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --driver-opt image=moby/buildkit:master --name talosbuilder1 --use unix:///var/outer-run/docker.sock',
-    'docker buildx create --append --name talosbuilder1 --platform linux/arm64 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --driver-opt image=moby/buildkit:master tcp://docker-arm64.ci.svc:2376',
-    'docker buildx inspect --bootstrap',
+    'setup-ci',
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
-    'git fetch --tags',
   ],
   volumes: volumes.ForStep(),
 };
