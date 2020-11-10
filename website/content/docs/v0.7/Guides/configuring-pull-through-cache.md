@@ -9,6 +9,12 @@ We spin up local caching pass-through registries to cache images and configure a
 A similar approach might be used to run Talos in production in air-gapped environments.
 It can be also used to verify that all the images are available in local registries.
 
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/PRiQJR9Q33s" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Requirements
 
 The follow are requirements for creating the set of caching proxies:

@@ -2,12 +2,20 @@
 title: Upgrading Kubernetes
 ---
 
-## Kubernetes
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Kubelet Image
 
 In Kubernetes 1.19, the official `hyperkube` image was removed.
 This means that in order to upgrade Kubernetes, Talos users will have to change the `command`, and `image` fields of each control plane component.
 The `kubelet` image will also have to be updated, if you wish to specify the `kubelet` image explicitly.
 The default used by Talos is sufficient in most cases.
+
+## Kubeconfig
 
 In order to edit the control plane, we will need a working `kubectl` config.
 If you don't already have one, you can get one by running:
