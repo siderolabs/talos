@@ -1,4 +1,22 @@
 
+<a name="v0.7.0-beta.1"></a>
+## [v0.7.0-beta.1](https://github.com/talos-systems/talos/compare/v0.7.0-beta.0...v0.7.0-beta.1) (2020-11-10)
+
+### Fix
+
+* r8169 driver, Go 1.15.4, maintenance service API
+
+### Breaking change
+
+
+in `pkg/provision`: now `NodeRequest.Type` should be set
+to the node type (as config can be missing now).
+
+In `talosctl cluster create` add a flag to skip providing config to the
+nodes so that they enter maintenance mode, while the generated configs
+are written down to disk (so they can be tweaked and applied easily).
+
+
 <a name="v0.7.0-beta.0"></a>
 ## [v0.7.0-beta.0](https://github.com/talos-systems/talos/compare/v0.7.0-alpha.8...v0.7.0-beta.0) (2020-11-03)
 
@@ -36,6 +54,10 @@
 ### Refactor
 
 * use gRPC for interactive installation
+
+### Release
+
+* **v0.7.0-beta.0:** prepare release
 
 
 <a name="v0.7.0-alpha.8"></a>
