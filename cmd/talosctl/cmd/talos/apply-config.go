@@ -11,14 +11,16 @@ import (
 	"io/ioutil"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/crypto/x509"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var applyConfigCmdFlags struct {
-	filename string
-	insecure bool
+	filename         string
+	insecure         bool
+	certFingerprints []string
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -48,9 +50,24 @@ var applyConfigCmd = &cobra.Command{
 				return fmt.Errorf("insecure mode requires one and only one node, got %d", len(Nodes))
 			}
 
-			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
+			tlsConfig := &tls.Config{
 				InsecureSkipVerify: true,
-			}), client.WithEndpoints(Nodes...))
+			}
+
+			if len(applyConfigCmdFlags.certFingerprints) > 0 {
+				fingerprints := make([]x509.Fingerprint, len(applyConfigCmdFlags.certFingerprints))
+
+				for i, stringFingerprint := range applyConfigCmdFlags.certFingerprints {
+					fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
+					if err != nil {
+						return fmt.Errorf("error parsing certificate fingerprint %q: %v", stringFingerprint, err)
+					}
+				}
+
+				tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
+			}
+
+			c, err := client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(Nodes...))
 			if err != nil {
 				return err
 			}
@@ -82,6 +99,7 @@ var applyConfigCmd = &cobra.Command{
 func init() {
 	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
+	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
 
 	addCommand(applyConfigCmd)
 }
