@@ -262,7 +262,7 @@ Examples:
 
 ``` yaml
 kubelet:
-    image: docker.io/autonomy/kubelet:v1.19.3 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/talos-systems/kubelet:v1.19.3 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         key: value
@@ -1064,7 +1064,7 @@ Appears in:
 
 
 ``` yaml
-image: docker.io/autonomy/kubelet:v1.19.3 # The `image` field is an optional reference to an alternative kubelet image.
+image: ghcr.io/talos-systems/kubelet:v1.19.3 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
     key: value
@@ -1096,7 +1096,7 @@ Examples:
 
 
 ``` yaml
-image: docker.io/autonomy/kubelet:v1.19.3
+image: ghcr.io/talos-systems/kubelet:v1.19.3
 ```
 
 
