@@ -91,7 +91,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	cluster.RegisterClusterServiceServer(obj, s)
 }
 
-// ApplyConfiguration implements machine.MachineServer.
+// ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
 	if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
 		return nil, err

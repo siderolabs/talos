@@ -9,6 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/go-loadbalancer/loadbalancer"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var loadbalancerLaunchCmdFlags struct {
@@ -27,7 +29,7 @@ var loadbalancerLaunchCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var lb loadbalancer.TCP
 
-		for _, port := range []int{6443} { // TODO: need to put 6443 as constant or use config?
+		for _, port := range []int{constants.DefaultControlPlanePort} {
 			upstreams := make([]string, len(loadbalancerLaunchCmdFlags.upstreams))
 			for i := range upstreams {
 				upstreams[i] = fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.upstreams[i], port)

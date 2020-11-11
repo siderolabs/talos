@@ -55,6 +55,23 @@ func (d *Doc) AddExample(name string, value interface{}) {
 	})
 }
 
+// Describe returns a field description.
+func (d *Doc) Describe(field string, short bool) string {
+	desc := ""
+
+	for _, f := range d.Fields {
+		if f.Name == field {
+			desc = f.Description
+		}
+	}
+
+	if short {
+		desc = strings.Split(desc, "\n")[0]
+	}
+
+	return desc
+}
+
 // Example represents one example snippet for a type.
 type Example struct {
 	Name  string

@@ -276,7 +276,7 @@ func create(ctx context.Context) (err error) {
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
+					Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort),
 					KubeVersion: kubernetesVersion,
 					GenOptions:  genOptions,
 				}),
@@ -317,7 +317,7 @@ func create(ctx context.Context) (err error) {
 		}
 
 		if i == 0 {
-			nodeReq.Ports = []string{"50000:50000/tcp", "6443:6443/tcp"}
+			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", constants.DefaultControlPlanePort, constants.DefaultControlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -413,7 +413,10 @@ func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 		return err
 	}
 
-	c.Merge(talosConfigObj)
+	renames := c.Merge(talosConfigObj)
+	for _, rename := range renames {
+		fmt.Printf("renamed talosconfig context %s\n", rename.String())
+	}
 
 	return c.Save(talosconfig)
 }
@@ -438,7 +441,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range config.Clusters {
-			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, 6443)
+			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, constants.DefaultControlPlanePort)
 		}
 	}
 

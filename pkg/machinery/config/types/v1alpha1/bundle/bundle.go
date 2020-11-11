@@ -76,7 +76,9 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 	}
 
 	// Handle generating net-new configs
-	fmt.Println("generating PKI and tokens")
+	if options.Verbose {
+		fmt.Println("generating PKI and tokens")
+	}
 
 	var input *generate.Input
 

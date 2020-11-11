@@ -294,7 +294,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
 		&bundle.InputOptions{
 			ClusterName: clusterName,
-			Endpoint:    fmt.Sprintf("https://%s:6443", defaultInternalLB),
+			Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort),
 			KubeVersion: "", // keep empty so that default version is used per Talos version
 			GenOptions: append(
 				genOptions,
