@@ -50,7 +50,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	osapi "github.com/talos-systems/talos/pkg/machinery/api/os"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -88,7 +87,6 @@ func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
 	machine.RegisterMachineServiceServer(obj, s)
-	osapi.RegisterOSServiceServer(obj, &osdServer{Server: s}) //nolint: staticcheck
 	cluster.RegisterClusterServiceServer(obj, s)
 }
 
