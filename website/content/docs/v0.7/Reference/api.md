@@ -157,6 +157,12 @@ title: API
   
     - [SecurityService](#securityapi.SecurityService)
   
+- [storage/storage.proto](#storage/storage.proto)
+    - [Disk](#storage.Disk)
+    - [DisksResponse](#storage.DisksResponse)
+  
+    - [StorageService](#storage.StorageService)
+  
 - [time/time.proto](#time/time.proto)
     - [Time](#time.Time)
     - [TimeRequest](#time.TimeRequest)
@@ -2230,6 +2236,7 @@ The machine service definition.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
+| Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [.storage.DisksResponse](#storage.DisksResponse) |  |
 
  <!-- end services -->
 
@@ -2535,6 +2542,65 @@ The security service definition.
 | Certificate | [CertificateRequest](#securityapi.CertificateRequest) | [CertificateResponse](#securityapi.CertificateResponse) |  |
 | ReadFile | [ReadFileRequest](#securityapi.ReadFileRequest) | [ReadFileResponse](#securityapi.ReadFileResponse) |  |
 | WriteFile | [WriteFileRequest](#securityapi.WriteFileRequest) | [WriteFileResponse](#securityapi.WriteFileResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="storage/storage.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## storage/storage.proto
+
+
+
+<a name="storage.Disk"></a>
+
+### Disk
+Disk represents a disk.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  | Size indicates the disk size in bytes. |
+| model | [string](#string) |  | Model idicates the disk model. |
+| device_name | [string](#string) |  | DeviceName indicates the disk name (e.g. `sda`). |
+
+
+
+
+
+
+<a name="storage.DisksResponse"></a>
+
+### DisksResponse
+DisksResponse represents the response of the `Disks` RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| disks | [Disk](#storage.Disk) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="storage.StorageService"></a>
+
+### StorageService
+StorageService represents the storage service.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [DisksResponse](#storage.DisksResponse) |  |
 
  <!-- end services -->
 

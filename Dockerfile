@@ -78,6 +78,8 @@ COPY ./api/health/health.proto /api/health/health.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
 COPY ./api/security/security.proto /api/security/security.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
+COPY ./api/storage/storage.proto /api/storage/storage.proto
+RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api storage/storage.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api machine/machine.proto
 COPY ./api/time/time.proto /api/time/time.proto
@@ -103,6 +105,7 @@ COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine
 COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
 COPY --from=generate-build /api/network/network.pb.go /pkg/machinery/api/network/
 COPY --from=generate-build /api/cluster/cluster.pb.go /pkg/machinery/api/cluster/
+COPY --from=generate-build /api/storage/storage.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos
@@ -636,6 +639,7 @@ RUN protoc \
     -I/protos/machine \
     -I/protos/network \
     -I/protos/security \
+    -I/protos/storage \
     -I/protos/time \
     --doc_opt=/tmp/markdown.tmpl,api.md \
     --doc_out=/tmp \
@@ -643,6 +647,7 @@ RUN protoc \
     /protos/machine/*.proto \
     /protos/network/*.proto \
     /protos/security/*.proto \
+    /protos/storage/*.proto \
     /protos/time/*.proto
 
 FROM scratch AS docs

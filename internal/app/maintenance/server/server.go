@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
@@ -38,6 +41,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
 	machine.RegisterMaintenanceServiceServer(obj, s)
+	storage.RegisterStorageServiceServer(obj, s)
 }
 
 // ApplyConfiguration implements machine.MaintenanceService.
@@ -58,6 +62,30 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 
 	s.cfgCh <- in.GetData()
+
+	return reply, nil
+}
+
+// Disks implements machine.MaintenanceService.
+func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.DisksResponse, err error) {
+	disks, err := util.GetDisks()
+	if err != nil {
+		return nil, err
+	}
+
+	diskList := make([]*storage.Disk, len(disks))
+
+	for i, disk := range disks {
+		diskList[i] = &storage.Disk{
+			DeviceName: disk.DeviceName,
+			Model:      disk.Model,
+			Size:       disk.Size,
+		}
+	}
+
+	reply = &storage.DisksResponse{
+		Disks: diskList,
+	}
 
 	return reply, nil
 }
