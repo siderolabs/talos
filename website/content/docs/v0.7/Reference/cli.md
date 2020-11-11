@@ -91,7 +91,7 @@ talosctl cluster create [flags]
       --initrd-path string                      the uncompressed kernel image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string                        location of pre-generated config files
       --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string               desired kubernetes version to run (default "1.19.3")
+      --kubernetes-version string               desired kubernetes version to run (default "1.19.4")
       --masters int                             the number of masters to create (default 1)
       --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
@@ -674,7 +674,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                        help for config
       --install-disk string         the disk to install to (default "/dev/sda")
       --install-image string        the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string   desired kubernetes version to run (default "1.19.3")
+      --kubernetes-version string   desired kubernetes version to run (default "1.19.4")
   -o, --output-dir string           destination to output generated files
   -p, --persist                     the desired persist value for configs (default true)
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
@@ -1468,7 +1468,7 @@ talosctl upgrade-k8s [flags]
       --arch string   the cluster architecture (default "amd64")
       --from string   the Kubernetes control plane version to upgrade from
   -h, --help          help for upgrade-k8s
-      --to string     the Kubernetes control plane version to upgrade to (default "1.19.3")
+      --to string     the Kubernetes control plane version to upgrade to (default "1.19.4")
 ```
 
 ### Options inherited from parent commands

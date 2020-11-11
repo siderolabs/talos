@@ -163,10 +163,10 @@ const (
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.19.3"
+	DefaultKubernetesVersion = "1.19.4"
 
 	// KubeletImage is the enforced kubelet image to use.
-	KubeletImage = "docker.io/autonomy/kubelet"
+	KubeletImage = "ghcr.io/talos-systems/kubelet"
 
 	// KubeProxyImage is the enforced kube-proxy image to use for the control plane.
 	KubeProxyImage = "k8s.gcr.io/kube-proxy"
