@@ -147,9 +147,6 @@ title: API
   
     - [NetworkService](#network.NetworkService)
   
-- [os/os.proto](#os/os.proto)
-    - [OSService](#os.OSService)
-  
 - [security/security.proto](#security/security.proto)
     - [CertificateRequest](#securityapi.CertificateRequest)
     - [CertificateResponse](#securityapi.CertificateResponse)
@@ -2422,39 +2419,6 @@ The network service definition.
 | ----------- | ------------ | ------------- | ------------|
 | Routes | [.google.protobuf.Empty](#google.protobuf.Empty) | [RoutesResponse](#network.RoutesResponse) |  |
 | Interfaces | [.google.protobuf.Empty](#google.protobuf.Empty) | [InterfacesResponse](#network.InterfacesResponse) |  |
-
- <!-- end services -->
-
-
-
-<a name="os/os.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## os/os.proto
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="os.OSService"></a>
-
-### OSService
-The OS service definition.
-
-Deprecated: this API is deprecated and merged into Machine API.
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| Containers | [.machine.ContainersRequest](#machine.ContainersRequest) | [.machine.ContainersResponse](#machine.ContainersResponse) |  |
-| Dmesg | [.machine.DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
-| Memory | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.MemoryResponse](#machine.MemoryResponse) |  |
-| Processes | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.ProcessesResponse](#machine.ProcessesResponse) |  |
-| Restart | [.machine.RestartRequest](#machine.RestartRequest) | [.machine.RestartResponse](#machine.RestartResponse) |  |
-| Stats | [.machine.StatsRequest](#machine.StatsRequest) | [.machine.StatsResponse](#machine.StatsResponse) |  |
 
  <!-- end services -->
 

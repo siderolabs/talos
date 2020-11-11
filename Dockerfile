@@ -84,8 +84,6 @@ COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
-COPY ./api/os/os.proto /api/os/os.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api os/os.proto
 COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
 # Gofumports generated files to adjust import order
@@ -100,7 +98,6 @@ WORKDIR /
 FROM scratch AS generate
 COPY --from=generate-build /api/common/common.pb.go /pkg/machinery/api/common/
 COPY --from=generate-build /api/health/health.pb.go /pkg/machinery/api/health/
-COPY --from=generate-build /api/os/os.pb.go /pkg/machinery/api/os/
 COPY --from=generate-build /api/security/security.pb.go /pkg/machinery/api/security/
 COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine/
 COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
@@ -638,7 +635,6 @@ RUN protoc \
     -I/protos/health \
     -I/protos/machine \
     -I/protos/network \
-    -I/protos/os \
     -I/protos/security \
     -I/protos/time \
     --doc_opt=/tmp/markdown.tmpl,api.md \
@@ -646,7 +642,6 @@ RUN protoc \
     /protos/health/*.proto \
     /protos/machine/*.proto \
     /protos/network/*.proto \
-    /protos/os/*.proto \
     /protos/security/*.proto \
     /protos/time/*.proto
 
