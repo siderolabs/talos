@@ -32,7 +32,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 
 		options := []generate.GenOption{}
 
-		if in.MachineConfig.NetworkConfig != nil {
+		if in.MachineConfig.NetworkConfig != nil && in.MachineConfig.NetworkConfig.Hostname != "" {
 			options = append(options, generate.WithNetworkConfig(
 				&v1alpha1.NetworkConfig{
 					NetworkHostname: in.MachineConfig.NetworkConfig.Hostname,

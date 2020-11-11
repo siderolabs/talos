@@ -20,12 +20,15 @@ type InputOptions struct {
 // Options describes generate parameters.
 type Options struct {
 	ExistingConfigs string // path to existing config files
+	Verbose         bool   // wheither to write any logs during generate
 	InputOptions    *InputOptions
 }
 
 // DefaultOptions returns default options.
 func DefaultOptions() Options {
-	return Options{}
+	return Options{
+		Verbose: true,
+	}
 }
 
 // WithExistingConfigs sets the path to existing config files.
@@ -41,6 +44,15 @@ func WithExistingConfigs(configPath string) Option {
 func WithInputOptions(inputOpts *InputOptions) Option {
 	return func(o *Options) error {
 		o.InputOptions = inputOpts
+
+		return nil
+	}
+}
+
+// WithVerbose allows setting verbose logging.
+func WithVerbose(verbose bool) Option {
+	return func(o *Options) error {
+		o.Verbose = verbose
 
 		return nil
 	}

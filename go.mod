@@ -31,6 +31,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.21.0
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
+	github.com/gdamore/tcell/v2 v2.0.1-0.20201017141208-acf90d56d591
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.4.3
@@ -49,6 +50,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.2.0
+	github.com/rivo/tview v0.0.0-20201018122409-d551c850a743
 	github.com/rs/xid v1.2.1
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
@@ -57,7 +59,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/bootkube-plugin v0.0.0-20200915135634-229d57e818f3
 	github.com/talos-systems/crypto v0.2.1-0.20201112141136-12a489768a6b
-	github.com/talos-systems/go-blockdevice v0.1.1-0.20201111103554-874213371a3f
+	github.com/talos-systems/go-blockdevice v0.1.1-0.20201118151932-8076344a9502
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688

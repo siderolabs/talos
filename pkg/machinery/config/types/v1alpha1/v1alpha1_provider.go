@@ -231,7 +231,7 @@ func (c *ClusterConfig) Endpoint() *url.URL {
 // LocalAPIServerPort implements the config.Provider interface.
 func (c *ClusterConfig) LocalAPIServerPort() int {
 	if c.ControlPlane.LocalAPIServerPort == 0 {
-		return 6443
+		return constants.DefaultControlPlanePort
 	}
 
 	return c.ControlPlane.LocalAPIServerPort

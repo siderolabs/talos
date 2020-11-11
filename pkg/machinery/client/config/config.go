@@ -108,11 +108,23 @@ func (c *Config) Bytes() ([]byte, error) {
 	return yaml.Marshal(c)
 }
 
+// Rename describes context rename during merge.
+type Rename struct {
+	From string
+	To   string
+}
+
+// String converts to "from" -> "to".
+func (r *Rename) String() string {
+	return fmt.Sprintf("%q -> %q", r.From, r.To)
+}
+
 // Merge in additional contexts from another Config.
 //
 // Current context is overridden from passed in config.
-func (c *Config) Merge(cfg *Config) {
+func (c *Config) Merge(cfg *Config) []Rename {
 	mappedContexts := map[string]string{}
+	renames := []Rename{}
 
 	for name, ctx := range cfg.Contexts {
 		mergedName := name
@@ -130,7 +142,7 @@ func (c *Config) Merge(cfg *Config) {
 		mappedContexts[name] = mergedName
 
 		if name != mergedName {
-			fmt.Printf("renamed talosconfig context %q -> %q\n", name, mergedName)
+			renames = append(renames, Rename{name, mergedName})
 		}
 
 		c.Contexts[mergedName] = ctx
@@ -139,6 +151,8 @@ func (c *Config) Merge(cfg *Config) {
 	if cfg.Context != "" {
 		c.Context = mappedContexts[cfg.Context]
 	}
+
+	return renames
 }
 
 func ensure(filename string) (err error) {

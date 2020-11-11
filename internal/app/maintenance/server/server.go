@@ -20,7 +20,7 @@ import (
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// Server implements machine.MaintenanceService.
+// Server implements machine.MachineService.
 type Server struct {
 	machine.UnimplementedMachineServiceServer
 	storaged.Server

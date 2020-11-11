@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
+	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -52,6 +53,7 @@ type Client struct {
 	TimeClient    timeapi.TimeServiceClient
 	NetworkClient networkapi.NetworkServiceClient
 	ClusterClient clusterapi.ClusterServiceClient
+	StorageClient storageapi.StorageServiceClient
 }
 
 func (c *Client) resolveConfigContext() error {
@@ -142,6 +144,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
+	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 
 	return c, nil
 }
@@ -366,6 +369,11 @@ func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyCo
 // GenerateConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.GenerateConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateConfigurationResponse, err error) {
 	return c.MachineClient.GenerateConfiguration(ctx, req, callOptions...)
+}
+
+// Disks returns the list of block devices.
+func (c *Client) Disks(ctx context.Context, callOptions ...grpc.CallOption) (resp *storageapi.DisksResponse, err error) {
+	return c.StorageClient.Disks(ctx, &empty.Empty{}, callOptions...)
 }
 
 // Stats implements the proto.MachineServiceClient interface.
