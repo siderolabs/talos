@@ -58,7 +58,7 @@ var applyConfigCmd = &cobra.Command{
 			//nolint: errcheck
 			defer c.Close()
 
-			if _, err := c.ApplyConfigurationInsecure(ctx, &machineapi.ApplyConfigurationRequest{
+			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data: cfgBytes,
 			}); err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
