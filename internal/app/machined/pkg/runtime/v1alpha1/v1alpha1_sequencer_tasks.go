@@ -433,7 +433,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
-					return fmt.Errorf("failed to receive config via maintenance service: %w", err)
+					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
 				}
 			}
 
@@ -458,12 +458,12 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		}
 
 		if !cfg.Persist() {
-			logger.Printf("found existing config, but peristence is disabled, downloading config")
+			logger.Printf("found existing config, but persistence is disabled, downloading config")
 
 			return download()
 		}
 
-		logger.Printf("peristence is enabled, using existing config on disk")
+		logger.Printf("persistence is enabled, using existing config on disk")
 
 		b, err := cfg.Bytes()
 		if err != nil {

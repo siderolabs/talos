@@ -31,7 +31,17 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		return nil, fmt.Errorf("failed to get list of IPs: %w", err)
 	}
 
-	tlsConfig, err := genTLSConfig(ips)
+	tlsConfig, provider, err := genTLSConfig(ips)
+	if err != nil {
+		return nil, err
+	}
+
+	cert, err := provider.GetCertificate(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	certFingerprint, err := x509.SPKIFingerprintFromDER(cert.Certificate[0])
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +79,18 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		logger.Printf("\t%s\n", ip.String())
 	}
 
+	firstIP := "<IP>"
+
+	if len(ips) > 0 {
+		firstIP = ips[0].String()
+	}
+
+	logger.Println("server certificate fingerprint:")
+	logger.Printf("\t%s\n", certFingerprint)
+
+	logger.Println("upload configuration using talosctl:")
+	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --cert-fingerprint '%s' --file <config.yaml>\n", firstIP, certFingerprint)
+
 	select {
 	case cfg := <-cfgCh:
 		server.GracefulStop()
@@ -79,46 +101,44 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	}
 }
 
-func genTLSConfig(ips []net.IP) (*tls.Config, error) {
+func genTLSConfig(ips []net.IP) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
 	ca, err := x509.NewSelfSignedCertificateAuthority()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate self-signed CA: %w", err)
+		return nil, nil, fmt.Errorf("failed to generate self-signed CA: %w", err)
 	}
 
 	ips = append(ips, net.ParseIP("127.0.0.1"), net.ParseIP("::1"))
 
 	dnsNames, err := tnet.DNSNames()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get DNS names: %w", err)
+		return nil, nil, fmt.Errorf("failed to get DNS names: %w", err)
 	}
 
 	var generator ttls.Generator
 
 	generator, err = gen.NewLocalGenerator(ca.KeyPEM, ca.CrtPEM)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create local generator provider: %w", err)
+		return nil, nil, fmt.Errorf("failed to create local generator provider: %w", err)
 	}
-
-	var provider ttls.CertificateProvider
 
 	provider, err = ttls.NewRenewingCertificateProvider(generator, dnsNames, ips)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create local certificate provider: %w", err)
+		return nil, nil, fmt.Errorf("failed to create local certificate provider: %w", err)
 	}
 
-	caProvider, err := provider.GetCA()
+	caCertPEM, err := provider.GetCA()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get CA: %w", err)
+		return nil, nil, fmt.Errorf("failed to get CA: %w", err)
 	}
 
-	tlsConfig, err := ttls.New(
+	tlsConfig, err = ttls.New(
 		ttls.WithClientAuthType(ttls.ServerOnly),
-		ttls.WithCACertPEM(caProvider),
+		ttls.WithCACertPEM(caCertPEM),
 		ttls.WithServerCertificateProvider(provider),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tlsconfig: %w", err)
+		return nil, nil, fmt.Errorf("failed to generate tlsconfig: %w", err)
 	}
 
-	return tlsConfig, nil
+	return tlsConfig, provider, nil
 }

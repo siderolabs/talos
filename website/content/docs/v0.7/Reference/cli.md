@@ -15,9 +15,10 @@ talosctl apply-config [flags]
 ### Options
 
 ```
-  -f, --file string   the filename of the updated configuration
-  -h, --help          help for apply-config
-  -i, --insecure      apply the config using the insecure (encrypted with no auth) maintenance service
+      --cert-fingerprint strings   list of server certificate fingeprints to accept (defaults to no check)
+  -f, --file string                the filename of the updated configuration
+  -h, --help                       help for apply-config
+  -i, --insecure                   apply the config using the insecure (encrypted with no auth) maintenance service
 ```
 
 ### Options inherited from parent commands
