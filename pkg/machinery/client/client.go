@@ -46,13 +46,12 @@ type Credentials struct {
 // Client implements the proto.OSClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	options                  *Options
-	conn                     *grpc.ClientConn
-	MaintenanceServiceClient machineapi.MaintenanceServiceClient
-	MachineClient            machineapi.MachineServiceClient
-	TimeClient               timeapi.TimeServiceClient
-	NetworkClient            networkapi.NetworkServiceClient
-	ClusterClient            clusterapi.ClusterServiceClient
+	options       *Options
+	conn          *grpc.ClientConn
+	MachineClient machineapi.MachineServiceClient
+	TimeClient    timeapi.TimeServiceClient
+	NetworkClient networkapi.NetworkServiceClient
+	ClusterClient clusterapi.ClusterServiceClient
 }
 
 func (c *Client) resolveConfigContext() error {
@@ -143,7 +142,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
-	c.MaintenanceServiceClient = machineapi.NewMaintenanceServiceClient(c.conn)
 
 	return c, nil
 }
@@ -294,11 +292,6 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 // Close shuts down client protocol.
 func (c *Client) Close() error {
 	return c.conn.Close()
-}
-
-// ApplyConfigurationInsecure implements machine.MaintenanceService.
-func (c *Client) ApplyConfigurationInsecure(ctx context.Context, req *machineapi.ApplyConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.ApplyConfigurationResponse, err error) {
-	return c.MaintenanceServiceClient.ApplyConfiguration(ctx, req, callOptions...)
 }
 
 // KubeconfigRaw returns K8s client config (kubeconfig).

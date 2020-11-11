@@ -131,7 +131,6 @@ title: API
     - [TaskEvent.Action](#machine.TaskEvent.Action)
   
     - [MachineService](#machine.MachineService)
-    - [MaintenanceService](#machine.MaintenanceService)
   
 - [network/network.proto](#network/network.proto)
     - [Interface](#network.Interface)
@@ -2226,17 +2225,6 @@ The machine service definition.
 | SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
 | Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
-
-
-<a name="machine.MaintenanceService"></a>
-
-### MaintenanceService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
-| Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [.storage.DisksResponse](#storage.DisksResponse) |  |
 
  <!-- end services -->
 
