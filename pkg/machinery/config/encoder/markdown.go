@@ -32,7 +32,7 @@ Examples:
 ## {{ $struct.Type }}
 {{ if $struct.Description -}}
 {{ $struct.Description }}
-{{ end -}}
+{{ end }}
 {{ if $struct.AppearsIn -}}
 Appears in:
 

@@ -17,8 +17,16 @@ talosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>
 This will generate a machine config for each node type, and a talosconfig for the CLI.
 
 ## Config
+Config defines the v1alpha1 configuration file.
 
 
+
+``` yaml
+version: v1alpha1
+persist: true
+machine: # ...
+cluster: # ...
+```
 
 <hr />
 
@@ -119,12 +127,27 @@ Provides cluster specific configuration options.
 
 
 ## MachineConfig
+MachineConfig represents the machine-specific config values.
+
 Appears in:
 
 
 - <code><a href="#config">Config</a>.machine</code>
 
 
+``` yaml
+type: controlplane
+# InstallConfig represents the installation options for preparing a node.
+install:
+    disk: /dev/sda # The disk used for installations.
+    # Allows for supplying extra kernel args via the bootloader.
+    extraKernelArgs:
+        - console=ttyS1
+        - panic=10
+    image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
+    bootloader: true # Indicates if a bootloader should be installed.
+    wipe: false # Indicates if the installation disk should be wiped at installation time.
+```
 
 <hr />
 
@@ -265,7 +288,7 @@ kubelet:
     image: ghcr.io/talos-systems/kubelet:v1.19.4 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
-        key: value
+        --feature-gates: ServerSideApply=true
 
     # # The `extraMounts` field is used to add additional mounts to the kubelet container.
     # extraMounts:
@@ -402,7 +425,8 @@ install:
     disk: /dev/sda # The disk used for installations.
     # Allows for supplying extra kernel args via the bootloader.
     extraKernelArgs:
-        - option=value
+        - console=ttyS1
+        - panic=10
     image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
@@ -609,12 +633,33 @@ registries:
 
 
 ## ClusterConfig
+ClusterConfig represents the cluster-wide config values.
+
 Appears in:
 
 
 - <code><a href="#config">Config</a>.cluster</code>
 
 
+``` yaml
+# ControlPlaneConfig represents the control plane configuration options.
+controlPlane:
+    endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
+    localAPIServerPort: 443 # The port that the API server listens on internally.
+clusterName: talos.local
+# ClusterNetworkConfig represents kube networking configuration options.
+network:
+    # The CNI used.
+    cni:
+        name: flannel # Name of CNI to use.
+    dnsDomain: cluster.local # The domain used by Kubernetes DNS.
+    # The pod subnet CIDR.
+    podSubnets:
+        - 10.244.0.0/16
+    # The service subnet CIDR.
+    serviceSubnets:
+        - 10.96.0.0/12
+```
 
 <hr />
 
@@ -779,7 +824,8 @@ apiServer:
     image: k8s.gcr.io/kube-apiserver-amd64:v1.19.4 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
-        key: value
+        --feature-gates: ServerSideApply=true
+        --http2-max-streams-per-connection: "32"
     # Extra certificate subject alternative names for the API server's certificate.
     certSANs:
         - 1.2.3.4
@@ -810,7 +856,7 @@ controllerManager:
     image: k8s.gcr.io/kube-controller-manager-amd64:v1.19.4 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
-        key: value
+        --feature-gates: ServerSideApply=true
 ```
 
 
@@ -838,7 +884,7 @@ proxy:
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
-        key: value
+        --proxy-mode: iptables
 ```
 
 
@@ -865,7 +911,7 @@ scheduler:
     image: k8s.gcr.io/kube-scheduler-amd64:v1.19.4 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
-        key: value
+        --feature-gates: AllBeta=true
 ```
 
 
@@ -896,7 +942,7 @@ etcd:
         key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
     # Extra arguments to supply to etcd.
     extraArgs:
-        key: value
+        --election-timeout: "5000"
 ```
 
 
@@ -1057,6 +1103,8 @@ Valid values:
 
 
 ## KubeletConfig
+KubeletConfig represents the kubelet config values.
+
 Appears in:
 
 
@@ -1067,7 +1115,7 @@ Appears in:
 image: ghcr.io/talos-systems/kubelet:v1.19.4 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
-    key: value
+    --feature-gates: ServerSideApply=true
 
 # # The `extraMounts` field is used to add additional mounts to the kubelet container.
 # extraMounts:
@@ -1162,6 +1210,8 @@ extraMounts:
 
 
 ## NetworkConfig
+NetworkConfig represents the machine's networking config values.
+
 Appears in:
 
 
@@ -1331,6 +1381,8 @@ extraHostEntries:
 
 
 ## InstallConfig
+InstallConfig represents the installation options for preparing a node.
+
 Appears in:
 
 
@@ -1341,7 +1393,8 @@ Appears in:
 disk: /dev/sda # The disk used for installations.
 # Allows for supplying extra kernel args via the bootloader.
 extraKernelArgs:
-    - option=value
+    - console=ttyS1
+    - panic=10
 image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
 bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if the installation disk should be wiped at installation time.
@@ -1392,7 +1445,8 @@ Examples:
 
 ``` yaml
 extraKernelArgs:
-    - a=b
+    - talos.platform=metal
+    - reboot=k
 ```
 
 
@@ -1408,6 +1462,8 @@ extraKernelArgs:
 <div class="dt">
 
 Allows for supplying the image used to perform the installation.
+Image reference for each Talos release can be found on
+[GitHub releases page](https://github.com/talos-systems/talos/releases).
 
 
 
@@ -1415,7 +1471,7 @@ Examples:
 
 
 ``` yaml
-image: docker.io/<org>/<image>:<tag>
+image: ghcr.io/talos-systems/installer:latest
 ```
 
 
@@ -1477,6 +1533,8 @@ Valid values:
 
 
 ## TimeConfig
+TimeConfig represents the options for configuring time on a machine.
+
 Appears in:
 
 
@@ -1528,6 +1586,8 @@ Defaults to `pool.ntp.org`
 
 
 ## RegistriesConfig
+RegistriesConfig represents the image pull options.
+
 Appears in:
 
 
@@ -1638,6 +1698,8 @@ config:
 
 
 ## PodCheckpointer
+PodCheckpointer represents the pod-checkpointer config values.
+
 Appears in:
 
 
@@ -1668,6 +1730,8 @@ The `image` field is an override to the default pod-checkpointer image.
 
 
 ## CoreDNS
+CoreDNS represents the CoreDNS config values.
+
 Appears in:
 
 
@@ -1698,6 +1762,8 @@ The `image` field is an override to the default coredns image.
 
 
 ## Endpoint
+Endpoint represents the endpoint URL parsed out of the machine config.
+
 Appears in:
 
 
@@ -1705,12 +1771,17 @@ Appears in:
 
 
 ``` yaml
-https://1.2.3.4:443
+https://1.2.3.4:6443
+```
+``` yaml
+https://cluster1.internal:6443
 ```
 
 
 
 ## ControlPlaneConfig
+ControlPlaneConfig represents the control plane configuration options.
+
 Appears in:
 
 
@@ -1740,7 +1811,11 @@ Examples:
 
 
 ``` yaml
-endpoint: https://1.2.3.4:443
+endpoint: https://1.2.3.4:6443
+```
+
+``` yaml
+endpoint: https://cluster1.internal:6443
 ```
 
 
@@ -1768,6 +1843,8 @@ The default is `6443`.
 
 
 ## APIServerConfig
+APIServerConfig represents the kube apiserver configuration options.
+
 Appears in:
 
 
@@ -1778,7 +1855,8 @@ Appears in:
 image: k8s.gcr.io/kube-apiserver-amd64:v1.19.4 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
-    key: value
+    --feature-gates: ServerSideApply=true
+    --http2-max-streams-per-connection: "32"
 # Extra certificate subject alternative names for the API server's certificate.
 certSANs:
     - 1.2.3.4
@@ -1831,6 +1909,8 @@ Extra certificate subject alternative names for the API server's certificate.
 
 
 ## ControllerManagerConfig
+ControllerManagerConfig represents the kube controller manager configuration options.
+
 Appears in:
 
 
@@ -1841,7 +1921,7 @@ Appears in:
 image: k8s.gcr.io/kube-controller-manager-amd64:v1.19.4 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
-    key: value
+    --feature-gates: ServerSideApply=true
 ```
 
 <hr />
@@ -1877,6 +1957,8 @@ Extra arguments to supply to the controller manager.
 
 
 ## ProxyConfig
+ProxyConfig represents the kube proxy configuration options.
+
 Appears in:
 
 
@@ -1888,7 +1970,7 @@ image: k8s.gcr.io/kube-proxy-amd64:v1.19.4 # The container image used in the kub
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
-    key: value
+    --proxy-mode: iptables
 ```
 
 <hr />
@@ -1938,6 +2020,8 @@ Extra arguments to supply to kube-proxy.
 
 
 ## SchedulerConfig
+SchedulerConfig represents the kube scheduler configuration options.
+
 Appears in:
 
 
@@ -1948,7 +2032,7 @@ Appears in:
 image: k8s.gcr.io/kube-scheduler-amd64:v1.19.4 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
-    key: value
+    --feature-gates: AllBeta=true
 ```
 
 <hr />
@@ -1984,6 +2068,8 @@ Extra arguments to supply to the scheduler.
 
 
 ## EtcdConfig
+EtcdConfig represents the etcd configuration options.
+
 Appears in:
 
 
@@ -1998,7 +2084,7 @@ ca:
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
 # Extra arguments to supply to etcd.
 extraArgs:
-    key: value
+    --election-timeout: "5000"
 ```
 
 <hr />
@@ -2074,6 +2160,8 @@ Note that the following args are not allowed:
 
 
 ## ClusterNetworkConfig
+ClusterNetworkConfig represents kube networking configuration options.
+
 Appears in:
 
 
@@ -2204,6 +2292,8 @@ serviceSubnets:
 
 
 ## CNIConfig
+CNIConfig represents the CNI configuration options.
+
 Appears in:
 
 
@@ -2250,6 +2340,8 @@ URLs containing manifests to apply for the CNI.
 
 
 ## AdminKubeconfigConfig
+AdminKubeconfigConfig contains admin kubeconfig settings.
+
 Appears in:
 
 
@@ -2281,6 +2373,10 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 
 
 ## MachineDisk
+MachineDisk represents the options available for partitioning, formatting, and
+mounting extra disks.
+
+
 Appears in:
 
 
@@ -2334,6 +2430,8 @@ A list of partitions to create on the disk.
 
 
 ## DiskPartition
+DiskPartition represents the options for a disk partition.
+
 Appears in:
 
 
@@ -2388,6 +2486,8 @@ Where to mount the partition.
 
 
 ## MachineFile
+MachineFile represents a file to write to disk.
+
 Appears in:
 
 
@@ -2469,6 +2569,8 @@ Valid values:
 
 
 ## ExtraHost
+ExtraHost represents a host entry in /etc/hosts.
+
 Appears in:
 
 
@@ -2516,6 +2618,8 @@ The host alias.
 
 
 ## Device
+Device represents a network interface.
+
 Appears in:
 
 
@@ -2775,6 +2879,8 @@ dhcpOptions:
 
 
 ## DHCPOptions
+DHCPOptions contains options for configuring the DHCP settings for a given interface.
+
 Appears in:
 
 
@@ -2805,6 +2911,8 @@ The priority of all routes received via DHCP.
 
 
 ## Bond
+Bond contains the various options for configuring a bonded interface.
+
 Appears in:
 
 
@@ -3204,6 +3312,8 @@ Please see the official kernel documentation.
 
 
 ## Vlan
+Vlan represents vlan settings for a device.
+
 Appears in:
 
 
@@ -3270,6 +3380,8 @@ The VLAN's ID.
 
 
 ## Route
+Route represents a network route.
+
 Appears in:
 
 
@@ -3318,6 +3430,8 @@ The route's gateway.
 
 
 ## RegistryMirrorConfig
+RegistryMirrorConfig represents mirror configuration for a registry.
+
 Appears in:
 
 
@@ -3354,6 +3468,8 @@ port and path (if path is not set, it defaults to `/v2`).
 
 
 ## RegistryConfig
+RegistryConfig specifies auth & TLS config per registry.
+
 Appears in:
 
 
@@ -3446,6 +3562,8 @@ auth:
 
 
 ## RegistryAuthConfig
+RegistryAuthConfig specifies authentication configuration for a registry.
+
 Appears in:
 
 
@@ -3520,6 +3638,8 @@ The meaning of each field is the same with the corresponding field in .docker/co
 
 
 ## RegistryTLSConfig
+RegistryTLSConfig specifies TLS config for HTTPS registries.
+
 Appears in:
 
 

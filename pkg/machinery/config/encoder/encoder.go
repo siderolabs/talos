@@ -225,7 +225,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 			element := v.MapIndex(k)
 			value := element.Interface()
 
-			if err := addToMap(node, getDoc(value), k.Interface(), value, 0); err != nil {
+			if err := addToMap(node, nil, k.Interface(), value, 0); err != nil {
 				return nil, err
 			}
 		}

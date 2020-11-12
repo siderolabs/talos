@@ -80,13 +80,13 @@ var (
 )
 
 func init() {
-	configDoc.Comments[encoder.HeadComment] = "test configuration"
+	configDoc.Comments[encoder.LineComment] = "test configuration"
 	configDoc.Fields = make([]encoder.Doc, 8)
 	configDoc.Fields[1].Comments[encoder.LineComment] = "<<<"
 	configDoc.Fields[2].Comments[encoder.HeadComment] = "complex slice"
 	configDoc.Fields[3].Comments[encoder.FootComment] = "some text example for map"
 
-	endpointDoc.Comments[encoder.HeadComment] = "endpoint settings"
+	endpointDoc.Comments[encoder.LineComment] = "endpoint settings"
 	endpointDoc.Fields = make([]encoder.Doc, 2)
 	endpointDoc.Fields[0].Comments[encoder.LineComment] = "endpoint host"
 	endpointDoc.Fields[1].Comments[encoder.LineComment] = "custom port"
@@ -169,8 +169,7 @@ func (suite *EncoderSuite) TestRun() {
 		{
 			name:  "default struct",
 			value: &Config{},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
@@ -186,8 +185,7 @@ map: {}
 					value: "abcd",
 				},
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
@@ -205,8 +203,7 @@ custommarshaller:
 			value: &Config{
 				Bytes: []byte("..."),
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
@@ -225,14 +222,12 @@ bytes: [46, 46, 46]
 				},
 				unexported: -1,
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
 complex_slice: []
 map:
-    # endpoint settings
     endpoint:
         host: "" # endpoint host
 # some text example for map
@@ -245,14 +240,12 @@ map:
 					"endpoint": nil,
 				},
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
 complex_slice: []
 map:
-    # endpoint settings
     endpoint: null
 # some text example for map
 `,
@@ -265,8 +258,7 @@ map:
 				},
 				ComplexSlice: []*Endpoint{e},
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
@@ -274,7 +266,6 @@ complex_slice:
     - host: "" # endpoint host
       port: 8080 # custom port
 map:
-    # endpoint settings
     endpoint:
         host: "" # endpoint host
 # some text example for map
@@ -287,8 +278,7 @@ map:
 					MixedIn: "a",
 				},
 			},
-			expectedYAML: `# test configuration
-integer: 0
+			expectedYAML: `integer: 0
 # <<<
 slice: []
 # complex slice
@@ -332,7 +322,7 @@ mixed_in: a # was inlined
 			},
 			expectedYAML: `machine:
     state: 1000
-    
+    ` + `
     # config:
     #     # this is some version
     #     version: 0.0.2

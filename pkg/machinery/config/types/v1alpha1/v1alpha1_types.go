@@ -28,6 +28,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 func init() {
@@ -39,8 +40,28 @@ func init() {
 }
 
 var (
-
 	// Examples section.
+
+	// this is using custom type to avoid generating full example with all the nested structs.
+	configExample = struct {
+		Version string `yaml:"version"`
+		Persist bool
+		Machine *yaml.Node
+		Cluster *yaml.Node
+	}{
+		Version: "v1alpha1",
+		Persist: true,
+		Machine: &yaml.Node{Kind: yaml.ScalarNode, LineComment: "..."},
+		Cluster: &yaml.Node{Kind: yaml.ScalarNode, LineComment: "..."},
+	}
+
+	machineConfigExample = struct {
+		Type    string
+		Install *InstallConfig
+	}{
+		Type:    machine.TypeControlPlane.String(),
+		Install: machineInstallExample,
+	}
 
 	machineConfigRegistriesExample = &RegistriesConfig{
 		RegistryMirrors: map[string]*RegistryMirrorConfig{
@@ -96,7 +117,7 @@ var (
 	machineKubeletExample = &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
 		KubeletExtraArgs: map[string]string{
-			"key": "value",
+			"--feature-gates": "ServerSideApply=true",
 		},
 	}
 
@@ -133,7 +154,7 @@ var (
 
 	machineInstallExample = &InstallConfig{
 		InstallDisk:            "/dev/sda",
-		InstallExtraKernelArgs: []string{"option=value"},
+		InstallExtraKernelArgs: []string{"console=ttyS1", "panic=10"},
 		InstallImage:           "ghcr.io/talos-systems/installer:latest",
 		InstallBootloader:      true,
 		InstallWipe:            false,
@@ -172,6 +193,16 @@ var (
 		"net.ipv4.ip_forward": "0",
 	}
 
+	clusterConfigExample = struct {
+		ControlPlane *ControlPlaneConfig   `yaml:"controlPlane"`
+		ClusterName  string                `yaml:"clusterName"`
+		Network      *ClusterNetworkConfig `yaml:"network"`
+	}{
+		ControlPlane: clusterControlPlaneExample,
+		ClusterName:  "talos.local",
+		Network:      clusterNetworkExample,
+	}
+
 	clusterControlPlaneExample = &ControlPlaneConfig{
 		Endpoint: &Endpoint{
 			&url.URL{
@@ -194,7 +225,8 @@ var (
 	clusterAPIServerExample = &APIServerConfig{
 		ContainerImage: (&APIServerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"key": "value", // TODO: add more real live examples
+			"--feature-gates":                    "ServerSideApply=true",
+			"--http2-max-streams-per-connection": "32",
 		},
 		CertSANs: []string{
 			"1.2.3.4",
@@ -205,14 +237,14 @@ var (
 	clusterControllerManagerExample = &ControllerManagerConfig{
 		ContainerImage: (&ControllerManagerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"key": "value", // TODO: add more real live examples
+			"--feature-gates": "ServerSideApply=true",
 		},
 	}
 
 	clusterProxyExample = &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"key": "value", // TODO: add more real live examples
+			"--proxy-mode": "iptables",
 		},
 		ModeConfig: "ipvs",
 	}
@@ -220,14 +252,14 @@ var (
 	clusterSchedulerConfig = &SchedulerConfig{
 		ContainerImage: (&SchedulerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"key": "value", // TODO: add more real live examples
+			"--feature-gates": "AllBeta=true",
 		},
 	}
 
 	clusterEtcdConfig = &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
 		EtcdExtraArgs: map[string]string{
-			"key": "value", // TODO: add more real live examples
+			"--election-timeout": "5000",
 		},
 		RootCA: pemEncodedCertificateExample,
 	}
@@ -296,6 +328,9 @@ var (
 )
 
 // Config defines the v1alpha1 configuration file.
+//
+//  examples:
+//     - value: configExample
 type Config struct {
 	//   description: |
 	//     Indicates the schema used to decode the contents.
@@ -327,6 +362,9 @@ type Config struct {
 }
 
 // MachineConfig represents the machine-specific config values.
+//
+//  examples:
+//     - value: machineConfigExample
 type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
@@ -455,7 +493,10 @@ type MachineConfig struct {
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
 }
 
-// ClusterConfig reperesents the cluster-wide config values.
+// ClusterConfig represents the cluster-wide config values.
+//
+//  examples:
+//     - value: clusterConfigExample
 type ClusterConfig struct {
 	//   description: |
 	//     Provides control plane specific configuration options.
@@ -560,7 +601,7 @@ type ClusterConfig struct {
 	AllowSchedulingOnMasters bool `yaml:"allowSchedulingOnMasters,omitempty"`
 }
 
-// KubeletConfig reperesents the kubelet config values.
+// KubeletConfig represents the kubelet config values.
 type KubeletConfig struct {
 	//   description: |
 	//     The `image` field is an optional reference to an alternative kubelet image.
@@ -582,7 +623,7 @@ type KubeletConfig struct {
 	KubeletExtraMounts []specs.Mount `yaml:"extraMounts,omitempty"`
 }
 
-// NetworkConfig reperesents the machine's networking config values.
+// NetworkConfig represents the machine's networking config values.
 type NetworkConfig struct {
 	//   description: |
 	//     Used to statically set the hostname for the machine.
@@ -618,12 +659,14 @@ type InstallConfig struct {
 	//   description: |
 	//     Allows for supplying extra kernel args via the bootloader.
 	//   examples:
-	//     - value: '[]string{"a=b"}'
+	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
 	//   description: |
 	//     Allows for supplying the image used to perform the installation.
+	//     Image reference for each Talos release can be found on
+	//     [GitHub releases page](https://github.com/talos-systems/talos/releases).
 	//   examples:
-	//     - value: '"docker.io/<org>/<image>:<tag>"'
+	//     - value: '"ghcr.io/talos-systems/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Indicates if a bootloader should be installed.
@@ -728,7 +771,8 @@ type ControlPlaneConfig struct {
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 	//     It is single-valued, and may optionally include a port number.
 	//   examples:
-	//     - value: '"https://1.2.3.4:443"'
+	//     - value: '"https://1.2.3.4:6443"'
+	//     - value: '"https://cluster1.internal:6443"'
 	Endpoint *Endpoint `yaml:"endpoint"`
 	//   description: |
 	//     The port that the API server listens on internally.
@@ -1042,8 +1086,7 @@ type DHCPOptions struct {
 	DHCPRouteMetric uint32 `yaml:"routeMetric"`
 }
 
-// Bond contains the various options for configuring a
-// bonded interface.
+// Bond contains the various options for configuring a bonded interface.
 type Bond struct {
 	//   description: The interfaces that make up the bond.
 	BondInterfaces []string `yaml:"interfaces"`
