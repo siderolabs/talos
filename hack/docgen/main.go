@@ -44,7 +44,7 @@ func init() {
 	{{ range $struct := .Structs -}}
 	{{ $docVar := printf "%v%v" $struct.Name "Doc" }}
 	{{ $docVar }}.Type = "{{ $struct.Name }}"
-	{{ $docVar }}.Comments[encoder.HeadComment] = "{{ $struct.Text.Comment }}"
+	{{ $docVar }}.Comments[encoder.LineComment] = "{{ $struct.Text.Comment }}"
 	{{ $docVar }}.Description = "{{ $struct.Text.Description }}"
 	{{ range $example := $struct.Text.Examples }}
 	{{ if $example.Value }}
@@ -204,6 +204,8 @@ func collectStructs(node ast.Node) []*structType {
 
 			if t.Doc != nil {
 				text = parseComment([]byte(t.Doc.Text()))
+			} else if g.Doc != nil {
+				text = parseComment([]byte(g.Doc.Text()))
 			}
 
 			s := &structType{
@@ -232,12 +234,16 @@ func parseComment(comment []byte) *Text {
 		// take only the first line from the Description for the comment
 		text.Comment = strings.Split(text.Description, "\n")[0]
 
-		return text
+		// try to parse the everything except for the first line as yaml
+		if err = yaml.Unmarshal([]byte(strings.Join(strings.Split(text.Description, "\n")[1:], "\n")), text); err == nil {
+			// if parsed, remove it from the description
+			text.Description = text.Comment
+		}
+	} else {
+		text.Description = strings.TrimSpace(text.Description)
+		// take only the first line from the Description for the comment
+		text.Comment = strings.Split(text.Description, "\n")[0]
 	}
-
-	text.Description = strings.TrimSpace(text.Description)
-	// take only the first line from the Description for the comment
-	text.Comment = strings.Split(text.Description, "\n")[0]
 
 	text.Description = escape(text.Description)
 	for _, example := range text.Examples {

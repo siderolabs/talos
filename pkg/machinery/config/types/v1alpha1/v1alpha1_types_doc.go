@@ -48,8 +48,10 @@ var (
 
 func init() {
 	ConfigDoc.Type = "Config"
-	ConfigDoc.Comments[encoder.HeadComment] = ""
-	ConfigDoc.Description = ""
+	ConfigDoc.Comments[encoder.LineComment] = "Config defines the v1alpha1 configuration file."
+	ConfigDoc.Description = "Config defines the v1alpha1 configuration file."
+
+	ConfigDoc.AddExample("", configExample)
 	ConfigDoc.Fields = make([]encoder.Doc, 5)
 	ConfigDoc.Fields[0].Name = "version"
 	ConfigDoc.Fields[0].Type = "string"
@@ -93,8 +95,10 @@ func init() {
 	ConfigDoc.Fields[4].Comments[encoder.LineComment] = "Provides cluster specific configuration options."
 
 	MachineConfigDoc.Type = "MachineConfig"
-	MachineConfigDoc.Comments[encoder.HeadComment] = ""
-	MachineConfigDoc.Description = ""
+	MachineConfigDoc.Comments[encoder.LineComment] = "MachineConfig represents the machine-specific config values."
+	MachineConfigDoc.Description = "MachineConfig represents the machine-specific config values."
+
+	MachineConfigDoc.AddExample("", machineConfigExample)
 	MachineConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Config",
@@ -209,8 +213,10 @@ func init() {
 	MachineConfigDoc.Fields[12].AddExample("", machineConfigRegistriesExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
-	ClusterConfigDoc.Comments[encoder.HeadComment] = ""
-	ClusterConfigDoc.Description = ""
+	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
+	ClusterConfigDoc.Description = "ClusterConfig represents the cluster-wide config values."
+
+	ClusterConfigDoc.AddExample("", clusterConfigExample)
 	ClusterConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Config",
@@ -347,8 +353,8 @@ func init() {
 	}
 
 	KubeletConfigDoc.Type = "KubeletConfig"
-	KubeletConfigDoc.Comments[encoder.HeadComment] = ""
-	KubeletConfigDoc.Description = ""
+	KubeletConfigDoc.Comments[encoder.LineComment] = "KubeletConfig represents the kubelet config values."
+	KubeletConfigDoc.Description = "KubeletConfig represents the kubelet config values."
 
 	KubeletConfigDoc.AddExample("Kubelet definition example.", machineKubeletExample)
 	KubeletConfigDoc.AppearsIn = []encoder.Appearance{
@@ -383,8 +389,8 @@ func init() {
 	KubeletConfigDoc.Fields[2].AddExample("", kubeletExtraMountsExample)
 
 	NetworkConfigDoc.Type = "NetworkConfig"
-	NetworkConfigDoc.Comments[encoder.HeadComment] = ""
-	NetworkConfigDoc.Description = ""
+	NetworkConfigDoc.Comments[encoder.LineComment] = "NetworkConfig represents the machine's networking config values."
+	NetworkConfigDoc.Description = "NetworkConfig represents the machine's networking config values."
 
 	NetworkConfigDoc.AddExample("Network definition example.", machineNetworkConfigExample)
 	NetworkConfigDoc.AppearsIn = []encoder.Appearance{
@@ -422,8 +428,8 @@ func init() {
 	NetworkConfigDoc.Fields[3].AddExample("", networkConfigExtraHostsExample)
 
 	InstallConfigDoc.Type = "InstallConfig"
-	InstallConfigDoc.Comments[encoder.HeadComment] = ""
-	InstallConfigDoc.Description = ""
+	InstallConfigDoc.Comments[encoder.LineComment] = "InstallConfig represents the installation options for preparing a node."
+	InstallConfigDoc.Description = "InstallConfig represents the installation options for preparing a node."
 
 	InstallConfigDoc.AddExample("MachineInstall config usage example.", machineInstallExample)
 	InstallConfigDoc.AppearsIn = []encoder.Appearance{
@@ -448,14 +454,14 @@ func init() {
 	InstallConfigDoc.Fields[1].Description = "Allows for supplying extra kernel args via the bootloader."
 	InstallConfigDoc.Fields[1].Comments[encoder.LineComment] = "Allows for supplying extra kernel args via the bootloader."
 
-	InstallConfigDoc.Fields[1].AddExample("", []string{"a=b"})
+	InstallConfigDoc.Fields[1].AddExample("", []string{"talos.platform=metal", "reboot=k"})
 	InstallConfigDoc.Fields[2].Name = "image"
 	InstallConfigDoc.Fields[2].Type = "string"
 	InstallConfigDoc.Fields[2].Note = ""
-	InstallConfigDoc.Fields[2].Description = "Allows for supplying the image used to perform the installation."
+	InstallConfigDoc.Fields[2].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/talos-systems/talos/releases)."
 	InstallConfigDoc.Fields[2].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
 
-	InstallConfigDoc.Fields[2].AddExample("", "docker.io/<org>/<image>:<tag>")
+	InstallConfigDoc.Fields[2].AddExample("", "ghcr.io/talos-systems/installer:latest")
 	InstallConfigDoc.Fields[3].Name = "bootloader"
 	InstallConfigDoc.Fields[3].Type = "bool"
 	InstallConfigDoc.Fields[3].Note = ""
@@ -480,8 +486,8 @@ func init() {
 	}
 
 	TimeConfigDoc.Type = "TimeConfig"
-	TimeConfigDoc.Comments[encoder.HeadComment] = ""
-	TimeConfigDoc.Description = ""
+	TimeConfigDoc.Comments[encoder.LineComment] = "TimeConfig represents the options for configuring time on a machine."
+	TimeConfigDoc.Description = "TimeConfig represents the options for configuring time on a machine."
 
 	TimeConfigDoc.AddExample("Example configuration for cloudflare ntp server.", machineTimeExample)
 	TimeConfigDoc.AppearsIn = []encoder.Appearance{
@@ -503,8 +509,8 @@ func init() {
 	TimeConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies time (NTP) servers to use for setting the system time."
 
 	RegistriesConfigDoc.Type = "RegistriesConfig"
-	RegistriesConfigDoc.Comments[encoder.HeadComment] = ""
-	RegistriesConfigDoc.Description = ""
+	RegistriesConfigDoc.Comments[encoder.LineComment] = "RegistriesConfig represents the image pull options."
+	RegistriesConfigDoc.Description = "RegistriesConfig represents the image pull options."
 
 	RegistriesConfigDoc.AddExample("", machineConfigRegistriesExample)
 	RegistriesConfigDoc.AppearsIn = []encoder.Appearance{
@@ -530,8 +536,8 @@ func init() {
 	RegistriesConfigDoc.Fields[1].AddExample("", machineConfigRegistryConfigExample)
 
 	PodCheckpointerDoc.Type = "PodCheckpointer"
-	PodCheckpointerDoc.Comments[encoder.HeadComment] = ""
-	PodCheckpointerDoc.Description = ""
+	PodCheckpointerDoc.Comments[encoder.LineComment] = "PodCheckpointer represents the pod-checkpointer config values."
+	PodCheckpointerDoc.Description = "PodCheckpointer represents the pod-checkpointer config values."
 
 	PodCheckpointerDoc.AddExample("", clusterPodCheckpointerExample)
 	PodCheckpointerDoc.AppearsIn = []encoder.Appearance{
@@ -548,8 +554,8 @@ func init() {
 	PodCheckpointerDoc.Fields[0].Comments[encoder.LineComment] = "The `image` field is an override to the default pod-checkpointer image."
 
 	CoreDNSDoc.Type = "CoreDNS"
-	CoreDNSDoc.Comments[encoder.HeadComment] = ""
-	CoreDNSDoc.Description = ""
+	CoreDNSDoc.Comments[encoder.LineComment] = "CoreDNS represents the CoreDNS config values."
+	CoreDNSDoc.Description = "CoreDNS represents the CoreDNS config values."
 
 	CoreDNSDoc.AddExample("", clusterCoreDNSExample)
 	CoreDNSDoc.AppearsIn = []encoder.Appearance{
@@ -566,10 +572,12 @@ func init() {
 	CoreDNSDoc.Fields[0].Comments[encoder.LineComment] = "The `image` field is an override to the default coredns image."
 
 	EndpointDoc.Type = "Endpoint"
-	EndpointDoc.Comments[encoder.HeadComment] = ""
-	EndpointDoc.Description = ""
+	EndpointDoc.Comments[encoder.LineComment] = "Endpoint represents the endpoint URL parsed out of the machine config."
+	EndpointDoc.Description = "Endpoint represents the endpoint URL parsed out of the machine config."
 
-	EndpointDoc.AddExample("", "https://1.2.3.4:443")
+	EndpointDoc.AddExample("", "https://1.2.3.4:6443")
+
+	EndpointDoc.AddExample("", "https://cluster1.internal:6443")
 	EndpointDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "ControlPlaneConfig",
@@ -579,8 +587,8 @@ func init() {
 	EndpointDoc.Fields = make([]encoder.Doc, 0)
 
 	ControlPlaneConfigDoc.Type = "ControlPlaneConfig"
-	ControlPlaneConfigDoc.Comments[encoder.HeadComment] = ""
-	ControlPlaneConfigDoc.Description = ""
+	ControlPlaneConfigDoc.Comments[encoder.LineComment] = "ControlPlaneConfig represents the control plane configuration options."
+	ControlPlaneConfigDoc.Description = "ControlPlaneConfig represents the control plane configuration options."
 
 	ControlPlaneConfigDoc.AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample)
 	ControlPlaneConfigDoc.AppearsIn = []encoder.Appearance{
@@ -596,7 +604,9 @@ func init() {
 	ControlPlaneConfigDoc.Fields[0].Description = "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number."
 	ControlPlaneConfigDoc.Fields[0].Comments[encoder.LineComment] = "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname."
 
-	ControlPlaneConfigDoc.Fields[0].AddExample("", "https://1.2.3.4:443")
+	ControlPlaneConfigDoc.Fields[0].AddExample("", "https://1.2.3.4:6443")
+
+	ControlPlaneConfigDoc.Fields[0].AddExample("", "https://cluster1.internal:6443")
 	ControlPlaneConfigDoc.Fields[1].Name = "localAPIServerPort"
 	ControlPlaneConfigDoc.Fields[1].Type = "int"
 	ControlPlaneConfigDoc.Fields[1].Note = ""
@@ -604,8 +614,8 @@ func init() {
 	ControlPlaneConfigDoc.Fields[1].Comments[encoder.LineComment] = "The port that the API server listens on internally."
 
 	APIServerConfigDoc.Type = "APIServerConfig"
-	APIServerConfigDoc.Comments[encoder.HeadComment] = ""
-	APIServerConfigDoc.Description = ""
+	APIServerConfigDoc.Comments[encoder.LineComment] = "APIServerConfig represents the kube apiserver configuration options."
+	APIServerConfigDoc.Description = "APIServerConfig represents the kube apiserver configuration options."
 
 	APIServerConfigDoc.AddExample("", clusterAPIServerExample)
 	APIServerConfigDoc.AppearsIn = []encoder.Appearance{
@@ -632,8 +642,8 @@ func init() {
 	APIServerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
 
 	ControllerManagerConfigDoc.Type = "ControllerManagerConfig"
-	ControllerManagerConfigDoc.Comments[encoder.HeadComment] = ""
-	ControllerManagerConfigDoc.Description = ""
+	ControllerManagerConfigDoc.Comments[encoder.LineComment] = "ControllerManagerConfig represents the kube controller manager configuration options."
+	ControllerManagerConfigDoc.Description = "ControllerManagerConfig represents the kube controller manager configuration options."
 
 	ControllerManagerConfigDoc.AddExample("", clusterControllerManagerExample)
 	ControllerManagerConfigDoc.AppearsIn = []encoder.Appearance{
@@ -655,8 +665,8 @@ func init() {
 	ControllerManagerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the controller manager."
 
 	ProxyConfigDoc.Type = "ProxyConfig"
-	ProxyConfigDoc.Comments[encoder.HeadComment] = ""
-	ProxyConfigDoc.Description = ""
+	ProxyConfigDoc.Comments[encoder.LineComment] = "ProxyConfig represents the kube proxy configuration options."
+	ProxyConfigDoc.Description = "ProxyConfig represents the kube proxy configuration options."
 
 	ProxyConfigDoc.AddExample("", clusterProxyExample)
 	ProxyConfigDoc.AppearsIn = []encoder.Appearance{
@@ -683,8 +693,8 @@ func init() {
 	ProxyConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to kube-proxy."
 
 	SchedulerConfigDoc.Type = "SchedulerConfig"
-	SchedulerConfigDoc.Comments[encoder.HeadComment] = ""
-	SchedulerConfigDoc.Description = ""
+	SchedulerConfigDoc.Comments[encoder.LineComment] = "SchedulerConfig represents the kube scheduler configuration options."
+	SchedulerConfigDoc.Description = "SchedulerConfig represents the kube scheduler configuration options."
 
 	SchedulerConfigDoc.AddExample("", clusterSchedulerConfig)
 	SchedulerConfigDoc.AppearsIn = []encoder.Appearance{
@@ -706,8 +716,8 @@ func init() {
 	SchedulerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the scheduler."
 
 	EtcdConfigDoc.Type = "EtcdConfig"
-	EtcdConfigDoc.Comments[encoder.HeadComment] = ""
-	EtcdConfigDoc.Description = ""
+	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."
+	EtcdConfigDoc.Description = "EtcdConfig represents the etcd configuration options."
 
 	EtcdConfigDoc.AddExample("", clusterEtcdConfig)
 	EtcdConfigDoc.AppearsIn = []encoder.Appearance{
@@ -736,8 +746,8 @@ func init() {
 	EtcdConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to etcd."
 
 	ClusterNetworkConfigDoc.Type = "ClusterNetworkConfig"
-	ClusterNetworkConfigDoc.Comments[encoder.HeadComment] = ""
-	ClusterNetworkConfigDoc.Description = ""
+	ClusterNetworkConfigDoc.Comments[encoder.LineComment] = "ClusterNetworkConfig represents kube networking configuration options."
+	ClusterNetworkConfigDoc.Description = "ClusterNetworkConfig represents kube networking configuration options."
 
 	ClusterNetworkConfigDoc.AddExample("Configuring with flannel CNI and setting up subnets.", clusterNetworkExample)
 	ClusterNetworkConfigDoc.AppearsIn = []encoder.Appearance{
@@ -777,8 +787,8 @@ func init() {
 	ClusterNetworkConfigDoc.Fields[3].AddExample("", []string{"10.96.0.0/12"})
 
 	CNIConfigDoc.Type = "CNIConfig"
-	CNIConfigDoc.Comments[encoder.HeadComment] = ""
-	CNIConfigDoc.Description = ""
+	CNIConfigDoc.Comments[encoder.LineComment] = "CNIConfig represents the CNI configuration options."
+	CNIConfigDoc.Description = "CNIConfig represents the CNI configuration options."
 
 	CNIConfigDoc.AddExample("", clusterCustomCNIExample)
 	CNIConfigDoc.AppearsIn = []encoder.Appearance{
@@ -800,8 +810,8 @@ func init() {
 	CNIConfigDoc.Fields[1].Comments[encoder.LineComment] = "URLs containing manifests to apply for the CNI."
 
 	AdminKubeconfigConfigDoc.Type = "AdminKubeconfigConfig"
-	AdminKubeconfigConfigDoc.Comments[encoder.HeadComment] = ""
-	AdminKubeconfigConfigDoc.Description = ""
+	AdminKubeconfigConfigDoc.Comments[encoder.LineComment] = "AdminKubeconfigConfig contains admin kubeconfig settings."
+	AdminKubeconfigConfigDoc.Description = "AdminKubeconfigConfig contains admin kubeconfig settings."
 
 	AdminKubeconfigConfigDoc.AddExample("", clusterAdminKubeconfigExample)
 	AdminKubeconfigConfigDoc.AppearsIn = []encoder.Appearance{
@@ -818,8 +828,8 @@ func init() {
 	AdminKubeconfigConfigDoc.Fields[0].Comments[encoder.LineComment] = "Admin kubeconfig certificate lifetime (default is 1 year)."
 
 	MachineDiskDoc.Type = "MachineDisk"
-	MachineDiskDoc.Comments[encoder.HeadComment] = ""
-	MachineDiskDoc.Description = ""
+	MachineDiskDoc.Comments[encoder.LineComment] = "MachineDisk represents the options available for partitioning, formatting, and"
+	MachineDiskDoc.Description = "MachineDisk represents the options available for partitioning, formatting, and\nmounting extra disks.\n"
 
 	MachineDiskDoc.AddExample("MachineDisks list example.", machineDisksExample)
 	MachineDiskDoc.AppearsIn = []encoder.Appearance{
@@ -841,8 +851,8 @@ func init() {
 	MachineDiskDoc.Fields[1].Comments[encoder.LineComment] = "A list of partitions to create on the disk."
 
 	DiskPartitionDoc.Type = "DiskPartition"
-	DiskPartitionDoc.Comments[encoder.HeadComment] = ""
-	DiskPartitionDoc.Description = ""
+	DiskPartitionDoc.Comments[encoder.LineComment] = "DiskPartition represents the options for a disk partition."
+	DiskPartitionDoc.Description = "DiskPartition represents the options for a disk partition."
 	DiskPartitionDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "MachineDisk",
@@ -866,8 +876,8 @@ func init() {
 	DiskPartitionDoc.Fields[1].Comments[encoder.LineComment] = "Where to mount the partition."
 
 	MachineFileDoc.Type = "MachineFile"
-	MachineFileDoc.Comments[encoder.HeadComment] = ""
-	MachineFileDoc.Description = ""
+	MachineFileDoc.Comments[encoder.LineComment] = "MachineFile represents a file to write to disk."
+	MachineFileDoc.Description = "MachineFile represents a file to write to disk."
 
 	MachineFileDoc.AddExample("MachineFiles usage example.", machineFilesExample)
 	MachineFileDoc.AppearsIn = []encoder.Appearance{
@@ -904,8 +914,8 @@ func init() {
 	}
 
 	ExtraHostDoc.Type = "ExtraHost"
-	ExtraHostDoc.Comments[encoder.HeadComment] = ""
-	ExtraHostDoc.Description = ""
+	ExtraHostDoc.Comments[encoder.LineComment] = "ExtraHost represents a host entry in /etc/hosts."
+	ExtraHostDoc.Description = "ExtraHost represents a host entry in /etc/hosts."
 
 	ExtraHostDoc.AddExample("", networkConfigExtraHostsExample)
 	ExtraHostDoc.AppearsIn = []encoder.Appearance{
@@ -927,8 +937,8 @@ func init() {
 	ExtraHostDoc.Fields[1].Comments[encoder.LineComment] = "The host alias."
 
 	DeviceDoc.Type = "Device"
-	DeviceDoc.Comments[encoder.HeadComment] = ""
-	DeviceDoc.Description = ""
+	DeviceDoc.Comments[encoder.LineComment] = "Device represents a network interface."
+	DeviceDoc.Description = "Device represents a network interface."
 
 	DeviceDoc.AddExample("", machineNetworkConfigExample.NetworkInterfaces)
 	DeviceDoc.AppearsIn = []encoder.Appearance{
@@ -1002,8 +1012,8 @@ func init() {
 	DeviceDoc.Fields[9].AddExample("", networkConfigDHCPOptionsExample)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
-	DHCPOptionsDoc.Comments[encoder.HeadComment] = ""
-	DHCPOptionsDoc.Description = ""
+	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
+	DHCPOptionsDoc.Description = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
 
 	DHCPOptionsDoc.AddExample("", networkConfigDHCPOptionsExample)
 	DHCPOptionsDoc.AppearsIn = []encoder.Appearance{
@@ -1020,8 +1030,8 @@ func init() {
 	DHCPOptionsDoc.Fields[0].Comments[encoder.LineComment] = "The priority of all routes received via DHCP."
 
 	BondDoc.Type = "Bond"
-	BondDoc.Comments[encoder.HeadComment] = ""
-	BondDoc.Description = ""
+	BondDoc.Comments[encoder.LineComment] = "Bond contains the various options for configuring a bonded interface."
+	BondDoc.Description = "Bond contains the various options for configuring a bonded interface."
 
 	BondDoc.AddExample("", networkConfigBondExample)
 	BondDoc.AppearsIn = []encoder.Appearance{
@@ -1168,8 +1178,8 @@ func init() {
 	BondDoc.Fields[26].Comments[encoder.LineComment] = "A bond option."
 
 	VlanDoc.Type = "Vlan"
-	VlanDoc.Comments[encoder.HeadComment] = ""
-	VlanDoc.Description = ""
+	VlanDoc.Comments[encoder.LineComment] = "Vlan represents vlan settings for a device."
+	VlanDoc.Description = "Vlan represents vlan settings for a device."
 	VlanDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Device",
@@ -1199,8 +1209,8 @@ func init() {
 	VlanDoc.Fields[3].Comments[encoder.LineComment] = "The VLAN's ID."
 
 	RouteDoc.Type = "Route"
-	RouteDoc.Comments[encoder.HeadComment] = ""
-	RouteDoc.Description = ""
+	RouteDoc.Comments[encoder.LineComment] = "Route represents a network route."
+	RouteDoc.Description = "Route represents a network route."
 
 	RouteDoc.AddExample("", networkConfigRoutesExample)
 	RouteDoc.AppearsIn = []encoder.Appearance{
@@ -1226,8 +1236,8 @@ func init() {
 	RouteDoc.Fields[1].Comments[encoder.LineComment] = "The route's gateway."
 
 	RegistryMirrorConfigDoc.Type = "RegistryMirrorConfig"
-	RegistryMirrorConfigDoc.Comments[encoder.HeadComment] = ""
-	RegistryMirrorConfigDoc.Description = ""
+	RegistryMirrorConfigDoc.Comments[encoder.LineComment] = "RegistryMirrorConfig represents mirror configuration for a registry."
+	RegistryMirrorConfigDoc.Description = "RegistryMirrorConfig represents mirror configuration for a registry."
 
 	RegistryMirrorConfigDoc.AddExample("", machineConfigRegistryMirrorsExample)
 	RegistryMirrorConfigDoc.AppearsIn = []encoder.Appearance{
@@ -1244,8 +1254,8 @@ func init() {
 	RegistryMirrorConfigDoc.Fields[0].Comments[encoder.LineComment] = "List of endpoints (URLs) for registry mirrors to use."
 
 	RegistryConfigDoc.Type = "RegistryConfig"
-	RegistryConfigDoc.Comments[encoder.HeadComment] = ""
-	RegistryConfigDoc.Description = ""
+	RegistryConfigDoc.Comments[encoder.LineComment] = "RegistryConfig specifies auth & TLS config per registry."
+	RegistryConfigDoc.Description = "RegistryConfig specifies auth & TLS config per registry."
 
 	RegistryConfigDoc.AddExample("", machineConfigRegistryConfigExample)
 	RegistryConfigDoc.AppearsIn = []encoder.Appearance{
@@ -1273,8 +1283,8 @@ func init() {
 	RegistryConfigDoc.Fields[1].AddExample("", machineConfigRegistryAuthConfigExample)
 
 	RegistryAuthConfigDoc.Type = "RegistryAuthConfig"
-	RegistryAuthConfigDoc.Comments[encoder.HeadComment] = ""
-	RegistryAuthConfigDoc.Description = ""
+	RegistryAuthConfigDoc.Comments[encoder.LineComment] = "RegistryAuthConfig specifies authentication configuration for a registry."
+	RegistryAuthConfigDoc.Description = "RegistryAuthConfig specifies authentication configuration for a registry."
 
 	RegistryAuthConfigDoc.AddExample("", machineConfigRegistryAuthConfigExample)
 	RegistryAuthConfigDoc.AppearsIn = []encoder.Appearance{
@@ -1306,8 +1316,8 @@ func init() {
 	RegistryAuthConfigDoc.Fields[3].Comments[encoder.LineComment] = "Optional registry authentication."
 
 	RegistryTLSConfigDoc.Type = "RegistryTLSConfig"
-	RegistryTLSConfigDoc.Comments[encoder.HeadComment] = ""
-	RegistryTLSConfigDoc.Description = ""
+	RegistryTLSConfigDoc.Comments[encoder.LineComment] = "RegistryTLSConfig specifies TLS config for HTTPS registries."
+	RegistryTLSConfigDoc.Description = "RegistryTLSConfig specifies TLS config for HTTPS registries."
 
 	RegistryTLSConfigDoc.AddExample("", machineConfigRegistryTLSConfigExample1)
 
