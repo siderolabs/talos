@@ -70,7 +70,7 @@ const (
 
 	stableK8sVersion  = "1.19.0"
 	nextK8sVersion    = "1.19.1"
-	currentK8sVersion = "1.19.3"
+	currentK8sVersion = "1.19.4"
 )
 
 var (
