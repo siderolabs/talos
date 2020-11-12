@@ -13,9 +13,11 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	storaged "github.com/talos-systems/talos/internal/app/storaged"
+	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // Server implements machine.MaintenanceService.
@@ -65,4 +67,20 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	s.cfgCh <- in.GetData()
 
 	return reply, nil
+}
+
+// GenerateConfiguration implements the machine.MachineServer interface.
+// nolint:gocyclo
+func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
+	if in.MachineConfig == nil {
+		return nil, fmt.Errorf("invalid generate request")
+	}
+
+	machineType := v1alpha1machine.Type(in.MachineConfig.Type)
+
+	if machineType == v1alpha1machine.TypeJoin {
+		return nil, fmt.Errorf("join config cannot be generated in the maintenance mode")
+	}
+
+	return configuration.Generate(ctx, in)
 }
