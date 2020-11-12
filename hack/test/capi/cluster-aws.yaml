@@ -57,7 +57,7 @@ kind: TalosControlPlane
 metadata:
   name: talos-e2e-{{TAG}}-aws-controlplane
 spec:
-  version: v1.19.3
+  version: v1.19.4
   replicas: 3
   infrastructureTemplate:
     kind: AWSMachineTemplate
@@ -111,7 +111,7 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: AWSMachineTemplate
         name: talos-e2e-{{TAG}}-aws-workers
-      version: 1.19.3
+      version: 1.19.4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: AWSMachineTemplate

@@ -163,7 +163,7 @@ const (
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.19.3"
+	DefaultKubernetesVersion = "1.19.4"
 
 	// KubeletImage is the enforced kubelet image to use.
 	KubeletImage = "ghcr.io/talos-systems/kubelet"
