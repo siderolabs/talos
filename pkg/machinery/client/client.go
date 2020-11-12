@@ -43,7 +43,7 @@ type Credentials struct {
 	Crt tls.Certificate
 }
 
-// Client implements the proto.OSClient interface. It serves as the
+// Client implements the proto.MachineServiceClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
 	options       *Options
@@ -358,12 +358,17 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 	return kubeconfig, err
 }
 
-// ApplyConfiguration implements proto.OSClient interface.
+// ApplyConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.ApplyConfigurationResponse, err error) {
 	return c.MachineClient.ApplyConfiguration(ctx, req, callOptions...)
 }
 
-// Stats implements the proto.OSClient interface.
+// GenerateConfiguration implements proto.MachineServiceClient interface.
+func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.GenerateConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateConfigurationResponse, err error) {
+	return c.MachineClient.GenerateConfiguration(ctx, req, callOptions...)
+}
+
+// Stats implements the proto.MachineServiceClient interface.
 func (c *Client) Stats(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *machineapi.StatsResponse, err error) {
 	resp, err = c.MachineClient.Stats(
 		ctx, &machineapi.StatsRequest{
@@ -380,7 +385,7 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 	return
 }
 
-// Containers implements the proto.OSClient interface.
+// Containers implements the proto.MachineServiceClient interface.
 func (c *Client) Containers(ctx context.Context, namespace string, driver common.ContainerDriver, callOptions ...grpc.CallOption) (resp *machineapi.ContainersResponse, err error) {
 	resp, err = c.MachineClient.Containers(
 		ctx,
@@ -398,7 +403,7 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 	return
 }
 
-// Restart implements the proto.OSClient interface.
+// Restart implements the proto.MachineServiceClient interface.
 func (c *Client) Restart(ctx context.Context, namespace string, driver common.ContainerDriver, id string, callOptions ...grpc.CallOption) (err error) {
 	resp, err := c.MachineClient.Restart(ctx, &machineapi.RestartRequest{
 		Id:        id,
@@ -413,7 +418,7 @@ func (c *Client) Restart(ctx context.Context, namespace string, driver common.Co
 	return
 }
 
-// Reset implements the proto.OSClient interface.
+// Reset implements the proto.MachineServiceClient interface.
 func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 	resp, err := c.MachineClient.Reset(ctx, &machineapi.ResetRequest{Graceful: graceful, Reboot: reboot})
 
@@ -424,7 +429,7 @@ func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 	return
 }
 
-// Reboot implements the proto.OSClient interface.
+// Reboot implements the proto.MachineServiceClient interface.
 func (c *Client) Reboot(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Reboot(ctx, &empty.Empty{})
 
@@ -435,7 +440,7 @@ func (c *Client) Reboot(ctx context.Context) (err error) {
 	return
 }
 
-// Recover implements the proto.OSClient interface.
+// Recover implements the proto.MachineServiceClient interface.
 func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_Source) (err error) {
 	resp, err := c.MachineClient.Recover(ctx, &machineapi.RecoverRequest{Source: source})
 
@@ -446,7 +451,7 @@ func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_S
 	return
 }
 
-// Rollback implements the proto.OSClient interface.
+// Rollback implements the proto.MachineServiceClient interface.
 func (c *Client) Rollback(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
 
@@ -457,7 +462,7 @@ func (c *Client) Rollback(ctx context.Context) (err error) {
 	return
 }
 
-// Bootstrap implements the proto.OSClient interface.
+// Bootstrap implements the proto.MachineServiceClient interface.
 func (c *Client) Bootstrap(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})
 
@@ -468,7 +473,7 @@ func (c *Client) Bootstrap(ctx context.Context) (err error) {
 	return
 }
 
-// Shutdown implements the proto.OSClient interface.
+// Shutdown implements the proto.MachineServiceClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Shutdown(ctx, &empty.Empty{})
 
@@ -479,7 +484,7 @@ func (c *Client) Shutdown(ctx context.Context) (err error) {
 	return
 }
 
-// Dmesg implements the proto.OSClient interface.
+// Dmesg implements the proto.MachineServiceClient interface.
 func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (machineapi.MachineService_DmesgClient, error) {
 	return c.MachineClient.Dmesg(ctx, &machineapi.DmesgRequest{
 		Follow: follow,
@@ -487,7 +492,7 @@ func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (machineapi.Machi
 	})
 }
 
-// Logs implements the proto.OSClient interface.
+// Logs implements the proto.MachineServiceClient interface.
 func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool, tailLines int32) (stream machineapi.MachineService_LogsClient, err error) {
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
 		Namespace: namespace,
@@ -500,7 +505,7 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver common.Conta
 	return
 }
 
-// Version implements the proto.OSClient interface.
+// Version implements the proto.MachineServiceClient interface.
 func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.VersionResponse, err error) {
 	resp, err = c.MachineClient.Version(
 		ctx,
@@ -530,7 +535,7 @@ func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (re
 	return
 }
 
-// Interfaces implements the proto.OSClient interface.
+// Interfaces implements the proto.MachineServiceClient interface.
 func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.InterfacesResponse, err error) {
 	resp, err = c.NetworkClient.Interfaces(
 		ctx,
@@ -545,7 +550,7 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 	return
 }
 
-// Processes implements the proto.OSClient interface.
+// Processes implements the proto.MachineServiceClient interface.
 func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ProcessesResponse, err error) {
 	resp, err = c.MachineClient.Processes(
 		ctx,
@@ -560,7 +565,7 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 	return
 }
 
-// Memory implements the proto.OSClient interface.
+// Memory implements the proto.MachineServiceClient interface.
 func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MemoryResponse, err error) {
 	resp, err = c.MachineClient.Memory(
 		ctx,
@@ -575,7 +580,7 @@ func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (re
 	return
 }
 
-// Mounts implements the proto.OSClient interface.
+// Mounts implements the proto.MachineServiceClient interface.
 func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MountsResponse, err error) {
 	resp, err = c.MachineClient.Mounts(
 		ctx,
@@ -590,17 +595,17 @@ func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (re
 	return
 }
 
-// LS implements the proto.OSClient interface.
+// LS implements the proto.MachineServiceClient interface.
 func (c *Client) LS(ctx context.Context, req *machineapi.ListRequest) (stream machineapi.MachineService_ListClient, err error) {
 	return c.MachineClient.List(ctx, req)
 }
 
-// DiskUsage implements the proto.OSClient interface.
+// DiskUsage implements the proto.MachineServiceClient interface.
 func (c *Client) DiskUsage(ctx context.Context, req *machineapi.DiskUsageRequest) (stream machineapi.MachineService_DiskUsageClient, err error) {
 	return c.MachineClient.DiskUsage(ctx, req)
 }
 
-// Copy implements the proto.OSClient interface.
+// Copy implements the proto.MachineServiceClient interface.
 func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
 	stream, err := c.MachineClient.Copy(ctx, &machineapi.CopyRequest{
 		RootPath: rootPath,
@@ -612,7 +617,7 @@ func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-ch
 	return ReadStream(stream)
 }
 
-// Upgrade initiates a Talos upgrade ... and implements the proto.OSClient
+// Upgrade initiates a Talos upgrade ... and implements the proto.MachineServiceClient
 // interface.
 func (c *Client) Upgrade(ctx context.Context, image string, preserve bool, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
 	resp, err = c.MachineClient.Upgrade(

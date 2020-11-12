@@ -28,6 +28,8 @@ service MachineService {
       returns (EtcdLeaveClusterResponse);
   rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
       returns (EtcdForfeitLeadershipResponse);
+  rpc GenerateConfiguration(GenerateConfigurationRequest)
+      returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
@@ -713,3 +715,54 @@ message EtcdMemberList {
   repeated string members = 2;
 }
 message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
+
+// rpc generateConfiguration
+
+message NetworkConfig {
+  string hostname = 1;
+}
+
+message InstallConfig {
+  string install_disk = 1;
+  string install_image = 2;
+}
+
+message MachineConfig {
+  enum MachineType {
+    TYPE_UNKNOWN = 0;
+    TYPE_INIT = 1;
+    TYPE_CONTROL_PLANE = 2;
+    TYPE_JOIN = 3;
+  };
+  MachineType type = 1;
+  InstallConfig install_config = 2;
+  NetworkConfig network_config = 3;
+  string kubernetes_version = 4;
+}
+
+message ControlPlaneConfig {
+  string endpoint = 1;
+}
+
+message ClusterNetworkConfig {
+  string dns_domain = 1;
+}
+
+message ClusterConfig {
+  string name = 1;
+  ControlPlaneConfig control_plane = 2;
+  ClusterNetworkConfig cluster_network = 3;
+}
+
+// GenerateConfigurationRequest describes a request to generate a new configuration
+// on a node.
+message GenerateConfigurationRequest {
+  string config_version = 1;
+  ClusterConfig cluster_config = 2;
+  MachineConfig machine_config = 3;
+}
+// GenerateConfiguration describes the response to a generate configuration request.
+message GenerateConfigurationResponse {
+  common.Metadata metadata = 1;
+  repeated bytes data = 2;
+}

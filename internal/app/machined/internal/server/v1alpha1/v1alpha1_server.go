@@ -36,6 +36,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
@@ -113,6 +114,12 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 
 	return reply, nil
+}
+
+// GenerateConfiguration implements the machine.MachineServer interface.
+// nolint:gocyclo
+func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
+	return configuration.Generate(ctx, in)
 }
 
 // Reboot implements the machine.MachineServer interface.
