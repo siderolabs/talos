@@ -46,11 +46,17 @@ var isoCmd = &cobra.Command{
 }
 
 func init() {
+	isoCmd.Flags().StringVar(&outputArg, "output", "/out", "The output path")
+	isoCmd.Flags().BoolVar(&tarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
 	rootCmd.AddCommand(isoCmd)
 }
 
 // nolint: gocyclo
 func runISOCmd() error {
+	if err := os.MkdirAll(outputArg, 0o777); err != nil {
+		return err
+	}
+
 	files := map[string]string{
 		"/usr/install/vmlinuz":      "/mnt/boot/vmlinuz",
 		"/usr/install/initramfs.xz": "/mnt/boot/initramfs.xz",
@@ -120,6 +126,12 @@ func runISOCmd() error {
 	_, err = io.Copy(to, from)
 	if err != nil {
 		return err
+	}
+
+	if tarToStdout {
+		if err := tarOutput(); err != nil {
+			return err
+		}
 	}
 
 	return nil

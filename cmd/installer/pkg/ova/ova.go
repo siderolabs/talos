@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -184,7 +185,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 		return err
 	}
 
-	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, "vmware.ova"), "-C", dir, name+".ovf", name+".mf", name+".vmdk"); err != nil {
+	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, fmt.Sprintf("vmware-%s.ova", runtime.GOARCH)), "-C", dir, name+".ovf", name+".mf", name+".vmdk"); err != nil {
 		return err
 	}
 
