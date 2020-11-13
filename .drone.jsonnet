@@ -215,8 +215,10 @@ local installer = Step("installer", depends_on=[initramfs], environment={"REGIST
 local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": local_registry, "PUSH": true});
 local lint = Step("lint", depends_on=[check_dirty]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
-local images = Step("images", depends_on=[installer], environment={"REGISTRY": local_registry});
-local iso = Step('iso', depends_on=[images], environment={"REGISTRY": local_registry});
+local images_amd64 = Step("images-amd64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry});
+local images_arm64 = Step("images-arm64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry});
+local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
@@ -295,8 +297,10 @@ local default_steps = [
   talos,
   lint,
   talosctl_cni_bundle,
-  images,
-  iso,
+  images_amd64,
+  images_arm64,
+  iso_amd64,
+  iso_arm64,
   unit_tests,
   unit_tests_race,
   coverage,
@@ -479,22 +483,28 @@ local release = {
     draft: true,
     note: '_out/RELEASE_NOTES.md',
     files: [
-      '_out/aws.tar.gz',
-      '_out/azure.tar.gz',
+      '_out/aws-amd64.tar.gz',
+      '_out/aws-arm64.tar.gz',
+      '_out/azure-amd64.tar.gz',
+      '_out/azure-arm64.tar.gz',
       '_out/boot-amd64.tar.gz',
       '_out/boot-arm64.tar.gz',
-      '_out/digital-ocean.tar.gz',
-      '_out/gcp.tar.gz',
+      '_out/digital-ocean-amd64.tar.gz',
+      '_out/digital-ocean-arm64.tar.gz',
+      '_out/gcp-amd64.tar.gz',
+      '_out/gcp-arm64.tar.gz',
       '_out/initramfs-amd64.xz',
       '_out/initramfs-arm64.xz',
       '_out/talos-amd64.iso',
+      '_out/talos-arm64.iso',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
       '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',
       '_out/talosctl-linux-amd64',
       '_out/talosctl-linux-arm64',
       '_out/talosctl-linux-armv7',
-      '_out/vmware.ova',
+      '_out/vmware-amd64.ova',
+      '_out/vmware-arm64.ova',
       '_out/vmlinuz-amd64',
       '_out/vmlinuz-arm64',
     ],
@@ -503,7 +513,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, iso.name, boot.name, talosctl_cni_bundle.name, images.name, push.name, release_notes.name]
+  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [

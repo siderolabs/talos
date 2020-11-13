@@ -19,9 +19,9 @@ function setup {
   # Login to azure
   az login --service-principal --username ${AZURE_CLIENT_ID} --password ${AZURE_CLIENT_SECRET} --tenant ${AZURE_TENANT_ID} > /dev/null
   set -x
-  
+
   # Untar image
-  tar -C ${TMP} -xf ${ARTIFACTS}/azure.tar.gz
+  tar -C ${TMP} -xf ${ARTIFACTS}/azure-amd64.tar.gz
 
   # Get connection string
   AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n ${AZURE_STORAGE_ACCOUNT} -g ${AZURE_GROUP} -o tsv)
