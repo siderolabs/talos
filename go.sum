@@ -824,10 +824,9 @@ github.com/talos-systems/go-loadbalancer v0.1.0 h1:MQFONvSjoleU8RrKq1O1Z8CyTCJGd
 github.com/talos-systems/go-loadbalancer v0.1.0/go.mod h1:D5Qjfz+29WVjONWECZvOkmaLsBb3f5YeWME0u/5HmIc=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45 h1:FND/LgzFHTBdJBOeZVzdO6B47kxQZvSIzb9AMIXYotg=
 github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
-github.com/talos-systems/go-retry v0.1.0 h1:O+OeZR54CQ1+ch99p/81Pqi5GqJH6LIu1MTN/N0vd78=
 github.com/talos-systems/go-retry v0.1.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
-github.com/talos-systems/go-retry v0.1.1-0.20200922131245-752f081252cf h1:JzyT28FxRDndO59tFKA1IyGb9uWpJX429PPAfjc0dVQ=
-github.com/talos-systems/go-retry v0.1.1-0.20200922131245-752f081252cf/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
+github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688 h1:U5wFGj5LXt/r+qfy1nGftQxJvEbg/lVJuasHKtk3K7s=
+github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e h1:uCp8BfH4Ky2R1XkOKA5pSZpeMMyt0AbH29PIrkoBlaM=
 github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e/go.mod h1:HxhrzAoTZ7ed5Z5VvtCvnCIrOxyXDS7V2B5hCetAMW8=
 github.com/talos-systems/grpc-proxy v0.2.0 h1:DN75bLfaW4xfhq0r0mwFRnfGhSB+HPhK1LNzuMEs9Pw=

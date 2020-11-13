@@ -19,6 +19,7 @@ import (
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	platformerrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -64,7 +65,9 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 		}
 
 		if val == "" {
-			return nil, fmt.Errorf("config is required, no value found for guestinfo: %q, %q", constants.VMwareGuestInfoConfigKey, constants.VMwareGuestInfoFallbackKey)
+			log.Printf("config is required, no value found for guestinfo: %q, %q", constants.VMwareGuestInfoConfigKey, constants.VMwareGuestInfoFallbackKey)
+
+			return nil, platformerrors.ErrNoConfigSource
 		}
 
 		b, err := base64.StdEncoding.DecodeString(val)

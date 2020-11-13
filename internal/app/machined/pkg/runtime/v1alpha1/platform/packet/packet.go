@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
@@ -78,7 +79,9 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 	// metadata about the instance from packet's metadata server
 	log.Printf("fetching machine config from: %q", PacketUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, PacketUserDataEndpoint)
+	machineConfigDl, err := download.Download(ctx, PacketUserDataEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 	if err != nil {
 		return nil, err
 	}
