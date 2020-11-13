@@ -134,7 +134,7 @@ doctl compute droplet create \
 
 ### Retrieve the `kubeconfig`
 
-To configure `talosctl` we will need the first controla plane node's IP:
+To configure `talosctl` we will need the first control plane node's IP:
 
 ```bash
 doctl compute droplet get --format PublicIPv4 <droplet ID>

@@ -5,8 +5,12 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"os"
 	"path/filepath"
+	stdruntime "runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -17,11 +21,15 @@ import (
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-var outputArg string
+var (
+	outputArg   string
+	tarToStdout bool
+)
 
 // imageCmd represents the image command.
 var imageCmd = &cobra.Command{
@@ -37,6 +45,7 @@ var imageCmd = &cobra.Command{
 
 func init() {
 	imageCmd.Flags().StringVar(&outputArg, "output", "/out", "The output path")
+	imageCmd.Flags().BoolVar(&tarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
 	rootCmd.AddCommand(imageCmd)
 }
 
@@ -44,6 +53,10 @@ func init() {
 func runImageCmd() (err error) {
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(outputArg, 0o777); err != nil {
 		return err
 	}
 
@@ -88,6 +101,12 @@ func runImageCmd() (err error) {
 		return err
 	}
 
+	if tarToStdout {
+		if err := tarOutput(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -100,7 +119,7 @@ func finalize(platform runtime.Platform, img string) (err error) {
 
 	switch platform.Name() {
 	case "aws":
-		if err = tar("aws.tar.gz", file, dir); err != nil {
+		if err = tar(fmt.Sprintf("aws-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
 			return err
 		}
 	case "azure":
@@ -110,15 +129,15 @@ func finalize(platform runtime.Platform, img string) (err error) {
 			return err
 		}
 
-		if err = tar("azure.tar.gz", file, dir); err != nil {
+		if err = tar(fmt.Sprintf("azure-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
 			return err
 		}
 	case "digital-ocean":
-		if err = tar("digital-ocean.tar.gz", file, dir); err != nil {
+		if err = tar(fmt.Sprintf("digital-ocean-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
 			return err
 		}
 	case "gcp":
-		if err = tar("gcp.tar.gz", file, dir); err != nil {
+		if err = tar(fmt.Sprintf("gcp-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
 			return err
 		}
 	case "vmware":
@@ -136,4 +155,8 @@ func tar(filename, src, dir string) error {
 	}
 
 	return nil
+}
+
+func tarOutput() error {
+	return archiver.TarGz(context.Background(), outputArg, os.Stdout)
 }
