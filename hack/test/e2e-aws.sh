@@ -12,7 +12,7 @@ function setup {
   mkdir -p ${TMP}
 
   # Untar image
-  tar -C ${TMP} -xf ${ARTIFACTS}/aws.tar.gz
+  tar -C ${TMP} -xf ${ARTIFACTS}/aws-amd64.tar.gz
 
   # Upload Image
   echo "uploading image to s3"

@@ -23,14 +23,14 @@ export REGION="us-central1"
 ### Create the Image
 
 First, download the Google Cloud image from a Talos [release](https://github.com/talos-systems/talos/releases).
-These images are called `gcp.tar.gz`.
+These images are called `gcp-$ARCH.tar.gz`.
 
 #### Upload the Image
 
 Once you have downloaded the image, you can upload it to your storage bucket with:
 
 ```bash
-gsutil cp /path/to/gcp.tar.gz gs://$STORAGE_BUCKET
+gsutil cp /path/to/gcp-amd64.tar.gz gs://$STORAGE_BUCKET
 ```
 
 #### Register the image
@@ -39,7 +39,7 @@ Now that the image is present in our bucket, we'll register it.
 
 ```bash
 gcloud compute images create talos \
- --source-uri=gs://$STORAGE_BUCKET/gcp.tar.gz \
+ --source-uri=gs://$STORAGE_BUCKET/gcp-amd64.tar.gz \
  --guest-os-features=VIRTIO_SCSI_MULTIQUEUE
 ```
 
