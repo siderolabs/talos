@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 )
 
@@ -40,7 +41,10 @@ func (g *GCP) Name() string {
 func (g *GCP) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", GCUserDataEndpoint)
 
-	return download.Download(ctx, GCUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}))
+	return download.Download(ctx, GCUserDataEndpoint,
+		download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}),
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Hostname implements the platform.Platform interface.

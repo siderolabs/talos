@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 )
 
@@ -39,7 +40,9 @@ func (d *DigitalOcean) Name() string {
 func (d *DigitalOcean) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", DigitalOceanUserDataEndpoint)
 
-	return download.Download(ctx, DigitalOceanUserDataEndpoint)
+	return download.Download(ctx, DigitalOceanUserDataEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Mode implements the platform.Platform interface.
@@ -104,6 +107,6 @@ func (d *DigitalOcean) ExternalIPs(ctx context.Context) (addrs []net.IP, err err
 // KernelArgs implements the runtime.Platform interface.
 func (d *DigitalOcean) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS0"),
+		procfs.NewParameter("console").Append("ttyS0").Append("tty0").Append("tty1"),
 	}
 }

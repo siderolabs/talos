@@ -10,7 +10,8 @@ If you need more information on Digital Ocean specifics, please see the [officia
 
 ### Create the Image
 
-First, download the Digital Ocean image from a Talos release.
+First, download the Digital Ocean image from a Talos release. Extract the archive to get the `disk.raw` file, compress it using
+`gzip` to `disk.raw.gz`.
 
 Using an upload method of your choice (`doctl` does not have Spaces support), upload the image to a space.
 Now, create an image using the URL of the uploaded image:
@@ -18,8 +19,8 @@ Now, create an image using the URL of the uploaded image:
 ```bash
 doctl compute image create \
     --region $REGION \
-    --image-name talos-digital-ocean-tutorial \
-    --image-url https://talos-tutorial.$REGION.digitaloceanspaces.com/digital-ocean.raw.gz \
+    --image-description talos-digital-ocean-tutorial \
+    --image-url https://talos-tutorial.$REGION.digitaloceanspaces.com/disk.raw.gz \
     Talos
 ```
 

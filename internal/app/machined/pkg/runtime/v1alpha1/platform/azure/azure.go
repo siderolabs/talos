@@ -57,6 +57,8 @@ func (a *Azure) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (a *Azure) Configuration(ctx context.Context) ([]byte, error) {
+	// TODO: support ErrNoConfigSource, requires handling of both CD-ROM & user-data sources
+	//       requires splitting `linuxAgent` into separate platform task which is called when node is up (or close to that)
 	// attempt to download from metadata endpoint
 	// disabled by default
 	log.Printf("fetching machine config from: %q", AzureUserDataEndpoint)

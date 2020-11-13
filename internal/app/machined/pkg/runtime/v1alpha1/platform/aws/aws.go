@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 )
 
@@ -142,7 +143,9 @@ func (a *AWS) Name() string {
 func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", AWSUserDataEndpoint)
 
-	return download.Download(ctx, AWSUserDataEndpoint)
+	return download.Download(ctx, AWSUserDataEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Mode implements the runtime.Platform interface.
