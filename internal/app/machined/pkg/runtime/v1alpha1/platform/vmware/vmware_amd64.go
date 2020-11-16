@@ -58,7 +58,14 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 		}
 
 		if val == "" {
-			return nil, fmt.Errorf("config is required, no value found for guestinfo: %q", constants.VMwareGuestInfoConfigKey)
+			val, err = config.String(constants.VMwareGuestInfoFallbackKey, "")
+			if err != nil {
+				return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoFallbackKey, err)
+			}
+		}
+
+		if val == "" {
+			return nil, fmt.Errorf("config is required, no value found for guestinfo: %q, %q", constants.VMwareGuestInfoConfigKey, constants.VMwareGuestInfoFallbackKey)
 		}
 
 		b, err := base64.StdEncoding.DecodeString(val)
