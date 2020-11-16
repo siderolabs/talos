@@ -7,7 +7,6 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
-	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -328,20 +326,7 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 		Action: machine.TaskEvent_STOP,
 	})
 
-	logger := &log.Logger{}
-
-	var machinedLog io.WriteCloser
-
-	machinedLog, err = c.Runtime().Logging().ServiceLog("machined").Writer()
-	if err != nil {
-		return err
-	}
-
-	defer machinedLog.Close() //nolint: errcheck
-
-	if err = kmsg.SetupLogger(logger, fmt.Sprintf("[talos] task %s (%s):", taskName, progress), machinedLog); err != nil {
-		return err
-	}
+	logger := log.New(log.Writer(), fmt.Sprintf("[talos] task %s (%s): ", taskName, progress), log.Flags())
 
 	err = task(context.TODO(), logger, c.r)
 
