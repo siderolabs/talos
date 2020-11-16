@@ -75,6 +75,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	switch r.State().Platform().Mode() { //nolint: exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
+			"logger",
+			SetupLogger,
+		).Append(
 			"systemRequirements",
 			WriteRequiredSysctlsForContainer,
 			SetupSystemDirectory,

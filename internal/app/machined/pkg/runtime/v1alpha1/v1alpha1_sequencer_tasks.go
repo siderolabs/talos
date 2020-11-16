@@ -66,13 +66,17 @@ import (
 // SetupLogger represents the SetupLogger task.
 func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if r.State().Platform().Mode() == runtime.ModeContainer {
-			return nil
-		}
-
 		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
 		if err != nil {
 			return err
+		}
+
+		if r.State().Platform().Mode() == runtime.ModeContainer {
+			// send all the logs to machinedLog as well, but skip /dev/kmsg logging
+			log.SetOutput(io.MultiWriter(log.Writer(), machinedLog))
+			log.SetPrefix("[talos] ")
+
+			return nil
 		}
 
 		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {

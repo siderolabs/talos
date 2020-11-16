@@ -76,7 +76,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	logger.Println("this machine is reachable at:")
 
 	for _, ip := range ips {
-		logger.Printf("\t%s\n", ip.String())
+		logger.Printf("\t%s", ip.String())
 	}
 
 	firstIP := "<IP>"
@@ -86,10 +86,13 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	}
 
 	logger.Println("server certificate fingerprint:")
-	logger.Printf("\t%s\n", certFingerprint)
+	logger.Printf("\t%s", certFingerprint)
 
+	logger.Println()
 	logger.Println("upload configuration using talosctl:")
-	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --cert-fingerprint '%s' --file <config.yaml>\n", firstIP, certFingerprint)
+	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --file <config.yaml>", firstIP)
+	logger.Println("optionally with node fingerprint check:")
+	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --cert-fingerprint '%s' --file <config.yaml>", firstIP, certFingerprint)
 
 	select {
 	case cfg := <-cfgCh:
