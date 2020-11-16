@@ -67,6 +67,11 @@ func FromString(p string) (c *Config, err error) {
 	return ReadFrom(bytes.NewReader([]byte(p)))
 }
 
+// FromBytes returns a config from []byte.
+func FromBytes(b []byte) (c *Config, err error) {
+	return ReadFrom(bytes.NewReader(b))
+}
+
 // ReadFrom reads a config from io.Reader.
 func ReadFrom(r io.Reader) (c *Config, err error) {
 	c = &Config{}
@@ -82,7 +87,7 @@ func ReadFrom(r io.Reader) (c *Config, err error) {
 
 // Save writes the config to disk.
 func (c *Config) Save(p string) (err error) {
-	configBytes, err := yaml.Marshal(c)
+	configBytes, err := c.Bytes()
 	if err != nil {
 		return
 	}
@@ -96,6 +101,11 @@ func (c *Config) Save(p string) (err error) {
 	}
 
 	return nil
+}
+
+// Bytes gets yaml encoded config data.
+func (c *Config) Bytes() ([]byte, error) {
+	return yaml.Marshal(c)
 }
 
 // Merge in additional contexts from another Config.

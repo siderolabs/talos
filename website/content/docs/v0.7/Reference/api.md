@@ -956,6 +956,7 @@ GenerateConfiguration describes the response to a generate configuration request
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | data | [bytes](#bytes) | repeated |  |
+| talosconfig | [bytes](#bytes) |  |  |
 
 
 

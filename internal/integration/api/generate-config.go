@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/images"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -78,17 +79,37 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 
 	suite.Require().NoError(err)
 
-	config, err := configloader.NewFromBytes(reply.GetData()[0])
+	data := reply.GetData()
+
+	config, err := configloader.NewFromBytes(data[0])
 
 	suite.Require().NoError(err)
 
-	suite.Require().EqualValues(config.Machine().Type(), request.MachineConfig.Type)
-	suite.Require().EqualValues(config.Version(), request.ConfigVersion)
-	suite.Require().EqualValues(config.Cluster().Name(), request.ClusterConfig.Name)
-	suite.Require().EqualValues(config.Cluster().Endpoint(), request.ClusterConfig.ControlPlane.Endpoint)
-	suite.Require().EqualValues(config.Cluster().Network().DNSDomain(), request.ClusterConfig.ClusterNetwork.DnsDomain)
-	suite.Require().EqualValues(config.Machine().Kubelet().Image(), fmt.Sprintf("%s:%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion))
-	suite.Require().EqualValues(config.Machine().Install().Disk(), request.MachineConfig.InstallConfig.InstallDisk)
-	suite.Require().EqualValues(config.Machine().Install().Image(), request.MachineConfig.InstallConfig.InstallImage)
-	suite.Require().EqualValues(config.Machine().Network().Hostname(), request.MachineConfig.NetworkConfig.Hostname)
+	suite.Require().EqualValues(request.MachineConfig.Type, config.Machine().Type())
+	suite.Require().EqualValues(request.ConfigVersion, config.Version())
+	suite.Require().EqualValues(request.ClusterConfig.Name, config.Cluster().Name())
+	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, config.Cluster().Endpoint().String())
+	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, config.Cluster().Network().DNSDomain())
+	suite.Require().EqualValues(fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion), config.Machine().Kubelet().Image())
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, config.Machine().Install().Disk())
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, config.Machine().Install().Image())
+	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
+
+	talosconfig, err := clientconfig.FromBytes(reply.Talosconfig)
+
+	suite.Require().NoError(err)
+
+	context := talosconfig.Contexts[request.ClusterConfig.Name]
+
+	suite.Require().NotNil(context)
+
+	suite.Require().NotEmpty(context.CA)
+	suite.Require().NotEmpty(context.Crt)
+	suite.Require().NotEmpty(context.Key)
+	suite.Require().Greater(len(context.Endpoints), 0)
+	suite.Require().EqualValues(context.Endpoints[0], config.Cluster().Endpoint().Hostname())
+}
+
+func init() {
+	allSuites = append(allSuites, new(GenerateConfigSuite))
 }
