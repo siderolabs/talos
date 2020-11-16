@@ -765,4 +765,5 @@ message GenerateConfigurationRequest {
 message GenerateConfigurationResponse {
   common.Metadata metadata = 1;
   repeated bytes data = 2;
+  bytes talosconfig = 3;
 }

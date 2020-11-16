@@ -7,6 +7,7 @@ package configuration
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -32,32 +33,33 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 		options := []generate.GenOption{}
 
 		if in.MachineConfig.NetworkConfig != nil {
-			generate.WithNetworkConfig(
+			options = append(options, generate.WithNetworkConfig(
 				&v1alpha1.NetworkConfig{
 					NetworkHostname: in.MachineConfig.NetworkConfig.Hostname,
 				},
-			)
+			))
 		}
 
 		if in.MachineConfig.InstallConfig != nil {
 			if in.MachineConfig.InstallConfig.InstallDisk != "" {
-				generate.WithInstallDisk(in.MachineConfig.InstallConfig.InstallDisk)
+				options = append(options, generate.WithInstallDisk(in.MachineConfig.InstallConfig.InstallDisk))
 			}
 
 			if in.MachineConfig.InstallConfig.InstallImage != "" {
-				generate.WithInstallImage(in.MachineConfig.InstallConfig.InstallImage)
+				options = append(options, generate.WithInstallImage(in.MachineConfig.InstallConfig.InstallImage))
 			}
 		}
 
 		if in.ClusterConfig.ClusterNetwork != nil {
 			if in.ClusterConfig.ClusterNetwork.DnsDomain != "" {
-				generate.WithDNSDomain(in.ClusterConfig.ClusterNetwork.DnsDomain)
+				options = append(options, generate.WithDNSDomain(in.ClusterConfig.ClusterNetwork.DnsDomain))
 			}
 		}
 
 		var (
-			input    *generate.Input
-			cfgBytes []byte
+			input         *generate.Input
+			cfgBytes      []byte
+			taloscfgBytes []byte
 		)
 
 		input, err = generate.NewInput(
@@ -86,7 +88,30 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			return nil, err
 		}
 
-		reply.Data = [][]byte{cfgBytes}
+		talosconfig, err := generate.Talosconfig(input, options...)
+		if err != nil {
+			return nil, err
+		}
+
+		endpoint, err := url.Parse(in.ClusterConfig.ControlPlane.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		talosconfig.Contexts[talosconfig.Context].Endpoints = []string{
+			endpoint.Hostname(),
+		}
+
+		taloscfgBytes, err = talosconfig.Bytes()
+
+		if err != nil {
+			return nil, err
+		}
+
+		reply = &machine.GenerateConfigurationResponse{
+			Data:        [][]byte{cfgBytes},
+			Talosconfig: taloscfgBytes,
+		}
 	default:
 		return nil, fmt.Errorf("unsupported config version %s", in.ConfigVersion)
 	}
