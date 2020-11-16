@@ -6,6 +6,7 @@ package config
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -101,12 +102,32 @@ func (c *Config) Save(p string) (err error) {
 //
 // Current context is overridden from passed in config.
 func (c *Config) Merge(cfg *Config) {
+	mappedContexts := map[string]string{}
+
 	for name, ctx := range cfg.Contexts {
-		c.Contexts[name] = ctx
+		mergedName := name
+
+		if _, exists := c.Contexts[mergedName]; exists {
+			for i := 1; ; i++ {
+				mergedName = fmt.Sprintf("%s-%d", name, i)
+
+				if _, exists := c.Contexts[mergedName]; !exists {
+					break
+				}
+			}
+		}
+
+		mappedContexts[name] = mergedName
+
+		if name != mergedName {
+			fmt.Printf("renamed talosconfig context %q -> %q\n", name, mergedName)
+		}
+
+		c.Contexts[mergedName] = ctx
 	}
 
 	if cfg.Context != "" {
-		c.Context = cfg.Context
+		c.Context = mappedContexts[cfg.Context]
 	}
 }
 
