@@ -234,6 +234,9 @@ const (
 	// VMwareGuestInfoConfigKey is the guestinfo key used to provide a config file.
 	VMwareGuestInfoConfigKey = "talos.config"
 
+	// VMwareGuestInfoFallbackKey is the fallback guestinfo key used to provide a config file.
+	VMwareGuestInfoFallbackKey = "userdata"
+
 	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
 	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"
 
