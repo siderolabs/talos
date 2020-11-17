@@ -21,6 +21,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+const dhcpReceivedRouteMetric uint32 = 1024
+
 // DHCP implements the Addressing interface.
 type DHCP struct {
 	Ack         *dhcpv4.DHCPv4
@@ -116,26 +118,51 @@ func (d *DHCP) Valid() bool {
 //   If the DHCP server returns both a Classless Static Routes option and
 //   a Router option, the DHCP client MUST ignore the Router option.
 func (d *DHCP) Routes() (routes []*Route) {
+	metric := dhcpReceivedRouteMetric
+
+	if d.DHCPOptions != nil && d.DHCPOptions.RouteMetric() != 0 {
+		metric = d.DHCPOptions.RouteMetric()
+	}
+
 	defRoute := &net.IPNet{
 		IP:   net.IPv4zero,
 		Mask: net.IPv4Mask(0, 0, 0, 0),
 	}
 
 	for _, router := range d.Ack.Router() {
-		routes = append(routes, &Route{Router: router, Dest: defRoute})
+		routes = append(routes, &Route{
+			Destination: defRoute,
+			Gateway:     router,
+			Metric:      metric,
+		})
 	}
 
 	// overwrite router option if classless routes were provided.
 	if len(d.Ack.ClasslessStaticRoute()) > 0 {
-		routes = d.Ack.ClasslessStaticRoute()
+		routes = []*Route{}
+
+		for _, dhcpRoute := range d.Ack.ClasslessStaticRoute() {
+			routes = append(routes, &Route{
+				Destination: dhcpRoute.Dest,
+				Gateway:     dhcpRoute.Router,
+				Metric:      metric,
+			})
+		}
 	}
 
 	// append any routes that were provided in config
 	for _, route := range d.RouteList {
-		// nolint: errcheck
-		_, ipnet, _ := net.ParseCIDR(route.Network())
+		_, ipnet, err := net.ParseCIDR(route.Network())
+		if err != nil {
+			// TODO: we should at least log this failure
+			continue
+		}
 
-		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway())})
+		routes = append(routes, &Route{
+			Destination: ipnet,
+			Gateway:     net.ParseIP(route.Gateway()),
+			Metric:      staticRouteDefaultMetric,
+		})
 	}
 
 	return routes

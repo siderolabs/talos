@@ -8,8 +8,6 @@ import (
 	"context"
 	"net"
 	"time"
-
-	"github.com/insomniacslk/dhcp/dhcpv4"
 )
 
 // Addressing provides an interface for abstracting the underlying network
@@ -32,4 +30,19 @@ type Addressing interface {
 }
 
 // Route is a representation of a network route.
-type Route = dhcpv4.Route
+type Route struct {
+	// Destination is the destination network this route provides.
+	Destination *net.IPNet
+
+	// Gateway is the router through which the destination may be reached.
+	// This option is exclusive of Interface
+	Gateway net.IP
+
+	// Interface indicates the route is an interface route, and traffic destinted for the Gateway should be sent through the given network interface.
+	// This option is exclusive of Gateway.
+	Interface string
+
+	// Metric indicates the "distance" to the destination through this route.
+	// This is an integer which allows the control of priority in the case of multiple routes to the same destination.
+	Metric uint32
+}
