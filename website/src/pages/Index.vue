@@ -27,7 +27,7 @@
                 laptop inside Docker.
               </p>
               <div class="flex-1 text-center pb-4 m-0">
-                <a href="/docs/v0.6/introduction/quickstart">
+                <a href="/docs/v0.7/introduction/quickstart">
                   <button class="teal-cta-button">Try it now</button></a
                 >
               </div>
