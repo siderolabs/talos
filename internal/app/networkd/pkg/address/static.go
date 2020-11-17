@@ -14,6 +14,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
+const staticRouteDefaultMetric uint32 = 10
+
 // Static implements the Addressing interface.
 type Static struct {
 	CIDR        string
@@ -98,10 +100,23 @@ func (s *Static) Scope() uint8 {
 // TODO: do we need to be explicit on route vs gateway?
 func (s *Static) Routes() (routes []*Route) {
 	for _, route := range s.RouteList {
-		// nolint: errcheck
-		_, ipnet, _ := net.ParseCIDR(route.Network())
+		_, ipnet, err := net.ParseCIDR(route.Network())
+		if err != nil {
+			// TODO: we should at least log the error
+			continue
+		}
 
-		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway())})
+		metric := staticRouteDefaultMetric
+
+		if route.Metric() != 0 {
+			metric = route.Metric()
+		}
+
+		routes = append(routes, &Route{
+			Destination: ipnet,
+			Gateway:     net.ParseIP(route.Gateway()),
+			Metric:      metric,
+		})
 	}
 
 	return routes

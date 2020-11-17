@@ -378,38 +378,26 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 	// Add any routes
 	for _, r := range method.Routes() {
 		// If gateway/router is 0.0.0.0 we'll set to nil so route scope decision will be correct
-		gw := r.Router
-		if net.IPv4zero.Equal(gw) {
+		gw := r.Gateway
+		if net.IPv4zero.Equal(gw) || net.IPv6zero.Equal(gw) {
 			gw = nil
 		}
 
 		src := method.Address()
-		// if destination is the ipv6 route,and gateway is LL do not pass a src address to set the default geteway
-		if net.IPv6zero.Equal(r.Dest.IP) && gw.IsLinkLocalUnicast() {
+		// if destination is the ipv6 default route,and gateway is LL do not pass a src address to set the default geteway
+		if net.IPv6zero.Equal(r.Destination.IP) && gw.IsLinkLocalUnicast() {
 			src = nil
 		}
 
 		attr := rtnetlink.RouteAttributes{
-			Dst:      r.Dest.IP,
-			OutIface: uint32(method.Link().Index),
+			Priority: r.Metric,
 		}
 
 		if gw != nil {
 			attr.Gateway = gw
 		}
 
-		// Set DHCP specific options
-		if dhcpObj, ok := method.(*address.DHCP); ok {
-			if dhcpObj.DHCPOptions != nil {
-				attr.Priority = dhcpObj.DHCPOptions.RouteMetric()
-			}
-
-			if attr.Priority == uint32(0) {
-				attr.Priority = uint32(1024)
-			}
-		}
-
-		err = n.rtnlConn.RouteAdd(method.Link(), *r.Dest, gw, rtnl.WithRouteSrc(src), rtnl.WithRouteAttrs(attr))
+		err = n.rtnlConn.RouteAdd(method.Link(), *r.Destination, gw, rtnl.WithRouteSrc(src), rtnl.WithRouteAttrs(attr))
 		if err != nil {
 			return err
 		}

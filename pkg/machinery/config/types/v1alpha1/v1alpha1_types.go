@@ -134,6 +134,7 @@ var (
 					{
 						RouteNetwork: "0.0.0.0/0",
 						RouteGateway: "192.168.2.1",
+						RouteMetric:  1024,
 					},
 				},
 			},
@@ -1214,6 +1215,8 @@ type Route struct {
 	RouteNetwork string `yaml:"network"`
 	//   description: The route's gateway.
 	RouteGateway string `yaml:"gateway"`
+	//   description: The optional metric for the route.
+	RouteMetric uint32 `yaml:"metric,omitempty"`
 }
 
 // RegistryMirrorConfig represents mirror configuration for a registry.

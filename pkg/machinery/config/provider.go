@@ -166,6 +166,7 @@ type Vlan interface {
 type Route interface {
 	Network() string
 	Gateway() string
+	Metric() uint32
 }
 
 // Time defines the requirements for a config that pertains to time related

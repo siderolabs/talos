@@ -330,6 +330,7 @@ network:
           routes:
             - network: 0.0.0.0/0 # The route's network.
               gateway: 192.168.2.1 # The route's gateway.
+              metric: 1024 # The optional metric for the route.
           mtu: 1500 # The interface's MTU.
 
           # # Bond specific options.
@@ -1228,6 +1229,7 @@ interfaces:
       routes:
         - network: 0.0.0.0/0 # The route's network.
           gateway: 192.168.2.1 # The route's gateway.
+          metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
       # # Bond specific options.
@@ -1298,6 +1300,7 @@ interfaces:
       routes:
         - network: 0.0.0.0/0 # The route's network.
           gateway: 192.168.2.1 # The route's gateway.
+          metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
       # # Bond specific options.
@@ -2633,6 +2636,7 @@ Appears in:
   routes:
     - network: 0.0.0.0/0 # The route's network.
       gateway: 192.168.2.1 # The route's gateway.
+      metric: 1024 # The optional metric for the route.
   mtu: 1500 # The interface's MTU.
 
   # # Bond specific options.
@@ -3420,6 +3424,19 @@ The route's network.
 <div class="dt">
 
 The route's gateway.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>metric</code>  <i>uint32</i>
+
+</div>
+<div class="dt">
+
+The optional metric for the route.
 
 </div>
 
