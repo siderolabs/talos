@@ -4,6 +4,14 @@ title: QEMU
 
 In this guide we will create a Kubernetes cluster using QEMU.
 
+<img src="/images/qemu.png">
+
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/UzQ8Hl_TfF8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Requirements
 
 - Linux
