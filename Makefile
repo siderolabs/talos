@@ -20,10 +20,10 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.19.4/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 CLUSTERCTL_VERSION ?= 0.3.7
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
-SONOBUOY_VERSION ?= 0.18.4
+SONOBUOY_VERSION ?= 0.19.0
 SONOBUOY_URL ?= https://github.com/heptio/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
-RELEASES ?= v0.6.3 v0.7.0-alpha.3
+RELEASES ?= v0.6.3 v0.7.0
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 

@@ -65,12 +65,12 @@ type upgradeSpec struct {
 }
 
 const (
-	stableVersion = "v0.6.3"
-	nextVersion   = "v0.7.0-alpha.3"
+	previousRelease = "v0.6.3"
+	stableRelease   = "v0.7.0"
 
-	stableK8sVersion  = "1.19.0"
-	nextK8sVersion    = "1.19.1"
-	currentK8sVersion = "1.19.4"
+	previousK8sVersion = "1.19.0"
+	stableK8sVersion   = "1.19.4"
+	currentK8sVersion  = "1.19.4"
 )
 
 var (
@@ -83,7 +83,6 @@ const (
 	defaultCNICacheDir = "/var/lib/cni"
 )
 
-//nolint: unparam
 func trimVersion(version string) string {
 	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
 	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
@@ -92,34 +91,33 @@ func trimVersion(version string) string {
 // upgradeBetweenTwoLastReleases upgrades between two last releases of Talos.
 func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", stableVersion, nextVersion),
+		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
 
-		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
-		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", stableVersion),
-		SourceVersion:        stableVersion,
-		SourceK8sVersion:     stableK8sVersion,
+		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.KernelAsset)),
+		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.InitramfsAsset)),
+		// TODO: update to images.DefaultInstallerImageRepository once previousRelease migrates to gchr.io
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", previousRelease),
+		SourceVersion:        previousRelease,
+		SourceK8sVersion:     previousK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", nextVersion),
-		TargetVersion:        nextVersion,
-		TargetK8sVersion:     nextK8sVersion,
+		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
+		TargetVersion:        stableRelease,
+		TargetK8sVersion:     stableK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
 	}
 }
 
-// upgradeLastReleaseToCurrent upgrades last release to the current version of Talos.
-func upgradeLastReleaseToCurrent() upgradeSpec {
+// upgradeStableReleaseToCurrent upgrades last release to the current version of Talos.
+func upgradeStableReleaseToCurrent() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", stableVersion, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
-		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", stableVersion),
-		SourceVersion:        stableVersion,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
+		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
@@ -134,13 +132,12 @@ func upgradeLastReleaseToCurrent() upgradeSpec {
 // upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-%s-%s", stableVersion, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("preserve-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.KernelAsset)),
-		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(stableVersion), constants.InitramfsAsset)),
-		// TODO: update to images.DefaultInstallerImageRepository once stableVersion migrates to gchr.io
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", stableVersion),
-		SourceVersion:        stableVersion,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
+		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
@@ -545,7 +542,7 @@ func (suite *UpgradeSuite) SuiteName() string {
 func init() {
 	allSuites = append(allSuites,
 		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
-		&UpgradeSuite{specGen: upgradeLastReleaseToCurrent, track: 1},
+		&UpgradeSuite{specGen: upgradeStableReleaseToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 	)
 }
