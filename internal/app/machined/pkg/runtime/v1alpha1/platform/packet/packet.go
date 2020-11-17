@@ -23,6 +23,7 @@ import (
 
 // Metadata holds packet metadata info.
 type Metadata struct {
+	Hostname       string   `json:"hostname"`
 	Network        Network  `json:"network"`
 	PrivateSubnets []string `json:"private_subnets"`
 }
@@ -188,8 +189,20 @@ func (p *Packet) Mode() runtime.Mode {
 }
 
 // Hostname implements the platform.Platform interface.
-func (p *Packet) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, nil
+func (p *Packet) Hostname(ctx context.Context) (hostname []byte, err error) {
+	log.Printf("fetching equinix metadata from: %q", PacketMetaDataEndpoint)
+
+	metadataConfig, err := download.Download(ctx, PacketMetaDataEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	var unmarshalledMetadataConfig Metadata
+	if err = json.Unmarshal(metadataConfig, &unmarshalledMetadataConfig); err != nil {
+		return nil, err
+	}
+
+	return []byte(unmarshalledMetadataConfig.Hostname), nil
 }
 
 // ExternalIPs implements the runtime.Platform interface.
