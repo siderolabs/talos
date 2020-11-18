@@ -1,0 +1,158 @@
+{
+  "v0.7.0": {
+    "aws": {
+      "regions": {
+        "ap-northeast-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0df85376cbeb76343"
+            },
+            "arm64": {
+              "ami_id": "ami-07060084f4c8dac1c"
+            }
+          }
+        },
+        "ap-northeast-2": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0a58dee02c89b99ce"
+            },
+            "arm64": {
+              "ami_id": "ami-0d6f5ae9aa94ba8ef"
+            }
+          }
+        },
+        "ap-south-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0ef23551e96400eb6"
+            },
+            "arm64": {
+              "ami_id": "ami-022d398b4f6d897c5"
+            }
+          }
+        },
+        "ap-southeast-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-01fd3ba89024cdb1b"
+            },
+            "arm64": {
+              "ami_id": "ami-050f2b5bd37539998"
+            }
+          }
+        },
+        "ap-southeast-2": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-07ec76f9aec28a6e3"
+            },
+            "arm64": {
+              "ami_id": "ami-09b856507cdcaa343"
+            }
+          }
+        },
+        "ca-central-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0a9a71f638b882b37"
+            },
+            "arm64": {
+              "ami_id": "ami-011a14c7a0389eb10"
+            }
+          }
+        },
+        "eu-central-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-01fac11f98038e56b"
+            },
+            "arm64": {
+              "ami_id": "ami-0584641bbec216ea3"
+            }
+          }
+        },
+        "eu-west-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0c3fd62a4ebade4f2"
+            },
+            "arm64": {
+              "ami_id": "ami-022d322224e6fc212"
+            }
+          }
+        },
+        "eu-west-2": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-01ce28cf944a5a859"
+            },
+            "arm64": {
+              "ami_id": "ami-01fc686cc13468d3a"
+            }
+          }
+        },
+        "eu-west-3": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-008db80a831ee3123"
+            },
+            "arm64": {
+              "ami_id": "ami-0d814c30c5e36380b"
+            }
+          }
+        },
+        "sa-east-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-04870144727658d42"
+            },
+            "arm64": {
+              "ami_id": "ami-07e311cf5a94c5df6"
+            }
+          }
+        },
+        "us-east-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-011f4ea1099abdc58"
+            },
+            "arm64": {
+              "ami_id": "ami-07754060c459a5170"
+            }
+          }
+        },
+        "us-east-2": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0d8d645ffcee9ed35"
+            },
+            "arm64": {
+              "ami_id": "ami-07987d595c070ec78"
+            }
+          }
+        },
+        "us-west-1": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-093ec077e42b644f2"
+            },
+            "arm64": {
+              "ami_id": "ami-0d0c9a0d3a161c80b"
+            }
+          }
+        },
+        "us-west-2": {
+          "arch": {
+            "amd64": {
+              "ami_id": "ami-0fb76a6a165b374da"
+            },
+            "arm64": {
+              "ami_id": "ami-0cb168fba818d65fe"
+            }
+          }
+        }
+      }
+    }
+  }
+}
