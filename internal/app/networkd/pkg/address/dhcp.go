@@ -70,10 +70,12 @@ func (d *DHCP) Mask() net.IPMask {
 func (d *DHCP) MTU() uint32 {
 	mtuReturn := uint32(d.NetIf.MTU)
 
-	// TODO do we need to implement dhcpv4.GetUint32 upstream?
-	mtu, err := dhcpv4.GetUint16(dhcpv4.OptionInterfaceMTU, d.Ack.Options)
-	if err == nil {
-		mtuReturn = uint32(mtu)
+	if d.Ack != nil {
+		// TODO do we need to implement dhcpv4.GetUint32 upstream?
+		mtu, err := dhcpv4.GetUint16(dhcpv4.OptionInterfaceMTU, d.Ack.Options)
+		if err == nil {
+			mtuReturn = uint32(mtu)
+		}
 	}
 
 	// override with any non-zero Mtu value passed into the dhcp object
