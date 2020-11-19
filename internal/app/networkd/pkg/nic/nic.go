@@ -333,13 +333,15 @@ func (n *NetworkInterface) renew(method address.Addressing) {
 func (n *NetworkInterface) configureInterface(method address.Addressing, link *net.Interface) error {
 	var err error
 
-	if err = method.Discover(context.Background(), link); err != nil {
+	discoverErr := method.Discover(context.Background(), link)
+
+	// Set link MTU in any case
+	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {
 		return err
 	}
 
-	// Set link MTU if we got a response
-	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {
-		return err
+	if discoverErr != nil {
+		return discoverErr
 	}
 
 	if method.Address() != nil {
