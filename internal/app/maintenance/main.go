@@ -91,6 +91,8 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	logger.Println()
 	logger.Println("upload configuration using talosctl:")
 	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --file <config.yaml>", firstIP)
+	logger.Println("or apply configuration using talosctl interactive installer:")
+	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --interactive", firstIP)
 	logger.Println("optionally with node fingerprint check:")
 	logger.Printf("\ttalosctl apply-config --insecure --nodes %s --cert-fingerprint '%s' --file <config.yaml>", firstIP, certFingerprint)
 
