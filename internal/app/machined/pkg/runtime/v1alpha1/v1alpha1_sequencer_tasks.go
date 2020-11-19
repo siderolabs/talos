@@ -627,6 +627,26 @@ func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "startContainerd"
 }
 
+// StartTimedAtInstall represents the task to start timed at install time without dependency on networkd.
+func StartTimedAtInstall(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Timed{
+			SkipNetworkd: true,
+		}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		if err := system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
+			logger.Printf("skipped waiting for time sync to finish")
+		}
+
+		return nil
+	}, "startTimedAtInstall"
+}
+
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

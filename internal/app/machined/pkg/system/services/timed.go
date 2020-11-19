@@ -35,7 +35,9 @@ import (
 
 // Timed implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Timed struct{}
+type Timed struct {
+	SkipNetworkd bool
+}
 
 // ID implements the Service interface.
 func (n *Timed) ID(r runtime.Runtime) string {
@@ -59,6 +61,10 @@ func (n *Timed) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *Timed) DependsOn(r runtime.Runtime) []string {
+	if n.SkipNetworkd {
+		return []string{"containerd"}
+	}
+
 	return []string{"containerd", "networkd"}
 }
 

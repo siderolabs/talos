@@ -158,6 +158,9 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"containerd",
 				StartContainerd,
 			).Append(
+				"timed",
+				StartTimedAtInstall,
+			).Append(
 				"install",
 				Install,
 			).Append(
