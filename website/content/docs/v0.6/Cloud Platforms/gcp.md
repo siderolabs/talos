@@ -97,6 +97,12 @@ gcloud compute forwarding-rules create talos-fwd-rule \
      --source-ranges 130.211.0.0/22,35.191.0.0/16 \
      --target-tags talos-controlplane \
      --allow tcp:6443
+
+# Create firewall rule to allow talosctl access
+gcloud compute firewall-rules create talos-controlplane-talosctl \
+  --source-ranges 0.0.0.0/0 \
+  --target-tags talos-controlplane \
+  --allow tcp:50000
 ```
 
 ### Cluster Configuration
@@ -162,6 +168,7 @@ CONTROL_PLANE_0_IP=$(gcloud compute instances describe talos-controlplane-0 \
                      | jq -r '.networkInterfaces[0].accessConfigs[0].natIP')
 
 talosctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
+talosctl --talosconfig ./talosconfig config node $CONTROL_PLANE_0_IP
 talosctl --talosconfig ./talosconfig kubeconfig .
 kubectl --kubeconfig ./kubeconfig get nodes
 ```
