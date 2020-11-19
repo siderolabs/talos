@@ -10,6 +10,7 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 	tnet "github.com/talos-systems/net"
 
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/internal/cis"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -132,7 +134,7 @@ type Certs struct {
 	OS    *x509.PEMEncodedCertificateAndKey
 }
 
-// Secrets holds the senesitve kubeadm data.
+// Secrets holds the sensitive kubeadm data.
 type Secrets struct {
 	BootstrapToken         string
 	AESCBCEncryptionSecret string
@@ -141,6 +143,114 @@ type Secrets struct {
 // TrustdInfo holds the trustd credentials.
 type TrustdInfo struct {
 	Token string
+}
+
+// SecretsBundle holds trustd, kubeadm and certs information.
+type SecretsBundle struct {
+	Secrets    *Secrets
+	TrustdInfo *TrustdInfo
+	Certs      *Certs
+}
+
+// NewSecretsBundle creates secrets bundle generating all secrets.
+func NewSecretsBundle() (*SecretsBundle, error) {
+	var (
+		etcd          *x509.CertificateAuthority
+		kubernetesCA  *x509.CertificateAuthority
+		talosCA       *x509.CertificateAuthority
+		trustdInfo    *TrustdInfo
+		kubeadmTokens *Secrets
+		err           error
+	)
+
+	etcd, err = NewEtcdCA()
+	if err != nil {
+		return nil, err
+	}
+
+	kubernetesCA, err = NewKubernetesCA()
+	if err != nil {
+		return nil, err
+	}
+
+	talosCA, err = NewTalosCA()
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	kubeadmTokens = &Secrets{}
+
+	// Gen trustd token strings
+	kubeadmTokens.BootstrapToken, err = genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeadmTokens.AESCBCEncryptionSecret, err = cis.CreateEncryptionToken()
+	if err != nil {
+		return nil, err
+	}
+
+	trustdInfo = &TrustdInfo{}
+
+	// Gen trustd token strings
+	trustdInfo.Token, err = genToken(6, 16)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretsBundle{
+		Secrets:    kubeadmTokens,
+		TrustdInfo: trustdInfo,
+		Certs: &Certs{
+			Etcd: &x509.PEMEncodedCertificateAndKey{
+				Crt: etcd.CrtPEM,
+				Key: etcd.KeyPEM,
+			},
+			K8s: &x509.PEMEncodedCertificateAndKey{
+				Crt: kubernetesCA.CrtPEM,
+				Key: kubernetesCA.KeyPEM,
+			},
+			OS: &x509.PEMEncodedCertificateAndKey{
+				Crt: talosCA.CrtPEM,
+				Key: talosCA.KeyPEM,
+			},
+		},
+	}, nil
+}
+
+// NewSecretsBundleFromConfig creates secrets bundle using existing config.
+func NewSecretsBundleFromConfig(c config.Provider) *SecretsBundle {
+	certs := &Certs{
+		K8s:  c.Cluster().CA(),
+		Etcd: c.Cluster().Etcd().CA(),
+		OS:   c.Machine().Security().CA(),
+	}
+
+	trustd := &TrustdInfo{
+		Token: c.Machine().Security().Token(),
+	}
+
+	bootstrapToken := fmt.Sprintf(
+		"%s.%s",
+		c.Cluster().Token().ID(),
+		c.Cluster().Token().Secret(),
+	)
+
+	secrets := &Secrets{
+		AESCBCEncryptionSecret: c.Cluster().AESCBCEncryptionSecret(),
+		BootstrapToken:         bootstrapToken,
+	}
+
+	return &SecretsBundle{
+		Secrets:    secrets,
+		TrustdInfo: trustd,
+		Certs:      certs,
+	}
 }
 
 // NewEtcdCA generates a CA for the Etcd PKI.
@@ -211,7 +321,7 @@ func NewAdminCertificateAndKey(crt, key []byte, loopback string) (p *x509.PEMEnc
 // NewInput generates the sensitive data required to generate all config
 // types.
 // nolint: dupl,gocyclo
-func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption) (input *Input, err error) {
+func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsBundle, opts ...GenOption) (input *Input, err error) {
 	options := DefaultGenOptions()
 
 	for _, opt := range opts {
@@ -232,66 +342,14 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 		serviceNet = constants.DefaultIPv4ServiceNet
 	}
 
-	// Gen trustd token strings
-	kubeadmBootstrapToken, err := genToken(6, 16)
+	secrets.Certs.Admin, err = NewAdminCertificateAndKey(
+		secrets.Certs.OS.Crt,
+		secrets.Certs.OS.Key,
+		loopback,
+	)
+
 	if err != nil {
 		return nil, err
-	}
-
-	aescbcEncryptionSecret, err := cis.CreateEncryptionToken()
-	if err != nil {
-		return nil, err
-	}
-
-	// Gen trustd token strings
-	trustdToken, err := genToken(6, 16)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeadmTokens := &Secrets{
-		BootstrapToken:         kubeadmBootstrapToken,
-		AESCBCEncryptionSecret: aescbcEncryptionSecret,
-	}
-
-	trustdInfo := &TrustdInfo{
-		Token: trustdToken,
-	}
-
-	etcdCA, err := NewEtcdCA()
-	if err != nil {
-		return nil, err
-	}
-
-	kubernetesCA, err := NewKubernetesCA()
-	if err != nil {
-		return nil, err
-	}
-
-	talosCA, err := NewTalosCA()
-	if err != nil {
-		return nil, err
-	}
-
-	admin, err := NewAdminCertificateAndKey(talosCA.CrtPEM, talosCA.KeyPEM, loopback)
-	if err != nil {
-		return nil, err
-	}
-
-	certs := &Certs{
-		Admin: admin,
-		Etcd: &x509.PEMEncodedCertificateAndKey{
-			Crt: etcdCA.CrtPEM,
-			Key: etcdCA.KeyPEM,
-		},
-		K8s: &x509.PEMEncodedCertificateAndKey{
-			Crt: kubernetesCA.CrtPEM,
-			Key: kubernetesCA.KeyPEM,
-		},
-		OS: &x509.PEMEncodedCertificateAndKey{
-			Crt: talosCA.CrtPEM,
-			Key: talosCA.KeyPEM,
-		},
 	}
 
 	var additionalSubjectAltNames []string
@@ -310,7 +368,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 	}
 
 	input = &Input{
-		Certs:                     certs,
+		Certs:                     secrets.Certs,
 		ControlPlaneEndpoint:      endpoint,
 		PodNet:                    []string{podNet},
 		ServiceNet:                []string{serviceNet},
@@ -318,8 +376,8 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...GenOption
 		ClusterName:               clustername,
 		Architecture:              options.Architecture,
 		KubernetesVersion:         kubernetesVersion,
-		Secrets:                   kubeadmTokens,
-		TrustdInfo:                trustdInfo,
+		Secrets:                   secrets.Secrets,
+		TrustdInfo:                secrets.TrustdInfo,
 		AdditionalSubjectAltNames: additionalSubjectAltNames,
 		AdditionalMachineCertSANs: additionalMachineCertSANs,
 		InstallDisk:               options.InstallDisk,

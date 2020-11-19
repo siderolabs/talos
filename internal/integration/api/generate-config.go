@@ -108,6 +108,39 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().NotEmpty(context.Key)
 	suite.Require().Greater(len(context.Endpoints), 0)
 	suite.Require().EqualValues(context.Endpoints[0], config.Cluster().Endpoint().Hostname())
+
+	// now generate control plane join config
+	request.MachineConfig.Type = machineapi.MachineConfig_MachineType(machine.TypeControlPlane)
+
+	reply, err = suite.Client.GenerateConfiguration(
+		suite.ctx,
+		request,
+	)
+
+	suite.Require().NoError(err)
+
+	data = reply.GetData()
+
+	joinedConfig, err := configloader.NewFromBytes(data[0])
+
+	suite.Require().NoError(err)
+
+	suite.Require().EqualValues(request.MachineConfig.Type, joinedConfig.Machine().Type())
+	suite.Require().EqualValues(request.ConfigVersion, joinedConfig.Version())
+	suite.Require().EqualValues(request.ClusterConfig.Name, joinedConfig.Cluster().Name())
+	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, joinedConfig.Cluster().Endpoint().String())
+	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, joinedConfig.Cluster().Network().DNSDomain())
+	suite.Require().EqualValues(fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion), joinedConfig.Machine().Kubelet().Image())
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, joinedConfig.Machine().Install().Disk())
+	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, joinedConfig.Machine().Install().Image())
+	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, joinedConfig.Machine().Network().Hostname())
+
+	suite.Require().EqualValues(config.Machine().Security().CA(), joinedConfig.Machine().Security().CA())
+	suite.Require().EqualValues(config.Machine().Security().Token(), joinedConfig.Machine().Security().Token())
+	suite.Require().EqualValues(config.Cluster().AESCBCEncryptionSecret(), joinedConfig.Cluster().AESCBCEncryptionSecret())
+	suite.Require().EqualValues(config.Cluster().CA(), joinedConfig.Cluster().CA())
+	suite.Require().EqualValues(config.Cluster().Token(), joinedConfig.Cluster().Token())
+	suite.Require().EqualValues(config.Cluster().Etcd().CA(), config.Cluster().Etcd().CA())
 }
 
 func init() {

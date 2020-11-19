@@ -80,12 +80,18 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		fmt.Println("generating PKI and tokens")
 	}
 
+	secrets, err := generate.NewSecretsBundle()
+	if err != nil {
+		return bundle, err
+	}
+
 	var input *generate.Input
 
-	input, err := generate.NewInput(
+	input, err = generate.NewInput(
 		options.InputOptions.ClusterName,
 		options.InputOptions.Endpoint,
 		options.InputOptions.KubeVersion,
+		secrets,
 		options.InputOptions.GenOptions...,
 	)
 	if err != nil {
