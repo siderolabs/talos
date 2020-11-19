@@ -2,4 +2,4 @@
 title: "Equinix Metal"
 ---
 
-Talos is known to work on KVM; however, it is currently undocumented.
+Talos is known to work on Equinix Metal; however, it is currently undocumented.
