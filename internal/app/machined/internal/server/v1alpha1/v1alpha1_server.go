@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -93,19 +94,42 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
-	if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
-		return nil, err
-	}
-
-	go func() {
-		if err = s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
-			log.Println("apply configuration failed:", err)
-
-			if err != runtime.ErrLocked {
-				s.server.GracefulStop()
-			}
+	if !in.NoReboot {
+		if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
+			return nil, err
 		}
-	}()
+
+		go func() {
+			if err = s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
+				log.Println("apply configuration failed:", err)
+
+				if err != runtime.ErrLocked {
+					s.server.GracefulStop()
+				}
+			}
+		}()
+	} else {
+		cfg, err := s.Controller.Runtime().ValidateConfig(in.GetData())
+		if err != nil {
+			return nil, err
+		}
+
+		err = cfg.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
+		if err != nil {
+			return nil, err
+		}
+
+		var b []byte
+
+		b, err = cfg.Bytes()
+		if err != nil {
+			return nil, err
+		}
+
+		if err = ioutil.WriteFile(constants.ConfigPath, b, 0o600); err != nil {
+			return nil, err
+		}
+	}
 
 	reply = &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{

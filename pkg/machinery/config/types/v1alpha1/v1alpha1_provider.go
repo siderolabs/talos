@@ -5,9 +5,11 @@
 package v1alpha1
 
 import (
+	"context"
 	"crypto/tls"
 	stdx509 "crypto/x509"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	goruntime "runtime"
@@ -68,6 +70,53 @@ func (c *Config) Bytes() (res []byte, err error) {
 	res, err = encoder.NewEncoder(c).Encode()
 
 	return
+}
+
+// ApplyDynamicConfig implements the config.Provider interface.
+func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.DynamicConfigProvider) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if c.MachineConfig == nil {
+		c.MachineConfig = &MachineConfig{}
+	}
+
+	hostname, err := dynamicProvider.Hostname(ctx)
+	if err != nil {
+		return err
+	}
+
+	if hostname != nil {
+		if c.MachineConfig.MachineNetwork == nil {
+			c.MachineConfig.MachineNetwork = &NetworkConfig{}
+		}
+
+		c.MachineConfig.MachineNetwork.NetworkHostname = string(hostname)
+	}
+
+	addrs, err := dynamicProvider.ExternalIPs(ctx)
+	if err != nil {
+		log.Printf("certificates will be created without external IPs: %v", err)
+	}
+
+	sans := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		sans = append(sans, addr.String())
+	}
+
+	c.MachineConfig.MachineCertSANs = append(c.MachineConfig.MachineCertSANs, sans...)
+
+	if c.ClusterConfig == nil {
+		c.ClusterConfig = &ClusterConfig{}
+	}
+
+	if c.ClusterConfig.APIServerConfig == nil {
+		c.ClusterConfig.APIServerConfig = &APIServerConfig{}
+	}
+
+	c.ClusterConfig.APIServerConfig.CertSANs = append(c.ClusterConfig.APIServerConfig.CertSANs, sans...)
+
+	return nil
 }
 
 // Install implements the config.Provider interface.
@@ -179,11 +228,6 @@ func (m *MachineConfig) CertSANs() []string {
 	return m.MachineCertSANs
 }
 
-// SetCertSANs implements the config.Provider interface.
-func (m *MachineConfig) SetCertSANs(sans []string) {
-	m.MachineCertSANs = append(m.MachineCertSANs, sans...)
-}
-
 // Registries implements the config.Provider interface.
 func (m *MachineConfig) Registries() config.Registries {
 	return &m.MachineRegistries
@@ -240,15 +284,6 @@ func (c *ClusterConfig) LocalAPIServerPort() int {
 // CertSANs implements the config.Provider interface.
 func (c *ClusterConfig) CertSANs() []string {
 	return c.APIServerConfig.CertSANs
-}
-
-// SetCertSANs implements the config.Provider interface.
-func (c *ClusterConfig) SetCertSANs(sans []string) {
-	if c.APIServerConfig == nil {
-		c.APIServerConfig = &APIServerConfig{}
-	}
-
-	c.APIServerConfig.CertSANs = append(c.APIServerConfig.CertSANs, sans...)
 }
 
 // CA implements the config.Provider interface.
@@ -639,11 +674,6 @@ func (c *CNIConfig) URLs() []string {
 // Hostname implements the config.Provider interface.
 func (n *NetworkConfig) Hostname() string {
 	return n.NetworkHostname
-}
-
-// SetHostname implements the config.Provider interface.
-func (n *NetworkConfig) SetHostname(hostname string) {
-	n.NetworkHostname = hostname
 }
 
 // Devices implements the config.Provider interface.

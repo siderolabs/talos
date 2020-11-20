@@ -49,6 +49,10 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
+	if in.NoReboot {
+		return nil, fmt.Errorf("apply configuration without reboot is not supported in maintenance mode")
+	}
+
 	cfgProvider, err := configloader.NewFromBytes(in.GetData())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)

@@ -72,7 +72,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.10"))
 
 	// Static for computed hostname ( talos-ip )
-	sampleConfig.Machine().Network().SetHostname("")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = ""
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
@@ -83,7 +83,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.10"))
 
 	// Static for hostname too long
-	sampleConfig.Machine().Network().SetHostname("somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit"
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
@@ -93,7 +93,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Require().Error(err)
 
 	// Static for hostname vs domain name
-	sampleConfig.Machine().Network().SetHostname("dadjokes.biz.dev.com.org.io")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "dadjokes.biz.dev.com.org.io"
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)

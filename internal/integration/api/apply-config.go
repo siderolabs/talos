@@ -40,6 +40,10 @@ const applyConfigTestSysctl = "net.ipv6.conf.all.accept_ra_mtu"
 
 const applyConfigTestSysctlVal = "1"
 
+const applyConfigNoRebootTestSysctl = "fs.file-max"
+
+const applyConfigNoRebootTestSysctlVal = "500000"
+
 const assertRebootedRebootTimeout = 10 * time.Minute
 
 // ApplyConfigSuite ...
@@ -125,6 +129,52 @@ func (suite *ApplyConfigSuite) TestApply() {
 		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
 		applyConfigTestSysctlVal,
 	)
+}
+
+// TestApplyNoReboot verifies the apply config API without reboot.
+func (suite *ApplyConfigSuite) TestApplyNoReboot() {
+	suite.WaitForBootDone(suite.ctx)
+
+	node := suite.RandomDiscoveredNode()
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	provider, err := suite.readConfigFromNode(nodeCtx)
+	suite.Require().NoError(err, "failed to read existing config from node %q", node)
+
+	provider.Machine().Sysctls()[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+
+	cfgDataOut, err := provider.Bytes()
+	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+
+	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		NoReboot: true,
+		Data:     cfgDataOut,
+	})
+	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
+
+	// Verify configuration change
+	var newProvider config.Provider
+
+	newProvider, err = suite.readConfigFromNode(nodeCtx)
+
+	suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
+
+	suite.Assert().Equal(
+		newProvider.Machine().Sysctls()[applyConfigNoRebootTestSysctl],
+		applyConfigNoRebootTestSysctlVal,
+	)
+
+	// revert back
+	delete(provider.Machine().Sysctls(), applyConfigNoRebootTestSysctl)
+
+	cfgDataOut, err = provider.Bytes()
+	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+
+	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		NoReboot: true,
+		Data:     cfgDataOut,
+	})
+	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
 }
 
 func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (config.Provider, error) {

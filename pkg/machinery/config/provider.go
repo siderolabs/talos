@@ -5,6 +5,7 @@
 package config
 
 import (
+	"context"
 	"crypto/tls"
 	"net/url"
 	"os"
@@ -24,6 +25,7 @@ type Provider interface {
 	Machine() MachineConfig
 	Cluster() ClusterConfig
 	Validate(RuntimeMode) error
+	ApplyDynamicConfig(context.Context, DynamicConfigProvider) error
 	String() (string, error)
 	Bytes() ([]byte, error)
 }
@@ -84,14 +86,12 @@ type Security interface {
 	CA() *x509.PEMEncodedCertificateAndKey
 	Token() string
 	CertSANs() []string
-	SetCertSANs([]string)
 }
 
 // MachineNetwork defines the requirements for a config that pertains to network
 // related options.
 type MachineNetwork interface {
 	Hostname() string
-	SetHostname(string)
 	Resolvers() []string
 	Devices() []Device
 	ExtraHosts() []ExtraHost
@@ -230,7 +230,6 @@ type ClusterConfig interface {
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
-	SetCertSANs([]string)
 	CA() *x509.PEMEncodedCertificateAndKey
 	AESCBCEncryptionSecret() string
 	Config(machine.Type) (string, error)

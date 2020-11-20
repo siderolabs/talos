@@ -23,6 +23,7 @@ var applyConfigCmdFlags struct {
 	filename         string
 	insecure         bool
 	interactive      bool
+	noReboot         bool
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -108,7 +109,8 @@ var applyConfigCmd = &cobra.Command{
 			}
 
 			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
-				Data: cfgBytes,
+				Data:     cfgBytes,
+				NoReboot: applyConfigCmdFlags.noReboot,
 			}); err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
 			}
@@ -122,7 +124,8 @@ func init() {
 	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
-	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.interactive, "interactive", "", false, "apply the config using text based interactive mode")
+	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.interactive, "interactive", false, "apply the config using text based interactive mode")
+	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.noReboot, "no-reboot", false, "apply the config only after the reboot")
 
 	addCommand(applyConfigCmd)
 }

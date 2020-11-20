@@ -20,6 +20,7 @@ talosctl apply-config [flags]
   -h, --help                       help for apply-config
   -i, --insecure                   apply the config using the insecure (encrypted with no auth) maintenance service
       --interactive                apply the config using text based interactive mode
+      --no-reboot                  apply the config only after the reboot
 ```
 
 ### Options inherited from parent commands
