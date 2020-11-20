@@ -61,7 +61,10 @@ service MachineService {
 // rpc applyConfiguration
 // ApplyConfiguration describes a request to assert a new configuration upon a
 // node.
-message ApplyConfigurationRequest { bytes data = 1; }
+message ApplyConfigurationRequest {
+  bytes data = 1;
+  bool no_reboot = 2;
+}
 
 // ApplyConfigurationResponse describes the response to a configuration request.
 message ApplyConfiguration { common.Metadata metadata = 1; }

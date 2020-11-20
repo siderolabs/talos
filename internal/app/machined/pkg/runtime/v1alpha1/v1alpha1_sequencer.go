@@ -58,11 +58,12 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 	).Append(
 		"unmountState",
 		UnmountStatePartition,
-	).AppendList(stopAllPhaselist(r)).
-		Append(
-			"reboot",
-			Reboot,
-		)
+	).AppendList(
+		stopAllPhaselist(r),
+	).Append(
+		"reboot",
+		Reboot,
+	)
 
 	return phases
 }

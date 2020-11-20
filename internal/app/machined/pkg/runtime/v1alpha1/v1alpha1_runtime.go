@@ -35,15 +35,25 @@ func (r *Runtime) Config() config.Provider {
 	return r.c
 }
 
-// SetConfig implements the Runtime interface.
-func (r *Runtime) SetConfig(b []byte) error {
+// ValidateConfig implements the Runtime interface.
+func (r *Runtime) ValidateConfig(b []byte) (config.Provider, error) {
 	cfg, err := configloader.NewFromBytes(b)
 	if err != nil {
-		return fmt.Errorf("failed to parse config: %w", err)
+		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	if err := cfg.Validate(r.State().Platform().Mode()); err != nil {
-		return fmt.Errorf("failed to validate config: %w", err)
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// SetConfig implements the Runtime interface.
+func (r *Runtime) SetConfig(b []byte) error {
+	cfg, err := r.ValidateConfig(b)
+	if err != nil {
+		return err
 	}
 
 	r.c = cfg

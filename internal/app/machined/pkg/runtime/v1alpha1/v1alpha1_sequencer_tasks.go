@@ -485,30 +485,9 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // SaveConfig represents the SaveConfig task.
 func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		saveCtx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer ctxCancel()
-
-		hostname, err := r.State().Platform().Hostname(saveCtx)
-		if err != nil {
+		if err = r.Config().ApplyDynamicConfig(ctx, r.State().Platform()); err != nil {
 			return err
 		}
-
-		if hostname != nil {
-			r.Config().Machine().Network().SetHostname(string(hostname))
-		}
-
-		addrs, err := r.State().Platform().ExternalIPs(saveCtx)
-		if err != nil {
-			logger.Printf("certificates will be created without external IPs: %v", err)
-		}
-
-		sans := make([]string, 0, len(addrs))
-		for _, addr := range addrs {
-			sans = append(sans, addr.String())
-		}
-
-		r.Config().Machine().Security().SetCertSANs(sans)
-		r.Config().Cluster().SetCertSANs(sans)
 
 		var b []byte
 
