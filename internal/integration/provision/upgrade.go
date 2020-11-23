@@ -70,7 +70,7 @@ const (
 
 	previousK8sVersion = "1.19.0"
 	stableK8sVersion   = "1.19.4"
-	currentK8sVersion  = "1.19.4"
+	currentK8sVersion  = "1.20.0-beta.2"
 )
 
 var (
@@ -164,7 +164,8 @@ type UpgradeSuite struct {
 
 	configBundle *v1alpha1.ConfigBundle
 
-	clusterAccess *access.Adapter
+	clusterAccess        *access.Adapter
+	controlPlaneEndpoint string
 
 	ctx       context.Context
 	ctxCancel context.CancelFunc
@@ -269,6 +270,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	}
 
 	defaultInternalLB, _ := suite.provisioner.GetLoadBalancers(request.Network)
+	suite.controlPlaneEndpoint = fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort)
 
 	genOptions := suite.provisioner.GenOptions(request.Network)
 
@@ -294,7 +296,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
 		&bundle.InputOptions{
 			ClusterName: clusterName,
-			Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort),
+			Endpoint:    suite.controlPlaneEndpoint,
 			KubeVersion: "", // keep empty so that default version is used per Talos version
 			GenOptions: append(
 				genOptions,
@@ -462,7 +464,14 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 
 	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
 
-	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, runtime.GOARCH, fromVersion, toVersion))
+	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, kubernetes.UpgradeOptions{
+		FromVersion: fromVersion,
+		ToVersion:   toVersion,
+
+		Architecture: runtime.GOARCH,
+
+		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
+	}))
 }
 
 func (suite *UpgradeSuite) untaint(name string) {

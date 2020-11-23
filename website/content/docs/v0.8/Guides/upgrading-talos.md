@@ -17,12 +17,12 @@ To manually upgrade a Talos node, you will specify the node's IP address and the
 installer container image for the version of Talos to which you wish to upgrade.
 
 For instance, if your Talos node has the IP address `10.20.30.40` and you want
-to install the official version `v0.7.0-beta.0`, you would enter a command such
+to install the official version `v0.8.0-beta.0`, you would enter a command such
 as:
 
 ```sh
   $ talosctl upgrade --nodes 10.20.30.40 \
-      --image ghcr.io/talos-systems/installer:v0.7.0-beta.0
+      --image ghcr.io/talos-systems/installer:v0.8.0-beta.0
 ```
 
 There is an option to this command: `--preserve`, which can be used to explicitly tell Talos to either keep intact its ephemeral data or not.
@@ -32,7 +32,7 @@ However, if you are running a single-node control-plane, you will want to make s
 ## Talos Controller Manager
 
 The Talos Controller Manager can coordinate upgrades of your nodes
-automatically.  
+automatically.
 It ensures that a controllable number of nodes are being
 upgraded at any given time.
 It also applies an upgrade flow which allows you to classify some machines as
