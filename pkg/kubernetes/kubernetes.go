@@ -205,9 +205,12 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 	}
 
 	n.Labels[constants.LabelNodeRoleMaster] = ""
+	n.Labels[constants.LabelNodeRoleControlPlane] = ""
 
 	if taintNoSchedule {
 		taintFound := false
+
+		// TODO: with K8s 1.21, add new taint LabelNodeRoleControlPlane
 
 		for _, taint := range n.Spec.Taints {
 			if taint.Key == constants.LabelNodeRoleMaster && taint.Value == "true" {

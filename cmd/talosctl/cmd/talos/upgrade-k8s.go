@@ -28,16 +28,13 @@ var upgradeK8sCmd = &cobra.Command{
 	},
 }
 
-var upgradeK8sCmdFlags struct {
-	fromVersion string
-	toVersion   string
-	arch        string
-}
+var upgradeOptions k8s.UpgradeOptions
 
 func init() {
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.fromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.toVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.arch, "arch", runtime.GOARCH, "the cluster architecture")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.Architecture, "arch", runtime.GOARCH, "the cluster architecture")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	cli.Should(upgradeK8sCmd.MarkFlagRequired("from"))
 	cli.Should(upgradeK8sCmd.MarkFlagRequired("to"))
 	addCommand(upgradeK8sCmd)
@@ -58,5 +55,5 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 		},
 	}
 
-	return k8s.Upgrade(ctx, &state, upgradeK8sCmdFlags.arch, upgradeK8sCmdFlags.fromVersion, upgradeK8sCmdFlags.toVersion)
+	return k8s.Upgrade(ctx, &state, upgradeOptions)
 }
