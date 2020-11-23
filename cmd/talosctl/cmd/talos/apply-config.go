@@ -99,13 +99,28 @@ var applyConfigCmd = &cobra.Command{
 
 		return withClient(func(ctx context.Context, c *client.Client) error {
 			if applyConfigCmdFlags.interactive {
-				installer := installer.NewInstaller()
-				err := installer.Run(Nodes[0], c)
-				if e != nil {
-					return err
-				}
+				install := installer.NewInstaller()
+				node := Nodes[0]
 
-				return nil
+				return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
+					opts := []installer.Option{}
+
+					if len(Endpoints) > 0 {
+						opts = append(opts, installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, Endpoints[0]))
+					}
+
+					conn, err := installer.NewConnection(
+						ctx,
+						c,
+						node,
+						opts...,
+					)
+					if err != nil {
+						return err
+					}
+
+					return install.Run(conn)
+				})
 			}
 
 			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{

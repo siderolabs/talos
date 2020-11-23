@@ -13,14 +13,13 @@ import (
 
 	"github.com/talos-systems/talos/pkg/images"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // NewState creates new installer state.
-func NewState(ctx context.Context, endpoint string, c *client.Client) (*State, error) {
+func NewState(ctx context.Context, conn *Connection) (*State, error) {
 	opts := &machineapi.GenerateConfigurationRequest{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &machineapi.MachineConfig{
@@ -32,19 +31,24 @@ func NewState(ctx context.Context, endpoint string, c *client.Client) (*State, e
 			},
 		},
 		ClusterConfig: &machineapi.ClusterConfig{
-			Name: "talos-default",
-			ControlPlane: &machineapi.ControlPlaneConfig{
-				Endpoint: fmt.Sprintf("https://%s:%d", endpoint, constants.DefaultControlPlanePort),
-			},
+			Name:         "talos-default",
+			ControlPlane: &machineapi.ControlPlaneConfig{},
 			ClusterNetwork: &machineapi.ClusterNetworkConfig{
 				DnsDomain: "cluster.local",
 			},
 		},
 	}
 
+	if conn.ExpandingCluster() {
+		// join node should be used as a controlplane endpoint
+		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.bootstrapEndpoint, constants.DefaultControlPlanePort)
+	} else {
+		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.nodeEndpoint, constants.DefaultControlPlanePort)
+	}
+
 	diskInstallOptions := []interface{}{}
 
-	disks, err := c.Disks(ctx)
+	disks, err := conn.Disks()
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +62,23 @@ func NewState(ctx context.Context, endpoint string, c *client.Client) (*State, e
 		diskInstallOptions = append(diskInstallOptions, name, disk.DeviceName)
 	}
 
+	var machineTypes []interface{}
+
+	if conn.ExpandingCluster() {
+		machineTypes = []interface{}{
+			"worker", machineapi.MachineConfig_MachineType(machine.TypeJoin),
+			"control plane", machineapi.MachineConfig_MachineType(machine.TypeControlPlane),
+		}
+		opts.MachineConfig.Type = machineapi.MachineConfig_MachineType(machine.TypeControlPlane)
+	} else {
+		machineTypes = []interface{}{
+			"control plane", machineapi.MachineConfig_MachineType(machine.TypeInit),
+		}
+	}
+
 	state := &State{
-		client: c,
-		opts:   opts,
+		conn: conn,
+		opts: opts,
 		pages: []*Page{
 			NewPage("Machine Config",
 				NewItem(
@@ -69,11 +87,15 @@ func NewState(ctx context.Context, endpoint string, c *client.Client) (*State, e
 					&opts.ClusterConfig.Name,
 				),
 				NewItem(
+					"control plane endpoint",
+					v1alpha1.ControlPlaneConfigDoc.Describe("endpoint", true),
+					&opts.ClusterConfig.ControlPlane.Endpoint,
+				),
+				NewItem(
 					"machine type",
 					v1alpha1.MachineConfigDoc.Describe("type", true),
 					&opts.MachineConfig.Type,
-					"init", machineapi.MachineConfig_MachineType(machine.TypeInit), // TODO: add more machine types when supported
-					"controlplane", machineapi.MachineConfig_MachineType(machine.TypeControlPlane),
+					machineTypes...,
 				),
 				NewItem(
 					"kubernetes version",
@@ -112,12 +134,12 @@ func NewState(ctx context.Context, endpoint string, c *client.Client) (*State, e
 
 // State installer state.
 type State struct {
-	pages  []*Page
-	opts   *machineapi.GenerateConfigurationRequest
-	client *client.Client
+	pages []*Page
+	opts  *machineapi.GenerateConfigurationRequest
+	conn  *Connection
 }
 
 // GenConfig returns current config encoded in yaml.
-func (s *State) GenConfig(ctx context.Context) (*machineapi.GenerateConfigurationResponse, error) {
-	return s.client.GenerateConfiguration(ctx, s.opts)
+func (s *State) GenConfig() (*machineapi.GenerateConfigurationResponse, error) {
+	return s.conn.GenerateConfiguration(s.opts)
 }

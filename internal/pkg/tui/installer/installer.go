@@ -19,7 +19,6 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/tui/components"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -185,7 +184,7 @@ const (
 )
 
 // Run starts interactive installer.
-func (installer *Installer) Run(endpoint string, c *client.Client) error {
+func (installer *Installer) Run(conn *Connection) error {
 	installer.startApp()
 	defer installer.stopApp()
 
@@ -198,13 +197,13 @@ func (installer *Installer) Run(endpoint string, c *client.Client) error {
 		switch phase {
 		case phaseInit:
 			description = "get the node information"
-			err = installer.init(endpoint, c)
+			err = installer.init(conn)
 		case phaseConfigure:
 			description = "generate the configuration"
 			err = installer.configure()
 		case phaseApply:
 			description = "apply the configuration"
-			err = installer.apply(c)
+			err = installer.apply(conn)
 		}
 
 		if err != nil && err != context.Canceled {
@@ -262,11 +261,11 @@ func (installer *Installer) stopApp() {
 	installer.app = nil
 }
 
-func (installer *Installer) init(endpoint string, c *client.Client) (err error) {
+func (installer *Installer) init(conn *Connection) (err error) {
 	installer.startApp()
 
 	s := components.NewSpinner(
-		fmt.Sprintf("Connecting to the maintenance service at [green::]%s[white::]", endpoint),
+		fmt.Sprintf("Connecting to the maintenance service at [green::]%s[white::]", conn.nodeEndpoint),
 		spinner,
 		installer.app,
 	)
@@ -276,8 +275,7 @@ func (installer *Installer) init(endpoint string, c *client.Client) (err error) 
 
 	installer.state, err = NewState(
 		installer.ctx,
-		endpoint,
-		c,
+		conn,
 	)
 
 	select {
@@ -459,7 +457,7 @@ func (installer *Installer) configure() error {
 	return nil
 }
 
-func (installer *Installer) apply(c *client.Client) error {
+func (installer *Installer) apply(conn *Connection) error {
 	var (
 		config      []byte
 		talosconfig *clientconfig.Config
@@ -481,7 +479,7 @@ func (installer *Installer) apply(c *client.Client) error {
 
 		list.AddItem(s, 1, 1, false)
 
-		response, err = installer.state.GenConfig(installer.ctx)
+		response, err = installer.state.GenConfig()
 
 		s.Stop(err == nil)
 
@@ -507,7 +505,7 @@ func (installer *Installer) apply(c *client.Client) error {
 
 		// TODO: progress bar, logs?
 		list.AddItem(s, 1, 1, false)
-		_, err = c.ApplyConfiguration(installer.ctx, &machineapi.ApplyConfigurationRequest{
+		_, err = conn.ApplyConfiguration(&machineapi.ApplyConfigurationRequest{
 			Data: config,
 		})
 
