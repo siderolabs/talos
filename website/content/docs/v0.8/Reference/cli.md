@@ -15,9 +15,12 @@ talosctl apply-config [flags]
 ### Options
 
 ```
-  -f, --file string   the filename of the updated configuration
-  -h, --help          help for apply-config
-  -i, --insecure      apply the config using the insecure (encrypted with no auth) maintenance service
+      --cert-fingerprint strings   list of server certificate fingeprints to accept (defaults to no check)
+  -f, --file string                the filename of the updated configuration
+  -h, --help                       help for apply-config
+  -i, --insecure                   apply the config using the insecure (encrypted with no auth) maintenance service
+      --interactive                apply the config using text based interactive mode
+      --no-reboot                  apply the config only after the reboot
 ```
 
 ### Options inherited from parent commands
@@ -74,7 +77,7 @@ talosctl cluster create [flags]
       --arch string                             cluster architecture (default "amd64")
       --cidr string                             CIDR of the cluster network (default "10.5.0.0/24")
       --cni-bin-path strings                    search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.7.0/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.8.0-alpha.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                    CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                     CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")

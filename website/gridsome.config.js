@@ -22,6 +22,12 @@ module.exports = {
     },
     dropdownOptions: [
       {
+        version: "v0.8",
+        url: "/docs/v0.8/",
+        latest: false,
+        prerelease: true,
+      },
+      {
         version: "v0.7",
         url: "/docs/v0.7/",
         latest: true,
@@ -64,6 +70,16 @@ module.exports = {
             { title: "Learn More", method: "weighted" },
           ],
           "v0.7": [
+            { title: "Introduction", method: "weighted" },
+            { title: "Bare Metal Platforms", method: "alphabetical" },
+            { title: "Virtualized Platforms", method: "alphabetical" },
+            { title: "Cloud Platforms", method: "alphabetical" },
+            { title: "Local Platforms", method: "alphabetical" },
+            { title: "Guides", method: "alphabetical" },
+            { title: "Reference", method: "alphabetical" },
+            { title: "Learn More", method: "weighted" },
+          ],
+          "v0.8": [
             { title: "Introduction", method: "weighted" },
             { title: "Bare Metal Platforms", method: "alphabetical" },
             { title: "Virtualized Platforms", method: "alphabetical" },
