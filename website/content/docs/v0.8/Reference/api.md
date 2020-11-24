@@ -27,10 +27,13 @@ title: API
     - [CPUInfoResponse](#machine.CPUInfoResponse)
     - [CPUStat](#machine.CPUStat)
     - [CPUsInfo](#machine.CPUsInfo)
+    - [ClusterConfig](#machine.ClusterConfig)
+    - [ClusterNetworkConfig](#machine.ClusterNetworkConfig)
     - [Container](#machine.Container)
     - [ContainerInfo](#machine.ContainerInfo)
     - [ContainersRequest](#machine.ContainersRequest)
     - [ContainersResponse](#machine.ContainersResponse)
+    - [ControlPlaneConfig](#machine.ControlPlaneConfig)
     - [CopyRequest](#machine.CopyRequest)
     - [DiskStat](#machine.DiskStat)
     - [DiskStats](#machine.DiskStats)
@@ -50,12 +53,16 @@ title: API
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FileInfo](#machine.FileInfo)
+    - [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest)
+    - [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse)
     - [Hostname](#machine.Hostname)
     - [HostnameResponse](#machine.HostnameResponse)
+    - [InstallConfig](#machine.InstallConfig)
     - [ListRequest](#machine.ListRequest)
     - [LoadAvg](#machine.LoadAvg)
     - [LoadAvgResponse](#machine.LoadAvgResponse)
     - [LogsRequest](#machine.LogsRequest)
+    - [MachineConfig](#machine.MachineConfig)
     - [MemInfo](#machine.MemInfo)
     - [Memory](#machine.Memory)
     - [MemoryResponse](#machine.MemoryResponse)
@@ -63,6 +70,7 @@ title: API
     - [Mounts](#machine.Mounts)
     - [MountsResponse](#machine.MountsResponse)
     - [NetDev](#machine.NetDev)
+    - [NetworkConfig](#machine.NetworkConfig)
     - [NetworkDeviceStats](#machine.NetworkDeviceStats)
     - [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse)
     - [PhaseEvent](#machine.PhaseEvent)
@@ -124,6 +132,7 @@ title: API
     - [VersionInfo](#machine.VersionInfo)
     - [VersionResponse](#machine.VersionResponse)
   
+    - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [RecoverRequest.Source](#machine.RecoverRequest.Source)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
@@ -131,7 +140,6 @@ title: API
     - [TaskEvent.Action](#machine.TaskEvent.Action)
   
     - [MachineService](#machine.MachineService)
-    - [MaintenanceService](#machine.MaintenanceService)
   
 - [network/network.proto](#network/network.proto)
     - [Interface](#network.Interface)
@@ -147,9 +155,6 @@ title: API
   
     - [NetworkService](#network.NetworkService)
   
-- [os/os.proto](#os/os.proto)
-    - [OSService](#os.OSService)
-  
 - [security/security.proto](#security/security.proto)
     - [CertificateRequest](#securityapi.CertificateRequest)
     - [CertificateResponse](#securityapi.CertificateResponse)
@@ -159,6 +164,12 @@ title: API
     - [WriteFileResponse](#securityapi.WriteFileResponse)
   
     - [SecurityService](#securityapi.SecurityService)
+  
+- [storage/storage.proto](#storage/storage.proto)
+    - [Disk](#storage.Disk)
+    - [DisksResponse](#storage.DisksResponse)
+  
+    - [StorageService](#storage.StorageService)
   
 - [time/time.proto](#time/time.proto)
     - [Time](#time.Time)
@@ -333,6 +344,7 @@ node.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  |  |
+| no_reboot | [bool](#bool) |  |  |
 
 
 
@@ -489,6 +501,38 @@ rpc bootstrap
 
 
 
+<a name="machine.ClusterConfig"></a>
+
+### ClusterConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| control_plane | [ControlPlaneConfig](#machine.ControlPlaneConfig) |  |  |
+| cluster_network | [ClusterNetworkConfig](#machine.ClusterNetworkConfig) |  |  |
+
+
+
+
+
+
+<a name="machine.ClusterNetworkConfig"></a>
+
+### ClusterNetworkConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dns_domain | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="machine.Container"></a>
 
 ### Container
@@ -551,6 +595,21 @@ The messages message containing the requested containers.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [Container](#machine.Container) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ControlPlaneConfig"></a>
+
+### ControlPlaneConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
 
 
 
@@ -870,6 +929,41 @@ TODO: unix timestamp or include proto's Date type |
 
 
 
+<a name="machine.GenerateConfigurationRequest"></a>
+
+### GenerateConfigurationRequest
+GenerateConfigurationRequest describes a request to generate a new configuration
+on a node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config_version | [string](#string) |  |  |
+| cluster_config | [ClusterConfig](#machine.ClusterConfig) |  |  |
+| machine_config | [MachineConfig](#machine.MachineConfig) |  |  |
+
+
+
+
+
+
+<a name="machine.GenerateConfigurationResponse"></a>
+
+### GenerateConfigurationResponse
+GenerateConfiguration describes the response to a generate configuration request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| data | [bytes](#bytes) | repeated |  |
+| talosconfig | [bytes](#bytes) |  |  |
+
+
+
+
+
+
 <a name="machine.Hostname"></a>
 
 ### Hostname
@@ -895,6 +989,22 @@ TODO: unix timestamp or include proto's Date type |
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [Hostname](#machine.Hostname) | repeated |  |
+
+
+
+
+
+
+<a name="machine.InstallConfig"></a>
+
+### InstallConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| install_disk | [string](#string) |  |  |
+| install_image | [string](#string) |  |  |
 
 
 
@@ -965,6 +1075,24 @@ The request message containing the process name.
 | driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
 | follow | [bool](#bool) |  |  |
 | tail_lines | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.MachineConfig"></a>
+
+### MachineConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [MachineConfig.MachineType](#machine.MachineConfig.MachineType) |  |  |
+| install_config | [InstallConfig](#machine.InstallConfig) |  |  |
+| network_config | [NetworkConfig](#machine.NetworkConfig) |  |  |
+| kubernetes_version | [string](#string) |  |  |
 
 
 
@@ -1138,6 +1266,21 @@ The messages message containing the requested df stats.
 | tx_collisions | [uint64](#uint64) |  |  |
 | tx_carrier | [uint64](#uint64) |  |  |
 | tx_compressed | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.NetworkConfig"></a>
+
+### NetworkConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostname | [string](#string) |  |  |
 
 
 
@@ -2109,6 +2252,20 @@ rpc upgrade
  <!-- end messages -->
 
 
+<a name="machine.MachineConfig.MachineType"></a>
+
+### MachineConfig.MachineType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TYPE_UNKNOWN | 0 |  |
+| TYPE_INIT | 1 |  |
+| TYPE_CONTROL_PLANE | 2 |  |
+| TYPE_JOIN | 3 |  |
+
+
+
 <a name="machine.PhaseEvent.Action"></a>
 
 ### PhaseEvent.Action
@@ -2198,6 +2355,7 @@ The machine service definition.
 | EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
+| GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
 | Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
 | Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |
 | List | [ListRequest](#machine.ListRequest) | [FileInfo](#machine.FileInfo) stream |  |
@@ -2223,16 +2381,6 @@ The machine service definition.
 | SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
 | Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
-
-
-<a name="machine.MaintenanceService"></a>
-
-### MaintenanceService
-
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
 
  <!-- end services -->
 
@@ -2427,39 +2575,6 @@ The network service definition.
 
 
 
-<a name="os/os.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## os/os.proto
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="os.OSService"></a>
-
-### OSService
-The OS service definition.
-
-Deprecated: this API is deprecated and merged into Machine API.
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| Containers | [.machine.ContainersRequest](#machine.ContainersRequest) | [.machine.ContainersResponse](#machine.ContainersResponse) |  |
-| Dmesg | [.machine.DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
-| Memory | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.MemoryResponse](#machine.MemoryResponse) |  |
-| Processes | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.ProcessesResponse](#machine.ProcessesResponse) |  |
-| Restart | [.machine.RestartRequest](#machine.RestartRequest) | [.machine.RestartResponse](#machine.RestartResponse) |  |
-| Stats | [.machine.StatsRequest](#machine.StatsRequest) | [.machine.StatsResponse](#machine.StatsResponse) |  |
-
- <!-- end services -->
-
-
-
 <a name="security/security.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -2571,6 +2686,65 @@ The security service definition.
 | Certificate | [CertificateRequest](#securityapi.CertificateRequest) | [CertificateResponse](#securityapi.CertificateResponse) |  |
 | ReadFile | [ReadFileRequest](#securityapi.ReadFileRequest) | [ReadFileResponse](#securityapi.ReadFileResponse) |  |
 | WriteFile | [WriteFileRequest](#securityapi.WriteFileRequest) | [WriteFileResponse](#securityapi.WriteFileResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="storage/storage.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## storage/storage.proto
+
+
+
+<a name="storage.Disk"></a>
+
+### Disk
+Disk represents a disk.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  | Size indicates the disk size in bytes. |
+| model | [string](#string) |  | Model idicates the disk model. |
+| device_name | [string](#string) |  | DeviceName indicates the disk name (e.g. `sda`). |
+
+
+
+
+
+
+<a name="storage.DisksResponse"></a>
+
+### DisksResponse
+DisksResponse represents the response of the `Disks` RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| disks | [Disk](#storage.Disk) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="storage.StorageService"></a>
+
+### StorageService
+StorageService represents the storage service.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [DisksResponse](#storage.DisksResponse) |  |
 
  <!-- end services -->
 
