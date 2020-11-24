@@ -46,7 +46,9 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.nodeEndpoint, constants.DefaultControlPlanePort)
 	}
 
-	diskInstallOptions := []interface{}{}
+	diskInstallOptions := []interface{}{
+		NewTableHeaders("device name", "model name", "size"),
+	}
 
 	disks, err := conn.Disks()
 	if err != nil {
@@ -58,8 +60,7 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 			opts.MachineConfig.InstallConfig.InstallDisk = disk.DeviceName
 		}
 
-		name := fmt.Sprintf("%s  %s  %s", disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
-		diskInstallOptions = append(diskInstallOptions, name, disk.DeviceName)
+		diskInstallOptions = append(diskInstallOptions, disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
 	}
 
 	var machineTypes []interface{}
@@ -80,7 +81,26 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 		conn: conn,
 		opts: opts,
 		pages: []*Page{
+			NewPage("Installer Params",
+				NewItem(
+					"image",
+					v1alpha1.InstallConfigDoc.Describe("image", true),
+					&opts.MachineConfig.InstallConfig.InstallImage,
+				),
+				NewItem(
+					"install disk",
+					v1alpha1.InstallConfigDoc.Describe("disk", true),
+					&opts.MachineConfig.InstallConfig.InstallDisk,
+					diskInstallOptions...,
+				),
+			),
 			NewPage("Machine Config",
+				NewItem(
+					"machine type",
+					v1alpha1.MachineConfigDoc.Describe("type", true),
+					&opts.MachineConfig.Type,
+					machineTypes...,
+				),
 				NewItem(
 					"cluster name",
 					v1alpha1.ClusterConfigDoc.Describe("clusterName", true),
@@ -92,26 +112,9 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 					&opts.ClusterConfig.ControlPlane.Endpoint,
 				),
 				NewItem(
-					"machine type",
-					v1alpha1.MachineConfigDoc.Describe("type", true),
-					&opts.MachineConfig.Type,
-					machineTypes...,
-				),
-				NewItem(
 					"kubernetes version",
 					"Kubernetes version to install.",
 					&opts.MachineConfig.KubernetesVersion,
-				),
-				NewItem(
-					"install disk",
-					v1alpha1.InstallConfigDoc.Describe("disk", true),
-					&opts.MachineConfig.InstallConfig.InstallDisk,
-					diskInstallOptions...,
-				),
-				NewItem(
-					"image",
-					v1alpha1.InstallConfigDoc.Describe("image", true),
-					&opts.MachineConfig.InstallConfig.InstallImage,
 				),
 			),
 			NewPage("Network Config",

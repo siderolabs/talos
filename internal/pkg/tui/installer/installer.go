@@ -45,6 +45,14 @@ type Item struct {
 	options     []interface{}
 }
 
+// TableHeaders represents table headers list for item options which are using table representation.
+type TableHeaders []interface{}
+
+// NewTableHeaders creates TableHeaders object.
+func NewTableHeaders(headers ...interface{}) TableHeaders {
+	return TableHeaders(headers)
+}
+
 // NewItem creates new form item.
 func NewItem(name, description string, dest interface{}, options ...interface{}) *Item {
 	return &Item{
@@ -62,8 +70,8 @@ func (item *Item) assign(value string) error {
 
 // createFormItems dynamically creates tview.FormItem list based on the wrapped type.
 // nolint:gocyclo
-func (item *Item) createFormItems() ([]tview.FormItem, error) {
-	res := []tview.FormItem{}
+func (item *Item) createFormItems() ([]tview.Primitive, error) {
+	res := []tview.Primitive{}
 
 	v := reflect.ValueOf(item.dest)
 	if v.Kind() == reflect.Ptr {
@@ -77,7 +85,7 @@ func (item *Item) createFormItems() ([]tview.FormItem, error) {
 		}
 	}
 
-	var formItem tview.FormItem
+	var formItem tview.Primitive
 
 	// nolint:exhaustive
 	switch v.Kind() {
@@ -92,37 +100,69 @@ func (item *Item) createFormItems() ([]tview.FormItem, error) {
 		formItem = checkbox
 	default:
 		if len(item.options) > 0 {
-			dropdown := tview.NewDropDown()
+			tableHeaders, ok := item.options[0].(TableHeaders)
+			if ok {
+				table := components.NewTable()
+				table.SetHeader(tableHeaders...)
 
-			if len(item.options)%2 != 0 {
-				return nil, fmt.Errorf("wrong amount of arguments for options: should be even amount of key, value pairs")
-			}
+				data := item.options[1:]
+				numColumns := len(tableHeaders)
 
-			for i := 0; i < len(item.options); i += 2 {
-				if optionName, ok := item.options[i].(string); ok {
-					selected := -1
-
-					func(index int) {
-						dropdown.AddOption(optionName, func() {
-							v.Set(reflect.ValueOf(item.options[index]))
-						})
-
-						if v.Interface() == item.options[index] {
-							selected = i / 2
-						}
-					}(i + 1)
-
-					if selected != -1 {
-						dropdown.SetCurrentOption(selected)
-					}
-				} else {
-					return nil, fmt.Errorf("expected string option name, got %s", item.options[i])
+				if len(data)%numColumns != 0 {
+					return nil, fmt.Errorf("incorrect amount of data provided for the table")
 				}
+
+				selected := -1
+
+				for i := 0; i < len(data); i += numColumns {
+					table.AddRow(data[i : i+numColumns]...)
+
+					if v.Interface() == data[i] {
+						selected = i / numColumns
+					}
+				}
+
+				if selected != -1 {
+					table.SelectRow(selected)
+				}
+
+				formItem = table
+				table.SetRowSelectedFunc(func(row int) {
+					v.Set(reflect.ValueOf(table.GetValue(row, 0))) // always pick the first column
+				})
+			} else {
+				dropdown := tview.NewDropDown()
+
+				if len(item.options)%2 != 0 {
+					return nil, fmt.Errorf("wrong amount of arguments for options: should be even amount of key, value pairs")
+				}
+
+				for i := 0; i < len(item.options); i += 2 {
+					if optionName, ok := item.options[i].(string); ok {
+						selected := -1
+
+						func(index int) {
+							dropdown.AddOption(optionName, func() {
+								v.Set(reflect.ValueOf(item.options[index]))
+							})
+
+							if v.Interface() == item.options[index] {
+								selected = i / 2
+							}
+						}(i + 1)
+
+						if selected != -1 {
+							dropdown.SetCurrentOption(selected)
+						}
+					} else {
+						return nil, fmt.Errorf("expected string option name, got %s", item.options[i])
+					}
+				}
+
+				dropdown.SetLabel(item.name)
+
+				formItem = dropdown
 			}
-
-			dropdown.SetLabel(item.name)
-
-			formItem = dropdown
 		} else {
 			input := tview.NewInputField()
 			formItem = input
@@ -375,7 +415,8 @@ func (installer *Installer) configure() error {
 		groups = append(groups, eg)
 
 		err = func(index int) error {
-			form := tview.NewForm()
+			form := components.NewForm()
+			form.SetBackgroundColor(color)
 
 			for _, item := range p.items {
 				formItems, e := item.createFormItems()
