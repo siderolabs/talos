@@ -140,6 +140,10 @@ func finalize(platform runtime.Platform, img string) (err error) {
 		if err = tar(fmt.Sprintf("gcp-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
 			return err
 		}
+	case "openstack":
+		if err = tar(fmt.Sprintf("openstack-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+			return err
+		}
 	case "vmware":
 		if err = ova.CreateOVAFromRAW(name, img, outputArg); err != nil {
 			return err

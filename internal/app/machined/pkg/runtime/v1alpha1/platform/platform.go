@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/digitalocean"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/gcp"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -49,20 +50,23 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 	return newPlatform(platform)
 }
 
+// nolint: gocyclo
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":
 		p = &aws.AWS{}
 	case "azure":
 		p = &azure.Azure{}
-	case "digital-ocean":
-		p = &digitalocean.DigitalOcean{}
-	case "metal":
-		p = &metal.Metal{}
 	case "container":
 		p = &container.Container{}
+	case "digital-ocean":
+		p = &digitalocean.DigitalOcean{}
 	case "gcp":
 		p = &gcp.GCP{}
+	case "metal":
+		p = &metal.Metal{}
+	case "openstack":
+		p = &openstack.Openstack{}
 	case "packet":
 		p = &packet.Packet{}
 	case "vmware":
