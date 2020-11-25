@@ -68,6 +68,12 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 			},
 			ClusterNetwork: &machineapi.ClusterNetworkConfig{
 				DnsDomain: "cluster.test",
+				CniConfig: &machineapi.CNIConfig{
+					Name: "custom",
+					Urls: []string{
+						"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
+					},
+				},
 			},
 		},
 	}
@@ -90,9 +96,12 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().EqualValues(request.ClusterConfig.Name, config.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, config.Cluster().Endpoint().String())
 	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, config.Cluster().Network().DNSDomain())
+	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.CniConfig.Name, config.Cluster().Network().CNI().Name())
+	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.CniConfig.Urls, config.Cluster().Network().CNI().URLs())
 	suite.Require().EqualValues(fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion), config.Machine().Kubelet().Image())
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, config.Machine().Install().Disk())
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, config.Machine().Install().Image())
+	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
 
 	talosconfig, err := clientconfig.FromBytes(reply.Talosconfig)

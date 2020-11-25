@@ -747,8 +747,14 @@ message ControlPlaneConfig {
   string endpoint = 1;
 }
 
+message CNIConfig {
+  string name = 1;
+  repeated string urls = 2;
+}
+
 message ClusterNetworkConfig {
   string dns_domain = 1;
+  CNIConfig cni_config = 2;
 }
 
 message ClusterConfig {

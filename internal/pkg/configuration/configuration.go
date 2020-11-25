@@ -57,6 +57,13 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			if in.ClusterConfig.ClusterNetwork.DnsDomain != "" {
 				options = append(options, generate.WithDNSDomain(in.ClusterConfig.ClusterNetwork.DnsDomain))
 			}
+
+			if in.ClusterConfig.ClusterNetwork.CniConfig != nil {
+				options = append(options, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
+					CNIName: in.ClusterConfig.ClusterNetwork.CniConfig.Name,
+					CNIUrls: in.ClusterConfig.ClusterNetwork.CniConfig.Urls,
+				}))
+			}
 		}
 
 		var (

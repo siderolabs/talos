@@ -18,6 +18,16 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// cniPresets defines custom CNI presets.
+var cniPresets = map[string]*machineapi.CNIConfig{
+	"cilium": {
+		Name: "custom",
+		Urls: []string{
+			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
+		},
+	},
+}
+
 // NewState creates new installer state.
 func NewState(ctx context.Context, conn *Connection) (*State, error) {
 	opts := &machineapi.GenerateConfigurationRequest{
@@ -40,13 +50,12 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 	}
 
 	if conn.ExpandingCluster() {
-		// join node should be used as a controlplane endpoint
 		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.bootstrapEndpoint, constants.DefaultControlPlanePort)
 	} else {
 		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.nodeEndpoint, constants.DefaultControlPlanePort)
 	}
 
-	diskInstallOptions := []interface{}{
+	installDiskOptions := []interface{}{
 		NewTableHeaders("device name", "model name", "size"),
 	}
 
@@ -60,7 +69,7 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 			opts.MachineConfig.InstallConfig.InstallDisk = disk.DeviceName
 		}
 
-		diskInstallOptions = append(diskInstallOptions, disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
+		installDiskOptions = append(installDiskOptions, disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
 	}
 
 	var machineTypes []interface{}
@@ -78,58 +87,75 @@ func NewState(ctx context.Context, conn *Connection) (*State, error) {
 	}
 
 	state := &State{
+		cni:  constants.DefaultCNI,
 		conn: conn,
 		opts: opts,
-		pages: []*Page{
-			NewPage("Installer Params",
-				NewItem(
-					"image",
-					v1alpha1.InstallConfigDoc.Describe("image", true),
-					&opts.MachineConfig.InstallConfig.InstallImage,
-				),
-				NewItem(
-					"install disk",
-					v1alpha1.InstallConfigDoc.Describe("disk", true),
-					&opts.MachineConfig.InstallConfig.InstallDisk,
-					diskInstallOptions...,
-				),
+	}
+
+	networkConfigItems := []*Item{
+		NewItem(
+			"hostname",
+			v1alpha1.NetworkConfigDoc.Describe("hostname", true),
+			&opts.MachineConfig.NetworkConfig.Hostname,
+		),
+		NewItem(
+			"dns domain",
+			v1alpha1.ClusterNetworkConfigDoc.Describe("dnsDomain", true),
+			&opts.ClusterConfig.ClusterNetwork.DnsDomain,
+		),
+	}
+
+	if !conn.ExpandingCluster() {
+		networkConfigItems = append(networkConfigItems, NewItem(
+			"type",
+			v1alpha1.ClusterNetworkConfigDoc.Describe("cni", true),
+			&state.cni,
+			NewTableHeaders("CNI", "description"),
+			constants.DefaultCNI, "CNI used by Talos by default",
+			"cilium", "Cillium 1.8 installed through quick-install.yaml",
+		))
+	}
+
+	state.pages = []*Page{
+		NewPage("Installer Params",
+			NewItem(
+				"image",
+				v1alpha1.InstallConfigDoc.Describe("image", true),
+				&opts.MachineConfig.InstallConfig.InstallImage,
 			),
-			NewPage("Machine Config",
-				NewItem(
-					"machine type",
-					v1alpha1.MachineConfigDoc.Describe("type", true),
-					&opts.MachineConfig.Type,
-					machineTypes...,
-				),
-				NewItem(
-					"cluster name",
-					v1alpha1.ClusterConfigDoc.Describe("clusterName", true),
-					&opts.ClusterConfig.Name,
-				),
-				NewItem(
-					"control plane endpoint",
-					v1alpha1.ControlPlaneConfigDoc.Describe("endpoint", true),
-					&opts.ClusterConfig.ControlPlane.Endpoint,
-				),
-				NewItem(
-					"kubernetes version",
-					"Kubernetes version to install.",
-					&opts.MachineConfig.KubernetesVersion,
-				),
+			NewItem(
+				"install disk",
+				v1alpha1.InstallConfigDoc.Describe("disk", true),
+				&opts.MachineConfig.InstallConfig.InstallDisk,
+				installDiskOptions...,
 			),
-			NewPage("Network Config",
-				NewItem(
-					"hostname",
-					v1alpha1.NetworkConfigDoc.Describe("hostname", true),
-					&opts.MachineConfig.NetworkConfig.Hostname,
-				),
-				NewItem(
-					"dns domain",
-					v1alpha1.ClusterNetworkConfigDoc.Describe("dnsDomain", true),
-					&opts.ClusterConfig.ClusterNetwork.DnsDomain,
-				),
+		),
+		NewPage("Machine Config",
+			NewItem(
+				"machine type",
+				v1alpha1.MachineConfigDoc.Describe("type", true),
+				&opts.MachineConfig.Type,
+				machineTypes...,
 			),
-		},
+			NewItem(
+				"cluster name",
+				v1alpha1.ClusterConfigDoc.Describe("clusterName", true),
+				&opts.ClusterConfig.Name,
+			),
+			NewItem(
+				"control plane endpoint",
+				v1alpha1.ControlPlaneConfigDoc.Describe("endpoint", true),
+				&opts.ClusterConfig.ControlPlane.Endpoint,
+			),
+			NewItem(
+				"kubernetes version",
+				"Kubernetes version to install.",
+				&opts.MachineConfig.KubernetesVersion,
+			),
+		),
+		NewPage("Network Config",
+			networkConfigItems...,
+		),
 	}
 
 	return state, nil
@@ -140,9 +166,15 @@ type State struct {
 	pages []*Page
 	opts  *machineapi.GenerateConfigurationRequest
 	conn  *Connection
+	cni   string
 }
 
 // GenConfig returns current config encoded in yaml.
 func (s *State) GenConfig() (*machineapi.GenerateConfigurationResponse, error) {
+	// configure custom cni from the preset
+	if customCNI, ok := cniPresets[s.cni]; ok {
+		s.opts.ClusterConfig.ClusterNetwork.CniConfig = customCNI
+	}
+
 	return s.conn.GenerateConfiguration(s.opts)
 }
