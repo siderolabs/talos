@@ -7,8 +7,8 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-10-g83dc352
-PKGS ?= v0.3.0-27-g7a64952
+TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-11-g84c834e
+PKGS ?= v0.3.0-35-g6b7be81
 EXTRAS ?= v0.1.0-5-gcc2df81
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
@@ -173,7 +173,7 @@ talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker run --rm -v /dev:/dev --privileged $(REGISTRY)/$(USERNAME)/installer:$(TAG) image --platform $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
-images: image-aws image-azure image-digital-ocean image-gcp image-openstack image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, Openstack, and VMware).
+images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, Metal, Openstack, and VMware).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.

@@ -85,6 +85,7 @@ module.exports = {
             { title: "Virtualized Platforms", method: "alphabetical" },
             { title: "Cloud Platforms", method: "alphabetical" },
             { title: "Local Platforms", method: "alphabetical" },
+            { title: "Single Board Computers", method: "alphabetical" },
             { title: "Guides", method: "alphabetical" },
             { title: "Reference", method: "alphabetical" },
             { title: "Learn More", method: "weighted" },

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,13 +19,13 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -34,8 +35,9 @@ import (
 // Manifest represents the instructions for preparing all block devices
 // for an installation.
 type Manifest struct {
-	Devices map[string]Device
-	Targets map[string][]*Target
+	PartitionOptions *runtime.PartitionOptions
+	Devices          map[string]Device
+	Targets          map[string][]*Target
 }
 
 // Device represents device options.
@@ -136,6 +138,17 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	manifest = &Manifest{
 		Devices: map[string]Device{},
 		Targets: map[string][]*Target{},
+	}
+
+	if opts.Board != constants.BoardNone {
+		var b runtime.Board
+
+		b, err = board.NewBoard(opts.Board)
+		if err != nil {
+			return nil, err
+		}
+
+		manifest.PartitionOptions = b.PartitionOptions()
 	}
 
 	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
@@ -345,14 +358,48 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	var bd *blockdevice.BlockDevice
 
-	if bd, err = blockdevice.Open(device.Device, blockdevice.WithNewGPT(device.ResetPartitionTable)); err != nil {
+	if bd, err = blockdevice.Open(device.Device); err != nil {
 		return err
 	}
 
 	// nolint: errcheck
 	defer bd.Close()
 
-	if device.ResetPartitionTable {
+	var pt *gpt.GPT
+
+	created := false
+
+	pt, err = bd.PartitionTable()
+	if err != nil {
+		if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+			return err
+		}
+
+		log.Printf("creating new partition table on %s", device.Device)
+
+		gptOpts := []gpt.Option{}
+
+		if m.PartitionOptions != nil {
+			gptOpts = append(gptOpts, gpt.WithPartitionEntriesStartLBA(m.PartitionOptions.PartitionsOffset))
+		}
+
+		pt, err = gpt.New(bd.Device(), gptOpts...)
+		if err != nil {
+			return err
+		}
+
+		if err = pt.Write(); err != nil {
+			return err
+		}
+
+		if bd, err = blockdevice.Open(device.Device); err != nil {
+			return err
+		}
+
+		created = true
+	}
+
+	if !created && device.ResetPartitionTable {
 		log.Printf("resetting partition table on %s", device.Device)
 
 		// TODO: how should it work with zero option above?
@@ -365,13 +412,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		}
 	} else {
 		// clean up partitions which are going to be recreated
-		var pt table.PartitionTable
-
-		pt, err = bd.PartitionTable()
-		if err != nil {
-			return err
-		}
-
 		keepPartitions := map[string]struct{}{}
 
 		for _, target := range targets {
@@ -387,8 +427,8 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			missingPartitions[label] = struct{}{}
 		}
 
-		for _, part := range pt.Partitions() {
-			delete(missingPartitions, part.Label())
+		for _, part := range pt.Partitions().Items() {
+			delete(missingPartitions, part.Name)
 		}
 
 		if len(missingPartitions) > 0 {
@@ -396,9 +436,9 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		}
 
 		// delete all partitions which are not skipped
-		for _, part := range pt.Partitions() {
-			if _, ok := keepPartitions[part.Label()]; !ok {
-				log.Printf("deleting partition %s", part.Label())
+		for _, part := range pt.Partitions().Items() {
+			if _, ok := keepPartitions[part.Name]; !ok {
+				log.Printf("deleting partition %s", part.Name)
 
 				if err = pt.Delete(part); err != nil {
 					return err
@@ -414,8 +454,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 	}
-
-	var pt table.PartitionTable
 
 	pt, err = bd.PartitionTable()
 	if err != nil {
@@ -507,7 +545,7 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 		}
 
 		var (
-			sourcePart     table.Partition
+			sourcePart     *gpt.Partition
 			fileSystemType FileSystemType
 			fnmatchFilters []string
 		)
@@ -521,8 +559,8 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 
 		for _, source := range sources {
 			// find matching existing partition table entry
-			for _, part := range pt.Partitions() {
-				if part.Label() == source.Label {
+			for _, part := range pt.Partitions().Items() {
+				if part.Name == source.Label {
 					sourcePart = part
 					fileSystemType = source.FileSystemType
 					fnmatchFilters = source.FnmatchFilters
@@ -600,11 +638,11 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 
 // Partition creates a new partition on the specified device.
 // nolint: dupl, gocyclo
-func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.BlockDevice) (err error) {
+func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
 	if t.Skip {
-		for _, part := range pt.Partitions() {
-			if part.Label() == t.Label {
-				t.PartitionName, err = util.PartPath(t.Device, int(part.No()))
+		for _, part := range pt.Partitions().Items() {
+			if part.Name == t.Label {
+				t.PartitionName, err = util.PartPath(t.Device, int(part.Number))
 				if err != nil {
 					return err
 				}
@@ -620,17 +658,17 @@ func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.Blo
 
 	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
 
-	opts := []interface{}{
-		partition.WithPartitionType(t.PartitionType),
-		partition.WithPartitionName(t.Label),
+	opts := []gpt.PartitionOption{
+		gpt.WithPartitionType(t.PartitionType),
+		gpt.WithPartitionName(t.Label),
 	}
 
 	if t.Size == 0 {
-		opts = append(opts, partition.WithMaximumSize(true))
+		opts = append(opts, gpt.WithMaximumSize(true))
 	}
 
 	if t.LegacyBIOSBootable {
-		opts = append(opts, partition.WithLegacyBIOSBootableAttribute(true))
+		opts = append(opts, gpt.WithLegacyBIOSBootableAttribute(true))
 	}
 
 	part, err := pt.InsertAt(pos, t.Size, opts...)
@@ -638,7 +676,7 @@ func (t *Target) Partition(pt table.PartitionTable, pos int, bd *blockdevice.Blo
 		return err
 	}
 
-	t.PartitionName, err = util.PartPath(t.Device, int(part.No()))
+	t.PartitionName, err = util.PartPath(t.Device, int(part.Number))
 	if err != nil {
 		return err
 	}
@@ -755,8 +793,8 @@ func withTemporaryMounted(partPath string, flags uintptr, fileSystemType FileSys
 }
 
 // SaveContents saves contents of partition to the target (in-memory).
-func (t *Target) SaveContents(device Device, source table.Partition, fileSystemType FileSystemType, fnmatchFilters []string) error {
-	partPath, err := util.PartPath(device.Device, int(source.No()))
+func (t *Target) SaveContents(device Device, source *gpt.Partition, fileSystemType FileSystemType, fnmatchFilters []string) error {
+	partPath, err := util.PartPath(device.Device, int(source.Number))
 	if err != nil {
 		return err
 	}

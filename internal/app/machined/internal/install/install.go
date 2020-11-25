@@ -66,10 +66,14 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
-	var config *string
-	if config = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
-		c := "none"
-		config = &c
+	config := constants.ConfigNone
+	if c := procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); c != nil {
+		config = *c
+	}
+
+	board := constants.BoardNone
+	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
+		board = *c
 	}
 
 	upgrade := strconv.FormatBool(options.Upgrade)
@@ -81,7 +85,8 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		"install",
 		"--disk=" + disk,
 		"--platform=" + platform,
-		"--config=" + *config,
+		"--board=" + board,
+		"--config=" + config,
 		"--upgrade=" + upgrade,
 		"--force=" + force,
 		"--zero=" + zero,

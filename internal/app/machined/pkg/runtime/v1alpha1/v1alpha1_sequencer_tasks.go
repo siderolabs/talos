@@ -25,7 +25,7 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -815,7 +815,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 		// nolint: errcheck
 		defer bd.Close()
 
-		var pt table.PartitionTable
+		var pt *gpt.GPT
 
 		pt, err = bd.PartitionTable()
 		if err != nil {
@@ -830,7 +830,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) 
 		// - a partition table does not exist
 
 		if pt != nil {
-			if len(pt.Partitions()) > 0 {
+			if len(pt.Partitions().Items()) > 0 {
 				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
 
 				continue

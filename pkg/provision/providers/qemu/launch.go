@@ -6,6 +6,7 @@ package qemu
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -19,7 +20,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
@@ -167,8 +168,12 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 
 	defer disk.Close() //nolint: errcheck
 
-	diskTable, err := gpt.NewGPT("vda", disk)
+	diskTable, err := gpt.Open(disk)
 	if err != nil {
+		if errors.Is(err, gpt.ErrPartitionTableDoesNotExist) {
+			return false, nil
+		}
+
 		return false, fmt.Errorf("error creating GPT object: %w", err)
 	}
 
@@ -176,7 +181,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 		return false, nil
 	}
 
-	return len(diskTable.Partitions()) > 0, nil
+	return len(diskTable.Partitions().Items()) > 0, nil
 }
 
 // launchVM runs qemu with args built based on config.

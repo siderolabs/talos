@@ -16,8 +16,7 @@ import (
 	"regexp"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem/vfat"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision/internal/vmlinuz"
@@ -114,7 +113,7 @@ func (b *BootLoader) Close() error {
 }
 
 func (b *BootLoader) findBootPartition() error {
-	diskTable, err := gpt.NewGPT("vda", b.diskF)
+	diskTable, err := gpt.Open(b.diskF)
 	if err != nil {
 		return fmt.Errorf("error creating GPT object: %w", err)
 	}
@@ -123,11 +122,11 @@ func (b *BootLoader) findBootPartition() error {
 		return fmt.Errorf("error reading GPT: %w", err)
 	}
 
-	var bootPartition table.Partition
+	var bootPartition *gpt.Partition
 
-	for _, part := range diskTable.Partitions() {
+	for _, part := range diskTable.Partitions().Items() {
 		// TODO: should we do better matching here
-		if part.No() == 1 {
+		if part.Number == 1 {
 			bootPartition = part
 
 			break
@@ -138,7 +137,7 @@ func (b *BootLoader) findBootPartition() error {
 		return fmt.Errorf("no boot partition found")
 	}
 
-	b.bootPartitionReader = io.NewSectionReader(b.diskF, bootPartition.Start()*diskImageSectorSize, bootPartition.Length()*diskImageSectorSize)
+	b.bootPartitionReader = io.NewSectionReader(b.diskF, int64(bootPartition.FirstLBA)*diskImageSectorSize, int64(bootPartition.Length())*diskImageSectorSize)
 
 	return nil
 }

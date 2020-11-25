@@ -86,7 +86,7 @@ func runImageCmd() (err error) {
 	if options.ConfigSource == "" {
 		switch p.Name() {
 		case "aws", "azure", "digital-ocean", "gcp":
-			options.ConfigSource = "none"
+			options.ConfigSource = constants.ConfigNone
 		case "vmware":
 			options.ConfigSource = constants.ConfigGuestInfo
 		default:
@@ -146,6 +146,16 @@ func finalize(platform runtime.Platform, img string) (err error) {
 		}
 	case "vmware":
 		if err = ova.CreateOVAFromRAW(name, img, outputArg); err != nil {
+			return err
+		}
+	case "metal":
+		name := fmt.Sprintf("metal-%s.tar.gz", stdruntime.GOARCH)
+
+		if options.Board != "" {
+			name = fmt.Sprintf("metal-%s-%s.tar.gz", options.Board, stdruntime.GOARCH)
+		}
+
+		if err = tar(name, file, dir); err != nil {
 			return err
 		}
 	}
