@@ -19,8 +19,28 @@ import (
 )
 
 // Result of the upload process.
-type Result struct {
-	AWS AWSResult `json:"aws,omitempty"`
+type Result []CloudImage
+
+// CloudImage is the record official cloud image.
+type CloudImage struct {
+	Cloud  string `json:"cloud"`
+	Tag    string `json:"version"`
+	Region string `json:"region"`
+	Arch   string `json:"arch"`
+	Type   string `json:"type"`
+	ID     string `json:"id"`
+}
+
+var (
+	result   Result
+	resultMu sync.Mutex
+)
+
+func pushResult(image CloudImage) {
+	resultMu.Lock()
+	defer resultMu.Unlock()
+
+	result = append(result, image)
 }
 
 func main() {
@@ -45,10 +65,6 @@ func main() {
 
 	var g errgroup.Group
 
-	result := Result{}
-
-	var mu sync.Mutex
-
 	g.Go(func() error {
 		aws := AWSUploader{
 			Options: DefaultOptions,
@@ -58,11 +74,6 @@ func main() {
 			return err
 		}
 
-		mu.Lock()
-		defer mu.Unlock()
-
-		result.AWS = aws.GetResult()
-
 		return nil
 	})
 
@@ -70,5 +81,7 @@ func main() {
 		log.Fatalf("failed: %s", err)
 	}
 
-	json.NewEncoder(os.Stdout).Encode(&result) //nolint: errcheck
+	e := json.NewEncoder(os.Stdout)
+	e.SetIndent("", "  ")
+	e.Encode(&result) //nolint: errcheck
 }
