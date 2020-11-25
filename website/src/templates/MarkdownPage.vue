@@ -2,6 +2,7 @@
   <Layout>
     <div>
       <h1 class="content" v-html="$page.markdownPage.title" />
+      <AMIImages v-if="$page.markdownPage.title === 'AWS'" />
       <div
         class="content overflow-x-auto"
         v-html="$page.markdownPage.content"
@@ -46,10 +47,12 @@ query ($id: ID!) {
 
 <script>
 import NextPrevLinks from "@/components/NextPrevLinks.vue";
+import AMIImages from "@/components/AMIImages";
 
 export default {
   components: {
     NextPrevLinks,
+    AMIImages,
   },
 
   metaInfo() {

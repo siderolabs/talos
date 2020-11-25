@@ -25,26 +25,10 @@ import (
 type AWSUploader struct {
 	Options Options
 
-	mu     sync.Mutex
-	result AWSResult
+	mu sync.Mutex
 
 	sess    *session.Session
 	ec2svcs map[string]*ec2.EC2
-}
-
-// AWSResult is the result of AWS upload.
-type AWSResult struct {
-	Regions map[string]*AWSResultByRegion `json:"regions"`
-}
-
-// AWSResultByRegion is the result of AWS upload.
-type AWSResultByRegion struct {
-	Architectures map[string]*AWSResultByArch `json:"arch"`
-}
-
-// AWSResultByArch is the result of AWS upload.
-type AWSResultByArch struct {
-	AmiID string `json:"ami_id"`
 }
 
 var awsArchitectures = map[string]string{
@@ -63,8 +47,6 @@ func (au *AWSUploader) Upload() error {
 		return fmt.Errorf("failed creating AWS session: %w", err)
 	}
 
-	au.result.Regions = map[string]*AWSResultByRegion{}
-
 	au.ec2svcs = make(map[string]*ec2.EC2)
 
 	for _, region := range au.Options.AWSRegions {
@@ -76,11 +58,6 @@ func (au *AWSUploader) Upload() error {
 	}
 
 	return nil
-}
-
-// GetResult returns the result.
-func (au *AWSUploader) GetResult() AWSResult {
-	return au.result
 }
 
 // RegisterAMIs in every region.
@@ -105,12 +82,6 @@ func (au *AWSUploader) RegisterAMIs() error {
 }
 
 func (au *AWSUploader) registerAMI(region string, svc *ec2.EC2) error {
-	au.mu.Lock()
-	au.result.Regions[region] = &AWSResultByRegion{
-		Architectures: make(map[string]*AWSResultByArch),
-	}
-	au.mu.Unlock()
-
 	s3Svc := s3.New(au.sess, aws.NewConfig().WithRegion(region))
 	bucketName := fmt.Sprintf("talos-image-upload-%s", uuid.New())
 
@@ -318,11 +289,14 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 		Attribute: aws.String("launchPermission"),
 	})
 
-	au.mu.Lock()
-	au.result.Regions[region].Architectures[arch] = &AWSResultByArch{
-		AmiID: imageID,
-	}
-	au.mu.Unlock()
+	pushResult(CloudImage{
+		Cloud:  "aws",
+		Tag:    au.Options.Tag,
+		Region: region,
+		Arch:   arch,
+		Type:   "hvm",
+		ID:     imageID,
+	})
 
 	return nil
 }
