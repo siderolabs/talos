@@ -6,7 +6,9 @@ package install
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -14,6 +16,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -26,6 +29,7 @@ type Options struct {
 	ConfigSource    string
 	Disk            string
 	Platform        string
+	Board           string
 	ExtraKernelArgs []string
 	Bootloader      bool
 	Upgrade         bool
@@ -37,7 +41,10 @@ type Options struct {
 func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error) {
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
-	cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
+
+	if opts.ConfigSource != "" {
+		cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
+	}
 
 	if err = cmdline.AppendAll(p.KernelArgs().Strings()); err != nil {
 		return err
@@ -152,6 +159,17 @@ func (i *Installer) probeBootPartition() error {
 //
 // nolint: gocyclo
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
+	if i.options.Board != constants.BoardNone {
+		var b runtime.Board
+
+		b, err = board.NewBoard(i.options.Board)
+		if err != nil {
+			return err
+		}
+
+		i.cmdline.Append(constants.KernelParamBoard, b.Name())
+	}
+
 	if err = i.manifest.Execute(); err != nil {
 		return err
 	}
@@ -218,6 +236,54 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 	if err = i.bootloader.Install(i.Current, grubcfg, seq); err != nil {
 		return err
+	}
+
+	if i.options.Board != constants.BoardNone {
+		var b runtime.Board
+
+		b, err = board.NewBoard(i.options.Board)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("installing U-Boot for %q board", b.Name())
+
+		var f *os.File
+
+		if f, err = os.OpenFile(i.options.Disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
+			return err
+		}
+
+		// nolint: errcheck
+		defer f.Close()
+
+		bin, off := b.UBoot()
+
+		var uboot []byte
+
+		uboot, err = ioutil.ReadFile(bin)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("writing %s to %s at offset %d", bin, i.options.Disk, off)
+
+		var n int
+
+		n, err = f.WriteAt(uboot, off)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("wrote %d bytes", n)
+
+		// NB: In the case that the block device is a loopback device, we sync here
+		// to esure that the file is written before the loopback device is
+		// unmounted.
+		err = f.Sync()
+		if err != nil {
+			return err
+		}
 	}
 
 	if seq == runtime.SequenceUpgrade {

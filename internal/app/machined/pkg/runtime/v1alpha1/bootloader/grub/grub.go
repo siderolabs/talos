@@ -53,8 +53,8 @@ terminal_output console
 
 {{ range $label := .Labels -}}
 menuentry "{{ $label.Root }}" {
-	set gfxmode=auto
-	set gfxpayload=text
+  set gfxmode=auto
+  set gfxpayload=text
   linux {{ $label.Kernel }} {{ $label.Append }}
   initrd {{ $label.Initrd }}
 }

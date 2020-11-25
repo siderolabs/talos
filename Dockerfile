@@ -29,6 +29,7 @@ FROM ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs
 FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
 FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
+FROM ghcr.io/talos-systems/u-boot:${PKGS} AS pkg-u-boot
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -470,6 +471,7 @@ COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 ARG TARGETARCH
 COPY --from=kernel /vmlinuz-${TARGETARCH} /usr/install/vmlinuz
 COPY --from=initramfs /initramfs-${TARGETARCH}.xz /usr/install/initramfs.xz
+COPY --from=pkg-u-boot / /usr/install/u-boot
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
 ARG TAG

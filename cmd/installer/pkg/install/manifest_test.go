@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/loopback"
-	"github.com/talos-systems/go-blockdevice/blockdevice/table/gpt/partition"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"
@@ -111,34 +111,34 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	suite.Assert().Len(table.Partitions(), 6)
 
-	part := table.Partitions()[0]
-	suite.Assert().Equal(install.EFISystemPartition, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.EFIPartitionLabel, part.Label())
-	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	part := table.Partitions().Items()[0]
+	suite.Assert().Equal(install.EFISystemPartition, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.EFIPartitionLabel, part.Name)
+	suite.Assert().EqualValues(0, part.Attributes)
 	suite.Assert().EqualValues(install.EFISize/lbaSize, part.Length())
 
-	part = table.Partitions()[1]
-	suite.Assert().Equal(install.BIOSBootPartition, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.BIOSGrubPartitionLabel, part.Label())
-	suite.Assert().EqualValues(4, part.(*partition.Partition).Flags)
+	part = table.Partitions().Items()[1]
+	suite.Assert().Equal(install.BIOSBootPartition, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.BIOSGrubPartitionLabel, part.Name)
+	suite.Assert().EqualValues(4, part.Attributes)
 	suite.Assert().EqualValues(install.BIOSGrubSize/lbaSize, part.Length())
 
-	part = table.Partitions()[2]
-	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.BootPartitionLabel, part.Label())
-	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	part = table.Partitions().Items()[2]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.BootPartitionLabel, part.Name)
+	suite.Assert().EqualValues(0, part.Attributes)
 	suite.Assert().EqualValues(install.BootSize/lbaSize, part.Length())
 
-	part = table.Partitions()[3]
-	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.MetaPartitionLabel, part.Label())
-	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	part = table.Partitions().Items()[3]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.MetaPartitionLabel, part.Name)
+	suite.Assert().EqualValues(0, part.Attributes)
 	suite.Assert().EqualValues(install.MetaSize/lbaSize, part.Length())
 
-	part = table.Partitions()[4]
-	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.StatePartitionLabel, part.Label())
-	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	part = table.Partitions().Items()[4]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.StatePartitionLabel, part.Name)
+	suite.Assert().EqualValues(0, part.Attributes)
 
 	if !upgradeFromLegacy {
 		suite.Assert().EqualValues(install.StateSize/lbaSize, part.Length())
@@ -146,10 +146,10 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 		suite.Assert().EqualValues((diskSize-legacyEphemeralSize-install.EFISize-install.BIOSGrubSize-install.BootSize-install.MetaSize)/lbaSize-gptReserved, part.Length())
 	}
 
-	part = table.Partitions()[5]
-	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.(*partition.Partition).Type.String()))
-	suite.Assert().Equal(constants.EphemeralPartitionLabel, part.Label())
-	suite.Assert().EqualValues(0, part.(*partition.Partition).Flags)
+	part = table.Partitions().Items()[5]
+	suite.Assert().Equal(install.LinuxFilesystemData, strings.ToUpper(part.Type.String()))
+	suite.Assert().Equal(constants.EphemeralPartitionLabel, part.Name)
+	suite.Assert().EqualValues(0, part.Attributes)
 
 	if !upgradeFromLegacy {
 		suite.Assert().EqualValues((diskSize-install.EFISize-install.BIOSGrubSize-install.BootSize-install.MetaSize-install.StateSize)/lbaSize-gptReserved, part.Length())
@@ -189,7 +189,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 		suite.Assert().NoError(mount.Unmount(mountpoints))
 	}()
 
-	metaPath := fmt.Sprintf("%sp%d", suite.loopbackDevice.Name(), table.Partitions()[3].No())
+	metaPath := fmt.Sprintf("%sp%d", suite.loopbackDevice.Name(), table.Partitions().Items()[3].Number)
 
 	if verifyConfigPersistence {
 		suite.Assert().FileExists(filepath.Join(tempDir, "system", "state", "config.yaml"))
@@ -383,7 +383,12 @@ func (suite *manifestSuite) TestTargetInstall() {
 }
 
 func (suite *manifestSuite) createTalosLegacyLayout() {
-	bd, err := blockdevice.Open(suite.loopbackDevice.Name(), blockdevice.WithNewGPT(true))
+	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
+	suite.Require().NoError(err)
+
+	_, err = gpt.New(bd.Device())
+	suite.Require().NoError(err)
+
 	suite.Require().NoError(err)
 
 	defer bd.Close() //nolint: errcheck
@@ -393,16 +398,16 @@ func (suite *manifestSuite) createTalosLegacyLayout() {
 	suite.Require().NoError(err)
 
 	partBoot, err := table.Add(512*install.MiB,
-		partition.WithLegacyBIOSBootableAttribute(true),
-		partition.WithPartitionName(constants.LegacyBootPartitionLabel),
-		partition.WithPartitionType("28732AC1-1FF8-D211-BA4B-00A0C93EC93B"),
+		gpt.WithLegacyBIOSBootableAttribute(true),
+		gpt.WithPartitionName(constants.LegacyBootPartitionLabel),
+		gpt.WithPartitionType("28732AC1-1FF8-D211-BA4B-00A0C93EC93B"),
 	)
 	suite.Require().NoError(err)
 
 	partEphemeral, err := table.Add(0,
-		partition.WithPartitionName(constants.EphemeralPartitionLabel),
-		partition.WithPartitionType("0FC63DAF-8483-4772-8E79-3D69D8477DE4"),
-		partition.WithMaximumSize(true),
+		gpt.WithPartitionName(constants.EphemeralPartitionLabel),
+		gpt.WithPartitionType("0FC63DAF-8483-4772-8E79-3D69D8477DE4"),
+		gpt.WithMaximumSize(true),
 	)
 	suite.Require().NoError(err)
 
@@ -411,12 +416,12 @@ func (suite *manifestSuite) createTalosLegacyLayout() {
 	suite.Require().NoError(bd.Close())
 
 	// format partitions
-	partBootPath, err := util.PartPath(suite.loopbackDevice.Name(), int(partBoot.No()))
+	partBootPath, err := util.PartPath(suite.loopbackDevice.Name(), int(partBoot.Number))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(makefs.VFAT(partBootPath))
 
-	partEphemeralPath, err := util.PartPath(suite.loopbackDevice.Name(), int(partEphemeral.No()))
+	partEphemeralPath, err := util.PartPath(suite.loopbackDevice.Name(), int(partEphemeral.Number))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(makefs.XFS(partEphemeralPath, makefs.WithLabel(constants.EphemeralPartitionLabel)))

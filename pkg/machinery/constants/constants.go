@@ -20,9 +20,22 @@ const (
 	// to the config.
 	KernelParamConfig = "talos.config"
 
+	// ConfigNone indicates no config is required.
+	ConfigNone = "none"
+
 	// KernelParamPlatform is the kernel parameter name for specifying the
 	// platform.
 	KernelParamPlatform = "talos.platform"
+
+	// KernelParamBoard is the kernel parameter name for specifying the
+	// SBC.
+	KernelParamBoard = "talos.board"
+
+	// BoardNone indicates that the install is not for a specific board.
+	BoardNone = "none"
+
+	// BoardLibretechAllH3CCH5 is the  name of the Libre Computer board ALL-H3-CC.
+	BoardLibretechAllH3CCH5 = "libretech_all_h3_cc_h5"
 
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
