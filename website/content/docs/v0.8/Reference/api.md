@@ -23,6 +23,7 @@ title: API
     - [Bootstrap](#machine.Bootstrap)
     - [BootstrapRequest](#machine.BootstrapRequest)
     - [BootstrapResponse](#machine.BootstrapResponse)
+    - [CNIConfig](#machine.CNIConfig)
     - [CPUInfo](#machine.CPUInfo)
     - [CPUInfoResponse](#machine.CPUInfoResponse)
     - [CPUStat](#machine.CPUStat)
@@ -406,6 +407,22 @@ rpc bootstrap
 
 
 
+<a name="machine.CNIConfig"></a>
+
+### CNIConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| urls | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="machine.CPUInfo"></a>
 
 ### CPUInfo
@@ -527,6 +544,7 @@ rpc bootstrap
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | dns_domain | [string](#string) |  |  |
+| cni_config | [CNIConfig](#machine.CNIConfig) |  |  |
 
 
 
