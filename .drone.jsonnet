@@ -495,6 +495,8 @@ local release = {
       '_out/gcp-arm64.tar.gz',
       '_out/initramfs-amd64.xz',
       '_out/initramfs-arm64.xz',
+      '_out/openstack-amd64.tar.gz',
+      '_out/openstack-arm64.tar.gz',
       '_out/talos-amd64.iso',
       '_out/talos-arm64.iso',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
