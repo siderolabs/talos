@@ -12,7 +12,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/talos-systems/talos/pkg/conditions"
 )
@@ -43,7 +43,7 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 		return
 	}
 
-	w, _, _ := terminal.GetSize(int(wr.w.Fd())) //nolint: errcheck
+	w, _, _ := term.GetSize(int(wr.w.Fd())) //nolint: errcheck
 	if w <= 0 {
 		w = 80
 	}
