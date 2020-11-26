@@ -2,6 +2,7 @@ REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty)
+IMAGE_TAG ?= $(TAG)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
@@ -85,7 +86,7 @@ for applications using `img` tool.
 ## Artifacts
 
 All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
-registry "$(REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(TAG)).
+registry "$(REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
 The registry and username can be overriden by exporting REGISTRY, and USERNAME
 respectively.
 
@@ -115,10 +116,10 @@ local-%: ## Builds the specified target defined in the Dockerfile using the loca
 
 docker-%: ## Builds the specified target defined in the Dockerfile using the docker output type. The build result will be output to the specified local destination.
 	@mkdir -p $(DEST)
-	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
+	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(IMAGE_TAG) $(TARGET_ARGS)"
 
 registry-%: ## Builds the specified target defined in the Dockerfile using the image/registry output type. The build result will be pushed to the registry if PUSH=true.
-	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(TAG) $(TARGET_ARGS)"
+	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(IMAGE_TAG) $(TARGET_ARGS)"
 
 hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
 	@./hack/test/$*.sh
@@ -329,8 +330,8 @@ endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
 ifeq (,$(MULTI_PLATFORM))
-	@docker push $(REGISTRY_AND_USERNAME)/installer:$(TAG)
-	@docker push $(REGISTRY_AND_USERNAME)/talos:$(TAG)
+	@docker push $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)
+	@docker push $(REGISTRY_AND_USERNAME)/talos:$(IMAGE_TAG)
 else
 	@$(MAKE) installer PUSH=true
 	@$(MAKE) talos PUSH=true
@@ -343,7 +344,7 @@ ifeq (,$(MULTI_PLATFORM))
 	@docker push $(REGISTRY_AND_USERNAME)/installer:$*
 	@docker push $(REGISTRY_AND_USERNAME)/talos:$*
 else
-	@$(MAKE) push TAG=$*
+	@$(MAKE) push IMAGE_TAG=$*
 endif
 
 .PHONY: clean
