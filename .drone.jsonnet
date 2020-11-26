@@ -282,7 +282,7 @@ local push_latest = {
       'push',
     ],
   },
-  depends_on: [e2e_docker.name, e2e_qemu.name],
+  depends_on: [push.name],
 };
 
 local default_steps = [
