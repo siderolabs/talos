@@ -17,7 +17,7 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
@@ -85,7 +85,7 @@ func processesUI(ctx context.Context, c *client.Client) {
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call
 		// we'll be able to handle terminal window resizing
-		w, h, err := terminal.GetSize(0)
+		w, h, err := term.GetSize(0)
 		cli.Should(err)
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
