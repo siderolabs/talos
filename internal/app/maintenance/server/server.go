@@ -9,12 +9,15 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	storaged "github.com/talos-systems/talos/internal/app/storaged"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -23,6 +26,7 @@ import (
 // Server implements machine.MachineService.
 type Server struct {
 	machine.UnimplementedMachineServiceServer
+	network.UnimplementedNetworkServiceServer
 	storaged.Server
 	runtime runtime.Runtime
 	cfgCh   chan []byte
@@ -45,6 +49,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	storage.RegisterStorageServiceServer(obj, s)
 	machine.RegisterMachineServiceServer(obj, s)
+	network.RegisterNetworkServiceServer(obj, s)
 }
 
 // ApplyConfiguration implements machine.MachineService.
@@ -87,4 +92,9 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 	}
 
 	return configuration.Generate(ctx, in)
+}
+
+// Interfaces implements the machine.NetworkService interface.
+func (s *Server) Interfaces(ctx context.Context, in *empty.Empty) (reply *network.InterfacesResponse, err error) {
+	return networkd.GetDevices()
 }
