@@ -151,7 +151,7 @@ func finalize(platform runtime.Platform, img string) (err error) {
 	case "metal":
 		name := fmt.Sprintf("metal-%s.tar.gz", stdruntime.GOARCH)
 
-		if options.Board != "" {
+		if options.Board != constants.BoardNone {
 			name = fmt.Sprintf("metal-%s-%s.tar.gz", options.Board, stdruntime.GOARCH)
 		}
 
