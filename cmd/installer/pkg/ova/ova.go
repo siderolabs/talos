@@ -16,6 +16,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
 	"github.com/talos-systems/talos/pkg/cmd"
 )
@@ -149,7 +150,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 
 	size := f.Size()
 
-	ovf, err := renderOVF(name, size, 544)
+	ovf, err := renderOVF(name, size, pkg.RAWDiskSize)
 	if err != nil {
 		return err
 	}
