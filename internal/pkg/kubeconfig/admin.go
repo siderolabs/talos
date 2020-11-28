@@ -52,7 +52,7 @@ func GenerateAdmin(config config.ClusterConfig, out io.Writer) error {
 
 	k8sKey, err := config.CA().GetRSAKey()
 	if err != nil {
-		return fmt.Errorf("error parseing Kubernetes key: %w", err)
+		return fmt.Errorf("error parsing Kubernetes key: %w", err)
 	}
 
 	adminCert, err := x509.NewCertficateAndKey(k8sCA, k8sKey,

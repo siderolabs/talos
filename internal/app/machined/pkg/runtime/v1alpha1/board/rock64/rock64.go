@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package libretechallh3cch5
+package rock64
 
 import (
 	"fmt"
@@ -20,23 +20,23 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardLibretechAllH3CCH5)
-	off int64 = 1024 * 8
-	dtb       = "/dtb/allwinner/sun50i-h5-libretech-all-h3-cc.dtb"
+	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-rockchip.bin", constants.BoardRock64)
+	off int64 = 512 * 64
+	dtb       = "/dtb/rockchip/rk3328-rock64.dtb"
 )
 
-// LibretechAllH3CCH5 represents the Libre Computer ALL-H3-CC (Tritium).
+// Rock64 represents the Pine64 Rock64 board.
 //
-// Reference: https://libre.computer/products/boards/all-h3-cc/
-type LibretechAllH3CCH5 struct{}
+// Reference: https://www.pine64.org/devices/single-board-computers/rock64/
+type Rock64 struct{}
 
 // Name implements the runtime.Board.
-func (l *LibretechAllH3CCH5) Name() string {
-	return constants.BoardLibretechAllH3CCH5
+func (r *Rock64) Name() string {
+	return constants.BoardRock64
 }
 
 // Install implements the runtime.Board.
-func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
+func (r *Rock64) Install(disk string) (err error) {
 	var f *os.File
 
 	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
@@ -88,13 +88,13 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 }
 
 // KernelArgs implements the runtime.Board.
-func (l *LibretechAllH3CCH5) KernelArgs() procfs.Parameters {
+func (r *Rock64) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS0,115200"),
+		procfs.NewParameter("console").Append("ttyS2,115200n8"),
 	}
 }
 
 // PartitionOptions implements the runtime.Board.
-func (l *LibretechAllH3CCH5) PartitionOptions() *runtime.PartitionOptions {
-	return &runtime.PartitionOptions{PartitionsOffset: 2048}
+func (r *Rock64) PartitionOptions() *runtime.PartitionOptions {
+	return &runtime.PartitionOptions{PartitionsOffset: 2048 * 10}
 }
