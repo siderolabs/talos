@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package libretechallh3cch5
+package bananapim64
 
 import (
 	"fmt"
@@ -19,23 +19,26 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardLibretechAllH3CCH5)
+	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardBananaPiM64)
 	off int64 = 1024 * 8
-	dtb       = "/dtb/allwinner/sun50i-h5-libretech-all-h3-cc.dtb"
+	dtb       = "/dtb/allwinner/sun50i-a64-bananapi-m64.dtb"
 )
 
-// LibretechAllH3CCH5 represents the Libre Computer ALL-H3-CC (Tritium).
+// BananaPiM64 represents the Banana Pi M64.
 //
-// Reference: https://libre.computer/products/boards/all-h3-cc/
-type LibretechAllH3CCH5 struct{}
+// References:
+//	- http://www.banana-pi.org/m64.html
+//	- http://wiki.banana-pi.org/Banana_Pi_BPI-M64
+//	- https://linux-sunxi.org/Banana_Pi_M64
+type BananaPiM64 struct{}
 
 // Name implements the runtime.Board.
-func (l *LibretechAllH3CCH5) Name() string {
-	return constants.BoardLibretechAllH3CCH5
+func (l *BananaPiM64) Name() string {
+	return constants.BoardBananaPiM64
 }
 
-// Install implenents the runtime.Board.
-func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
+// Install implements the runtime.Board.
+func (l *BananaPiM64) Install(disk string) (err error) {
 	var f *os.File
 
 	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
@@ -87,6 +90,6 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 }
 
 // PartitionOptions implements the runtime.Board.
-func (l *LibretechAllH3CCH5) PartitionOptions() *runtime.PartitionOptions {
+func (l *BananaPiM64) PartitionOptions() *runtime.PartitionOptions {
 	return &runtime.PartitionOptions{PartitionsOffset: 2048}
 }

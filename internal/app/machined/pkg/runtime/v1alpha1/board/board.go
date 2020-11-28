@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	bananapim64 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
 	libretechallh3cch5 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
 	rpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -49,6 +50,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &libretechallh3cch5.LibretechAllH3CCH5{}
 	case constants.BoardRPi4:
 		b = &rpi4.RPi4{}
+	case constants.BoardBananaPiM64:
+		b = &bananapim64.BananaPiM64{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}
