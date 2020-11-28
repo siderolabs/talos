@@ -43,6 +43,9 @@ const (
 	// BoardBananaPiM64 is the  name of the Banana Pi M64.
 	BoardBananaPiM64 = "bananapi_m64"
 
+	// BoardRock64 is the  name of the Pine64 Rock64.
+	BoardRock64 = "rock64"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"
