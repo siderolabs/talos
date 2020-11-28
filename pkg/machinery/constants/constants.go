@@ -40,6 +40,9 @@ const (
 	// BoardRPi4 is the  name of the Raspberry Pi 4 Model B.
 	BoardRPi4 = "rpi_4"
 
+	// BoardBananaPiM64 is the  name of the Banana Pi M64.
+	BoardBananaPiM64 = "bananapi_m64"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"

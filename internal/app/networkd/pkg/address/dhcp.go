@@ -226,7 +226,7 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	lease, err := cli.Request(context.Background(), mods...)
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
-		log.Println("failed dhcp request for", d.NetIf.Name)
+		log.Printf("failed dhcp request for %q: %v", d.NetIf.Name, err)
 
 		return nil, err
 	}
