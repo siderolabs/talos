@@ -13,6 +13,6 @@ type PartitionOptions struct {
 // Board defines the requirements for a SBC.
 type Board interface {
 	Name() string
-	UBoot() (string, int64)
+	Install(string) error
 	PartitionOptions() *PartitionOptions
 }

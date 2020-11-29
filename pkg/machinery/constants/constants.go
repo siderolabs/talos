@@ -37,6 +37,9 @@ const (
 	// BoardLibretechAllH3CCH5 is the  name of the Libre Computer board ALL-H3-CC.
 	BoardLibretechAllH3CCH5 = "libretech_all_h3_cc_h5"
 
+	// BoardRPi4 is the  name of the Raspberry Pi 4 Model B.
+	BoardRPi4 = "rpi_4"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"

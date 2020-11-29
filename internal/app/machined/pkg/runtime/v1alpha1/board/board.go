@@ -13,6 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	libretechallh3cch5 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
+	rpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -46,6 +47,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 	switch board {
 	case constants.BoardLibretechAllH3CCH5:
 		b = &libretechallh3cch5.LibretechAllH3CCH5{}
+	case constants.BoardRPi4:
+		b = &rpi4.RPi4{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}

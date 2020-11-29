@@ -6,9 +6,7 @@ package install
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -246,42 +244,9 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			return err
 		}
 
-		log.Printf("installing U-Boot for %q board", b.Name())
+		log.Printf("installing U-Boot for %q", b.Name())
 
-		var f *os.File
-
-		if f, err = os.OpenFile(i.options.Disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer f.Close()
-
-		bin, off := b.UBoot()
-
-		var uboot []byte
-
-		uboot, err = ioutil.ReadFile(bin)
-		if err != nil {
-			return err
-		}
-
-		log.Printf("writing %s to %s at offset %d", bin, i.options.Disk, off)
-
-		var n int
-
-		n, err = f.WriteAt(uboot, off)
-		if err != nil {
-			return err
-		}
-
-		log.Printf("wrote %d bytes", n)
-
-		// NB: In the case that the block device is a loopback device, we sync here
-		// to esure that the file is written before the loopback device is
-		// unmounted.
-		err = f.Sync()
-		if err != nil {
+		if err = b.Install(i.options.Disk); err != nil {
 			return err
 		}
 	}
