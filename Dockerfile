@@ -30,6 +30,7 @@ FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
 FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
 FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
 FROM ghcr.io/talos-systems/u-boot:${PKGS} AS pkg-u-boot
+FROM ghcr.io/talos-systems/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -472,6 +473,7 @@ ARG TARGETARCH
 COPY --from=kernel /vmlinuz-${TARGETARCH} /usr/install/vmlinuz
 COPY --from=initramfs /initramfs-${TARGETARCH}.xz /usr/install/initramfs.xz
 COPY --from=pkg-u-boot / /usr/install/u-boot
+COPY --from=pkg-raspberrypi-firmware / /usr/install/raspberrypi-firmware
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
 ARG TAG
