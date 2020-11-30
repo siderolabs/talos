@@ -32,7 +32,6 @@ CUSTOM_CNI_URL ?=
 space := $(subst ,, )
 BUILD := docker buildx build
 PLATFORM ?= linux/amd64
-MULTI_PLATFORM = $(findstring $(,),$(PLATFORM))
 PROGRESS ?= auto
 PUSH ?= false
 COMMON_ARGS := --file=Dockerfile
@@ -149,22 +148,11 @@ initramfs: ## Builds the compressed initramfs and outputs it to the artifact dir
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the artifact directory.
-ifeq (,$(MULTI_PLATFORM))
-	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
-	@docker load < $(ARTIFACTS)/$@.tar
-else
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
-endif
 
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the artifact directory.
-ifeq (,$(MULTI_PLATFORM))
-	@$(MAKE) docker-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
-	@mv $(ARTIFACTS)/$@.tar $(ARTIFACTS)/container.tar
-	@docker load < $(ARTIFACTS)/container.tar
-else
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
-endif
 
 talosctl-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64
@@ -329,23 +317,11 @@ ifeq ($(DOCKER_LOGIN_ENABLED), true)
 endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
-ifeq (,$(MULTI_PLATFORM))
-	@docker push $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)
-	@docker push $(REGISTRY_AND_USERNAME)/talos:$(IMAGE_TAG)
-else
 	@$(MAKE) installer PUSH=true
 	@$(MAKE) talos PUSH=true
-endif
 
 push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
-ifeq (,$(MULTI_PLATFORM))
-	@docker tag $(REGISTRY_AND_USERNAME)/installer:$(TAG) $(REGISTRY_AND_USERNAME)/installer:$*
-	@docker tag $(REGISTRY_AND_USERNAME)/talos:$(TAG) $(REGISTRY_AND_USERNAME)/talos:$*
-	@docker push $(REGISTRY_AND_USERNAME)/installer:$*
-	@docker push $(REGISTRY_AND_USERNAME)/talos:$*
-else
 	@$(MAKE) push IMAGE_TAG=$*
-endif
 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
