@@ -36,12 +36,9 @@ var configEndpointCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext("")
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
-		}
-		if c.Context == "" {
-			return fmt.Errorf("no context is set")
+			return err
 		}
 
 		c.Contexts[c.Context].Endpoints = args
@@ -61,12 +58,9 @@ var configNodeCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext("")
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
-		}
-		if c.Context == "" {
-			return fmt.Errorf("no context is set")
+			return err
 		}
 
 		c.Contexts[c.Context].Nodes = args
@@ -87,9 +81,9 @@ var configContextCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
 
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext(context)
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
+			return err
 		}
 
 		c.Context = context
@@ -158,6 +152,27 @@ var configGenerateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("'talosctl config generate' was renamed to 'talosctl gen config'")
 	},
+}
+
+func openConfigAndContext(context string) (*clientconfig.Config, error) {
+	c, err := clientconfig.Open(Talosconfig)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config: %w", err)
+	}
+
+	if context == "" {
+		context = c.Context
+	}
+
+	if context == "" {
+		return nil, fmt.Errorf("no context is set")
+	}
+
+	if _, ok := c.Contexts[context]; !ok {
+		return nil, fmt.Errorf("context %q is not defined", context)
+	}
+
+	return c, nil
 }
 
 func init() {
