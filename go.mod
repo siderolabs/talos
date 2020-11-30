@@ -59,7 +59,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116
 	github.com/talos-systems/crypto v0.2.1-0.20201112141136-12a489768a6b
-	github.com/talos-systems/go-blockdevice v0.1.1-0.20201126002059-98754ec2bb20
+	github.com/talos-systems/go-blockdevice v0.1.1-0.20201130193002-5b4ee44cfd43
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
 	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688

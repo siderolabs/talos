@@ -235,12 +235,16 @@ var (
 		},
 	}
 
+	clusterAPIServerImageExample = (&APIServerConfig{}).Image()
+
 	clusterControllerManagerExample = &ControllerManagerConfig{
 		ContainerImage: (&ControllerManagerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"--feature-gates": "ServerSideApply=true",
 		},
 	}
+
+	clusterControllerManagerImageExample = (&ControllerManagerConfig{}).Image()
 
 	clusterProxyExample = &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),
@@ -250,20 +254,26 @@ var (
 		ModeConfig: "ipvs",
 	}
 
-	clusterSchedulerConfig = &SchedulerConfig{
+	clusterProxyImageExample = (&ProxyConfig{}).Image()
+
+	clusterSchedulerExample = &SchedulerConfig{
 		ContainerImage: (&SchedulerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
 			"--feature-gates": "AllBeta=true",
 		},
 	}
 
-	clusterEtcdConfig = &EtcdConfig{
+	clusterSchedulerImageExample = (&SchedulerConfig{}).Image()
+
+	clusterEtcdExample = &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
 		EtcdExtraArgs: map[string]string{
 			"--election-timeout": "5000",
 		},
 		RootCA: pemEncodedCertificateExample,
 	}
+
+	clusterEtcdImageExample = (&EtcdConfig{}).Image()
 
 	clusterPodCheckpointerExample = &PodCheckpointer{
 		PodCheckpointerImage: "...",
@@ -550,12 +560,12 @@ type ClusterConfig struct {
 	//   description: |
 	//     Scheduler server specific configuration options.
 	//   examples:
-	//     - value: clusterSchedulerConfig
+	//     - value: clusterSchedulerExample
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
-	//     - value: clusterEtcdConfig
+	//     - value: clusterEtcdExample
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
 	//   description: |
 	//     Pod Checkpointer specific configuration options.
@@ -786,6 +796,8 @@ type ControlPlaneConfig struct {
 type APIServerConfig struct {
 	//   description: |
 	//     The container image used in the API server manifest.
+	//   examples:
+	//     - value: clusterAPIServerImageExample
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the API server.
@@ -799,6 +811,8 @@ type APIServerConfig struct {
 type ControllerManagerConfig struct {
 	//   description: |
 	//     The container image used in the controller manager manifest.
+	//   examples:
+	//     - value: clusterControllerManagerImageExample
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
@@ -809,6 +823,8 @@ type ControllerManagerConfig struct {
 type ProxyConfig struct {
 	//   description: |
 	//     The container image used in the kube-proxy manifest.
+	//   examples:
+	//     - value: clusterProxyImageExample
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     proxy mode of kube-proxy.
@@ -823,6 +839,8 @@ type ProxyConfig struct {
 type SchedulerConfig struct {
 	//   description: |
 	//     The container image used in the scheduler manifest.
+	//   examples:
+	//     - value: clusterSchedulerImageExample
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the scheduler.
@@ -833,6 +851,8 @@ type SchedulerConfig struct {
 type EtcdConfig struct {
 	//   description: |
 	//     The container image used to create the etcd service.
+	//   examples:
+	//     - value: clusterEtcdImageExample
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `ca` is the root certificate authority of the PKI.

@@ -21,7 +21,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (
@@ -144,7 +143,7 @@ func init() {
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&architecture, "arch", runtime.GOARCH, "the architecture of the cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
-	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&persistConfig, "persist", "p", true, "the desired persist value for configs")

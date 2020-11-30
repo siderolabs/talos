@@ -291,14 +291,14 @@ func init() {
 	ClusterConfigDoc.Fields[9].Description = "Scheduler server specific configuration options."
 	ClusterConfigDoc.Fields[9].Comments[encoder.LineComment] = "Scheduler server specific configuration options."
 
-	ClusterConfigDoc.Fields[9].AddExample("", clusterSchedulerConfig)
+	ClusterConfigDoc.Fields[9].AddExample("", clusterSchedulerExample)
 	ClusterConfigDoc.Fields[10].Name = "etcd"
 	ClusterConfigDoc.Fields[10].Type = "EtcdConfig"
 	ClusterConfigDoc.Fields[10].Note = ""
 	ClusterConfigDoc.Fields[10].Description = "Etcd specific configuration options."
 	ClusterConfigDoc.Fields[10].Comments[encoder.LineComment] = "Etcd specific configuration options."
 
-	ClusterConfigDoc.Fields[10].AddExample("", clusterEtcdConfig)
+	ClusterConfigDoc.Fields[10].AddExample("", clusterEtcdExample)
 	ClusterConfigDoc.Fields[11].Name = "podCheckpointer"
 	ClusterConfigDoc.Fields[11].Type = "PodCheckpointer"
 	ClusterConfigDoc.Fields[11].Note = ""
@@ -630,6 +630,8 @@ func init() {
 	APIServerConfigDoc.Fields[0].Note = ""
 	APIServerConfigDoc.Fields[0].Description = "The container image used in the API server manifest."
 	APIServerConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the API server manifest."
+
+	APIServerConfigDoc.Fields[0].AddExample("", clusterAPIServerImageExample)
 	APIServerConfigDoc.Fields[1].Name = "extraArgs"
 	APIServerConfigDoc.Fields[1].Type = "map[string]string"
 	APIServerConfigDoc.Fields[1].Note = ""
@@ -658,6 +660,8 @@ func init() {
 	ControllerManagerConfigDoc.Fields[0].Note = ""
 	ControllerManagerConfigDoc.Fields[0].Description = "The container image used in the controller manager manifest."
 	ControllerManagerConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the controller manager manifest."
+
+	ControllerManagerConfigDoc.Fields[0].AddExample("", clusterControllerManagerImageExample)
 	ControllerManagerConfigDoc.Fields[1].Name = "extraArgs"
 	ControllerManagerConfigDoc.Fields[1].Type = "map[string]string"
 	ControllerManagerConfigDoc.Fields[1].Note = ""
@@ -681,6 +685,8 @@ func init() {
 	ProxyConfigDoc.Fields[0].Note = ""
 	ProxyConfigDoc.Fields[0].Description = "The container image used in the kube-proxy manifest."
 	ProxyConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the kube-proxy manifest."
+
+	ProxyConfigDoc.Fields[0].AddExample("", clusterProxyImageExample)
 	ProxyConfigDoc.Fields[1].Name = "mode"
 	ProxyConfigDoc.Fields[1].Type = "string"
 	ProxyConfigDoc.Fields[1].Note = ""
@@ -696,7 +702,7 @@ func init() {
 	SchedulerConfigDoc.Comments[encoder.LineComment] = "SchedulerConfig represents the kube scheduler configuration options."
 	SchedulerConfigDoc.Description = "SchedulerConfig represents the kube scheduler configuration options."
 
-	SchedulerConfigDoc.AddExample("", clusterSchedulerConfig)
+	SchedulerConfigDoc.AddExample("", clusterSchedulerExample)
 	SchedulerConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "ClusterConfig",
@@ -709,6 +715,8 @@ func init() {
 	SchedulerConfigDoc.Fields[0].Note = ""
 	SchedulerConfigDoc.Fields[0].Description = "The container image used in the scheduler manifest."
 	SchedulerConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the scheduler manifest."
+
+	SchedulerConfigDoc.Fields[0].AddExample("", clusterSchedulerImageExample)
 	SchedulerConfigDoc.Fields[1].Name = "extraArgs"
 	SchedulerConfigDoc.Fields[1].Type = "map[string]string"
 	SchedulerConfigDoc.Fields[1].Note = ""
@@ -719,7 +727,7 @@ func init() {
 	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."
 	EtcdConfigDoc.Description = "EtcdConfig represents the etcd configuration options."
 
-	EtcdConfigDoc.AddExample("", clusterEtcdConfig)
+	EtcdConfigDoc.AddExample("", clusterEtcdExample)
 	EtcdConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "ClusterConfig",
@@ -732,6 +740,8 @@ func init() {
 	EtcdConfigDoc.Fields[0].Note = ""
 	EtcdConfigDoc.Fields[0].Description = "The container image used to create the etcd service."
 	EtcdConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used to create the etcd service."
+
+	EtcdConfigDoc.Fields[0].AddExample("", clusterEtcdImageExample)
 	EtcdConfigDoc.Fields[1].Name = "ca"
 	EtcdConfigDoc.Fields[1].Type = "PEMEncodedCertificateAndKey"
 	EtcdConfigDoc.Fields[1].Note = ""
