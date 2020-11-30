@@ -1877,6 +1877,16 @@ certSANs:
 
 The container image used in the API server manifest.
 
+
+
+Examples:
+
+
+``` yaml
+image: k8s.gcr.io/kube-apiserver-amd64:v1.20.0-beta.2
+```
+
+
 </div>
 
 <hr />
@@ -1938,6 +1948,16 @@ extraArgs:
 
 The container image used in the controller manager manifest.
 
+
+
+Examples:
+
+
+``` yaml
+image: k8s.gcr.io/kube-controller-manager-amd64:v1.20.0-beta.2
+```
+
+
 </div>
 
 <hr />
@@ -1986,6 +2006,16 @@ extraArgs:
 <div class="dt">
 
 The container image used in the kube-proxy manifest.
+
+
+
+Examples:
+
+
+``` yaml
+image: k8s.gcr.io/kube-proxy-amd64:v1.20.0-beta.2
+```
+
 
 </div>
 
@@ -2049,6 +2079,16 @@ extraArgs:
 
 The container image used in the scheduler manifest.
 
+
+
+Examples:
+
+
+``` yaml
+image: k8s.gcr.io/kube-scheduler-amd64:v1.20.0-beta.2
+```
+
+
 </div>
 
 <hr />
@@ -2100,6 +2140,16 @@ extraArgs:
 <div class="dt">
 
 The container image used to create the etcd service.
+
+
+
+Examples:
+
+
+``` yaml
+image: gcr.io/etcd-development/etcd:v3.4.14
+```
+
 
 </div>
 
