@@ -29,7 +29,7 @@ docker run \
   --rm \
   -v /dev:/dev \
   --privileged \
-  ghcr.io/talos-systems/installer:latest image --platform metal --board rpi_4 --tar-to-stdout | tar xz
+  ghcr.io/talos-systems/installer:latest image --platform metal --board rpi_4 --extra-kernel-arg="console=ttyS0,115200" --tar-to-stdout | tar xz
 ```
 
 ## Writing the Image
