@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -33,12 +34,12 @@ var (
 type BananaPiM64 struct{}
 
 // Name implements the runtime.Board.
-func (l *BananaPiM64) Name() string {
+func (b *BananaPiM64) Name() string {
 	return constants.BoardBananaPiM64
 }
 
 // Install implements the runtime.Board.
-func (l *BananaPiM64) Install(disk string) (err error) {
+func (b *BananaPiM64) Install(disk string) (err error) {
 	var f *os.File
 
 	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
@@ -89,7 +90,14 @@ func (l *BananaPiM64) Install(disk string) (err error) {
 	return nil
 }
 
+// KernelArgs implements the runtime.Board.
+func (b *BananaPiM64) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS2,115200n8"),
+	}
+}
+
 // PartitionOptions implements the runtime.Board.
-func (l *BananaPiM64) PartitionOptions() *runtime.PartitionOptions {
+func (b *BananaPiM64) PartitionOptions() *runtime.PartitionOptions {
 	return &runtime.PartitionOptions{PartitionsOffset: 2048}
 }
