@@ -1,3 +1,17 @@
+
+<a name="v0.7.1"></a>
+## [v0.7.1](https://github.com/talos-systems/talos/compare/v0.7.0...v0.7.1) (2020-12-01)
+
+### Fix
+
+* prevent endless loop with DHCP requests in networkd
+* ignore 'not found' errors when stopping/removing CRI pods
+* **security:** update Containerd to v1.4.3
+
+### Release
+
+* **v0.7.1:** prepare release
+
 <a name="v0.7.0"></a>
 
 ## [v0.7.0](https://github.com/talos-systems/talos/compare/v0.7.0-beta.1...v0.7.0) (2020-11-16)
