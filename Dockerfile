@@ -471,6 +471,7 @@ COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 ARG TARGETARCH
 COPY --from=kernel /vmlinuz-${TARGETARCH} /usr/install/vmlinuz
+COPY --from=pkg-kernel /dtb /usr/install/dtb
 COPY --from=initramfs /initramfs-${TARGETARCH}.xz /usr/install/initramfs.xz
 COPY --from=pkg-u-boot / /usr/install/u-boot
 COPY --from=pkg-raspberrypi-firmware / /usr/install/raspberrypi-firmware
