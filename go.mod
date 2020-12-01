@@ -10,14 +10,14 @@ replace (
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/Microsoft/hcsshim v0.8.9 // indirect
-	github.com/Microsoft/hcsshim/test v0.0.0-20200831205110-d2cba219a8d7 // indirect
+	github.com/Microsoft/hcsshim v0.8.10 // indirect
+	github.com/Microsoft/hcsshim/test v0.0.0-20201124231931-de74fe8b94ae // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/beevik/ntp v0.3.0
-	github.com/containerd/cgroups v0.0.0-20200824123100-0b889c03f102
-	github.com/containerd/containerd v1.4.1
+	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327
+	github.com/containerd/containerd v1.4.3
 	github.com/containerd/continuity v0.0.0-20200928162600-f2cc35102c2a // indirect
-	github.com/containerd/cri v1.11.1
+	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.1
 	github.com/containerd/ttrpc v1.0.2 // indirect
 	github.com/containerd/typeurl v1.0.1
@@ -28,8 +28,8 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.9.0
-	github.com/firecracker-microvm/firecracker-go-sdk v0.21.0
+	github.com/fatih/color v1.10.0
+	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.0.1-0.20201017141208-acf90d56d591
 	github.com/gizak/termui/v3 v3.1.0
@@ -37,10 +37,10 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/hashicorp/go-getter v1.5.0
+	github.com/hashicorp/go-getter v1.5.1
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/insomniacslk/dhcp v0.0.0-20200922210017-67c425063dca
-	github.com/jsimonetti/rtnetlink v0.0.0-20201022080559-7cf95b6356e5
+	github.com/insomniacslk/dhcp v0.0.0-20201112113307-4de412bc85d8
+	github.com/jsimonetti/rtnetlink v0.0.0-20201125080424-8bebea019a6c
 	github.com/kubernetes-sigs/bootkube v0.14.1-0.20200817205730-0b4482256ca1
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mdlayher/genetlink v1.0.0
@@ -50,10 +50,10 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.2.0
-	github.com/rivo/tview v0.0.0-20201018122409-d551c850a743
+	github.com/rivo/tview v0.0.0-20201118063654-f007e9ad3893
 	github.com/rs/xid v1.2.1
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/smira/go-xz v0.0.0-20150414201226-0c531f070014
+	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
@@ -73,13 +73,14 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20201125193152-8a03d2e9614b
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
-	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
-	golang.org/x/sys v0.0.0-20201112073958-5cba982894dd
-	golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/sys v0.0.0-20201130171929-760e229fe7c5
+	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
-	golang.org/x/tools v0.0.0-20201019175715-b894a3290fff // indirect
+	golang.org/x/tools v0.0.0-20201201064407-fd09bd90d85c // indirect
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
