@@ -11,7 +11,8 @@ ARG EXTRAS
 
 FROM ghcr.io/talos-systems/fhs:${PKGS} AS pkg-fhs
 FROM ghcr.io/talos-systems/ca-certificates:${PKGS} AS pkg-ca-certificates
-FROM ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd
+# Explicit version for containerd for 1.4.3 security fix.
+FROM ghcr.io/talos-systems/containerd:v0.3.0-45-gcbf412f AS pkg-containerd
 FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
 FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
 FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub

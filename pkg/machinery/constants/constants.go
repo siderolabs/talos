@@ -253,7 +253,7 @@ const (
 	TrustdPort = 50001
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.4.1"
+	DefaultContainerdVersion = "1.4.3"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
