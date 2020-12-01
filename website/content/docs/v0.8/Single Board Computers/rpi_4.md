@@ -20,24 +20,21 @@ If successful, the green LED light will blink rapidly (forever), otherwise an er
 If a HDMI display is attached then screen will display green for success or red if failure a failure occurs.
 Power off the Raspberry Pi and remove the SD card.
 
-## Generating the Image
+## Download the Image
 
-Using the Talos installer container, we can generate an image for the Raspberry Pi 4 by running:
+An official image is provided in a release.
+Download the tarball and extract the image:
 
 ```bash
-docker run \
-  --rm \
-  -v /dev:/dev \
-  --privileged \
-  ghcr.io/talos-systems/installer:latest image --platform metal --board rpi_4 --tar-to-stdout | tar xz
+curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-rpi_4-arm64.tar.gz
+tar -xvf metal-rpi_4-arm64.tar.gz
 ```
 
 ## Writing the Image
 
-Once the image generation is done, extract the raw disk and `dd` it your SD card (be sure to update `x` in `mmcblkx`):
+Now `dd` the image your SD card (be sure to update `x` in `mmcblkx`):
 
 ```bash
-tar -xvf metal-rpi_4-arm64.tar.gz
 sudo dd if=disk.raw of=/dev/mmcblkx
 ```
 
@@ -47,7 +44,7 @@ Insert the SD card, turn on the board, and wait for the console to show you the 
 Following the instructions in the console output, generate the configuration files and apply the `init.yaml`:
 
 ```bash
-talosctl gen config rpi4 https://<node IP or DNS name>:6443
+talosctl gen config example https://<node IP or DNS name>:6443
 talosctl apply-config --insecure --file init.yaml --nodes <node IP or DNS name>
 ```
 
