@@ -46,9 +46,11 @@ func (d *DHCP) Link() *net.Interface {
 // Discover handles the DHCP client exchange stores the DHCP Ack.
 func (d *DHCP) Discover(ctx context.Context, link *net.Interface) error {
 	d.NetIf = link
-	// TODO do something with context
-	ack, err := d.discover()
-	d.Ack = ack
+	ack, err := d.discover(ctx)
+
+	if ack != nil {
+		d.Ack = ack
+	}
 
 	return err
 }
@@ -191,7 +193,7 @@ func (d *DHCP) Hostname() (hostname string) {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
+func (d *DHCP) discover(ctx context.Context) (*dhcpv4.DHCPv4, error) {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
@@ -223,7 +225,7 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 	// nolint: errcheck
 	defer cli.Close()
 
-	lease, err := cli.Request(context.Background(), mods...)
+	lease, err := cli.Request(ctx, mods...)
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
 		log.Printf("failed dhcp request for %q: %v", d.NetIf.Name, err)
@@ -231,5 +233,21 @@ func (d *DHCP) discover() (*dhcpv4.DHCPv4, error) {
 		return nil, err
 	}
 
+	log.Printf("DHCP ACK on %q: %s", d.NetIf.Name, collapseSummary(lease.ACK.Summary()))
+
 	return lease.ACK, err
+}
+
+func collapseSummary(summary string) string {
+	lines := strings.Split(summary, "\n")[1:]
+
+	for i := range lines {
+		lines[i] = strings.TrimSpace(lines[i])
+	}
+
+	if len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	return strings.Join(lines, ", ")
 }
