@@ -166,6 +166,11 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 
 		i.cmdline.Append(constants.KernelParamBoard, b.Name())
+
+		err = i.cmdline.AppendAll(b.KernelArgs().Strings())
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = i.manifest.Execute(); err != nil {

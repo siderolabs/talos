@@ -4,6 +4,8 @@
 
 package runtime
 
+import "github.com/talos-systems/go-procfs/procfs"
+
 // PartitionOptions are the board specific options for customizing the
 // partition table.
 type PartitionOptions struct {
@@ -14,5 +16,6 @@ type PartitionOptions struct {
 type Board interface {
 	Name() string
 	Install(string) error
+	KernelArgs() procfs.Parameters
 	PartitionOptions() *PartitionOptions
 }

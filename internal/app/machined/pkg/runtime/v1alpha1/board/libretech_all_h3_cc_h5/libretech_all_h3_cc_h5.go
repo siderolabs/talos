@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -84,6 +85,13 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 	}
 
 	return nil
+}
+
+// KernelArgs implements the runtime.Board.
+func (l *LibretechAllH3CCH5) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0,115200"),
+	}
 }
 
 // PartitionOptions implements the runtime.Board.

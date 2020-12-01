@@ -7,6 +7,8 @@ package rpi4
 import (
 	"io/ioutil"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/copy"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -23,12 +25,12 @@ kernel=u-boot.bin
 type RPi4 struct{}
 
 // Name implements the runtime.Board.
-func (l *RPi4) Name() string {
+func (r *RPi4) Name() string {
 	return constants.BoardRPi4
 }
 
 // Install implements the runtime.Board.
-func (l *RPi4) Install(disk string) (err error) {
+func (r *RPi4) Install(disk string) (err error) {
 	err = copy.Dir("/usr/install/raspberrypi-firmware/boot", "/boot/EFI")
 	if err != nil {
 		return err
@@ -42,7 +44,14 @@ func (l *RPi4) Install(disk string) (err error) {
 	return ioutil.WriteFile("/boot/EFI/config.txt", configTxt, 0o600)
 }
 
+// KernelArgs implements the runtime.Board.
+func (r *RPi4) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0,115200"),
+	}
+}
+
 // PartitionOptions implements the runtime.Board.
-func (l *RPi4) PartitionOptions() *runtime.PartitionOptions {
+func (r *RPi4) PartitionOptions() *runtime.PartitionOptions {
 	return nil
 }

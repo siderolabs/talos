@@ -11,7 +11,7 @@ docker run \
   --rm \
   -v /dev:/dev \
   --privileged \
-  ghcr.io/talos-systems/installer:latest image --platform metal --board bananapi_m64 --extra-kernel-arg="console=ttyS2,115200n8" --tar-to-stdout | tar xz
+  ghcr.io/talos-systems/installer:latest image --platform metal --board bananapi_m64 --tar-to-stdout | tar xz
 ```
 
 > Note: This step MUST be executed on an aarch64 machine.
