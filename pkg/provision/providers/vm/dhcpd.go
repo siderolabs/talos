@@ -50,7 +50,7 @@ func handler(serverIP net.IP, statePath string) server4.Handler {
 			dhcpv4.WithOption(dhcpv4.OptHostName(match.Hostname)),
 			dhcpv4.WithOption(dhcpv4.OptDNS(match.Nameservers...)),
 			dhcpv4.WithOption(dhcpv4.OptRouter(match.Gateway)),
-			dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(time.Hour)),
+			dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(5*time.Minute)),
 			dhcpv4.WithOption(dhcpv4.OptServerIdentifier(serverIP)),
 		)
 		if err != nil {

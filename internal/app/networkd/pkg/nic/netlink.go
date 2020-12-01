@@ -48,6 +48,10 @@ func (n *NetworkInterface) setMTU(idx int, mtu uint32) error {
 		return err
 	}
 
+	if msg.Attributes != nil && msg.Attributes.MTU == mtu {
+		return nil
+	}
+
 	err = n.rtConn.Link.Set(&rtnetlink.LinkMessage{
 		Family: msg.Family,
 		Type:   msg.Type,
