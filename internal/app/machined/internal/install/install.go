@@ -71,11 +71,6 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		config = *c
 	}
 
-	board := constants.BoardNone
-	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
-		board = *c
-	}
-
 	upgrade := strconv.FormatBool(options.Upgrade)
 	force := strconv.FormatBool(options.Force)
 	zero := strconv.FormatBool(options.Zero)
@@ -85,11 +80,14 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		"install",
 		"--disk=" + disk,
 		"--platform=" + platform,
-		"--board=" + board,
 		"--config=" + config,
 		"--upgrade=" + upgrade,
 		"--force=" + force,
 		"--zero=" + zero,
+	}
+
+	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
+		args = append(args, "--board="+*c)
 	}
 
 	for _, arg := range options.ExtraKernelArgs {
