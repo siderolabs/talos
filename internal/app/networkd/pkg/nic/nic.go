@@ -312,17 +312,25 @@ func (n *NetworkInterface) Renew() {
 // address TTL. If that fails, we'll continue to attempt to retry every
 // halflife.
 func (n *NetworkInterface) renew(method address.Addressing) {
+	const minRenewDuration = 5 * time.Second // protect from renewing too often
+
 	renewDuration := method.TTL() / 2
 
 	var err error
 
 	for {
-		<-time.After(renewDuration)
+		time.Sleep(renewDuration)
 
 		if err = n.configureInterface(method, n.Link); err != nil {
+			log.Printf("failure to renew address for %q: %s", n.Name, err)
+
 			renewDuration = (renewDuration / 2)
 		} else {
 			renewDuration = method.TTL() / 2
+		}
+
+		if renewDuration < minRenewDuration {
+			renewDuration = minRenewDuration
 		}
 	}
 }
@@ -337,7 +345,7 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 
 	// Set link MTU in any case
 	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {
-		return err
+		return fmt.Errorf("error setting MTU %d on %q: %w", method.MTU(), n.Name, err)
 	}
 
 	if discoverErr != nil {
@@ -368,7 +376,7 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 				switch err := err.(type) {
 				case *netlink.OpError:
 					if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
-						return err
+						return fmt.Errorf("error adding address %s on %q: %w", method.Address(), n.Name, err)
 					}
 				default:
 					return fmt.Errorf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
@@ -401,7 +409,10 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 
 		err = n.rtnlConn.RouteAdd(method.Link(), *r.Destination, gw, rtnl.WithRouteSrc(src), rtnl.WithRouteAttrs(attr))
 		if err != nil {
-			return err
+			// ignore "EEXIST" errors for routes which are already present
+			if opErr, ok := err.(*netlink.OpError); !ok || !os.IsExist(opErr.Err) {
+				return fmt.Errorf("error adding route %s %s on %q: %s", *r.Destination, gw, n.Name, err)
+			}
 		}
 	}
 
