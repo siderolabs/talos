@@ -164,6 +164,11 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 
 images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, Metal, Openstack, and VMware).
 
+sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, bananapi_m64, and libretech_all_h3_cc_h5 (e.g. sbc-rpi_4)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY)/$(USERNAME)/installer:$(TAG) image --platform metal --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+
+sbcs: sbc-rpi_4 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 ## Builds all known SBC images (Raspberry Pi 4 Model B, Banana Pi M64, and Libre Computer Board ALL-H3-CC).
+
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
 	@docker run --rm -i $(REGISTRY)/$(USERNAME)/installer:$(TAG) iso --tar-to-stdout | tar xz -C $(ARTIFACTS)

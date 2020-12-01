@@ -217,8 +217,9 @@ local lint = Step("lint", depends_on=[check_dirty]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
 local images_amd64 = Step("images-amd64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry});
 local images_arm64 = Step("images-arm64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry});
-local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[sbcs_arm64], environment={"REGISTRY": local_registry});
+local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[sbcs_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
@@ -299,6 +300,7 @@ local default_steps = [
   talosctl_cni_bundle,
   images_amd64,
   images_arm64,
+  sbcs_arm64,
   iso_amd64,
   iso_arm64,
   unit_tests,
@@ -497,6 +499,9 @@ local release = {
       '_out/initramfs-arm64.xz',
       '_out/metal-amd64.tar.gz',
       '_out/metal-arm64.tar.gz',
+      '_out/metal-rpi_4-arm64.tar.gz',
+      '_out/metal-bananapi_m64-arm64.tar.gz',
+      '_out/metal-libretech_all_h3_cc_h5-arm64.tar.gz',
       '_out/openstack-amd64.tar.gz',
       '_out/openstack-arm64.tar.gz',
       '_out/talos-amd64.iso',
@@ -517,7 +522,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
+  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, sbcs_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
