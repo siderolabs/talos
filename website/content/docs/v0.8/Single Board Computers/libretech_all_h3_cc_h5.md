@@ -11,7 +11,7 @@ docker run \
   --rm \
   -v /dev:/dev \
   --privileged \
-  ghcr.io/talos-systems/installer:latest image --platform metal --board libretech_all_h3_cc_h5 --tar-to-stdout | tar xz
+  ghcr.io/talos-systems/installer:latest image --platform metal --board libretech_all_h3_cc_h5 --extra-kernel-arg="console=ttyS0,115200" --tar-to-stdout | tar xz
 ```
 
 ## Writing the Image
