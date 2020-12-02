@@ -223,7 +223,6 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 		if !taintFound {
 			n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
 				Key:    constants.LabelNodeRoleMaster,
-				Value:  "true",
 				Effect: corev1.TaintEffectNoSchedule,
 			})
 		}
