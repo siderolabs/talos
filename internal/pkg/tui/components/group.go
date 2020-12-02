@@ -30,6 +30,17 @@ func (eg *Group) AddElement(element tview.Primitive) tview.Primitive {
 	return element
 }
 
+// FocusFirst sets focus to the first element.
+func (eg *Group) FocusFirst() {
+	if len(eg.elements) == 0 {
+		return
+	}
+
+	eg.current = 0
+	eg.focus = eg.elements[eg.current]
+	eg.app.SetFocus(eg.focus)
+}
+
 // NextFocus switch focus to the next element.
 func (eg *Group) NextFocus() {
 	eg.detectFocus()

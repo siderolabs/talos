@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -59,6 +60,11 @@ func (c *Connection) ApplyConfiguration(req *machine.ApplyConfigurationRequest, 
 // Disks get disks list from the target node.
 func (c *Connection) Disks(callOptions ...grpc.CallOption) (*storage.DisksResponse, error) {
 	return c.nodeClient.Disks(c.nodeCtx, callOptions...)
+}
+
+// Interfaces get list of network interfaces.
+func (c *Connection) Interfaces(callOptions ...grpc.CallOption) (*network.InterfacesResponse, error) {
+	return c.nodeClient.Interfaces(c.nodeCtx, callOptions...)
 }
 
 // ExpandingCluster check if bootstrap node is set.

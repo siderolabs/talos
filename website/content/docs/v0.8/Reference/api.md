@@ -36,6 +36,7 @@ title: API
     - [ContainersResponse](#machine.ContainersResponse)
     - [ControlPlaneConfig](#machine.ControlPlaneConfig)
     - [CopyRequest](#machine.CopyRequest)
+    - [DHCPOptionsConfig](#machine.DHCPOptionsConfig)
     - [DiskStat](#machine.DiskStat)
     - [DiskStats](#machine.DiskStats)
     - [DiskStatsResponse](#machine.DiskStatsResponse)
@@ -72,6 +73,7 @@ title: API
     - [MountsResponse](#machine.MountsResponse)
     - [NetDev](#machine.NetDev)
     - [NetworkConfig](#machine.NetworkConfig)
+    - [NetworkDeviceConfig](#machine.NetworkDeviceConfig)
     - [NetworkDeviceStats](#machine.NetworkDeviceStats)
     - [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse)
     - [PhaseEvent](#machine.PhaseEvent)
@@ -95,6 +97,7 @@ title: API
     - [Rollback](#machine.Rollback)
     - [RollbackRequest](#machine.RollbackRequest)
     - [RollbackResponse](#machine.RollbackResponse)
+    - [RouteConfig](#machine.RouteConfig)
     - [SequenceEvent](#machine.SequenceEvent)
     - [ServiceEvent](#machine.ServiceEvent)
     - [ServiceEvents](#machine.ServiceEvents)
@@ -645,6 +648,21 @@ Copy produces .tar.gz archive which is streamed back to the caller
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | root_path | [string](#string) |  | Root path to start copying data out, it might be either a file or directory |
+
+
+
+
+
+
+<a name="machine.DHCPOptionsConfig"></a>
+
+### DHCPOptionsConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| route_metric | [uint32](#uint32) |  |  |
 
 
 
@@ -1300,6 +1318,28 @@ The messages message containing the requested df stats.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | hostname | [string](#string) |  |  |
+| interfaces | [NetworkDeviceConfig](#machine.NetworkDeviceConfig) | repeated |  |
+
+
+
+
+
+
+<a name="machine.NetworkDeviceConfig"></a>
+
+### NetworkDeviceConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interface | [string](#string) |  |  |
+| cidr | [string](#string) |  |  |
+| mtu | [int32](#int32) |  |  |
+| dhcp | [bool](#bool) |  |  |
+| ignore | [bool](#bool) |  |  |
+| dhcp_options | [DHCPOptionsConfig](#machine.DHCPOptionsConfig) |  |  |
+| routes | [RouteConfig](#machine.RouteConfig) | repeated |  |
 
 
 
@@ -1654,6 +1694,23 @@ rpc rollback
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [Rollback](#machine.Rollback) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RouteConfig"></a>
+
+### RouteConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| network | [string](#string) |  |  |
+| gateway | [string](#string) |  |  |
+| metric | [uint32](#uint32) |  |  |
 
 
 
