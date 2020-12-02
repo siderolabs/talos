@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	talosnet "github.com/talos-systems/net"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -21,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (
@@ -49,10 +51,30 @@ var genConfigCmd = &cobra.Command{
 		// Validate url input to ensure it has https:// scheme before we attempt to gen
 		u, err := url.Parse(args[1])
 		if err != nil {
-			return fmt.Errorf("failed to parse load balancer IP or DNS name: %w", err)
+			if !strings.Contains(args[1], "/") {
+				// not a URL, could be just host:port
+				u = &url.URL{
+					Host: args[1],
+				}
+			} else {
+				return fmt.Errorf("failed to parse the cluster endpoint URL: %w", err)
+			}
 		}
+
 		if u.Scheme == "" {
-			return fmt.Errorf("no scheme specified for load balancer IP or DNS name\ntry \"https://<load balancer IP or DNS name>\"")
+			if u.Port() == "" {
+				return fmt.Errorf("no scheme and port specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+			}
+
+			return fmt.Errorf("no scheme specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+		}
+
+		if u.Scheme != "https" {
+			return fmt.Errorf("the control plane endpoint URL should have scheme https://\ntry: %q", fixControlPlaneEndpoint(u))
+		}
+
+		if err = talosnet.ValidateEndpointURI(args[1]); err != nil {
+			return fmt.Errorf("error validating the cluster endpoint URL: %w", err)
 		}
 
 		switch configVersion {
@@ -62,6 +84,22 @@ var genConfigCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func fixControlPlaneEndpoint(u *url.URL) *url.URL {
+	// handle the case when the hostname/IP is given without the port, it parses as URL Path
+	if u.Scheme == "" && u.Host == "" && u.Path != "" {
+		u.Host = u.Path
+		u.Path = ""
+	}
+
+	u.Scheme = "https"
+
+	if u.Port() == "" {
+		u.Host = fmt.Sprintf("%s:%d", u.Host, constants.DefaultControlPlanePort)
+	}
+
+	return u
 }
 
 //nolint: gocyclo
