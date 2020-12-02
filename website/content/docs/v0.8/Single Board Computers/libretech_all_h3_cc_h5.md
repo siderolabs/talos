@@ -5,11 +5,11 @@ title: "Libre Computer Board ALL-H3-CC"
 ## Download the Image
 
 An official image is provided in a release.
-Download the tarball and extract the image:
+Download the compressed image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-libretech_all_h3_cc_h5-arm64.tar.gz
-tar -xvf metal-libretech_all_h3_cc_h5-arm64.tar.gz
+curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-libretech_all_h3_cc_h5-arm64.img.xz
+xz -d metal-libretech_all_h3_cc_h5-arm64.img.xz
 ```
 
 ## Writing the Image
@@ -17,7 +17,7 @@ tar -xvf metal-libretech_all_h3_cc_h5-arm64.tar.gz
 Now `dd` the image your SD card (be sure to update `x` in `mmcblkx`):
 
 ```bash
-sudo dd if=disk.raw of=/dev/mmcblkx
+sudo dd if=metal-libretech_all_h3_cc_h5-arm64.img of=/dev/mmcblkx
 ```
 
 ## Bootstrapping the Node

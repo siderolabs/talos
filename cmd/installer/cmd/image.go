@@ -149,11 +149,26 @@ func finalize(platform runtime.Platform, img string) (err error) {
 			return err
 		}
 	case "metal":
-		name := fmt.Sprintf("metal-%s.tar.gz", stdruntime.GOARCH)
-
 		if options.Board != constants.BoardNone {
-			name = fmt.Sprintf("metal-%s-%s.tar.gz", options.Board, stdruntime.GOARCH)
+			name := fmt.Sprintf("metal-%s-%s.img", options.Board, stdruntime.GOARCH)
+
+			file = filepath.Join(outputArg, name)
+
+			err = os.Rename(img, file)
+			if err != nil {
+				return err
+			}
+
+			log.Println("compressing image")
+
+			if err = xz(file); err != nil {
+				return err
+			}
+
+			break
 		}
+
+		name := fmt.Sprintf("metal-%s.tar.gz", stdruntime.GOARCH)
 
 		if err = tar(name, file, dir); err != nil {
 			return err
@@ -165,6 +180,14 @@ func finalize(platform runtime.Platform, img string) (err error) {
 
 func tar(filename, src, dir string) error {
 	if _, err := cmd.Run("tar", "-czvf", filepath.Join(outputArg, filename), src, "-C", dir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func xz(filename string) error {
+	if _, err := cmd.Run("xz", "-0", filename); err != nil {
 		return err
 	}
 

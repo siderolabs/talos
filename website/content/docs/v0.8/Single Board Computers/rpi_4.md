@@ -23,11 +23,11 @@ Power off the Raspberry Pi and remove the SD card.
 ## Download the Image
 
 An official image is provided in a release.
-Download the tarball and extract the image:
+Download the compressed image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-rpi_4-arm64.tar.gz
-tar -xvf metal-rpi_4-arm64.tar.gz
+curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-rpi_4-arm64.img.xz
+xz -d metal-rpi_4-arm64.img.xz
 ```
 
 ## Writing the Image
@@ -35,7 +35,7 @@ tar -xvf metal-rpi_4-arm64.tar.gz
 Now `dd` the image your SD card (be sure to update `x` in `mmcblkx`):
 
 ```bash
-sudo dd if=disk.raw of=/dev/mmcblkx
+sudo dd if=metal-rpi_4-arm64.img of=/dev/mmcblkx
 ```
 
 ## Bootstrapping the Node
