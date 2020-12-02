@@ -35,12 +35,38 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 
 		options := []generate.GenOption{}
 
-		if in.MachineConfig.NetworkConfig != nil && in.MachineConfig.NetworkConfig.Hostname != "" {
-			options = append(options, generate.WithNetworkConfig(
-				&v1alpha1.NetworkConfig{
-					NetworkHostname: in.MachineConfig.NetworkConfig.Hostname,
-				},
-			))
+		if in.MachineConfig.NetworkConfig != nil {
+			networkConfig := &v1alpha1.NetworkConfig{
+				NetworkHostname: in.MachineConfig.NetworkConfig.Hostname,
+			}
+
+			networkInterfaces := in.MachineConfig.NetworkConfig.Interfaces
+			if len(networkInterfaces) > 0 {
+				networkConfig.NetworkInterfaces = make([]*v1alpha1.Device, len(networkInterfaces))
+
+				for i, device := range networkInterfaces {
+					routes := make([]*v1alpha1.Route, len(device.Routes))
+
+					iface := &v1alpha1.Device{
+						DeviceInterface: device.Interface,
+						DeviceMTU:       int(device.Mtu),
+						DeviceCIDR:      device.Cidr,
+						DeviceDHCP:      device.Dhcp,
+						DeviceIgnore:    device.Ignore,
+						DeviceRoutes:    routes,
+					}
+
+					if device.DhcpOptions != nil {
+						iface.DeviceDHCPOptions = &v1alpha1.DHCPOptions{
+							DHCPRouteMetric: device.DhcpOptions.RouteMetric,
+						}
+					}
+
+					networkConfig.NetworkInterfaces[i] = iface
+				}
+			}
+
+			options = append(options, generate.WithNetworkConfig(networkConfig))
 		}
 
 		if in.MachineConfig.InstallConfig != nil {

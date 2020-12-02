@@ -721,8 +721,29 @@ message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
 
 // rpc generateConfiguration
 
+message RouteConfig {
+  string network = 1;
+  string gateway = 2;
+  uint32 metric = 3;
+}
+
+message DHCPOptionsConfig {
+  uint32 route_metric = 1;
+}
+
+message NetworkDeviceConfig {
+  string interface = 1;
+  string cidr = 2;
+  int32 mtu = 3;
+  bool dhcp = 4;
+  bool ignore = 5;
+  DHCPOptionsConfig dhcp_options = 6;
+  repeated RouteConfig routes = 7;
+}
+
 message NetworkConfig {
   string hostname = 1;
+  repeated NetworkDeviceConfig interfaces = 2;
 }
 
 message InstallConfig {

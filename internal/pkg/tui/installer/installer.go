@@ -9,13 +9,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/pkg/tui/components"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -24,7 +22,7 @@ import (
 )
 
 // NewPage creates a new installer page.
-func NewPage(name string, items ...*Item) *Page {
+func NewPage(name string, items ...*components.Item) *Page {
 	return &Page{
 		name:  name,
 		items: items,
@@ -34,156 +32,7 @@ func NewPage(name string, items ...*Item) *Page {
 // Page represents a single installer page.
 type Page struct {
 	name  string
-	items []*Item
-}
-
-// Item represents a single form item.
-type Item struct {
-	name        string
-	description string
-	dest        interface{}
-	options     []interface{}
-}
-
-// TableHeaders represents table headers list for item options which are using table representation.
-type TableHeaders []interface{}
-
-// NewTableHeaders creates TableHeaders object.
-func NewTableHeaders(headers ...interface{}) TableHeaders {
-	return TableHeaders(headers)
-}
-
-// NewItem creates new form item.
-func NewItem(name, description string, dest interface{}, options ...interface{}) *Item {
-	return &Item{
-		dest:        dest,
-		name:        name,
-		description: description,
-		options:     options,
-	}
-}
-
-func (item *Item) assign(value string) error {
-	// rely on yaml parser to decode value into the right type
-	return yaml.Unmarshal([]byte(value), item.dest)
-}
-
-// createFormItems dynamically creates tview.FormItem list based on the wrapped type.
-// nolint:gocyclo
-func (item *Item) createFormItems() ([]tview.Primitive, error) {
-	res := []tview.Primitive{}
-
-	v := reflect.ValueOf(item.dest)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if item.description != "" {
-		parts := strings.Split(item.description, "\n")
-		for _, part := range parts {
-			res = append(res, components.NewFormLabel(part))
-		}
-	}
-
-	var formItem tview.Primitive
-
-	// nolint:exhaustive
-	switch v.Kind() {
-	case reflect.Bool:
-		// use checkbox for boolean fields
-		checkbox := tview.NewCheckbox()
-		checkbox.SetChangedFunc(func(checked bool) {
-			reflect.ValueOf(item.dest).Set(reflect.ValueOf(checked))
-		})
-		checkbox.SetChecked(v.Bool())
-		checkbox.SetLabel(item.name)
-		formItem = checkbox
-	default:
-		if len(item.options) > 0 {
-			tableHeaders, ok := item.options[0].(TableHeaders)
-			if ok {
-				table := components.NewTable()
-				table.SetHeader(tableHeaders...)
-
-				data := item.options[1:]
-				numColumns := len(tableHeaders)
-
-				if len(data)%numColumns != 0 {
-					return nil, fmt.Errorf("incorrect amount of data provided for the table")
-				}
-
-				selected := -1
-
-				for i := 0; i < len(data); i += numColumns {
-					table.AddRow(data[i : i+numColumns]...)
-
-					if v.Interface() == data[i] {
-						selected = i / numColumns
-					}
-				}
-
-				if selected != -1 {
-					table.SelectRow(selected)
-				}
-
-				formItem = table
-				table.SetRowSelectedFunc(func(row int) {
-					v.Set(reflect.ValueOf(table.GetValue(row, 0))) // always pick the first column
-				})
-			} else {
-				dropdown := tview.NewDropDown()
-
-				if len(item.options)%2 != 0 {
-					return nil, fmt.Errorf("wrong amount of arguments for options: should be even amount of key, value pairs")
-				}
-
-				for i := 0; i < len(item.options); i += 2 {
-					if optionName, ok := item.options[i].(string); ok {
-						selected := -1
-
-						func(index int) {
-							dropdown.AddOption(optionName, func() {
-								v.Set(reflect.ValueOf(item.options[index]))
-							})
-
-							if v.Interface() == item.options[index] {
-								selected = i / 2
-							}
-						}(i + 1)
-
-						if selected != -1 {
-							dropdown.SetCurrentOption(selected)
-						}
-					} else {
-						return nil, fmt.Errorf("expected string option name, got %s", item.options[i])
-					}
-				}
-
-				dropdown.SetLabel(item.name)
-
-				formItem = dropdown
-			}
-		} else {
-			input := tview.NewInputField()
-			formItem = input
-			input.SetLabel(item.name)
-			text, err := yaml.Marshal(item.dest)
-			if err != nil {
-				return nil, err
-			}
-			input.SetText(string(text))
-			input.SetChangedFunc(func(text string) {
-				if err := item.assign(text); err != nil {
-					// TODO: highlight red
-					return
-				}
-			})
-		}
-	}
-
-	res = append(res, formItem)
-
-	return res, nil
+	items []*components.Item
 }
 
 // Installer interactive installer text based UI.
@@ -315,6 +164,7 @@ func (installer *Installer) init(conn *Connection) (err error) {
 
 	installer.state, err = NewState(
 		installer.ctx,
+		installer,
 		conn,
 	)
 
@@ -330,11 +180,10 @@ func (installer *Installer) init(conn *Connection) (err error) {
 // nolint:gocyclo
 func (installer *Installer) configure() error {
 	var (
-		currentGroup *components.Group
-		err          error
+		err   error
+		forms []*components.Form
 	)
 
-	groups := []*components.Group{}
 	currentPage := 0
 	menuButtons := []*components.MenuButton{}
 
@@ -351,21 +200,13 @@ func (installer *Installer) configure() error {
 		menuButtons[currentPage].SetActive(true)
 
 		installer.pages.SwitchToPage(state.pages[currentPage].name)
-		currentGroup = groups[currentPage]
+		installer.app.SetFocus(forms[currentPage])
 	}
 
 	capture := installer.app.GetInputCapture()
 	installer.app.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		if currentGroup == nil {
-			return e
-		}
-
 		//nolint:exhaustive
 		switch e.Key() {
-		case tcell.KeyTAB:
-			currentGroup.NextFocus()
-		case tcell.KeyBacktab:
-			currentGroup.PrevFocus()
 		case tcell.KeyCtrlN:
 			setPage(currentPage + 1)
 		case tcell.KeyCtrlB:
@@ -376,6 +217,8 @@ func (installer *Installer) configure() error {
 		if e.Rune() >= '1' && e.Rune() < '9' {
 			if e.Modifiers()&(tcell.ModAlt|tcell.ModCtrl) != 0 {
 				setPage(int(e.Rune()) - 49)
+
+				return nil
 			}
 		}
 
@@ -410,70 +253,43 @@ func (installer *Installer) configure() error {
 		}
 	}
 
+	forms = make([]*components.Form, len(state.pages))
+
 	for i, p := range state.pages {
-		eg := components.NewGroup(installer.app)
-		groups = append(groups, eg)
-
 		err = func(index int) error {
-			form := components.NewForm()
+			form := components.NewForm(installer.app)
 			form.SetBackgroundColor(color)
+			forms[i] = form
 
-			for _, item := range p.items {
-				formItems, e := item.createFormItems()
-				if e != nil {
-					return e
-				}
-
-				for _, formItem := range formItems {
-					if _, ok := formItem.(*components.FormLabel); !ok {
-						eg.AddElement(formItem)
-					}
-
-					form.AddFormItem(formItem)
-				}
+			if e := form.AddFormItems(p.items); e != nil {
+				return e
 			}
 
-			flex := tview.NewFlex().SetDirection(tview.FlexRow)
-			flex.AddItem(form, 0, 1, false)
-
-			content := tview.NewFlex()
-
 			if index > 0 {
-				back := tview.NewButton("[::u]B[::-]ack")
+				back := form.AddMenuButton("[::u]B[::-]ack", false)
 				back.SetSelectedFunc(func() {
 					setPage(index - 1)
 				})
-
-				content.AddItem(eg.AddElement(back), 10, 1, false)
 			}
 
 			addMenuItem(p.name, index)
 
-			content.AddItem(tview.NewBox().SetBackgroundColor(color), 0, 1, false)
-			flex.SetBackgroundColor(color)
 			form.SetBackgroundColor(color)
-			content.SetBackgroundColor(color)
 
 			if index < len(state.pages)-1 {
-				next := tview.NewButton("[::u]N[::-]ext")
+				next := form.AddMenuButton("[::u]N[::-]ext", index == 0)
 				next.SetSelectedFunc(func() {
 					setPage(index + 1)
 				})
-
-				content.AddItem(eg.AddElement(next), 10, 1, false)
 			} else {
-				install := tview.NewButton("Install")
+				install := form.AddMenuButton("Install", false)
 				install.SetBackgroundColor(tcell.ColorGreen)
-				install.SetTitleAlign(tview.AlignCenter)
 				install.SetSelectedFunc(func() {
 					close(done)
 				})
-				content.AddItem(eg.AddElement(install), 11, 1, false)
 			}
 
-			flex.AddItem(content, 1, 1, false)
-
-			installer.addPage(p.name, flex, index == 0, menu)
+			installer.addPage(p.name, form, index == 0, menu)
 
 			return nil
 		}(i)
@@ -698,16 +514,22 @@ func (installer *Installer) addPage(name string, primitive tview.Primitive, swit
 		frame := tview.NewFrame(content).SetBorders(1, 1, 1, 1, 2, 2).
 			AddText(name, true, tview.AlignLeft, tcell.ColorWhite).
 			AddText("Talos Interactive Installer", true, tview.AlignCenter, tcell.ColorWhite).
-			AddText(version.Tag, true, tview.AlignRight, tcell.ColorIvory)
+			AddText(version.Tag, true, tview.AlignRight, tcell.ColorIvory).
+			AddText("<CTRL>+B/<CTRL>+N to switch tabs", false, tview.AlignLeft, tcell.ColorIvory).
+			AddText("<TAB> for navigation", false, tview.AlignLeft, tcell.ColorIvory).
+			AddText("[::b]Key Bindings[::-]", false, tview.AlignLeft, tcell.ColorIvory)
 
 		frame.SetBackgroundColor(frameBGColor)
 
-		installer.pages.AddPage(name,
-			frame, true, false)
-		installer.app.Draw()
-	}
-
-	if switchToPage {
+		if switchToPage {
+			installer.pages.AddAndSwitchToPage(name, frame, true)
+		} else {
+			installer.pages.AddPage(name,
+				frame, true, false)
+		}
+	} else if switchToPage {
 		installer.pages.SwitchToPage(name)
 	}
+
+	installer.app.ForceDraw()
 }
