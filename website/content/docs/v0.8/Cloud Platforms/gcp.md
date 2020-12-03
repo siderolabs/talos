@@ -120,7 +120,7 @@ talosctl gen config talos-k8s-gcp-tutorial https://${LB_PUBLIC_IP}:443
 
 ### Compute Creation
 
-We are now ready to create our azure nodes.
+We are now ready to create our GCP nodes.
 
 ```bash
 # Create control plane 0
