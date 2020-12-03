@@ -26,7 +26,7 @@ func TestGenerateSuite(t *testing.T) {
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
-	secrets, err := genv1alpha1.NewSecretsBundle()
+	secrets, err := genv1alpha1.NewSecretsBundle(genv1alpha1.NewClock())
 	suite.Require().NoError(err)
 	suite.input, err = genv1alpha1.NewInput("test", "10.0.1.5", constants.DefaultKubernetesVersion, secrets)
 	suite.Require().NoError(err)

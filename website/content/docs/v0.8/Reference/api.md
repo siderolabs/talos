@@ -959,6 +959,7 @@ on a node.
 | config_version | [string](#string) |  |  |
 | cluster_config | [ClusterConfig](#machine.ClusterConfig) |  |  |
 | machine_config | [MachineConfig](#machine.MachineConfig) |  |  |
+| override_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
 
 
 

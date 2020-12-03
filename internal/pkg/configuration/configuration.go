@@ -76,16 +76,22 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 
 		baseConfig, err = configloader.NewFromFile(constants.ConfigPath)
 
+		clock := generate.NewClock()
+
+		if in.OverrideTime != nil {
+			clock.SetFixedTimestamp(in.OverrideTime.AsTime())
+		}
+
 		switch {
 		case os.IsNotExist(err):
-			secrets, err = generate.NewSecretsBundle()
+			secrets, err = generate.NewSecretsBundle(clock)
 			if err != nil {
 				return nil, err
 			}
 		case err != nil:
 			return nil, err
 		default:
-			secrets = generate.NewSecretsBundleFromConfig(baseConfig)
+			secrets = generate.NewSecretsBundleFromConfig(clock, baseConfig)
 		}
 
 		input, err = generate.NewInput(

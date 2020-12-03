@@ -8,8 +8,10 @@ package installer
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dustin/go-humanize"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/talos-systems/talos/pkg/images"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -175,6 +177,8 @@ func (s *State) GenConfig() (*machineapi.GenerateConfigurationResponse, error) {
 	if customCNI, ok := cniPresets[s.cni]; ok {
 		s.opts.ClusterConfig.ClusterNetwork.CniConfig = customCNI
 	}
+
+	s.opts.OverrideTime = timestamppb.New(time.Now().UTC())
 
 	return s.conn.GenerateConfiguration(s.opts)
 }
