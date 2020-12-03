@@ -96,6 +96,10 @@ func (c *Client) resolveConfigContext() error {
 
 // GetConfigContext returns resolved config context.
 func (c *Client) GetConfigContext() *config.Context {
+	if err := c.resolveConfigContext(); err != nil {
+		return nil
+	}
+
 	return c.options.configContext
 }
 
@@ -109,6 +113,10 @@ func (c *Client) getEndpoints() []string {
 	}
 
 	if c.options.config != nil {
+		if err := c.resolveConfigContext(); err != nil {
+			return nil
+		}
+
 		return c.options.configContext.Endpoints
 	}
 
@@ -125,10 +133,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		if err = opt(c.options); err != nil {
 			return nil, err
 		}
-	}
-
-	if err = c.resolveConfigContext(); err != nil {
-		return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
 	}
 
 	if len(c.getEndpoints()) < 1 {
@@ -174,6 +178,10 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 		// Add TLS credentials to gRPC DialOptions
 		tlsConfig := c.options.tlsConfig
 		if tlsConfig == nil {
+			if err := c.resolveConfigContext(); err != nil {
+				return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
+			}
+
 			creds, err := CredentialsFromConfigContext(c.options.configContext)
 			if err != nil {
 				return nil, fmt.Errorf("failed to acquire credentials: %w", err)
