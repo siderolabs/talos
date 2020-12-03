@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -34,7 +35,10 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
@@ -311,7 +315,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, err
 	}
 
-	log.Printf("upgrade request received")
+	log.Printf("upgrade request received: preserve %v, staged %v", in.GetPreserve(), in.GetStage())
 
 	log.Printf("validating %q", in.GetImage())
 
@@ -344,21 +348,68 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		}
 	}
 
-	go func() {
-		if mu != nil {
-			defer mu.Unlock(ctx) // nolint: errcheck
+	if in.GetStage() {
+		meta, err := bootloader.NewMeta()
+		if err != nil {
+			return nil, fmt.Errorf("error reading meta: %w", err)
+		}
+		// nolint: errcheck
+		defer meta.Close()
+
+		if !meta.ADV.SetTag(adv.StagedUpgradeImageRef, in.GetImage()) {
+			return nil, fmt.Errorf("error adding staged upgrade image ref tag")
 		}
 
-		if err := s.Controller.Run(runtime.SequenceUpgrade, in); err != nil {
-			log.Println("upgrade failed:", err)
+		opts := install.DefaultInstallOptions()
+		if err = opts.Apply(install.OptionsFromUpgradeRequest(s.Controller.Runtime(), in)...); err != nil {
+			return nil, fmt.Errorf("error applying install options: %w", err)
+		}
 
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
+		serialized, err := json.Marshal(opts)
+		if err != nil {
+			return nil, fmt.Errorf("error serializing install options: %s", err)
+		}
+
+		if !meta.ADV.SetTag(adv.StagedUpgradeInstallOptions, string(serialized)) {
+			return nil, fmt.Errorf("error adding staged upgrade install options tag")
+		}
+
+		if err = meta.Write(); err != nil {
+			return nil, fmt.Errorf("error writing meta: %w", err)
+		}
+
+		go func() {
+			if mu != nil {
+				defer mu.Unlock(ctx) // nolint: errcheck
 			}
-		}
-	}()
+
+			if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
+				log.Println("reboot for staged upgrade failed:", err)
+
+				if err != runtime.ErrLocked {
+					// NB: We stop the gRPC server since a failed sequence triggers a
+					// reboot.
+					s.server.GracefulStop()
+				}
+			}
+		}()
+	} else {
+		go func() {
+			if mu != nil {
+				defer mu.Unlock(ctx) // nolint: errcheck
+			}
+
+			if err := s.Controller.Run(runtime.SequenceUpgrade, in); err != nil {
+				log.Println("upgrade failed:", err)
+
+				if err != runtime.ErrLocked {
+					// NB: We stop the gRPC server since a failed sequence triggers a
+					// reboot.
+					s.server.GracefulStop()
+				}
+			}
+		}()
+	}
 
 	reply = &machine.UpgradeResponse{
 		Messages: []*machine.Upgrade{

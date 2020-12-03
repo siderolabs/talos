@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -38,6 +39,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
@@ -1384,10 +1386,7 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			devname, r.State().Platform().Name(),
 			in.GetImage(),
 			r.Config().Machine().Registries(),
-			install.WithPull(false),
-			install.WithUpgrade(true),
-			install.WithForce(!in.GetPreserve()),
-			install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+			install.OptionsFromUpgradeRequest(r, in)...,
 		)
 		if err != nil {
 			return err
@@ -1438,10 +1437,10 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		// nolint: errcheck
 		defer meta.Close()
 
-		if ok := meta.DeleteTag(bootloader.AdvUpgrade); ok {
+		if ok := meta.LegacyADV.DeleteTag(adv.Upgrade); ok {
 			logger.Println("removing fallback")
 
-			if _, err = meta.Write(); err != nil {
+			if err = meta.Write(); err != nil {
 				return err
 			}
 		}
@@ -1565,25 +1564,54 @@ func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.
 // Install mounts or installs the system partitions.
 func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		installerImage := r.Config().Machine().Install().Image()
-		if installerImage == "" {
-			installerImage = images.DefaultInstallerImage
-		}
+		switch {
+		case !r.State().Machine().Installed():
+			installerImage := r.Config().Machine().Install().Image()
+			if installerImage == "" {
+				installerImage = images.DefaultInstallerImage
+			}
 
-		err = install.RunInstallerContainer(
-			r.Config().Machine().Install().Disk(),
-			r.State().Platform().Name(),
-			installerImage,
-			r.Config().Machine().Registries(),
-			install.WithForce(true),
-			install.WithZero(r.Config().Machine().Install().Zero()),
-			install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
-		)
-		if err != nil {
-			return err
-		}
+			err = install.RunInstallerContainer(
+				r.Config().Machine().Install().Disk(),
+				r.State().Platform().Name(),
+				installerImage,
+				r.Config().Machine().Registries(),
+				install.WithForce(true),
+				install.WithZero(r.Config().Machine().Install().Zero()),
+				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+			)
+			if err != nil {
+				return err
+			}
 
-		logger.Println("install successful")
+			logger.Println("install successful")
+
+		case r.State().Machine().IsInstallStaged():
+			devname := r.State().Machine().Disk().BlockDevice.Device().Name()
+
+			var options install.Options
+
+			if err = json.Unmarshal(r.State().Machine().StagedInstallOptions(), &options); err != nil {
+				return fmt.Errorf("error unserializing install options: %w", err)
+			}
+
+			logger.Printf("performing staged upgrade via %q", r.State().Machine().StagedInstallImageRef())
+
+			err = install.RunInstallerContainer(
+				devname, r.State().Platform().Name(),
+				r.State().Machine().StagedInstallImageRef(),
+				r.Config().Machine().Registries(),
+				install.WithOptions(options),
+			)
+			if err != nil {
+				return err
+			}
+
+			logger.Println("staged upgrade successful")
+
+		default:
+			return fmt.Errorf("unsupported configuration for install task")
+		}
 
 		return nil
 	}, "install"

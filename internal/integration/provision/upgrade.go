@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -62,6 +64,7 @@ type upgradeSpec struct {
 	WorkerNodes int
 
 	UpgradePreserve bool
+	UpgradeStage    bool
 }
 
 const (
@@ -147,6 +150,30 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		MasterNodes:     1,
 		WorkerNodes:     0,
 		UpgradePreserve: true,
+	}
+}
+
+// upgradeSingeNodeStage upgrade last release of Talos to the current version of Talos for single-node cluster with preserve and stage.
+//
+// TODO: this test should run same as upgradeSingleNodePreserve, but for now it runs between current and current version until we get a release.
+func upgradeSingeNodeStage() upgradeSpec {
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("preserve-stage-%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
+
+		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
+		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
+		SourceInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+
+		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+
+		MasterNodes:     1,
+		WorkerNodes:     0,
+		UpgradePreserve: true,
+		UpgradeStage:    true,
 	}
 }
 
@@ -429,10 +456,22 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
 
-	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve)
+	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage)
+	if err != nil {
+		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+			// ignore errors if reboot happens before response is fully received
+			err = nil
+		}
+	}
+
 	suite.Require().NoError(err)
 
-	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
+	if resp != nil {
+		suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
+	}
+
+	// wait for the upgrade to be kicked off
+	time.Sleep(10 * time.Second)
 
 	// wait for the version to be equal to target version
 	suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
@@ -553,5 +592,6 @@ func init() {
 		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
 		&UpgradeSuite{specGen: upgradeStableReleaseToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
+		&UpgradeSuite{specGen: upgradeSingeNodeStage, track: 1},
 	)
 }
