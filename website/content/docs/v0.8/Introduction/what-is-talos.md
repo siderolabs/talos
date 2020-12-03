@@ -12,7 +12,7 @@ For these reasons, Talos has a number of features unique to it:
 - it is ephemeral
 - it is minimal
 - it is secure by default
-- it is managed via a sigle declaritive configuration file and gRPC API
+- it is managed via a single declarative configuration file and gRPC API
 
 Talos can be deployed on container, cloud, virtualized, and bare metal platforms.
 
