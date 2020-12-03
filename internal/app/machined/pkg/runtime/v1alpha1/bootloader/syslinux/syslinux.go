@@ -19,7 +19,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	advcommon "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv/syslinux"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -301,13 +302,13 @@ func setADV(ldlinux, fallback string) (err error) {
 	// nolint: errcheck
 	defer f.Close()
 
-	var adv bootloader.ADV
+	var adv syslinux.ADV
 
-	if adv, err = bootloader.NewADV(f); err != nil {
+	if adv, err = syslinux.NewADV(f); err != nil {
 		return err
 	}
 
-	if ok := adv.SetTag(bootloader.AdvUpgrade, fallback); !ok {
+	if ok := adv.SetTag(advcommon.Upgrade, fallback); !ok {
 		return fmt.Errorf("failed to set upgrade tag: %q", fallback)
 	}
 

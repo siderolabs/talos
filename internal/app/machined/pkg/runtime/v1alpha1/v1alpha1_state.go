@@ -11,6 +11,8 @@ import (
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -25,36 +27,33 @@ type State struct {
 // MachineState represents the machine's state.
 type MachineState struct {
 	disk *probe.ProbedBlockDevice
+
+	stagedInstall         bool
+	stagedInstallImageRef string
+	stagedInstallOptions  []byte
 }
 
 // ClusterState represents the cluster's state.
 type ClusterState struct {
-	disk *probe.ProbedBlockDevice
 }
 
 // NewState initializes and returns the v1alpha1 state.
 func NewState() (s *State, err error) {
-	var dev *probe.ProbedBlockDevice
+	p, err := platform.CurrentPlatform()
+	if err != nil {
+		return nil, err
+	}
 
-	dev, err = probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
+	machine := &MachineState{}
+
+	err = machine.probeDisk()
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 	}
 
-	p, err := platform.CurrentPlatform()
-	if err != nil {
-		return nil, err
-	}
-
-	machine := &MachineState{
-		disk: dev,
-	}
-
-	cluster := &ClusterState{
-		disk: dev,
-	}
+	cluster := &ClusterState{}
 
 	s = &State{
 		platform: p,
@@ -80,16 +79,55 @@ func (s *State) Cluster() runtime.ClusterState {
 	return s.cluster
 }
 
+func (s *MachineState) probeDisk() error {
+	if s.disk != nil {
+		return nil
+	}
+
+	var dev *probe.ProbedBlockDevice
+
+	dev, err := probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
+	if err == nil {
+		s.disk = dev
+	}
+
+	if err != nil {
+		return err
+	}
+
+	meta, err := bootloader.NewMeta()
+	if err != nil {
+		// ignore missing meta
+		return nil
+	}
+
+	defer meta.Close() //nolint: errcheck
+
+	stagedInstallImageRef, ok1 := meta.ADV.ReadTag(adv.StagedUpgradeImageRef)
+	stagedInstallOptions, ok2 := meta.ADV.ReadTag(adv.StagedUpgradeInstallOptions)
+
+	s.stagedInstall = ok1 && ok2
+
+	if s.stagedInstall {
+		// clear the staged install flags
+		meta.ADV.DeleteTag(adv.StagedUpgradeImageRef)
+		meta.ADV.DeleteTag(adv.StagedUpgradeInstallOptions)
+
+		if err = meta.Write(); err != nil {
+			// failed to delete staged install tags, clear the stagedInstall to prevent boot looping
+			s.stagedInstall = false
+		}
+
+		s.stagedInstallImageRef = stagedInstallImageRef
+		s.stagedInstallOptions = []byte(stagedInstallOptions)
+	}
+
+	return nil
+}
+
 // Disk implements the machine state interface.
 func (s *MachineState) Disk() *probe.ProbedBlockDevice {
-	if s.disk == nil {
-		var dev *probe.ProbedBlockDevice
-
-		dev, err := probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
-		if err == nil {
-			s.disk = dev
-		}
-	}
+	s.probeDisk() //nolint: errcheck
 
 	return s.disk
 }
@@ -105,14 +143,22 @@ func (s *MachineState) Close() error {
 
 // Installed implements the machine state interface.
 func (s *MachineState) Installed() bool {
-	if s.disk == nil {
-		var dev *probe.ProbedBlockDevice
-
-		dev, err := probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
-		if err == nil {
-			s.disk = dev
-		}
-	}
+	s.probeDisk() //nolint: errcheck
 
 	return s.disk != nil
+}
+
+// IsInstallStaged implements the machine state interface.
+func (s *MachineState) IsInstallStaged() bool {
+	return s.stagedInstall
+}
+
+// StagedInstallImageRef implements the machine state interface.
+func (s *MachineState) StagedInstallImageRef() string {
+	return s.stagedInstallImageRef
+}
+
+// StagedInstallOptions implements the machine state interface.
+func (s *MachineState) StagedInstallOptions() []byte {
+	return s.stagedInstallOptions
 }

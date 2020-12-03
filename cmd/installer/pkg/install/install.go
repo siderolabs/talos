@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -266,11 +267,11 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		//nolint: errcheck
 		defer meta.Close()
 
-		if ok := meta.SetTag(bootloader.AdvUpgrade, i.Current); !ok {
+		if ok := meta.LegacyADV.SetTag(adv.Upgrade, i.Current); !ok {
 			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
 		}
 
-		if _, err = meta.Write(); err != nil {
+		if err = meta.Write(); err != nil {
 			return err
 		}
 	}

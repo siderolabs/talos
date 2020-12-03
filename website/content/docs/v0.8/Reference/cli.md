@@ -1438,6 +1438,7 @@ talosctl upgrade [flags]
   -h, --help           help for upgrade
   -i, --image string   the container image to use for performing the install
   -p, --preserve       preserve data
+  -s, --stage          stage the upgrade to perform it after a reboot
 ```
 
 ### Options inherited from parent commands

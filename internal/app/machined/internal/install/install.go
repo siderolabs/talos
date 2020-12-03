@@ -20,8 +20,10 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -47,13 +49,14 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	var img containerd.Image
 
-	img, err = client.GetImage(ctx, ref)
-	if err != nil {
-		if errdefs.IsNotFound(err) && options.Pull {
-			log.Printf("pulling %q", ref)
+	if !options.Pull {
+		img, err = client.GetImage(ctx, ref)
+	}
 
-			img, err = image.Pull(ctx, reg, client, ref)
-		}
+	if img == nil || err != nil && errdefs.IsNotFound(err) {
+		log.Printf("pulling %q", ref)
+
+		img, err = image.Pull(ctx, reg, client, ref)
 	}
 
 	if err != nil {
@@ -151,4 +154,14 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 	}
 
 	return nil
+}
+
+// OptionsFromUpgradeRequest builds installer options from upgrade request.
+func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest) []Option {
+	return []Option{
+		WithPull(false),
+		WithUpgrade(true),
+		WithForce(!in.GetPreserve()),
+		WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+	}
 }

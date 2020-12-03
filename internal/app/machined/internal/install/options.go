@@ -23,6 +23,26 @@ func DefaultInstallOptions() Options {
 	}
 }
 
+// Apply list of Option.
+func (o *Options) Apply(opts ...Option) error {
+	for _, opt := range opts {
+		if err := opt(o); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// WithOptions sets Options as a whole.
+func WithOptions(opts Options) Option {
+	return func(o *Options) error {
+		*o = opts
+
+		return nil
+	}
+}
+
 // WithPull sets the pull option.
 func WithPull(b bool) Option {
 	return func(o *Options) error {

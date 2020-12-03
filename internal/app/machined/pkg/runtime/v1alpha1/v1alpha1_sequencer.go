@@ -148,7 +148,7 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	case runtime.ModeContainer:
 		return nil
 	default:
-		if !r.State().Machine().Installed() {
+		if !r.State().Machine().Installed() || r.State().Machine().IsInstallStaged() {
 			phases = phases.Append(
 				"validateConfig",
 				ValidateConfig,

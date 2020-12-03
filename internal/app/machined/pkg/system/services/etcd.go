@@ -29,6 +29,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
@@ -360,7 +361,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		// nolint: errcheck
 		defer meta.Close()
 
-		_, upgraded = meta.ReadTag(bootloader.AdvUpgrade)
+		_, upgraded = meta.LegacyADV.ReadTag(adv.Upgrade)
 	}
 
 	primaryAddr, listenAddress, err := primaryAndListenAddresses()

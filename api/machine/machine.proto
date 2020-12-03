@@ -174,6 +174,7 @@ message ShutdownResponse { repeated Shutdown messages = 1; }
 message UpgradeRequest {
   string image = 1;
   bool preserve = 2;
+  bool stage = 3;
 }
 
 message Upgrade {

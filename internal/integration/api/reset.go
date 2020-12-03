@@ -12,6 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -87,7 +90,16 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		// uptime should go down after Reset, as it reboots the node
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
-			return suite.Client.Reset(nodeCtx, true, true)
+			err := suite.Client.Reset(nodeCtx, true, true)
+			if err != nil {
+				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+					// ignore errors if reboot happens before response is fully received
+
+					err = nil
+				}
+			}
+
+			return err
 		}, 10*time.Minute)
 	}
 }

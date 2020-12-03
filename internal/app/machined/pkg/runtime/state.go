@@ -28,6 +28,9 @@ type MachineState interface {
 	Disk() *probe.ProbedBlockDevice
 	Close() error
 	Installed() bool
+	IsInstallStaged() bool
+	StagedInstallImageRef() string
+	StagedInstallOptions() []byte
 }
 
 // ClusterState defines the cluster state.

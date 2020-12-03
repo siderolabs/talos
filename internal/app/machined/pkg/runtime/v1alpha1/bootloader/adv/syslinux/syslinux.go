@@ -2,18 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package bootloader
+// Package syslinux provides syslinux-compatible ADV data.
+package syslinux
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
-	"os"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
-
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 )
 
 const (
@@ -29,107 +25,8 @@ const (
 	AdvMagic3 = uint32(0xdd28bf64)
 )
 
-const (
-	// AdvEnd is the noop tag.
-	AdvEnd = iota
-	// AdvBootonce is the bootonce tag.
-	AdvBootonce
-	// AdvMenusave is the menusave tag.
-	AdvMenusave
-	// AdvReserved1 is a reserved tag.
-	AdvReserved1
-	// AdvReserved2 is a reserved tag.
-	AdvReserved2
-	// AdvReserved3 is a reserved tag.
-	AdvReserved3
-	// AdvUpgrade is the upgrade tag.
-	AdvUpgrade
-)
-
-// Meta represents the meta reader.
-type Meta struct {
-	*os.File
-	ADV
-}
-
 // ADV represents the Syslinux Auxiliary Data Vector.
 type ADV []byte
-
-// NewMeta initializes and returns a `Meta`.
-func NewMeta() (meta *Meta, err error) {
-	var f *os.File
-
-	f, err = probe.GetPartitionWithName(constants.MetaPartitionLabel)
-	if err != nil {
-		return nil, err
-	}
-
-	adv, err := NewADV(f)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Meta{
-		File: f,
-		ADV:  adv,
-	}, nil
-}
-
-func (m *Meta) Read(b []byte) (int, error) {
-	return m.File.Read(b)
-}
-
-func (m *Meta) Write() (int, error) {
-	offset, err := m.File.Seek(-2*AdvSize, io.SeekEnd)
-	if err != nil {
-		return 0, err
-	}
-
-	n, err := m.File.WriteAt(m.ADV, offset)
-	if err != nil {
-		return n, err
-	}
-
-	if n != 2*AdvSize {
-		return n, fmt.Errorf("expected to write %d bytes, wrote %d", AdvLen*2, n)
-	}
-
-	return n, nil
-}
-
-// Revert reverts the default bootloader label to the previous installation.
-//
-// nolint: gocyclo
-func (m *Meta) Revert() (err error) {
-	label, ok := m.ReadTag(AdvUpgrade)
-	if !ok {
-		return nil
-	}
-
-	if label == "" {
-		m.DeleteTag(AdvUpgrade)
-
-		if _, err = m.Write(); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	g := &grub.Grub{}
-
-	if err = g.Default(label); err != nil {
-		return err
-	}
-
-	m.DeleteTag(AdvUpgrade)
-
-	if _, err = m.Write(); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // NewADV returns the Auxiliary Data Vector.
 func NewADV(r io.ReadSeeker) (adv ADV, err error) {
@@ -160,7 +57,7 @@ func (a ADV) ReadTag(t uint8) (val string, ok bool) {
 		tag := a[i]
 		size := int(a[i+1])
 
-		if tag == AdvEnd {
+		if tag == adv.End {
 			break
 		}
 
@@ -199,7 +96,7 @@ func (a ADV) SetTag(t uint8, val string) (ok bool) {
 		tag := a[i]
 		size := int(a[i+1])
 
-		if tag != AdvEnd {
+		if tag != adv.End {
 			// Jump to the next tag.
 			i += 2 + size
 
@@ -236,7 +133,7 @@ func (a ADV) DeleteTag(t uint8) (ok bool) {
 		tag := a[i]
 		size := int(a[i+1])
 
-		if tag == AdvEnd {
+		if tag == adv.End {
 			break
 		}
 
@@ -279,6 +176,11 @@ func (a ADV) DeleteTag(t uint8) (ok bool) {
 	}
 
 	return ok
+}
+
+// Bytes returns serialized contents of ADV.
+func (a ADV) Bytes() ([]byte, error) {
+	return a, nil
 }
 
 func (a ADV) cleanup() {
