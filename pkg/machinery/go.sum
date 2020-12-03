@@ -80,8 +80,8 @@ github.com/stretchr/testify v0.0.0-20180303142811-b89eecf5ca5d/go.mod h1:a8OnRci
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/talos-systems/crypto v0.2.0 h1:UwT8uhJ0eDlklY0vYwo1+LGoFgiqkPqjQnae6j8UNYE=
-github.com/talos-systems/crypto v0.2.0/go.mod h1:KwqG+jANKU1FNQIapmioHQ5fkovY1DJkAqMenjYBGh0=
+github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745 h1:Smw6ebFiEiwrkaOD2hEYYb+xkIhQTMZNq3WVYKLszB8=
+github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745/go.mod h1:KwqG+jANKU1FNQIapmioHQ5fkovY1DJkAqMenjYBGh0=
 github.com/talos-systems/net v0.2.0 h1:QJ2ofYboG1Zjew9b+3RAjtLIfL0mIONGuc6/LyO68MM=
 github.com/talos-systems/net v0.2.0/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
