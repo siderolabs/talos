@@ -1,6 +1,63 @@
 
+<a name="v0.8.0-alpha.2"></a>
+## [v0.8.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.1...v0.8.0-alpha.2) (2020-12-03)
+
+### Chore
+
+* publish Rock64 image
+* enable thrice daily pipeline
+* run integration test thrice daily
+* output SBC images as compressed raw images
+* build SBC images
+* update module dependencies
+* drop support for `docker load`
+* fix metal image name
+* use IMAGE_TAG instead of TAG for :latest pushes
+
+### Docs
+
+* fix typos
+* add openstack docs
+* ensure port for vbox and proxmox docs
+* add console kernel arg to rpi_4 image generation
+* add console kernel arg to libretech_all_h3_cc_h5 image generation
+
+### Feat
+
+* add support for the Pine64 Rock64
+* add TUI for configuring network interfaces settings
+* make GenerateConfiguration accept current time as a parameter
+* introduce configpatcher package in machinery
+* suggest fixed control plane endpoints in talosctl gen config
+* update kubernetes to 1.20.0-rc.0
+* allow boards to set kernel args
+* add support for the Banana Pi M64
+* stop including K8s version by default in `talosctl gen config`
+* add support for the Raspberry Pi 4 Model B
+* implement network interfaces list API
+* bump package for kernel with CIFS support
+* upgrade etcd to 3.4.14
+* update Containerd and Linux
+* add support for installing to SBCs
+* add ability to choose CNI config
+
+### Fix
+
+* make default generate image arch dynamic based on arch
+* stabilize serial console on RPi4, add video console
+* make reset work again
+* node taint doesn't contain value anymore
+* defer resolving config context in client code
+* remove value (change to empty) for `NoSchedule` taint
+* prevent endless loop with DHCP requests in networkd
+* skip `board` argument to the installer if it's not set
+* use the dtb from kernel pkg for libretech_all_h3_cc_h5
+* prevent crash in `talosctl config` commands
+* update generated .ova manifest for raw disk size
+* **security:** update Containerd to v1.4.3
+
 <a name="v0.8.0-alpha.1"></a>
-## [v0.8.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.0...v0.8.0-alpha.1) (2020-11-25)
+## [v0.8.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.0...v0.8.0-alpha.1) (2020-11-26)
 
 ### Chore
 
@@ -59,6 +116,10 @@
 ### Refactor
 
 * drop osd compatibility layer
+
+### Release
+
+* **v0.8.0-alpha.1:** prepare release
 
 ### Test
 
