@@ -2,30 +2,55 @@
 title: "Banana Pi M64"
 ---
 
-## Download the Image
+## Prerequisites
 
-An official image is provided in a release.
-Download the compressed image and decompress it:
+You will need
+
+- `talosctl`
+- an SD card
+
+Download the latest alpha `talosctl`.
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/<version>/metal-bananapi_m64-arm64.img.xz
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/v0.8.0-alpha.2/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+chmod +x /usr/local/bin/talosctl
+```
+
+## Download the Image
+
+Download the image and decompress it:
+
+```bash
+curl -LO https://github.com/talos-systems/talos/releases/download/v0.8.0-alpha.2/metal-bananapi_m64-arm64.img.xz
 xz -d metal-bananapi_m64-arm64.img.xz
 ```
 
 ## Writing the Image
 
-Now `dd` the image your SD card (be sure to update `x` in `mmcblkx`):
+The path to your SD card can be found using `fdisk` on Linux or `diskutil` on Mac OS.
+In this example we will assume `/dev/mmcblk0`.
+
+Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-bananapi_m64-arm64.img of=/dev/mmcblkx
+sudo dd if=metal-bananapi_m64-arm64.img of=/dev/mmcblk0
 ```
 
 ## Bootstrapping the Node
 
-Now insert the SD card, turn on the board, and wait for the console to show you the instructions for bootstrapping the node.
-Following the instructions in the console output, generate the configuration files and apply the `init.yaml`:
+Insert the SD card to your board, turn it on and wait for the console to show you the instructions for bootstrapping the node.
+Following the instructions in the console output to connect to the interactive installer:
 
 ```bash
-talosctl gen config example https://<node IP or DNS name>:6443
-talosctl apply-config --insecure --file init.yaml --nodes <node IP or DNS name>
+talosctl apply-config --insecure --interactive --nodes <node IP or DNS name>
+```
+
+Once the interactive installation is applied, the cluster will form and you can then use `kubectl`.
+
+## Retrieve the `kubeconfig`
+
+Retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl kubeconfig
 ```
