@@ -407,6 +407,7 @@ local integration_nightly_trigger = {
 
 
 local integration_pipeline = Pipeline('integration', integration_steps) + integration_trigger;
+local integration_thrice_daily_pipeline = Pipeline('integration-thrice-daily', integration_steps) + integration_thrice_daily_trigger;
 local integration_nightly_pipeline = Pipeline('integration-nightly', integration_steps) + integration_nightly_trigger;
 
 // E2E pipeline.
@@ -582,13 +583,14 @@ local notify_trigger = {
   },
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, integration_nightly_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, integration_thrice_daily_pipeline, integration_nightly_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
 
 // Final configuration file definition.
 
 [
   default_pipeline,
   integration_pipeline,
+  integration_thrice_daily_pipeline,
   integration_nightly_pipeline,
   e2e_pipeline,
   conformance_pipeline,
