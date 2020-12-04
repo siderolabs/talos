@@ -17,6 +17,7 @@ import (
 var configTxt = []byte(`arm_64bit=1
 enable_uart=1
 kernel=u-boot.bin
+dtoverlay=disable-bt
 `)
 
 // RPi4 represents the Raspberry Pi 4 Model B.
@@ -47,7 +48,7 @@ func (r *RPi4) Install(disk string) (err error) {
 // KernelArgs implements the runtime.Board.
 func (r *RPi4) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS0,115200"),
+		procfs.NewParameter("console").Append("tty0").Append("ttyAMA0,115200"),
 	}
 }
 

@@ -93,7 +93,7 @@ func (b *BananaPiM64) Install(disk string) (err error) {
 // KernelArgs implements the runtime.Board.
 func (b *BananaPiM64) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS2,115200n8"),
+		procfs.NewParameter("console").Append("tty0").Append("ttyS2,115200n8"),
 	}
 }
 
