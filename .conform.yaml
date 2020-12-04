@@ -33,7 +33,7 @@ policies:
           - talosctl
           - kernel
           - security
-          - ^v0.7
+          - ^v0.8
           - '*'
   - type: license
     spec:
