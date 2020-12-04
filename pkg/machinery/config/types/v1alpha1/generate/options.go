@@ -5,6 +5,8 @@
 package generate
 
 import (
+	"runtime"
+
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -175,6 +177,6 @@ type GenOptions struct {
 func DefaultGenOptions() GenOptions {
 	return GenOptions{
 		Persist:      true,
-		Architecture: "amd64",
+		Architecture: runtime.GOARCH,
 	}
 }
