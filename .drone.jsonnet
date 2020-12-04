@@ -314,13 +314,11 @@ local default_steps = [
 
 local default_trigger = {
   trigger: {
-    cron: {
-      exclude: ['nightly'],
-    },
     event: {
       exclude: [
         'tag',
         'promote',
+        'cron',
       ],
     },
   },
@@ -387,6 +385,14 @@ local integration_trigger = {
   trigger: {
     target: {
       include: ['integration'],
+    },
+  },
+};
+
+local integration_thrice_daily_trigger = {
+  trigger: {
+    cron: {
+      include: ['thrice-daily'],
     },
   },
 };
