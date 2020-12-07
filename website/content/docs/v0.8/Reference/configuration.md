@@ -1082,7 +1082,7 @@ adminKubeconfig:
 </div>
 <div class="dt">
 
-Indicates if master nodes are schedulable.
+Allows running workload on master nodes.
 
 
 Valid values:

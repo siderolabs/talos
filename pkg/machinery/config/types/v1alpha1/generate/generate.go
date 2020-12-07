@@ -87,8 +87,9 @@ type Input struct {
 	RegistryConfig  map[string]*v1alpha1.RegistryConfig
 	MachineDisks    []*v1alpha1.MachineDisk
 
-	Debug   bool
-	Persist bool
+	Debug                    bool
+	Persist                  bool
+	AllowSchedulingOnMasters bool
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint.
@@ -426,6 +427,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		RegistryConfig:            options.RegistryConfig,
 		Debug:                     options.Debug,
 		Persist:                   options.Persist,
+		AllowSchedulingOnMasters:  options.AllowSchedulingOnMasters,
 		MachineDisks:              options.MachineDisks,
 	}
 

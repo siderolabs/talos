@@ -532,6 +532,7 @@ rpc bootstrap
 | name | [string](#string) |  |  |
 | control_plane | [ControlPlaneConfig](#machine.ControlPlaneConfig) |  |  |
 | cluster_network | [ClusterNetworkConfig](#machine.ClusterNetworkConfig) |  |  |
+| allow_scheduling_on_masters | [bool](#bool) |  |  |
 
 
 
