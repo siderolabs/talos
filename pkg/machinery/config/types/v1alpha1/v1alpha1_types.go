@@ -603,7 +603,7 @@ type ClusterConfig struct {
 	//     - value: clusterAdminKubeconfigExample
 	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 	//   description: |
-	//     Indicates if master nodes are schedulable.
+	//     Allows running workload on master nodes.
 	//   values:
 	//     - true
 	//     - yes

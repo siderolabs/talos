@@ -155,6 +155,15 @@ func WithUserDisks(disks []*v1alpha1.MachineDisk) GenOption {
 	}
 }
 
+// WithAllowSchedulingOnMasters specifies AllowSchedulingOnMasters flag.
+func WithAllowSchedulingOnMasters(enabled bool) GenOption {
+	return func(o *GenOptions) error {
+		o.AllowSchedulingOnMasters = enabled
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -170,6 +179,7 @@ type GenOptions struct {
 	Architecture              string
 	Debug                     bool
 	Persist                   bool
+	AllowSchedulingOnMasters  bool
 	MachineDisks              []*v1alpha1.MachineDisk
 }
 

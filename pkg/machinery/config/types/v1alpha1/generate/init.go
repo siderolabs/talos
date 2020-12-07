@@ -78,6 +78,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterCA:                     in.Certs.K8s,
 		BootstrapToken:                in.Secrets.BootstrapToken,
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
+		AllowSchedulingOnMasters:      in.AllowSchedulingOnMasters,
 	}
 
 	config.MachineConfig = machine

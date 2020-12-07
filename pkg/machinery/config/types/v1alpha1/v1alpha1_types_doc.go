@@ -343,8 +343,8 @@ func init() {
 	ClusterConfigDoc.Fields[16].Name = "allowSchedulingOnMasters"
 	ClusterConfigDoc.Fields[16].Type = "bool"
 	ClusterConfigDoc.Fields[16].Note = ""
-	ClusterConfigDoc.Fields[16].Description = "Indicates if master nodes are schedulable."
-	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "Indicates if master nodes are schedulable."
+	ClusterConfigDoc.Fields[16].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "Allows running workload on master nodes."
 	ClusterConfigDoc.Fields[16].Values = []string{
 		"true",
 		"yes",

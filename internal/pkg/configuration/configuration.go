@@ -90,6 +90,8 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 					CNIUrls: in.ClusterConfig.ClusterNetwork.CniConfig.Urls,
 				}))
 			}
+
+			options = append(options, generate.WithAllowSchedulingOnMasters(in.ClusterConfig.AllowSchedulingOnMasters))
 		}
 
 		var (
