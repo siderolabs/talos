@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.1.7-experimental
+# syntax = docker/dockerfile-upstream:1.2.0-labs
 
 # Meta args applied to stage base names.
 
@@ -15,6 +15,8 @@ FROM ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd
 FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
 FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
 FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub
+FROM --platform=arm64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-arm64
+FROM --platform=amd64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-amd64
 FROM ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables
 FROM ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl
 FROM ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
@@ -467,6 +469,8 @@ RUN apk add --no-cache --update \
     xfsprogs \
     xorriso \
     xz
+COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
+COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 ARG TARGETARCH
