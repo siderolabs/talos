@@ -51,8 +51,8 @@ type Settings struct {
 var DefaultSettings Settings = Settings{
 	CIDR:                       "172.21.0.0/24",
 	MTU:                        1500,
-	CPUs:                       1,
-	MemMB:                      1.5 * 1024,
+	CPUs:                       2,
+	MemMB:                      2 * 1024,
 	DiskGB:                     8,
 	MasterNodes:                3,
 	WorkerNodes:                1,
