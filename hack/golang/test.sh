@@ -7,17 +7,17 @@ export PLATFORM=container
 
 perform_tests() {
   echo "Performing tests on $1"
-  go test -v -covermode=atomic -coverprofile=coverage.txt -count 1 "$1"
+  go test -v -covermode=atomic -coverprofile=coverage.txt -count 1 -p 4 "$1"
 }
 
 perform_race_tests() {
   echo "Performing race tests on $1"
-  CGO_ENABLED=1 go test -v -race -count 1 "$1"
+  CGO_ENABLED=1 go test -v -race -count 1 -p 4 "$1"
 }
 
 perform_short_tests() {
   echo "Performing short tests on $1"
-  go test -v -short -count 1 "$1"
+  go test -v -short -count 1 -p 4 "$1"
 }
 
 case $1 in
