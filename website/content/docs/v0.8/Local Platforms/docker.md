@@ -14,6 +14,11 @@ The follow are requirements for running Talos in Docker:
 - Docker 18.03 or greater
 - a recent version of [`talosctl`](https://github.com/talos-systems/talos/releases)
 
+## Caveats
+
+Due to the fact that Talos runs in a container, certain APIs are not available when running in Docker.
+For example `upgrade`, `reset`, and APIs like these don't apply in container mode.
+
 ## Create the Cluster
 
 Creating a local cluster is as simple as:
