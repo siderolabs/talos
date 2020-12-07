@@ -695,7 +695,7 @@ func (t *Target) Format() error {
 	}
 
 	if t.FileSystemType == FilesystemTypeNone {
-		return nil
+		return t.zeroPartition()
 	}
 
 	log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, t.FileSystemType, t.Label)
@@ -895,4 +895,27 @@ func (t *Target) restoreFilesystemContents() error {
 	return withTemporaryMounted(t.PartitionName, 0, t.FileSystemType, t.Label, func(mountPath string) error {
 		return archiver.UntarGz(context.TODO(), t.Contents, mountPath)
 	})
+}
+
+// zeroPartition fills the partition with zeroes.
+func (t *Target) zeroPartition() (err error) {
+	log.Printf("zeroing out %q", t.PartitionName)
+
+	zeroes, err := os.Open("/dev/zero")
+	if err != nil {
+		return err
+	}
+
+	defer zeroes.Close() //nolint: errcheck
+
+	part, err := os.OpenFile(t.PartitionName, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+
+	defer part.Close() //nolint: errcheck
+
+	_, err = io.CopyN(part, zeroes, int64(t.Size))
+
+	return err
 }
