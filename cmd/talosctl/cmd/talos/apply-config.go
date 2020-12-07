@@ -102,25 +102,35 @@ var applyConfigCmd = &cobra.Command{
 				install := installer.NewInstaller()
 				node := Nodes[0]
 
-				return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
-					opts := []installer.Option{}
-
-					if len(Endpoints) > 0 {
+				if len(Endpoints) > 0 {
+					return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
+						opts := []installer.Option{}
 						opts = append(opts, installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, Endpoints[0]))
-					}
 
-					conn, err := installer.NewConnection(
-						ctx,
-						c,
-						node,
-						opts...,
-					)
-					if err != nil {
-						return err
-					}
+						conn, err := installer.NewConnection(
+							ctx,
+							c,
+							node,
+							opts...,
+						)
+						if err != nil {
+							return err
+						}
 
-					return install.Run(conn)
-				})
+						return install.Run(conn)
+					})
+				}
+
+				conn, err := installer.NewConnection(
+					ctx,
+					c,
+					node,
+				)
+				if err != nil {
+					return err
+				}
+
+				return install.Run(conn)
 			}
 
 			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
