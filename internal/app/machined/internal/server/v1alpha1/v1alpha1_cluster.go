@@ -99,20 +99,14 @@ func (cluster *clusterState) NodesByType(t machine.Type) []string {
 }
 
 func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
-	var err error
+	if len(cluster.controlPlaneNodes) == 0 && len(cluster.workerNodes) == 0 {
+		var err error
 
-	if len(cluster.controlPlaneNodes) == 0 {
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
 			return err
 		}
 
 		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.MasterIPs(ctx); err != nil {
-			return err
-		}
-	}
-
-	if len(cluster.workerNodes) == 0 {
-		if _, err = k8sProvider.K8sClient(ctx); err != nil {
 			return err
 		}
 
