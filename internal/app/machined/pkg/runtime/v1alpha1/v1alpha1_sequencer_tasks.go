@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"text/template"
 	"time"
 
@@ -77,6 +78,19 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 			log.SetPrefix("[talos] ")
 
 			return nil
+		}
+
+		// disable ratelimiting for kmsg, otherwise logs might be not visible.
+		// this should be set via kernel arg, but in case it's not set, try to force it.
+		if err = sysctl.WriteSystemProperty(&sysctl.SystemProperty{
+			Key:   "kernel.printk_devkmsg",
+			Value: "on\n",
+		}); err != nil {
+			var serr syscall.Errno
+
+			if !(errors.As(err, &serr) && serr == syscall.EINVAL) { // ignore EINVAL which is returned when kernel arg is set
+				log.Printf("failed setting kernel.printk_devkmsg: %s, error ignored", err)
+			}
 		}
 
 		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
