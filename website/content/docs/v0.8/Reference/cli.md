@@ -396,6 +396,37 @@ talosctl config endpoint <endpoint>... [flags]
 
 * [talosctl config](#talosctl-config)	 - Manage the client configuration
 
+## talosctl config merge
+
+Merge additional contexts from another Talos config into the default config
+
+### Synopsis
+
+Contexts with the same name are renamed while merging configs.
+
+```
+talosctl config merge <from> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for merge
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl config](#talosctl-config)	 - Manage the client configuration
+
 ## talosctl config node
 
 Set the node(s) for the current context
@@ -449,6 +480,7 @@ Manage the client configuration
 * [talosctl config context](#talosctl-config-context)	 - Set the current context
 * [talosctl config contexts](#talosctl-config-contexts)	 - List contexts defined in Talos config
 * [talosctl config endpoint](#talosctl-config-endpoint)	 - Set the endpoint(s) for the current context
+* [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another Talos config into the default config
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
 
 ## talosctl containers

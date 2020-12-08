@@ -76,7 +76,7 @@ var configNodeCmd = &cobra.Command{
 	},
 }
 
-// configContextCmd represents the configc context command.
+// configContextCmd represents the config context command.
 var configContextCmd = &cobra.Command{
 	Use:     "context <context>",
 	Short:   "Set the current context",
@@ -231,8 +231,40 @@ var configGetContexts = &cobra.Command{
 	},
 }
 
+// configMergeCmd represents the config merge command.
+var configMergeCmd = &cobra.Command{
+	Use:    "merge <from>",
+	Short:  "Merge additional contexts from another Talos config into the default config",
+	Long:   "Contexts with the same name are renamed while merging configs.",
+	Hidden: false,
+	Args:   cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		from := args[0]
+		c, err := clientconfig.Open(Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		secondConfig, err := clientconfig.Open(from)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		renames := c.Merge(secondConfig)
+		for _, rename := range renames {
+			fmt.Printf("renamed talosconfig context %s\n", rename.String())
+		}
+
+		if err := c.Save(Talosconfig); err != nil {
+			return fmt.Errorf("error writing config: %s", err)
+		}
+
+		return nil
+	},
+}
+
 func init() {
-	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd, configGetContexts)
+	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd, configMergeCmd, configGetContexts)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
