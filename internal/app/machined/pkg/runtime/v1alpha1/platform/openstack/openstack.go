@@ -110,5 +110,6 @@ func (a *Openstack) ExternalIPs(ctx context.Context) (addrs []net.IP, err error)
 func (a *Openstack) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
+		procfs.NewParameter("reboot").Append("k"),
 	}
 }
