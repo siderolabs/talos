@@ -109,7 +109,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	// verify partition table
 
-	suite.Assert().Len(table.Partitions(), 6)
+	suite.Assert().Len(table.Partitions().Items(), 6)
 
 	part := table.Partitions().Items()[0]
 	suite.Assert().Equal(install.EFISystemPartition, strings.ToUpper(part.Type.String()))
@@ -244,6 +244,7 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -259,6 +260,7 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -273,6 +275,7 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 		Bootloader: true,
 		Force:      true,
 		Zero:       true,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -288,6 +291,7 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -301,6 +305,7 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      false,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -320,6 +325,7 @@ func (suite *manifestSuite) TestExecuteManifestLegacyForce() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      true,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -339,6 +345,7 @@ func (suite *manifestSuite) TestExecuteManifestLegacyPreserve() {
 		Disk:       suite.loopbackDevice.Name(),
 		Bootloader: true,
 		Force:      false,
+		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -386,15 +393,10 @@ func (suite *manifestSuite) createTalosLegacyLayout() {
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
-	_, err = gpt.New(bd.Device())
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(err)
-
 	defer bd.Close() //nolint: errcheck
 
 	// create Talos 0.6 partitions
-	table, err := bd.PartitionTable()
+	table, err := gpt.New(bd.Device())
 	suite.Require().NoError(err)
 
 	partBoot, err := table.Add(512*install.MiB,

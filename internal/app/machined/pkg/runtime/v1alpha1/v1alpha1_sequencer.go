@@ -301,7 +301,7 @@ func (*Sequencer) Recover(r runtime.Runtime, in *machineapi.RecoverRequest) []ru
 }
 
 // Reset is the reset sequence.
-func (*Sequencer) Reset(r runtime.Runtime, in *machineapi.ResetRequest) []runtime.Phase {
+func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint: exhaustive
@@ -324,13 +324,28 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machineapi.ResetRequest) []runtim
 			in.GetGraceful(),
 			"cleanup",
 			RemoveAllPods,
-		).AppendList(stopAllPhaselist(r)).
-			Append(
-				"reset",
-				ResetSystemDisk,
-			).Append(
+		).AppendWhen(
+			!in.GetGraceful(),
+			"cleanup",
+			StopAllPods,
+		).AppendList(
+			stopAllPhaselist(r),
+		).AppendWhen(
+			len(in.GetSystemDiskTargets()) == 0,
+			"reset",
+			ResetSystemDisk,
+		).AppendWhen(
+			len(in.GetSystemDiskTargets()) > 0,
+			"resetSpec",
+			ResetSystemDiskSpec,
+		).AppendWhen(
+			in.GetReboot(),
 			"reboot",
 			Reboot,
+		).AppendWhen(
+			!in.GetReboot(),
+			"shutdown",
+			Shutdown,
 		)
 	}
 

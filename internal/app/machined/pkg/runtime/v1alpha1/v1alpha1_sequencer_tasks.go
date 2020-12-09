@@ -1296,6 +1296,26 @@ func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "resetSystemDisk"
 }
 
+// ResetSystemDiskSpec represents the task to reset the system disk by spec.
+func ResetSystemDiskSpec(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		in, ok := data.(runtime.ResetOptions)
+		if !ok {
+			return fmt.Errorf("unexpected runtime data")
+		}
+
+		for _, target := range in.GetSystemDiskTargets() {
+			if err = target.Format(); err != nil {
+				return fmt.Errorf("failed wiping partition %s: %w", target, err)
+			}
+		}
+
+		logger.Printf("successfully reset system disk by the spec")
+
+		return nil
+	}, "resetSystemDiskSpec"
+}
+
 // VerifyDiskAvailability represents the task for verifying that the system
 // disk is not in use.
 func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {

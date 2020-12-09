@@ -8,6 +8,9 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
 	"sort"
 	"testing"
 	"time"
@@ -16,7 +19,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // ResetSuite ...
@@ -47,6 +53,35 @@ func (suite *ResetSuite) TearDownTest() {
 	if suite.ctxCancel != nil {
 		suite.ctxCancel()
 	}
+}
+
+func (suite *ResetSuite) hashKubeletCert(ctx context.Context, node string) (string, error) {
+	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer reqCtxCancel()
+
+	reqCtx = client.WithNodes(reqCtx, node)
+
+	reader, errCh, err := suite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
+	if err != nil {
+		return "", err
+	}
+
+	defer reader.Close() //nolint: errcheck
+
+	hash := sha256.New()
+
+	_, err = io.Copy(hash, reader)
+	if err != nil {
+		return "", err
+	}
+
+	for err = range errCh {
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
 }
 
 // TestResetNodeByNode Resets cluster node by node, waiting for health between Resets.
@@ -85,12 +120,12 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.T().Log("Resetting node", node)
 
-		// TODO: there is no good way to assert that node was reset and disk contents were really wiped
+		preReset, err := suite.hashKubeletCert(suite.ctx, node)
+		suite.Require().NoError(err)
 
-		// uptime should go down after Reset, as it reboots the node
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
-			err := suite.Client.Reset(nodeCtx, true, true)
+			err = suite.Client.Reset(nodeCtx, true, true)
 			if err != nil {
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
 					// ignore errors if reboot happens before response is fully received
@@ -101,7 +136,149 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 			return err
 		}, 10*time.Minute)
+
+		postReset, err := suite.hashKubeletCert(suite.ctx, node)
+		suite.Require().NoError(err)
+
+		suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
 	}
+}
+
+// TestResetNoGraceful resets a worker in !graceful to test the flow.
+//
+// We can't reset control plane node in !graceful mode as it won't be able to join back the cluster.
+func (suite *ResetSuite) TestResetNoGraceful() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	}
+
+	node := suite.RandomDiscoveredNode(machine.TypeJoin)
+
+	suite.T().Log("Resetting node !graceful", node)
+
+	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
+		// force reboot after reset, as this is the only mode we can test
+		err = suite.Client.Reset(nodeCtx, false, true)
+		if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+				// ignore errors if reboot happens before response is fully received
+
+				err = nil
+			}
+		}
+
+		return err
+	}, 5*time.Minute)
+
+	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
+}
+
+// TestResetWithSpecEphemeral resets only ephemeral partition on the node.
+//
+//nolint: dupl
+func (suite *ResetSuite) TestResetWithSpecEphemeral() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	}
+
+	node := suite.RandomDiscoveredNode()
+
+	suite.T().Log("Resetting node with spec=[EPHEMERAL]", node)
+
+	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
+		// force reboot after reset, as this is the only mode we can test
+		err = suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
+			Reboot:   true,
+			Graceful: true,
+			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+				{
+					Label: constants.EphemeralPartitionLabel,
+					Wipe:  true,
+				},
+			},
+		})
+		if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+				// ignore errors if reboot happens before response is fully received
+
+				err = nil
+			}
+		}
+
+		return err
+	}, 5*time.Minute)
+
+	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
+}
+
+// TestResetWithSpecState resets only state partition on the node.
+//
+// As ephemeral partition is not reset, so kubelet cert shouldn't change.
+//
+//nolint: dupl
+func (suite *ResetSuite) TestResetWithSpecState() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	}
+
+	node := suite.RandomDiscoveredNode()
+
+	suite.T().Log("Resetting node with spec=[STATE]", node)
+
+	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
+		// force reboot after reset, as this is the only mode we can test
+		err = suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
+			Reboot:   true,
+			Graceful: true,
+			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+				{
+					Label: constants.StatePartitionLabel,
+					Wipe:  true,
+				},
+			},
+		})
+		if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+				// ignore errors if reboot happens before response is fully received
+
+				err = nil
+			}
+		}
+
+		return err
+	}, 5*time.Minute)
+
+	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
 }
 
 func init() {

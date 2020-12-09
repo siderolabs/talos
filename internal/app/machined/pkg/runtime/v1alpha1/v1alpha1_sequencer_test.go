@@ -211,7 +211,7 @@ func TestSequencer_Reboot(t *testing.T) {
 func TestSequencer_Reset(t *testing.T) {
 	type args struct {
 		r  runtime.Runtime
-		in *machine.ResetRequest
+		in runtime.ResetOptions
 	}
 
 	tests := []struct {

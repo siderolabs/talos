@@ -445,6 +445,17 @@ func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 	return
 }
 
+// ResetGeneric implements the proto.MachineServiceClient interface.
+func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest) (err error) {
+	resp, err := c.MachineClient.Reset(ctx, req)
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return
+}
+
 // Reboot implements the proto.MachineServiceClient interface.
 func (c *Client) Reboot(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Reboot(ctx, &empty.Empty{})
