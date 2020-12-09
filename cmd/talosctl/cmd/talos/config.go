@@ -8,6 +8,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"sort"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
@@ -74,10 +78,11 @@ var configNodeCmd = &cobra.Command{
 
 // configContextCmd represents the configc context command.
 var configContextCmd = &cobra.Command{
-	Use:   "context <context>",
-	Short: "Set the current context",
-	Long:  ``,
-	Args:  cobra.ExactArgs(1),
+	Use:     "context <context>",
+	Short:   "Set the current context",
+	Aliases: []string{"use-context"},
+	Long:    ``,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
 
@@ -175,8 +180,59 @@ func openConfigAndContext(context string) (*clientconfig.Config, error) {
 	return c, nil
 }
 
+// configGetContexts represents config contexts command.
+var configGetContexts = &cobra.Command{
+	Use:     "contexts",
+	Short:   "List contexts defined in Talos config",
+	Aliases: []string{"get-contexts"},
+	Long:    ``,
+	Hidden:  false,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := clientconfig.Open(Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		keys := make([]string, len(c.Contexts))
+		i := 0
+		for key := range c.Contexts {
+			keys[i] = key
+			i++
+		}
+		sort.Strings(keys)
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "CURRENT\tNAME\tENDPOINTS\tNODES")
+		for _, name := range keys {
+			context := c.Contexts[name]
+
+			var (
+				current   string
+				endpoints string
+				nodes     string
+			)
+
+			if name == c.Context {
+				current = "*"
+			}
+
+			endpoints = strings.Join(context.Endpoints, ",")
+			if len(context.Nodes) > 3 {
+				nodes = strings.Join(context.Nodes[:3], ",")
+				nodes += "..."
+			} else {
+				nodes = strings.Join(context.Nodes, ",")
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", current, name, endpoints, nodes)
+		}
+
+		return w.Flush()
+	},
+}
+
 func init() {
-	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd)
+	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd, configGetContexts)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
