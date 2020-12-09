@@ -342,6 +342,33 @@ talosctl config context <context> [flags]
 
 * [talosctl config](#talosctl-config)	 - Manage the client configuration
 
+## talosctl config contexts
+
+List contexts defined in Talos config
+
+```
+talosctl config contexts [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for contexts
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl config](#talosctl-config)	 - Manage the client configuration
+
 ## talosctl config endpoint
 
 Set the endpoint(s) for the current context
@@ -420,6 +447,7 @@ Manage the client configuration
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl config add](#talosctl-config-add)	 - Add a new context
 * [talosctl config context](#talosctl-config-context)	 - Set the current context
+* [talosctl config contexts](#talosctl-config-contexts)	 - List contexts defined in Talos config
 * [talosctl config endpoint](#talosctl-config-endpoint)	 - Set the endpoint(s) for the current context
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
 
