@@ -91,6 +91,19 @@ func ParseSequence(s string) (seq Sequence, err error) {
 	return seq, nil
 }
 
+// ResetOptions are parameters to Reset sequence.
+type ResetOptions interface {
+	GetGraceful() bool
+	GetReboot() bool
+	GetSystemDiskTargets() []PartitionTarget
+}
+
+// PartitionTarget provides interface to the disk partition.
+type PartitionTarget interface {
+	fmt.Stringer
+	Format() error
+}
+
 // Sequencer describes the set of sequences required for the lifecycle
 // management of the operating system.
 type Sequencer interface {
@@ -101,7 +114,7 @@ type Sequencer interface {
 	Install(Runtime) []Phase
 	Reboot(Runtime) []Phase
 	Recover(Runtime, *machine.RecoverRequest) []Phase
-	Reset(Runtime, *machine.ResetRequest) []Phase
+	Reset(Runtime, ResetOptions) []Phase
 	Shutdown(Runtime) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }

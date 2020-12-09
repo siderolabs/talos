@@ -141,9 +141,20 @@ message Event {
 }
 
 // rpc reset
+message ResetPartitionSpec {
+  string label = 1;
+  bool wipe = 2;
+}
+
 message ResetRequest {
+  // Graceful indicates whether node should leave etcd before the upgrade, it also
+  // enforces etcd checks before leaving.
   bool graceful = 1;
+  // Reboot indicates whether node should reboot or halt after resetting.
   bool reboot = 2;
+  // System_partitions_to_wipe lists specific system disk partitions to be reset (wiped).
+  // If system_partitions_to_wipe is empty, all the partitions are erased.
+  repeated ResetPartitionSpec system_partitions_to_wipe = 3;
 }
 
 // The reset message containing the restart status.

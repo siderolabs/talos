@@ -31,10 +31,12 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"go.etcd.io/etcd/clientv3/concurrency"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -422,14 +424,81 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 	return reply, nil
 }
 
+// ResetOptions implements runtime.ResetOptions interface.
+type ResetOptions struct {
+	*machine.ResetRequest
+
+	systemDiskTargets []*installer.Target
+}
+
+// GetSystemDiskTargets implements runtime.ResetOptions interface.
+func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
+	if opt.systemDiskTargets == nil {
+		return nil
+	}
+
+	result := make([]runtime.PartitionTarget, len(opt.systemDiskTargets))
+
+	for i := range result {
+		result[i] = opt.systemDiskTargets[i]
+	}
+
+	return result
+}
+
 // Reset resets the node.
 //
-// nolint: dupl
+// nolint: dupl, gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
 	log.Printf("reset request received")
 
+	opts := ResetOptions{
+		ResetRequest: in,
+	}
+
+	if len(in.GetSystemPartitionsToWipe()) > 0 {
+		bd := s.Controller.Runtime().State().Machine().Disk().BlockDevice
+
+		var pt *gpt.GPT
+
+		pt, err = bd.PartitionTable()
+		if err != nil {
+			return nil, fmt.Errorf("error reading partition table: %w", err)
+		}
+
+		for _, spec := range in.GetSystemPartitionsToWipe() {
+			var target *installer.Target
+
+			switch spec.Label {
+			case constants.EFIPartitionLabel:
+				target = installer.EFITarget(bd.Device().Name(), nil)
+			case constants.BIOSGrubPartitionLabel:
+				target = installer.BIOSTarget(bd.Device().Name(), nil)
+			case constants.BootPartitionLabel:
+				target = installer.BootTarget(bd.Device().Name(), nil)
+			case constants.MetaPartitionLabel:
+				target = installer.MetaTarget(bd.Device().Name(), nil)
+			case constants.StatePartitionLabel:
+				target = installer.StateTarget(bd.Device().Name(), nil)
+			case constants.EphemeralPartitionLabel:
+				target = installer.EphemeralTarget(bd.Device().Name(), nil)
+			default:
+				return nil, fmt.Errorf("label %q is not supported", spec.Label)
+			}
+
+			_, err = target.Locate(pt)
+			if err != nil {
+				return nil, fmt.Errorf("failed location partition with label %q: %w", spec.Label, err)
+			}
+
+			if spec.Wipe {
+				opts.systemDiskTargets = append(opts.systemDiskTargets, target)
+			}
+		}
+	}
+
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceReset, in); err != nil {
+		if err := s.Controller.Run(runtime.SequenceReset, &opts); err != nil {
 			log.Println("reset failed:", err)
 
 			if err != runtime.ErrLocked {

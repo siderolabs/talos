@@ -89,6 +89,7 @@ title: API
     - [RecoverRequest](#machine.RecoverRequest)
     - [RecoverResponse](#machine.RecoverResponse)
     - [Reset](#machine.Reset)
+    - [ResetPartitionSpec](#machine.ResetPartitionSpec)
     - [ResetRequest](#machine.ResetRequest)
     - [ResetResponse](#machine.ResetResponse)
     - [Restart](#machine.Restart)
@@ -1582,16 +1583,33 @@ The reset message containing the restart status.
 
 
 
-<a name="machine.ResetRequest"></a>
+<a name="machine.ResetPartitionSpec"></a>
 
-### ResetRequest
+### ResetPartitionSpec
 rpc reset
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| graceful | [bool](#bool) |  |  |
-| reboot | [bool](#bool) |  |  |
+| label | [string](#string) |  |  |
+| wipe | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.ResetRequest"></a>
+
+### ResetRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| graceful | [bool](#bool) |  | Graceful indicates whether node should leave etcd before the upgrade, it also enforces etcd checks before leaving. |
+| reboot | [bool](#bool) |  | Reboot indicates whether node should reboot or halt after resetting. |
+| system_partitions_to_wipe | [ResetPartitionSpec](#machine.ResetPartitionSpec) | repeated | System_partitions_to_wipe lists specific system disk partitions to be reset (wiped). If system_partitions_to_wipe is empty, all the partitions are erased. |
 
 
 
