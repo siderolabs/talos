@@ -14,8 +14,6 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -64,16 +62,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 		suite.T().Log("rebooting node", node)
 
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-			err := suite.Client.Reboot(nodeCtx)
-			if err != nil {
-				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-					// ignore errors if reboot happens before response is fully received
-
-					err = nil
-				}
-			}
-
-			return err
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 10*time.Minute)
 	}
 }
@@ -117,13 +106,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 
 	allNodesCtx := client.WithNodes(suite.ctx, nodes...)
 
-	err := suite.Client.Reboot(allNodesCtx)
-	if err != nil {
-		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-			// ignore errors if reboot happens before response is fully received
-			err = nil
-		}
-	}
+	err := base.IgnoreGRPCUnavailable(suite.Client.Reboot(allNodesCtx))
 
 	suite.Require().NoError(err)
 

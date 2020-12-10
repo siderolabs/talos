@@ -21,8 +21,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -68,11 +66,11 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v0.6.3"
-	stableRelease   = "v0.7.1"
+	previousRelease = "v0.7.1"
+	stableRelease   = "v0.8.0-alpha.3"
 
-	previousK8sVersion = "1.19.0"
-	stableK8sVersion   = "1.19.4"
+	previousK8sVersion = "1.19.4"
+	stableK8sVersion   = "1.20.0"
 	currentK8sVersion  = "1.20.0"
 )
 
@@ -96,10 +94,9 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
 
-		SourceKernelPath:    helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.KernelAsset)),
-		SourceInitramfsPath: helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.InitramfsAsset)),
-		// TODO: update to images.DefaultInstallerImageRepository once previousRelease migrates to gchr.io
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "docker.io/autonomy/installer", previousRelease),
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.KernelAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", previousRelease),
 		SourceVersion:        previousRelease,
 		SourceK8sVersion:     previousK8sVersion,
 
@@ -154,21 +151,19 @@ func upgradeSingeNodePreserve() upgradeSpec {
 }
 
 // upgradeSingeNodeStage upgrade last release of Talos to the current version of Talos for single-node cluster with preserve and stage.
-//
-// TODO: this test should run same as upgradeSingleNodePreserve, but for now it runs between current and current version until we get a release.
 func upgradeSingeNodeStage() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("preserve-stage-%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
 
-		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
-		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
-		SourceInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
-		SourceVersion:        DefaultSettings.CurrentVersion,
-		SourceK8sVersion:     currentK8sVersion,
+		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
+		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
+		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
+		SourceVersion:        stableRelease,
+		SourceK8sVersion:     stableK8sVersion,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		TargetK8sVersion:     stableK8sVersion,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -390,10 +385,25 @@ func (suite *UpgradeSuite) setupCluster() {
 
 // waitForClusterHealth asserts cluster health after any change.
 func (suite *UpgradeSuite) waitForClusterHealth() {
-	checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 10*time.Minute)
-	defer checkCtxCancel()
+	runs := 1
 
-	suite.Require().NoError(check.Wait(checkCtx, suite.clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+	singleNodeCluster := len(suite.Cluster.Info().Nodes) == 1
+	if singleNodeCluster {
+		// run health check several times for single node clusters,
+		// as self-hosted control plane is not stable after reboot
+		runs = 3
+	}
+
+	for run := 0; run < runs; run++ {
+		if run > 0 {
+			time.Sleep(15 * time.Second)
+		}
+
+		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 10*time.Minute)
+		defer checkCtxCancel()
+
+		suite.Require().NoError(check.Wait(checkCtx, suite.clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+	}
 }
 
 // runE2E runs e2e test on the cluster.
@@ -457,13 +467,8 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
 
 	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage)
-	if err != nil {
-		if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-			// ignore errors if reboot happens before response is fully received
-			err = nil
-		}
-	}
 
+	err = base.IgnoreGRPCUnavailable(err)
 	suite.Require().NoError(err)
 
 	if resp != nil {

@@ -92,7 +92,7 @@ func (suite *EventsSuite) TestServiceEvents() {
 	}()
 
 	// wait for event watcher to start
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	_, err = suite.Client.ServiceRestart(suite.nodeCtx, service)
 	suite.Assert().NoError(err)

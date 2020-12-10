@@ -15,9 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -125,16 +122,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
-			err = suite.Client.Reset(nodeCtx, true, true)
-			if err != nil {
-				if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-					// ignore errors if reboot happens before response is fully received
-
-					err = nil
-				}
-			}
-
-			return err
+			return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, true, true))
 		}, 10*time.Minute)
 
 		postReset, err := suite.hashKubeletCert(suite.ctx, node)
@@ -165,16 +153,7 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 		// force reboot after reset, as this is the only mode we can test
-		err = suite.Client.Reset(nodeCtx, false, true)
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-				// ignore errors if reboot happens before response is fully received
-
-				err = nil
-			}
-		}
-
-		return err
+		return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, false, true))
 	}, 5*time.Minute)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
@@ -204,7 +183,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 		// force reboot after reset, as this is the only mode we can test
-		err = suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
+		return base.IgnoreGRPCUnavailable(suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
 			Reboot:   true,
 			Graceful: true,
 			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
@@ -213,16 +192,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 					Wipe:  true,
 				},
 			},
-		})
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-				// ignore errors if reboot happens before response is fully received
-
-				err = nil
-			}
-		}
-
-		return err
+		}))
 	}, 5*time.Minute)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
@@ -254,7 +224,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 		// force reboot after reset, as this is the only mode we can test
-		err = suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
+		return base.IgnoreGRPCUnavailable(suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
 			Reboot:   true,
 			Graceful: true,
 			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
@@ -263,16 +233,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 					Wipe:  true,
 				},
 			},
-		})
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-				// ignore errors if reboot happens before response is fully received
-
-				err = nil
-			}
-		}
-
-		return err
+		}))
 	}, 5*time.Minute)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
