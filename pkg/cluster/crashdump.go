@@ -22,9 +22,19 @@ type APICrashDumper struct {
 	Info
 }
 
+// DefaultServiceLogTailLines specifies number of log lines to tail from each service.
+const DefaultServiceLogTailLines = 100
+
+// LogLinesPerService customizes defaults for specific services.
+var LogLinesPerService = map[string]int32{
+	"etcd": 5000,
+}
+
 // CrashDump produces information to help with debugging.
 //
 // CrashDump implements CrashDumper interface.
+//
+//nolint: gocyclo
 func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 	cli, err := s.Client()
 	if err != nil {
@@ -49,7 +59,12 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 
 			for _, msg := range services.Messages {
 				for _, svc := range msg.Services {
-					stream, err := cli.Logs(nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, 100)
+					logLines, ok := LogLinesPerService[svc.Id]
+					if !ok {
+						logLines = DefaultServiceLogTailLines
+					}
+
+					stream, err := cli.Logs(nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, svc.Id, false, logLines)
 					if err != nil {
 						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
 
