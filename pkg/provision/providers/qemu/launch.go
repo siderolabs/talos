@@ -38,6 +38,7 @@ type LaunchConfig struct {
 	QemuExecutable    string
 	KernelImagePath   string
 	InitrdPath        string
+	ISOPath           string
 	PFlashImages      []string
 	KernelArgs        string
 	MachineType       string
@@ -235,12 +236,18 @@ func launchVM(config *LaunchConfig) error {
 		return err
 	}
 
-	if (!diskBootable || !config.BootloaderEnabled) && config.KernelImagePath != "" {
-		args = append(args,
-			"-kernel", config.KernelImagePath,
-			"-initrd", config.InitrdPath,
-			"-append", config.KernelArgs,
-		)
+	if !diskBootable || !config.BootloaderEnabled {
+		if config.ISOPath != "" {
+			args = append(args,
+				"-cdrom", config.ISOPath,
+			)
+		} else if config.KernelImagePath != "" {
+			args = append(args,
+				"-kernel", config.KernelImagePath,
+				"-initrd", config.InitrdPath,
+				"-append", config.KernelArgs,
+			)
+		}
 	}
 
 	fmt.Fprintf(os.Stderr, "starting qemu with args:\n%s\n", strings.Join(args, " "))

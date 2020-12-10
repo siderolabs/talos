@@ -50,6 +50,7 @@ var (
 	kubernetesVersion       string
 	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
+	nodeISOPath             string
 	bootloaderEnabled       bool
 	uefiEnabled             bool
 	configDebug             bool
@@ -171,6 +172,7 @@ func create(ctx context.Context) (err error) {
 		Image:         nodeImage,
 		KernelPath:    nodeVmlinuzPath,
 		InitramfsPath: nodeInitramfsPath,
+		ISOPath:       nodeISOPath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
@@ -559,6 +561,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(images.DefaultTalosImageRepository), "the image to use")
 	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
+	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "the uncompressed kernel image to use")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", false, "enable UEFI on x86_64 architecture (always enabled for arm64)")
