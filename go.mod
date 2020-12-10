@@ -61,7 +61,7 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745
 	github.com/talos-systems/go-blockdevice v0.1.1-0.20201204153756-943b08bc32a2
 	github.com/talos-systems/go-loadbalancer v0.1.0
-	github.com/talos-systems/go-procfs v0.0.0-20200219015357-57c7311fdd45
+	github.com/talos-systems/go-procfs v0.0.0-20201210152942-5a9a4a75d559
 	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0

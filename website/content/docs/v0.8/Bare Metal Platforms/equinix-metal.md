@@ -20,9 +20,9 @@ These assets can be downloaded from a given [release](https://github.com/talos-s
 The following is a list of kernel parameters required by Talos:
 
 - `talos.platform`: set this to `packet`
-- `page_poison=1`: required by KSPP
+- `init_on_alloc=1`: required by KSPP
+- `init_on_free=1`: required by KSPP
 - `slab_nomerge`: required by KSPP
-- `slub_debug=P`: required by KSPP
 - `pti=on`: required by KSPP
 
 ### User Data

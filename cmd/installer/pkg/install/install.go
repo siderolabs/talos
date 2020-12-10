@@ -49,11 +49,12 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 		return err
 	}
 
+	// first defaults, then extra kernel args to allow extra kernel args to override defaults
+	cmdline.AppendDefaults()
+
 	if err = cmdline.AppendAll(opts.ExtraKernelArgs); err != nil {
 		return err
 	}
-
-	cmdline.AppendDefaults()
 
 	i, err := NewInstaller(cmdline, seq, opts)
 	if err != nil {
