@@ -192,6 +192,15 @@ talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle fo
 	done
 	@rm -rf $(ARTIFACTS)/talosctl-cni-bundle-*/
 
+.PHONY: cloud-images
+cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
+	@docker run --rm -v $(PWD):/src -w /src \
+		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) \
+		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SVC_ACCT \
+		-e AZURE_SVC_ACCT -e GCE_SVC_ACCT -e PACKET_AUTH_TOKEN \
+		golang:$(GO_VERSION) \
+		./hack/cloud-image-uploader.sh
+
 # Code Quality
 
 .PHONY: fmt
@@ -254,7 +263,6 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy \
 		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
-
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
