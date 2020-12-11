@@ -58,17 +58,51 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//
+//nolint: gocyclo
 func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
-	errCh := make(chan error, 1)
-
-	go e.setup(ctx, r, errCh)
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-errCh:
+	if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
 		return err
 	}
+
+	// Data path might exist after upgrade from previous version of Talos.
+	if err = os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
+		return err
+	}
+
+	if err = generatePKI(r); err != nil {
+		return fmt.Errorf("failed to generate etcd PKI: %w", err)
+	}
+
+	client, err := containerdapi.New(constants.SystemContainerdAddress)
+	if err != nil {
+		return err
+	}
+	// nolint: errcheck
+	defer client.Close()
+
+	// Pull the image and unpack it.
+	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+	if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
+		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
+	}
+
+	switch r.Config().Machine().Type() { //nolint: exhaustive
+	case machine.TypeInit:
+		err = e.argsForInit(ctx, r)
+		if err != nil {
+			return err
+		}
+	case machine.TypeControlPlane:
+		err = e.argsForControlPlane(ctx, r)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
+	}
+
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -303,11 +337,21 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 			id        uint64
 		)
 
+		select {
+		case <-ctx.Done():
+			return retry.UnexpectedError(ctx.Err())
+		default:
+		}
+
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer attemptCtxCancel()
 
 		resp, id, err = addMember(attemptCtx, r, peerAddrs, name)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return retry.UnexpectedError(err)
+			}
+
 			// TODO(andrewrynhard): We should check the error type here and
 			// handle the specific error accordingly.
 			return retry.ExpectedError(err)
@@ -433,56 +477,6 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	e.args = denyListArgs.Merge(extraArgs).Args()
 
 	return nil
-}
-
-//nolint: gocyclo
-func (e *Etcd) setup(ctx context.Context, r runtime.Runtime, errCh chan error) {
-	errCh <- func() error {
-		var err error
-
-		if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
-			return err
-		}
-
-		// Data path might exist after upgrade from previous version of Talos.
-		if err = os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
-			return err
-		}
-
-		if err = generatePKI(r); err != nil {
-			return fmt.Errorf("failed to generate etcd PKI: %w", err)
-		}
-
-		client, err := containerdapi.New(constants.SystemContainerdAddress)
-		if err != nil {
-			return err
-		}
-		// nolint: errcheck
-		defer client.Close()
-
-		// Pull the image and unpack it.
-		containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-		if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
-			return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
-		}
-
-		switch r.Config().Machine().Type() { //nolint: exhaustive
-		case machine.TypeInit:
-			err = e.argsForInit(ctx, r)
-			if err != nil {
-				return err
-			}
-		case machine.TypeControlPlane:
-			err = e.argsForControlPlane(ctx, r)
-			if err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
-		}
-
-		return nil
-	}()
 }
 
 // nolint: gocyclo
