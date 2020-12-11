@@ -41,7 +41,7 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 		if img, err = client.Pull(ctx, ref, containerd.WithPullUnpack, containerd.WithResolver(resolver)); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
-			if errdefs.IsNotFound(err) {
+			if errdefs.IsNotFound(err) || errdefs.IsCanceled(err) {
 				return retry.UnexpectedError(err)
 			}
 
