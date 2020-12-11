@@ -478,6 +478,25 @@ local nightly_trigger = {
 
 local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigger;
 
+// Cloud images pipeline.
+
+local cloud_images = Step("cloud-images", depends_on=[images_amd64, images_arm64], environment=creds_env_vars);
+
+local upload_images_steps = default_steps + [
+  cloud_images,
+];
+
+
+local upload_images_trigger = {
+  trigger: {
+    target: {
+      include: ['upload-images'],
+    },
+  },
+};
+
+local upload_images_pipeline = Pipeline('upload-images', upload_images_steps) + upload_images_trigger;
+
 // Release pipeline.
 
 local boot = Step('boot', depends_on=[e2e_docker, e2e_qemu]);
@@ -585,7 +604,7 @@ local notify_trigger = {
   },
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, integration_thrice_daily_pipeline, integration_nightly_pipeline, conformance_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, integration_thrice_daily_pipeline, integration_nightly_pipeline, conformance_pipeline, upload_images_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
 
 // Final configuration file definition.
 
@@ -596,6 +615,7 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_
   integration_nightly_pipeline,
   e2e_pipeline,
   conformance_pipeline,
+  upload_images_pipeline,
   nightly_pipeline,
   release_pipeline,
   notify_pipeline,
