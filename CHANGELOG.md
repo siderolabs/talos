@@ -1,4 +1,49 @@
 
+<a name="v0.8.0-alpha.3"></a>
+## [v0.8.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.2...v0.8.0-alpha.3) (2020-12-10)
+
+### Chore
+
+* update CONTRIBUTING.md
+* limit unit-test run concurrency
+* bump Go to 1.15.6
+* bump dockerfile frontend version
+* fix conform for releases
+
+### Docs
+
+* update Equinix Metal guide
+* add architectural doc on the root file system layout
+* add a note on caveats in container mode
+* add storage doc
+* add guide for custom CAs
+* add docs for network connectivity
+* improve SBC documentation
+
+### Feat
+
+* update kernel to 5.9.13, new KSPP requirements
+* reset with system disk wipe spec
+* add talosctl merge config command
+* add talosctl config contexts
+* update Kubernetes to 1.20.0
+* implement "staged" (failsafe/backup) upgrades
+* allow disabling NoSchedule taint on masters using TUI installer
+
+### Fix
+
+* remove kmsg ratelimiting on startup
+* zero out partitions without filesystems on install
+* make interactive installer work without endpoints provided
+
+### Test
+
+* add ISO test
+* add support for mounting ISO in talosctl cluster create
+* bump Talos release version for upgrade test to 0.7.1
+* bump defaults for provision tests resources
+
+
 <a name="v0.8.0-alpha.2"></a>
 ## [v0.8.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.1...v0.8.0-alpha.2) (2020-12-04)
 
@@ -55,6 +100,10 @@
 * prevent crash in `talosctl config` commands
 * update generated .ova manifest for raw disk size
 * **security:** update Containerd to v1.4.3
+
+### Release
+
+* **v0.8.0-alpha.2:** prepare release
 
 
 <a name="v0.8.0-alpha.1"></a>
