@@ -43,6 +43,7 @@ type Bonding struct {
 // Interface holds interface info from the packet metadata.
 type Interface struct {
 	Name string `json:"name"`
+	MAC  string `json:"mac"`
 	Bond string `json:"bond"`
 }
 
@@ -115,21 +116,45 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 	bondMode := nic.BondMode(uint8(unmarshalledMetadataConfig.Network.Bonding.Mode))
 
 	// determine bond name and build list of interfaces enslaved by the bond
-	// nb: currently only eth0 is supported.
 	devicesInBond := []string{}
 	bondName := ""
 
+	hostInterfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, fmt.Errorf("error listing host interfaces: %w", err)
+	}
+
 	for _, iface := range unmarshalledMetadataConfig.Network.Interfaces {
+		if iface.Bond == "" {
+			continue
+		}
+
 		if bondName != "" && iface.Bond != bondName {
 			return nil, fmt.Errorf("encountered multiple bonds. this is unexpected in the equinix metal platform")
 		}
 
-		// TODO: allow for all ifaces to be in the bond once we figure out eth1 in packet.
-		if iface.Name == "eth0" {
-			devicesInBond = append(devicesInBond, iface.Name)
+		found := false
+
+		for _, hostIf := range hostInterfaces {
+			if hostIf.HardwareAddr.String() == iface.MAC {
+				found = true
+
+				devicesInBond = append(devicesInBond, hostIf.Name)
+
+				break
+			}
+		}
+
+		if !found {
+			log.Printf("interface with MAC %q wasn't found on the host, skipping", iface.MAC)
+
+			continue
 		}
 
 		bondName = iface.Bond
+
+		// nb: currently only one interface is supported, as adding one more interface breaks networking
+		break
 	}
 
 	// create multiple bond devices and add them to device list.
