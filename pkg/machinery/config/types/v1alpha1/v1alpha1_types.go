@@ -350,6 +350,9 @@ type Config struct {
 	ConfigVersion string `yaml:"version"`
 	//   description: |
 	//     Enable verbose logging to the console.
+	//     All system containers logs will flow into serial console.
+	//
+	//     > Note: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.
 	//   values:
 	//     - true
 	//     - yes
