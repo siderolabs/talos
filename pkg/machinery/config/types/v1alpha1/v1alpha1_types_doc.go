@@ -64,7 +64,7 @@ func init() {
 	ConfigDoc.Fields[1].Name = "debug"
 	ConfigDoc.Fields[1].Type = "bool"
 	ConfigDoc.Fields[1].Note = ""
-	ConfigDoc.Fields[1].Description = "Enable verbose logging to the console."
+	ConfigDoc.Fields[1].Description = "Enable verbose logging to the console.\nAll system containers logs will flow into serial console.\n\n> Note: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput."
 	ConfigDoc.Fields[1].Comments[encoder.LineComment] = "Enable verbose logging to the console."
 	ConfigDoc.Fields[1].Values = []string{
 		"true",
