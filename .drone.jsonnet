@@ -124,7 +124,7 @@ local docker = {
   command: [
     '--dns=8.8.8.8',
     '--dns=8.8.4.4',
-    '--mtu=1500',
+    '--mtu=1450',
     '--log-level=error',
   ],
   // Set resource requests to ensure that only one build can be performed at a
