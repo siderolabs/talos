@@ -1,5 +1,6 @@
 ---
 title: "Banana Pi M64"
+description: "Installing Talos on Banana Pi M64 SBC using raw disk image."
 ---
 
 ## Prerequisites

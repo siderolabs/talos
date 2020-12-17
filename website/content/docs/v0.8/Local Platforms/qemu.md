@@ -1,5 +1,6 @@
 ---
 title: QEMU
+description: "Creating Talos Kubernetes cluster using QEMU VMs."
 ---
 
 In this guide we will create a Kubernetes cluster using QEMU.

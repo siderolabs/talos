@@ -1,5 +1,6 @@
 ---
 title: Firecracker
+description: "Creating Talos Kubernetes cluster using Firecracker VMs."
 ---
 
 In this guide we will create a Kubernetes cluster using Firecracker.

@@ -1,5 +1,6 @@
 ---
 title: CLI
+desription: Talosctl CLI tool reference.
 ---
 
 <!-- markdownlint-disable -->

@@ -1,5 +1,6 @@
 ---
 title: "VMware"
+description: "Creating Talos Kubernetes cluster using VMware."
 ---
 
 ## Creating a Cluster via the `govc` CLI

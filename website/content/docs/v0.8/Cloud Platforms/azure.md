@@ -1,5 +1,6 @@
 ---
 title: "Azure"
+description: "Creating a cluster via the CLI on Azure."
 ---
 
 ## Creating a Cluster via the CLI

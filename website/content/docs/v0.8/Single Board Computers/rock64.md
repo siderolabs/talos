@@ -1,5 +1,6 @@
 ---
 title: "Pine64 Rock64"
+description: "Installing Talos on Pine64 Rock64 SBC using raw disk image."
 ---
 
 ## Prerequisites

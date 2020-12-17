@@ -1,5 +1,6 @@
 ---
 title: "Equinix Metal"
+description: "Creating Talos cluster using Enquinix Metal."
 ---
 
 ## Prerequisites

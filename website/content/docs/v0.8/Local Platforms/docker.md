@@ -1,5 +1,6 @@
 ---
 title: Docker
+description: "Creating Talos Kubernetes cluster using Docker."
 ---
 
 In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.

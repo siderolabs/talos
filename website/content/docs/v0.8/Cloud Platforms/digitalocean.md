@@ -1,5 +1,6 @@
 ---
 title: "Digital Ocean"
+description: "Creating a cluster via the CLI on Digital Ocean."
 ---
 
 ## Creating a Cluster via the CLI

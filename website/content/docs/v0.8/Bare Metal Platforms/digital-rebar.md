@@ -1,5 +1,6 @@
 ---
 title: "Digital Rebar"
+description: "In this guide we will create an Kubernetes cluster with 1 worker node, and 2 controlplane nodes using an existing digital rebar deployment."
 ---
 
 ## Prerequisites

@@ -1,5 +1,6 @@
 ---
 title: "Raspberry Pi 4 Model B"
+description: "Installing Talos on Rpi4 SBC using raw disk image."
 ---
 
 ## Prerequisites

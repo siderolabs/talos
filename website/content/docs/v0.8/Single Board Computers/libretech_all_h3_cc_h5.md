@@ -1,5 +1,6 @@
 ---
 title: "Libre Computer Board ALL-H3-CC"
+description: "Installing Talos on Libre Computer Board ALL-H3-CC SBC using raw disk image."
 ---
 
 ## Prerequisites

@@ -1,5 +1,6 @@
 ---
 title: Proxmox
+description: "Creating Talos Kubernetes cluster using Proxmox."
 ---
 
 In this guide we will create a Kubernetes cluster using Proxmox.

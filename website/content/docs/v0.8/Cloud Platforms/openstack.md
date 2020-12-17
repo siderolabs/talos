@@ -1,5 +1,6 @@
 ---
 title: "Openstack"
+description: "Creating a cluster via the CLI on Openstack."
 ---
 
 ## Creating a Cluster via the CLI
