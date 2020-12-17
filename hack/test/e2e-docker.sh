@@ -15,7 +15,7 @@ function create_cluster {
     --name "${CLUSTER_NAME}" \
     --image "${IMAGE}" \
     --masters=3 \
-    --mtu 1500 \
+    --mtu 1450 \
     --memory 2048 \
     --cpus 2.0 \
     --with-init-node=false \

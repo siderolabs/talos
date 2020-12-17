@@ -21,7 +21,7 @@ function create_cluster {
     --name "${CLUSTER_NAME}" \
     --masters=1 \
     --workers=0 \
-    --mtu 1500 \
+    --mtu 1450 \
     --memory 2048 \
     --cpus 2.0 \
     --cidr 172.20.2.0/24 \

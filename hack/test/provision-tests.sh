@@ -40,4 +40,4 @@ case "${CUSTOM_CNI_URL:-false}" in
     ;;
 esac
 
-"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" ${INTEGRATION_TEST_FLAGS}
+"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mtu 1450 ${INTEGRATION_TEST_FLAGS}
