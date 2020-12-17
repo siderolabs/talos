@@ -215,11 +215,11 @@ local installer = Step("installer", depends_on=[initramfs], environment={"REGIST
 local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": local_registry, "PUSH": true});
 local lint = Step("lint", depends_on=[check_dirty]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
-local images_amd64 = Step("images-amd64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry});
-local images_arm64 = Step("images-arm64", target="images", depends_on=[installer], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[installer], environment={"REGISTRY": local_registry});
+local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[installer], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local images_amd64 = Step("images-amd64", target="images", depends_on=[iso_amd64], environment={"REGISTRY": local_registry});
+local images_arm64 = Step("images-arm64", target="images", depends_on=[iso_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[sbcs_arm64], environment={"REGISTRY": local_registry});
-local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[sbcs_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
@@ -299,11 +299,11 @@ local default_steps = [
   talos,
   lint,
   talosctl_cni_bundle,
+  iso_amd64,
+  iso_arm64,
   images_amd64,
   images_arm64,
   sbcs_arm64,
-  iso_amd64,
-  iso_arm64,
   unit_tests,
   unit_tests_race,
   coverage,
