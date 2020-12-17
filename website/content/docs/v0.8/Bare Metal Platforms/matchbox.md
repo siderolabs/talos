@@ -1,5 +1,6 @@
 ---
 title: "Matchbox"
+description: "In this guide we will create an HA Kubernetes cluster with 3 worker nodes using an existing load balancer and matchbox deployment."
 ---
 
 ## Creating a Cluster

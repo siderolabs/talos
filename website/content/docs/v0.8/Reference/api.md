@@ -1,5 +1,6 @@
 ---
 title: API
+description: Talos gRPC API reference.
 ---
 
 ## Table of Contents

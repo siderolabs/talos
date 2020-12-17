@@ -19,10 +19,11 @@ import (
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-func frontmatter(title string) string {
+func frontmatter(title, description string) string {
 	frontmatter := "---\n"
 
 	frontmatter += "title: " + title + "\n"
+	frontmatter += "desription: " + description + "\n"
 
 	frontmatter += "---\n\n"
 
@@ -36,6 +37,11 @@ func linkHandler(name string) string {
 
 	return "#" + strings.ToLower(base)
 }
+
+const (
+	cliDescription           = "Talosctl CLI tool reference."
+	configurationDescription = "Talos node configuration file reference."
+)
 
 var (
 	cliDocs    bool
@@ -73,7 +79,7 @@ var docsCmd = &cobra.Command{
 			// nolint: errcheck
 			defer f.Close()
 
-			if _, err := io.WriteString(f, frontmatter("CLI")); err != nil {
+			if _, err := io.WriteString(f, frontmatter("CLI", cliDescription)); err != nil {
 				return err
 			}
 
@@ -83,7 +89,7 @@ var docsCmd = &cobra.Command{
 		}
 
 		if configDocs || all {
-			if err := v1alpha1.GetConfigurationDoc().Write(dir, frontmatter("Configuration")); err != nil {
+			if err := v1alpha1.GetConfigurationDoc().Write(dir, frontmatter("Configuration", configurationDescription)); err != nil {
 				return fmt.Errorf("failed to generate docs: %w", err)
 			}
 		}

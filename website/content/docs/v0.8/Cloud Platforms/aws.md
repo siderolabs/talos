@@ -1,5 +1,6 @@
 ---
 title: "AWS"
+description: "Creating a cluster via the AWS CLI."
 ---
 
 ## Creating a Cluster via the AWS CLI

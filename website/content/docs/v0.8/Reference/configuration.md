@@ -1,5 +1,6 @@
 ---
 title: Configuration
+desription: Talos node configuration file reference.
 ---
 
 <!-- markdownlint-disable -->

@@ -1,5 +1,6 @@
 ---
 title: "GCP"
+description: "Creating a cluster via the CLI on Google Cloud Platform."
 ---
 
 ## Creating a Cluster via the CLI

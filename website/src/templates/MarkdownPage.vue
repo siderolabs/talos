@@ -57,8 +57,9 @@ export default {
 
   metaInfo() {
     const title = this.$page.markdownPage.title;
+    const defaultDescription = "Talos is a modern OS designed to be secure, immutable, and minimal. Its purpose is to host Kubernetes clusters, so it is tightly integrated with Kubernetes.";
     const description =
-      this.$page.markdownPage.description || this.$page.markdownPage.excerpt;
+      this.$page.markdownPage.description || this.$page.markdownPage.excerpt || defaultDescription;
 
     return {
       title: title,

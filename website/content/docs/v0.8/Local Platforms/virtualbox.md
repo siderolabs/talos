@@ -1,5 +1,6 @@
 ---
 title: VirtualBox
+description: "Creating Talos Kubernetes cluster using VurtualBox VMs."
 ---
 
 In this guide we will create a Kubernetes cluster using VirtualBox.
