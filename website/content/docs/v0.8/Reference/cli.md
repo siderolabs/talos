@@ -1470,7 +1470,7 @@ talosctl time [--check server] [flags]
 ### Options
 
 ```
-      --check string   checks server time against specified ntp server (default "c")
+  -c, --check string   checks server time against specified ntp server
   -h, --help           help for time
 ```
 

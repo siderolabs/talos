@@ -21,6 +21,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
+var timeCmdFlags struct {
+	ntpServer string
+}
+
 // timeCmd represents the time command.
 var timeCmd = &cobra.Command{
 	Use:   "time [--check server]",
@@ -29,20 +33,16 @@ var timeCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			server, err := cmd.Flags().GetString("check")
-			if err != nil {
-				return fmt.Errorf("failed to parse check flag: %w", err)
-			}
-
 			var (
 				resp       *timeapi.TimeResponse
 				remotePeer peer.Peer
+				err        error
 			)
 
-			if server == "" {
+			if timeCmdFlags.ntpServer == "" {
 				resp, err = c.Time(ctx, grpc.Peer(&remotePeer))
 			} else {
-				resp, err = c.TimeCheck(ctx, server, grpc.Peer(&remotePeer))
+				resp, err = c.TimeCheck(ctx, timeCmdFlags.ntpServer, grpc.Peer(&remotePeer))
 			}
 
 			if err != nil {
@@ -85,6 +85,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().String("check", "c", "checks server time against specified ntp server")
+	timeCmd.Flags().StringVarP(&timeCmdFlags.ntpServer, "check", "c", "", "checks server time against specified ntp server")
 	addCommand(timeCmd)
 }
