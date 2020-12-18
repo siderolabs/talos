@@ -7,17 +7,12 @@ package services
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
-	"time"
 
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/go-retry/retry"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -56,34 +51,7 @@ func (b *Bootkube) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		// nolint: errcheck
 		defer client.Close()
 
-		err = retry.Exponential(3*time.Minute, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-			var resp *clientv3.GetResponse
-
-			// limit single attempt to 15 seconds to allow for 12 attempts at least
-			attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
-			defer attemptCtxCancel()
-
-			if resp, err = client.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
-				if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
-					// no key set yet, treat as not provisioned yet
-					return nil
-				}
-
-				return retry.ExpectedError(err)
-			}
-
-			if len(resp.Kvs) == 0 {
-				// no key/values in the range, treat as not provisioned yet
-				return nil
-			}
-
-			if string(resp.Kvs[0].Value) == "true" {
-				b.provisioned = true
-			}
-
-			return nil
-		})
-
+		b.provisioned, err = client.GetInitialized(ctx)
 		if err != nil {
 			return fmt.Errorf("error querying cluster provisioned state in etcd: %w", err)
 		}
@@ -118,14 +86,7 @@ func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err e
 	// nolint: errcheck
 	defer client.Close()
 
-	err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-		ctx := clientv3.WithRequireLeader(context.Background())
-		if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		return nil
-	})
+	err = client.MarkAsInitialized(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to put state into etcd: %w", err)
 	}

@@ -6,6 +6,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
@@ -254,4 +256,48 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 	}
 
 	return "", nil
+}
+
+// MarkAsInitialized marks cluster as initialized (bootstrapped) in etcd.
+func (c *Client) MarkAsInitialized(ctx context.Context) error {
+	return retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+		if _, err := c.Put(clientv3.WithRequireLeader(ctx), constants.InitializedKey, "true"); err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		return nil
+	})
+}
+
+// GetInitialized returns current initializes (bootstrapped) status from etcd.
+func (c *Client) GetInitialized(ctx context.Context) (initialized bool, err error) {
+	err = retry.Exponential(3*time.Minute, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
+		var resp *clientv3.GetResponse
+
+		// limit single attempt to 15 seconds to allow for 12 attempts at least
+		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 15*time.Second)
+		defer attemptCtxCancel()
+
+		if resp, err = c.Get(clientv3.WithRequireLeader(attemptCtx), constants.InitializedKey); err != nil {
+			if errors.Is(err, rpctypes.ErrGRPCKeyNotFound) {
+				// no key set yet, treat as not provisioned yet
+				return nil
+			}
+
+			return retry.ExpectedError(err)
+		}
+
+		if len(resp.Kvs) == 0 {
+			// no key/values in the range, treat as not provisioned yet
+			return nil
+		}
+
+		if string(resp.Kvs[0].Value) == "true" {
+			initialized = true
+		}
+
+		return nil
+	})
+
+	return initialized, err
 }

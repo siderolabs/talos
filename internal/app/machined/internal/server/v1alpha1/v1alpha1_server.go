@@ -255,6 +255,25 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, fmt.Errorf("bootstrap can only be performed on a control plane node")
 	}
 
+	provisioned, err := func() (bool, error) {
+		client, e := etcd.NewClient([]string{"127.0.0.1:2379"})
+		if e != nil {
+			return false, fmt.Errorf("error building etcd client: %w", e)
+		}
+
+		// nolint: errcheck
+		defer client.Close()
+
+		return client.GetInitialized(ctx)
+	}()
+	if err != nil {
+		log.Printf("error checking etcd initialized state, ignoring: %s", err)
+	}
+
+	if provisioned {
+		return nil, fmt.Errorf("bootstrap can't be performed on a provisioned cluster")
+	}
+
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceBootstrap, in); err != nil {
 			log.Println("bootstrap failed:", err)
