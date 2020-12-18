@@ -251,7 +251,7 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 
 // WaitUntilReady waits for a node to be ready.
 func (h *Client) WaitUntilReady(name string) error {
-	return retry.Exponential(3*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
+	return retry.Exponential(10*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond), retry.WithErrorLogging(true)).Retry(func() error {
 		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 30*time.Second)
 		defer attemptCtxCancel()
 

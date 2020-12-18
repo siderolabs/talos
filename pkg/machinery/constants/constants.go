@@ -377,6 +377,16 @@ const (
 	// InitializedKey is the key used to indicate if the cluster has been
 	// initialized.
 	InitializedKey = "initialized"
+
+	// BootkubeAssetTimeout is the constant in bootkube implementation.
+	BootkubeAssetTimeout = 20 * time.Minute
+
+	// BootkubeRunTimeout is the timeout to run bootkube.
+	BootkubeRunTimeout = BootkubeAssetTimeout + 5*time.Minute
+
+	// NodeReadyTimeout is the timeout to wait for the node to be ready (CNI to be running).
+	// For bootstrap API, this includes time to run bootkube.
+	NodeReadyTimeout = BootkubeRunTimeout
 )
 
 // See https://linux.die.net/man/3/klogctl
