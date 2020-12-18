@@ -41,7 +41,7 @@ func (r *Registrator) Register(s *grpc.Server) {
 func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeResponse, err error) {
 	reply = &timeapi.TimeResponse{}
 
-	rt, err := r.Timed.Query()
+	rt, err := r.Timed.Query(ctx)
 	if err != nil {
 		return reply, err
 	}
@@ -58,7 +58,7 @@ func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (r
 		return reply, err
 	}
 
-	rt, err := tc.Query()
+	rt, err := tc.Query(ctx)
 	if err != nil {
 		return reply, err
 	}
