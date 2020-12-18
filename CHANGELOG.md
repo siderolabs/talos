@@ -1,6 +1,48 @@
 
+<a name="v0.8.0-beta.0"></a>
+## [v0.8.0-beta.0](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.3...v0.8.0-beta.0) (2020-12-18)
+
+### Chore
+
+* lower MTU to 1450 for the tests in the CI
+* build ISOs earlier to launch e2e-iso as soon as possible
+* add drone pipeline to upload cloud images
+* bump npm `ini` package for security vulnerability
+
+### Docs
+
+* add fallback to default page description if none is set on current page
+* add a note for being careful about enabling debug flag
+
+### Feat
+
+* bump pkgs for kernel with HZ=250 on amd64
+* bump Linux kernel to 5.10.1, add CONFIG_USB_ACM
+* bump pkgs for kernel with CONFIG_USB_XHCI_PLATFORM
+
+### Fix
+
+* synchronize bootkube timeouts and various boot timeouts
+* sync RTC in timed, sync time before fetching packet metadata
+* don't overwrite PMBR
+* bump blockdevice library for 2nd partitione entries copy fix
+* properly define shorthand in `talosctl time` command
+* take the first interface from the bond (packet)
+* disable kmsg throttling for iso mode
+
+### Refactor
+
+* remove setup goroutine in etcd service
+
+### Test
+
+* add an extra 'node boot done' health check
+* remove provision tests with Cilium CNI
+* stabilize upgrade test by running health check several times
+
+
 <a name="v0.8.0-alpha.3"></a>
-## [v0.8.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.2...v0.8.0-alpha.3) (2020-12-10)
+## [v0.8.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.2...v0.8.0-alpha.3) (2020-12-11)
 
 ### Chore
 
@@ -35,6 +77,10 @@
 * remove kmsg ratelimiting on startup
 * zero out partitions without filesystems on install
 * make interactive installer work without endpoints provided
+
+### Release
+
+* **v0.8.0-alpha.3:** prepare release
 
 ### Test
 
