@@ -47,6 +47,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -516,7 +517,31 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 	}, "saveConfig"
 }
 
+func singleTimeSync(ctx context.Context) (cancel context.CancelFunc) {
+	ctx, cancel = context.WithCancel(ctx)
+
+	go func() {
+		ntpClient, err := ntp.NewNTPClient()
+		if err != nil {
+			log.Printf("failed to build one-time ntp client")
+
+			return
+		}
+
+		if err = ntpClient.QueryAndSetTime(ctx); err != nil {
+			if !errors.Is(err, context.Canceled) {
+				log.Printf("failed to do one-time time sync: %s", err)
+			}
+		}
+	}()
+
+	return
+}
+
 func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
+	cancel := singleTimeSync(ctx)
+	defer cancel()
+
 	var b []byte
 
 	if b, err = r.State().Platform().Configuration(ctx); err != nil {

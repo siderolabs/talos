@@ -112,8 +112,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"discoverNetwork",
 			SetupDiscoveryNetwork,
-			// We MUST mount the boot partition so that this task can attempt to read
-			// the config on disk.
 		).AppendWhen(
 			r.State().Machine().Installed(),
 			"mountSystem",
@@ -121,9 +119,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"config",
 			LoadConfig,
-			// We unmount the boot partition here to simplify subsequent sequences.
-			// If we leave it mounted, it becomes tricky trying to figure out if we
-			// need to mount the boot partition.
 		).AppendWhen(
 			r.State().Machine().Installed(),
 			"unmountSystem",

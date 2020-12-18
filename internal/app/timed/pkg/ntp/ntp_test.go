@@ -5,6 +5,7 @@
 package ntp_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -28,7 +29,7 @@ func (suite *NtpSuite) TestQuery() {
 	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
 	suite.Assert().NoError(err)
 
-	_, err = n.Query()
+	_, err = n.Query(context.Background())
 	suite.Assert().NoError(err)
 }
 

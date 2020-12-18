@@ -67,6 +67,7 @@ require (
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
+	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	github.com/vmware-tanzu/sonobuoy v0.19.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e

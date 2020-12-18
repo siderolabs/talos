@@ -82,6 +82,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
+		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.TimeSocketPath), Source: filepath.Dir(constants.TimeSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
@@ -112,6 +113,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 			}),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
+			oci.WithAllDevicesAllowed,
 		),
 	),
 		restart.WithType(restart.Forever),
