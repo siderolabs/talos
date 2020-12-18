@@ -732,7 +732,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			all = append(all, cond)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, constants.BootkubeRunTimeout)
 
 		defer cancel()
 
@@ -1456,7 +1456,7 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 			return err
 		}
 
-		err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
+		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).Retry(func() error {
 			if err = h.LabelNodeAsMaster(hostname, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
 				return retry.ExpectedError(err)
 			}
@@ -1778,7 +1778,7 @@ func BootstrapKubernetes(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 
 		system.Services(r).LoadAndStart(svc)
 
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, constants.BootkubeRunTimeout)
 		defer cancel()
 
 		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/bootkube/pkg/bootkube"
 	"github.com/kubernetes-sigs/bootkube/pkg/util"
 
@@ -59,6 +60,10 @@ func run() error {
 		return err
 	}
 
+	// cleanup manifests which might have been left from previous bootkube run
+	cleanupManifests("bootkube-*")                     //nolint: errcheck
+	cleanupManifests("kube-system-pod-checkpointer-*") //nolint: errcheck
+
 	defaultRequiredPods := []string{
 		"kube-system/pod-checkpointer",
 		"kube-system/kube-apiserver",
@@ -92,19 +97,8 @@ func run() error {
 			log.Printf("failed to cleanup bootkube assets dir %s", constants.AssetsDirectory)
 		}
 
-		bootstrapWildcard := filepath.Join(constants.ManifestsDirectory, "bootstrap-*")
-
-		var bootstrapFiles []string
-
-		bootstrapFiles, err = filepath.Glob(bootstrapWildcard)
-		if err != nil {
-			log.Printf("error finding bootstrap files in manifests dir %s", constants.ManifestsDirectory)
-		}
-
-		for _, bootstrapFile := range bootstrapFiles {
-			if err = os.Remove(bootstrapFile); err != nil {
-				log.Printf("error deleting bootstrap file in manifests dir : %s", err)
-			}
+		if err = cleanupManifests("bootstrap-*"); err != nil {
+			log.Printf("%s", err)
 		}
 	}()
 
@@ -115,6 +109,25 @@ func run() error {
 	failed = false
 
 	return nil
+}
+
+func cleanupManifests(wildcard string) error {
+	bootstrapWildcard := filepath.Join(constants.ManifestsDirectory, wildcard)
+
+	bootstrapFiles, err := filepath.Glob(bootstrapWildcard)
+	if err != nil {
+		return fmt.Errorf("error finding bootstrap files in manifests dir %s", constants.ManifestsDirectory)
+	}
+
+	var multiErr *multierror.Error
+
+	for _, bootstrapFile := range bootstrapFiles {
+		if err = os.Remove(bootstrapFile); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("error deleting bootstrap file in manifests dir: %s", err))
+		}
+	}
+
+	return multiErr.ErrorOrNil()
 }
 
 func main() {
