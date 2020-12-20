@@ -269,7 +269,6 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"kubernetes",
 		BootstrapKubernetes,
-		LabelNodeAsMaster,
 	).Append(
 		"initStatus",
 		SetInitStatus,
