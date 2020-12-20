@@ -21,18 +21,18 @@ talosctl --nodes <master node> kubeconfig
 
 ### Automated Kubernetes Upgrade
 
-To upgrade from Kubernetes v1.19.4 to v1.20.0 run:
+To upgrade from Kubernetes v1.19.4 to v1.20.1 run:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --from 1.19.4 --to 1.20.0
+$ talosctl --nodes <master node> upgrade-k8s --from 1.19.4 --to 1.20.1
 patched kube-apiserver secrets for "service-account.key"
 updating pod-checkpointer grace period to "0m"
 sleeping 5m0s to let the pod-checkpointer self-checkpoint be updated
 temporarily taking "kube-apiserver" out of pod-checkpointer control
-updating daemonset "kube-apiserver" to version "1.20.0"
-updating daemonset "kube-controller-manager" to version "1.20.0"
-updating daemonset "kube-scheduler" to version "1.20.0"
-updating daemonset "kube-proxy" to version "1.20.0"
+updating daemonset "kube-apiserver" to version "1.20.1"
+updating daemonset "kube-controller-manager" to version "1.20.1"
+updating daemonset "kube-scheduler" to version "1.20.1"
+updating daemonset "kube-proxy" to version "1.20.1"
 updating pod-checkpointer grace period to "5m0s"
 ```
 
@@ -144,7 +144,7 @@ spec:
     spec:
       containers:
         - name: kube-apiserver
-          image: k8s.gcr.io/kube-apiserver:v1.20.0
+          image: k8s.gcr.io/kube-apiserver:v1.20.1
           command:
             - /go-runner
             - /usr/local/bin/kube-apiserver
@@ -202,7 +202,7 @@ spec:
     spec:
       containers:
         - name: kube-controller-manager
-          image: k8s.gcr.io/kube-controller-manager:v1.20.0
+          image: k8s.gcr.io/kube-controller-manager:v1.20.1
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane
@@ -247,7 +247,7 @@ spec:
     spec:
       containers:
         - name: kube-sceduler
-          image: k8s.gcr.io/kube-scheduler:v1.20.0
+          image: k8s.gcr.io/kube-scheduler:v1.20.1
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane
@@ -292,7 +292,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v1.20.0
+          image: k8s.gcr.io/kube-proxy:v1.20.1
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane
@@ -352,7 +352,7 @@ spec:
 ### Kubelet
 
 The Talos team now maintains an image for the `kubelet` that should be used starting with Kubernetes 1.20.
-The image for this release is `ghcr.io/talos-systems/kubelet:v1.20.0`.
+The image for this release is `ghcr.io/talos-systems/kubelet:v1.20.1`.
 To explicitly set the image, we can use the [official documentation](/v0.8/en/configuration/v1alpha1#kubelet).
 For example:
 
@@ -360,5 +360,5 @@ For example:
 machine:
   ...
   kubelet:
-    image: ghcr.io/talos-systems/kubelet:v1.20.0
+    image: ghcr.io/talos-systems/kubelet:v1.20.1
 ```

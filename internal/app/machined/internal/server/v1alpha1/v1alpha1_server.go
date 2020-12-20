@@ -385,7 +385,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) // nolint: errcheck
 			}
 
-			if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
+			if err := s.Controller.Run(runtime.SequenceStageUpgrade, in); err != nil {
 				log.Println("reboot for staged upgrade failed:", err)
 
 				if err != runtime.ErrLocked {
@@ -1610,7 +1610,14 @@ func (s *Server) Memory(ctx context.Context, in *empty.Empty) (reply *machine.Me
 
 // EtcdMemberList implements the machine.MachineServer interface.
 func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (reply *machine.EtcdMemberListResponse, err error) {
-	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	var client *etcd.Client
+
+	if in.QueryLocal {
+		client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
+	} else {
+		client, err = etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	}
+
 	if err != nil {
 		return nil, err
 	}

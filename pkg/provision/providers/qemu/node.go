@@ -54,6 +54,11 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
+	err = p.populateSystemDisk(diskPaths, clusterReq)
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
 	logFile, err := os.OpenFile(state.GetRelativePath(fmt.Sprintf("%s.log", nodeReq.Name)), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
 		return provision.NodeInfo{}, err
@@ -225,4 +230,26 @@ func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) 
 	port := l.Addr().(*net.TCPAddr).Port
 
 	return port, l.Close()
+}
+
+func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.ClusterRequest) error {
+	if len(disks) > 0 && clusterReq.DiskImagePath != "" {
+		disk, err := os.OpenFile(disks[0], os.O_RDWR, 0o755)
+		if err != nil {
+			return err
+		}
+		defer disk.Close() // nolint:errcheck
+
+		image, err := os.Open(clusterReq.DiskImagePath)
+		if err != nil {
+			return err
+		}
+		defer image.Close() // nolint:errcheck
+
+		_, err = io.Copy(disk, image)
+
+		return err
+	}
+
+	return nil
 }

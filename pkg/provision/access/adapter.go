@@ -17,6 +17,7 @@ type Adapter struct {
 	cluster.APICrashDumper
 	cluster.APIBoostrapper
 	cluster.Info
+	cluster.ApplyConfigClient
 }
 
 type infoWrapper struct {

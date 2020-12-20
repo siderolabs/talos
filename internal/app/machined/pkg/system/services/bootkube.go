@@ -137,7 +137,7 @@ func (b *Bootkube) PostFunc(r runtime.Runtime, state events.ServiceState) (err e
 
 // DependsOn implements the Service interface.
 func (b *Bootkube) DependsOn(r runtime.Runtime) []string {
-	return []string{"etcd"}
+	return []string{"etcd", "kubelet"}
 }
 
 // Condition implements the Service interface.

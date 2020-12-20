@@ -28,6 +28,8 @@ const (
 	SequenceShutdown
 	// SequenceUpgrade is the upgrade sequence.
 	SequenceUpgrade
+	// SequenceStageUpgrade is the stage upgrade sequence.
+	SequenceStageUpgrade
 	// SequenceReset is the reset sequence.
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
@@ -46,6 +48,7 @@ const (
 	install            = "install"
 	shutdown           = "shutdown"
 	upgrade            = "upgrade"
+	stageUpgrade       = "stageUpgrade"
 	reset              = "reset"
 	reboot             = "reboot"
 	recover            = "recover"
@@ -54,7 +57,7 @@ const (
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{applyConfiguration, boot, bootstrap, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
+	return [...]string{applyConfiguration, boot, bootstrap, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot, recover, noop}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
@@ -76,6 +79,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 		seq = SequenceShutdown
 	case upgrade:
 		seq = SequenceUpgrade
+	case stageUpgrade:
+		seq = SequenceStageUpgrade
 	case reset:
 		seq = SequenceReset
 	case reboot:
@@ -116,6 +121,7 @@ type Sequencer interface {
 	Recover(Runtime, *machine.RecoverRequest) []Phase
 	Reset(Runtime, ResetOptions) []Phase
 	Shutdown(Runtime) []Phase
+	StageUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }
 

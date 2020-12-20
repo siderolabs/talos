@@ -724,7 +724,9 @@ message EtcdForfeitLeadershipResponse {
   repeated EtcdForfeitLeadership messages = 1;
 }
 
-message EtcdMemberListRequest {}
+message EtcdMemberListRequest {
+  bool query_local = 1;
+}
 message EtcdMemberList {
   common.Metadata metadata = 1;
   repeated string members = 2;

@@ -35,6 +35,16 @@ case "${WITH_UEFI:-false}" in
     ;;
 esac
 
+case "${USE_DISK_IMAGE:-false}" in
+  false)
+    DISK_IMAGE_FLAG=
+    ;;
+  *)
+    tar -xf _out/metal-amd64.tar.gz -C _out/
+    DISK_IMAGE_FLAG="--disk-image-path=_out/disk.raw --with-apply-config"
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
@@ -52,6 +62,7 @@ function create_cluster {
     --with-init-node=false \
     --cni-bundle-url ${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
     --crashdump \
+    ${DISK_IMAGE_FLAG} \
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
     ${CUSTOM_CNI_FLAG}

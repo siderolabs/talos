@@ -67,11 +67,11 @@ type upgradeSpec struct {
 
 const (
 	previousRelease = "v0.7.1"
-	stableRelease   = "v0.8.0-alpha.3"
+	stableRelease   = "v0.8.0-beta.0"
 
 	previousK8sVersion = "1.19.4"
 	stableK8sVersion   = "1.20.0"
-	currentK8sVersion  = "1.20.0"
+	currentK8sVersion  = "1.20.1"
 )
 
 var (

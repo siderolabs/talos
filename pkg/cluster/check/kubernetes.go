@@ -126,6 +126,18 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 			return fmt.Errorf("error listing pods for daemonset %s: %w", ds.GetName(), err)
 		}
 
+		// filter out pod checkpoints
+		n := 0
+
+		for _, pod := range pods.Items {
+			if _, exists := pod.Annotations["checkpointer.alpha.coreos.com/checkpoint-of"]; !exists {
+				pods.Items[n] = pod
+				n++
+			}
+		}
+
+		pods.Items = pods.Items[:n]
+
 		if int32(len(pods.Items)) != ds.Status.DesiredNumberScheduled {
 			return fmt.Errorf("expected number of pods for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, len(pods.Items))
 		}

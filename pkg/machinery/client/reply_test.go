@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -91,5 +93,36 @@ func TestFilterMessagesOnlyErrors(t *testing.T) {
 
 	filtered, err := client.FilterMessages(reply, nil)
 	assert.EqualError(t, err, "2 errors occurred:\n\t* host2: something wrong\n\t* host4: even more wrong\n\n")
+	assert.Nil(t, filtered)
+}
+
+func TestFilterMessagesGRPCStatus(t *testing.T) {
+	reply := &common.DataResponse{
+		Messages: []*common.Data{
+			{
+				Metadata: &common.Metadata{
+					Hostname: "host2",
+					Error:    "should be ignored",
+					Status: &status.Status{
+						Code:    int32(codes.Aborted),
+						Message: "something aborted",
+					},
+				},
+			},
+			{
+				Metadata: &common.Metadata{
+					Hostname: "host4",
+					Error:    "should be ignored",
+					Status: &status.Status{
+						Code:    int32(codes.Unknown),
+						Message: "something went wrong",
+					},
+				},
+			},
+		},
+	}
+
+	filtered, err := client.FilterMessages(reply, nil)
+	assert.EqualError(t, err, "2 errors occurred:\n\t* host2: rpc error: code = Aborted desc = something aborted\n\t* host4: rpc error: code = Unknown desc = something went wrong\n\n")
 	assert.Nil(t, filtered)
 }
