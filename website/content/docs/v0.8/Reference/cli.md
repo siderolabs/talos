@@ -85,6 +85,7 @@ talosctl cluster create [flags]
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
       --disk int                                default limit on disk size in MB (each VM) (default 6144)
+      --disk-image-path string                  disk image to use
       --dns-domain string                       the dns domain to use for cluster (default "cluster.local")
       --docker-host-ip string                   Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
       --endpoint string                         use endpoint instead of provider defaults
@@ -96,7 +97,7 @@ talosctl cluster create [flags]
   -i, --input-dir string                        location of pre-generated config files
       --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
       --iso-path string                         the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string               desired kubernetes version to run (default "1.20.0")
+      --kubernetes-version string               desired kubernetes version to run (default "1.20.1")
       --masters int                             the number of masters to create (default 1)
       --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
@@ -109,6 +110,7 @@ talosctl cluster create [flags]
       --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                                    wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                   timeout to wait for the cluster to be ready (default 20m0s)
+      --with-apply-config                       enable apply config when the VM is starting in maintenance mode
       --with-bootloader                         enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-debug                              enable debug in Talos config to send service logs to the console
       --with-init-node                          create the cluster with an init node
@@ -654,6 +656,113 @@ talosctl dmesg [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl etcd forfeit-leadership
+
+Tell node to forfeit etcd cluster leadership
+
+```
+talosctl etcd forfeit-leadership [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for forfeit-leadership
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd leave
+
+Tell nodes to leave etcd cluster
+
+```
+talosctl etcd leave [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for leave
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd members
+
+Get the list of etcd cluster members
+
+```
+talosctl etcd members [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for members
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd
+
+Manage etcd
+
+### Options
+
+```
+  -h, --help   help for etcd
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
+* [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
+* [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
 
 ## talosctl events
 
@@ -1536,7 +1645,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
-      --to string         the Kubernetes control plane version to upgrade to (default "1.20.0")
+      --to string         the Kubernetes control plane version to upgrade to (default "1.20.1")
 ```
 
 ### Options inherited from parent commands
@@ -1667,6 +1776,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl health](#talosctl-health)	 - Check cluster health

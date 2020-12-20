@@ -269,7 +269,6 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"kubernetes",
 		BootstrapKubernetes,
-		LabelNodeAsMaster,
 	).Append(
 		"initStatus",
 		SetInitStatus,
@@ -352,6 +351,29 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.
 		AppendList(stopAllPhaselist(r)).
 		Append("shutdown", Shutdown)
+
+	return phases
+}
+
+// StageUpgrade is the stage upgrade sequence.
+func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
+	phases := PhaseList{}
+
+	switch r.State().Platform().Mode() { //nolint: exhaustive
+	case runtime.ModeContainer:
+		return nil
+	default:
+		phases = phases.AppendWhen(
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			"leave",
+			LeaveEtcd,
+		).AppendList(
+			stopAllPhaselist(r),
+		).Append(
+			"reboot",
+			Reboot,
+		)
+	}
 
 	return phases
 }

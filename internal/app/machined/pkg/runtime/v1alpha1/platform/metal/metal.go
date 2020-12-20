@@ -131,5 +131,7 @@ func readConfigFromISO() (b []byte, err error) {
 
 // KernelArgs implements the runtime.Platform interface.
 func (m *Metal) KernelArgs() procfs.Parameters {
-	return nil
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0").Append("tty0"),
+	}
 }

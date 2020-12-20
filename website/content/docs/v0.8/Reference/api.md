@@ -5,6 +5,17 @@ description: Talos gRPC API reference.
 
 ## Table of Contents
 
+- [common/common.proto](#common/common.proto)
+    - [Data](#common.Data)
+    - [DataResponse](#common.DataResponse)
+    - [Empty](#common.Empty)
+    - [EmptyResponse](#common.EmptyResponse)
+    - [Error](#common.Error)
+    - [Metadata](#common.Metadata)
+  
+    - [Code](#common.Code)
+    - [ContainerDriver](#common.ContainerDriver)
+  
 - [health/health.proto](#health/health.proto)
     - [HealthCheck](#health.HealthCheck)
     - [HealthCheckResponse](#health.HealthCheckResponse)
@@ -185,6 +196,141 @@ description: Talos gRPC API reference.
     - [TimeService](#time.TimeService)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="common/common.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## common/common.proto
+
+
+
+<a name="common.Data"></a>
+
+### Data
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [Metadata](#common.Metadata) |  |  |
+| bytes | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="common.DataResponse"></a>
+
+### DataResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Data](#common.Data) | repeated |  |
+
+
+
+
+
+
+<a name="common.Empty"></a>
+
+### Empty
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="common.EmptyResponse"></a>
+
+### EmptyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Empty](#common.Empty) | repeated |  |
+
+
+
+
+
+
+<a name="common.Error"></a>
+
+### Error
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [Code](#common.Code) |  |  |
+| message | [string](#string) |  |  |
+| details | [google.protobuf.Any](#google.protobuf.Any) | repeated |  |
+
+
+
+
+
+
+<a name="common.Metadata"></a>
+
+### Metadata
+Common metadata message nested in all reply message types
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostname | [string](#string) |  | hostname of the server response comes from (injected by proxy) |
+| error | [string](#string) |  | error is set if request failed to the upstream (rest of response is undefined) |
+| status | [google.rpc.Status](#google.rpc.Status) |  | error as gRPC Status |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="common.Code"></a>
+
+### Code
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FATAL | 0 |  |
+| LOCKED | 1 |  |
+
+
+
+<a name="common.ContainerDriver"></a>
+
+### ContainerDriver
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINERD | 0 |  |
+| CRI | 1 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -888,6 +1034,11 @@ dmesg
 
 ### EtcdMemberListRequest
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| query_local | [bool](#bool) |  |  |
 
 
 

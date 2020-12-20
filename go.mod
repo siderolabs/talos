@@ -61,7 +61,7 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745
 	github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972
 	github.com/talos-systems/go-loadbalancer v0.1.0
-	github.com/talos-systems/go-procfs v0.0.0-20201210152942-5a9a4a75d559
+	github.com/talos-systems/go-procfs v0.0.0-20201223150035-a82654edcec1
 	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0
@@ -85,10 +85,10 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	k8s.io/api v0.20.0
-	k8s.io/apimachinery v0.20.0
-	k8s.io/apiserver v0.20.0
-	k8s.io/client-go v0.20.0
-	k8s.io/cri-api v0.20.0
-	k8s.io/kubelet v0.20.0
+	k8s.io/api v0.20.1
+	k8s.io/apimachinery v0.20.1
+	k8s.io/apiserver v0.20.1
+	k8s.io/client-go v0.20.1
+	k8s.io/cri-api v0.20.1
+	k8s.io/kubelet v0.20.1
 )

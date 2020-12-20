@@ -24,6 +24,7 @@ type ClusterRequest struct {
 	KernelPath    string
 	InitramfsPath string
 	ISOPath       string
+	DiskImagePath string
 
 	// Path to talosctl executable to re-execute itself as needed.
 	SelfExecutable string

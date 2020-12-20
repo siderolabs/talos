@@ -51,6 +51,8 @@ var (
 	nodeVmlinuzPath         string
 	nodeInitramfsPath       string
 	nodeISOPath             string
+	nodeDiskImagePath       string
+	applyConfigEnabled      bool
 	bootloaderEnabled       bool
 	uefiEnabled             bool
 	configDebug             bool
@@ -173,6 +175,7 @@ func create(ctx context.Context) (err error) {
 		KernelPath:    nodeVmlinuzPath,
 		InitramfsPath: nodeInitramfsPath,
 		ISOPath:       nodeISOPath,
+		DiskImagePath: nodeDiskImagePath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
@@ -370,6 +373,13 @@ func create(ctx context.Context) (err error) {
 	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
 	defer clusterAccess.Close() //nolint: errcheck
 
+	if applyConfigEnabled {
+		err = clusterAccess.ApplyConfig(ctx, request.Nodes, os.Stdout)
+		if err != nil {
+			return err
+		}
+	}
+
 	if err = postCreate(ctx, clusterAccess); err != nil {
 		if crashdumpOnFailure {
 			provisioner.CrashDump(ctx, cluster, os.Stderr)
@@ -563,6 +573,8 @@ func init() {
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "the uncompressed kernel image to use")
+	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
+	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", false, "enable UEFI on x86_64 architecture (always enabled for arm64)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
