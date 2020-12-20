@@ -13,7 +13,7 @@ You will need
 Download the latest alpha `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/v0.8.0-alpha.2/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/v0.8.0-beta.1/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/v0.8.0-alpha.2/metal-bananapi_m64-arm64.img.xz
+curl -LO https://github.com/talos-systems/talos/releases/download/v0.8.0-beta.1/metal-bananapi_m64-arm64.img.xz
 xz -d metal-bananapi_m64-arm64.img.xz
 ```
 
@@ -34,7 +34,7 @@ In this example we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-bananapi_m64-arm64.img of=/dev/mmcblk0
+sudo dd if=metal-bananapi_m64-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
