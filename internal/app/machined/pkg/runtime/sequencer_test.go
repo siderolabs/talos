@@ -38,6 +38,11 @@ func TestSequence_String(t *testing.T) {
 			want: "upgrade",
 		},
 		{
+			name: "stageUpgrade",
+			s:    runtime.SequenceStageUpgrade,
+			want: "stageUpgrade",
+		},
+		{
 			name: "reboot",
 			s:    runtime.SequenceReboot,
 			want: "reboot",
@@ -96,6 +101,12 @@ func TestParseSequence(t *testing.T) {
 			name:    "upgrade",
 			args:    args{"upgrade"},
 			wantSeq: runtime.SequenceUpgrade,
+			wantErr: false,
+		},
+		{
+			name:    "stageUpgrade",
+			args:    args{"stageUpgrade"},
+			wantSeq: runtime.SequenceStageUpgrade,
 			wantErr: false,
 		},
 		{

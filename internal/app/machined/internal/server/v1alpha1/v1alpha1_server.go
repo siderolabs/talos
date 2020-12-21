@@ -385,7 +385,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) // nolint: errcheck
 			}
 
-			if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
+			if err := s.Controller.Run(runtime.SequenceStageUpgrade, in); err != nil {
 				log.Println("reboot for staged upgrade failed:", err)
 
 				if err != runtime.ErrLocked {
