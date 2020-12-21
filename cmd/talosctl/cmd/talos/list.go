@@ -28,6 +28,7 @@ var (
 	recurse        bool
 	recursionDepth int32
 	humanizeFlag   bool
+	types          []string
 )
 
 // lsCmd represents the ls command.
@@ -176,5 +177,6 @@ func init() {
 	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
 	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
 	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
+	lsCmd.Flags().StringSliceVar(&types, "type", nil, "TODO")
 	addCommand(lsCmd)
 }

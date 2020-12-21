@@ -20,10 +20,20 @@ type FileItem struct {
 	Error    error
 }
 
+// FileType is a file type.
+type FileType string
+
+// File types.
+const (
+	RegularFileType   FileType = "r"
+	DirectoryFileType FileType = "d"
+)
+
 type walkerOptions struct {
 	skipRoot        bool
 	maxRecurseDepth int
 	fnmatchPatterns []string
+	types           map[FileType]struct{}
 }
 
 // WalkerOption configures Walker.
@@ -54,7 +64,19 @@ func WithFnmatchPatterns(patterns ...string) WalkerOption {
 	}
 }
 
-// Walker provides a channel of file info/paths for archival
+// WithFileTypes filters results by file types.
+//
+// Default is not to do any filtering.
+func WithFileTypes(fileType ...FileType) WalkerOption {
+	return func(o *walkerOptions) {
+		o.types = make(map[FileType]struct{}, len(fileType))
+		for _, t := range fileType {
+			o.types[t] = struct{}{}
+		}
+	}
+}
+
+// Walker provides a channel of file info/paths for archival.
 //
 //nolint: gocyclo
 func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
@@ -94,6 +116,30 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				item.RelPath = filepath.Base(path)
 			} else if item.Error == nil {
 				item.RelPath, item.Error = filepath.Rel(rootPath, path)
+			}
+
+			// TODO refactor all those `if item.Error == nil &&` conditions
+
+			if item.Error == nil && len(opts.types) > 0 {
+				matches := false
+
+				for t := range opts.types {
+					// TODO enable exhaustive linter, check it
+
+					switch t {
+					case RegularFileType:
+						matches = fileInfo.Mode().IsRegular()
+					case DirectoryFileType:
+						matches = fileInfo.IsDir()
+					}
+					if matches {
+						break
+					}
+				}
+
+				if !matches {
+					return nil
+				}
 			}
 
 			if item.Error == nil && path == rootPath && opts.skipRoot && fileInfo.IsDir() {

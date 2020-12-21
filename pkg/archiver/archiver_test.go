@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package archiver provides a service to archive part of the filesystem into tar archive
 package archiver_test
 
 import (
@@ -38,7 +37,7 @@ var filesFixture = []struct {
 	},
 	{
 		Path: "/dev/random",
-		Mode: 0o600 | os.ModeCharDevice,
+		Mode: 0o600 | os.ModeDevice | os.ModeCharDevice,
 	},
 	{
 		Path:     "/usr/bin/cp",
