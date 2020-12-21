@@ -85,6 +85,7 @@ talosctl cluster create [flags]
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
       --disk int                                default limit on disk size in MB (each VM) (default 6144)
+      --disk-image-path string                  disk image to use
       --dns-domain string                       the dns domain to use for cluster (default "cluster.local")
       --docker-host-ip string                   Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
       --endpoint string                         use endpoint instead of provider defaults
@@ -109,6 +110,7 @@ talosctl cluster create [flags]
       --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
       --wait                                    wait for the cluster to be ready before returning (default true)
       --wait-timeout duration                   timeout to wait for the cluster to be ready (default 20m0s)
+      --with-apply-config                       enable apply config when the VM is starting in maintenance mode
       --with-bootloader                         enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-debug                              enable debug in Talos config to send service logs to the console
       --with-init-node                          create the cluster with an init node
