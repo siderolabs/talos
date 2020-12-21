@@ -348,6 +348,11 @@ local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, de
         "WITH_UEFI": "true",
         "REGISTRY": local_registry,
 });
+local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privileged=true, depends_on=[integration_uefi], environment={
+        "SHORT_INTEGRATION_TEST": "yes",
+        "USE_DISK_IMAGE": "true",
+        "REGISTRY": local_registry,
+});
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -379,6 +384,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_track_1,
   integration_cilium,
   integration_uefi,
+  integration_disk_image,
   push_edge,
 ];
 
