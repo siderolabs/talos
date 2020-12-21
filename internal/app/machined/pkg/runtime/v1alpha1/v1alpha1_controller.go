@@ -383,6 +383,17 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 		}
 
 		phases = c.s.Upgrade(c.r, in)
+	case runtime.SequenceStageUpgrade:
+		var (
+			in *machine.UpgradeRequest
+			ok bool
+		)
+
+		if in, ok = data.(*machine.UpgradeRequest); !ok {
+			return nil, runtime.ErrInvalidSequenceData
+		}
+
+		phases = c.s.StageUpgrade(c.r, in)
 	case runtime.SequenceReset:
 		var (
 			in runtime.ResetOptions
