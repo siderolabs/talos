@@ -224,7 +224,6 @@ local unit_tests = Step("unit-tests", depends_on=[initramfs]);
 local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
 local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
-local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[talosctl_linux, initramfs, iso_amd64, unit_tests, unit_tests_race], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -307,7 +306,6 @@ local default_steps = [
   unit_tests,
   unit_tests_race,
   coverage,
-  e2e_iso,
   e2e_qemu,
   e2e_docker,
   push,
@@ -348,6 +346,8 @@ local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, de
         "WITH_UEFI": "true",
         "REGISTRY": local_registry,
 });
+local integration_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[talosctl_linux, iso_amd64, integration_uefi], environment={"REGISTRY": local_registry});
+
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -379,6 +379,7 @@ local integration_steps = default_steps + [
   integration_provision_tests_track_1,
   integration_cilium,
   integration_uefi,
+  integration_iso,
   push_edge,
 ];
 
