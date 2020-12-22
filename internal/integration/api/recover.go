@@ -53,6 +53,8 @@ func (suite *RecoverSuite) TearDownTest() {
 
 // TestRecoverControlPlane removes the control plane components and attempts to recover them with the recover API.
 func (suite *RecoverSuite) TestRecoverControlPlane() {
+	suite.T().Skip("with checkpoints enabled for kube-scheduler and kube-controller-manager this test no longer makes sense")
+
 	if !suite.Capabilities().SupportsRecover {
 		suite.T().Skip("cluster doesn't support recovery")
 	}

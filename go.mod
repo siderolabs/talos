@@ -57,7 +57,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
-	github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116
+	github.com/talos-systems/bootkube-plugin v0.0.0-20201223175004-aee474d8d060
 	github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745
 	github.com/talos-systems/go-blockdevice v0.1.1
 	github.com/talos-systems/go-loadbalancer v0.1.0

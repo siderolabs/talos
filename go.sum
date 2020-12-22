@@ -925,8 +925,8 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0TYG7HtkIgExQo+2RdLuwRft63jn2HWj8=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116 h1:ly3meWKF9LIVOv0BLI3y74jJAKluivEDymVVXTzAwIA=
-github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116/go.mod h1:AbdJAgHK5rJNDPUN3msPTfQJSR9b4DKb5xNN07uG8/Y=
+github.com/talos-systems/bootkube-plugin v0.0.0-20201223175004-aee474d8d060 h1:mPJ7w+edz0xQhhZ9Qp1iF7w5vcj7owK2ExmS8usDsFA=
+github.com/talos-systems/bootkube-plugin v0.0.0-20201223175004-aee474d8d060/go.mod h1:AbdJAgHK5rJNDPUN3msPTfQJSR9b4DKb5xNN07uG8/Y=
 github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745 h1:Smw6ebFiEiwrkaOD2hEYYb+xkIhQTMZNq3WVYKLszB8=
 github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745/go.mod h1:KwqG+jANKU1FNQIapmioHQ5fkovY1DJkAqMenjYBGh0=
 github.com/talos-systems/go-blockdevice v0.1.1 h1:vmaZHHf5jhdP3/RvDQV6sATHQuLy5LPMXWJtzBloe84=
