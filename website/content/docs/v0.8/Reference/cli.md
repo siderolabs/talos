@@ -657,6 +657,113 @@ talosctl dmesg [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl etcd forfeit-leadership
+
+Tell node to forfeit etcd cluster leadership
+
+```
+talosctl etcd forfeit-leadership [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for forfeit-leadership
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd leave
+
+Tell nodes to leave etcd cluster
+
+```
+talosctl etcd leave [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for leave
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd members
+
+Get the list of etcd cluster members
+
+```
+talosctl etcd members [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for members
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
+## talosctl etcd
+
+Manage etcd
+
+### Options
+
+```
+  -h, --help   help for etcd
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
+* [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
+* [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
+
 ## talosctl events
 
 Stream runtime events
@@ -1669,6 +1776,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl health](#talosctl-health)	 - Check cluster health
