@@ -890,6 +890,11 @@ dmesg
 
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| query_local | [bool](#bool) |  |  |
+
+
 
 
 
