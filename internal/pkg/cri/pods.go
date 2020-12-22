@@ -218,7 +218,9 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 			return nil
 		}
 
-		return err
+		log.Printf("error stopping pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
+
+		return nil
 	}
 
 	if stopAction == StopAndRemove {
@@ -227,7 +229,9 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 				return nil
 			}
 
-			return err
+			log.Printf("error removing pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
+
+			return nil
 		}
 	}
 
