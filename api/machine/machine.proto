@@ -276,22 +276,34 @@ message CopyRequest {
   string root_path = 1;
 }
 
-// ListRequest describes a request to list the contents of a directory
+// ListRequest describes a request to list the contents of a directory.
 message ListRequest {
-  // Root indicates the root directory for the list.  If not indicated, '/' is
+  // Root indicates the root directory for the list. If not indicated, '/' is
   // presumed.
   string root = 1;
   // Recurse indicates that subdirectories should be recursed.
   bool recurse = 2;
   // RecursionDepth indicates how many levels of subdirectories should be
-  // recursed.  The default (0) indicates that no limit should be enforced.
+  // recursed. The default (0) indicates that no limit should be enforced.
   int32 recursion_depth = 3;
+  // File type.
+  enum Type {
+    // Regular file (not directory, symlink, etc).
+    REGULAR = 0;
+    // Directory.
+    DIRECTORY = 1;
+    // Symbolic link.
+    SYMLINK = 2;
+  }
+  // Types indicates what file type should be returned. If not indicated,
+  // all files will be returned.
+  repeated Type types = 4;
 }
 
 // DiskUsageRequest describes a request to list disk usage of directories and regular files
 message DiskUsageRequest {
   // RecursionDepth indicates how many levels of subdirectories should be
-  // recursed.  The default (0) indicates that no limit should be enforced.
+  // recursed. The default (0) indicates that no limit should be enforced.
   int32 recursion_depth = 1;
   // All write sizes for all files, not just directories.
   bool all = 2;

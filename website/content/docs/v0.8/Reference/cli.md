@@ -1149,11 +1149,15 @@ talosctl list [path] [flags]
 ### Options
 
 ```
-  -d, --depth int32   maximum recursion depth
-  -h, --help          help for list
-  -H, --humanize      humanize size and time in the output
-  -l, --long          display additional file details
-  -r, --recurse       recurse into subdirectories
+  -d, --depth int32    maximum recursion depth
+  -h, --help           help for list
+  -H, --humanize       humanize size and time in the output
+  -l, --long           display additional file details
+  -r, --recurse        recurse into subdirectories
+  -t, --type strings   filter by specified types:
+                       f	regular file
+                       d	directory
+                       l, L	symbolic link
 ```
 
 ### Options inherited from parent commands
