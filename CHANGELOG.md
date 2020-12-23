@@ -1,4 +1,12 @@
 
+<a name="v0.8.0"></a>
+## [v0.8.0](https://github.com/talos-systems/talos/compare/v0.8.0-beta.0...v0.8.0) (2020-12-20)
+
+### Fix
+
+* backport fixes from 0.9 after 0.8-beta.0
+
+
 <a name="v0.8.0-beta.0"></a>
 ## [v0.8.0-beta.0](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.3...v0.8.0-beta.0) (2020-12-18)
 
@@ -33,6 +41,10 @@
 ### Refactor
 
 * remove setup goroutine in etcd service
+
+### Release
+
+* **v0.8.0-beta.0:** prepare release
 
 ### Test
 
