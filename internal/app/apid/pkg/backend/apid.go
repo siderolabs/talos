@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 
@@ -199,6 +200,7 @@ func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
 		Metadata: &common.Metadata{
 			Hostname: a.target,
 			Error:    err.Error(),
+			Status:   status.Convert(err).Proto(),
 		},
 	}
 

@@ -5,20 +5,28 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/go-multierror"
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc/status"
 )
 
 // NodeError is RPC error from some node.
 type NodeError struct {
 	Node string
-	Err  string
+	Err  error
 }
 
 func (ne *NodeError) Error() string {
 	return fmt.Sprintf("%s: %s", ne.Node, ne.Err)
+}
+
+// Unwrap implements errors.Unwrap interface.
+func (ne *NodeError) Unwrap() error {
+	return ne.Err
 }
 
 // FilterMessages removes error Messagess from resp and builds multierror.
@@ -102,6 +110,26 @@ func FilterMessages(resp interface{}, err error) (interface{}, error) {
 			continue
 		}
 
+		rpcError := errors.New(errorField.String())
+
+		statusField := metadata.FieldByName("Status")
+		if !statusField.IsValid() {
+			panic("metadata.Status field missing")
+		}
+
+		if statusField.Kind() != reflect.Ptr {
+			panic("metadata.Status should be pointer")
+		}
+
+		if !statusField.IsZero() {
+			statusValue, ok := statusField.Interface().(*rpcstatus.Status)
+			if !ok {
+				panic("metadata.Status should be of type *status.Status")
+			}
+
+			rpcError = status.FromProto(statusValue).Err()
+		}
+
 		hostnameField := metadata.FieldByName("Hostname")
 		if !hostnameField.IsValid() {
 			panic("metadata.Hostname field missing")
@@ -114,7 +142,7 @@ func FilterMessages(resp interface{}, err error) (interface{}, error) {
 		// extract error
 		nodeError := &NodeError{
 			Node: hostnameField.String(),
-			Err:  errorField.String(),
+			Err:  rpcError,
 		}
 
 		multiErr = multierror.Append(multiErr, nodeError)
