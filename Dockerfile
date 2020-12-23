@@ -74,22 +74,23 @@ WORKDIR /src
 
 FROM build AS generate-build
 # Common needs to be at or near the top to satisfy the subsequent imports
+COPY ./api/vendor/ /api/vendor/
 COPY ./api/common/common.proto /api/common/common.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
 COPY ./api/health/health.proto /api/health/health.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
 COPY ./api/security/security.proto /api/security/security.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
 COPY ./api/storage/storage.proto /api/storage/storage.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api storage/storage.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api storage/storage.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api machine/machine.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api machine/machine.proto
 COPY ./api/time/time.proto /api/time/time.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
 COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
-RUN protoc -I/api --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
@@ -646,8 +647,10 @@ RUN protoc \
     -I/protos/security \
     -I/protos/storage \
     -I/protos/time \
+    -I/protos/vendor \
     --doc_opt=/tmp/markdown.tmpl,api.md \
     --doc_out=/tmp \
+    /protos/common/*.proto \
     /protos/health/*.proto \
     /protos/machine/*.proto \
     /protos/network/*.proto \
