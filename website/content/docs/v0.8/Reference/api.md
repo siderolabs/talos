@@ -149,6 +149,7 @@ description: Talos gRPC API reference.
     - [VersionInfo](#machine.VersionInfo)
     - [VersionResponse](#machine.VersionResponse)
   
+    - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [RecoverRequest.Source](#machine.RecoverRequest.Source)
@@ -1205,7 +1206,7 @@ GenerateConfiguration describes the response to a generate configuration request
 <a name="machine.ListRequest"></a>
 
 ### ListRequest
-ListRequest describes a request to list the contents of a directory
+ListRequest describes a request to list the contents of a directory.
 
 
 | Field | Type | Label | Description |
@@ -1213,6 +1214,7 @@ ListRequest describes a request to list the contents of a directory
 | root | [string](#string) |  | Root indicates the root directory for the list. If not indicated, '/' is presumed. |
 | recurse | [bool](#bool) |  | Recurse indicates that subdirectories should be recursed. |
 | recursion_depth | [int32](#int32) |  | RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced. |
+| types | [ListRequest.Type](#machine.ListRequest.Type) | repeated | Types indicates what file type should be returned. If not indicated, all files will be returned. |
 
 
 
@@ -2498,6 +2500,19 @@ rpc upgrade
 
 
  <!-- end messages -->
+
+
+<a name="machine.ListRequest.Type"></a>
+
+### ListRequest.Type
+File type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| REGULAR | 0 | Regular file (not directory, symlink, etc). |
+| DIRECTORY | 1 | Directory. |
+| SYMLINK | 2 | Symbolic link. |
+
 
 
 <a name="machine.MachineConfig.MachineType"></a>

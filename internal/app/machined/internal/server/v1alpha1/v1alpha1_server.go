@@ -667,6 +667,8 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 }
 
 // List implements the machine.MachineServer interface.
+//
+//nolint:gocyclo
 func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListServer) error {
 	if req == nil {
 		req = new(machine.ListRequest)
@@ -682,17 +684,34 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		req.Root = "/"
 	}
 
-	var maxDepth int
+	var opts []archiver.WalkerOption
 
 	if req.Recurse {
 		if req.RecursionDepth == 0 {
-			maxDepth = -1
+			opts = append(opts, archiver.WithMaxRecurseDepth(-1))
 		} else {
-			maxDepth = int(req.RecursionDepth)
+			opts = append(opts, archiver.WithMaxRecurseDepth(int(req.RecursionDepth)))
 		}
 	}
 
-	files, err := archiver.Walker(obj.Context(), req.Root, archiver.WithMaxRecurseDepth(maxDepth))
+	if len(req.Types) > 0 {
+		types := make([]archiver.FileType, 0, len(req.Types))
+
+		for _, t := range req.Types {
+			switch t {
+			case machine.ListRequest_REGULAR:
+				types = append(types, archiver.RegularFileType)
+			case machine.ListRequest_DIRECTORY:
+				types = append(types, archiver.DirectoryFileType)
+			case machine.ListRequest_SYMLINK:
+				types = append(types, archiver.SymlinkFileType)
+			}
+		}
+
+		opts = append(opts, archiver.WithFileTypes(types...))
+	}
+
+	files, err := archiver.Walker(obj.Context(), req.Root, opts...)
 	if err != nil {
 		return err
 	}

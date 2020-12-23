@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -28,6 +29,7 @@ var (
 	recurse        bool
 	recursionDepth int32
 	humanizeFlag   bool
+	types          []string
 )
 
 // lsCmd represents the ls command.
@@ -45,10 +47,29 @@ var lsCmd = &cobra.Command{
 				rootDir = args[0]
 			}
 
+			// handle all variants: --type=f,l; -tfl; etc
+			var reqTypes []machineapi.ListRequest_Type
+			for _, typ := range types {
+				for _, t := range typ {
+					// handle both `find -type X` and os.FileMode.String() designations
+					switch t {
+					case 'f':
+						reqTypes = append(reqTypes, machineapi.ListRequest_REGULAR)
+					case 'd':
+						reqTypes = append(reqTypes, machineapi.ListRequest_DIRECTORY)
+					case 'l', 'L':
+						reqTypes = append(reqTypes, machineapi.ListRequest_SYMLINK)
+					default:
+						return fmt.Errorf("invalid file type: %s", string(t))
+					}
+				}
+			}
+
 			stream, err := c.LS(ctx, &machineapi.ListRequest{
 				Root:           rootDir,
 				Recurse:        recurse,
 				RecursionDepth: recursionDepth,
+				Types:          reqTypes,
 			})
 			if err != nil {
 				return fmt.Errorf("error fetching logs: %s", err)
@@ -172,9 +193,17 @@ var lsCmd = &cobra.Command{
 }
 
 func init() {
+	typesHelp := strings.Join([]string{
+		"filter by specified types:",
+		"f" + "\t" + "regular file",
+		"d" + "\t" + "directory",
+		"l, L" + "\t" + "symbolic link",
+	}, "\n")
+
 	lsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
 	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
 	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
 	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
+	lsCmd.Flags().StringSliceVarP(&types, "type", "t", nil, typesHelp)
 	addCommand(lsCmd)
 }
