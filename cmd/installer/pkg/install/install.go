@@ -45,9 +45,7 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 		cmdline.Append(constants.KernelParamConfig, opts.ConfigSource)
 	}
 
-	if err = cmdline.AppendAll(p.KernelArgs().Strings()); err != nil {
-		return err
-	}
+	cmdline.SetAll(p.KernelArgs().Strings())
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
 	cmdline.AppendDefaults()
@@ -169,10 +167,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 		i.cmdline.Append(constants.KernelParamBoard, b.Name())
 
-		err = i.cmdline.AppendAll(b.KernelArgs().Strings())
-		if err != nil {
-			return err
-		}
+		i.cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
 	if err = i.manifest.Execute(); err != nil {
