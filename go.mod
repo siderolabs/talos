@@ -75,7 +75,7 @@ require (
 	github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v7.0.0+incompatible
-	github.com/vmware-tanzu/sonobuoy v0.19.0
+	github.com/vmware-tanzu/sonobuoy v0.20.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20201125193152-8a03d2e9614b
 	go.uber.org/zap v1.14.1 // indirect

@@ -371,6 +371,11 @@ local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privile
         "USE_DISK_IMAGE": "true",
         "IMAGE_REGISTRY": local_registry,
 });
+local integration_canal_reset = Step("e2e-canal-reset", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
+        "INTEGRATION_TEST_RUN": "TestIntegration/api.ResetSuite/TestResetWithSpec",
+        "CUSTOM_CNI_URL": "https://docs.projectcalico.org/manifests/canal.yaml",
+        "REGISTRY": local_registry,
+});
 local integration_qemu_encrypted = Step("e2e-encrypted", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "WITH_DISK_ENCRYPTION": "true",
         "IMAGE_REGISTRY": local_registry,
@@ -410,7 +415,7 @@ local integration_pipelines = [
   Pipeline('integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + integration_trigger(['integration-provision', 'integration-provision-0']),
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),
-  Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + integration_trigger(['integration-misc']),
+  Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset]) + integration_trigger(['integration-misc']),
   Pipeline('integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted]) + integration_trigger(['integration-qemu-encrypted']),
 
   // cron pipelines, triggered on schedule events
@@ -418,7 +423,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 
