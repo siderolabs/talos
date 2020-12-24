@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
@@ -66,7 +67,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	defer logFile.Close() //nolint: errcheck
 
-	cmdline := procfs.NewDefaultCmdline()
+	cmdline := procfs.NewCmdline("")
+
+	cmdline.SetAll(kernel.DefaultArgs)
 
 	// backwards compatibility to boot initrd from Talos < 0.8
 	// we can remove it once we stop testing upgrades from versions < 0.8
