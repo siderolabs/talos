@@ -152,9 +152,6 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 		}
 
 		bondName = iface.Bond
-
-		// nb: currently only one interface is supported, as adding one more interface breaks networking
-		break
 	}
 
 	// create multiple bond devices and add them to device list.
@@ -168,6 +165,10 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 			DeviceCIDR:      fmt.Sprintf("%s/%d", addr.Address, addr.CIDR),
 			DeviceBond: &v1alpha1.Bond{
 				BondMode:       bondMode.String(),
+				BondDownDelay:  200,
+				BondMIIMon:     100,
+				BondUpDelay:    200,
+				BondHashPolicy: "layer3+4",
 				BondInterfaces: devicesInBond,
 			},
 		}

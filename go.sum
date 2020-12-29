@@ -933,10 +933,8 @@ github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972 h1:
 github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972/go.mod h1:efEE9wjtgxiovqsZAV39xlOd/AOI/0sLuZqb5jEgeqo=
 github.com/talos-systems/go-loadbalancer v0.1.0 h1:MQFONvSjoleU8RrKq1O1Z8CyTCJGd4SLqdAHDlR6o9s=
 github.com/talos-systems/go-loadbalancer v0.1.0/go.mod h1:D5Qjfz+29WVjONWECZvOkmaLsBb3f5YeWME0u/5HmIc=
-github.com/talos-systems/go-procfs v0.0.0-20201210152942-5a9a4a75d559 h1:wHuwJhQa20pD0Re+Ucpr0ec+om/b0GgPcpvTwRHSR3o=
-github.com/talos-systems/go-procfs v0.0.0-20201210152942-5a9a4a75d559/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
-github.com/talos-systems/go-procfs v0.0.0-20201223150035-a82654edcec1 h1:n6q6VlyJp5yyCAzUyds+CFDLW6iDvTDSDXoI3NoXpcs=
-github.com/talos-systems/go-procfs v0.0.0-20201223150035-a82654edcec1/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
+github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24 h1:fN8vYvlB9XBQ5aImb1vLgR0ZaDwvfZfBMptqkpi3aEg=
+github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
 github.com/talos-systems/go-retry v0.1.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688 h1:U5wFGj5LXt/r+qfy1nGftQxJvEbg/lVJuasHKtk3K7s=
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=

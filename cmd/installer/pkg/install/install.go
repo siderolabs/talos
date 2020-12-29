@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -48,9 +49,11 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 	cmdline.SetAll(p.KernelArgs().Strings())
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
-	cmdline.AppendDefaults()
+	if err = cmdline.AppendAll(kernel.DefaultArgs); err != nil {
+		return err
+	}
 
-	if err = cmdline.AppendAll(opts.ExtraKernelArgs); err != nil {
+	if err = cmdline.AppendAll(opts.ExtraKernelArgs, procfs.WithOverwriteArgs("console")); err != nil {
 		return err
 	}
 

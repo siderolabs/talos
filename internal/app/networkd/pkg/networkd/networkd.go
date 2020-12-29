@@ -140,6 +140,13 @@ func New(config config.Provider) (*Networkd, error) {
 		}
 	}
 
+	// add local interfaces which were filtered out with Ignore
+	for _, device := range localInterfaces {
+		if _, ok := netconf[device.Name]; !ok {
+			netconf[device.Name] = []nic.Option{nic.WithName(device.Name), nic.WithIgnore()}
+		}
+	}
+
 	interfaces := make(map[string]*nic.NetworkInterface)
 
 	// Create nic.NetworkInterface representation of the interface
@@ -303,6 +310,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 	// Loop through address responses and use the first hostname
 	// and address response.
+outer:
 	for _, intName := range interfaceNames {
 		iface := n.Interfaces[intName]
 
@@ -322,7 +330,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 				address = method.Address().IP
 
-				break
+				break outer
 			}
 		}
 	}
@@ -400,7 +408,9 @@ func (n *Networkd) configureLinks(bonded bool) error {
 		count++
 
 		go func(netif *nic.NetworkInterface) {
-			log.Printf("setting up %s", netif.Name)
+			if !netif.IsIgnored() {
+				log.Printf("setting up %s", netif.Name)
+			}
 
 			errCh <- func() error {
 				// Ensure link exists
