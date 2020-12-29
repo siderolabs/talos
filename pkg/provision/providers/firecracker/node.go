@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
@@ -75,7 +76,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	cmdline := procfs.NewDefaultCmdline()
+	cmdline := procfs.NewCmdline("")
+
+	cmdline.SetAll(kernel.DefaultArgs)
 
 	// required to get kernel console
 	cmdline.Append("console", "ttyS0")
