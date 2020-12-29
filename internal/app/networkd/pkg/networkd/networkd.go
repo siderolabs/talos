@@ -140,6 +140,13 @@ func New(config config.Provider) (*Networkd, error) {
 		}
 	}
 
+	// add local interfaces which were filtered out with Ignore
+	for _, device := range localInterfaces {
+		if _, ok := netconf[device.Name]; !ok {
+			netconf[device.Name] = []nic.Option{nic.WithName(device.Name), nic.WithIgnore()}
+		}
+	}
+
 	interfaces := make(map[string]*nic.NetworkInterface)
 
 	// Create nic.NetworkInterface representation of the interface
@@ -400,7 +407,9 @@ func (n *Networkd) configureLinks(bonded bool) error {
 		count++
 
 		go func(netif *nic.NetworkInterface) {
-			log.Printf("setting up %s", netif.Name)
+			if !netif.IsIgnored() {
+				log.Printf("setting up %s", netif.Name)
+			}
 
 			errCh <- func() error {
 				// Ensure link exists
