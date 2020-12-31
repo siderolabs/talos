@@ -786,9 +786,64 @@ func (d *Device) DHCPOptions() config.DHCPOptions {
 	return d.DeviceDHCPOptions
 }
 
+// WireguardConfig implements the MachineNetwork interface.
+func (d *Device) WireguardConfig() config.WireguardConfig {
+	if d.DeviceWireguardConfig == nil {
+		return nil
+	}
+
+	return d.DeviceWireguardConfig
+}
+
 // RouteMetric implements the MachineNetwork interface.
 func (d *DHCPOptions) RouteMetric() uint32 {
 	return d.DHCPRouteMetric
+}
+
+// PrivateKey implements the MachineNetwork interface.
+func (wc *DeviceWireguardConfig) PrivateKey() string {
+	return wc.WireguardPrivateKey
+}
+
+// ListenPort implements the MachineNetwork interface.
+func (wc *DeviceWireguardConfig) ListenPort() int {
+	return wc.WireguardListenPort
+}
+
+// FirewallMark implements the MachineNetwork interface.
+func (wc *DeviceWireguardConfig) FirewallMark() int {
+	return wc.WireguardFirewallMark
+}
+
+// Peers implements the MachineNetwork interface.
+func (wc *DeviceWireguardConfig) Peers() []config.WireguardPeer {
+	peers := make([]config.WireguardPeer, len(wc.WireguardPeers))
+
+	for i := 0; i < len(wc.WireguardPeers); i++ {
+		peers[i] = wc.WireguardPeers[i]
+	}
+
+	return peers
+}
+
+// PublicKey implements the MachineNetwork interface.
+func (wd *DeviceWireguardPeer) PublicKey() string {
+	return wd.WireguardPublicKey
+}
+
+// Endpoint implements the MachineNetwork interface.
+func (wd *DeviceWireguardPeer) Endpoint() string {
+	return wd.WireguardEndpoint
+}
+
+// PersistentKeepaliveInterval implements the MachineNetwork interface.
+func (wd *DeviceWireguardPeer) PersistentKeepaliveInterval() time.Duration {
+	return wd.WireguardPersistentKeepaliveInterval
+}
+
+// AllowedIPs implements the MachineNetwork interface.
+func (wd *DeviceWireguardPeer) AllowedIPs() []string {
+	return wd.WireguardAllowedIPs
 }
 
 // Network implements the MachineNetwork interface.
