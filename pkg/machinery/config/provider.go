@@ -115,11 +115,28 @@ type Device interface {
 	Ignore() bool
 	Dummy() bool
 	DHCPOptions() DHCPOptions
+	WireguardConfig() WireguardConfig
 }
 
 // DHCPOptions represents a set of DHCP options.
 type DHCPOptions interface {
 	RouteMetric() uint32
+}
+
+// WireguardConfig contains settings for configuring Wireguard network interface.
+type WireguardConfig interface {
+	PrivateKey() string
+	ListenPort() int
+	FirewallMark() int
+	Peers() []WireguardPeer
+}
+
+// WireguardPeer a WireGuard device peer configuration.
+type WireguardPeer interface {
+	PublicKey() string
+	Endpoint() string
+	PersistentKeepaliveInterval() time.Duration
+	AllowedIPs() []string
 }
 
 // Bond contains the various options for configuring a

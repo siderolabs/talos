@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
@@ -41,17 +42,19 @@ const (
 // NetworkInterface provides an abstract configuration representation for a
 // network interface.
 type NetworkInterface struct {
-	Name          string
-	Type          int
-	Ignore        bool
-	Dummy         bool
-	Bonded        bool
-	MTU           uint32
-	Link          *net.Interface
-	SubInterfaces []*net.Interface
-	AddressMethod []address.Addressing
-	BondSettings  *netlink.AttributeEncoder
-	Vlans         []*Vlan
+	Name            string
+	Type            int
+	Ignore          bool
+	Dummy           bool
+	Bonded          bool
+	Wireguard       bool
+	MTU             uint32
+	Link            *net.Interface
+	SubInterfaces   []*net.Interface
+	AddressMethod   []address.Addressing
+	BondSettings    *netlink.AttributeEncoder
+	Vlans           []*Vlan
+	WireguardConfig *wgtypes.Config
 
 	rtConn   *rtnetlink.Conn
 	rtnlConn *rtnl.Conn
@@ -123,12 +126,15 @@ func (n *NetworkInterface) Create() error {
 		return err
 	}
 
-	if n.Bonded {
+	switch {
+	case n.Bonded:
 		info = &rtnetlink.LinkInfo{Kind: "bond"}
-	}
-
-	if n.Dummy {
+	case n.Dummy:
 		info = &rtnetlink.LinkInfo{Kind: "dummy"}
+	case n.Wireguard:
+		info = &rtnetlink.LinkInfo{Kind: "wireguard"}
+	default:
+		return fmt.Errorf("unknown device type")
 	}
 
 	if err = n.createLink(n.Name, info); err != nil {
@@ -194,6 +200,7 @@ func (n *NetworkInterface) CreateSub() error {
 
 // Configure is used to set the link state and configure any necessary
 // bond settings ( ex, mode ).
+// nolint:gocyclo
 func (n *NetworkInterface) Configure() (err error) {
 	if n.IsIgnored() {
 		return err
@@ -208,6 +215,12 @@ func (n *NetworkInterface) Configure() (err error) {
 
 		// TODO: Add check if link is already part of a bond
 		if err = n.enslaveLink(bondIndex, n.SubInterfaces...); err != nil {
+			return err
+		}
+	}
+
+	if n.Wireguard {
+		if err = n.configureWireguard(n.Name, n.WireguardConfig); err != nil {
 			return err
 		}
 	}

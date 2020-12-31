@@ -10,6 +10,8 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 // createLink creates an interface.
@@ -92,6 +94,21 @@ func (n *NetworkInterface) configureBond(idx int, attrs *netlink.AttributeEncode
 		},
 	})
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (n *NetworkInterface) configureWireguard(name string, config *wgtypes.Config) error {
+	c, err := wgctrl.New()
+	if err != nil {
+		return err
+	}
+
+	defer c.Close() // nolint:errcheck
+
+	if err = c.ConfigureDevice(name, *config); err != nil {
 		return err
 	}
 

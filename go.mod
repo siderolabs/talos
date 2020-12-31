@@ -78,13 +78,15 @@ require (
 	golang.org/x/sys v0.0.0-20201130171929-760e229fe7c5
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
-	golang.org/x/tools v0.0.0-20201201064407-fd09bd90d85c // indirect
+	golang.org/x/tools v0.0.0-20201217163546-c88dec5c6b05 // indirect
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20200609130330-bd2cb7843e1b
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
 	k8s.io/api v0.20.1
 	k8s.io/apimachinery v0.20.1
 	k8s.io/apiserver v0.20.1

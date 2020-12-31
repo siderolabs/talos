@@ -58,6 +58,7 @@ var (
 	configDebug             bool
 	networkCIDR             string
 	networkMTU              int
+	wireguardCIDR           string
 	nameservers             []string
 	dnsDomain               string
 	workers                 int
@@ -305,6 +306,15 @@ func create(ctx context.Context) (err error) {
 		}
 	}
 
+	// Wireguard configuration.
+	var wireguardConfigBundle *helpers.WireguardConfigBundle
+	if wireguardCIDR != "" {
+		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips, wireguardCIDR, 51111, masters)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Add talosconfig to provision options so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
@@ -332,6 +342,13 @@ func create(ctx context.Context) (err error) {
 			cfg = configBundle.ControlPlane()
 		}
 
+		if wireguardConfigBundle != nil {
+			cfg, err = wireguardConfigBundle.PatchConfig(nodeReq.IP, cfg)
+			if err != nil {
+				return err
+			}
+		}
+
 		if !skipInjectingConfig {
 			nodeReq.Config = cfg
 		}
@@ -348,11 +365,20 @@ func create(ctx context.Context) (err error) {
 			cfg = configBundle.Join()
 		}
 
+		ip := ips[masters+i-1]
+
+		if wireguardConfigBundle != nil {
+			cfg, err = wireguardConfigBundle.PatchConfig(ip, cfg)
+			if err != nil {
+				return err
+			}
+		}
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:     name,
 				Type:     machine.TypeJoin,
-				IP:       ips[masters+i-1],
+				IP:       ip,
 				Memory:   memory,
 				NanoCPUs: nanoCPUs,
 				Disks:    disks,
@@ -582,6 +608,7 @@ func init() {
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")
 	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network")
+	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")
 	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")

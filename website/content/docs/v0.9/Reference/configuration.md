@@ -352,6 +352,31 @@ network:
           # # DHCP specific options.
           # dhcpOptions:
           #     routeMetric: 1024 # The priority of all routes received via DHCP.
+
+          # # Wireguard specific configuration.
+
+          # # wireguard server example
+          # wireguard:
+          #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+          #     listenPort: 51111 # Specifies a device's listening port.
+          #     # Specifies a list of peer configurations to apply to a device.
+          #     peers:
+          #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+          #           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+          #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+          #           allowedIPs:
+          #             - 192.168.1.0/24
+          # # wireguard peer example
+          # wireguard:
+          #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+          #     # Specifies a list of peer configurations to apply to a device.
+          #     peers:
+          #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+          #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+          #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+          #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+          #           allowedIPs:
+          #             - 192.168.1.0/24
     # Used to statically set the nameservers for the machine.
     nameservers:
         - 9.8.7.6
@@ -1251,6 +1276,31 @@ interfaces:
       # # DHCP specific options.
       # dhcpOptions:
       #     routeMetric: 1024 # The priority of all routes received via DHCP.
+
+      # # Wireguard specific configuration.
+
+      # # wireguard server example
+      # wireguard:
+      #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+      #     listenPort: 51111 # Specifies a device's listening port.
+      #     # Specifies a list of peer configurations to apply to a device.
+      #     peers:
+      #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+      #           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+      #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      #           allowedIPs:
+      #             - 192.168.1.0/24
+      # # wireguard peer example
+      # wireguard:
+      #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+      #     # Specifies a list of peer configurations to apply to a device.
+      #     peers:
+      #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+      #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+      #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      #           allowedIPs:
+      #             - 192.168.1.0/24
 # Used to statically set the nameservers for the machine.
 nameservers:
     - 9.8.7.6
@@ -1322,6 +1372,31 @@ interfaces:
       # # DHCP specific options.
       # dhcpOptions:
       #     routeMetric: 1024 # The priority of all routes received via DHCP.
+
+      # # Wireguard specific configuration.
+
+      # # wireguard server example
+      # wireguard:
+      #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+      #     listenPort: 51111 # Specifies a device's listening port.
+      #     # Specifies a list of peer configurations to apply to a device.
+      #     peers:
+      #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+      #           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+      #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      #           allowedIPs:
+      #             - 192.168.1.0/24
+      # # wireguard peer example
+      # wireguard:
+      #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+      #     # Specifies a list of peer configurations to apply to a device.
+      #     peers:
+      #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+      #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+      #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      #           allowedIPs:
+      #             - 192.168.1.0/24
 ```
 
 
@@ -2708,6 +2783,31 @@ Appears in:
   # # DHCP specific options.
   # dhcpOptions:
   #     routeMetric: 1024 # The priority of all routes received via DHCP.
+
+  # # Wireguard specific configuration.
+
+  # # wireguard server example
+  # wireguard:
+  #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+  #     listenPort: 51111 # Specifies a device's listening port.
+  #     # Specifies a list of peer configurations to apply to a device.
+  #     peers:
+  #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+  #           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+  #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+  #           allowedIPs:
+  #             - 192.168.1.0/24
+  # # wireguard peer example
+  # wireguard:
+  #     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+  #     # Specifies a list of peer configurations to apply to a device.
+  #     peers:
+  #         - publicKey: ABCDEF... # Specifies the public key of this peer.
+  #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+  #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+  #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+  #           allowedIPs:
+  #             - 192.168.1.0/24
 ```
 
 <hr />
@@ -2932,6 +3032,52 @@ dhcpOptions:
 
 <hr />
 
+<div class="dd">
+
+<code>wireguard</code>  <i><a href="#devicewireguardconfig">DeviceWireguardConfig</a></i>
+
+</div>
+<div class="dt">
+
+Wireguard specific configuration.
+Includes things like private key, listen port, peers.
+
+
+
+Examples:
+
+
+``` yaml
+wireguard:
+    privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+    listenPort: 51111 # Specifies a device's listening port.
+    # Specifies a list of peer configurations to apply to a device.
+    peers:
+        - publicKey: ABCDEF... # Specifies the public key of this peer.
+          endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+          # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+          allowedIPs:
+            - 192.168.1.0/24
+```
+
+``` yaml
+wireguard:
+    privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+    # Specifies a list of peer configurations to apply to a device.
+    peers:
+        - publicKey: ABCDEF... # Specifies the public key of this peer.
+          endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+          persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+          # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+          allowedIPs:
+            - 192.168.1.0/24
+```
+
+
+</div>
+
+<hr />
+
 
 
 
@@ -2959,6 +3105,167 @@ routeMetric: 1024 # The priority of all routes received via DHCP.
 <div class="dt">
 
 The priority of all routes received via DHCP.
+
+</div>
+
+<hr />
+
+
+
+
+
+## DeviceWireguardConfig
+DeviceWireguardConfig contains settings for configuring Wireguard network interface.
+
+Appears in:
+
+
+- <code><a href="#device">Device</a>.wireguard</code>
+
+
+``` yaml
+privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+listenPort: 51111 # Specifies a device's listening port.
+# Specifies a list of peer configurations to apply to a device.
+peers:
+    - publicKey: ABCDEF... # Specifies the public key of this peer.
+      endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.
+      # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      allowedIPs:
+        - 192.168.1.0/24
+```
+``` yaml
+privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
+# Specifies a list of peer configurations to apply to a device.
+peers:
+    - publicKey: ABCDEF... # Specifies the public key of this peer.
+      endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
+      # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+      allowedIPs:
+        - 192.168.1.0/24
+```
+
+<hr />
+
+<div class="dd">
+
+<code>privateKey</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies a private key configuration (base64 encoded).
+Can be generated by `wg genkey`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>listenPort</code>  <i>int</i>
+
+</div>
+<div class="dt">
+
+Specifies a device's listening port.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>firewallMark</code>  <i>int</i>
+
+</div>
+<div class="dt">
+
+Specifies a device's firewall mark.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>peers</code>  <i>[]<a href="#devicewireguardpeer">DeviceWireguardPeer</a></i>
+
+</div>
+<div class="dt">
+
+Specifies a list of peer configurations to apply to a device.
+
+</div>
+
+<hr />
+
+
+
+
+
+## DeviceWireguardPeer
+DeviceWireguardPeer a WireGuard device peer configuration.
+
+Appears in:
+
+
+- <code><a href="#devicewireguardconfig">DeviceWireguardConfig</a>.peers</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>publicKey</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies the public key of this peer.
+Can be extracted from private key by running `wg pubkey < private.key > public.key && cat public.key`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>endpoint</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies the endpoint of this peer entry.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>persistentKeepaliveInterval</code>  <i>Duration</i>
+
+</div>
+<div class="dt">
+
+Specifies the persistent keepalive interval for this peer.
+Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>allowedIPs</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
 
 </div>
 
