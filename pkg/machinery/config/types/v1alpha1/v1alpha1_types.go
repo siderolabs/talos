@@ -986,8 +986,9 @@ func (ds *DiskSize) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // DiskPartition represents the options for a disk partition.
 type DiskPartition struct {
-	//   description: |
-	//     This size of partition: either bytes or human readable representation.
+	//   description: >
+	//     The size of partition: either bytes or human readable representation. If `size:`
+	//     is omitted, the partition is sized to occupy the full disk.
 	//   examples:
 	//     - name: Human readable representation.
 	//       value: DiskSize(100000000)

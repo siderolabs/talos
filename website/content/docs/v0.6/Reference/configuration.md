@@ -1161,7 +1161,7 @@ Type: `array`
 
 #### size
 
-This size of the partition in bytes.
+The size of the partition in bytes. If `size:` is omitted, the partition is sized to occupy the full disk.
 
 Type: `uint`
 
