@@ -873,8 +873,8 @@ func init() {
 	DiskPartitionDoc.Fields[0].Name = "size"
 	DiskPartitionDoc.Fields[0].Type = "DiskSize"
 	DiskPartitionDoc.Fields[0].Note = ""
-	DiskPartitionDoc.Fields[0].Description = "This size of partition: either bytes or human readable representation."
-	DiskPartitionDoc.Fields[0].Comments[encoder.LineComment] = "This size of partition: either bytes or human readable representation."
+	DiskPartitionDoc.Fields[0].Description = "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk."
+	DiskPartitionDoc.Fields[0].Comments[encoder.LineComment] = "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk."
 
 	DiskPartitionDoc.Fields[0].AddExample("Human readable representation.", DiskSize(100000000))
 

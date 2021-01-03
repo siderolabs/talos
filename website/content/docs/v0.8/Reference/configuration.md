@@ -398,7 +398,7 @@ disks:
       partitions:
         - mountpoint: /var/mnt/extra # Where to mount the partition.
 
-          # # This size of partition: either bytes or human readable representation.
+          # # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
 
           # # Human readable representation.
           # size: 100 MB
@@ -2446,7 +2446,7 @@ Appears in:
   partitions:
     - mountpoint: /var/mnt/extra # Where to mount the partition.
 
-      # # This size of partition: either bytes or human readable representation.
+      # # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
 
       # # Human readable representation.
       # size: 100 MB
@@ -2505,7 +2505,7 @@ Appears in:
 </div>
 <div class="dt">
 
-This size of partition: either bytes or human readable representation.
+The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
 
 
 
