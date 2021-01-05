@@ -47,7 +47,13 @@ var validateCmd = &cobra.Command{
 
 func init() {
 	validateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
-	validateCmd.Flags().StringVarP(&validateModeArg, "mode", "m", "", "the mode to validate the config for")
+	validateCmd.Flags().StringVarP(
+		&validateModeArg,
+		"mode",
+		"m",
+		"",
+		fmt.Sprintf("the mode to validate the config for (valid values are %s, %s, and %s)", runtime.ModeMetal.String(), runtime.ModeCloud.String(), runtime.ModeContainer.String()),
+	)
 	cli.Should(validateCmd.MarkFlagRequired("mode"))
 	addCommand(validateCmd)
 }
