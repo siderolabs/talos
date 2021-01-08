@@ -61,6 +61,10 @@ func (suite *EtcdSuite) TestEtcdForfeitLeadership() {
 
 	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
 
+	if len(nodes) < 3 {
+		suite.T().Skip("test only can be run on HA etcd clusters")
+	}
+
 	var leader string
 
 	for _, node := range nodes {
@@ -80,6 +84,8 @@ func (suite *EtcdSuite) TestEtcdForfeitLeadership() {
 }
 
 // TestEtcdLeaveCluster tests removing an etcd member.
+//
+//nolint: gocyclo
 func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
@@ -91,7 +97,11 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 
 	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
 
-	node := nodes[2]
+	if len(nodes) < 3 {
+		suite.T().Skip("test only can be run on HA etcd clusters")
+	}
+
+	node := nodes[len(nodes)-1]
 
 	suite.T().Log("Removing etcd member", node)
 
