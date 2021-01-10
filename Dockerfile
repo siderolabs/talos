@@ -51,7 +51,7 @@ RUN cd $(mktemp -d) \
     && go mod init tmp \
     && go get mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
-RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.8.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
+RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
 RUN cd /go/src/github.com/talos-systems/docgen \
     && go build . \
@@ -101,14 +101,14 @@ RUN go generate /pkg/machinery/config/types/v1alpha1/
 WORKDIR /
 
 FROM scratch AS generate
-COPY --from=generate-build /api/common/common.pb.go /pkg/machinery/api/common/
-COPY --from=generate-build /api/health/health.pb.go /pkg/machinery/api/health/
-COPY --from=generate-build /api/security/security.pb.go /pkg/machinery/api/security/
-COPY --from=generate-build /api/machine/machine.pb.go /pkg/machinery/api/machine/
-COPY --from=generate-build /api/time/time.pb.go /pkg/machinery/api/time/
-COPY --from=generate-build /api/network/network.pb.go /pkg/machinery/api/network/
-COPY --from=generate-build /api/cluster/cluster.pb.go /pkg/machinery/api/cluster/
-COPY --from=generate-build /api/storage/storage.pb.go /pkg/machinery/api/storage/
+COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
+COPY --from=generate-build /api/health/*.pb.go /pkg/machinery/api/health/
+COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
+COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
+COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
+COPY --from=generate-build /api/network/*.pb.go /pkg/machinery/api/network/
+COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
+COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos

@@ -10,7 +10,7 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
@@ -21,8 +21,8 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
 	golang.org/x/text v0.3.3 // indirect
-	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
-	google.golang.org/grpc v1.29.0
+	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
+	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
