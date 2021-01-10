@@ -8,7 +8,7 @@ REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-13-g05b7372
+TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-16-g0fe682e
 PKGS ?= v0.3.0-60-g2409ba7
 EXTRAS ?= v0.1.0-6-gdc32cc8
 GO_VERSION ?= 1.15
