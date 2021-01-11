@@ -310,6 +310,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 	// Loop through address responses and use the first hostname
 	// and address response.
+outer:
 	for _, intName := range interfaceNames {
 		iface := n.Interfaces[intName]
 
@@ -329,7 +330,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 				address = method.Address().IP
 
-				break
+				break outer
 			}
 		}
 	}

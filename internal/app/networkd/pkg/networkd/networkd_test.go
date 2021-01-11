@@ -199,6 +199,11 @@ func dhcpConfigFile() config.Provider {
 					{
 						DeviceInterface: "eth0",
 					},
+					{
+						DeviceInterface: "eth1",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceMTU:       9100,
+					},
 				},
 			},
 		},
