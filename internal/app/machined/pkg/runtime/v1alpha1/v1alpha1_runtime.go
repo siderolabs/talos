@@ -58,7 +58,7 @@ func (r *Runtime) SetConfig(b []byte) error {
 
 	r.c = cfg
 
-	return nil
+	return r.s.V1Alpha2().SetConfig(cfg)
 }
 
 // State implements the Runtime interface.

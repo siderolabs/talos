@@ -62,10 +62,11 @@ require (
 	github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
-	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688
+	github.com/talos-systems/go-retry v0.2.0
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.0
+	github.com/talos-systems/os-runtime v0.0.0-20210119124441-98acf0d2d332
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect

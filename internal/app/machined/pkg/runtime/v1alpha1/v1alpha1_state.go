@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -22,6 +23,7 @@ type State struct {
 	platform runtime.Platform
 	machine  *MachineState
 	cluster  *ClusterState
+	v2       runtime.V1Alpha2State
 }
 
 // MachineState represents the machine's state.
@@ -55,10 +57,16 @@ func NewState() (s *State, err error) {
 
 	cluster := &ClusterState{}
 
+	v2State, err := v1alpha2.NewState()
+	if err != nil {
+		return nil, err
+	}
+
 	s = &State{
 		platform: p,
 		cluster:  cluster,
 		machine:  machine,
+		v2:       v2State,
 	}
 
 	return s, nil
@@ -77,6 +85,11 @@ func (s *State) Machine() runtime.MachineState {
 // Cluster implements the state interface.
 func (s *State) Cluster() runtime.ClusterState {
 	return s.cluster
+}
+
+// V1Alpha2 implements the state interface.
+func (s *State) V1Alpha2() runtime.V1Alpha2State {
+	return s.v2
 }
 
 func (s *MachineState) probeDisk() error {

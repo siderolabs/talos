@@ -24,14 +24,24 @@ func NewEncoder(value interface{}) *Encoder {
 	}
 }
 
-// Encode convert value to yaml.
-func (e *Encoder) Encode() ([]byte, error) {
+// Marshal converts value to YAML-serializable value (suitable for MarshalYAML).
+func (e *Encoder) Marshal() (*yaml.Node, error) {
 	node, err := toYamlNode(e.value)
 	if err != nil {
 		return nil, err
 	}
 
 	addComments(node, getDoc(e.value), HeadComment, LineComment)
+
+	return node, nil
+}
+
+// Encode converts value to yaml.
+func (e *Encoder) Encode() ([]byte, error) {
+	node, err := e.Marshal()
+	if err != nil {
+		return nil, err
+	}
 
 	// special handling for case when we get an empty output
 	if node.Kind == yaml.MappingNode && len(node.Content) == 0 && node.FootComment != "" {

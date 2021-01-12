@@ -66,10 +66,8 @@ func (c *Config) String() (string, error) {
 }
 
 // Bytes implements the config.Provider interface.
-func (c *Config) Bytes() (res []byte, err error) {
-	res, err = encoder.NewEncoder(c).Encode()
-
-	return
+func (c *Config) Bytes() ([]byte, error) {
+	return encoder.NewEncoder(c).Encode()
 }
 
 // ApplyDynamicConfig implements the config.Provider interface.

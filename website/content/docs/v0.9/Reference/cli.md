@@ -1015,6 +1015,35 @@ Generate CAs, certificates, and private keys
 * [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
 * [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
 
+## talosctl get
+
+Get a specific resource or list of resources.
+
+```
+talosctl get <type> [<id>] [flags]
+```
+
+### Options
+
+```
+  -h, --help               help for get
+      --namespace string   resource namespace (default is to use default namespace per resource)
+  -o, --output string      output mode (table, yaml) (default "table")
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl health
 
 Check cluster health
@@ -1784,6 +1813,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources.
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl images](#talosctl-images)	 - List the default images used by Talos
 * [talosctl interfaces](#talosctl-interfaces)	 - List network interfaces
