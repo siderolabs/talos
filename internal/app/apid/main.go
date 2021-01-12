@@ -75,6 +75,8 @@ func main() {
 		"/machine.MachineService/List",
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/Read",
+		"/resource.ResourceService/List",
+		"/resource.ResourceService/Watch",
 		"/os.OSService/Dmesg",
 		"/cluster.ClusterService/HealthCheck",
 	} {

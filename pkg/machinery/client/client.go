@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
+	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
 	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/client/config"
@@ -47,13 +48,17 @@ type Credentials struct {
 // Client implements the proto.MachineServiceClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
-	options       *Options
-	conn          *grpc.ClientConn
-	MachineClient machineapi.MachineServiceClient
-	TimeClient    timeapi.TimeServiceClient
-	NetworkClient networkapi.NetworkServiceClient
-	ClusterClient clusterapi.ClusterServiceClient
-	StorageClient storageapi.StorageServiceClient
+	options *Options
+	conn    *grpc.ClientConn
+
+	MachineClient  machineapi.MachineServiceClient
+	TimeClient     timeapi.TimeServiceClient
+	NetworkClient  networkapi.NetworkServiceClient
+	ClusterClient  clusterapi.ClusterServiceClient
+	StorageClient  storageapi.StorageServiceClient
+	ResourceClient resourceapi.ResourceServiceClient
+
+	Resources *ResourcesClient
 }
 
 func (c *Client) resolveConfigContext() error {
@@ -149,6 +154,9 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
+	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn)
+
+	c.Resources = &ResourcesClient{c.ResourceClient}
 
 	return c, nil
 }

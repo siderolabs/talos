@@ -30,6 +30,7 @@ func main() {
 	machinedBackend := backend.NewLocal("machined", constants.MachineSocketPath)
 	router.RegisterLocalBackend("os.OSService", machinedBackend)
 	router.RegisterLocalBackend("machine.MachineService", machinedBackend)
+	router.RegisterLocalBackend("resource.ResourceService", machinedBackend)
 	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
 	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
 	router.RegisterLocalBackend("cluster.ClusterService", machinedBackend)

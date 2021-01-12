@@ -173,6 +173,22 @@ description: Talos gRPC API reference.
   
     - [NetworkService](#network.NetworkService)
   
+- [resource/resource.proto](#resource/resource.proto)
+    - [Get](#resource.Get)
+    - [GetRequest](#resource.GetRequest)
+    - [GetResponse](#resource.GetResponse)
+    - [ListRequest](#resource.ListRequest)
+    - [ListResponse](#resource.ListResponse)
+    - [Metadata](#resource.Metadata)
+    - [Resource](#resource.Resource)
+    - [Spec](#resource.Spec)
+    - [WatchRequest](#resource.WatchRequest)
+    - [WatchResponse](#resource.WatchResponse)
+  
+    - [EventType](#resource.EventType)
+  
+    - [ResourceService](#resource.ResourceService)
+  
 - [security/security.proto](#security/security.proto)
     - [CertificateRequest](#securityapi.CertificateRequest)
     - [CertificateResponse](#securityapi.CertificateResponse)
@@ -2833,6 +2849,211 @@ The network service definition.
 | ----------- | ------------ | ------------- | ------------|
 | Routes | [.google.protobuf.Empty](#google.protobuf.Empty) | [RoutesResponse](#network.RoutesResponse) |  |
 | Interfaces | [.google.protobuf.Empty](#google.protobuf.Empty) | [InterfacesResponse](#network.InterfacesResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="resource/resource.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/resource.proto
+
+
+
+<a name="resource.Get"></a>
+
+### Get
+The GetResponse message contains the Resource returned.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| definition | [Resource](#resource.Resource) |  |  |
+| resource | [Resource](#resource.Resource) |  |  |
+
+
+
+
+
+
+<a name="resource.GetRequest"></a>
+
+### GetRequest
+rpc Get
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="resource.GetResponse"></a>
+
+### GetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Get](#resource.Get) | repeated |  |
+
+
+
+
+
+
+<a name="resource.ListRequest"></a>
+
+### ListRequest
+rpc List
+The ListResponse message contains the Resource returned.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="resource.ListResponse"></a>
+
+### ListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| definition | [Resource](#resource.Resource) |  |  |
+| resource | [Resource](#resource.Resource) |  |  |
+
+
+
+
+
+
+<a name="resource.Metadata"></a>
+
+### Metadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+| phase | [string](#string) |  |  |
+| finalizers | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="resource.Resource"></a>
+
+### Resource
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [Metadata](#resource.Metadata) |  |  |
+| spec | [Spec](#resource.Spec) |  |  |
+
+
+
+
+
+
+<a name="resource.Spec"></a>
+
+### Spec
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| yaml | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="resource.WatchRequest"></a>
+
+### WatchRequest
+rpc Watch
+The WatchResponse message contains the Resource returned.
+
+
+
+
+
+
+<a name="resource.WatchResponse"></a>
+
+### WatchResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| event_type | [EventType](#resource.EventType) |  |  |
+| resource | [Resource](#resource.Resource) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="resource.EventType"></a>
+
+### EventType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CREATED | 0 |  |
+| UPDATED | 1 |  |
+| DELETED | 2 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="resource.ResourceService"></a>
+
+### ResourceService
+The resource service definition.
+
+ResourceService provides user-facing API for the Talos resources.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Get | [GetRequest](#resource.GetRequest) | [GetResponse](#resource.GetResponse) |  |
+| List | [ListRequest](#resource.ListRequest) | [ListResponse](#resource.ListResponse) stream |  |
+| Watch | [WatchRequest](#resource.WatchRequest) | [WatchResponse](#resource.WatchResponse) stream |  |
 
  <!-- end services -->
 

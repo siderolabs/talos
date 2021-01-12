@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -31,8 +32,9 @@ import (
 // Controller represents the controller responsible for managing the execution
 // of sequences.
 type Controller struct {
-	r *Runtime
-	s *Sequencer
+	r  *Runtime
+	s  *Sequencer
+	v2 *v1alpha2.Controller
 
 	semaphore int32
 }
@@ -69,6 +71,11 @@ func NewController(b []byte) (*Controller, error) {
 	ctlr := &Controller{
 		r: NewRuntime(cfg, s, e, l),
 		s: NewSequencer(),
+	}
+
+	ctlr.v2, err = v1alpha2.NewController(ctlr.r, l)
+	if err != nil {
+		return nil, err
 	}
 
 	return ctlr, nil
@@ -137,6 +144,11 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 	}
 
 	return nil
+}
+
+// V1Alpha2 implements the controller interface.
+func (c *Controller) V1Alpha2() runtime.V1Alpha2Controller {
+	return c.v2
 }
 
 // Runtime implements the controller interface.

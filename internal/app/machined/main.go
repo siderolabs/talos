@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -139,6 +140,18 @@ func main() {
 		if e := c.ListenForEvents(); e != nil {
 			log.Printf("WARNING: signals and ACPI events will be ignored: %+v", e)
 		}
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start v2 controller runtime.
+	go func() {
+		if e := c.V1Alpha2().Run(ctx); e != nil {
+			handle(fmt.Errorf("fatal controller runtime error: %s", e))
+		}
+
+		log.Printf("controller runtime finished")
 	}()
 
 	// Initialize the machine.

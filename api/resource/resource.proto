@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package resource;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource";
+option java_multiple_files = true;
+option java_outer_classname = "ResourceApi";
+option java_package = "com.resource.api";
+
+import "common/common.proto";
+
+// The resource service definition.
+//
+// ResourceService provides user-facing API for the Talos resources.
+service ResourceService {
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (stream ListResponse);
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
+}
+
+// common resource definition
+
+message Resource {
+    Metadata metadata = 1;
+    Spec spec = 2;
+}
+
+message Metadata {
+    string namespace = 1;
+    string type = 2;
+    string id = 3;
+    string version = 4;
+    string phase = 5;
+    repeated string finalizers = 6;
+}
+
+message Spec {
+    bytes yaml = 1;
+}
+
+// rpc Get
+message GetRequest {
+    string namespace = 1;
+    string type = 2;
+    string id = 3;
+}
+
+// The GetResponse message contains the Resource returned.
+message Get {
+    common.Metadata metadata = 1;
+    Resource definition = 2;
+    Resource resource = 3;
+}
+
+message GetResponse { repeated Get messages = 1; }
+
+// rpc List
+// The ListResponse message contains the Resource returned.
+message ListRequest {
+    string namespace = 1;
+    string type = 2;
+}
+
+message ListResponse {
+    common.Metadata metadata = 1;
+    Resource definition = 2;
+    Resource resource = 3;
+}
+
+// rpc Watch
+// The WatchResponse message contains the Resource returned.
+message WatchRequest {}
+
+enum EventType {
+    CREATED = 0;
+    UPDATED = 1;
+    DELETED = 2;
+}
+
+message WatchResponse {
+    common.Metadata metadata = 1;
+    EventType event_type = 2;
+    Resource resource = 3;
+}
