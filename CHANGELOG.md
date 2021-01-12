@@ -1,10 +1,22 @@
 
+<a name="v0.8.1"></a>
+## [v0.8.1](https://github.com/talos-systems/talos/compare/v0.8.0...v0.8.1) (2020-12-29)
+
+### Fix
+
+* networkd updates for Packet, hostname detection, console kernel arg
+
+
 <a name="v0.8.0"></a>
-## [v0.8.0](https://github.com/talos-systems/talos/compare/v0.8.0-beta.0...v0.8.0) (2020-12-20)
+## [v0.8.0](https://github.com/talos-systems/talos/compare/v0.8.0-beta.0...v0.8.0) (2020-12-23)
 
 ### Fix
 
 * backport fixes from 0.9 after 0.8-beta.0
+
+### Release
+
+* **v0.8.0:** prepare release
 
 
 <a name="v0.8.0-beta.0"></a>
