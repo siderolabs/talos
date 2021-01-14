@@ -26,6 +26,9 @@ func (suite *ListSuite) SuiteName() string {
 func (suite *ListSuite) TestSuccess() {
 	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/etc"},
 		base.StdoutShouldMatch(regexp.MustCompile(`os-release`)))
+
+	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/"},
+		base.StdoutShouldNotMatch(regexp.MustCompile(`os-release`)))
 }
 
 func init() {
