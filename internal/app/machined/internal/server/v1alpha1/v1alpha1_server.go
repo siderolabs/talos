@@ -684,14 +684,18 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 		req.Root = "/"
 	}
 
-	var opts []archiver.WalkerOption
+	var recursionDepth int
 
 	if req.Recurse {
 		if req.RecursionDepth == 0 {
-			opts = append(opts, archiver.WithMaxRecurseDepth(-1))
+			recursionDepth = -1
 		} else {
-			opts = append(opts, archiver.WithMaxRecurseDepth(int(req.RecursionDepth)))
+			recursionDepth = int(req.RecursionDepth)
 		}
+	}
+
+	opts := []archiver.WalkerOption{
+		archiver.WithMaxRecurseDepth(recursionDepth),
 	}
 
 	if len(req.Types) > 0 {
