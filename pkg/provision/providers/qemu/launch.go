@@ -42,6 +42,7 @@ type LaunchConfig struct {
 	PFlashImages      []string
 	KernelArgs        string
 	MachineType       string
+	MonitorPath       string
 	EnableKVM         bool
 	BootloaderEnabled bool
 	NodeUUID          uuid.UUID
@@ -205,6 +206,8 @@ func launchVM(config *LaunchConfig) error {
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=virtio-net-pci",
 		"-device", "virtio-rng-pci",
+		"-device", "virtio-balloon,deflate-on-oom=on",
+		"-monitor", fmt.Sprintf("unix:%s,server,nowait", config.MonitorPath),
 		"-no-reboot",
 		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),

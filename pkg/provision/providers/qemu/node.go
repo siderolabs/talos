@@ -113,6 +113,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		KernelArgs:        cmdline.String(),
 		MachineType:       arch.QemuMachine(),
 		PFlashImages:      pflashImages,
+		MonitorPath:       state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
 		BootloaderEnabled: opts.BootloaderEnabled,
 		NodeUUID:          nodeUUID,
