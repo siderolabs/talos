@@ -71,7 +71,7 @@ const (
 
 	previousK8sVersion = "1.19.4"
 	stableK8sVersion   = "1.20.1"
-	currentK8sVersion  = "1.20.1"
+	currentK8sVersion  = "1.20.2"
 )
 
 var (

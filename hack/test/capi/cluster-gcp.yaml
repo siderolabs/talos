@@ -44,7 +44,7 @@ kind: TalosControlPlane
 metadata:
   name: talos-e2e-{{TAG}}-gcp-controlplane
 spec:
-  version: v1.20.1
+  version: v1.20.2
   replicas: 3
   infrastructureTemplate:
     kind: GCPMachineTemplate
@@ -102,7 +102,7 @@ spec:
         kind: GCPMachineTemplate
         name: talos-e2e-{{TAG}}-gcp-workers
         namespace: default
-      version: 1.20.1
+      version: 1.20.2
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: GCPMachineTemplate
