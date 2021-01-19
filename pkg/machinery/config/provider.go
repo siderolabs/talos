@@ -7,6 +7,7 @@ package config
 import (
 	"context"
 	"crypto/tls"
+	"net"
 	"net/url"
 	"os"
 	"time"
@@ -248,12 +249,13 @@ type ClusterConfig interface {
 	Token() Token
 	CertSANs() []string
 	CA() *x509.PEMEncodedCertificateAndKey
+	AggregatorCA() *x509.PEMEncodedCertificateAndKey
+	ServiceAccount() *x509.PEMEncodedKey
 	AESCBCEncryptionSecret() string
 	Config(machine.Type) (string, error)
 	Etcd() Etcd
 	Network() ClusterNetwork
 	LocalAPIServerPort() int
-	PodCheckpointer() PodCheckpointer
 	CoreDNS() CoreDNS
 	ExtraManifestURLs() []string
 	ExtraManifestHeaderMap() map[string]string
@@ -268,6 +270,8 @@ type ClusterNetwork interface {
 	PodCIDR() string
 	ServiceCIDR() string
 	DNSDomain() string
+	APIServerIPs() ([]net.IP, error)
+	DNSServiceIPs() ([]net.IP, error)
 }
 
 // CNI defines the requirements for a config that pertains to Kubernetes
@@ -325,13 +329,7 @@ type Token interface {
 	Secret() string
 }
 
-// PodCheckpointer defines the requirements for a config that pertains to bootkube
-// pod-checkpointer options.
-type PodCheckpointer interface {
-	Image() string
-}
-
-// CoreDNS defines the requirements for a config that pertains to bootkube
+// CoreDNS defines the requirements for a config that pertains to CoreDNS
 // coredns options.
 type CoreDNS interface {
 	Image() string

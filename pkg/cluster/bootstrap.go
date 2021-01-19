@@ -19,8 +19,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// APIBoostrapper bootstraps cluster via Talos API.
-type APIBoostrapper struct {
+// APIBootstrapper bootstraps cluster via Talos API.
+type APIBootstrapper struct {
 	ClientProvider
 	Info
 }
@@ -28,7 +28,7 @@ type APIBoostrapper struct {
 // Bootstrap the cluster via the API.
 //
 // Bootstrap implements Bootstrapper interface.
-func (s *APIBoostrapper) Bootstrap(ctx context.Context, out io.Writer) error {
+func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	cli, err := s.Client()
 	if err != nil {
 		return err

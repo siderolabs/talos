@@ -266,12 +266,6 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 	phases = phases.Append(
 		"etcd",
 		BootstrapEtcd,
-	).Append(
-		"kubernetes",
-		BootstrapKubernetes,
-	).Append(
-		"initStatus",
-		SetInitStatus,
 	)
 
 	return phases
@@ -281,15 +275,6 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.AppendList(stopAllPhaselist(r)).
 		Append("reboot", Reboot)
-
-	return phases
-}
-
-// Recover is the recover sequence.
-func (*Sequencer) Recover(r runtime.Runtime, in *machineapi.RecoverRequest) []runtime.Phase {
-	phases := PhaseList{}
-
-	phases = phases.Append("recover", Recover)
 
 	return phases
 }

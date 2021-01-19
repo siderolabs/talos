@@ -1,0 +1,77 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package v1alpha1
+
+import (
+	"fmt"
+
+	"github.com/talos-systems/os-runtime/pkg/resource"
+	"github.com/talos-systems/os-runtime/pkg/resource/core"
+)
+
+// BootstrapStatusType is type of BootstrapStatus resource.
+const BootstrapStatusType = resource.Type("v1alpha1/bootstrapStatus")
+
+// BootstrapStatusID is a singleton instance ID.
+const BootstrapStatusID = resource.ID("bootstrapStatus")
+
+// BootstrapStatus describes v1alpha1 (bootkube) bootstrap status.
+type BootstrapStatus struct {
+	md   resource.Metadata
+	spec BootstrapStatusSpec
+}
+
+// BootstrapStatusSpec describe service state.
+type BootstrapStatusSpec struct {
+	SelfHostedControlPlane bool `yaml:"selfHostedControlPlane"`
+}
+
+// NewBootstrapStatus initializes a BootstrapStatus resource.
+func NewBootstrapStatus() *BootstrapStatus {
+	r := &BootstrapStatus{
+		md:   resource.NewMetadata(NamespaceName, BootstrapStatusType, BootstrapStatusID, resource.VersionUndefined),
+		spec: BootstrapStatusSpec{},
+	}
+
+	r.md.BumpVersion()
+
+	return r
+}
+
+// Metadata implements resource.Resource.
+func (r *BootstrapStatus) Metadata() *resource.Metadata {
+	return &r.md
+}
+
+// Spec implements resource.Resource.
+func (r *BootstrapStatus) Spec() interface{} {
+	return r.spec
+}
+
+func (r *BootstrapStatus) String() string {
+	return fmt.Sprintf("v1alpha1.BootstrapStatus(%q)", r.md.ID())
+}
+
+// DeepCopy implements resource.Resource.
+func (r *BootstrapStatus) DeepCopy() resource.Resource {
+	return &BootstrapStatus{
+		md:   r.md,
+		spec: r.spec,
+	}
+}
+
+// ResourceDefinition implements core.ResourceDefinitionProvider interface.
+func (r *BootstrapStatus) ResourceDefinition() core.ResourceDefinitionSpec {
+	return core.ResourceDefinitionSpec{
+		Type:             BootstrapStatusType,
+		Aliases:          []resource.Type{"bootstrapStatus"},
+		DefaultNamespace: NamespaceName,
+	}
+}
+
+// Status returns .spec.
+func (r *BootstrapStatus) Status() *BootstrapStatusSpec {
+	return &r.spec
+}

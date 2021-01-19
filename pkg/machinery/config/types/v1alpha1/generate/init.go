@@ -76,6 +76,8 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			CNI:           in.CNIConfig,
 		},
 		ClusterCA:                     in.Certs.K8s,
+		ClusterAggregatorCA:           in.Certs.K8sAggregator,
+		ClusterServiceAccount:         in.Certs.K8sServiceAccount,
 		BootstrapToken:                in.Secrets.BootstrapToken,
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 	}

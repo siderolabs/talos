@@ -125,6 +125,7 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	event := events.ServiceEvent{
 		Message:   message,
 		State:     svcrunner.state,
+		Health:    change.New,
 		Timestamp: time.Now(),
 	}
 	svcrunner.events.Push(event)
@@ -136,6 +137,10 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 
 	if isUp {
 		svcrunner.notifyEvent(StateEventUp)
+	}
+
+	if svcrunner.runtime != nil {
+		svcrunner.runtime.Events().Publish(event.AsProto(svcrunner.id))
 	}
 }
 

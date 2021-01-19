@@ -57,6 +57,7 @@ import (
 	"github.com/talos-systems/talos/pkg/chunker/stream"
 	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -98,6 +99,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterMachineServiceServer(obj, s)
 	cluster.RegisterClusterServiceServer(obj, s)
 	resource.RegisterResourceServiceServer(obj, &ResourceServer{server: s})
+	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 }
 
 // ApplyConfiguration implements machine.MachineService.
@@ -530,25 +532,7 @@ func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply
 		return nil, fmt.Errorf("recover can only be performed on a control plane node")
 	}
 
-	go func() {
-		if err := s.Controller.Run(runtime.SequenceRecover, in); err != nil {
-			log.Println("recover failed:", err)
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
-			}
-		}
-	}()
-
-	reply = &machine.RecoverResponse{
-		Messages: []*machine.Recover{
-			{},
-		},
-	}
-
-	return reply, nil
+	return nil, fmt.Errorf("recover is not supported since Talos 0.9, use apply-config to update control plane configuration")
 }
 
 // ServiceList returns list of the registered services and their status.
@@ -1638,7 +1622,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	var client *etcd.Client
 
 	if in.QueryLocal {
-		client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
+		client, err = etcd.NewLocalClient()
 	} else {
 		client, err = etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 	}

@@ -114,6 +114,10 @@ var (
 		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
 	}
 
+	pemEncodedKeyExample *x509.PEMEncodedKey = &x509.PEMEncodedKey{
+		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
+	}
+
 	machineKubeletExample = &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
 		KubeletExtraArgs: map[string]string{
@@ -570,6 +574,20 @@ type ClusterConfig struct {
 	//       value: pemEncodedCertificateExample
 	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
+	//     The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
+	//
+	//     This CA can be self-signed.
+	//   examples:
+	//     - name: AggregatorCA example.
+	//       value: pemEncodedCertificateExample
+	ClusterAggregatorCA *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA,omitempty"`
+	//   description: |
+	//     The base64 encoded private key for service account token generation.
+	//   examples:
+	//     - name: AggregatorCA example.
+	//       value: pemEncodedKeyExample
+	ClusterServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount,omitempty"`
+	//   description: |
 	//     API server specific configuration options.
 	//   examples:
 	//     - value: clusterAPIServerExample
@@ -606,7 +624,7 @@ type ClusterConfig struct {
 	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
 	//   description: |
 	//     A list of urls that point to additional manifests.
-	//     These will get automatically deployed by bootkube.
+	//     These will get automatically deployed as part of the bootstrap.
 	//   examples:
 	//     - value: >
 	//        []string{
@@ -920,7 +938,7 @@ type ClusterNetworkConfig struct {
 	//     The "name" key only supports options of "flannel" or "custom".
 	//     URLs is only used if name is equal to "custom".
 	//     URLs should point to the set of YAML files to be deployed.
-	//     An empty struct or any other name will default to bootkube's flannel.
+	//     An empty struct or any other name will default to Flannel CNI.
 	//   examples:
 	//     - value: clusterCustomCNIExample
 	CNI *CNIConfig `yaml:"cni,omitempty"`

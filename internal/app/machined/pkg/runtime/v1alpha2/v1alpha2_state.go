@@ -14,6 +14,8 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state/registry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 )
@@ -53,10 +55,31 @@ func NewState() (*State, error) {
 		return nil, err
 	}
 
+	if err := s.namespaceRegistry.Register(ctx, k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources.", true); err != nil {
+		return nil, err
+	}
+
+	if err := s.namespaceRegistry.Register(ctx, k8s.ExtraNamespaceName, "Kubernetes extra configuration resources.", true); err != nil {
+		return nil, err
+	}
+
+	if err := s.namespaceRegistry.Register(ctx, secrets.NamespaceName, "Resources with secret material.", true); err != nil {
+		return nil, err
+	}
+
 	// register Talos resources
 	for _, r := range []resource.Resource{
+		&v1alpha1.BootstrapStatus{},
 		&v1alpha1.Service{},
 		&config.V1Alpha1{},
+		&config.MachineType{},
+		&config.K8sControlPlane{},
+		&k8s.Manifest{},
+		&k8s.ManifestStatus{},
+		&k8s.StaticPod{},
+		&k8s.StaticPodStatus{},
+		&k8s.SecretsStatus{},
+		&secrets.Kubernetes{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {
 			return nil, err

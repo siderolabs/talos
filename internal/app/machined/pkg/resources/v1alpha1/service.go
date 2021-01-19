@@ -73,3 +73,18 @@ func (r *Service) ResourceDefinition() core.ResourceDefinitionSpec {
 func (r *Service) SetRunning(running bool) {
 	r.spec.Running = true
 }
+
+// SetHealthy changes .spec.healthy.
+func (r *Service) SetHealthy(healthy bool) {
+	r.spec.Healthy = true
+}
+
+// Running returns .spec.running.
+func (r *Service) Running() bool {
+	return r.spec.Running
+}
+
+// Healthy returns .spec.healthy.
+func (r *Service) Healthy() bool {
+	return r.spec.Healthy
+}

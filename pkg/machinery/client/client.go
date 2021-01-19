@@ -29,6 +29,7 @@ import (
 
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
@@ -57,8 +58,10 @@ type Client struct {
 	ClusterClient  clusterapi.ClusterServiceClient
 	StorageClient  storageapi.StorageServiceClient
 	ResourceClient resourceapi.ResourceServiceClient
+	InspectClient  inspectapi.InspectServiceClient
 
 	Resources *ResourcesClient
+	Inspect   *InspectClient
 }
 
 func (c *Client) resolveConfigContext() error {
@@ -155,8 +158,10 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn)
+	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 
 	c.Resources = &ResourcesClient{c.ResourceClient}
+	c.Inspect = &InspectClient{c.InspectClient}
 
 	return c, nil
 }

@@ -28,6 +28,15 @@ description: Talos gRPC API reference.
   
     - [Health](#health.Health)
   
+- [inspect/inspect.proto](#inspect/inspect.proto)
+    - [ControllerDependencyEdge](#inspect.ControllerDependencyEdge)
+    - [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse)
+    - [ControllerRuntimeDependency](#inspect.ControllerRuntimeDependency)
+  
+    - [DependencyEdgeType](#inspect.DependencyEdgeType)
+  
+    - [InspectService](#inspect.InspectService)
+  
 - [machine/machine.proto](#machine/machine.proto)
     - [ApplyConfiguration](#machine.ApplyConfiguration)
     - [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest)
@@ -475,6 +484,97 @@ Common metadata message nested in all reply message types
 | Check | [.google.protobuf.Empty](#google.protobuf.Empty) | [HealthCheckResponse](#health.HealthCheckResponse) |  |
 | Watch | [HealthWatchRequest](#health.HealthWatchRequest) | [HealthCheckResponse](#health.HealthCheckResponse) stream |  |
 | Ready | [.google.protobuf.Empty](#google.protobuf.Empty) | [ReadyCheckResponse](#health.ReadyCheckResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="inspect/inspect.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## inspect/inspect.proto
+
+
+
+<a name="inspect.ControllerDependencyEdge"></a>
+
+### ControllerDependencyEdge
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| controller_name | [string](#string) |  |  |
+| edge_type | [DependencyEdgeType](#inspect.DependencyEdgeType) |  |  |
+| resource_namespace | [string](#string) |  |  |
+| resource_type | [string](#string) |  |  |
+| resource_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="inspect.ControllerRuntimeDependenciesResponse"></a>
+
+### ControllerRuntimeDependenciesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ControllerRuntimeDependency](#inspect.ControllerRuntimeDependency) | repeated |  |
+
+
+
+
+
+
+<a name="inspect.ControllerRuntimeDependency"></a>
+
+### ControllerRuntimeDependency
+The ControllerRuntimeDependency message contains the graph of controller-resource dependencies.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| edges | [ControllerDependencyEdge](#inspect.ControllerDependencyEdge) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="inspect.DependencyEdgeType"></a>
+
+### DependencyEdgeType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MANAGES | 0 |  |
+| STRONG | 1 |  |
+| WEAK | 2 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="inspect.InspectService"></a>
+
+### InspectService
+The inspect service definition.
+
+InspectService provides auxilary API to inspect OS internals.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ControllerRuntimeDependencies | [.google.protobuf.Empty](#google.protobuf.Empty) | [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse) |  |
 
  <!-- end services -->
 
@@ -2125,6 +2225,7 @@ rpc servicestart
 | service | [string](#string) |  |  |
 | action | [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action) |  |  |
 | message | [string](#string) |  |  |
+| health | [ServiceHealth](#machine.ServiceHealth) |  |  |
 
 
 

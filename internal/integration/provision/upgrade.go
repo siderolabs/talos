@@ -153,7 +153,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 // upgradeSingeNodeStage upgrade last release of Talos to the current version of Talos for single-node cluster with preserve and stage.
 func upgradeSingeNodeStage() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-stage-%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("preserve-stage-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),

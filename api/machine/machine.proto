@@ -126,6 +126,7 @@ message ServiceStateEvent {
   };
   Action action = 2;
   string message = 3;
+  ServiceHealth health = 4;
 };
 
 message EventsRequest {

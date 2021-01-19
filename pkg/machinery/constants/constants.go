@@ -123,6 +123,9 @@ const (
 	// PATH defines all locations where executables are stored.
 	PATH = "/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
 
+	// KubernetesDefaultCertificateValidityDuration specifies default certificate duration for Kubernetes generated certificates.
+	KubernetesDefaultCertificateValidityDuration = time.Hour * 24 * 365
+
 	// DefaultCertificatesDir is the path the the Kubernetes PKI directory.
 	DefaultCertificatesDir = "/etc/kubernetes/pki"
 
@@ -131,18 +134,6 @@ const (
 
 	// KubernetesCAKey is the path to the root CA private key.
 	KubernetesCAKey = DefaultCertificatesDir + "/" + "ca.key"
-
-	// KubernetesSACert is the path to the SA certificate.
-	KubernetesSACert = DefaultCertificatesDir + "/" + "sa.crt"
-
-	// KubernetesSAKey is the path to the SA private key.
-	KubernetesSAKey = DefaultCertificatesDir + "/" + "sa.key"
-
-	// KubernetesFrontProxyCACert is the path to the front proxy CA certificate.
-	KubernetesFrontProxyCACert = DefaultCertificatesDir + "/" + "fp.crt"
-
-	// KubernetesFrontProxyCAKey is the path to the front proxy CA private key.
-	KubernetesFrontProxyCAKey = DefaultCertificatesDir + "/" + "fp.key"
 
 	// KubernetesEtcdCACert is the path to the etcd CA certificate.
 	KubernetesEtcdCACert = EtcdPKIPath + "/" + "ca.crt"
@@ -156,20 +147,8 @@ const (
 	// KubernetesEtcdPeerKey is the path to the etcd CA private key.
 	KubernetesEtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
 
-	// KubernetesEtcdServerCert defines etcd's server certificate name.
-	KubernetesEtcdServerCert = EtcdPKIPath + "/" + "client.crt"
-
-	// KubernetesEtcdServerKey defines etcd's server key name.
-	KubernetesEtcdServerKey = EtcdPKIPath + "/" + "client.key"
-
 	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic.
 	KubernetesEtcdListenClientPort = "2379"
-
-	// KubernetesAPIServerEtcdClientCert defines apiserver's etcd client certificate name.
-	KubernetesAPIServerEtcdClientCert = DefaultCertificatesDir + "/" + "apiserver-etcd-client.crt"
-
-	// KubernetesAPIServerEtcdClientKey defines apiserver's etcd client key name.
-	KubernetesAPIServerEtcdClientKey = DefaultCertificatesDir + "/" + "apiserver-etcd-client.key"
 
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
 	KubernetesAdminCertCommonName = "apiserver-kubelet-client"
@@ -180,9 +159,30 @@ const (
 	// KubernetesAdminCertDefaultLifetime defines default lifetime for Kubernetes generated admin certificate.
 	KubernetesAdminCertDefaultLifetime = 365 * 24 * time.Hour
 
+	// KubebernetesStaticSecretsDir defines ephemeral directory which contains rendered secrets for controlplane components.
+	KubebernetesStaticSecretsDir = "/system/secrets/kubernetes"
+
+	// KubernetesAPIServerSecretsDir defines ephemeral directory with kube-apiserver secrets.
+	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
+
+	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.
+	KubernetesControllerManagerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-controller-manager"
+
+	// KubernetesSchedulerSecretsDir defines ephemeral directory with kube-scheduler secrets.
+	KubernetesSchedulerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-scheduler"
+
+	// KubernetesRunUser defines UID to run control plane components.
+	KubernetesRunUser = 65534
+
 	// KubeletBootstrapKubeconfig is the path to the kubeconfig required to
 	// bootstrap the kubelet.
 	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
+
+	// KubeletPort is the kubelet port for secure API.
+	KubeletPort = 10250
+
+	// KubeletPKIDir is the path to the directory where kubelet stores issues certificates and keys.
+	KubeletPKIDir = "/var/lib/kubelet/pki"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.20.2"
@@ -214,17 +214,11 @@ const (
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	DefaultCoreDNSVersion = "1.7.0"
 
-	// RecoveryKubeconfig is the path to kubeconfig used temporarily while recovering control plane.
-	RecoveryKubeconfig = "/etc/kubernetes/kubeconfig"
-
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
-
-	// AssetsDirectory is the directory that contains all bootstrap assets.
-	AssetsDirectory = "/etc/kubernetes/assets"
 
 	// ManifestsDirectory is the directory that contains all static manifests.
 	ManifestsDirectory = "/etc/kubernetes/manifests"
@@ -240,6 +234,9 @@ const (
 
 	// EtcdTalosEtcdUpgradeMutex is the etcd mutex prefix to be used to set an etcd upgrade lock.
 	EtcdTalosEtcdUpgradeMutex = EtcdRootTalosKey + ":etcdUpgradeMutex"
+
+	// EtcdTalosManifestApplyMutex is the etcd election .
+	EtcdTalosManifestApplyMutex = EtcdRootTalosKey + ":manifestApplyMutex"
 
 	// EtcdImage is the reposistory for the etcd image.
 	EtcdImage = "gcr.io/etcd-development/etcd"
@@ -378,15 +375,12 @@ const (
 	// initialized.
 	InitializedKey = "initialized"
 
-	// BootkubeAssetTimeout is the constant in bootkube implementation.
-	BootkubeAssetTimeout = 20 * time.Minute
-
-	// BootkubeRunTimeout is the timeout to run bootkube.
-	BootkubeRunTimeout = BootkubeAssetTimeout + 5*time.Minute
+	// BootTimeout is the timeout to run all services.
+	BootTimeout = 15 * time.Minute
 
 	// NodeReadyTimeout is the timeout to wait for the node to be ready (CNI to be running).
-	// For bootstrap API, this includes time to run bootkube.
-	NodeReadyTimeout = BootkubeRunTimeout
+	// For bootstrap API, this includes time to run bootstrap.
+	NodeReadyTimeout = BootTimeout
 )
 
 // See https://linux.die.net/man/3/klogctl

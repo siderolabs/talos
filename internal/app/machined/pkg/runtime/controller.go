@@ -7,6 +7,8 @@ package runtime
 import (
 	"context"
 	"log"
+
+	"github.com/talos-systems/os-runtime/pkg/controller"
 )
 
 // TaskSetupFunc defines the function that a task will execute for a specific runtime
@@ -57,4 +59,5 @@ type Controller interface {
 // V1Alpha2Controller provides glue into v2alpha1 controller runtime.
 type V1Alpha2Controller interface {
 	Run(context.Context) error
+	DependencyGraph() (*controller.DependencyGraph, error)
 }

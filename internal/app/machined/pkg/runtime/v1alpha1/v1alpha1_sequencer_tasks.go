@@ -31,7 +31,6 @@ import (
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
@@ -53,7 +52,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
@@ -709,7 +707,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			svcs.Load(
 				&services.Trustd{},
 				&services.Etcd{Bootstrap: true},
-				&services.Bootkube{},
 			)
 		case machine.TypeControlPlane:
 			svcs.Load(
@@ -732,8 +729,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			all = append(all, cond)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, constants.BootkubeRunTimeout)
-
+		ctx, cancel := context.WithTimeout(ctx, constants.BootTimeout)
 		defer cancel()
 
 		return conditions.WaitForAll(all...).Wait(ctx)
@@ -1662,56 +1658,6 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 	}, "install"
 }
 
-// Recover attempts to recover the control plane.
-//
-// nolint: gocyclo
-func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var (
-			in *machineapi.RecoverRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machineapi.RecoverRequest); !ok {
-			return runtime.ErrInvalidSequenceData
-		}
-
-		var b bytes.Buffer
-
-		if err = kubeconfig.GenerateAdmin(r.Config().Cluster(), &b); err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile(constants.RecoveryKubeconfig, b.Bytes(), 0o600); err != nil {
-			return fmt.Errorf("failed to create recovery kubeconfig: %w", err)
-		}
-
-		// nolint: errcheck
-		defer os.Remove(constants.RecoveryKubeconfig)
-
-		svc := &services.Bootkube{
-			Recover: true,
-			Source:  in.Source,
-		}
-
-		// unload bootkube (if any instance ran before)
-		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
-			return err
-		}
-
-		system.Services(r).Load(svc)
-
-		if err = system.Services(r).Start(svc.ID(r)); err != nil {
-			return fmt.Errorf("failed to start bootkube: %w", err)
-		}
-
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-		defer cancel()
-
-		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
-	}, "recover"
-}
-
 // BootstrapEtcd represents the task for bootstrapping etcd.
 func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -1769,50 +1715,6 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
 	}, "bootstrapEtcd"
-}
-
-// BootstrapKubernetes represents the task for bootstrapping Kubernetes.
-func BootstrapKubernetes(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		svc := &services.Bootkube{}
-
-		system.Services(r).LoadAndStart(svc)
-
-		ctx, cancel := context.WithTimeout(ctx, constants.BootkubeRunTimeout)
-		defer cancel()
-
-		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
-	}, "bootstrapKubernetes"
-}
-
-// SetInitStatus represents the task for setting the initialization status
-// in etcd.
-func SetInitStatus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer client.Close()
-
-		err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-			ctx := clientv3.WithRequireLeader(context.Background())
-			if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
-				return retry.ExpectedError(err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to put state into etcd: %w", err)
-		}
-
-		logger.Println("updated initialization status in etcd")
-
-		return nil
-	}, "SetInitStatus"
 }
 
 // ActivateLogicalVolumes represents the task for activating logical volumes.

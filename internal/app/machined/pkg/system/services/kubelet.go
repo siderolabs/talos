@@ -10,11 +10,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
@@ -24,7 +22,6 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	tnet "github.com/talos-systems/net"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -244,9 +241,9 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
 			Kind:       "KubeletConfiguration",
 		},
-		StaticPodPath:      "/etc/kubernetes/manifests",
+		StaticPodPath:      constants.ManifestsDirectory,
 		Address:            "0.0.0.0",
-		Port:               10250,
+		Port:               constants.KubeletPort,
 		RotateCertificates: true,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
@@ -278,7 +275,7 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"config":                     "/etc/kubernetes/kubelet.yaml",
 		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
 
-		"cert-dir":     "/var/lib/kubelet/pki",
+		"cert-dir":     constants.KubeletPKIDir,
 		"cni-conf-dir": cni.DefaultNetDir,
 	}
 
@@ -294,23 +291,18 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 }
 
 func writeKubeletConfig(r runtime.Runtime) error {
-	dnsServiceIPs := []string{}
-
-	for _, cidr := range strings.Split(r.Config().Cluster().Network().ServiceCIDR(), ",") {
-		_, svcCIDR, err := net.ParseCIDR(cidr)
-		if err != nil {
-			return fmt.Errorf("failed to parse service CIDR %s: %v", cidr, err)
-		}
-
-		dnsIP, err := tnet.NthIPInNetwork(svcCIDR, 10)
-		if err != nil {
-			return fmt.Errorf("failed to calculate Nth IP in CIDR %s: %v", svcCIDR, err)
-		}
-
-		dnsServiceIPs = append(dnsServiceIPs, dnsIP.String())
+	dnsServiceIPs, err := r.Config().Cluster().Network().DNSServiceIPs()
+	if err != nil {
+		return fmt.Errorf("failed to get DNS service IPs: %w", err)
 	}
 
-	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs, r.Config().Cluster().Network().DNSDomain())
+	dnsServiceIPsString := make([]string, 0, len(dnsServiceIPs))
+
+	for _, dnsIP := range dnsServiceIPs {
+		dnsServiceIPsString = append(dnsServiceIPsString, dnsIP.String())
+	}
+
+	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPsString, r.Config().Cluster().Network().DNSDomain())
 
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,
