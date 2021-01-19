@@ -15,7 +15,7 @@ type Adapter struct {
 	cluster.ConfigClientProvider
 	cluster.KubernetesClient
 	cluster.APICrashDumper
-	cluster.APIBoostrapper
+	cluster.APIBootstrapper
 	cluster.Info
 	cluster.ApplyConfigClient
 }
@@ -73,7 +73,7 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 			ClientProvider: &configProvider,
 			Info:           info,
 		},
-		APIBoostrapper: cluster.APIBoostrapper{
+		APIBootstrapper: cluster.APIBootstrapper{
 			ClientProvider: &configProvider,
 			Info:           info,
 		},

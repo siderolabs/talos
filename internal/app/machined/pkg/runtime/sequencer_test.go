@@ -52,11 +52,6 @@ func TestSequence_String(t *testing.T) {
 			s:    runtime.SequenceReset,
 			want: "reset",
 		},
-		{
-			name: "recover",
-			s:    runtime.SequenceRecover,
-			want: "recover",
-		},
 	}
 
 	for _, tt := range tests {
@@ -119,12 +114,6 @@ func TestParseSequence(t *testing.T) {
 			name:    "reset",
 			args:    args{"reset"},
 			wantSeq: runtime.SequenceReset,
-			wantErr: false,
-		},
-		{
-			name:    "recover",
-			args:    args{"recover"},
-			wantSeq: runtime.SequenceRecover,
 			wantErr: false,
 		},
 		{

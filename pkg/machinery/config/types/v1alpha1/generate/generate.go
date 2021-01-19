@@ -129,10 +129,12 @@ func (i *Input) GetAPIServerSANs() []string {
 
 // Certs holds the base64 encoded keys and certificates.
 type Certs struct {
-	Admin *x509.PEMEncodedCertificateAndKey
-	Etcd  *x509.PEMEncodedCertificateAndKey
-	K8s   *x509.PEMEncodedCertificateAndKey
-	OS    *x509.PEMEncodedCertificateAndKey
+	Admin             *x509.PEMEncodedCertificateAndKey
+	Etcd              *x509.PEMEncodedCertificateAndKey
+	K8s               *x509.PEMEncodedCertificateAndKey
+	K8sAggregator     *x509.PEMEncodedCertificateAndKey
+	K8sServiceAccount *x509.PEMEncodedKey
+	OS                *x509.PEMEncodedCertificateAndKey
 }
 
 // Secrets holds the sensitive kubeadm data.
@@ -186,12 +188,14 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 // NewSecretsBundle creates secrets bundle generating all secrets.
 func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
 	var (
-		etcd          *x509.CertificateAuthority
-		kubernetesCA  *x509.CertificateAuthority
-		talosCA       *x509.CertificateAuthority
-		trustdInfo    *TrustdInfo
-		kubeadmTokens *Secrets
-		err           error
+		etcd           *x509.CertificateAuthority
+		kubernetesCA   *x509.CertificateAuthority
+		aggregatorCA   *x509.CertificateAuthority
+		serviceAccount *x509.RSAKey
+		talosCA        *x509.CertificateAuthority
+		trustdInfo     *TrustdInfo
+		kubeadmTokens  *Secrets
+		err            error
 	)
 
 	etcd, err = NewEtcdCA(clock.Now())
@@ -204,11 +208,17 @@ func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
 		return nil, err
 	}
 
-	talosCA, err = NewTalosCA(clock.Now())
+	aggregatorCA, err = NewAggregatorCA(clock.Now())
 	if err != nil {
 		return nil, err
 	}
 
+	serviceAccount, err = x509.NewRSAKey()
+	if err != nil {
+		return nil, err
+	}
+
+	talosCA, err = NewTalosCA(clock.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +257,13 @@ func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
 				Crt: kubernetesCA.CrtPEM,
 				Key: kubernetesCA.KeyPEM,
 			},
+			K8sAggregator: &x509.PEMEncodedCertificateAndKey{
+				Crt: aggregatorCA.CrtPEM,
+				Key: aggregatorCA.KeyPEM,
+			},
+			K8sServiceAccount: &x509.PEMEncodedKey{
+				Key: serviceAccount.KeyPEM,
+			},
 			OS: &x509.PEMEncodedCertificateAndKey{
 				Crt: talosCA.CrtPEM,
 				Key: talosCA.KeyPEM,
@@ -258,9 +275,11 @@ func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
 // NewSecretsBundleFromConfig creates secrets bundle using existing config.
 func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 	certs := &Certs{
-		K8s:  c.Cluster().CA(),
-		Etcd: c.Cluster().Etcd().CA(),
-		OS:   c.Machine().Security().CA(),
+		K8s:               c.Cluster().CA(),
+		K8sAggregator:     c.Cluster().AggregatorCA(),
+		K8sServiceAccount: c.Cluster().ServiceAccount(),
+		Etcd:              c.Cluster().Etcd().CA(),
+		OS:                c.Machine().Security().CA(),
 	}
 
 	trustd := &TrustdInfo{
@@ -303,6 +322,18 @@ func NewKubernetesCA(currentTime time.Time) (ca *x509.CertificateAuthority, err 
 	opts := []x509.Option{
 		x509.RSA(true),
 		x509.Organization("kubernetes"),
+		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
+		x509.NotBefore(currentTime),
+	}
+
+	return x509.NewSelfSignedCertificateAuthority(opts...)
+}
+
+// NewAggregatorCA generates a CA for the Kubernetes aggregator/front-proxy.
+func NewAggregatorCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
+	opts := []x509.Option{
+		x509.RSA(true),
+		x509.CommonName("front-proxy"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
 	}

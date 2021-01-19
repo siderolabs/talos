@@ -6,13 +6,10 @@ package services
 
 import (
 	"context"
-	stdlibx509 "crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	stdlibnet "net"
 	"os"
 	goruntime "runtime"
 	"strings"
@@ -22,7 +19,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/clientv3"
@@ -186,7 +182,6 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	}
 }
 
-// nolint: gocyclo
 func generatePKI(r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0o644); err != nil {
 		return err
@@ -200,96 +195,16 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
-	ips, err := net.IPAddrs()
+	certAndKey, err := etcd.GeneratePeerCert(r.Config().Cluster().Etcd().CA())
 	if err != nil {
-		return fmt.Errorf("failed to discover IP addresses: %w", err)
-	}
-
-	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
-	if net.IsIPv6(ips...) {
-		ips = append(ips, stdlibnet.ParseIP("::1"))
-	}
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("failed to get hostname: %w", err)
-	}
-
-	dnsNames, err := net.DNSNames()
-	if err != nil {
-		return fmt.Errorf("failed to get host DNS names: %w", err)
-	}
-
-	dnsNames = append(dnsNames, "localhost")
-
-	opts := []x509.Option{
-		x509.CommonName(hostname),
-		x509.DNSNames(dnsNames),
-		x509.RSA(true),
-		x509.IPAddresses(ips),
-		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
-	}
-
-	peerKey, err := x509.NewRSAKey()
-	if err != nil {
-		return fmt.Errorf("failled to create RSA key: %w", err)
-	}
-
-	pemBlock, _ := pem.Decode(peerKey.KeyPEM)
-	if pemBlock == nil {
-		return errors.New("failed to decode peer key pem")
-	}
-
-	peerKeyRSA, err := stdlibx509.ParsePKCS1PrivateKey(pemBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("failled to parse private key: %w", err)
-	}
-
-	csr, err := x509.NewCertificateSigningRequest(peerKeyRSA, opts...)
-	if err != nil {
-		return fmt.Errorf("failed to create CSR: %w", err)
-	}
-
-	csrPemBlock, _ := pem.Decode(csr.X509CertificateRequestPEM)
-	if csrPemBlock == nil {
-		return errors.New("failed to decode csr pem")
-	}
-
-	ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("failled to parse certificate request: %w", err)
-	}
-
-	caPemBlock, _ := pem.Decode(r.Config().Cluster().Etcd().CA().Crt)
-	if caPemBlock == nil {
-		return errors.New("failed to decode ca cert pem")
-	}
-
-	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("failed to parse CA: %w", err)
-	}
-
-	caKeyPemBlock, _ := pem.Decode(r.Config().Cluster().Etcd().CA().Key)
-	if caKeyPemBlock == nil {
-		return errors.New("failed to decode ca key pem")
-	}
-
-	caKey, err := stdlibx509.ParsePKCS1PrivateKey(caKeyPemBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("failed to parse CA private key: %w", err)
-	}
-
-	peer, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, opts...)
-	if err != nil {
-		return fmt.Errorf("failled to create peer certificate: %w", err)
-	}
-
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerKey.KeyPEM, 0o500); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peer.X509CertificatePEM, 0o500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, certAndKey.Key, 0o500); err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, certAndKey.Crt, 0o500); err != nil {
 		return err
 	}
 

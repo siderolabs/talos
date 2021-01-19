@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
@@ -57,6 +58,7 @@ func (state ServiceState) String() string {
 type ServiceEvent struct {
 	Message   string
 	State     ServiceState
+	Health    health.Status
 	Timestamp time.Time
 }
 
@@ -66,6 +68,7 @@ func (event *ServiceEvent) AsProto(service string) *machineapi.ServiceStateEvent
 		Service: service,
 		Action:  machineapi.ServiceStateEvent_Action(event.State),
 		Message: event.Message,
+		Health:  event.Health.AsProto(),
 	}
 }
 

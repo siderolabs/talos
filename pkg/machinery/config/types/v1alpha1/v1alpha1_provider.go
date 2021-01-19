@@ -10,6 +10,7 @@ import (
 	stdx509 "crypto/x509"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	goruntime "runtime"
@@ -18,6 +19,7 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
+	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
@@ -287,6 +289,16 @@ func (c *ClusterConfig) CertSANs() []string {
 // CA implements the config.Provider interface.
 func (c *ClusterConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return c.ClusterCA
+}
+
+// AggregatorCA implements the config.Provider interface.
+func (c *ClusterConfig) AggregatorCA() *x509.PEMEncodedCertificateAndKey {
+	return c.ClusterAggregatorCA
+}
+
+// ServiceAccount implements the config.Provider interface.
+func (c *ClusterConfig) ServiceAccount() *x509.PEMEncodedKey {
+	return c.ClusterServiceAccount
 }
 
 // AESCBCEncryptionSecret implements the config.Provider interface.
@@ -631,6 +643,26 @@ func (c *ClusterConfig) ServiceCIDR() string {
 	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
 }
 
+// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
+func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
+	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
+	if err != nil {
+		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
+	}
+
+	return talosnet.NthIPInCIDRSet(serviceCIDRs, 1)
+}
+
+// DNSServiceIPs returns DNS service IPs in the ServiceCIDR.
+func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
+	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
+	if err != nil {
+		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
+	}
+
+	return talosnet.NthIPInCIDRSet(serviceCIDRs, 10)
+}
+
 // ExtraManifestURLs implements the config.Provider interface.
 func (c *ClusterConfig) ExtraManifestURLs() []string {
 	return c.ExtraManifests
@@ -639,15 +671,6 @@ func (c *ClusterConfig) ExtraManifestURLs() []string {
 // ExtraManifestHeaderMap implements the config.Provider interface.
 func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 	return c.ExtraManifestHeaders
-}
-
-// PodCheckpointer implements the config.Provider interface.
-func (c *ClusterConfig) PodCheckpointer() config.PodCheckpointer {
-	if c.PodCheckpointerConfig == nil {
-		return &PodCheckpointer{}
-	}
-
-	return c.PodCheckpointerConfig
 }
 
 // CoreDNS implements the config.Provider interface.
@@ -1072,11 +1095,6 @@ func (c *CoreDNS) Image() string {
 	}
 
 	return coreDNSImage
-}
-
-// Image implements the config.Provider interface.
-func (p *PodCheckpointer) Image() string {
-	return p.PodCheckpointerImage
 }
 
 // CertLifetime implements the config.Provider interface.

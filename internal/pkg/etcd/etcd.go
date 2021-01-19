@@ -36,7 +36,7 @@ type Client struct {
 }
 
 // NewClient initializes and returns an etcd client configured to talk to
-// a local endpoint.
+// a list of endpoints.
 func NewClient(endpoints []string) (client *Client, err error) {
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.KubernetesEtcdPeerCert,
@@ -60,6 +60,11 @@ func NewClient(endpoints []string) (client *Client, err error) {
 	}
 
 	return &Client{Client: c}, nil
+}
+
+// NewLocalClient initializes and returns etcd client configured to talk to localhost endpoint.
+func NewLocalClient() (client *Client, err error) {
+	return NewClient([]string{"127.0.0.1:2379"})
 }
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client

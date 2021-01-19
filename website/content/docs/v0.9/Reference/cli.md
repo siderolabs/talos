@@ -1105,6 +1105,68 @@ talosctl images [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl inspect dependencies
+
+Inspect controller-resource dependencies as graphviz graph.
+
+### Synopsis
+
+Inspect controller-resource dependencies as graphviz graph.
+
+Pipe the output of the command through the "dot" program (part of graphviz package)
+to render the graph:
+
+  talosctl inspect dependencies | dot -Tpng > graph.png
+
+
+```
+talosctl inspect dependencies [flags]
+```
+
+### Options
+
+```
+  -h, --help             help for dependencies
+      --with-resources   display live resource information with dependencies
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
+
+## talosctl inspect
+
+Inspect internals of Talos
+
+### Options
+
+```
+  -h, --help   help for inspect
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl inspect dependencies](#talosctl-inspect-dependencies)	 - Inspect controller-resource dependencies as graphviz graph.
+
 ## talosctl interfaces
 
 List network interfaces
@@ -1816,6 +1878,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources.
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl images](#talosctl-images)	 - List the default images used by Talos
+* [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
 * [talosctl interfaces](#talosctl-interfaces)	 - List network interfaces
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing

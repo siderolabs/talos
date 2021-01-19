@@ -1,0 +1,237 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package config
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"strings"
+
+	"github.com/AlekSi/pointer"
+	talosnet "github.com/talos-systems/net"
+	"github.com/talos-systems/os-runtime/pkg/controller"
+	"github.com/talos-systems/os-runtime/pkg/resource"
+	"github.com/talos-systems/os-runtime/pkg/state"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/images"
+	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+)
+
+// K8sControlPlaneController manages config.K8sControlPlane based on configuration.
+type K8sControlPlaneController struct {
+}
+
+// Name implements controller.Controller interface.
+func (ctrl *K8sControlPlaneController) Name() string {
+	return "config.K8sControlPlaneController"
+}
+
+// ManagedResources implements controller.Controller interface.
+func (ctrl *K8sControlPlaneController) ManagedResources() (resource.Namespace, resource.Type) {
+	return config.NamespaceName, config.K8sControlPlaneType
+}
+
+// Run implements controller.Controller interface.
+//
+//nolint: gocyclo
+func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+	if err := r.UpdateDependencies([]controller.Dependency{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.V1Alpha1Type,
+			ID:        pointer.ToString(config.V1Alpha1ID),
+			Kind:      controller.DependencyWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        pointer.ToString(config.MachineTypeID),
+			Kind:      controller.DependencyWeak,
+		},
+	}); err != nil {
+		return fmt.Errorf("error setting up dependencies: %w", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+
+		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				if err = ctrl.teardownAll(ctx, r, logger); err != nil {
+					return fmt.Errorf("error destroying resources: %w", err)
+				}
+
+				continue
+			}
+
+			return fmt.Errorf("error getting config: %w", err)
+		}
+
+		cfgProvider := cfg.(*config.V1Alpha1).Config()
+
+		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting machine type: %w", err)
+		}
+
+		machineType := machineTypeRes.(*config.MachineType).MachineType()
+
+		if machineType != machine.TypeControlPlane && machineType != machine.TypeInit {
+			if err = ctrl.teardownAll(ctx, r, logger); err != nil {
+				return fmt.Errorf("error destroying resources: %w", err)
+			}
+
+			continue
+		}
+
+		for _, f := range []func(context.Context, controller.Runtime, *log.Logger, talosconfig.Provider) error{
+			ctrl.manageAPIServerConfig,
+			ctrl.manageControllerManagerConfig,
+			ctrl.manageSchedulerConfig,
+			ctrl.manageManifestsConfig,
+			ctrl.manageExtraManifestsConfig,
+		} {
+			if err = f(ctx, r, logger, cfgProvider); err != nil {
+				return fmt.Errorf("error updating objects: %w", err)
+			}
+		}
+	}
+}
+
+func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	return r.Update(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
+		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
+			Image:                cfgProvider.Cluster().APIServer().Image(),
+			CloudProvider:        "", // TODO: add cloud provider to config one day
+			ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
+			EtcdServers:          []string{"https://127.0.0.1:2379"},
+			LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
+			ServiceCIDR:          cfgProvider.Cluster().Network().ServiceCIDR(),
+			ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),
+		})
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	return r.Update(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
+		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
+			Image:         cfgProvider.Cluster().ControllerManager().Image(),
+			CloudProvider: "", // TODO: add cloud provider to config one day
+			PodCIDR:       cfgProvider.Cluster().Network().PodCIDR(),
+			ServiceCIDR:   cfgProvider.Cluster().Network().ServiceCIDR(),
+			ExtraArgs:     cfgProvider.Cluster().ControllerManager().ExtraArgs(),
+		})
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	return r.Update(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
+		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
+			Image:     cfgProvider.Cluster().Scheduler().Image(),
+			ExtraArgs: cfgProvider.Cluster().Scheduler().ExtraArgs(),
+		})
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
+	if err != nil {
+		return fmt.Errorf("error calculating DNS service IPs: %w", err)
+	}
+
+	dnsServiceIP := ""
+	dnsServiceIPv6 := ""
+
+	if len(dnsServiceIPs) == 1 {
+		dnsServiceIP = dnsServiceIPs[0].String()
+	} else {
+		for _, ip := range dnsServiceIPs {
+			if dnsServiceIP == "" && ip.To4().Equal(ip) {
+				dnsServiceIP = ip.String()
+			}
+
+			if dnsServiceIPv6 == "" && talosnet.IsNonLocalIPv6(ip) {
+				dnsServiceIPv6 = ip.String()
+			}
+		}
+	}
+
+	return r.Update(ctx, config.NewK8sManifests(), func(r resource.Resource) error {
+		images := images.List(cfgProvider)
+
+		r.(*config.K8sControlPlane).SetManifests(config.K8sManifestsSpec{
+			Server:        cfgProvider.Cluster().Endpoint().String(),
+			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
+
+			PodCIDRs:     cfgProvider.Cluster().Network().PodCIDR(),
+			FirstPodCIDR: strings.Split(cfgProvider.Cluster().Network().PodCIDR(), ",")[0],
+
+			ProxyImage:     cfgProvider.Cluster().Proxy().Image(),
+			ProxyMode:      cfgProvider.Cluster().Proxy().Mode(),
+			ProxyExtraArgs: cfgProvider.Cluster().Proxy().ExtraArgs(),
+
+			CoreDNSImage: cfgProvider.Cluster().CoreDNS().Image(),
+
+			DNSServiceIP:   dnsServiceIP,
+			DNSServiceIPv6: dnsServiceIPv6,
+
+			FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() != constants.CustomCNI,
+			FlannelImage:    images.Flannel,
+			FlannelCNIImage: images.FlannelCNI,
+		})
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	return r.Update(ctx, config.NewK8sExtraManifests(), func(r resource.Resource) error {
+		spec := config.K8sExtraManifestsSpec{}
+
+		if cfgProvider.Cluster().Network().CNI().Name() == constants.CustomCNI {
+			for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
+				spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+					URL:      url,
+					Priority: "05", // push CNI to the top
+				})
+			}
+		}
+
+		for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
+			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				URL:          url,
+				Priority:     "99", // make sure extra manifests come last, when PSP is already created
+				ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
+			})
+		}
+
+		r.(*config.K8sControlPlane).SetExtraManifests(spec)
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+	return nil
+}

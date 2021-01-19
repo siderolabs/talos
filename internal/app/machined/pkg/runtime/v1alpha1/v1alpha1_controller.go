@@ -101,7 +101,7 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 	// Allow only one sequence to run at a time with the exception of bootstrap
 	// and reset sequences.
 	switch seq { //nolint: exhaustive
-	case runtime.SequenceBootstrap, runtime.SequenceReset, runtime.SequenceRecover:
+	case runtime.SequenceBootstrap, runtime.SequenceReset:
 		// Do not attempt to lock.
 	default:
 		if opts.Force {
@@ -373,17 +373,6 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 		phases = c.s.Shutdown(c.r)
 	case runtime.SequenceReboot:
 		phases = c.s.Reboot(c.r)
-	case runtime.SequenceRecover:
-		var (
-			in *machine.RecoverRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.RecoverRequest); !ok {
-			return nil, runtime.ErrInvalidSequenceData
-		}
-
-		phases = c.s.Recover(c.r, in)
 	case runtime.SequenceUpgrade:
 		var (
 			in *machine.UpgradeRequest

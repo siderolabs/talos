@@ -386,6 +386,12 @@ func (h *Client) Drain(node string) error {
 
 					return
 				}
+
+				if ref.Kind == "Node" {
+					log.Printf("skipping StaticPod pod %s\n", p.GetName())
+
+					return
+				}
 			}
 
 			if err := h.evict(p, int64(60)); err != nil {

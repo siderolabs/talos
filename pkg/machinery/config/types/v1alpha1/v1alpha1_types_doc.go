@@ -225,7 +225,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 17)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 19)
 	ClusterConfigDoc.Fields[0].Name = "controlPlane"
 	ClusterConfigDoc.Fields[0].Type = "ControlPlaneConfig"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -266,88 +266,102 @@ func init() {
 	ClusterConfigDoc.Fields[5].Comments[encoder.LineComment] = "The base64 encoded root certificate authority used by Kubernetes."
 
 	ClusterConfigDoc.Fields[5].AddExample("ClusterCA example.", pemEncodedCertificateExample)
-	ClusterConfigDoc.Fields[6].Name = "apiServer"
-	ClusterConfigDoc.Fields[6].Type = "APIServerConfig"
+	ClusterConfigDoc.Fields[6].Name = "aggregatorCA"
+	ClusterConfigDoc.Fields[6].Type = "PEMEncodedCertificateAndKey"
 	ClusterConfigDoc.Fields[6].Note = ""
-	ClusterConfigDoc.Fields[6].Description = "API server specific configuration options."
-	ClusterConfigDoc.Fields[6].Comments[encoder.LineComment] = "API server specific configuration options."
+	ClusterConfigDoc.Fields[6].Description = "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed."
+	ClusterConfigDoc.Fields[6].Comments[encoder.LineComment] = "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation."
 
-	ClusterConfigDoc.Fields[6].AddExample("", clusterAPIServerExample)
-	ClusterConfigDoc.Fields[7].Name = "controllerManager"
-	ClusterConfigDoc.Fields[7].Type = "ControllerManagerConfig"
+	ClusterConfigDoc.Fields[6].AddExample("AggregatorCA example.", pemEncodedCertificateExample)
+	ClusterConfigDoc.Fields[7].Name = "serviceAccount"
+	ClusterConfigDoc.Fields[7].Type = "PEMEncodedKey"
 	ClusterConfigDoc.Fields[7].Note = ""
-	ClusterConfigDoc.Fields[7].Description = "Controller manager server specific configuration options."
-	ClusterConfigDoc.Fields[7].Comments[encoder.LineComment] = "Controller manager server specific configuration options."
+	ClusterConfigDoc.Fields[7].Description = "The base64 encoded private key for service account token generation."
+	ClusterConfigDoc.Fields[7].Comments[encoder.LineComment] = "The base64 encoded private key for service account token generation."
 
-	ClusterConfigDoc.Fields[7].AddExample("", clusterControllerManagerExample)
-	ClusterConfigDoc.Fields[8].Name = "proxy"
-	ClusterConfigDoc.Fields[8].Type = "ProxyConfig"
+	ClusterConfigDoc.Fields[7].AddExample("AggregatorCA example.", pemEncodedKeyExample)
+	ClusterConfigDoc.Fields[8].Name = "apiServer"
+	ClusterConfigDoc.Fields[8].Type = "APIServerConfig"
 	ClusterConfigDoc.Fields[8].Note = ""
-	ClusterConfigDoc.Fields[8].Description = "Kube-proxy server-specific configuration options"
-	ClusterConfigDoc.Fields[8].Comments[encoder.LineComment] = "Kube-proxy server-specific configuration options"
+	ClusterConfigDoc.Fields[8].Description = "API server specific configuration options."
+	ClusterConfigDoc.Fields[8].Comments[encoder.LineComment] = "API server specific configuration options."
 
-	ClusterConfigDoc.Fields[8].AddExample("", clusterProxyExample)
-	ClusterConfigDoc.Fields[9].Name = "scheduler"
-	ClusterConfigDoc.Fields[9].Type = "SchedulerConfig"
+	ClusterConfigDoc.Fields[8].AddExample("", clusterAPIServerExample)
+	ClusterConfigDoc.Fields[9].Name = "controllerManager"
+	ClusterConfigDoc.Fields[9].Type = "ControllerManagerConfig"
 	ClusterConfigDoc.Fields[9].Note = ""
-	ClusterConfigDoc.Fields[9].Description = "Scheduler server specific configuration options."
-	ClusterConfigDoc.Fields[9].Comments[encoder.LineComment] = "Scheduler server specific configuration options."
+	ClusterConfigDoc.Fields[9].Description = "Controller manager server specific configuration options."
+	ClusterConfigDoc.Fields[9].Comments[encoder.LineComment] = "Controller manager server specific configuration options."
 
-	ClusterConfigDoc.Fields[9].AddExample("", clusterSchedulerExample)
-	ClusterConfigDoc.Fields[10].Name = "etcd"
-	ClusterConfigDoc.Fields[10].Type = "EtcdConfig"
+	ClusterConfigDoc.Fields[9].AddExample("", clusterControllerManagerExample)
+	ClusterConfigDoc.Fields[10].Name = "proxy"
+	ClusterConfigDoc.Fields[10].Type = "ProxyConfig"
 	ClusterConfigDoc.Fields[10].Note = ""
-	ClusterConfigDoc.Fields[10].Description = "Etcd specific configuration options."
-	ClusterConfigDoc.Fields[10].Comments[encoder.LineComment] = "Etcd specific configuration options."
+	ClusterConfigDoc.Fields[10].Description = "Kube-proxy server-specific configuration options"
+	ClusterConfigDoc.Fields[10].Comments[encoder.LineComment] = "Kube-proxy server-specific configuration options"
 
-	ClusterConfigDoc.Fields[10].AddExample("", clusterEtcdExample)
-	ClusterConfigDoc.Fields[11].Name = "podCheckpointer"
-	ClusterConfigDoc.Fields[11].Type = "PodCheckpointer"
+	ClusterConfigDoc.Fields[10].AddExample("", clusterProxyExample)
+	ClusterConfigDoc.Fields[11].Name = "scheduler"
+	ClusterConfigDoc.Fields[11].Type = "SchedulerConfig"
 	ClusterConfigDoc.Fields[11].Note = ""
-	ClusterConfigDoc.Fields[11].Description = "Pod Checkpointer specific configuration options."
-	ClusterConfigDoc.Fields[11].Comments[encoder.LineComment] = "Pod Checkpointer specific configuration options."
+	ClusterConfigDoc.Fields[11].Description = "Scheduler server specific configuration options."
+	ClusterConfigDoc.Fields[11].Comments[encoder.LineComment] = "Scheduler server specific configuration options."
 
-	ClusterConfigDoc.Fields[11].AddExample("", clusterPodCheckpointerExample)
-	ClusterConfigDoc.Fields[12].Name = "coreDNS"
-	ClusterConfigDoc.Fields[12].Type = "CoreDNS"
+	ClusterConfigDoc.Fields[11].AddExample("", clusterSchedulerExample)
+	ClusterConfigDoc.Fields[12].Name = "etcd"
+	ClusterConfigDoc.Fields[12].Type = "EtcdConfig"
 	ClusterConfigDoc.Fields[12].Note = ""
-	ClusterConfigDoc.Fields[12].Description = "Core DNS specific configuration options."
-	ClusterConfigDoc.Fields[12].Comments[encoder.LineComment] = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[12].Description = "Etcd specific configuration options."
+	ClusterConfigDoc.Fields[12].Comments[encoder.LineComment] = "Etcd specific configuration options."
 
-	ClusterConfigDoc.Fields[12].AddExample("", clusterCoreDNSExample)
-	ClusterConfigDoc.Fields[13].Name = "extraManifests"
-	ClusterConfigDoc.Fields[13].Type = "[]string"
+	ClusterConfigDoc.Fields[12].AddExample("", clusterEtcdExample)
+	ClusterConfigDoc.Fields[13].Name = "podCheckpointer"
+	ClusterConfigDoc.Fields[13].Type = "PodCheckpointer"
 	ClusterConfigDoc.Fields[13].Note = ""
-	ClusterConfigDoc.Fields[13].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed by bootkube."
-	ClusterConfigDoc.Fields[13].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+	ClusterConfigDoc.Fields[13].Description = "Pod Checkpointer specific configuration options."
+	ClusterConfigDoc.Fields[13].Comments[encoder.LineComment] = "Pod Checkpointer specific configuration options."
 
-	ClusterConfigDoc.Fields[13].AddExample("", []string{
+	ClusterConfigDoc.Fields[13].AddExample("", clusterPodCheckpointerExample)
+	ClusterConfigDoc.Fields[14].Name = "coreDNS"
+	ClusterConfigDoc.Fields[14].Type = "CoreDNS"
+	ClusterConfigDoc.Fields[14].Note = ""
+	ClusterConfigDoc.Fields[14].Description = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "Core DNS specific configuration options."
+
+	ClusterConfigDoc.Fields[14].AddExample("", clusterCoreDNSExample)
+	ClusterConfigDoc.Fields[15].Name = "extraManifests"
+	ClusterConfigDoc.Fields[15].Type = "[]string"
+	ClusterConfigDoc.Fields[15].Note = ""
+	ClusterConfigDoc.Fields[15].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+
+	ClusterConfigDoc.Fields[15].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
 		"https://www.example.com/manifest2.yaml",
 	})
-	ClusterConfigDoc.Fields[14].Name = "extraManifestHeaders"
-	ClusterConfigDoc.Fields[14].Type = "map[string]string"
-	ClusterConfigDoc.Fields[14].Note = ""
-	ClusterConfigDoc.Fields[14].Description = "A map of key value pairs that will be added while fetching the ExtraManifests."
-	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the ExtraManifests."
+	ClusterConfigDoc.Fields[16].Name = "extraManifestHeaders"
+	ClusterConfigDoc.Fields[16].Type = "map[string]string"
+	ClusterConfigDoc.Fields[16].Note = ""
+	ClusterConfigDoc.Fields[16].Description = "A map of key value pairs that will be added while fetching the ExtraManifests."
+	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the ExtraManifests."
 
-	ClusterConfigDoc.Fields[14].AddExample("", map[string]string{
+	ClusterConfigDoc.Fields[16].AddExample("", map[string]string{
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	ClusterConfigDoc.Fields[15].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[15].Type = "AdminKubeconfigConfig"
-	ClusterConfigDoc.Fields[15].Note = ""
-	ClusterConfigDoc.Fields[15].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+	ClusterConfigDoc.Fields[17].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[17].Type = "AdminKubeconfigConfig"
+	ClusterConfigDoc.Fields[17].Note = ""
+	ClusterConfigDoc.Fields[17].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
 
-	ClusterConfigDoc.Fields[15].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[16].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[16].Type = "bool"
-	ClusterConfigDoc.Fields[16].Note = ""
-	ClusterConfigDoc.Fields[16].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[16].Values = []string{
+	ClusterConfigDoc.Fields[17].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[18].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[18].Type = "bool"
+	ClusterConfigDoc.Fields[18].Note = ""
+	ClusterConfigDoc.Fields[18].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[18].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -772,7 +786,7 @@ func init() {
 	ClusterNetworkConfigDoc.Fields[0].Name = "cni"
 	ClusterNetworkConfigDoc.Fields[0].Type = "CNIConfig"
 	ClusterNetworkConfigDoc.Fields[0].Note = ""
-	ClusterNetworkConfigDoc.Fields[0].Description = "The CNI used.\nComposed of \"name\" and \"url\".\nThe \"name\" key only supports options of \"flannel\" or \"custom\".\nURLs is only used if name is equal to \"custom\".\nURLs should point to the set of YAML files to be deployed.\nAn empty struct or any other name will default to bootkube's flannel."
+	ClusterNetworkConfigDoc.Fields[0].Description = "The CNI used.\nComposed of \"name\" and \"url\".\nThe \"name\" key only supports options of \"flannel\" or \"custom\".\nURLs is only used if name is equal to \"custom\".\nURLs should point to the set of YAML files to be deployed.\nAn empty struct or any other name will default to Flannel CNI."
 	ClusterNetworkConfigDoc.Fields[0].Comments[encoder.LineComment] = "The CNI used."
 
 	ClusterNetworkConfigDoc.Fields[0].AddExample("", clusterCustomCNIExample)

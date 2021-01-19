@@ -98,6 +98,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 	// ensure that all control plane nodes have been labeled with the master
 	// label.
 
+	// daemonset check only there for pre-0.9 clusters with self-hosted control plane
 	daemonsets, err := clientset.AppsV1().DaemonSets("kube-system").List(ctx, metav1.ListOptions{
 		LabelSelector: "k8s-app in (kube-apiserver,kube-scheduler,kube-controller-manager)",
 	})
@@ -117,13 +118,15 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		if ds.Status.NumberReady != ds.Status.DesiredNumberScheduled {
 			return fmt.Errorf("expected number ready for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, ds.Status.NumberReady)
 		}
+	}
 
+	for _, k8sApp := range []string{"kube-apiserver", "kube-scheduler", "kube-controller-manager"} {
 		// list pods to verify that daemonset status is updated properly
 		pods, err := clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("k8s-app = %s", ds.Labels["k8s-app"]),
+			LabelSelector: fmt.Sprintf("k8s-app = %s", k8sApp),
 		})
 		if err != nil {
-			return fmt.Errorf("error listing pods for daemonset %s: %w", ds.GetName(), err)
+			return fmt.Errorf("error listing pods for app %s: %w", k8sApp, err)
 		}
 
 		// filter out pod checkpoints
@@ -138,8 +141,8 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 		pods.Items = pods.Items[:n]
 
-		if int32(len(pods.Items)) != ds.Status.DesiredNumberScheduled {
-			return fmt.Errorf("expected number of pods for %s to be %d, got %d", ds.GetName(), ds.Status.DesiredNumberScheduled, len(pods.Items))
+		if len(pods.Items) != len(actualNodes) {
+			return fmt.Errorf("expected number of pods for %s to be %d, got %d", k8sApp, len(actualNodes), len(pods.Items))
 		}
 
 		var notReadyPods []string
@@ -157,7 +160,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		}
 
 		if len(notReadyPods) > 0 {
-			return fmt.Errorf("some pods are not ready for %s: %v", ds.GetName(), notReadyPods)
+			return fmt.Errorf("some pods are not ready for %s: %v", k8sApp, notReadyPods)
 		}
 	}
 

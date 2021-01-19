@@ -24,7 +24,7 @@ type ApplyConfigClient struct {
 }
 
 // ApplyConfig on the node via the API using insecure mode.
-func (s *APIBoostrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, out io.Writer) error {
+func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, out io.Writer) error {
 	for _, node := range nodes {
 		n := node
 

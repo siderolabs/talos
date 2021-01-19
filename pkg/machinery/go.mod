@@ -15,10 +15,10 @@ require (
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.6.1
-	github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745
-	github.com/talos-systems/net v0.2.0
-	github.com/talos-systems/os-runtime v0.0.0-20210119124441-98acf0d2d332
+	github.com/stretchr/testify v1.7.0
+	github.com/talos-systems/crypto v0.2.1-0.20210125160556-cf75519cab82
+	github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b
+	github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
 	golang.org/x/text v0.3.3 // indirect
@@ -26,5 +26,5 @@ require (
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

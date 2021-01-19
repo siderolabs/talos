@@ -837,6 +837,57 @@ ca:
 
 <div class="dd">
 
+<code>aggregatorCA</code>  <i>PEMEncodedCertificateAndKey</i>
+
+</div>
+<div class="dt">
+
+The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
+
+This CA can be self-signed.
+
+
+
+Examples:
+
+
+``` yaml
+aggregatorCA:
+    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>serviceAccount</code>  <i>PEMEncodedKey</i>
+
+</div>
+<div class="dt">
+
+The base64 encoded private key for service account token generation.
+
+
+
+Examples:
+
+
+``` yaml
+serviceAccount:
+    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>apiServer</code>  <i><a href="#apiserverconfig">APIServerConfig</a></i>
 
 </div>
@@ -1036,7 +1087,7 @@ coreDNS:
 <div class="dt">
 
 A list of urls that point to additional manifests.
-These will get automatically deployed by bootkube.
+These will get automatically deployed as part of the bootstrap.
 
 
 
@@ -2327,7 +2378,7 @@ Composed of "name" and "url".
 The "name" key only supports options of "flannel" or "custom".
 URLs is only used if name is equal to "custom".
 URLs should point to the set of YAML files to be deployed.
-An empty struct or any other name will default to bootkube's flannel.
+An empty struct or any other name will default to Flannel CNI.
 
 
 

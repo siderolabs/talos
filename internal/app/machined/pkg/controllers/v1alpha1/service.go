@@ -65,7 +65,10 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 				switch msg.Action { //nolint: exhaustive
 				case machine.ServiceStateEvent_RUNNING:
 					if err := r.Update(ctx, service, func(r resource.Resource) error {
-						r.(*v1alpha1.Service).SetRunning(true)
+						svc := r.(*v1alpha1.Service) //nolint: errcheck
+
+						svc.SetRunning(true)
+						svc.SetHealthy(msg.GetHealth().GetHealthy() && !msg.GetHealth().GetUnknown())
 
 						return nil
 					}); err != nil {

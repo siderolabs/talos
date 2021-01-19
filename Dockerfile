@@ -93,6 +93,8 @@ COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
 COPY ./api/resource/resource.proto /api/resource/resource.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api resource/resource.proto
+COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api inspect/inspect.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
@@ -112,6 +114,7 @@ COPY --from=generate-build /api/network/*.pb.go /pkg/machinery/api/network/
 COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
+COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
 COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos
@@ -268,27 +271,6 @@ RUN printf "FROM scratch\nCOPY ./routerd /routerd\nENTRYPOINT [\"/routerd\"]" > 
 RUN --security=insecure img build --tag ${USERNAME}/routerd:${TAG} --output type=docker,dest=/routerd.tar --no-console  .
 
 
-# The bootkube target builds the bootkube image.
-
-FROM base AS bootkube-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/bootkube
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /bootkube
-RUN chmod +x /bootkube
-
-FROM base AS bootkube-image
-ARG TAG
-ARG USERNAME
-COPY --from=bootkube-build /bootkube /scratch/bootkube
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./bootkube /bootkube\nENTRYPOINT [\"/bootkube\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/bootkube:${TAG} --output type=docker,dest=/bootkube.tar --no-console  .
-
-
 # The talosctl targets build the talosctl binaries.
 
 FROM base AS talosctl-linux-amd64-build
@@ -392,7 +374,6 @@ COPY --from=pkg-kmod /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kernel /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
-COPY --from=bootkube-image /bootkube.tar /rootfs/usr/images/
 COPY --from=timed-image /timed.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
 COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
@@ -645,6 +626,7 @@ RUN protoc \
     -I/protos \
     -I/protos/common \
     -I/protos/health \
+    -I/protos/inspect \
     -I/protos/machine \
     -I/protos/network \
     -I/protos/resource \
@@ -656,6 +638,7 @@ RUN protoc \
     --doc_out=/tmp \
     /protos/common/*.proto \
     /protos/health/*.proto \
+    /protos/inspect/*.proto \
     /protos/machine/*.proto \
     /protos/network/*.proto \
     /protos/resource/*.proto \

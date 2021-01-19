@@ -8,33 +8,47 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/talos-systems/bootkube-plugin/pkg/asset"
+	criconfig "github.com/containerd/cri/pkg/config"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-// List returns a list of images used.
-func List(config config.Provider) asset.ImageVersions {
-	images := asset.DefaultImages
+// Versions holds all the images (and their versions) that are used in Talos.
+type Versions struct {
+	Etcd       string
+	Flannel    string
+	FlannelCNI string
+	CoreDNS    string
 
-	// Override all kube-related images with default val or specified image locations
+	Kubelet               string
+	KubeAPIServer         string
+	KubeControllerManager string
+	KubeProxy             string
+	KubeScheduler         string
+
+	Installer string
+
+	Pause string
+}
+
+// List returns default image versions.
+func List(config config.Provider) Versions {
+	var images Versions
+
+	images.Etcd = config.Cluster().Etcd().Image()
+	images.CoreDNS = config.Cluster().CoreDNS().Image()
 	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
 	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.ExtrasVersion)
-	images.PodCheckpointer = fmt.Sprintf("ghcr.io/talos-systems/pod-checkpointer:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
 	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
 	images.KubeProxy = config.Cluster().Proxy().Image()
 	images.KubeScheduler = config.Cluster().Scheduler().Image()
-	images.Etcd = config.Cluster().Etcd().Image()
 
-	// Allow for overriding by users via config data
-	images.CoreDNS = config.Cluster().CoreDNS().Image()
+	images.Installer = DefaultInstallerImage
 
-	if config.Cluster().PodCheckpointer().Image() != "" {
-		images.PodCheckpointer = config.Cluster().PodCheckpointer().Image()
-	}
+	images.Pause = criconfig.DefaultConfig().SandboxImage
 
 	return images
 }

@@ -20,6 +20,19 @@ type Status struct {
 	LastMessage string
 }
 
+// AsProto returns protobuf-ready health state.
+func (status *Status) AsProto() *machineapi.ServiceHealth {
+	// nolint: errcheck
+	tspb, _ := ptypes.TimestampProto(status.LastChange)
+
+	return &machineapi.ServiceHealth{
+		Unknown:     status.Healthy == nil,
+		Healthy:     status.Healthy != nil && *status.Healthy,
+		LastMessage: status.LastMessage,
+		LastChange:  tspb,
+	}
+}
+
 // StateChange is used to notify about status changes.
 type StateChange struct {
 	Old Status
@@ -114,13 +127,5 @@ func (state *State) Get() Status {
 func (state *State) AsProto() *machineapi.ServiceHealth {
 	status := state.Get()
 
-	// nolint: errcheck
-	tspb, _ := ptypes.TimestampProto(status.LastChange)
-
-	return &machineapi.ServiceHealth{
-		Unknown:     status.Healthy == nil,
-		Healthy:     status.Healthy != nil && *status.Healthy,
-		LastMessage: status.LastMessage,
-		LastChange:  tspb,
-	}
+	return status.AsProto()
 }
