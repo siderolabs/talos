@@ -270,6 +270,11 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 }
 
 func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
+	hostname, err := r.State().Platform().Hostname(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	denyListArgs := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
@@ -280,6 +285,8 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 
 		"cert-dir":     "/var/lib/kubelet/pki",
 		"cni-conf-dir": cni.DefaultNetDir,
+
+		"hostname-override": string(hostname),
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
