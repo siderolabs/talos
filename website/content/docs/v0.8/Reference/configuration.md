@@ -1210,6 +1210,31 @@ extraMounts:
 
 <hr />
 
+<div class="dd">
+
+<code>registerWithFQDN</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
+This is required in clouds like AWS.
+
+
+Valid values:
+
+
+  - <code>true</code>
+
+  - <code>yes</code>
+
+  - <code>false</code>
+
+  - <code>no</code>
+</div>
+
+<hr />
+
 
 
 

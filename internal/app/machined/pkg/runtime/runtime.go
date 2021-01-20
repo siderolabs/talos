@@ -16,4 +16,5 @@ type Runtime interface {
 	State() State
 	Events() EventStream
 	Logging() LoggingManager
+	NodeName() (string, error)
 }
