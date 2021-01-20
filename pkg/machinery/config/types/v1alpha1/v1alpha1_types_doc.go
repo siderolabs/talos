@@ -363,7 +363,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 3)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 4)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -387,6 +387,17 @@ func init() {
 	KubeletConfigDoc.Fields[2].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
 
 	KubeletConfigDoc.Fields[2].AddExample("", kubeletExtraMountsExample)
+	KubeletConfigDoc.Fields[3].Name = "registerWithFQDN"
+	KubeletConfigDoc.Fields[3].Type = "bool"
+	KubeletConfigDoc.Fields[3].Note = ""
+	KubeletConfigDoc.Fields[3].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
+	KubeletConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
+	KubeletConfigDoc.Fields[3].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
 
 	NetworkConfigDoc.Type = "NetworkConfig"
 	NetworkConfigDoc.Comments[encoder.LineComment] = "NetworkConfig represents the machine's networking config values."
