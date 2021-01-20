@@ -677,6 +677,15 @@ type KubeletConfig struct {
 	//   examples:
 	//     - value: kubeletExtraMountsExample
 	KubeletExtraMounts []specs.Mount `yaml:"extraMounts,omitempty"`
+	//   description: |
+	//     The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
+	//     This is required in clouds like AWS.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	KubeletRegisterWithFQDN bool `yaml:"registerWithFQDN,omitempty"`
 }
 
 // NetworkConfig represents the machine's networking config values.

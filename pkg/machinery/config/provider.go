@@ -200,6 +200,7 @@ type Kubelet interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
+	RegisterWithFQDN() bool
 }
 
 // Registries defines the configuration for image fetching.

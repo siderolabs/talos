@@ -262,6 +262,11 @@ func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return k.KubeletExtraMounts
 }
 
+// RegisterWithFQDN implements the config.Provider interface.
+func (k *KubeletConfig) RegisterWithFQDN() bool {
+	return k.KubeletRegisterWithFQDN
+}
+
 // Name implements the config.Provider interface.
 func (c *ClusterConfig) Name() string {
 	return c.ClusterName
