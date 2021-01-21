@@ -18,8 +18,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
-	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -118,22 +117,23 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 		return err
 	}
 
-	dev, err := probe.DevForFileSystemLabel(g.BootDisk, constants.BootPartitionLabel)
+	dev, err := blockdevice.Open(g.BootDisk)
 	if err != nil {
-		return fmt.Errorf("failed to probe boot partition: %w", err)
+		return err
 	}
 
 	// nolint: errcheck
 	defer dev.Close()
 
-	blk, err := util.DevnameFromPartname(dev.Path)
+	// verify that BootDisk has boot partition
+	_, err = dev.GetPartition(constants.BootPartitionLabel)
 	if err != nil {
 		return err
 	}
 
-	loopDevice := strings.HasPrefix(blk, "loop")
+	blk := dev.Device().Name()
 
-	blk = fmt.Sprintf("/dev/%s", blk)
+	loopDevice := strings.HasPrefix(blk, "/dev/loop")
 
 	// default: run for GRUB default platform
 	platforms := []string{""}

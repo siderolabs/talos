@@ -9,6 +9,7 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state"
 	"github.com/talos-systems/os-runtime/pkg/state/registry"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
@@ -28,7 +29,7 @@ type Machine interface {
 
 // MachineState defines the machined state.
 type MachineState interface {
-	Disk() *probe.ProbedBlockDevice
+	Disk(options ...disk.Option) *probe.ProbedBlockDevice
 	Close() error
 	Installed() bool
 	IsInstallStaged() bool

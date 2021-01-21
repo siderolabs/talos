@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
@@ -113,7 +114,16 @@ func readConfigFromISO() (b []byte, err error) {
 	// nolint: errcheck
 	defer dev.Close()
 
-	if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
+	sb, err := filesystem.Probe(dev.Device().Name())
+	if err != nil {
+		return nil, err
+	}
+
+	if sb == nil {
+		return nil, fmt.Errorf("failed to get filesystem type")
+	}
+
+	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
 		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}
 

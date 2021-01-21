@@ -141,6 +141,8 @@ type NodeRequest struct {
 	Disks []*Disk
 	// Ports
 	Ports []string
+	// SkipInjectingConfig disables reading configuration from http server
+	SkipInjectingConfig bool
 
 	// PXE-booted VMs
 	PXEBooted        bool

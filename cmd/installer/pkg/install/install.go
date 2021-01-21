@@ -9,7 +9,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
@@ -113,36 +113,40 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 func (i *Installer) probeBootPartition() error {
 	// there's no reason to discover boot partition if the disk is about to be wiped
 	if !i.options.Zero {
-		if dev, err := probe.DevForFileSystemLabel(i.options.Disk, constants.BootPartitionLabel); err != nil {
+		dev, err := blockdevice.Open(i.options.Disk)
+		if err != nil {
+			i.bootPartitionFound = false
+
+			return err
+		}
+
+		defer dev.Close() // nolint:errcheck
+
+		if part, err := dev.GetPartition(constants.BootPartitionLabel); err != nil {
 			i.bootPartitionFound = false
 		} else {
-			//nolint: errcheck
-			defer dev.Close()
-
 			i.bootPartitionFound = true
 
 			// mount the boot partition temporarily to find the bootloader labels
 			mountpoints := mount.NewMountPoints()
 
-			mountpoint := mount.NewMountPoint(dev.Path, constants.BootMountPoint, dev.SuperBlock.Type(), unix.MS_NOATIME|unix.MS_RDONLY, "")
+			partPath, err := part.Path()
+			if err != nil {
+				return err
+			}
+
+			fsType, err := part.Filesystem()
+			if err != nil {
+				return err
+			}
+
+			mountpoint := mount.NewMountPoint(partPath, constants.BootMountPoint, fsType, unix.MS_NOATIME|unix.MS_RDONLY, "")
 			mountpoints.Set(constants.BootPartitionLabel, mountpoint)
 
 			if err := mount.Mount(mountpoints); err != nil {
-				log.Printf("warning: failed to mount boot partition %q: %s", dev.Path, err)
+				log.Printf("warning: failed to mount boot partition %q: %s", partPath, err)
 			} else {
 				defer mount.Unmount(mountpoints) //nolint: errcheck
-			}
-		}
-
-		// try legacy boot partition
-		//
-		// TODO: remove this in Talos 0.8 (only required for upgrading from 0.6)
-		if !i.bootPartitionFound {
-			if dev, err := probe.DevForFileSystemLabel(i.options.Disk, constants.LegacyBootPartitionLabel); err == nil {
-				//nolint: errcheck
-				defer dev.Close()
-
-				i.bootPartitionFound = true
 			}
 		}
 	}
