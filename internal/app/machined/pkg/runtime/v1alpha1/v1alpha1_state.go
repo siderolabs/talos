@@ -8,9 +8,11 @@ import (
 	"errors"
 	"os"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
@@ -28,7 +30,7 @@ type State struct {
 
 // MachineState represents the machine's state.
 type MachineState struct {
-	disk *probe.ProbedBlockDevice
+	disks map[string]*probe.ProbedBlockDevice
 
 	stagedInstall         bool
 	stagedInstallImageRef string
@@ -48,12 +50,14 @@ func NewState() (s *State, err error) {
 
 	machine := &MachineState{}
 
-	err = machine.probeDisk()
+	err = machine.probeDisks()
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 	}
+
+	machine.probeMeta()
 
 	cluster := &ClusterState{}
 
@@ -92,26 +96,38 @@ func (s *State) V1Alpha2() runtime.V1Alpha2State {
 	return s.v2
 }
 
-func (s *MachineState) probeDisk() error {
-	if s.disk != nil {
-		return nil
+func (s *MachineState) probeDisks(labels ...string) error {
+	if len(labels) == 0 {
+		labels = []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel}
 	}
 
-	var dev *probe.ProbedBlockDevice
-
-	dev, err := probe.GetDevWithFileSystemLabel(constants.EphemeralPartitionLabel)
-	if err == nil {
-		s.disk = dev
+	if s.disks == nil {
+		s.disks = map[string]*probe.ProbedBlockDevice{}
 	}
 
-	if err != nil {
-		return err
+	for _, label := range labels {
+		if _, ok := s.disks[label]; ok {
+			continue
+		}
+
+		var dev *probe.ProbedBlockDevice
+
+		dev, err := probe.GetDevWithPartitionName(label)
+		if err != nil {
+			return err
+		}
+
+		s.disks[label] = dev
 	}
 
+	return nil
+}
+
+func (s *MachineState) probeMeta() {
 	meta, err := bootloader.NewMeta()
 	if err != nil {
 		// ignore missing meta
-		return nil
+		return
 	}
 
 	defer meta.Close() //nolint: errcheck
@@ -134,31 +150,44 @@ func (s *MachineState) probeDisk() error {
 		s.stagedInstallImageRef = stagedInstallImageRef
 		s.stagedInstallOptions = []byte(stagedInstallOptions)
 	}
-
-	return nil
 }
 
 // Disk implements the machine state interface.
-func (s *MachineState) Disk() *probe.ProbedBlockDevice {
-	s.probeDisk() //nolint: errcheck
+func (s *MachineState) Disk(options ...disk.Option) *probe.ProbedBlockDevice {
+	opts := &disk.Options{
+		Label: constants.EphemeralPartitionLabel,
+	}
 
-	return s.disk
+	for _, opt := range options {
+		opt(opts)
+	}
+
+	s.probeDisks(opts.Label) //nolint: errcheck
+
+	return s.disks[opts.Label]
 }
 
 // Close implements the machine state interface.
 func (s *MachineState) Close() error {
-	if s.disk != nil {
-		return s.disk.Close()
+	var result *multierror.Error
+
+	for _, disk := range s.disks {
+		if err := disk.Close(); err != nil {
+			e := multierror.Append(result, err)
+			if e != nil {
+				return e
+			}
+		}
 	}
 
-	return nil
+	return result.ErrorOrNil()
 }
 
 // Installed implements the machine state interface.
 func (s *MachineState) Installed() bool {
-	s.probeDisk() //nolint: errcheck
-
-	return s.disk != nil
+	return s.Disk(
+		disk.WithPartitionLabel(constants.EphemeralPartitionLabel),
+	) != nil
 }
 
 // IsInstallStaged implements the machine state interface.

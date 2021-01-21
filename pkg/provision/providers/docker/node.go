@@ -65,7 +65,7 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, options *provision.Options) (provision.NodeInfo, error) {
 	env := []string{"PLATFORM=container"}
 
-	if nodeReq.Config != nil {
+	if !nodeReq.SkipInjectingConfig {
 		cfg, err := nodeReq.Config.String()
 		if err != nil {
 			return provision.NodeInfo{}, err

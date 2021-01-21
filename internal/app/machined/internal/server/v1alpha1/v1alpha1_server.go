@@ -198,12 +198,12 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	if err := func() error {
-		if err := mount.SystemPartitionMount(constants.BootPartitionLabel); err != nil {
+		if err := mount.SystemPartitionMount(s.Controller.Runtime(), constants.BootPartitionLabel); err != nil {
 			return fmt.Errorf("error mounting boot partition: %w", err)
 		}
 
 		defer func() {
-			if err := mount.SystemPartitionUnmount(constants.BootPartitionLabel); err != nil {
+			if err := mount.SystemPartitionUnmount(s.Controller.Runtime(), constants.BootPartitionLabel); err != nil {
 				log.Printf("failed unmounting boot partition: %s", err)
 			}
 		}()

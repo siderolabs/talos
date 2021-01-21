@@ -323,12 +323,13 @@ func create(ctx context.Context) (err error) {
 		var cfg config.Provider
 
 		nodeReq := provision.NodeRequest{
-			Name:     fmt.Sprintf("%s-master-%d", clusterName, i+1),
-			Type:     machine.TypeControlPlane,
-			IP:       ips[i],
-			Memory:   memory,
-			NanoCPUs: nanoCPUs,
-			Disks:    disks,
+			Name:                fmt.Sprintf("%s-master-%d", clusterName, i+1),
+			Type:                machine.TypeControlPlane,
+			IP:                  ips[i],
+			Memory:              memory,
+			NanoCPUs:            nanoCPUs,
+			Disks:               disks,
+			SkipInjectingConfig: skipInjectingConfig,
 		}
 
 		if i == 0 {
@@ -349,21 +350,14 @@ func create(ctx context.Context) (err error) {
 			}
 		}
 
-		if !skipInjectingConfig {
-			nodeReq.Config = cfg
-		}
-
+		nodeReq.Config = cfg
 		request.Nodes = append(request.Nodes, nodeReq)
 	}
 
 	for i := 1; i <= workers; i++ {
 		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
 
-		var cfg config.Provider
-
-		if !skipInjectingConfig {
-			cfg = configBundle.Join()
-		}
+		cfg := configBundle.Join()
 
 		ip := ips[masters+i-1]
 
@@ -376,13 +370,14 @@ func create(ctx context.Context) (err error) {
 
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:     name,
-				Type:     machine.TypeJoin,
-				IP:       ip,
-				Memory:   memory,
-				NanoCPUs: nanoCPUs,
-				Disks:    disks,
-				Config:   cfg,
+				Name:                name,
+				Type:                machine.TypeJoin,
+				IP:                  ip,
+				Memory:              memory,
+				NanoCPUs:            nanoCPUs,
+				Disks:               disks,
+				Config:              cfg,
+				SkipInjectingConfig: skipInjectingConfig,
 			})
 	}
 

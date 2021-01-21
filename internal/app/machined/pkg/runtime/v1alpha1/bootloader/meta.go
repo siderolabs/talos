@@ -27,12 +27,22 @@ type Meta struct {
 
 // NewMeta initializes and returns a `Meta`.
 func NewMeta() (meta *Meta, err error) {
-	var f *os.File
+	var (
+		f   *os.File
+		dev *probe.ProbedBlockDevice
+	)
 
-	f, err = probe.GetPartitionWithName(constants.MetaPartitionLabel)
+	dev, err = probe.GetDevWithPartitionName(constants.MetaPartitionLabel)
 	if err != nil {
 		return nil, err
 	}
+
+	part, err := dev.OpenPartition(constants.MetaPartitionLabel)
+	if err != nil {
+		return nil, err
+	}
+
+	f = part.Device()
 
 	adv, err := talos.NewADV(f)
 	if adv == nil && err != nil {

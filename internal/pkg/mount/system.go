@@ -6,11 +6,13 @@ package mount
 
 import (
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -19,40 +21,22 @@ import (
 // creation and bare metall installs ). This is why we want to look up
 // device by specified disk as well as why we don't want to grow any
 // filesystems.
-func SystemMountPointsForDevice(devpath string) (mountpoints *Points, err error) {
+func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Points, err error) {
 	mountpoints = NewMountPoints()
 
+	bd, err := blockdevice.Open(devpath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer bd.Close() // nolint:errcheck
+
 	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel} {
-		var target string
-
-		switch name {
-		case constants.EphemeralPartitionLabel:
-			target = constants.EphemeralMountPoint
-		case constants.BootPartitionLabel:
-			target = constants.BootMountPoint
-		case constants.EFIPartitionLabel:
-			target = constants.EFIMountPoint
-		case constants.StatePartitionLabel:
-			target = constants.StateMountPoint
+		mountpoint, err := SystemMountPointForLabel(bd, name, opts...)
+		if err != nil {
+			return nil, err
 		}
 
-		var dev *probe.ProbedBlockDevice
-
-		if dev, err = probe.DevForFileSystemLabel(devpath, name); err != nil {
-			if name == constants.BootPartitionLabel {
-				// A bootloader is not always required.
-				log.Println("WARNING: no boot partition was found")
-
-				continue
-			}
-
-			return nil, fmt.Errorf("probe device for filesystem %s: %w", name, err)
-		}
-
-		// nolint: errcheck
-		defer dev.Close()
-
-		mountpoint := NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "")
 		mountpoints.Set(name, mountpoint)
 	}
 
@@ -60,14 +44,13 @@ func SystemMountPointsForDevice(devpath string) (mountpoints *Points, err error)
 }
 
 // SystemMountPointForLabel returns a mount point for the specified device and label.
-func SystemMountPointForLabel(label string, opts ...Option) (mountpoint *Point, err error) {
+// nolint:gocyclo
+func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
 	var target string
 
 	switch label {
 	case constants.EphemeralPartitionLabel:
 		target = constants.EphemeralMountPoint
-
-		opts = append(opts, WithResize(true))
 	case constants.BootPartitionLabel:
 		target = constants.BootMountPoint
 	case constants.EFIPartitionLabel:
@@ -78,9 +61,12 @@ func SystemMountPointForLabel(label string, opts ...Option) (mountpoint *Point, 
 		return nil, fmt.Errorf("unknown label: %q", label)
 	}
 
-	var dev *probe.ProbedBlockDevice
+	partition, err := device.GetPartition(label)
+	if err != nil && err != os.ErrNotExist {
+		return nil, err
+	}
 
-	if dev, err = probe.GetDevWithFileSystemLabel(label); err != nil {
+	if partition == nil {
 		// A boot partitition is not required.
 		if label == constants.BootPartitionLabel {
 			return nil, nil
@@ -89,19 +75,31 @@ func SystemMountPointForLabel(label string, opts ...Option) (mountpoint *Point, 
 		return nil, fmt.Errorf("failed to find device with label %s: %w", label, err)
 	}
 
-	// nolint: errcheck
-	defer dev.Close()
+	fsType, err := partition.Filesystem()
+	if err != nil {
+		return nil, err
+	}
 
-	mountpoint = NewMountPoint(dev.Path, target, dev.SuperBlock.Type(), unix.MS_NOATIME, "", opts...)
+	partPath, err := partition.Path()
+	if err != nil {
+		return nil, err
+	}
+
+	mountpoint = NewMountPoint(partPath, target, fsType, unix.MS_NOATIME, "", opts...)
 
 	return mountpoint, nil
 }
 
 // SystemPartitionMount mounts a system partition by the label.
-func SystemPartitionMount(label string, opts ...Option) (err error) {
+func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err error) {
+	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
+	if device == nil {
+		return fmt.Errorf("failed to find device with partition labeled %s", label)
+	}
+
 	mountpoints := NewMountPoints()
 
-	mountpoint, err := SystemMountPointForLabel(label, opts...)
+	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label, opts...)
 	if err != nil {
 		return err
 	}
@@ -120,10 +118,15 @@ func SystemPartitionMount(label string, opts ...Option) (err error) {
 }
 
 // SystemPartitionUnmount unmounts a system partition by the label.
-func SystemPartitionUnmount(label string) (err error) {
+func SystemPartitionUnmount(r runtime.Runtime, label string) (err error) {
+	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
+	if device == nil {
+		return fmt.Errorf("failed to find device with partition labeled %s", label)
+	}
+
 	mountpoints := NewMountPoints()
 
-	mountpoint, err := SystemMountPointForLabel(label)
+	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label)
 	if err != nil {
 		return err
 	}
