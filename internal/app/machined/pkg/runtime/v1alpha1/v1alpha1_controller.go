@@ -233,7 +233,9 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 
 	defer func() {
 		if err != nil {
-			log.Printf("%s sequence: failed", seq.String())
+			if !runtime.IsRebootError(err) {
+				log.Printf("%s sequence: failed", seq.String())
+			}
 		}
 
 		log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
@@ -250,7 +252,9 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 		log.Printf("phase %s (%s): %d tasks(s)", phase.Name, progress, len(phase.Tasks))
 
 		if err = c.runPhase(phase, seq, data); err != nil {
-			log.Printf("phase %s (%s): failed", phase.Name, progress)
+			if !runtime.IsRebootError(err) {
+				log.Printf("phase %s (%s): failed", phase.Name, progress)
+			}
 
 			return fmt.Errorf("error running phase %d in %s sequence: %w", number, seq.String(), err)
 		}
@@ -315,7 +319,9 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 
 	defer func() {
 		if err != nil {
-			log.Printf("task %s (%s): failed", taskName, progress)
+			if !runtime.IsRebootError(err) {
+				log.Printf("task %s (%s): failed", taskName, progress)
+			}
 		}
 
 		log.Printf("task %s (%s): done, %s", taskName, progress, time.Since(start))

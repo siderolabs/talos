@@ -28,7 +28,7 @@ func (suite *SystemServicesSuite) TestStartShutdown() {
 
 	suite.Require().NoError(system.Services(nil).Unload(context.Background(), "trustd", "notrunning"))
 
-	system.Services(nil).Shutdown()
+	system.Services(nil).Shutdown(context.TODO())
 }
 
 func TestSystemServicesSuite(t *testing.T) {
