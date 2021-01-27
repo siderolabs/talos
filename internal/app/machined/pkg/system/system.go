@@ -197,7 +197,7 @@ func (s *singleton) LoadAndStart(services ...Service) {
 }
 
 // Shutdown all the services.
-func (s *singleton) Shutdown() {
+func (s *singleton) Shutdown(ctx context.Context) {
 	s.mu.Lock()
 	if s.terminating {
 		s.mu.Unlock()
@@ -207,7 +207,7 @@ func (s *singleton) Shutdown() {
 
 	s.terminating = true
 
-	_ = s.stopServices(context.Background(), nil, true) //nolint: errcheck
+	_ = s.stopServices(ctx, nil, true) //nolint: errcheck
 }
 
 // Stop will initiate a shutdown of the specified service.

@@ -26,9 +26,11 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/proc"
 	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"
 )
@@ -69,11 +71,7 @@ func recovery() {
 	}
 }
 
-func handle(err error) {
-	if err != nil {
-		log.Print(err)
-	}
-
+func revertBootloader() {
 	if meta, err := bootloader.NewMeta(); err == nil {
 		if err = meta.Revert(); err != nil {
 			log.Printf("failed to revert upgrade: %v", err)
@@ -84,33 +82,179 @@ func handle(err error) {
 	} else {
 		log.Printf("failed to open meta: %v", err)
 	}
+}
 
-	if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
-		if *p == "0" {
-			log.Printf("panic=0 kernel flag found, sleeping forever")
+// syncNonVolatileStorageBuffers invokes unix.Sync and waits up to 30 seconds
+// for it to finish.
+//
+// See http://man7.org/linux/man-pages/man2/reboot.2.html.
+func syncNonVolatileStorageBuffers() {
+	syncdone := make(chan struct{})
 
-			exitSignal := make(chan os.Signal, 1)
+	go func() {
+		defer close(syncdone)
 
-			signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+		unix.Sync()
+	}()
 
-			<-exitSignal
+	log.Printf("waiting for sync...")
+
+	for i := 29; i >= 0; i-- {
+		select {
+		case <-syncdone:
+			log.Printf("sync done")
+
+			return
+		case <-time.After(time.Second):
+		}
+
+		if i != 0 {
+			log.Printf("waiting %d more seconds for sync to finish", i)
 		}
 	}
 
-	for i := 10; i >= 0; i-- {
-		log.Printf("rebooting in %d seconds\n", i)
-		time.Sleep(1 * time.Second)
+	log.Printf("sync hasn't completed in time, aborting...")
+}
+
+//nolint: gocyclo
+func handle(err error) {
+	rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
+
+	var rebootErr runtime.RebootError
+
+	if errors.As(err, &rebootErr) {
+		// not a failure, but wrapped reboot command
+		rebootCmd = rebootErr.Cmd
+
+		err = nil
 	}
 
-	v1alpha1runtime.SyncNonVolatileStorageBuffers()
+	if err != nil {
+		log.Print(err)
+		revertBootloader()
 
-	if unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART) == nil {
+		if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
+			if *p == "0" {
+				log.Printf("panic=0 kernel flag found, sleeping forever")
+
+				rebootCmd = 0
+			}
+		}
+	}
+
+	if rebootCmd == unix.LINUX_REBOOT_CMD_RESTART {
+		for i := 10; i >= 0; i-- {
+			log.Printf("rebooting in %d seconds\n", i)
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	if err = proc.KillAll(); err != nil {
+		log.Printf("error killing all procs: %s", err)
+	}
+
+	if err = mount.UnmountAll(); err != nil {
+		log.Printf("error unmounting: %s", err)
+	}
+
+	syncNonVolatileStorageBuffers()
+
+	if rebootCmd == 0 {
+		exitSignal := make(chan os.Signal, 1)
+
+		signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+
+		<-exitSignal
+	} else if unix.Reboot(rebootCmd) == nil {
 		// Wait forever.
 		select {}
 	}
 }
 
 // nolint: gocyclo
+func run() error {
+	errCh := make(chan error)
+
+	// Ensure RNG is seeded.
+	if err := startup.RandSeed(); err != nil {
+		return err
+	}
+
+	// Set the PATH env var.
+	if err := os.Setenv("PATH", constants.PATH); err != nil {
+		return errors.New("error setting PATH")
+	}
+
+	// Initialize the controller without a config.
+	c, err := v1alpha1runtime.NewController(nil)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Schedule service shutdown on any return.
+	defer system.Services(c.Runtime()).Shutdown(ctx)
+
+	// Start signal and ACPI listeners.
+	go func() {
+		if e := c.ListenForEvents(); e != nil {
+			log.Printf("WARNING: signals and ACPI events will be ignored: %s", e)
+		}
+	}()
+
+	// Start v2 controller runtime.
+	go func() {
+		if e := c.V1Alpha2().Run(ctx); e != nil {
+			errCh <- fmt.Errorf("fatal controller runtime error: %s", e)
+		}
+
+		log.Printf("controller runtime finished")
+	}()
+
+	// Initialize the machine.
+	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
+		return err
+	}
+
+	// Perform an installation if required.
+	if err = c.Run(runtime.SequenceInstall, nil); err != nil {
+		return err
+	}
+
+	// Start the machine API.
+	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
+
+	// Boot the machine.
+	if err = c.Run(runtime.SequenceBoot, nil); err != nil {
+		return err
+	}
+
+	// Watch and handle runtime events.
+	_ = c.Runtime().Events().Watch(func(events <-chan runtime.Event) { //nolint: errcheck
+		for {
+			for event := range events {
+				switch msg := event.Payload.(type) {
+				case *machine.SequenceEvent:
+					if msg.Error != nil {
+						if msg.Error.GetCode() == common.Code_LOCKED {
+							// ignore sequence lock errors, they're not fatal
+							continue
+						}
+
+						errCh <- fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String())
+					}
+				case *machine.RestartEvent:
+					errCh <- runtime.RebootError{Cmd: int(msg.Cmd)}
+				}
+			}
+		}
+	})
+
+	return <-errCh
+}
+
 func main() {
 	// Setup panic handler.
 	defer recovery()
@@ -119,76 +263,5 @@ func main() {
 	reaper.Run()
 	defer reaper.Shutdown()
 
-	// Ensure RNG is seeded.
-	if err := startup.RandSeed(); err != nil {
-		handle(err)
-	}
-
-	// Set the PATH env var.
-	if err := os.Setenv("PATH", constants.PATH); err != nil {
-		handle(errors.New("error setting PATH"))
-	}
-
-	// Initialize the controller without a config.
-	c, err := v1alpha1runtime.NewController(nil)
-	if err != nil {
-		handle(err)
-	}
-
-	// Start signal and ACPI listeners.
-	go func() {
-		if e := c.ListenForEvents(); e != nil {
-			log.Printf("WARNING: signals and ACPI events will be ignored: %+v", e)
-		}
-	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Start v2 controller runtime.
-	go func() {
-		if e := c.V1Alpha2().Run(ctx); e != nil {
-			handle(fmt.Errorf("fatal controller runtime error: %s", e))
-		}
-
-		log.Printf("controller runtime finished")
-	}()
-
-	// Initialize the machine.
-	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
-		handle(err)
-	}
-
-	// Perform an installation if required.
-	if err = c.Run(runtime.SequenceInstall, nil); err != nil {
-		handle(err)
-	}
-
-	// Start the machine API.
-	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
-
-	// Boot the machine.
-	if err = c.Run(runtime.SequenceBoot, nil); err != nil {
-		handle(err)
-	}
-
-	// Watch and handle runtime events.
-	_ = c.Runtime().Events().Watch(func(events <-chan runtime.Event) { //nolint: errcheck
-		for {
-			for event := range events {
-				if msg, ok := event.Payload.(*machine.SequenceEvent); ok {
-					if msg.Error != nil {
-						if msg.Error.GetCode() == common.Code_LOCKED {
-							// ignore sequence lock errors, they're not fatal
-							continue
-						}
-
-						handle(fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String()))
-					}
-				}
-			}
-		}
-	})
-
-	select {}
+	handle(run())
 }
