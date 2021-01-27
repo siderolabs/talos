@@ -929,8 +929,8 @@ github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116 h1:l
 github.com/talos-systems/bootkube-plugin v0.0.0-20201123195241-c59f3fa21116/go.mod h1:AbdJAgHK5rJNDPUN3msPTfQJSR9b4DKb5xNN07uG8/Y=
 github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745 h1:Smw6ebFiEiwrkaOD2hEYYb+xkIhQTMZNq3WVYKLszB8=
 github.com/talos-systems/crypto v0.2.1-0.20201203131813-e0dd56ac4745/go.mod h1:KwqG+jANKU1FNQIapmioHQ5fkovY1DJkAqMenjYBGh0=
-github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972 h1:/yEPl6h6+pK9XIfQEiZ989GDuw6dCUBeinzUcCu6dyY=
-github.com/talos-systems/go-blockdevice v0.1.1-0.20201218174450-f2728a581972/go.mod h1:efEE9wjtgxiovqsZAV39xlOd/AOI/0sLuZqb5jEgeqo=
+github.com/talos-systems/go-blockdevice v0.1.1 h1:vmaZHHf5jhdP3/RvDQV6sATHQuLy5LPMXWJtzBloe84=
+github.com/talos-systems/go-blockdevice v0.1.1/go.mod h1:efEE9wjtgxiovqsZAV39xlOd/AOI/0sLuZqb5jEgeqo=
 github.com/talos-systems/go-loadbalancer v0.1.0 h1:MQFONvSjoleU8RrKq1O1Z8CyTCJGd4SLqdAHDlR6o9s=
 github.com/talos-systems/go-loadbalancer v0.1.0/go.mod h1:D5Qjfz+29WVjONWECZvOkmaLsBb3f5YeWME0u/5HmIc=
 github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24 h1:fN8vYvlB9XBQ5aImb1vLgR0ZaDwvfZfBMptqkpi3aEg=
