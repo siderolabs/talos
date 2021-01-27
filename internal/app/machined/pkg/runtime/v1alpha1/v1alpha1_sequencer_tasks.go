@@ -835,72 +835,70 @@ func MountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 // TODO(andrewrynhard): We shouldn't pull in the installer command package
 // here.
-func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) {
+func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 	m := &installer.Manifest{
 		Devices: map[string]installer.Device{},
 		Targets: map[string][]*installer.Target{},
 	}
 
 	for _, disk := range r.Config().Machine().Disks() {
-		var bd *blockdevice.BlockDevice
+		disk := disk
 
-		bd, err = blockdevice.Open(disk.Device())
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer bd.Close()
-
-		var pt *gpt.GPT
-
-		pt, err = bd.PartitionTable()
-		if err != nil {
-			if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+		if err := func() error {
+			bd, err := blockdevice.Open(disk.Device())
+			if err != nil {
 				return err
 			}
-		}
 
-		// Partitions will be created/recreated if either of the following
-		//  conditions are true:
-		// - a partition table exists AND there are no partitions
-		// - a partition table does not exist
+			// nolint: errcheck
+			defer bd.Close()
 
-		if pt != nil {
-			if len(pt.Partitions().Items()) > 0 {
-				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
+			var pt *gpt.GPT
 
-				continue
-			}
-		}
-
-		m.Devices[disk.Device()] = installer.Device{
-			Device:              disk.Device(),
-			ResetPartitionTable: true,
-		}
-
-		if m.Targets[disk.Device()] == nil {
-			m.Targets[disk.Device()] = []*installer.Target{}
-		}
-
-		for _, part := range disk.Partitions() {
-			extraTarget := &installer.Target{
-				Device:         disk.Device(),
-				Size:           part.Size(),
-				Force:          true,
-				PartitionType:  installer.LinuxFilesystemData,
-				FileSystemType: installer.FilesystemTypeXFS,
+			pt, err = bd.PartitionTable()
+			if err != nil {
+				if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+					return err
+				}
 			}
 
-			m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
+			// Partitions will be created/recreated if either of the following
+			//  conditions are true:
+			// - a partition table exists AND there are no partitions
+			// - a partition table does not exist
+
+			if pt != nil {
+				if len(pt.Partitions().Items()) > 0 {
+					logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
+
+					return nil
+				}
+			}
+
+			m.Devices[disk.Device()] = installer.Device{
+				Device:              disk.Device(),
+				ResetPartitionTable: true,
+			}
+
+			for _, part := range disk.Partitions() {
+				extraTarget := &installer.Target{
+					Device:         disk.Device(),
+					Size:           part.Size(),
+					Force:          true,
+					PartitionType:  installer.LinuxFilesystemData,
+					FileSystemType: installer.FilesystemTypeXFS,
+				}
+
+				m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
+			}
+
+			return nil
+		}(); err != nil {
+			return err
 		}
 	}
 
-	if err = m.Execute(); err != nil {
-		return err
-	}
-
-	return nil
+	return m.Execute()
 }
 
 func mountDisks(r runtime.Runtime) (err error) {
