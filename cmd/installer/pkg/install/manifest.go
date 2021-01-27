@@ -233,7 +233,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	var bd *blockdevice.BlockDevice
 
-	if bd, err = blockdevice.Open(device.Device); err != nil {
+	if bd, err = blockdevice.Open(device.Device, blockdevice.WithExclusiveLock(true)); err != nil {
 		return err
 	}
 
@@ -267,66 +267,66 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 
-		if bd, err = blockdevice.Open(device.Device); err != nil {
+		if err = bd.Close(); err != nil {
 			return err
 		}
+
+		if bd, err = blockdevice.Open(device.Device, blockdevice.WithExclusiveLock(true)); err != nil {
+			return err
+		}
+
+		defer bd.Close() //nolint: errcheck
 
 		created = true
 	}
 
-	if !created && device.ResetPartitionTable {
-		log.Printf("resetting partition table on %s", device.Device)
+	if !created {
+		if device.ResetPartitionTable {
+			log.Printf("resetting partition table on %s", device.Device)
 
-		// TODO: how should it work with zero option above?
-		if err = bd.Reset(); err != nil {
-			return err
-		}
-
-		if err = bd.RereadPartitionTable(); err != nil {
-			return err
-		}
-	} else {
-		// clean up partitions which are going to be recreated
-		keepPartitions := map[string]struct{}{}
-
-		for _, target := range targets {
-			if target.Skip {
-				keepPartitions[target.Label] = struct{}{}
+			// TODO: how should it work with zero option above?
+			if err = bd.Reset(); err != nil {
+				return err
 			}
-		}
+		} else {
+			// clean up partitions which are going to be recreated
+			keepPartitions := map[string]struct{}{}
 
-		// make sure all partitions to be skipped already exist
-		missingPartitions := map[string]struct{}{}
-
-		for label := range keepPartitions {
-			missingPartitions[label] = struct{}{}
-		}
-
-		for _, part := range pt.Partitions().Items() {
-			delete(missingPartitions, part.Name)
-		}
-
-		if len(missingPartitions) > 0 {
-			return fmt.Errorf("some partitions to be skipped are missing: %v", missingPartitions)
-		}
-
-		// delete all partitions which are not skipped
-		for _, part := range pt.Partitions().Items() {
-			if _, ok := keepPartitions[part.Name]; !ok {
-				log.Printf("deleting partition %s", part.Name)
-
-				if err = pt.Delete(part); err != nil {
-					return err
+			for _, target := range targets {
+				if target.Skip {
+					keepPartitions[target.Label] = struct{}{}
 				}
 			}
-		}
 
-		if err = pt.Write(); err != nil {
-			return err
-		}
+			// make sure all partitions to be skipped already exist
+			missingPartitions := map[string]struct{}{}
 
-		if err = bd.RereadPartitionTable(); err != nil {
-			return err
+			for label := range keepPartitions {
+				missingPartitions[label] = struct{}{}
+			}
+
+			for _, part := range pt.Partitions().Items() {
+				delete(missingPartitions, part.Name)
+			}
+
+			if len(missingPartitions) > 0 {
+				return fmt.Errorf("some partitions to be skipped are missing: %v", missingPartitions)
+			}
+
+			// delete all partitions which are not skipped
+			for _, part := range pt.Partitions().Items() {
+				if _, ok := keepPartitions[part.Name]; !ok {
+					log.Printf("deleting partition %s", part.Name)
+
+					if err = pt.Delete(part); err != nil {
+						return err
+					}
+				}
+			}
+
+			if err = pt.Write(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -343,10 +343,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	if err = pt.Write(); err != nil {
 		return err
-	}
-
-	if err = bd.RereadPartitionTable(); err != nil {
-		log.Printf("failed to re-read partition table on %q: %s, ignoring error...", device.Device, err)
 	}
 
 	for _, target := range targets {
@@ -494,7 +490,7 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 
 	log.Printf("wiping %q", device.Device)
 
-	if bd, err = blockdevice.Open(device.Device); err != nil {
+	if bd, err = blockdevice.Open(device.Device, blockdevice.WithExclusiveLock(true)); err != nil {
 		return err
 	}
 
