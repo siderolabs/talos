@@ -746,7 +746,7 @@ func StopServicesForUpgrade(seq runtime.Sequence, data interface{}) (runtime.Tas
 // StopAllServices represents the StopAllServices task.
 func StopAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		system.Services(nil).Shutdown()
+		system.Services(nil).Shutdown(ctx)
 
 		return nil
 	}, "stopAllServices"
@@ -924,6 +924,29 @@ func mountDisks(r runtime.Runtime) (err error) {
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func unmountDisks(r runtime.Runtime) (err error) {
+	mountpoints := mount.NewMountPoints()
+
+	for _, disk := range r.Config().Machine().Disks() {
+		for i, part := range disk.Partitions() {
+			var partname string
+
+			partname, err = util.PartPath(disk.Device(), i+1)
+			if err != nil {
+				return err
+			}
+
+			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
+		}
+	}
+
+	if err = mount.Unmount(mountpoints); err != nil {
 		return err
 	}
 
@@ -1113,6 +1136,13 @@ func UnmountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.
 
 		return nil
 	}, "unmountOverlayFilesystems"
+}
+
+// UnmountUserDisks represents the UnmountUserDisks task.
+func UnmountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return unmountDisks(r)
+	}, "unmountUserDisks"
 }
 
 // UnmountPodMounts represents the UnmountPodMounts task.
@@ -1491,57 +1521,31 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 // Reboot represents the Reboot task.
 func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		SyncNonVolatileStorageBuffers()
+		r.Events().Publish(&machineapi.RestartEvent{
+			Cmd: unix.LINUX_REBOOT_CMD_RESTART,
+		})
 
-		return unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
+		return runtime.RebootError{Cmd: unix.LINUX_REBOOT_CMD_RESTART}
 	}, "reboot"
 }
 
 // Shutdown represents the Shutdown task.
 func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		SyncNonVolatileStorageBuffers()
+		cmd := unix.LINUX_REBOOT_CMD_POWER_OFF
 
 		if p := procfs.ProcCmdline().Get(constants.KernelParamShutdown).First(); p != nil {
 			if *p == "halt" {
-				return unix.Reboot(unix.LINUX_REBOOT_CMD_HALT)
+				cmd = unix.LINUX_REBOOT_CMD_HALT
 			}
 		}
 
-		return unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+		r.Events().Publish(&machineapi.RestartEvent{
+			Cmd: int64(cmd),
+		})
+
+		return runtime.RebootError{Cmd: cmd}
 	}, "shutdown"
-}
-
-// SyncNonVolatileStorageBuffers invokes unix.Sync and waits up to 30 seconds
-// for it to finish.
-//
-// See http://man7.org/linux/man-pages/man2/reboot.2.html.
-func SyncNonVolatileStorageBuffers() {
-	syncdone := make(chan struct{})
-
-	go func() {
-		defer close(syncdone)
-
-		unix.Sync()
-	}()
-
-	log.Printf("waiting for sync...")
-
-	for i := 29; i >= 0; i-- {
-		select {
-		case <-syncdone:
-			log.Printf("sync done")
-
-			return
-		case <-time.After(time.Second):
-		}
-
-		if i != 0 {
-			log.Printf("waiting %d more seconds for sync to finish", i)
-		}
-	}
-
-	log.Printf("sync hasn't completed in time, aborting...")
 }
 
 // MountBootPartition mounts the boot partition.
