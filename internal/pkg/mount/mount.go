@@ -312,7 +312,7 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 		return false, err
 	}
 
-	bd, err := blockdevice.Open("/dev/" + devname)
+	bd, err := blockdevice.Open("/dev/"+devname, blockdevice.WithExclusiveLock(true))
 	if err != nil {
 		return false, fmt.Errorf("error opening block device %q: %w", devname, err)
 	}
