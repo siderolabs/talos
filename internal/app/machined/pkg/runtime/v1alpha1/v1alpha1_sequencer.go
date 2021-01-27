@@ -405,6 +405,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"stopServices",
 			StopServicesForUpgrade,
 		).Append(
+			"unmountUser",
+			UnmountUserDisks,
+		).Append(
 			"unmount",
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
@@ -446,6 +449,9 @@ func stopAllPhaselist(r runtime.Runtime) PhaseList {
 		phases = phases.Append(
 			"stopEverything",
 			StopAllServices,
+		).Append(
+			"unmountUser",
+			UnmountUserDisks,
 		).Append(
 			"umount",
 			UnmountOverlayFilesystems,

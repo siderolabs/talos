@@ -128,6 +128,10 @@ message ServiceStateEvent {
   string message = 3;
 };
 
+message RestartEvent {
+  int64 cmd = 1;
+};
+
 message EventsRequest {
   int32 tail_events = 1;
   string tail_id = 2;

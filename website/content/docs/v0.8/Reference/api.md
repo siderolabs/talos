@@ -105,6 +105,7 @@ description: Talos gRPC API reference.
     - [ResetRequest](#machine.ResetRequest)
     - [ResetResponse](#machine.ResetResponse)
     - [Restart](#machine.Restart)
+    - [RestartEvent](#machine.RestartEvent)
     - [RestartRequest](#machine.RestartRequest)
     - [RestartResponse](#machine.RestartResponse)
     - [Rollback](#machine.Rollback)
@@ -1792,6 +1793,21 @@ rpc reset
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RestartEvent"></a>
+
+### RestartEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cmd | [int64](#int64) |  |  |
 
 
 

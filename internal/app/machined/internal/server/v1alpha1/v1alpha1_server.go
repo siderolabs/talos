@@ -107,7 +107,9 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 		go func() {
 			if err = s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
-				log.Println("apply configuration failed:", err)
+				if !runtime.IsRebootError(err) {
+					log.Println("apply configuration failed:", err)
+				}
 
 				if err != runtime.ErrLocked {
 					s.server.GracefulStop()
@@ -164,7 +166,9 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
-			log.Println("reboot failed:", err)
+			if !runtime.IsRebootError(err) {
+				log.Println("reboot failed:", err)
+			}
 
 			if err != runtime.ErrLocked {
 				// NB: We stop the gRPC server since a failed sequence triggers a
@@ -185,7 +189,7 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 
 // Rollback implements the machine.MachineServer interface.
 //
-// nolint: dupl
+// nolint: dupl, gocyclo
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
 	log.Printf("rollback via API received")
 
@@ -228,7 +232,9 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceReboot, in, runtime.WithForce()); err != nil {
-			log.Println("reboot failed:", err)
+			if !runtime.IsRebootError(err) {
+				log.Println("reboot failed:", err)
+			}
 
 			if err != runtime.ErrLocked {
 				// NB: We stop the gRPC server since a failed sequence triggers a
@@ -288,7 +294,9 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceShutdown, in); err != nil {
-			log.Println("shutdown failed:", err)
+			if !runtime.IsRebootError(err) {
+				log.Println("shutdown failed:", err)
+			}
 
 			if err != runtime.ErrLocked {
 				// NB: We stop the gRPC server since a failed sequence triggers a
@@ -386,7 +394,9 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			}
 
 			if err := s.Controller.Run(runtime.SequenceStageUpgrade, in); err != nil {
-				log.Println("reboot for staged upgrade failed:", err)
+				if !runtime.IsRebootError(err) {
+					log.Println("reboot for staged upgrade failed:", err)
+				}
 
 				if err != runtime.ErrLocked {
 					// NB: We stop the gRPC server since a failed sequence triggers a
@@ -402,7 +412,9 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			}
 
 			if err := s.Controller.Run(runtime.SequenceUpgrade, in); err != nil {
-				log.Println("upgrade failed:", err)
+				if !runtime.IsRebootError(err) {
+					log.Println("upgrade failed:", err)
+				}
 
 				if err != runtime.ErrLocked {
 					// NB: We stop the gRPC server since a failed sequence triggers a
@@ -499,7 +511,9 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 	go func() {
 		if err := s.Controller.Run(runtime.SequenceReset, &opts); err != nil {
-			log.Println("reset failed:", err)
+			if !runtime.IsRebootError(err) {
+				log.Println("reset failed:", err)
+			}
 
 			if err != runtime.ErrLocked {
 				// NB: We stop the gRPC server since a failed sequence triggers a
