@@ -66,7 +66,6 @@ type Input struct {
 	AdditionalMachineCertSANs []string
 
 	ClusterName       string
-	Architecture      string
 	ServiceDomain     string
 	PodNet            []string
 	ServiceNet        []string
@@ -443,7 +442,6 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		ServiceNet:                []string{serviceNet},
 		ServiceDomain:             options.DNSDomain,
 		ClusterName:               clustername,
-		Architecture:              options.Architecture,
 		KubernetesVersion:         kubernetesVersion,
 		Secrets:                   secrets.Secrets,
 		TrustdInfo:                secrets.TrustdInfo,

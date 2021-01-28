@@ -39,8 +39,6 @@ type UpgradeOptions struct {
 	FromVersion string
 	ToVersion   string
 
-	Architecture string
-
 	ControlPlaneEndpoint string
 
 	extraUpdaters                []daemonsetUpdater
@@ -236,13 +234,13 @@ func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds
 
 		switch ds {
 		case kubeAPIServer:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesAPIServerImage, options.Architecture, options.ToVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.ToVersion)
 		case kubeControllerManager:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesControllerManagerImage, options.Architecture, options.ToVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.ToVersion)
 		case kubeScheduler:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesSchedulerImage, options.Architecture, options.ToVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.ToVersion)
 		case kubeProxy:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s-%s:v%s", constants.KubernetesProxyImage, options.Architecture, options.ToVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesProxyImage, options.ToVersion)
 		default:
 			return fmt.Errorf("failed to build new image spec")
 		}

@@ -6,7 +6,6 @@ package images
 
 import (
 	"fmt"
-	"runtime"
 
 	criconfig "github.com/containerd/cri/pkg/config"
 
@@ -38,7 +37,7 @@ func List(config config.Provider) Versions {
 
 	images.Etcd = config.Cluster().Etcd().Image()
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.Flannel = fmt.Sprintf("quay.io/coreos/flannel:v0.12.0-%s", runtime.GOARCH)
+	images.Flannel = "quay.io/coreos/flannel:v0.13.0"
 	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()

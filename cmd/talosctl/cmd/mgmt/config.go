@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,7 +27,6 @@ import (
 var (
 	additionalSANs    []string
 	configVersion     string
-	architecture      string
 	dnsDomain         string
 	kubernetesVersion string
 	installDisk       string
@@ -141,7 +139,6 @@ func genV1Alpha1Config(args []string) error {
 					generate.WithAdditionalSubjectAltNames(additionalSANs),
 					generate.WithDNSDomain(dnsDomain),
 					generate.WithPersist(persistConfig),
-					generate.WithArchitecture(architecture),
 				),
 			},
 		),
@@ -179,7 +176,6 @@ func init() {
 	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
-	genConfigCmd.Flags().StringVar(&architecture, "arch", runtime.GOARCH, "the architecture of the cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")

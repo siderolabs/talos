@@ -5,8 +5,6 @@
 package generate
 
 import (
-	"runtime"
-
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -137,15 +135,6 @@ func WithClusterCNIConfig(config *v1alpha1.CNIConfig) GenOption {
 	}
 }
 
-// WithArchitecture specifies architecture of the Talos cluster.
-func WithArchitecture(arch string) GenOption {
-	return func(o *GenOptions) error {
-		o.Architecture = arch
-
-		return nil
-	}
-}
-
 // WithUserDisks generates user partitions config.
 func WithUserDisks(disks []*v1alpha1.MachineDisk) GenOption {
 	return func(o *GenOptions) error {
@@ -176,7 +165,6 @@ type GenOptions struct {
 	RegistryMirrors           map[string]*v1alpha1.RegistryMirrorConfig
 	RegistryConfig            map[string]*v1alpha1.RegistryConfig
 	DNSDomain                 string
-	Architecture              string
 	Debug                     bool
 	Persist                   bool
 	AllowSchedulingOnMasters  bool
@@ -186,7 +174,6 @@ type GenOptions struct {
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
 	return GenOptions{
-		Persist:      true,
-		Architecture: runtime.GOARCH,
+		Persist: true,
 	}
 }
