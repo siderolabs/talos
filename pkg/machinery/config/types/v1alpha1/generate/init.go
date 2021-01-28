@@ -55,16 +55,16 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
 			CertSANs:       certSANs,
-			ContainerImage: emptyIf(fmt.Sprintf("%s-%s:v%s", constants.KubernetesAPIServerImage, in.Architecture, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s-%s:v%s", constants.KubernetesControllerManagerImage, in.Architecture, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		ProxyConfig: &v1alpha1.ProxyConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s-%s:v%s", constants.KubeProxyImage, in.Architecture, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		SchedulerConfig: &v1alpha1.SchedulerConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s-%s:v%s", constants.KubernetesSchedulerImage, in.Architecture, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Certs.Etcd,

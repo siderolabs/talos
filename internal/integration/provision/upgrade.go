@@ -14,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
@@ -511,8 +510,6 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, kubernetes.UpgradeOptions{
 		FromVersion: fromVersion,
 		ToVersion:   toVersion,
-
-		Architecture: runtime.GOARCH,
 
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
 	}))
