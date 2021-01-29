@@ -223,6 +223,9 @@ const (
 	// ManifestsDirectory is the directory that contains all static manifests.
 	ManifestsDirectory = "/etc/kubernetes/manifests"
 
+	// TalosManifestPrefix is the prefix for static pod files created in ManifestsDirectory by Talos.
+	TalosManifestPrefix = "talos-"
+
 	// KubeletKubeconfig is the generated kubeconfig for kubelet.
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
