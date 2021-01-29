@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -121,6 +122,10 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
+				if err = ctrl.cleanupPods(logger, nil); err != nil {
+					return fmt.Errorf("error cleaning up static pods: %w", err)
+				}
+
 				continue
 			}
 
@@ -140,6 +145,10 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		if bootstrapStatus.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
 			logger.Print("skipped as running self-hosted control plane")
+
+			if err = ctrl.cleanupPods(logger, nil); err != nil {
+				return fmt.Errorf("error cleaning up static pods: %w", err)
+			}
 
 			continue
 		}
@@ -162,19 +171,31 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		for _, staticPod := range staticPods.Items {
 			switch staticPod.Metadata().Phase() {
 			case resource.PhaseRunning:
-				if err = ctrl.runPod(ctx, r, logger, staticPod.(*k8s.StaticPod)); err != nil {
+				if err = ctrl.writePod(ctx, r, logger, staticPod); err != nil {
 					return fmt.Errorf("error running pod: %w", err)
 				}
 			case resource.PhaseTearingDown:
-				if err = ctrl.teardownPod(logger, staticPod.(*k8s.StaticPod)); err != nil {
+				if err = ctrl.teardownPod(logger, staticPod); err != nil {
 					return fmt.Errorf("error tearing down pod: %w", err)
 				}
 			}
 		}
+
+		if err = ctrl.cleanupPods(logger, staticPods.Items); err != nil {
+			return fmt.Errorf("error cleaning up static pods: %w", err)
+		}
 	}
 }
 
-func (ctrl *KubeletStaticPodController) runPod(ctx context.Context, r controller.Runtime, logger *log.Logger, staticPod *k8s.StaticPod) error {
+func (ctrl *KubeletStaticPodController) podPath(staticPod resource.Resource) string {
+	return filepath.Join(constants.ManifestsDirectory, ctrl.podFilename(staticPod))
+}
+
+func (ctrl *KubeletStaticPodController) podFilename(staticPod resource.Resource) string {
+	return fmt.Sprintf("%s%s.yaml", constants.TalosManifestPrefix, staticPod.Metadata().ID())
+}
+
+func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controller.Runtime, logger *log.Logger, staticPod resource.Resource) error {
 	staticPodStatus := k8s.NewStaticPodStatus(staticPod.Metadata().Namespace(), staticPod.Metadata().ID())
 
 	if err := r.AddFinalizer(ctx, staticPod.Metadata(), staticPodStatus.String()); err != nil {
@@ -186,7 +207,7 @@ func (ctrl *KubeletStaticPodController) runPod(ctx context.Context, r controller
 		return nil
 	}
 
-	podPath := filepath.Join(constants.ManifestsDirectory, fmt.Sprintf("%s.yaml", staticPod.Metadata().ID()))
+	podPath := ctrl.podPath(staticPod)
 
 	existingPod, err := ioutil.ReadFile(podPath)
 	if err != nil {
@@ -204,8 +225,8 @@ func (ctrl *KubeletStaticPodController) runPod(ctx context.Context, r controller
 	return ioutil.WriteFile(podPath, renderedPod, 0o600)
 }
 
-func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPod *k8s.StaticPod) error {
-	podPath := filepath.Join(constants.ManifestsDirectory, fmt.Sprintf("%s.yaml", staticPod.Metadata().ID()))
+func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPod resource.Resource) error {
+	podPath := ctrl.podPath(staticPod)
 
 	_, err := os.Stat(podPath)
 	if err != nil {
@@ -220,6 +241,47 @@ func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPo
 
 	if err = os.Remove(podPath); err != nil {
 		return fmt.Errorf("error removing static pod %q: %w", podPath, err)
+	}
+
+	return nil
+}
+
+func (ctrl *KubeletStaticPodController) cleanupPods(logger *log.Logger, staticPods []resource.Resource) error {
+	manifestDir, err := os.Open(constants.ManifestsDirectory)
+	if err != nil {
+		return fmt.Errorf("error opening manifests directory: %w", err)
+	}
+
+	defer manifestDir.Close() //nolint: errcheck
+
+	manifests, err := manifestDir.Readdirnames(0)
+	if err != nil {
+		return fmt.Errorf("error listing manifests: %w", err)
+	}
+
+	expectedManifests := map[string]struct{}{}
+
+	for _, staticPod := range staticPods {
+		expectedManifests[ctrl.podFilename(staticPod)] = struct{}{}
+	}
+
+	for _, manifest := range manifests {
+		// skip manifests
+		if !strings.HasPrefix(manifest, constants.TalosManifestPrefix) {
+			continue
+		}
+
+		if _, expected := expectedManifests[manifest]; expected {
+			continue
+		}
+
+		podPath := filepath.Join(constants.ManifestsDirectory, manifest)
+
+		logger.Printf("cleaning up static pod %q", podPath)
+
+		if err = os.Remove(podPath); err != nil {
+			return fmt.Errorf("error cleaning up static pod: %w", err)
+		}
 	}
 
 	return nil
