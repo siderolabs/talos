@@ -8,15 +8,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
+	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+var trustdResolverScheme string
+
+func init() {
+	trustdResolverScheme = resolver.RegisterRoundRobinResolver(constants.TrustdPort)
+}
 
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
@@ -26,46 +34,33 @@ type RemoteGenerator struct {
 }
 
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
-func NewRemoteGenerator(token string, endpoints []string, port int) (g *RemoteGenerator, err error) {
+func NewRemoteGenerator(token string, endpoints []string) (g *RemoteGenerator, err error) {
 	if len(endpoints) == 0 {
 		return nil, fmt.Errorf("at least one root of trust endpoint is required")
 	}
 
 	creds := basic.NewTokenCredentials(token)
 
-	// Loop through trustd endpoints and attempt to download PKI
-	var (
-		conn       *grpc.ClientConn
-		multiError *multierror.Error
-	)
-
-	for i := 0; i < len(endpoints); i++ {
-		conn, err = basic.NewConnection(endpoints[i], port, creds)
-		if err != nil {
-			multiError = multierror.Append(multiError, err)
-			// Unable to connect, bail and attempt to contact next endpoint
-			continue
-		}
-
-		client := securityapi.NewSecurityServiceClient(conn)
-
-		g := &RemoteGenerator{
-			client: client,
-			conn:   conn,
-			done:   make(chan struct{}),
-		}
-
-		return g, nil
+	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", trustdResolverScheme, strings.Join(endpoints, ",")), creds)
+	if err != nil {
+		return nil, err
 	}
 
-	// We were unable to connect to any trustd endpoint
-	// Return error from last attempt.
-	return nil, multiError.ErrorOrNil()
+	client := securityapi.NewSecurityServiceClient(conn)
+
+	g = &RemoteGenerator{
+		client: client,
+		conn:   conn,
+		done:   make(chan struct{}),
+	}
+
+	return g, nil
 }
 
 // Certificate implements the securityapi.SecurityClient interface.
 func (g *RemoteGenerator) Certificate(in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	resp, err = g.client.Certificate(ctx, in)
 	if err != nil {
