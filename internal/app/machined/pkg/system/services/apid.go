@@ -85,7 +85,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	if r.Config().Machine().Type() == machine.TypeJoin {
 		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
 
-		err := retry.Constant(4*time.Minute, opts...).Retry(func() error {
+		err := retry.Constant(8*time.Minute, opts...).Retry(func() error {
 			ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer ctxCancel()
 
