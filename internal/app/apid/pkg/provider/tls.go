@@ -15,7 +15,6 @@ import (
 
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // TLSConfig provides client & server TLS configs for apid.
@@ -46,7 +45,6 @@ func NewTLSConfig(config config.Provider, endpoints []string) (*TLSConfig, error
 	generator, err := gen.NewRemoteGenerator(
 		config.Machine().Security().Token(),
 		endpoints,
-		constants.TrustdPort,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create remote certificate genertor: %w", err)
