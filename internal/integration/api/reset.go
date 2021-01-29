@@ -125,6 +125,8 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, true, true))
 		}, 10*time.Minute)
 
+		suite.ClearConnectionRefused(suite.ctx, node)
+
 		postReset, err := suite.hashKubeletCert(suite.ctx, node)
 		suite.Require().NoError(err)
 
@@ -155,6 +157,8 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 		// force reboot after reset, as this is the only mode we can test
 		return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, false, true))
 	}, 5*time.Minute)
+
+	suite.ClearConnectionRefused(suite.ctx, node)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
@@ -194,6 +198,8 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 			},
 		}))
 	}, 5*time.Minute)
+
+	suite.ClearConnectionRefused(suite.ctx, node)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
@@ -235,6 +241,8 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 			},
 		}))
 	}, 5*time.Minute)
+
+	suite.ClearConnectionRefused(suite.ctx, node)
 
 	postReset, err := suite.hashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
