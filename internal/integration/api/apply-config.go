@@ -136,6 +136,8 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.WaitForBootDone(suite.ctx)
 
 	node := suite.RandomDiscoveredNode()
+	suite.ClearConnectionRefused(suite.ctx, node)
+
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
 	provider, err := suite.readConfigFromNode(nodeCtx)

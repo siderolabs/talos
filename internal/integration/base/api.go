@@ -59,25 +59,7 @@ func (apiSuite *APISuite) SetupSuite() {
 
 	if len(nodes) > 0 {
 		// grpc might trigger backoff on reconnect attempts, so make sure we clear them
-		ctx, cancel := context.WithTimeout(context.Background(), backoff.DefaultConfig.MaxDelay)
-		defer cancel()
-
-		apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
-			for i := 0; i < len(nodes); i++ {
-				_, err = apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
-				if err == nil {
-					continue
-				}
-
-				if strings.Contains(err.Error(), "connection refused") {
-					return retry.ExpectedError(err)
-				}
-
-				return retry.UnexpectedError(err)
-			}
-
-			return nil
-		}))
+		apiSuite.ClearConnectionRefused(context.Background(), nodes...)
 	}
 }
 
@@ -276,6 +258,34 @@ func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
 	}, client.WithTailEvents(-1)))
 
 	apiSuite.Require().Empty(nodesNotDoneBooting)
+}
+
+// ClearConnectionRefused clears cached connection refused errors which might be left after node reboot.
+func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...string) {
+	ctx, cancel := context.WithTimeout(ctx, backoff.DefaultConfig.MaxDelay)
+	defer cancel()
+
+	numMasterNodes := len(apiSuite.DiscoverNodes().NodesByType(machine.TypeControlPlane)) + len(apiSuite.DiscoverNodes().NodesByType(machine.TypeInit))
+	if numMasterNodes == 0 {
+		numMasterNodes = 3
+	}
+
+	apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
+		for i := 0; i < numMasterNodes; i++ {
+			_, err := apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
+			if err == nil {
+				continue
+			}
+
+			if strings.Contains(err.Error(), "connection refused") {
+				return retry.ExpectedError(err)
+			}
+
+			return retry.UnexpectedError(err)
+		}
+
+		return nil
+	}))
 }
 
 // TearDownSuite closes Talos API client.
