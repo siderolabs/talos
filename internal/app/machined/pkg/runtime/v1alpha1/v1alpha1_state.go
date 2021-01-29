@@ -30,6 +30,8 @@ type State struct {
 
 // MachineState represents the machine's state.
 type MachineState struct {
+	platform runtime.Platform
+
 	disks map[string]*probe.ProbedBlockDevice
 
 	stagedInstall         bool
@@ -48,7 +50,9 @@ func NewState() (s *State, err error) {
 		return nil, err
 	}
 
-	machine := &MachineState{}
+	machine := &MachineState{
+		platform: p,
+	}
 
 	err = machine.probeDisks()
 	if err != nil {
@@ -97,6 +101,10 @@ func (s *State) V1Alpha2() runtime.V1Alpha2State {
 }
 
 func (s *MachineState) probeDisks(labels ...string) error {
+	if s.platform.Mode() == runtime.ModeContainer {
+		return os.ErrNotExist
+	}
+
 	if len(labels) == 0 {
 		labels = []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel}
 	}
@@ -124,6 +132,10 @@ func (s *MachineState) probeDisks(labels ...string) error {
 }
 
 func (s *MachineState) probeMeta() {
+	if s.platform.Mode() == runtime.ModeContainer {
+		return
+	}
+
 	meta, err := bootloader.NewMeta()
 	if err != nil {
 		// ignore missing meta
