@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/containerd/containerd v1.3.6
-	github.com/containerd/go-cni v1.0.0
+	github.com/containerd/go-cni v1.0.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
