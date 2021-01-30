@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"gopkg.in/fsnotify.v1"
+	"github.com/fsnotify/fsnotify"
 )
 
 // Reader implements io.ReadCloser over regular file following file contents.
