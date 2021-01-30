@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/aws/aws-sdk-go v1.15.78
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688
