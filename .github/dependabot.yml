@@ -1,0 +1,55 @@
+---
+
+# See https://docs.github.com/en/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    commit-message:
+      prefix: "chore:"
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "01:00"
+      timezone: "UTC"
+
+  - package-ecosystem: "gomod"
+    directory: "/pkg/machinery"
+    commit-message:
+      prefix: "chore:"
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "01:00"
+      timezone: "UTC"
+
+  - package-ecosystem: "gomod"
+    directory: "/hack/cloud-image-uploader"
+    commit-message:
+      prefix: "chore:"
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "01:00"
+      timezone: "UTC"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    commit-message:
+      prefix: "chore:"
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "01:00"
+      timezone: "UTC"
+
+# no website for now
