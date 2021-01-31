@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -177,6 +178,129 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 		Data:     cfgDataOut,
 	})
 	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
+}
+
+// TestApplyConfigRotateEncryptionSecrets verify key rotation by sequential apply config calls.
+func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
+	suite.T().Skip("skip: this test is not stable yet")
+
+	node := suite.RandomDiscoveredNode(machine.TypeJoin)
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+	provider, err := suite.readConfigFromNode(nodeCtx)
+
+	suite.Assert().NoError(err)
+
+	encryption := provider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
+
+	if encryption == nil {
+		suite.T().Skip("skipped in not encrypted mode")
+	}
+
+	suite.WaitForBootDone(suite.ctx)
+
+	cfg, ok := encryption.(*v1alpha1.EncryptionConfig)
+	suite.Assert().True(ok)
+
+	keySets := [][]*v1alpha1.EncryptionKey{
+		{
+			{
+				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeySlot:   0,
+			},
+			{
+				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+					KeyData: "AlO93jayutOpsDxDS=-",
+				},
+				KeySlot: 1,
+			},
+		},
+		{
+			{
+				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+					KeyData: "AlO93jayutOpsDxDS=-",
+				},
+				KeySlot: 1,
+			},
+		},
+		{
+			{
+				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeySlot:   0,
+			},
+			{
+				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+					KeyData: "AlO93jayutOpsDxDS=-",
+				},
+				KeySlot: 1,
+			},
+		},
+		{
+			{
+				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeySlot:   0,
+			},
+			{
+				KeyStatic: &v1alpha1.EncryptionKeyStatic{
+					KeyData: "1js4nfhvneJJsak=GVN4Inf5gh",
+				},
+				KeySlot: 1,
+			},
+		},
+	}
+
+	for _, keys := range keySets {
+		cfg.EncryptionKeys = keys
+
+		data, err := provider.Bytes()
+		suite.Require().NoError(err)
+
+		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
+			_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+				Data: data,
+			})
+			if err != nil {
+				// It is expected that the connection will EOF here, so just log the error
+				suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+			}
+
+			return nil
+		}, assertRebootedRebootTimeout)
+
+		// Verify configuration change
+		var newProvider config.Provider
+
+		suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
+			newProvider, err = suite.readConfigFromNode(nodeCtx)
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		}), "failed to read updated configuration from node %q: %w", node, err)
+
+		e := newProvider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
+
+		for i, k := range e.Keys() {
+			if keys[i].KeyStatic == nil {
+				suite.Require().Nil(k.Static())
+			} else {
+				suite.Require().Equal(keys[i].Static().Key(), k.Static().Key())
+			}
+
+			if keys[i].KeyNodeID == nil {
+				suite.Require().Nil(k.NodeID())
+			} else {
+				suite.Require().NotNil(keys[i].NodeID())
+			}
+
+			suite.Require().Equal(keys[i].Slot(), k.Slot())
+			suite.Require().Equal(keys[i].Slot(), k.Slot())
+		}
+
+		suite.WaitForBootDone(suite.ctx)
+	}
 }
 
 func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (config.Provider, error) {

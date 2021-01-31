@@ -14,7 +14,9 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/talos-systems/talos/internal/pkg/encryption"
 	"github.com/talos-systems/talos/internal/pkg/partition"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -89,7 +91,45 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 		return nil, err
 	}
 
+	o := NewDefaultOptions(opts...)
+
 	preMountHooks := []Hook{}
+
+	if o.Encryption != nil {
+		encryptionHandler, err := encryption.NewHandler(
+			device,
+			part,
+			o.Encryption,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		preMountHooks = append(preMountHooks,
+			func(p *Point) error {
+				var (
+					err  error
+					path string
+				)
+
+				if path, err = encryptionHandler.Open(); err != nil {
+					return err
+				}
+
+				p.source = path
+
+				return nil
+			},
+		)
+
+		opts = append(opts,
+			WithPostUnmountHooks(
+				func(p *Point) error {
+					return encryptionHandler.Close()
+				},
+			),
+		)
+	}
 
 	// Format the partition if it does not have any filesystem
 	preMountHooks = append(preMountHooks, func(p *Point) error {
@@ -130,6 +170,16 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
 	if device == nil {
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
+	}
+
+	var encryptionConfig config.Encryption
+
+	if r.Config() != nil && r.Config().Machine() != nil {
+		encryptionConfig = r.Config().Machine().SystemDiskEncryption().Get(label)
+	}
+
+	if encryptionConfig != nil {
+		opts = append(opts, WithEncryptionConfig(encryptionConfig))
 	}
 
 	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label, opts...)

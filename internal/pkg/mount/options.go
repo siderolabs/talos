@@ -4,6 +4,8 @@
 
 package mount
 
+import "github.com/talos-systems/talos/pkg/machinery/config"
+
 const (
 	// ReadOnly is a flag for setting the mount point as readonly.
 	ReadOnly Flags = 1 << iota
@@ -29,6 +31,7 @@ type Options struct {
 	MountFlags       Flags
 	PreMountHooks    []Hook
 	PostUnmountHooks []Hook
+	Encryption       config.Encryption
 }
 
 // Option is the functional option func.
@@ -69,6 +72,13 @@ func WithPreMountHooks(hooks ...Hook) Option {
 func WithPostUnmountHooks(hooks ...Hook) Option {
 	return func(args *Options) {
 		args.PostUnmountHooks = hooks
+	}
+}
+
+// WithEncryptionConfig partition encryption configuration.
+func WithEncryptionConfig(cfg config.Encryption) Option {
+	return func(args *Options) {
+		args.Encryption = cfg
 	}
 }
 
