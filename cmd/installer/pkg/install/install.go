@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
@@ -182,10 +183,34 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	// Mount the partitions.
+	mountpoints := mount.NewMountPoints()
 
-	mountpoints, err := i.manifest.SystemMountpoints()
-	if err != nil {
-		return err
+	for _, label := range []string{constants.BootPartitionLabel, constants.EFIPartitionLabel} {
+		err = func() error {
+			var bd *probe.ProbedBlockDevice
+
+			bd, err = probe.GetDevWithPartitionName(label)
+			if err != nil {
+				return err
+			}
+
+			defer bd.Close() //nolint:errcheck
+
+			var mountpoint *mount.Point
+
+			mountpoint, err = mount.SystemMountPointForLabel(bd.BlockDevice, label)
+			if err != nil {
+				return err
+			}
+
+			mountpoints.Set(label, mountpoint)
+
+			return nil
+		}()
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {

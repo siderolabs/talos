@@ -11,41 +11,46 @@ import (
 )
 
 var (
-	ConfigDoc                  encoder.Doc
-	MachineConfigDoc           encoder.Doc
-	ClusterConfigDoc           encoder.Doc
-	KubeletConfigDoc           encoder.Doc
-	NetworkConfigDoc           encoder.Doc
-	InstallConfigDoc           encoder.Doc
-	TimeConfigDoc              encoder.Doc
-	RegistriesConfigDoc        encoder.Doc
-	PodCheckpointerDoc         encoder.Doc
-	CoreDNSDoc                 encoder.Doc
-	EndpointDoc                encoder.Doc
-	ControlPlaneConfigDoc      encoder.Doc
-	APIServerConfigDoc         encoder.Doc
-	ControllerManagerConfigDoc encoder.Doc
-	ProxyConfigDoc             encoder.Doc
-	SchedulerConfigDoc         encoder.Doc
-	EtcdConfigDoc              encoder.Doc
-	ClusterNetworkConfigDoc    encoder.Doc
-	CNIConfigDoc               encoder.Doc
-	AdminKubeconfigConfigDoc   encoder.Doc
-	MachineDiskDoc             encoder.Doc
-	DiskPartitionDoc           encoder.Doc
-	MachineFileDoc             encoder.Doc
-	ExtraHostDoc               encoder.Doc
-	DeviceDoc                  encoder.Doc
-	DHCPOptionsDoc             encoder.Doc
-	DeviceWireguardConfigDoc   encoder.Doc
-	DeviceWireguardPeerDoc     encoder.Doc
-	BondDoc                    encoder.Doc
-	VlanDoc                    encoder.Doc
-	RouteDoc                   encoder.Doc
-	RegistryMirrorConfigDoc    encoder.Doc
-	RegistryConfigDoc          encoder.Doc
-	RegistryAuthConfigDoc      encoder.Doc
-	RegistryTLSConfigDoc       encoder.Doc
+	ConfigDoc                     encoder.Doc
+	MachineConfigDoc              encoder.Doc
+	ClusterConfigDoc              encoder.Doc
+	KubeletConfigDoc              encoder.Doc
+	NetworkConfigDoc              encoder.Doc
+	InstallConfigDoc              encoder.Doc
+	TimeConfigDoc                 encoder.Doc
+	RegistriesConfigDoc           encoder.Doc
+	PodCheckpointerDoc            encoder.Doc
+	CoreDNSDoc                    encoder.Doc
+	EndpointDoc                   encoder.Doc
+	ControlPlaneConfigDoc         encoder.Doc
+	APIServerConfigDoc            encoder.Doc
+	ControllerManagerConfigDoc    encoder.Doc
+	ProxyConfigDoc                encoder.Doc
+	SchedulerConfigDoc            encoder.Doc
+	EtcdConfigDoc                 encoder.Doc
+	ClusterNetworkConfigDoc       encoder.Doc
+	CNIConfigDoc                  encoder.Doc
+	AdminKubeconfigConfigDoc      encoder.Doc
+	MachineDiskDoc                encoder.Doc
+	DiskPartitionDoc              encoder.Doc
+	EncryptionConfigDoc           encoder.Doc
+	EncryptionKeyDoc              encoder.Doc
+	EncryptionKeyStaticDoc        encoder.Doc
+	EncryptionKeyNodeIDDoc        encoder.Doc
+	MachineFileDoc                encoder.Doc
+	ExtraHostDoc                  encoder.Doc
+	DeviceDoc                     encoder.Doc
+	DHCPOptionsDoc                encoder.Doc
+	DeviceWireguardConfigDoc      encoder.Doc
+	DeviceWireguardPeerDoc        encoder.Doc
+	BondDoc                       encoder.Doc
+	VlanDoc                       encoder.Doc
+	RouteDoc                      encoder.Doc
+	RegistryMirrorConfigDoc       encoder.Doc
+	RegistryConfigDoc             encoder.Doc
+	RegistryAuthConfigDoc         encoder.Doc
+	RegistryTLSConfigDoc          encoder.Doc
+	SystemDiskEncryptionConfigDoc encoder.Doc
 )
 
 func init() {
@@ -107,7 +112,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 13)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 14)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -213,6 +218,13 @@ func init() {
 	MachineConfigDoc.Fields[12].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
 
 	MachineConfigDoc.Fields[12].AddExample("", machineConfigRegistriesExample)
+	MachineConfigDoc.Fields[13].Name = "systemDiskEncryption"
+	MachineConfigDoc.Fields[13].Type = "SystemDiskEncryptionConfig"
+	MachineConfigDoc.Fields[13].Note = ""
+	MachineConfigDoc.Fields[13].Description = "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
+	MachineConfigDoc.Fields[13].Comments[encoder.LineComment] = "Machine system disk encryption configuration."
+
+	MachineConfigDoc.Fields[13].AddExample("", machineSystemDiskEncryptionExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
@@ -912,6 +924,87 @@ func init() {
 	DiskPartitionDoc.Fields[1].Description = "Where to mount the partition."
 	DiskPartitionDoc.Fields[1].Comments[encoder.LineComment] = "Where to mount the partition."
 
+	EncryptionConfigDoc.Type = "EncryptionConfig"
+	EncryptionConfigDoc.Comments[encoder.LineComment] = "EncryptionConfig represents partition encryption settings."
+	EncryptionConfigDoc.Description = "EncryptionConfig represents partition encryption settings."
+	EncryptionConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "SystemDiskEncryptionConfig",
+			FieldName: "ephemeral",
+		},
+	}
+	EncryptionConfigDoc.Fields = make([]encoder.Doc, 3)
+	EncryptionConfigDoc.Fields[0].Name = "provider"
+	EncryptionConfigDoc.Fields[0].Type = "string"
+	EncryptionConfigDoc.Fields[0].Note = ""
+	EncryptionConfigDoc.Fields[0].Description = "Encryption provider to use for the encryption."
+	EncryptionConfigDoc.Fields[0].Comments[encoder.LineComment] = "Encryption provider to use for the encryption."
+
+	EncryptionConfigDoc.Fields[0].AddExample("", "luks2")
+	EncryptionConfigDoc.Fields[1].Name = "keys"
+	EncryptionConfigDoc.Fields[1].Type = "[]EncryptionKey"
+	EncryptionConfigDoc.Fields[1].Note = ""
+	EncryptionConfigDoc.Fields[1].Description = "Defines the encryption keys generation and storage method."
+	EncryptionConfigDoc.Fields[1].Comments[encoder.LineComment] = "Defines the encryption keys generation and storage method."
+	EncryptionConfigDoc.Fields[2].Name = "cipher"
+	EncryptionConfigDoc.Fields[2].Type = "string"
+	EncryptionConfigDoc.Fields[2].Note = ""
+	EncryptionConfigDoc.Fields[2].Description = "Cipher kind to use for the encryption. Depends on the encryption provider."
+	EncryptionConfigDoc.Fields[2].Comments[encoder.LineComment] = "Cipher kind to use for the encryption. Depends on the encryption provider."
+
+	EncryptionKeyDoc.Type = "EncryptionKey"
+	EncryptionKeyDoc.Comments[encoder.LineComment] = "EncryptionKey represents configuration for disk encryption key."
+	EncryptionKeyDoc.Description = "EncryptionKey represents configuration for disk encryption key."
+	EncryptionKeyDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "EncryptionConfig",
+			FieldName: "keys",
+		},
+	}
+	EncryptionKeyDoc.Fields = make([]encoder.Doc, 3)
+	EncryptionKeyDoc.Fields[0].Name = "static"
+	EncryptionKeyDoc.Fields[0].Type = "EncryptionKeyStatic"
+	EncryptionKeyDoc.Fields[0].Note = ""
+	EncryptionKeyDoc.Fields[0].Description = "Key which value is stored in the configuration file."
+	EncryptionKeyDoc.Fields[0].Comments[encoder.LineComment] = "Key which value is stored in the configuration file."
+	EncryptionKeyDoc.Fields[1].Name = "nodeID"
+	EncryptionKeyDoc.Fields[1].Type = "EncryptionKeyNodeID"
+	EncryptionKeyDoc.Fields[1].Note = ""
+	EncryptionKeyDoc.Fields[1].Description = "Deterministically generated key from the node UUID and PartitionLabel."
+	EncryptionKeyDoc.Fields[1].Comments[encoder.LineComment] = "Deterministically generated key from the node UUID and PartitionLabel."
+	EncryptionKeyDoc.Fields[2].Name = "slot"
+	EncryptionKeyDoc.Fields[2].Type = "int"
+	EncryptionKeyDoc.Fields[2].Note = ""
+	EncryptionKeyDoc.Fields[2].Description = "Key slot number for luks2 encryption."
+	EncryptionKeyDoc.Fields[2].Comments[encoder.LineComment] = "Key slot number for luks2 encryption."
+
+	EncryptionKeyStaticDoc.Type = "EncryptionKeyStatic"
+	EncryptionKeyStaticDoc.Comments[encoder.LineComment] = "EncryptionKeyStatic represents throw away key type."
+	EncryptionKeyStaticDoc.Description = "EncryptionKeyStatic represents throw away key type."
+	EncryptionKeyStaticDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "EncryptionKey",
+			FieldName: "static",
+		},
+	}
+	EncryptionKeyStaticDoc.Fields = make([]encoder.Doc, 1)
+	EncryptionKeyStaticDoc.Fields[0].Name = "passphrase"
+	EncryptionKeyStaticDoc.Fields[0].Type = "string"
+	EncryptionKeyStaticDoc.Fields[0].Note = ""
+	EncryptionKeyStaticDoc.Fields[0].Description = "Defines the static passphrase value."
+	EncryptionKeyStaticDoc.Fields[0].Comments[encoder.LineComment] = "Defines the static passphrase value."
+
+	EncryptionKeyNodeIDDoc.Type = "EncryptionKeyNodeID"
+	EncryptionKeyNodeIDDoc.Comments[encoder.LineComment] = "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
+	EncryptionKeyNodeIDDoc.Description = "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
+	EncryptionKeyNodeIDDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "EncryptionKey",
+			FieldName: "nodeID",
+		},
+	}
+	EncryptionKeyNodeIDDoc.Fields = make([]encoder.Doc, 0)
+
 	MachineFileDoc.Type = "MachineFile"
 	MachineFileDoc.Comments[encoder.LineComment] = "MachineFile represents a file to write to disk."
 	MachineFileDoc.Description = "MachineFile represents a file to write to disk."
@@ -1473,6 +1566,24 @@ func init() {
 	RegistryTLSConfigDoc.Fields[2].Note = ""
 	RegistryTLSConfigDoc.Fields[2].Description = "Skip TLS server certificate verification (not recommended)."
 	RegistryTLSConfigDoc.Fields[2].Comments[encoder.LineComment] = "Skip TLS server certificate verification (not recommended)."
+
+	SystemDiskEncryptionConfigDoc.Type = "SystemDiskEncryptionConfig"
+	SystemDiskEncryptionConfigDoc.Comments[encoder.LineComment] = "SystemDiskEncryptionConfig specifies system disk partitions encryption settings."
+	SystemDiskEncryptionConfigDoc.Description = "SystemDiskEncryptionConfig specifies system disk partitions encryption settings."
+
+	SystemDiskEncryptionConfigDoc.AddExample("", machineSystemDiskEncryptionExample)
+	SystemDiskEncryptionConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "systemDiskEncryption",
+		},
+	}
+	SystemDiskEncryptionConfigDoc.Fields = make([]encoder.Doc, 1)
+	SystemDiskEncryptionConfigDoc.Fields[0].Name = "ephemeral"
+	SystemDiskEncryptionConfigDoc.Fields[0].Type = "EncryptionConfig"
+	SystemDiskEncryptionConfigDoc.Fields[0].Note = ""
+	SystemDiskEncryptionConfigDoc.Fields[0].Description = "Ephemeral partition encryption."
+	SystemDiskEncryptionConfigDoc.Fields[0].Comments[encoder.LineComment] = "Ephemeral partition encryption."
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -1563,6 +1674,22 @@ func (_ DiskPartition) Doc() *encoder.Doc {
 	return &DiskPartitionDoc
 }
 
+func (_ EncryptionConfig) Doc() *encoder.Doc {
+	return &EncryptionConfigDoc
+}
+
+func (_ EncryptionKey) Doc() *encoder.Doc {
+	return &EncryptionKeyDoc
+}
+
+func (_ EncryptionKeyStatic) Doc() *encoder.Doc {
+	return &EncryptionKeyStaticDoc
+}
+
+func (_ EncryptionKeyNodeID) Doc() *encoder.Doc {
+	return &EncryptionKeyNodeIDDoc
+}
+
 func (_ MachineFile) Doc() *encoder.Doc {
 	return &MachineFileDoc
 }
@@ -1615,6 +1742,10 @@ func (_ RegistryTLSConfig) Doc() *encoder.Doc {
 	return &RegistryTLSConfigDoc
 }
 
+func (_ SystemDiskEncryptionConfig) Doc() *encoder.Doc {
+	return &SystemDiskEncryptionConfigDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1643,6 +1774,10 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&AdminKubeconfigConfigDoc,
 			&MachineDiskDoc,
 			&DiskPartitionDoc,
+			&EncryptionConfigDoc,
+			&EncryptionKeyDoc,
+			&EncryptionKeyStaticDoc,
+			&EncryptionKeyNodeIDDoc,
 			&MachineFileDoc,
 			&ExtraHostDoc,
 			&DeviceDoc,
@@ -1656,6 +1791,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryConfigDoc,
 			&RegistryAuthConfigDoc,
 			&RegistryTLSConfigDoc,
+			&SystemDiskEncryptionConfigDoc,
 		},
 	}
 }

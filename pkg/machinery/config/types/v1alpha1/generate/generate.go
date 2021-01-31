@@ -80,9 +80,10 @@ type Input struct {
 	NetworkConfig *v1alpha1.NetworkConfig
 	CNIConfig     *v1alpha1.CNIConfig
 
-	RegistryMirrors map[string]*v1alpha1.RegistryMirrorConfig
-	RegistryConfig  map[string]*v1alpha1.RegistryConfig
-	MachineDisks    []*v1alpha1.MachineDisk
+	RegistryMirrors            map[string]*v1alpha1.RegistryMirrorConfig
+	RegistryConfig             map[string]*v1alpha1.RegistryConfig
+	MachineDisks               []*v1alpha1.MachineDisk
+	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 
 	Debug                    bool
 	Persist                  bool
@@ -454,28 +455,29 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 	}
 
 	input = &Input{
-		Certs:                     secrets.Certs,
-		ControlPlaneEndpoint:      endpoint,
-		PodNet:                    []string{podNet},
-		ServiceNet:                []string{serviceNet},
-		ServiceDomain:             options.DNSDomain,
-		ClusterName:               clustername,
-		KubernetesVersion:         kubernetesVersion,
-		Secrets:                   secrets.Secrets,
-		TrustdInfo:                secrets.TrustdInfo,
-		AdditionalSubjectAltNames: additionalSubjectAltNames,
-		AdditionalMachineCertSANs: additionalMachineCertSANs,
-		InstallDisk:               options.InstallDisk,
-		InstallImage:              options.InstallImage,
-		InstallExtraKernelArgs:    options.InstallExtraKernelArgs,
-		NetworkConfig:             options.NetworkConfig,
-		CNIConfig:                 options.CNIConfig,
-		RegistryMirrors:           options.RegistryMirrors,
-		RegistryConfig:            options.RegistryConfig,
-		Debug:                     options.Debug,
-		Persist:                   options.Persist,
-		AllowSchedulingOnMasters:  options.AllowSchedulingOnMasters,
-		MachineDisks:              options.MachineDisks,
+		Certs:                      secrets.Certs,
+		ControlPlaneEndpoint:       endpoint,
+		PodNet:                     []string{podNet},
+		ServiceNet:                 []string{serviceNet},
+		ServiceDomain:              options.DNSDomain,
+		ClusterName:                clustername,
+		KubernetesVersion:          kubernetesVersion,
+		Secrets:                    secrets.Secrets,
+		TrustdInfo:                 secrets.TrustdInfo,
+		AdditionalSubjectAltNames:  additionalSubjectAltNames,
+		AdditionalMachineCertSANs:  additionalMachineCertSANs,
+		InstallDisk:                options.InstallDisk,
+		InstallImage:               options.InstallImage,
+		InstallExtraKernelArgs:     options.InstallExtraKernelArgs,
+		NetworkConfig:              options.NetworkConfig,
+		CNIConfig:                  options.CNIConfig,
+		RegistryMirrors:            options.RegistryMirrors,
+		RegistryConfig:             options.RegistryConfig,
+		Debug:                      options.Debug,
+		Persist:                    options.Persist,
+		AllowSchedulingOnMasters:   options.AllowSchedulingOnMasters,
+		MachineDisks:               options.MachineDisks,
+		SystemDiskEncryptionConfig: options.SystemDiskEncryptionConfig,
 	}
 
 	return input, nil

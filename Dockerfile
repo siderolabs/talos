@@ -17,6 +17,8 @@ FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
 FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
 FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub
 FROM ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables
+FROM ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c
+FROM ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt
 FROM ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl
 FROM ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
 FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
@@ -358,6 +360,8 @@ COPY --from=pkg-containerd / /rootfs
 COPY --from=pkg-dosfstools / /rootfs
 COPY --from=pkg-eudev / /rootfs
 COPY --from=pkg-iptables / /rootfs
+COPY --from=pkg-libjson-c / /rootfs
+COPY --from=pkg-libpopt / /rootfs
 COPY --from=pkg-libressl / /rootfs
 COPY --from=pkg-libseccomp / /rootfs
 COPY --from=pkg-linux-firmware /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2

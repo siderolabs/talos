@@ -498,9 +498,9 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 			case constants.MetaPartitionLabel:
 				target = installer.MetaTarget(bd.Device().Name(), nil)
 			case constants.StatePartitionLabel:
-				target = installer.StateTarget(bd.Device().Name(), nil)
+				target = installer.StateTarget(bd.Device().Name(), installer.NoFilesystem)
 			case constants.EphemeralPartitionLabel:
-				target = installer.EphemeralTarget(bd.Device().Name(), nil)
+				target = installer.EphemeralTarget(bd.Device().Name(), installer.NoFilesystem)
 			default:
 				return nil, fmt.Errorf("label %q is not supported", spec.Label)
 			}

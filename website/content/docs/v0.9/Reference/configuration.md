@@ -658,6 +658,38 @@ registries:
 
 <hr />
 
+<div class="dd">
+
+<code>systemDiskEncryption</code>  <i><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a></i>
+
+</div>
+<div class="dt">
+
+Machine system disk encryption configuration.
+Defines each system partition encryption parameters.
+
+
+
+Examples:
+
+
+``` yaml
+systemDiskEncryption:
+    # Ephemeral partition encryption.
+    ephemeral:
+        provider: luks2 # Encryption provider to use for the encryption.
+        # Defines the encryption keys generation and storage method.
+        keys:
+            - # Deterministically generated key from the node UUID and PartitionLabel.
+              nodeID: {}
+              slot: 0 # Key slot number for luks2 encryption.
+```
+
+
+</div>
+
+<hr />
+
 
 
 
@@ -2693,6 +2725,167 @@ Where to mount the partition.
 
 
 
+## EncryptionConfig
+EncryptionConfig represents partition encryption settings.
+
+Appears in:
+
+
+- <code><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a>.ephemeral</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>provider</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Encryption provider to use for the encryption.
+
+
+
+Examples:
+
+
+``` yaml
+provider: luks2
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>keys</code>  <i>[]<a href="#encryptionkey">EncryptionKey</a></i>
+
+</div>
+<div class="dt">
+
+Defines the encryption keys generation and storage method.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>cipher</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Cipher kind to use for the encryption. Depends on the encryption provider.
+
+</div>
+
+<hr />
+
+
+
+
+
+## EncryptionKey
+EncryptionKey represents configuration for disk encryption key.
+
+Appears in:
+
+
+- <code><a href="#encryptionconfig">EncryptionConfig</a>.keys</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>static</code>  <i><a href="#encryptionkeystatic">EncryptionKeyStatic</a></i>
+
+</div>
+<div class="dt">
+
+Key which value is stored in the configuration file.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>nodeID</code>  <i><a href="#encryptionkeynodeid">EncryptionKeyNodeID</a></i>
+
+</div>
+<div class="dt">
+
+Deterministically generated key from the node UUID and PartitionLabel.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>slot</code>  <i>int</i>
+
+</div>
+<div class="dt">
+
+Key slot number for luks2 encryption.
+
+</div>
+
+<hr />
+
+
+
+
+
+## EncryptionKeyStatic
+EncryptionKeyStatic represents throw away key type.
+
+Appears in:
+
+
+- <code><a href="#encryptionkey">EncryptionKey</a>.static</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>passphrase</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Defines the static passphrase value.
+
+</div>
+
+<hr />
+
+
+
+
+
+## EncryptionKeyNodeID
+EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
+
+Appears in:
+
+
+- <code><a href="#encryptionkey">EncryptionKey</a>.nodeID</code>
+
+
+
+
+
 ## MachineFile
 MachineFile represents a file to write to disk.
 
@@ -4191,6 +4384,45 @@ Certificate should be base64-encoded.
 <div class="dt">
 
 Skip TLS server certificate verification (not recommended).
+
+</div>
+
+<hr />
+
+
+
+
+
+## SystemDiskEncryptionConfig
+SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
+
+Appears in:
+
+
+- <code><a href="#machineconfig">MachineConfig</a>.systemDiskEncryption</code>
+
+
+``` yaml
+# Ephemeral partition encryption.
+ephemeral:
+    provider: luks2 # Encryption provider to use for the encryption.
+    # Defines the encryption keys generation and storage method.
+    keys:
+        - # Deterministically generated key from the node UUID and PartitionLabel.
+          nodeID: {}
+          slot: 0 # Key slot number for luks2 encryption.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>ephemeral</code>  <i><a href="#encryptionconfig">EncryptionConfig</a></i>
+
+</div>
+<div class="dt">
+
+Ephemeral partition encryption.
 
 </div>
 

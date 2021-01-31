@@ -58,6 +58,9 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 	).Append(
 		"unmountState",
 		UnmountStatePartition,
+	).Append(
+		"cleanup",
+		StopAllPods,
 	).AppendList(
 		stopAllPhaselist(r),
 	).Append(
@@ -210,7 +213,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"ephemeral",
-		MountEphermeralPartition,
+		MountEphemeralPartition,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"verifyInstall",
@@ -273,7 +276,11 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 
 // Reboot is the reboot sequence.
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
-	phases := PhaseList{}.AppendList(stopAllPhaselist(r)).
+	phases := PhaseList{}.Append(
+		"cleanup",
+		StopAllPods,
+	).
+		AppendList(stopAllPhaselist(r)).
 		Append("reboot", Reboot)
 
 	return phases
@@ -334,6 +341,10 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 // Shutdown is the shutdown sequence.
 func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.
+		Append(
+			"cleanup",
+			StopAllPods,
+		).
 		AppendList(stopAllPhaselist(r)).
 		Append("shutdown", Shutdown)
 
@@ -352,6 +363,9 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
 			LeaveEtcd,
+		).Append(
+			"cleanup",
+			StopAllPods,
 		).AppendList(
 			stopAllPhaselist(r),
 		).Append(
@@ -397,12 +411,12 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountBind",
+			UnmountSystemDiskBindMounts,
+		).Append(
 			"unmountSystem",
 			UnmountEphemeralPartition,
 			UnmountStatePartition,
-		).Append(
-			"unmountBind",
-			UnmountSystemDiskBindMounts,
 		).Append(
 			"verifyDisk",
 			VerifyDiskAvailability,
@@ -442,12 +456,12 @@ func stopAllPhaselist(r runtime.Runtime) PhaseList {
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
+			"unmountBind",
+			UnmountSystemDiskBindMounts,
+		).Append(
 			"unmountSystem",
 			UnmountEphemeralPartition,
 			UnmountStatePartition,
-		).Append(
-			"unmountBind",
-			UnmountSystemDiskBindMounts,
 		)
 	}
 

@@ -19,7 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// NewConfigBundle returns a new bundle
+// NewConfigBundle returns a new bundle.
 // nolint: gocyclo
 func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 	options := DefaultOptions()

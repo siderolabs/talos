@@ -868,8 +868,8 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54 h1:2IGs3f0qG7f33Fv37XuYzIMxLARl4dcpwahZXLmdT2A=
 github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54/go.mod h1:OXCK52Q0dzm88YRG4VdTBdidkPUtqrCxCyW7bUs4DAw=
-github.com/talos-systems/go-blockdevice v0.2.0 h1:tTu0ak3GfF8iSxNsdsicVhTKebIcyBARQYxhRV86AF0=
-github.com/talos-systems/go-blockdevice v0.2.0/go.mod h1:DGbop5CJa0PYdhQK9cNVF61pPJNedas1m7Gi/qAnrsM=
+github.com/talos-systems/go-blockdevice v0.2.1-0.20210215235705-1cf7f252c38c h1:Phuso/dkIkP+xZBA0WNNea1MR3kzKdLQuPyHOu44S8w=
+github.com/talos-systems/go-blockdevice v0.2.1-0.20210215235705-1cf7f252c38c/go.mod h1:DGbop5CJa0PYdhQK9cNVF61pPJNedas1m7Gi/qAnrsM=
 github.com/talos-systems/go-loadbalancer v0.1.0 h1:MQFONvSjoleU8RrKq1O1Z8CyTCJGd4SLqdAHDlR6o9s=
 github.com/talos-systems/go-loadbalancer v0.1.0/go.mod h1:D5Qjfz+29WVjONWECZvOkmaLsBb3f5YeWME0u/5HmIc=
 github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24 h1:fN8vYvlB9XBQ5aImb1vLgR0ZaDwvfZfBMptqkpi3aEg=
@@ -1298,7 +1298,6 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20141024133853-64131543e789/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f h1:BLraFXnmrev5lT+xlilqcH8XK9/i0At2xKjWk4p6zsU=
 gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b h1:QRR6H1YWRnHb4Y/HeNFCTJLFVxaq6wH4YuVdsUOr75U=
 gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
@@ -1329,7 +1328,6 @@ gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
 gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 h1:tQIYjPdBoyREyB9XMu+nnTclpTYkz2zFM+lzLJFO4gQ=
 gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
@@ -1342,7 +1340,6 @@ honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a/go.mod h1:rf3lG4BRIbNafJWh
 honnef.co/go/tools v0.0.0-20190418001031-e561f6794a2a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
-honnef.co/go/tools v0.0.1-2020.1.3 h1:sXmLre5bzIR6ypkjXCDI3jHPssRhc8KD/Ome589sc3U=
 honnef.co/go/tools v0.0.1-2020.1.3/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
 honnef.co/go/tools v0.0.1-2020.1.6 h1:W18jzjh8mfPez+AwGLxmOImucz/IFjpNlrKVnaj2YVc=
 honnef.co/go/tools v0.0.1-2020.1.6/go.mod h1:pyyisuGw24ruLjrr1ddx39WE0y9OooInRzEYLhQB2YY=

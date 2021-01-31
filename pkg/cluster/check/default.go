@@ -41,7 +41,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("apid to be ready", func(ctx context.Context) error {
 				return ApidReadyAssertion(ctx, cluster)
-			}, 2*time.Minute, 5*time.Second)
+			}, 5*time.Minute, 5*time.Second)
 		},
 		// wait for kubelet to be healthy on all
 		func(cluster ClusterInfo) conditions.Condition {

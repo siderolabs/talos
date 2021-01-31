@@ -338,20 +338,28 @@ local integration_provision_tests_track_1 = Step("provision-tests-track-1", priv
 //         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.5/install/kubernetes/quick-install.yaml",
 //         "REGISTRY": local_registry,
 // });
-local integration_cilium = Step("e2e-cilium-1.8.5", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
+local integration_cilium = Step("e2e-cilium-1.8.5", target="e2e-qemu", privileged=true, depends_on=[integration_provision_tests_track_1], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.5/install/kubernetes/quick-install.yaml",
         "REGISTRY": local_registry,
+        "CLUSTER_CIDR": 2,
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_UEFI": "true",
+        "CLUSTER_CIDR": 3,
         "REGISTRY": local_registry,
 });
 local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privileged=true, depends_on=[integration_uefi], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "USE_DISK_IMAGE": "true",
         "REGISTRY": local_registry,
+        "CLUSTER_CIDR": 4,
+});
+local integration_disk_encryption = Step("e2e-encrypted", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
+        "WITH_DISK_ENCRYPTION": "true",
+        "REGISTRY": local_registry,
+        "CLUSTER_CIDR": 5,
 });
 local push_edge = {
   name: 'push-edge',
@@ -385,6 +393,7 @@ local integration_steps = default_steps + [
   integration_cilium,
   integration_uefi,
   integration_disk_image,
+  integration_disk_encryption,
   push_edge,
 ];
 

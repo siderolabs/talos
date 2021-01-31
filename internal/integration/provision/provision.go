@@ -4,7 +4,7 @@
 
 // +build integration
 
-// Package provision provides integration tests which rely on on provisioning cluster per test.
+// Package provision provides integration tests which rely on provisioning cluster per test.
 package provision
 
 import (

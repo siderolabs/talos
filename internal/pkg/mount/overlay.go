@@ -22,7 +22,7 @@ func OverlayMountPoints() (mountpoints *Points, err error) {
 	}
 
 	for _, target := range overlays {
-		mountpoint := NewMountPoint("", target, "", unix.MS_I_VERSION, "", WithOverlay(true))
+		mountpoint := NewMountPoint("", target, "", unix.MS_I_VERSION, "", WithFlags(Overlay))
 		mountpoints.Set(target, mountpoint)
 	}
 

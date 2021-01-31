@@ -119,6 +119,28 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterConfig.ClusterNetwork.DNSDomain))
 	}
 
+	for _, label := range []string{constants.EphemeralPartitionLabel} {
+		encryptionConfig := c.MachineConfig.SystemDiskEncryption().Get(label)
+		if encryptionConfig != nil {
+			if len(encryptionConfig.Keys()) == 0 {
+				result = multierror.Append(result, fmt.Errorf("no encryption keys provided for the ephemeral partition encryption"))
+			}
+
+			slotsInUse := map[int]bool{}
+			for _, key := range encryptionConfig.Keys() {
+				if slotsInUse[key.Slot()] {
+					result = multierror.Append(result, fmt.Errorf("encryption key slot %d is already in use", key.Slot()))
+				}
+
+				slotsInUse[key.Slot()] = true
+
+				if key.NodeID() == nil && key.Static() == nil {
+					result = multierror.Append(result, fmt.Errorf("encryption key at slot %d doesn't have any settings", key.Slot()))
+				}
+			}
+		}
+	}
+
 	return result.ErrorOrNil()
 }
 
