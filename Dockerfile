@@ -11,6 +11,7 @@ ARG EXTRAS
 
 FROM ghcr.io/talos-systems/fhs:${PKGS} AS pkg-fhs
 FROM ghcr.io/talos-systems/ca-certificates:${PKGS} AS pkg-ca-certificates
+FROM ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup
 FROM ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd
 FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
 FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
@@ -352,6 +353,7 @@ COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz-${TARGETARCH}
 FROM build AS rootfs-base
 COPY --from=pkg-fhs / /rootfs
 COPY --from=pkg-ca-certificates / /rootfs
+COPY --from=pkg-cryptsetup / /rootfs
 COPY --from=pkg-containerd / /rootfs
 COPY --from=pkg-dosfstools / /rootfs
 COPY --from=pkg-eudev / /rootfs
