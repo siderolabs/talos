@@ -163,23 +163,33 @@ func WithVersionContract(versionContract *config.VersionContract) GenOption {
 	}
 }
 
+// WithSystemDiskEncryption specifies encryption settings for the system disk partitions.
+func WithSystemDiskEncryption(cfg *v1alpha1.SystemDiskEncryptionConfig) GenOption {
+	return func(o *GenOptions) error {
+		o.SystemDiskEncryptionConfig = cfg
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
-	EndpointList              []string
-	InstallDisk               string
-	InstallImage              string
-	InstallExtraKernelArgs    []string
-	AdditionalSubjectAltNames []string
-	NetworkConfig             *v1alpha1.NetworkConfig
-	CNIConfig                 *v1alpha1.CNIConfig
-	RegistryMirrors           map[string]*v1alpha1.RegistryMirrorConfig
-	RegistryConfig            map[string]*v1alpha1.RegistryConfig
-	DNSDomain                 string
-	Debug                     bool
-	Persist                   bool
-	AllowSchedulingOnMasters  bool
-	MachineDisks              []*v1alpha1.MachineDisk
-	VersionContract           *config.VersionContract
+	EndpointList               []string
+	InstallDisk                string
+	InstallImage               string
+	InstallExtraKernelArgs     []string
+	AdditionalSubjectAltNames  []string
+	NetworkConfig              *v1alpha1.NetworkConfig
+	CNIConfig                  *v1alpha1.CNIConfig
+	RegistryMirrors            map[string]*v1alpha1.RegistryMirrorConfig
+	RegistryConfig             map[string]*v1alpha1.RegistryConfig
+	DNSDomain                  string
+	Debug                      bool
+	Persist                    bool
+	AllowSchedulingOnMasters   bool
+	MachineDisks               []*v1alpha1.MachineDisk
+	VersionContract            *config.VersionContract
+	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 }
 
 // DefaultGenOptions returns default options.

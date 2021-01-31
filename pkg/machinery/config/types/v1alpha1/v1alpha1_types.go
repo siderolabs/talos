@@ -198,6 +198,18 @@ var (
 		"net.ipv4.ip_forward": "0",
 	}
 
+	machineSystemDiskEncryptionExample = &SystemDiskEncryptionConfig{
+		EphemeralPartition: &EncryptionConfig{
+			EncryptionProvider: "luks2",
+			EncryptionKeys: []*EncryptionKey{
+				{
+					KeyNodeID: &EncryptionKeyNodeID{},
+					KeySlot:   0,
+				},
+			},
+		},
+	}
+
 	clusterConfigExample = struct {
 		ControlPlane *ControlPlaneConfig   `yaml:"controlPlane"`
 		ClusterName  string                `yaml:"clusterName"`
@@ -533,6 +545,12 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineConfigRegistriesExample
 	MachineRegistries RegistriesConfig `yaml:"registries,omitempty"`
+	//   description: |
+	//     Machine system disk encryption configuration.
+	//     Defines each system partition encryption parameters.
+	//   examples:
+	//     - value: machineSystemDiskEncryptionExample
+	MachineSystemDiskEncryption *SystemDiskEncryptionConfig `yaml:"systemDiskEncryption,omitempty"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -1051,6 +1069,45 @@ type DiskPartition struct {
 	DiskMountPoint string `yaml:"mountpoint,omitempty"`
 }
 
+// EncryptionConfig represents partition encryption settings.
+type EncryptionConfig struct {
+	//   description: >
+	//     Encryption provider to use for the encryption.
+	//   examples:
+	//     - value: '"luks2"'
+	EncryptionProvider string `yaml:"provider"`
+	//   description: >
+	//     Defines the encryption keys generation and storage method.
+	EncryptionKeys []*EncryptionKey `yaml:"keys"`
+	//   description: >
+	//     Cipher kind to use for the encryption.
+	//     Depends on the encryption provider.
+	EncryptionCipher string `yaml:"cipher,omitempty"`
+}
+
+// EncryptionKey represents configuration for disk encryption key.
+type EncryptionKey struct {
+	//   description: >
+	//     Key which value is stored in the configuration file.
+	KeyStatic *EncryptionKeyStatic `yaml:"static,omitempty"`
+	//   description: >
+	//     Deterministically generated key from the node UUID and PartitionLabel.
+	KeyNodeID *EncryptionKeyNodeID `yaml:"nodeID,omitempty"`
+	//   description: >
+	//     Key slot number for luks2 encryption.
+	KeySlot int `yaml:"slot"`
+}
+
+// EncryptionKeyStatic represents throw away key type.
+type EncryptionKeyStatic struct {
+	//   description: >
+	//     Defines the static passphrase value.
+	KeyData string `yaml:"passphrase,omitempty"`
+}
+
+// EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
+type EncryptionKeyNodeID struct{}
+
 // Env represents a set of environment variables.
 type Env = map[string]string
 
@@ -1395,4 +1452,11 @@ type RegistryTLSConfig struct {
 	//   description: |
 	//     Skip TLS server certificate verification (not recommended).
 	TLSInsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
+}
+
+// SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
+type SystemDiskEncryptionConfig struct {
+	//   description: |
+	//     Ephemeral partition encryption.
+	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
 }

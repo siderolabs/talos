@@ -45,6 +45,7 @@ type MachineConfig interface {
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Registries() Registries
+	SystemDiskEncryption() SystemDiskEncryption
 }
 
 // Disk represents the options available for partitioning, formatting, and
@@ -341,4 +342,32 @@ type CoreDNS interface {
 // AdminKubeconfig defines settings for admin kubeconfig.
 type AdminKubeconfig interface {
 	CertLifetime() time.Duration
+}
+
+// EncryptionKey defines settings for the partition encryption key handling.
+type EncryptionKey interface {
+	Static() EncryptionKeyStatic
+	NodeID() EncryptionKeyNodeID
+	Slot() int
+}
+
+// EncryptionKeyStatic ephemeral encryption key.
+type EncryptionKeyStatic interface {
+	Key() []byte
+}
+
+// EncryptionKeyNodeID deterministically generated encryption key.
+type EncryptionKeyNodeID interface {
+}
+
+// Encryption defines settings for the partition encryption.
+type Encryption interface {
+	Kind() string
+	Cipher() string
+	Keys() []EncryptionKey
+}
+
+// SystemDiskEncryption accumulates settings for all system partitions encryption.
+type SystemDiskEncryption interface {
+	Get(label string) Encryption
 }

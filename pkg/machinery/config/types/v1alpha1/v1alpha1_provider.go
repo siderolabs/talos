@@ -233,6 +233,15 @@ func (m *MachineConfig) Registries() config.Registries {
 	return &m.MachineRegistries
 }
 
+// SystemDiskEncryption implements the config.Provider interface.
+func (m *MachineConfig) SystemDiskEncryption() config.SystemDiskEncryption {
+	if m.MachineSystemDiskEncryption == nil {
+		return &SystemDiskEncryptionConfig{}
+	}
+
+	return m.MachineSystemDiskEncryption
+}
+
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage
@@ -1178,4 +1187,66 @@ func (p *DiskPartition) Size() uint64 {
 // MountPoint implements the config.Provider interface.
 func (p *DiskPartition) MountPoint() string {
 	return p.DiskMountPoint
+}
+
+// Kind implements the config.Provider interface.
+func (e *EncryptionConfig) Kind() string {
+	return e.EncryptionProvider
+}
+
+// Cipher implements the config.Provider interface.
+func (e *EncryptionConfig) Cipher() string {
+	return e.EncryptionCipher
+}
+
+// Keys implements the config.Provider interface.
+func (e *EncryptionConfig) Keys() []config.EncryptionKey {
+	keys := make([]config.EncryptionKey, len(e.EncryptionKeys))
+
+	for i, key := range e.EncryptionKeys {
+		keys[i] = key
+	}
+
+	return keys
+}
+
+// Static implements the config.Provider interface.
+func (e *EncryptionKey) Static() config.EncryptionKeyStatic {
+	if e.KeyStatic == nil {
+		return nil
+	}
+
+	return e.KeyStatic
+}
+
+// NodeID implements the config.Provider interface.
+func (e *EncryptionKey) NodeID() config.EncryptionKeyNodeID {
+	if e.KeyNodeID == nil {
+		return nil
+	}
+
+	return e.KeyNodeID
+}
+
+// Slot implements the config.Provider interface.
+func (e *EncryptionKey) Slot() int {
+	return e.KeySlot
+}
+
+// Key implements the config.Provider interface.
+func (e *EncryptionKeyStatic) Key() []byte {
+	return []byte(e.KeyData)
+}
+
+// Get implements the config.Provider interface.
+func (e *SystemDiskEncryptionConfig) Get(label string) config.Encryption {
+	if label == constants.EphemeralPartitionLabel {
+		if e.EphemeralPartition == nil {
+			return nil
+		}
+
+		return e.EphemeralPartition
+	}
+
+	return nil
 }

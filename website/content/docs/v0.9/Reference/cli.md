@@ -88,6 +88,7 @@ talosctl cluster create [flags]
       --disk-image-path string                  disk image to use
       --dns-domain string                       the dns domain to use for cluster (default "cluster.local")
       --docker-host-ip string                   Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
+      --encrypt-ephemeral                       enable ephemeral partition encryption
       --endpoint string                         use endpoint instead of provider defaults
   -p, --exposed-ports string                    Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
   -h, --help                                    help for create

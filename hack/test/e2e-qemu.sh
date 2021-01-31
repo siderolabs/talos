@@ -8,6 +8,7 @@ source ./hack/test/e2e.sh
 
 PROVISIONER=qemu
 CLUSTER_NAME=e2e-${PROVISIONER}
+CLUSTER_CIDR=${CLUSTER_CIDR:-1}
 
 case "${CI:-false}" in
   true)
@@ -45,6 +46,15 @@ case "${USE_DISK_IMAGE:-false}" in
     ;;
 esac
 
+case "${WITH_DISK_ENCRYPTION:-false}" in
+  false)
+    DISK_ENCRYPTION_FLAG=""
+    ;;
+  *)
+    DISK_ENCRYPTION_FLAG="--encrypt-ephemeral"
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
@@ -55,7 +65,7 @@ function create_cluster {
     --mtu 1450 \
     --memory 2048 \
     --cpus 2.0 \
-    --cidr 172.20.1.0/24 \
+    --cidr 172.20.${CLUSTER_CIDR}.0/24 \
     --user-disk /var/lib/extra:100MB \
     --user-disk /var/lib/p1:100MB:/var/lib/p2:100MB \
     --install-image ${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
@@ -63,11 +73,12 @@ function create_cluster {
     --cni-bundle-url ${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
     --crashdump \
     ${DISK_IMAGE_FLAG} \
+    ${DISK_ENCRYPTION_FLAG} \
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
     ${CUSTOM_CNI_FLAG}
 
-  "${TALOSCTL}" config node 172.20.1.2
+  "${TALOSCTL}" config node 172.20.${CLUSTER_CIDR}.2
 }
 
 function destroy_cluster() {

@@ -20,6 +20,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	talosnet "github.com/talos-systems/net"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -42,51 +43,52 @@ import (
 )
 
 var (
-	talosconfig             string
-	nodeImage               string
-	nodeInstallImage        string
-	registryMirrors         []string
-	registryInsecure        []string
-	kubernetesVersion       string
-	nodeVmlinuzPath         string
-	nodeInitramfsPath       string
-	nodeISOPath             string
-	nodeDiskImagePath       string
-	applyConfigEnabled      bool
-	bootloaderEnabled       bool
-	uefiEnabled             bool
-	configDebug             bool
-	networkCIDR             string
-	networkMTU              int
-	networkIPv4             bool
-	networkIPv6             bool
-	wireguardCIDR           string
-	nameservers             []string
-	dnsDomain               string
-	workers                 int
-	masters                 int
-	clusterCpus             string
-	clusterMemory           int
-	clusterDiskSize         int
-	clusterDisks            []string
-	targetArch              string
-	clusterWait             bool
-	clusterWaitTimeout      time.Duration
-	forceInitNodeAsEndpoint bool
-	forceEndpoint           string
-	inputDir                string
-	cniBinPath              []string
-	cniConfDir              string
-	cniCacheDir             string
-	cniBundleURL            string
-	ports                   string
-	dockerHostIP            string
-	withInitNode            bool
-	customCNIUrl            string
-	crashdumpOnFailure      bool
-	skipKubeconfig          bool
-	skipInjectingConfig     bool
-	talosVersion            string
+	talosconfig               string
+	nodeImage                 string
+	nodeInstallImage          string
+	registryMirrors           []string
+	registryInsecure          []string
+	kubernetesVersion         string
+	nodeVmlinuzPath           string
+	nodeInitramfsPath         string
+	nodeISOPath               string
+	nodeDiskImagePath         string
+	applyConfigEnabled        bool
+	bootloaderEnabled         bool
+	uefiEnabled               bool
+	configDebug               bool
+	networkCIDR               string
+	networkMTU                int
+	networkIPv4               bool
+	networkIPv6               bool
+	wireguardCIDR             string
+	nameservers               []string
+	dnsDomain                 string
+	workers                   int
+	masters                   int
+	clusterCpus               string
+	clusterMemory             int
+	clusterDiskSize           int
+	clusterDisks              []string
+	targetArch                string
+	clusterWait               bool
+	clusterWaitTimeout        time.Duration
+	forceInitNodeAsEndpoint   bool
+	forceEndpoint             string
+	inputDir                  string
+	cniBinPath                []string
+	cniConfDir                string
+	cniCacheDir               string
+	cniBundleURL              string
+	ports                     string
+	dockerHostIP              string
+	withInitNode              bool
+	customCNIUrl              string
+	crashdumpOnFailure        bool
+	skipKubeconfig            bool
+	skipInjectingConfig       bool
+	talosVersion              string
+	encryptEphemeralPartition bool
 )
 
 // createCmd represents the cluster up command.
@@ -302,6 +304,22 @@ func create(ctx context.Context) (err error) {
 			}
 
 			genOptions = append(genOptions, generate.WithVersionContract(versionContract))
+		}
+
+		if encryptEphemeralPartition {
+			genOptions = append(genOptions, generate.WithSystemDiskEncryption(
+				&v1alpha1.SystemDiskEncryptionConfig{
+					EphemeralPartition: &v1alpha1.EncryptionConfig{
+						EncryptionProvider: encryption.LUKS2,
+						EncryptionKeys: []*v1alpha1.EncryptionKey{
+							{
+								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+								KeySlot:   0,
+							},
+						},
+					},
+				},
+			))
 		}
 
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
@@ -701,6 +719,7 @@ func init() {
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
 	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
+	createCmd.Flags().BoolVar(&encryptEphemeralPartition, "encrypt-ephemeral", false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	Cmd.AddCommand(createCmd)
 }

@@ -510,7 +510,6 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
 	if t.Skip {
 		part := pt.Partitions().FindByName(t.Label)
-
 		if part != nil {
 			log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
 		}
