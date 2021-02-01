@@ -7,8 +7,6 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
-	stdlibx509 "crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
@@ -185,24 +183,26 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 }
 
 // NewSecretsBundle creates secrets bundle generating all secrets.
-func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
+//
+//nolint: gocyclo
+func NewSecretsBundle(clock Clock, useRSA bool) (*SecretsBundle, error) {
 	var (
 		etcd           *x509.CertificateAuthority
 		kubernetesCA   *x509.CertificateAuthority
 		aggregatorCA   *x509.CertificateAuthority
-		serviceAccount *x509.RSAKey
+		serviceAccount *x509.ECDSAKey
 		talosCA        *x509.CertificateAuthority
 		trustdInfo     *TrustdInfo
 		kubeadmTokens  *Secrets
 		err            error
 	)
 
-	etcd, err = NewEtcdCA(clock.Now())
+	etcd, err = NewEtcdCA(clock.Now(), useRSA)
 	if err != nil {
 		return nil, err
 	}
 
-	kubernetesCA, err = NewKubernetesCA(clock.Now())
+	kubernetesCA, err = NewKubernetesCA(clock.Now(), useRSA)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func NewSecretsBundle(clock Clock) (*SecretsBundle, error) {
 		return nil, err
 	}
 
-	serviceAccount, err = x509.NewRSAKey()
+	serviceAccount, err = x509.NewECDSAKey()
 	if err != nil {
 		return nil, err
 	}
@@ -305,24 +305,34 @@ func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 }
 
 // NewEtcdCA generates a CA for the Etcd PKI.
-func NewEtcdCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
+func NewEtcdCA(currentTime time.Time, useRSA bool) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
-		x509.RSA(true),
 		x509.Organization("etcd"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
+	}
+
+	if useRSA {
+		opts = append(opts, x509.RSA(true))
+	} else {
+		opts = append(opts, x509.ECDSA(true))
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
 // NewKubernetesCA generates a CA for the Kubernetes PKI.
-func NewKubernetesCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
+func NewKubernetesCA(currentTime time.Time, useRSA bool) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
-		x509.RSA(true),
 		x509.Organization("kubernetes"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
+	}
+
+	if useRSA {
+		opts = append(opts, x509.RSA(true))
+	} else {
+		opts = append(opts, x509.ECDSA(true))
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
@@ -331,7 +341,7 @@ func NewKubernetesCA(currentTime time.Time) (ca *x509.CertificateAuthority, err 
 // NewAggregatorCA generates a CA for the Kubernetes aggregator/front-proxy.
 func NewAggregatorCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
-		x509.RSA(true),
+		x509.ECDSA(true),
 		x509.CommonName("front-proxy"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
@@ -343,7 +353,6 @@ func NewAggregatorCA(currentTime time.Time) (ca *x509.CertificateAuthority, err 
 // NewTalosCA generates a CA for the Talos PKI.
 func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
-		x509.RSA(false),
 		x509.Organization("talos"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
@@ -353,7 +362,7 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 }
 
 // NewAdminCertificateAndKey generates the admin Talos certifiate and key.
-func NewAdminCertificateAndKey(currentTime time.Time, crt, key []byte, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
+func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	ips := []net.IP{net.ParseIP(loopback)}
 
 	opts := []x509.Option{
@@ -362,27 +371,17 @@ func NewAdminCertificateAndKey(currentTime time.Time, crt, key []byte, loopback 
 		x509.NotBefore(currentTime),
 	}
 
-	caPemBlock, _ := pem.Decode(crt)
-	if caPemBlock == nil {
-		return nil, errors.New("failed to decode ca cert pem")
-	}
-
-	caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
+	talosCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(ca)
 	if err != nil {
 		return nil, err
 	}
 
-	caKeyPemBlock, _ := pem.Decode(key)
-	if caKeyPemBlock == nil {
-		return nil, errors.New("failed to decode ca key pem")
-	}
-
-	caKey, err := stdlibx509.ParsePKCS8PrivateKey(caKeyPemBlock.Bytes)
+	keyPair, err := x509.NewKeyPair(talosCA, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return x509.NewCertficateAndKey(caCrt, caKey, opts...)
+	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
 }
 
 // NewInput generates the sensitive data required to generate all config
@@ -411,8 +410,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 
 	secrets.Certs.Admin, err = NewAdminCertificateAndKey(
 		secrets.Clock.Now(),
-		secrets.Certs.OS.Crt,
-		secrets.Certs.OS.Key,
+		secrets.Certs.OS,
 		loopback,
 	)
 

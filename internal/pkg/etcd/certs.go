@@ -41,7 +41,6 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 	opts := []x509.Option{
 		x509.CommonName(hostname),
 		x509.DNSNames(dnsNames),
-		x509.RSA(true),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}

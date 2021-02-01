@@ -69,7 +69,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 
 		secrets := secretsRes.(*secrets.Kubernetes).Secrets()
 
-		serviceAccountKey, err := secrets.ServiceAccount.GetRSAKey()
+		serviceAccountKey, err := secrets.ServiceAccount.GetKey()
 		if err != nil {
 			return fmt.Errorf("error parsing service account key: %w", err)
 		}
@@ -121,8 +121,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					{
 						getter: func() *x509.PEMEncodedCertificateAndKey {
 							return &x509.PEMEncodedCertificateAndKey{
-								Crt: serviceAccountKey.PublicKeyPEM,
-								Key: serviceAccountKey.KeyPEM,
+								Crt: serviceAccountKey.GetPublicKeyPEM(),
+								Key: serviceAccountKey.GetPrivateKeyPEM(),
 							}
 						},
 						certFilename: "service-account.pub",
@@ -161,8 +161,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					{
 						getter: func() *x509.PEMEncodedCertificateAndKey {
 							return &x509.PEMEncodedCertificateAndKey{
-								Crt: serviceAccountKey.PublicKeyPEM,
-								Key: serviceAccountKey.KeyPEM,
+								Crt: serviceAccountKey.GetPublicKeyPEM(),
+								Key: serviceAccountKey.GetPrivateKeyPEM(),
 							}
 						},
 						keyFilename: "service-account.key",

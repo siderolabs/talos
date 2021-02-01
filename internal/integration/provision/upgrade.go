@@ -62,6 +62,7 @@ type upgradeSpec struct {
 
 	UpgradePreserve bool
 	UpgradeStage    bool
+	UseRSAKeys      bool
 }
 
 const (
@@ -105,6 +106,7 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
+		UseRSAKeys:  true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -125,6 +127,7 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
+		UseRSAKeys:  true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -146,6 +149,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		MasterNodes:     1,
 		WorkerNodes:     0,
 		UpgradePreserve: true,
+		UseRSAKeys:      true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -168,6 +172,7 @@ func upgradeSingeNodeStage() upgradeSpec {
 		WorkerNodes:     0,
 		UpgradePreserve: true,
 		UpgradeStage:    true,
+		UseRSAKeys:      true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -319,6 +324,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			ClusterName: clusterName,
 			Endpoint:    suite.controlPlaneEndpoint,
 			KubeVersion: "", // keep empty so that default version is used per Talos version
+			UseRSAKeys:  suite.spec.UseRSAKeys,
 			GenOptions: append(
 				genOptions,
 				generate.WithEndpointList(masterEndpoints),

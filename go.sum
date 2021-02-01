@@ -856,8 +856,8 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 h1:b6uOv7YOFK0TYG7HtkIgExQo+2RdLuwRft63jn2HWj8=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/crypto v0.2.1-0.20210125160556-cf75519cab82 h1:5TsM3o/yJJF6kakHyPee88D0yWNNDNKZJ2NCX9MFsKk=
-github.com/talos-systems/crypto v0.2.1-0.20210125160556-cf75519cab82/go.mod h1:OXCK52Q0dzm88YRG4VdTBdidkPUtqrCxCyW7bUs4DAw=
+github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54 h1:2IGs3f0qG7f33Fv37XuYzIMxLARl4dcpwahZXLmdT2A=
+github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54/go.mod h1:OXCK52Q0dzm88YRG4VdTBdidkPUtqrCxCyW7bUs4DAw=
 github.com/talos-systems/go-blockdevice v0.2.0 h1:tTu0ak3GfF8iSxNsdsicVhTKebIcyBARQYxhRV86AF0=
 github.com/talos-systems/go-blockdevice v0.2.0/go.mod h1:DGbop5CJa0PYdhQK9cNVF61pPJNedas1m7Gi/qAnrsM=
 github.com/talos-systems/go-loadbalancer v0.1.0 h1:MQFONvSjoleU8RrKq1O1Z8CyTCJGd4SLqdAHDlR6o9s=
