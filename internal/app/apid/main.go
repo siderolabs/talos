@@ -8,6 +8,7 @@ import (
 	"flag"
 	"log"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
@@ -28,6 +29,9 @@ import (
 var endpoints *string
 
 func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")

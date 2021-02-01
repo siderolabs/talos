@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -22,6 +23,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
+
+func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+}
 
 func run() (err error) {
 	// Mount the pseudo devices.

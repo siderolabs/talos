@@ -6,6 +6,7 @@ package main
 
 import (
 	"log"
+	"runtime"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
@@ -16,6 +17,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
+
+func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+}
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
