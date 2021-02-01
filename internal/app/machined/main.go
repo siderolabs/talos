@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	goruntime "runtime"
 	"syscall"
 	"time"
 
@@ -36,6 +37,9 @@ import (
 )
 
 func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	goruntime.MemProfileRate = 0
+
 	// Explicitly set the default http client transport to work around proxy.Do
 	// once. This is the http.DefaultTransport with the Proxy func overridden so
 	// that the environment variables with be reread/initialized each time the
