@@ -180,13 +180,12 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 		"kubernetes.default.svc."+cfgProvider.Cluster().Network().DNSDomain(),
 	)
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().CA, x509.RSA(true))
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().CA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
 
 	apiServer, err := x509.NewKeyPair(ca,
-		x509.RSA(true),
 		x509.IPAddresses(altNames.IPs),
 		x509.DNSNames(altNames.DNSNames),
 		x509.CommonName("kube-apiserver"),
@@ -200,7 +199,6 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 	k8sSecrets.Secrets().APIServer = x509.NewCertificateAndKeyFromKeyPair(apiServer)
 
 	apiServerKubeletClient, err := x509.NewKeyPair(ca,
-		x509.RSA(true),
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
 		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
@@ -213,13 +211,12 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 
 	k8sSecrets.Secrets().ServiceAccount = cfgProvider.Cluster().ServiceAccount()
 
-	aggregatorCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().AggregatorCA, x509.RSA(true))
+	aggregatorCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().AggregatorCA)
 	if err != nil {
 		return fmt.Errorf("failed to parse aggregator CA: %w", err)
 	}
 
 	frontProxy, err := x509.NewKeyPair(aggregatorCA,
-		x509.RSA(true),
 		x509.CommonName("front-proxy-client"),
 		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
 	)

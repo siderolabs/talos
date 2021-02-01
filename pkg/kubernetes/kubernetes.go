@@ -6,9 +6,7 @@ package kubernetes
 
 import (
 	"context"
-	stdlibx509 "crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
@@ -103,38 +101,22 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 // with a TTL of 10 minutes.
 func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	opts := []x509.Option{
-		x509.RSA(true),
 		x509.CommonName("admin"),
 		x509.Organization("system:masters"),
 		x509.NotAfter(time.Now().Add(10 * time.Minute)),
 	}
 
-	key, err := x509.NewRSAKey()
+	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(ca)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create RSA key: %w", err)
+		return nil, fmt.Errorf("failed decoding Kubernetes CA: %w", err)
 	}
 
-	keyBlock, _ := pem.Decode(key.KeyPEM)
-	if keyBlock == nil {
-		return nil, errors.New("failed to decode key")
-	}
-
-	keyRSA, err := stdlibx509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	keyPair, err := x509.NewKeyPair(k8sCA, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %w", err)
+		return nil, fmt.Errorf("failed generating temporary cert: %w", err)
 	}
 
-	csr, err := x509.NewCertificateSigningRequest(keyRSA, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CSR: %w", err)
-	}
-
-	crt, err := x509.NewCertificateFromCSRBytes(ca.Crt, ca.Key, csr.X509CertificateRequestPEM, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
-	}
-
-	h, err := NewClientFromPKI(ca.Crt, crt.X509CertificatePEM, key.KeyPEM, endpoint)
+	h, err := NewClientFromPKI(ca.Crt, keyPair.CrtPEM, keyPair.KeyPEM, endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
