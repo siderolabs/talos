@@ -25,6 +25,7 @@ const dhcpReceivedRouteMetric uint32 = 1024
 
 // DHCP implements the Addressing interface.
 type DHCP struct {
+	Offer       *dhcpv4.DHCPv4
 	Ack         *dhcpv4.DHCPv4
 	NetIf       *net.Interface
 	DHCPOptions config.DHCPOptions
@@ -46,11 +47,7 @@ func (d *DHCP) Link() *net.Interface {
 // Discover handles the DHCP client exchange stores the DHCP Ack.
 func (d *DHCP) Discover(ctx context.Context, link *net.Interface) error {
 	d.NetIf = link
-	ack, err := d.discover(ctx)
-
-	if ack != nil {
-		d.Ack = ack
-	}
+	err := d.discover(ctx)
 
 	return err
 }
@@ -193,7 +190,7 @@ func (d *DHCP) Hostname() (hostname string) {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP) discover(ctx context.Context) (*dhcpv4.DHCPv4, error) {
+func (d *DHCP) discover(ctx context.Context) error {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
@@ -219,23 +216,36 @@ func (d *DHCP) discover(ctx context.Context) (*dhcpv4.DHCPv4, error) {
 	// debug logging option
 	cli, err := nclient4.New(d.NetIf.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// nolint: errcheck
 	defer cli.Close()
 
-	lease, err := cli.Request(ctx, mods...)
+	var lease *nclient4.Lease
+
+	if d.Offer != nil {
+		lease, err = cli.RequestFromOffer(ctx, d.Offer, mods...)
+	} else {
+		lease, err = cli.Request(ctx, mods...)
+	}
+
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
 		log.Printf("failed dhcp request for %q: %v", d.NetIf.Name, err)
 
-		return nil, err
+		// clear offer if request fails to start with discover sequence next time
+		d.Offer = nil
+
+		return err
 	}
 
 	log.Printf("DHCP ACK on %q: %s", d.NetIf.Name, collapseSummary(lease.ACK.Summary()))
 
-	return lease.ACK, err
+	d.Ack = lease.ACK
+	d.Offer = lease.Offer
+
+	return err
 }
 
 func collapseSummary(summary string) string {
