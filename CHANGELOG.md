@@ -1,3 +1,82 @@
+<a name="v0.9.0-alpha.0"></a>
+## [v0.9.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.8.1...v0.9.0-alpha.0) (2021-02-01)
+
+### Chore
+
+* bump dependencies (via dependabot)
+* fix import path for fsnotify
+* add dependabot config
+* enable virtio-balloon and monitor in QEMU provisioner
+* update protobuf, grpc-go, prototool
+* update upgrade test version used
+
+### Docs
+
+* update components.md
+* add v0.9 docs
+* add modes to validate command
+* document omitting DiskPartition size
+* update references to 0.8.0, add 0.8.0 AWS AMIs
+* fix latest docs
+* set latest docs to v0.8
+* provide AMIs for 0.8.0-beta.0
+* fix SBC docs to point to beta.0 instead of beta.1
+* update Talos release for SBCs
+
+### Feat
+
+* move to ECDSA keys for all Kubernetes/etcd certs and keys
+* update kernel
+* mount hugetlbfs
+* allow fqdn to be used when registering k8s node
+* copy cryptsetup executable from pkgs
+* use multi-arch images for k8s and Flannel CNI
+* replace bootkube with Talos-managed control plane
+* implement resource API in Talos
+* update Linux to 5.10.7, musl-libc to 1.2.2
+* update Kubernetes to 1.20.2
+* support Wireguard networking
+* bump pkgs for kernel with CONFIG_IPV6_MULTIPLE_TABLES
+* support type filter in list API and CLI
+* add commands to manage/query etcd cluster
+* support disk image in talosctl cluster create
+* update Kubernetes to 1.20.1
+
+### Fix
+
+* use hugetlbfs instead of none
+* use grpc load-balancing when connecting to trustd
+* lower memory usage a bit by disabling memory profiling
+* don't probe disks in container mode
+* prefix rendered Talos-owned static pod manifests
+* bump timeout for worker apid waiting for kubelet client config
+* kill all processes and umount all disk on reboot/shutdown
+* open blockdevices with exclusive flock for partitioning
+* list command unlimited recursion default behavior
+* pick first interface valid hostname (vs. last one)
+* allow 'console' argument in kernel args to be always overridden
+* bring up bonded interfaces correctly on packet
+* checkpoint controller-manager and scheduler
+* correctly transport gRPC errors from apid
+* use SetAll instead of AppendAll when building kernel args
+* add more dependencies for bootstrap services
+* pass disk image flags to e2e-qemu cluster create command
+* ignore pods spun up from checkpoints in health checks
+* leave etcd for staged upgrades
+* ignore errors on stopping/removing pod sandboxes
+* use the correct console on Banana Pi M64
+* don't run LabelNodeAsMaster in two sequences
+
+### Refactor
+
+* update go-blockdevice and restructure disk interaction code
+* define default kernel flags in machinery instead of procfs
+
+### Test
+
+* clear connection refused errors after reset
+* skip etcd tests on non-HA clusters
+
 
 <a name="v0.8.0-alpha.3"></a>
 ## [v0.8.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.8.0-alpha.2...v0.8.0-alpha.3) (2020-12-10)
@@ -174,4 +253,3 @@
 ### Test
 
 * update integration test versions, clean up names
-
