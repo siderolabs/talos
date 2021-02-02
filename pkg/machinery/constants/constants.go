@@ -209,10 +209,10 @@ const (
 	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
 
 	// CoreDNSImage is the enforced CoreDNS image to use.
-	CoreDNSImage = "k8s.gcr.io/coredns"
+	CoreDNSImage = "docker.io/coredns/coredns"
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
-	DefaultCoreDNSVersion = "1.7.0"
+	DefaultCoreDNSVersion = "1.8.0"
 
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
