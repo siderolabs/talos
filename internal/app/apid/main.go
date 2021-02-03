@@ -26,7 +26,10 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-var endpoints *string
+var (
+	endpoints       *string
+	useK8sEndpoints *bool
+)
 
 func init() {
 	// Explicitly disable memory profiling to save around 1.4MiB of memory.
@@ -34,7 +37,8 @@ func init() {
 
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
+	endpoints = flag.String("endpoints", "", "the static list of IPs of the control plane nodes")
+	useK8sEndpoints = flag.Bool("use-kubernetes-endpoints", false, "use Kubernetes master node endpoints as control plane endpoints")
 
 	flag.Parse()
 }
@@ -49,7 +53,17 @@ func main() {
 		log.Fatalf("open config: %v", err)
 	}
 
-	tlsConfig, err := provider.NewTLSConfig(config, strings.Split(*endpoints, ","))
+	var endpointsProvider provider.Endpoints
+
+	if *useK8sEndpoints {
+		endpointsProvider = &provider.KubernetesEndpoints{}
+	} else {
+		endpointsProvider = &provider.StaticEndpoints{
+			Endpoints: strings.Split(*endpoints, ","),
+		}
+	}
+
+	tlsConfig, err := provider.NewTLSConfig(config, endpointsProvider)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
