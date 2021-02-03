@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/talos-systems/crypto/x509"
@@ -28,9 +29,13 @@ func init() {
 
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
-	client securityapi.SecurityServiceClient
+	done  chan struct{}
+	creds basic.Credentials
+
+	// connMu protects conn & client
+	connMu sync.Mutex
 	conn   *grpc.ClientConn
-	done   chan struct{}
+	client securityapi.SecurityServiceClient
 }
 
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
@@ -39,35 +44,32 @@ func NewRemoteGenerator(token string, endpoints []string) (g *RemoteGenerator, e
 		return nil, fmt.Errorf("at least one root of trust endpoint is required")
 	}
 
-	creds := basic.NewTokenCredentials(token)
-
-	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", trustdResolverScheme, strings.Join(endpoints, ",")), creds)
-	if err != nil {
-		return nil, err
+	g = &RemoteGenerator{
+		done:  make(chan struct{}),
+		creds: basic.NewTokenCredentials(token),
 	}
 
-	client := securityapi.NewSecurityServiceClient(conn)
-
-	g = &RemoteGenerator{
-		client: client,
-		conn:   conn,
-		done:   make(chan struct{}),
+	if err = g.SetEndpoints(endpoints); err != nil {
+		return nil, err
 	}
 
 	return g, nil
 }
 
-// Certificate implements the securityapi.SecurityClient interface.
-func (g *RemoteGenerator) Certificate(in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	resp, err = g.client.Certificate(ctx, in)
+// SetEndpoints updates the list of endpoints to talk to.
+func (g *RemoteGenerator) SetEndpoints(endpoints []string) error {
+	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", trustdResolverScheme, strings.Join(endpoints, ",")), g.creds)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return resp, err
+	g.connMu.Lock()
+	defer g.connMu.Unlock()
+
+	g.conn = conn
+	g.client = securityapi.NewSecurityServiceClient(g.conn)
+
+	return nil
 }
 
 // Identity creates an identity certificate via the security API.
@@ -91,6 +93,16 @@ func (g *RemoteGenerator) Close() error {
 	return g.conn.Close()
 }
 
+func (g *RemoteGenerator) certificate(in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
+	g.connMu.Lock()
+	defer g.connMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	return g.client.Certificate(ctx, in)
+}
+
 func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca, crt []byte, err error) {
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
@@ -105,7 +117,7 @@ func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca, crt []by
 		case <-tick.C:
 			var resp *securityapi.CertificateResponse
 
-			resp, err = g.Certificate(in)
+			resp, err = g.certificate(in)
 			if err != nil {
 				log.Println(err)
 

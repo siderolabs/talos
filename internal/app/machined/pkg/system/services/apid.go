@@ -13,11 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -27,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -70,40 +67,12 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 }
 
 // Runner implements the Service interface.
-//
-//nolint: gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/apid"
-
-	endpoints := []string{"127.0.0.1"}
 
 	// Ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
 		return nil, err
-	}
-
-	if r.Config().Machine().Type() == machine.TypeJoin {
-		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
-
-		err := retry.Constant(8*time.Minute, opts...).Retry(func() error {
-			ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer ctxCancel()
-
-			h, err := kubernetes.NewClientFromKubeletKubeconfig()
-			if err != nil {
-				return retry.ExpectedError(fmt.Errorf("failed to create client: %w", err))
-			}
-
-			endpoints, err = h.MasterIPs(ctx)
-			if err != nil {
-				return retry.ExpectedError(err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Set the process arguments.
@@ -111,8 +80,15 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/apid",
-			"--endpoints=" + strings.Join(endpoints, ","),
 		},
+	}
+
+	isWorker := r.Config().Machine().Type() == machine.TypeJoin
+
+	if !isWorker {
+		args.ProcessArgs = append(args.ProcessArgs, "--endpoints="+strings.Join([]string{"127.0.0.1"}, ","))
+	} else {
+		args.ProcessArgs = append(args.ProcessArgs, "--use-kubernetes-endpoints")
 	}
 
 	// Set the mounts.
@@ -120,6 +96,14 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.RouterdSocketPath), Source: filepath.Dir(constants.RouterdSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
+	}
+
+	if isWorker {
+		// worker requires kubelet config to refresh the certs via Kubernetes
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: filepath.Dir(constants.KubeletKubeconfig), Source: filepath.Dir(constants.KubeletKubeconfig), Options: []string{"rbind", "ro"}},
+			specs.Mount{Type: "bind", Destination: constants.KubeletPKIDir, Source: constants.KubeletPKIDir, Options: []string{"rbind", "ro"}},
+		)
 	}
 
 	env := []string{}
