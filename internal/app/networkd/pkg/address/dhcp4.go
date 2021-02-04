@@ -23,8 +23,8 @@ import (
 
 const dhcpReceivedRouteMetric uint32 = 1024
 
-// DHCP implements the Addressing interface.
-type DHCP struct {
+// DHCP4 implements the Addressing interface.
+type DHCP4 struct {
 	Offer       *dhcpv4.DHCPv4
 	Ack         *dhcpv4.DHCPv4
 	NetIf       *net.Interface
@@ -34,18 +34,18 @@ type DHCP struct {
 }
 
 // Name returns back the name of the address method.
-func (d *DHCP) Name() string {
-	return "dhcp"
+func (d *DHCP4) Name() string {
+	return "dhcp4"
 }
 
 // Link returns the underlying net.Interface that this address
 // method is configured for.
-func (d *DHCP) Link() *net.Interface {
+func (d *DHCP4) Link() *net.Interface {
 	return d.NetIf
 }
 
 // Discover handles the DHCP client exchange stores the DHCP Ack.
-func (d *DHCP) Discover(ctx context.Context, link *net.Interface) error {
+func (d *DHCP4) Discover(ctx context.Context, link *net.Interface) error {
 	d.NetIf = link
 	err := d.discover(ctx)
 
@@ -53,7 +53,7 @@ func (d *DHCP) Discover(ctx context.Context, link *net.Interface) error {
 }
 
 // Address returns back the IP address from the received DHCP offer.
-func (d *DHCP) Address() *net.IPNet {
+func (d *DHCP4) Address() *net.IPNet {
 	return &net.IPNet{
 		IP:   d.Ack.YourIPAddr,
 		Mask: d.Mask(),
@@ -61,12 +61,12 @@ func (d *DHCP) Address() *net.IPNet {
 }
 
 // Mask returns the netmask from the DHCP offer.
-func (d *DHCP) Mask() net.IPMask {
+func (d *DHCP4) Mask() net.IPMask {
 	return d.Ack.SubnetMask()
 }
 
 // MTU returs the MTU size from the DHCP offer.
-func (d *DHCP) MTU() uint32 {
+func (d *DHCP4) MTU() uint32 {
 	mtuReturn := uint32(d.NetIf.MTU)
 
 	if d.Ack != nil {
@@ -86,7 +86,7 @@ func (d *DHCP) MTU() uint32 {
 }
 
 // TTL denotes how long a DHCP offer is valid for.
-func (d *DHCP) TTL() time.Duration {
+func (d *DHCP4) TTL() time.Duration {
 	if d.Ack == nil {
 		return 0
 	}
@@ -95,21 +95,17 @@ func (d *DHCP) TTL() time.Duration {
 }
 
 // Family qualifies the address as ipv4 or ipv6.
-func (d *DHCP) Family() int {
-	if d.Ack.YourIPAddr.To4() != nil {
-		return unix.AF_INET
-	}
-
-	return unix.AF_INET6
+func (d *DHCP4) Family() int {
+	return unix.AF_INET
 }
 
 // Scope sets the address scope.
-func (d *DHCP) Scope() uint8 {
+func (d *DHCP4) Scope() uint8 {
 	return unix.RT_SCOPE_UNIVERSE
 }
 
 // Valid denotes if this address method should be used.
-func (d *DHCP) Valid() bool {
+func (d *DHCP4) Valid() bool {
 	return d.Ack != nil
 }
 
@@ -118,7 +114,7 @@ func (d *DHCP) Valid() bool {
 // rfc3442:
 //   If the DHCP server returns both a Classless Static Routes option and
 //   a Router option, the DHCP client MUST ignore the Router option.
-func (d *DHCP) Routes() (routes []*Route) {
+func (d *DHCP4) Routes() (routes []*Route) {
 	metric := dhcpReceivedRouteMetric
 
 	if d.DHCPOptions != nil && d.DHCPOptions.RouteMetric() != 0 {
@@ -170,12 +166,12 @@ func (d *DHCP) Routes() (routes []*Route) {
 }
 
 // Resolvers returns the DNS resolvers from the DHCP offer.
-func (d *DHCP) Resolvers() []net.IP {
+func (d *DHCP4) Resolvers() []net.IP {
 	return d.Ack.DNS()
 }
 
 // Hostname returns the hostname from the DHCP offer.
-func (d *DHCP) Hostname() (hostname string) {
+func (d *DHCP4) Hostname() (hostname string) {
 	if d.Ack.HostName() == "" {
 		hostname = fmt.Sprintf("%s-%s", "talos", strings.ReplaceAll(d.Address().IP.String(), ".", "-"))
 	} else {
@@ -190,7 +186,7 @@ func (d *DHCP) Hostname() (hostname string) {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP) discover(ctx context.Context) error {
+func (d *DHCP4) discover(ctx context.Context) error {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,

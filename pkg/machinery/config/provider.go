@@ -122,6 +122,8 @@ type Device interface {
 // DHCPOptions represents a set of DHCP options.
 type DHCPOptions interface {
 	RouteMetric() uint32
+	IPv4() bool
+	IPv6() bool
 }
 
 // WireguardConfig contains settings for configuring Wireguard network interface.

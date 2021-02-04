@@ -821,9 +821,27 @@ func (d *Device) WireguardConfig() config.WireguardConfig {
 	return d.DeviceWireguardConfig
 }
 
-// RouteMetric implements the MachineNetwork interface.
+// RouteMetric implements the DHCPOptions interface.
 func (d *DHCPOptions) RouteMetric() uint32 {
 	return d.DHCPRouteMetric
+}
+
+// IPv4 implements the DHCPOptions interface.
+func (d *DHCPOptions) IPv4() bool {
+	if d.DHCPIPv4 == nil {
+		return true
+	}
+
+	return *d.DHCPIPv4
+}
+
+// IPv6 implements the DHCPOptions interface.
+func (d *DHCPOptions) IPv6() bool {
+	if d.DHCPIPv6 == nil {
+		return false
+	}
+
+	return *d.DHCPIPv6
 }
 
 // PrivateKey implements the MachineNetwork interface.

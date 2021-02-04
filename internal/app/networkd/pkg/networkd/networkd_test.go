@@ -110,7 +110,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{
@@ -131,7 +131,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{
@@ -148,7 +148,7 @@ func (suite *NetworkdSuite) TestHostname() {
 
 	// DHCP without OptionHostname and with OptionDomainName
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{

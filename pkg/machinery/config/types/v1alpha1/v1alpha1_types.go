@@ -1169,6 +1169,10 @@ type Device struct {
 type DHCPOptions struct {
 	//   description: The priority of all routes received via DHCP.
 	DHCPRouteMetric uint32 `yaml:"routeMetric"`
+	//   description: Enables DHCPv4 protocol for the interface (default is enabled).
+	DHCPIPv4 *bool `yaml:"ipv4,omitempty"`
+	//   description: Enables DHCPv6 protocol for the interface (default is disabled).
+	DHCPIPv6 *bool `yaml:"ipv6,omitempty"`
 }
 
 // DeviceWireguardConfig contains settings for configuring Wireguard network interface.

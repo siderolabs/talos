@@ -80,7 +80,7 @@ func New(setters ...Option) (*NetworkInterface, error) {
 	// If no addressing methods have been configured, default to DHCP.
 	// If VLANs exist do not force DHCP on master device
 	if len(iface.AddressMethod) == 0 && len(iface.Vlans) == 0 {
-		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{})
+		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP4{}) // TODO: enable DHCPv6 by default?
 	}
 
 	// Handle netlink connection

@@ -1068,12 +1068,22 @@ func init() {
 			FieldName: "dhcpOptions",
 		},
 	}
-	DHCPOptionsDoc.Fields = make([]encoder.Doc, 1)
+	DHCPOptionsDoc.Fields = make([]encoder.Doc, 3)
 	DHCPOptionsDoc.Fields[0].Name = "routeMetric"
 	DHCPOptionsDoc.Fields[0].Type = "uint32"
 	DHCPOptionsDoc.Fields[0].Note = ""
 	DHCPOptionsDoc.Fields[0].Description = "The priority of all routes received via DHCP."
 	DHCPOptionsDoc.Fields[0].Comments[encoder.LineComment] = "The priority of all routes received via DHCP."
+	DHCPOptionsDoc.Fields[1].Name = "ipv4"
+	DHCPOptionsDoc.Fields[1].Type = "bool"
+	DHCPOptionsDoc.Fields[1].Note = ""
+	DHCPOptionsDoc.Fields[1].Description = "Enables DHCPv4 protocol for the interface (default is enabled)."
+	DHCPOptionsDoc.Fields[1].Comments[encoder.LineComment] = "Enables DHCPv4 protocol for the interface (default is enabled)."
+	DHCPOptionsDoc.Fields[2].Name = "ipv6"
+	DHCPOptionsDoc.Fields[2].Type = "bool"
+	DHCPOptionsDoc.Fields[2].Note = ""
+	DHCPOptionsDoc.Fields[2].Description = "Enables DHCPv6 protocol for the interface (default is disabled)."
+	DHCPOptionsDoc.Fields[2].Comments[encoder.LineComment] = "Enables DHCPv6 protocol for the interface (default is disabled)."
 
 	DeviceWireguardConfigDoc.Type = "DeviceWireguardConfig"
 	DeviceWireguardConfigDoc.Comments[encoder.LineComment] = "DeviceWireguardConfig contains settings for configuring Wireguard network interface."
