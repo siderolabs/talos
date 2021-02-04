@@ -3186,6 +3186,32 @@ The priority of all routes received via DHCP.
 
 <hr />
 
+<div class="dd">
+
+<code>ipv4</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enables DHCPv4 protocol for the interface (default is enabled).
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>ipv6</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enables DHCPv6 protocol for the interface (default is disabled).
+
+</div>
+
+<hr />
+
 
 
 

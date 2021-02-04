@@ -47,8 +47,15 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 
 		opts = append(opts, nic.WithAddressing(s))
 	case device.DHCP():
-		d := &address.DHCP{DHCPOptions: device.DHCPOptions(), RouteList: device.Routes(), Mtu: device.MTU()}
-		opts = append(opts, nic.WithAddressing(d))
+		if device.DHCPOptions().IPv4() {
+			d := &address.DHCP4{DHCPOptions: device.DHCPOptions(), RouteList: device.Routes(), Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(d))
+		}
+
+		if device.DHCPOptions().IPv6() {
+			d := &address.DHCP6{Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(d))
+		}
 	default:
 		// Allow master interface without any addressing if VLANs exist
 		if len(device.Vlans()) > 0 {
