@@ -60,8 +60,6 @@ func New(config config.Provider) (*Networkd, error) {
 		resolvers []string
 	)
 
-	resolvers = []string{DefaultPrimaryResolver, DefaultSecondaryResolver}
-
 	netconf := make(map[string][]nic.Option)
 
 	if option = procfs.ProcCmdline().Get("ip").First(); option != nil {
@@ -203,18 +201,27 @@ func (n *Networkd) Configure() (err error) {
 		}
 	}
 
-	resolvers := []string{}
+	// prefer resolvers from the configuration
+	resolvers := append([]string(nil), n.resolvers...)
 
-	for _, netif := range n.Interfaces {
-		for _, method := range netif.AddressMethod {
-			if !method.Valid() {
-				continue
-			}
+	// if no resolvers configured, use addressing method resolvers
+	if len(resolvers) == 0 {
+		for _, netif := range n.Interfaces {
+			for _, method := range netif.AddressMethod {
+				if !method.Valid() {
+					continue
+				}
 
-			for _, resolver := range method.Resolvers() {
-				resolvers = append(resolvers, resolver.String())
+				for _, resolver := range method.Resolvers() {
+					resolvers = append(resolvers, resolver.String())
+				}
 			}
 		}
+	}
+
+	// use default resolvers if nothing is configured
+	if len(resolvers) == 0 {
+		resolvers = append(resolvers, DefaultPrimaryResolver, DefaultSecondaryResolver)
 	}
 
 	// Set hostname must be before the resolv configuration
@@ -222,10 +229,6 @@ func (n *Networkd) Configure() (err error) {
 	// before we write the search stanza
 	if err = n.Hostname(); err != nil {
 		return err
-	}
-
-	if len(resolvers) == 0 {
-		resolvers = n.resolvers
 	}
 
 	if err = writeResolvConf(resolvers); err != nil {

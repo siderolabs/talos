@@ -115,6 +115,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 				strings.ToUpper("CAP_" + capability.CAP_NET_ADMIN.String()),
 				strings.ToUpper("CAP_" + capability.CAP_SYS_ADMIN.String()),
 				strings.ToUpper("CAP_" + capability.CAP_NET_RAW.String()),
+				strings.ToUpper("CAP_" + capability.CAP_NET_BIND_SERVICE.String()),
 			}),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
