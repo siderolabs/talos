@@ -8,7 +8,9 @@ package adv
 // ADV describes implementation which stores tag-value data.
 type ADV interface {
 	ReadTag(t uint8) (val string, ok bool)
+	ReadTagBytes(t uint8) (val []byte, ok bool)
 	SetTag(t uint8, val string) (ok bool)
+	SetTagBytes(t uint8, val []byte) (ok bool)
 	DeleteTag(t uint8) (ok bool)
 	Bytes() ([]byte, error)
 }
@@ -32,4 +34,6 @@ const (
 	StagedUpgradeImageRef
 	// StagedUpgradeInstallOptions stores JSON-serialized install.Options.
 	StagedUpgradeInstallOptions
+	// StateEncryptionConfig stores JSON-serialized v1alpha1.Encryption.
+	StateEncryptionConfig
 )

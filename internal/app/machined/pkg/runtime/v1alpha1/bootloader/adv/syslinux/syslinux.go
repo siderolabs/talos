@@ -49,6 +49,16 @@ func NewADV(r io.ReadSeeker) (adv ADV, err error) {
 
 // ReadTag reads a tag in the ADV.
 func (a ADV) ReadTag(t uint8) (val string, ok bool) {
+	var b []byte
+
+	b, ok = a.ReadTagBytes(t)
+	val = string(b)
+
+	return
+}
+
+// ReadTagBytes reads a tag in the ADV.
+func (a ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 	// Header is in first 8 bytes.
 	i := 8
 
@@ -70,7 +80,7 @@ func (a ADV) ReadTag(t uint8) (val string, ok bool) {
 
 		len := int(a[i+1]) + i
 
-		val = string(a[i+2 : len+2])
+		val = a[i+2 : len+2]
 
 		ok = true
 
@@ -81,10 +91,13 @@ func (a ADV) ReadTag(t uint8) (val string, ok bool) {
 }
 
 // SetTag sets a tag in the ADV.
-func (a ADV) SetTag(t uint8, val string) (ok bool) {
-	b := []byte(val)
+func (a ADV) SetTag(t uint8, val string) bool {
+	return a.SetTagBytes(t, []byte(val))
+}
 
-	if len(b) > 255 {
+// SetTagBytes sets a tag in the ADV.
+func (a ADV) SetTagBytes(t uint8, val []byte) (ok bool) {
+	if len(val) > 255 {
 		return false
 	}
 
@@ -103,13 +116,13 @@ func (a ADV) SetTag(t uint8, val string) (ok bool) {
 			continue
 		}
 
-		length := uint8(len(b))
+		length := uint8(len(val))
 
 		a[i] = t
 
 		a[i+1] = length
 
-		copy(a[i+2:uint8(i+2)+length], b)
+		copy(a[i+2:uint8(i+2)+length], val)
 
 		ok = true
 

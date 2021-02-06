@@ -1240,7 +1240,14 @@ func (e *EncryptionKeyStatic) Key() []byte {
 
 // Get implements the config.Provider interface.
 func (e *SystemDiskEncryptionConfig) Get(label string) config.Encryption {
-	if label == constants.EphemeralPartitionLabel {
+	switch label {
+	case constants.StatePartitionLabel:
+		if e.StatePartition == nil {
+			return nil
+		}
+
+		return e.StatePartition
+	case constants.EphemeralPartitionLabel:
 		if e.EphemeralPartition == nil {
 			return nil
 		}
