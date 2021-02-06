@@ -6,6 +6,7 @@ package rpi4
 
 import (
 	"io/ioutil"
+	"strings"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -14,11 +15,16 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-var configTxt = []byte(`arm_64bit=1
+// https://www.raspberrypi.org/documentation/configuration/config-txt/
+var configTxt = []byte(strings.TrimSpace(`
+
+arm_64bit=1
 enable_uart=1
 kernel=u-boot.bin
 dtoverlay=disable-bt
-`)
+hdmi_safe=1
+
+` + "\n"))
 
 // RPi4 represents the Raspberry Pi 4 Model B.
 //
