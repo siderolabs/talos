@@ -2731,6 +2731,8 @@ EncryptionConfig represents partition encryption settings.
 Appears in:
 
 
+- <code><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a>.state</code>
+
 - <code><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a>.ephemeral</code>
 
 
@@ -4412,6 +4414,19 @@ ephemeral:
           nodeID: {}
           slot: 0 # Key slot number for luks2 encryption.
 ```
+
+<hr />
+
+<div class="dd">
+
+<code>state</code>  <i><a href="#encryptionconfig">EncryptionConfig</a></i>
+
+</div>
+<div class="dt">
+
+State partition encryption.
+
+</div>
 
 <hr />
 

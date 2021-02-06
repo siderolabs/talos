@@ -1457,6 +1457,9 @@ type RegistryTLSConfig struct {
 // SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
 type SystemDiskEncryptionConfig struct {
 	//   description: |
+	//     State partition encryption.
+	StatePartition *EncryptionConfig `yaml:"state,omitempty"`
+	//   description: |
 	//     Ephemeral partition encryption.
 	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
 }

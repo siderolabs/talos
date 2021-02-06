@@ -358,24 +358,20 @@ local integration_cilium = Step("e2e-cilium-1.9.4", target="e2e-qemu", privilege
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.9.4/install/kubernetes/quick-install.yaml",
         "REGISTRY": local_registry,
-        "CLUSTER_CIDR": 2,
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_UEFI": "true",
-        "CLUSTER_CIDR": 3,
         "REGISTRY": local_registry,
 });
 local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privileged=true, depends_on=[integration_uefi], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "USE_DISK_IMAGE": "true",
         "REGISTRY": local_registry,
-        "CLUSTER_CIDR": 4,
 });
-local integration_disk_encryption = Step("e2e-encrypted", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
+local integration_qemu_encrypted = Step("e2e-encrypted", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "WITH_DISK_ENCRYPTION": "true",
         "REGISTRY": local_registry,
-        "CLUSTER_CIDR": 5,
 });
 
 local push_edge = {
@@ -411,13 +407,15 @@ local integration_pipelines = [
   Pipeline('integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + integration_trigger(['integration-qemu']),
   Pipeline('integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + integration_trigger(['integration-provision', 'integration-provision-0']),
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
-  Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_disk_encryption]) + integration_trigger(['integration-misc']),
+  Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + integration_trigger(['integration-misc']),
+  Pipeline('integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted]) + integration_trigger(['integration-qemu-encrypted']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_disk_encryption]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 
 

@@ -930,6 +930,10 @@ func init() {
 	EncryptionConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "SystemDiskEncryptionConfig",
+			FieldName: "state",
+		},
+		{
+			TypeName:  "SystemDiskEncryptionConfig",
 			FieldName: "ephemeral",
 		},
 	}
@@ -1578,12 +1582,17 @@ func init() {
 			FieldName: "systemDiskEncryption",
 		},
 	}
-	SystemDiskEncryptionConfigDoc.Fields = make([]encoder.Doc, 1)
-	SystemDiskEncryptionConfigDoc.Fields[0].Name = "ephemeral"
+	SystemDiskEncryptionConfigDoc.Fields = make([]encoder.Doc, 2)
+	SystemDiskEncryptionConfigDoc.Fields[0].Name = "state"
 	SystemDiskEncryptionConfigDoc.Fields[0].Type = "EncryptionConfig"
 	SystemDiskEncryptionConfigDoc.Fields[0].Note = ""
-	SystemDiskEncryptionConfigDoc.Fields[0].Description = "Ephemeral partition encryption."
-	SystemDiskEncryptionConfigDoc.Fields[0].Comments[encoder.LineComment] = "Ephemeral partition encryption."
+	SystemDiskEncryptionConfigDoc.Fields[0].Description = "State partition encryption."
+	SystemDiskEncryptionConfigDoc.Fields[0].Comments[encoder.LineComment] = "State partition encryption."
+	SystemDiskEncryptionConfigDoc.Fields[1].Name = "ephemeral"
+	SystemDiskEncryptionConfigDoc.Fields[1].Type = "EncryptionConfig"
+	SystemDiskEncryptionConfigDoc.Fields[1].Note = ""
+	SystemDiskEncryptionConfigDoc.Fields[1].Description = "Ephemeral partition encryption."
+	SystemDiskEncryptionConfigDoc.Fields[1].Comments[encoder.LineComment] = "Ephemeral partition encryption."
 }
 
 func (_ Config) Doc() *encoder.Doc {

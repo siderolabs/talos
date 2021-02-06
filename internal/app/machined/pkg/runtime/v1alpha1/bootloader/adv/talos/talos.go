@@ -166,16 +166,27 @@ func (a *ADV) Bytes() ([]byte, error) {
 
 // ReadTag to get tag value.
 func (a *ADV) ReadTag(t uint8) (val string, ok bool) {
-	var b []byte
+	b, ok := a.ReadTagBytes(t)
 
-	b, ok = a.Tags[Tag(t)]
 	val = string(b)
+
+	return
+}
+
+// ReadTagBytes to get tag value.
+func (a *ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
+	val, ok = a.Tags[Tag(t)]
 
 	return
 }
 
 // SetTag to set tag value.
 func (a *ADV) SetTag(t uint8, val string) (ok bool) {
+	return a.SetTagBytes(t, []byte(val))
+}
+
+// SetTagBytes to set tag value.
+func (a *ADV) SetTagBytes(t uint8, val []byte) (ok bool) {
 	size := 20 // magic + checksum
 
 	for _, v := range a.Tags {

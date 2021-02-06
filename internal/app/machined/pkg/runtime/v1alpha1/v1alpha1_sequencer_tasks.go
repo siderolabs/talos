@@ -59,7 +59,9 @@ import (
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/sysctl"
@@ -1552,6 +1554,40 @@ func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc
 	}, "shutdown"
 }
 
+// SaveStateEncryptionConfig saves state partition encryption info in the meta partition.
+func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		config := r.Config()
+		if config == nil {
+			return nil
+		}
+
+		encryption := config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		if encryption == nil {
+			return nil
+		}
+
+		meta, err := bootloader.NewMeta()
+		if err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer meta.Close()
+
+		var data []byte
+
+		if data, err = json.Marshal(encryption); err != nil {
+			return err
+		}
+
+		if !meta.ADV.SetTagBytes(adv.StateEncryptionConfig, data) {
+			return fmt.Errorf("failed to save state encryption config in the META partition")
+		}
+
+		return meta.Write()
+	}, "SaveStateEncryptionConfig"
+}
+
 // MountBootPartition mounts the boot partition.
 func MountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -1583,7 +1619,41 @@ func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, mount.WithFlags(mount.SkipIfMounted))
+		meta, err := bootloader.NewMeta()
+		if err != nil {
+			return err
+		}
+		// nolint: errcheck
+		defer meta.Close()
+
+		opts := []mount.Option{mount.WithFlags(mount.SkipIfMounted)}
+
+		var encryption config.Encryption
+		// first try reading encryption from the config
+		// config always has the priority here
+		if r.Config() != nil && r.Config().Machine() != nil {
+			encryption = r.Config().Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		}
+
+		// then try reading it from the META partition
+		if encryption == nil {
+			var encryptionFromMeta *v1alpha1.EncryptionConfig
+
+			data, ok := meta.ADV.ReadTagBytes(adv.StateEncryptionConfig)
+			if ok {
+				if err = json.Unmarshal(data, &encryptionFromMeta); err != nil {
+					return err
+				}
+
+				encryption = encryptionFromMeta
+			}
+		}
+
+		if encryption != nil {
+			opts = append(opts, mount.WithEncryptionConfig(encryption))
+		}
+
+		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, opts...)
 	}, "mountStatePartition"
 }
 

@@ -50,6 +50,9 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 	phases := PhaseList{}
 
 	phases = phases.Append(
+		"saveStateEncryptionConfig",
+		SaveStateEncryptionConfig,
+	).Append(
 		"mountState",
 		MountStatePartition,
 	).Append(
@@ -162,6 +165,9 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 			).Append(
 				"install",
 				Install,
+			).Append(
+				"saveStateEncryptionConfig",
+				SaveStateEncryptionConfig,
 			).Append(
 				"mountState",
 				MountStatePartition,
