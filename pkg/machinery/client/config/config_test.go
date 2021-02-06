@@ -25,10 +25,8 @@ func TestConfigMerge(t *testing.T) {
 		expectedContexts map[string]*config.Context
 	}{
 		{
-			name: "IntoEmpty",
-			config: &config.Config{
-				Contexts: map[string]*config.Context{},
-			},
+			name:   "IntoEmpty",
+			config: &config.Config{},
 			configToMerge: &config.Config{
 				Context: "foo",
 				Contexts: map[string]*config.Context{

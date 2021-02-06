@@ -123,6 +123,10 @@ func (r *Rename) String() string {
 //
 // Current context is overridden from passed in config.
 func (c *Config) Merge(cfg *Config) []Rename {
+	if c.Contexts == nil {
+		c.Contexts = map[string]*Context{}
+	}
+
 	mappedContexts := map[string]string{}
 	renames := []Rename{}
 
