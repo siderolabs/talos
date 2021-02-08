@@ -51,6 +51,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			// V1Events
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
+		&v1alpha1.TimeSyncController{
+			V1Alpha1State: ctrl.v1alpha1Runtime.State(),
+		},
 		&config.MachineTypeController{},
 		&config.K8sControlPlaneController{},
 		&k8s.ControlPlaneStaticPodController{},

@@ -60,6 +60,12 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			Kind:      controller.DependencyWeak,
 		},
 		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.TimeSyncType,
+			ID:        pointer.ToString(v1alpha1.TimeSyncID),
+			Kind:      controller.DependencyWeak,
+		},
+		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
 			ID:        pointer.ToString(config.MachineTypeID),
@@ -121,6 +127,20 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		if !networkdResource.(*v1alpha1.Service).Healthy() {
+			continue
+		}
+
+		// wait for time sync as certs depend on current time
+		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.TimeSyncType, v1alpha1.TimeSyncID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return err
+		}
+
+		if !timeSyncResource.(*v1alpha1.TimeSync).Sync() {
 			continue
 		}
 
