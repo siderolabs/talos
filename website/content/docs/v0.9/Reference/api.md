@@ -2560,6 +2560,7 @@ rpc upgrade
 | image | [string](#string) |  |  |
 | preserve | [bool](#bool) |  |  |
 | stage | [bool](#bool) |  |  |
+| force | [bool](#bool) |  |  |
 
 
 
