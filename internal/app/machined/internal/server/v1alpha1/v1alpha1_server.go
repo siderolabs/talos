@@ -329,7 +329,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, err
 	}
 
-	log.Printf("upgrade request received: preserve %v, staged %v", in.GetPreserve(), in.GetStage())
+	log.Printf("upgrade request received: preserve %v, staged %v, force %v", in.GetPreserve(), in.GetStage(), in.GetForce())
 
 	log.Printf("validating %q", in.GetImage())
 
@@ -337,7 +337,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeJoin && !in.GetForce() {
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create etcd client: %w", err)

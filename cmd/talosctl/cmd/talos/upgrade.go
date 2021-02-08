@@ -40,6 +40,7 @@ func init() {
 	upgradeCmd.Flags().StringVarP(&upgradeImage, "image", "i", "", "the container image to use for performing the install")
 	upgradeCmd.Flags().BoolVarP(&preserve, "preserve", "p", false, "preserve data")
 	upgradeCmd.Flags().BoolVarP(&stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
+	upgradeCmd.Flags().BoolVarP(&force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
 	addCommand(upgradeCmd)
 }
 
@@ -49,7 +50,7 @@ func upgrade() error {
 
 		// TODO: See if we can validate version and prevent starting upgrades to
 		// an unknown version
-		resp, err := c.Upgrade(ctx, upgradeImage, preserve, stage, grpc.Peer(&remotePeer))
+		resp, err := c.Upgrade(ctx, upgradeImage, preserve, stage, force, grpc.Peer(&remotePeer))
 		if err != nil {
 			if resp == nil {
 				return fmt.Errorf("error performing upgrade: %s", err)

@@ -1702,6 +1702,7 @@ talosctl upgrade [flags]
 ### Options
 
 ```
+  -f, --force          force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help           help for upgrade
   -i, --image string   the container image to use for performing the install
   -p, --preserve       preserve data

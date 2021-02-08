@@ -191,6 +191,7 @@ message UpgradeRequest {
   string image = 1;
   bool preserve = 2;
   bool stage = 3;
+  bool force = 4;
 }
 
 message Upgrade {

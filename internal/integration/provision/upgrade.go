@@ -471,7 +471,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
 
-	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage)
+	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage, false)
 
 	err = base.IgnoreGRPCUnavailable(err)
 	suite.Require().NoError(err)
