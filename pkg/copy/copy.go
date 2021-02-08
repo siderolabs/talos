@@ -12,13 +12,18 @@ import (
 )
 
 // File copies the `src` file to the `dst` file.
-func File(src, dst string) error {
+func File(src, dst string, setters ...Option) error {
 	var (
-		err  error
-		s    *os.File
-		d    *os.File
-		info os.FileInfo
+		err     error
+		s       *os.File
+		d       *os.File
+		info    os.FileInfo
+		options Options
 	)
+
+	for _, setter := range setters {
+		setter(&options)
+	}
 
 	if s, err = os.Open(src); err != nil {
 		return err
@@ -45,22 +50,38 @@ func File(src, dst string) error {
 		return err
 	}
 
-	return os.Chmod(dst, info.Mode())
+	mode := info.Mode()
+	if options.Mode != 0 {
+		mode = options.Mode
+	}
+
+	return os.Chmod(dst, mode)
 }
 
 // Dir copies the `src` directory to the `dst` directory.
-func Dir(src, dst string) error {
+func Dir(src, dst string, setters ...Option) error {
 	var (
-		err   error
-		files []os.FileInfo
-		info  os.FileInfo
+		err     error
+		files   []os.FileInfo
+		info    os.FileInfo
+		options Options
 	)
+
+	for _, setter := range setters {
+		setter(&options)
+	}
 
 	if info, err = os.Stat(src); err != nil {
 		return err
 	}
 
-	if err = os.MkdirAll(dst, info.Mode()); err != nil {
+	mode := info.Mode()
+
+	if options.Mode != 0 {
+		mode = options.Mode
+	}
+
+	if err = os.MkdirAll(dst, mode); err != nil {
 		return err
 	}
 
@@ -73,15 +94,30 @@ func Dir(src, dst string) error {
 		d := path.Join(dst, file.Name())
 
 		if file.IsDir() {
-			if err = Dir(s, d); err != nil {
+			if err = Dir(s, d, setters...); err != nil {
 				return err
 			}
 		} else {
-			if err = File(s, d); err != nil {
+			if err = File(s, d, setters...); err != nil {
 				return err
 			}
 		}
 	}
 
 	return nil
+}
+
+// Option represents copy option.
+type Option func(o *Options)
+
+// Options represents copy options.
+type Options struct {
+	Mode os.FileMode
+}
+
+// WithMode sets destination files filemode.
+func WithMode(m os.FileMode) Option {
+	return func(o *Options) {
+		o.Mode = m
+	}
 }

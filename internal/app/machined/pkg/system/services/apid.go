@@ -9,12 +9,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/containerd/containerd/oci"
+	"github.com/fsnotify/fsnotify"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -25,13 +28,18 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/copy"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // APID implements the Service interface. It serves as the concrete type with
 // the required methods.
-type APID struct{}
+type APID struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+}
 
 // ID implements the Service interface.
 func (o *APID) ID(r runtime.Runtime) string {
@@ -40,11 +48,18 @@ func (o *APID) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
+	if r.Config().Machine().Type() == machine.TypeJoin {
+		o.syncKubeletPKI()
+	}
+
 	return image.Import(ctx, "/usr/images/apid.tar", "talos/apid")
 }
 
 // PostFunc implements the Service interface.
 func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	o.cancel()
+	o.wg.Wait()
+
 	return nil
 }
 
@@ -101,8 +116,8 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	if isWorker {
 		// worker requires kubelet config to refresh the certs via Kubernetes
 		mounts = append(mounts,
-			specs.Mount{Type: "bind", Destination: filepath.Dir(constants.KubeletKubeconfig), Source: filepath.Dir(constants.KubeletKubeconfig), Options: []string{"rbind", "ro"}},
-			specs.Mount{Type: "bind", Destination: constants.KubeletPKIDir, Source: constants.KubeletPKIDir, Options: []string{"rbind", "ro"}},
+			specs.Mount{Type: "bind", Destination: filepath.Dir(constants.KubeletKubeconfig), Source: constants.SystemKubeletPKIDir, Options: []string{"rbind", "ro"}},
+			specs.Mount{Type: "bind", Destination: constants.KubeletPKIDir, Source: constants.SystemKubeletPKIDir, Options: []string{"rbind", "ro"}},
 		)
 	}
 
@@ -163,4 +178,56 @@ func (o *APID) HealthFunc(runtime.Runtime) health.Check {
 // HealthSettings implements the HealthcheckedService interface.
 func (o *APID) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
+}
+
+func (o *APID) syncKubeletPKI() {
+	copyAll := func() {
+		if err := copy.Dir(constants.KubeletPKIDir, constants.SystemKubeletPKIDir, copy.WithMode(0o700)); err != nil {
+			log.Printf("failed to sync %s dir contents into %s: %s", constants.KubeletPKIDir, constants.SystemKubeletPKIDir, err)
+
+			return
+		}
+
+		if err := copy.File(constants.KubeletKubeconfig, filepath.Join(constants.SystemKubeletPKIDir, filepath.Base(constants.KubeletKubeconfig)), copy.WithMode(0o700)); err != nil {
+			log.Printf("failed to sync %s into %s: %s", constants.KubeletKubeconfig, constants.SystemKubeletPKIDir, err)
+
+			return
+		}
+	}
+
+	copyAll()
+
+	o.ctx, o.cancel = context.WithCancel(context.Background())
+	o.wg.Add(1)
+
+	go func() {
+		defer o.wg.Done()
+
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Printf("failed to create directory watcher %s", err)
+
+			return
+		}
+
+		defer watcher.Close() //nolint:errcheck
+
+		err = watcher.Add(constants.KubeletPKIDir)
+		if err != nil {
+			log.Printf("failed to watch dir %s %s", constants.KubeletPKIDir, err)
+
+			return
+		}
+
+		for {
+			select {
+			case <-o.ctx.Done():
+				return
+			case <-watcher.Events:
+				copyAll()
+			case err = <-watcher.Errors:
+				log.Printf("directory watch error %s", err)
+			}
+		}
+	}()
 }

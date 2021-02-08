@@ -181,8 +181,11 @@ const (
 	// KubeletPort is the kubelet port for secure API.
 	KubeletPort = 10250
 
-	// KubeletPKIDir is the path to the directory where kubelet stores issues certificates and keys.
+	// KubeletPKIDir is the path to the directory where kubelet stores issued certificates and keys.
 	KubeletPKIDir = "/var/lib/kubelet/pki"
+
+	// SystemKubeletPKIDir is the path to the directory where Talos copies kubelet issued certificates and keys.
+	SystemKubeletPKIDir = "/system/secrets/kubelet"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.20.2"
