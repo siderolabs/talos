@@ -118,12 +118,13 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		BootloaderEnabled: opts.BootloaderEnabled,
 		NodeUUID:          nodeUUID,
 		Config:            nodeConfig,
+		BridgeName:        state.BridgeName,
 		NetworkConfig:     state.VMCNIConfig,
 		CNI:               clusterReq.Network.CNI,
-		CIDR:              clusterReq.Network.CIDR,
-		IP:                nodeReq.IP,
+		CIDRs:             clusterReq.Network.CIDRs,
+		IPs:               nodeReq.IPs,
 		Hostname:          nodeReq.Name,
-		GatewayAddr:       clusterReq.Network.GatewayAddr,
+		GatewayAddrs:      clusterReq.Network.GatewayAddrs,
 		MTU:               clusterReq.Network.MTU,
 		Nameservers:       clusterReq.Network.Nameservers,
 		TFTPServer:        nodeReq.TFTPServer,
@@ -185,7 +186,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		Memory:   nodeReq.Memory,
 		DiskSize: nodeReq.Disks[0].Size,
 
-		PrivateIP: nodeReq.IP,
+		IPs: nodeReq.IPs,
 
 		APIPort: apiPort,
 	}
@@ -226,7 +227,7 @@ func (p *provisioner) createNodes(state *vm.State, clusterReq provision.ClusterR
 }
 
 func (p *provisioner) findBridgeListenPort(clusterReq provision.ClusterRequest) (int, error) {
-	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddr.String(), "0"))
+	l, err := net.Listen("tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
 	if err != nil {
 		return 0, err
 	}

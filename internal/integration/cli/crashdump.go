@@ -34,11 +34,11 @@ func (suite *CrashdumpSuite) TestRun() {
 	for _, node := range suite.Cluster.Info().Nodes {
 		switch node.Type {
 		case machine.TypeInit:
-			args = append(args, "--init-node", node.PrivateIP.String())
+			args = append(args, "--init-node", node.IPs[0].String())
 		case machine.TypeControlPlane:
-			args = append(args, "--control-plane-nodes", node.PrivateIP.String())
+			args = append(args, "--control-plane-nodes", node.IPs[0].String())
 		case machine.TypeJoin:
-			args = append(args, "--worker-nodes", node.PrivateIP.String())
+			args = append(args, "--worker-nodes", node.IPs[0].String())
 		case machine.TypeUnknown:
 			panic("unexpected")
 		}

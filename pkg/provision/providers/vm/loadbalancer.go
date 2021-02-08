@@ -36,12 +36,12 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 	masterIPs := make([]string, len(masterNodes))
 
 	for i := range masterIPs {
-		masterIPs[i] = masterNodes[i].IP.String()
+		masterIPs[i] = masterNodes[i].IPs[0].String()
 	}
 
 	args := []string{
 		"loadbalancer-launch",
-		"--loadbalancer-addr", clusterReq.Network.GatewayAddr.String(),
+		"--loadbalancer-addr", clusterReq.Network.GatewayAddrs[0].String(),
 		"--loadbalancer-upstreams", strings.Join(masterIPs, ","),
 	}
 

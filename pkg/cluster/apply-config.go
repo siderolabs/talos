@@ -31,7 +31,7 @@ func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.Nod
 		configureNode := func() error {
 			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
 				InsecureSkipVerify: true,
-			}), client.WithEndpoints(n.IP.String()))
+			}), client.WithEndpoints(n.IPs[0].String()))
 			if err != nil {
 				return retry.UnexpectedError(err)
 			}

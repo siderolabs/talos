@@ -37,8 +37,8 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		}
 
 		res.clusterInfo.Network.Name = network.Name
-		res.clusterInfo.Network.CIDR = *cidr
-		res.clusterInfo.Network.GatewayAddr = net.ParseIP(network.IPAM.Config[0].Gateway)
+		res.clusterInfo.Network.CIDRs = []net.IPNet{*cidr}
+		res.clusterInfo.Network.GatewayAddrs = []net.IP{net.ParseIP(network.IPAM.Config[0].Gateway)}
 
 		mtuStr := network.Options["com.docker.network.driver.mtu"]
 		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
@@ -66,7 +66,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 				Name: node.Names[0],
 				Type: t,
 
-				PrivateIP: net.ParseIP(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress),
+				IPs: []net.IP{net.ParseIP(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress)},
 			})
 	}
 

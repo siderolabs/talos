@@ -27,8 +27,8 @@ type IPAMRecord struct {
 	IPXEBootFilename string
 }
 
-// IPAMDatabase is a mapping from MAC address to records.
-type IPAMDatabase map[string]IPAMRecord
+// IPAMDatabase is a mapping from MAC address to records with IPv4/IPv6 flag.
+type IPAMDatabase map[string]map[int]IPAMRecord
 
 const dbFile = "ipam.db"
 
@@ -75,7 +75,16 @@ func LoadIPAMRecords(statePath string) (IPAMDatabase, error) {
 			return nil, err
 		}
 
-		result[record.MAC] = record
+		ipFormat := 4
+		if record.IP.To4() == nil {
+			ipFormat = 6
+		}
+
+		if result[record.MAC] == nil {
+			result[record.MAC] = make(map[int]IPAMRecord)
+		}
+
+		result[record.MAC][ipFormat] = record
 	}
 
 	return result, scanner.Err()

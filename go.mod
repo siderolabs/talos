@@ -22,8 +22,8 @@ require (
 	github.com/containerd/go-cni v1.0.1
 	github.com/containerd/ttrpc v1.0.2 // indirect
 	github.com/containerd/typeurl v1.0.1
-	github.com/containernetworking/cni v0.8.0
-	github.com/containernetworking/plugins v0.8.7
+	github.com/containernetworking/cni v0.8.1
+	github.com/containernetworking/plugins v0.9.0
 	github.com/coreos/go-iptables v0.4.5
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/docker/distribution v2.7.1+incompatible
@@ -71,11 +71,10 @@ require (
 	github.com/talos-systems/go-retry v0.2.0
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b
+	github.com/talos-systems/net v0.2.1-0.20210204205549-52c750994376
 	github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v7.0.0+incompatible
-	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	github.com/vmware-tanzu/sonobuoy v0.19.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20201125193152-8a03d2e9614b

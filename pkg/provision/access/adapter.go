@@ -28,7 +28,7 @@ func (wrapper *infoWrapper) Nodes() []string {
 	nodes := make([]string, len(wrapper.clusterInfo.Nodes))
 
 	for i := range nodes {
-		nodes[i] = wrapper.clusterInfo.Nodes[i].PrivateIP.String()
+		nodes[i] = wrapper.clusterInfo.Nodes[i].IPs[0].String()
 	}
 
 	return nodes
@@ -39,7 +39,7 @@ func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 
 	for _, node := range wrapper.clusterInfo.Nodes {
 		if node.Type == t {
-			nodes = append(nodes, node.PrivateIP.String())
+			nodes = append(nodes, node.IPs[0].String())
 		}
 	}
 

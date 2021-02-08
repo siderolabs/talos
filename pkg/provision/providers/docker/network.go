@@ -27,8 +27,8 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 
 	// If named net already exists, see if we can reuse it
 	if len(existingNet) > 0 {
-		if existingNet[0].IPAM.Config[0].Subnet != req.CIDR.String() {
-			return fmt.Errorf("existing network has differing cidr: %s vs %s", existingNet[0].IPAM.Config[0].Subnet, req.CIDR.String())
+		if existingNet[0].IPAM.Config[0].Subnet != req.CIDRs[0].String() {
+			return fmt.Errorf("existing network has differing cidr: %s vs %s", existingNet[0].IPAM.Config[0].Subnet, req.CIDRs[0].String())
 		}
 		// CIDRs match, we'll reuse
 		return nil
@@ -43,7 +43,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 		IPAM: &network.IPAM{
 			Config: []network.IPAMConfig{
 				{
-					Subnet: req.CIDR.String(),
+					Subnet: req.CIDRs[0].String(),
 				},
 			},
 		},

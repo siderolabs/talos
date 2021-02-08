@@ -95,7 +95,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit {
-			initNodeAddress = node.PrivateIP.String()
+			initNodeAddress = node.IPs[0].String()
 
 			break
 		}

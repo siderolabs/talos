@@ -6,6 +6,7 @@ package mgmt
 
 import (
 	"net"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -26,12 +27,18 @@ var dhcpdLaunchCmd = &cobra.Command{
 	Args:   cobra.NoArgs,
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return vm.DHCPd(dhcpdLaunchCmdFlags.ifName, net.ParseIP(dhcpdLaunchCmdFlags.addr), dhcpdLaunchCmdFlags.statePath)
+		ips := []net.IP{}
+
+		for _, ip := range strings.Split(dhcpdLaunchCmdFlags.addr, ",") {
+			ips = append(ips, net.ParseIP(ip))
+		}
+
+		return vm.DHCPd(dhcpdLaunchCmdFlags.ifName, ips, dhcpdLaunchCmdFlags.statePath)
 	},
 }
 
 func init() {
-	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.addr, "addr", "localhost", "IP address to listen on")
+	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.addr, "addr", "localhost", "IP addresses to listen on")
 	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.ifName, "interface", "", "interface to listen on")
 	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.statePath, "state-path", "", "path to state directory")
 	addCommand(dhcpdLaunchCmd)

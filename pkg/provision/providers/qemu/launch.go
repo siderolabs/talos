@@ -21,6 +21,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
+	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
@@ -51,12 +52,13 @@ type LaunchConfig struct {
 	Config string
 
 	// Network
+	BridgeName    string
 	NetworkConfig *libcni.NetworkConfigList
 	CNI           provision.CNIConfig
-	IP            net.IP
-	CIDR          net.IPNet
+	IPs           []net.IP
+	CIDRs         []net.IPNet
 	Hostname      string
-	GatewayAddr   net.IP
+	GatewayAddrs  []net.IP
 	MTU           int
 	Nameservers   []net.IP
 
@@ -82,6 +84,8 @@ type LaunchConfig struct {
 
 // withCNI creates network namespace, launches CNI and passes control to the next function
 // filling config with netNS and interface details.
+//
+//nolint: gocyclo
 func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchConfig) error) error {
 	// random ID for the CNI, maps to single VM
 	containerID := uuid.New().String()
@@ -99,14 +103,23 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		testutils.UnmountNS(ns) //nolint: errcheck
 	}()
 
-	ones, _ := config.CIDR.Mask.Size()
+	ips := make([]string, len(config.IPs))
+	for j := range ips {
+		ips[j] = talosnet.FormatCIDR(config.IPs[j], config.CIDRs[j])
+	}
+
+	gatewayAddrs := make([]string, len(config.GatewayAddrs))
+	for j := range gatewayAddrs {
+		gatewayAddrs[j] = config.GatewayAddrs[j].String()
+	}
+
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
 		NetNS:       ns.Path(),
 		IfName:      "veth0",
 		Args: [][2]string{
-			{"IP", fmt.Sprintf("%s/%d", config.IP, ones)},
-			{"GATEWAY", config.GatewayAddr.String()},
+			{"IP", strings.Join(ips, ",")},
+			{"GATEWAY", strings.Join(gatewayAddrs, ",")},
 		},
 	}
 
@@ -144,19 +157,36 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	config.vmMAC = vmIface.Mac
 	config.ns = ns
 
-	// dump node IP/mac/hostname for dhcp
-	if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
-		IP:               config.IP,
-		Netmask:          config.CIDR.Mask,
-		MAC:              vmIface.Mac,
-		Hostname:         config.Hostname,
-		Gateway:          config.GatewayAddr,
-		MTU:              config.MTU,
-		Nameservers:      config.Nameservers,
-		TFTPServer:       config.TFTPServer,
-		IPXEBootFilename: config.IPXEBootFileName,
-	}); err != nil {
-		return err
+	for j := range config.CIDRs {
+		nameservers := make([]net.IP, 0, len(config.Nameservers))
+
+		// filter nameservers by IPv4/IPv6 matching IPs
+		for i := range config.Nameservers {
+			if config.IPs[j].To4() == nil {
+				if config.Nameservers[i].To4() == nil {
+					nameservers = append(nameservers, config.Nameservers[i])
+				}
+			} else {
+				if config.Nameservers[i].To4() != nil {
+					nameservers = append(nameservers, config.Nameservers[i])
+				}
+			}
+		}
+
+		// dump node IP/mac/hostname for dhcp
+		if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
+			IP:               config.IPs[j],
+			Netmask:          config.CIDRs[j].Mask,
+			MAC:              vmIface.Mac,
+			Hostname:         config.Hostname,
+			Gateway:          config.GatewayAddrs[j],
+			MTU:              config.MTU,
+			Nameservers:      nameservers,
+			TFTPServer:       config.TFTPServer,
+			IPXEBootFilename: config.IPXEBootFileName,
+		}); err != nil {
+			return err
+		}
 	}
 
 	return f(config)
@@ -333,7 +363,7 @@ func Launch() error {
 	config.c = vm.ConfigureSignals()
 	config.controller = NewController()
 
-	httpServer, err := vm.NewHTTPServer(config.GatewayAddr, config.APIPort, []byte(config.Config), config.controller)
+	httpServer, err := vm.NewHTTPServer(config.GatewayAddrs[0], config.APIPort, []byte(config.Config), config.controller)
 	if err != nil {
 		return err
 	}

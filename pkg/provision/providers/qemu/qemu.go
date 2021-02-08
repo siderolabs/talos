@@ -7,6 +7,9 @@ package qemu
 import (
 	"context"
 
+	"github.com/AlekSi/pointer"
+
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
@@ -34,9 +37,15 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
-	nameservers := make([]string, len(networkReq.Nameservers))
-	for i := range nameservers {
-		nameservers[i] = networkReq.Nameservers[i].String()
+	hasIPv4 := false
+	hasIPv6 := false
+
+	for _, cidr := range networkReq.CIDRs {
+		if cidr.IP.To4() == nil {
+			hasIPv6 = true
+		} else {
+			hasIPv4 = true
+		}
 	}
 
 	return []generate.GenOption{
@@ -50,11 +59,25 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			// Talos-specific
 			"talos.platform=metal",
 		}),
+		generate.WithNetworkConfig(
+			&v1alpha1.NetworkConfig{
+				NetworkInterfaces: []*v1alpha1.Device{
+					{
+						DeviceInterface: "eth0",
+						DeviceDHCP:      true,
+						DeviceDHCPOptions: &v1alpha1.DHCPOptions{
+							DHCPIPv4: pointer.ToBool(hasIPv4),
+							DHCPIPv6: pointer.ToBool(hasIPv6),
+						},
+					},
+				},
+			},
+		),
 	}
 }
 
 // GetLoadBalancers returns internal/external loadbalancer endpoints.
 func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
 	// qemu runs loadbalancer on the bridge, which is good for both internal access, external access goes via round-robin
-	return networkReq.GatewayAddr.String(), ""
+	return networkReq.GatewayAddrs[0].String(), ""
 }
