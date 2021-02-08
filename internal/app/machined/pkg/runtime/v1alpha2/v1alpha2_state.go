@@ -71,6 +71,7 @@ func NewState() (*State, error) {
 	for _, r := range []resource.Resource{
 		&v1alpha1.BootstrapStatus{},
 		&v1alpha1.Service{},
+		&v1alpha1.TimeSync{},
 		&config.V1Alpha1{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},

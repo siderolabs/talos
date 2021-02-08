@@ -124,5 +124,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 	// wait for key change or any other event in etcd
 	<-watchCh
 
+	r.QueueReconcile()
+
 	return nil
 }
