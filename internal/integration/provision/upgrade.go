@@ -276,11 +276,11 @@ func (suite *UpgradeSuite) setupCluster() {
 		Name: clusterName,
 
 		Network: provision.NetworkRequest{
-			Name:        clusterName,
-			CIDR:        *cidr,
-			GatewayAddr: gatewayIP,
-			MTU:         DefaultSettings.MTU,
-			Nameservers: defaultNameservers,
+			Name:         clusterName,
+			CIDRs:        []net.IPNet{*cidr},
+			GatewayAddrs: []net.IP{gatewayIP},
+			MTU:          DefaultSettings.MTU,
+			Nameservers:  defaultNameservers,
 			CNI: provision.CNIConfig{
 				BinPath:  defaultCNIBinPath,
 				ConfDir:  defaultCNIConfDir,
@@ -339,7 +339,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("master-%d", i+1),
 				Type:     machine.TypeControlPlane,
-				IP:       ips[i],
+				IPs:      []net.IP{ips[i]},
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{
@@ -356,7 +356,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("worker-%d", i),
 				Type:     machine.TypeJoin,
-				IP:       ips[suite.spec.MasterNodes+i-1],
+				IPs:      []net.IP{ips[suite.spec.MasterNodes+i-1]},
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{
@@ -428,7 +428,7 @@ func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, 
 	nodes := make([]string, len(suite.Cluster.Info().Nodes))
 
 	for i, node := range suite.Cluster.Info().Nodes {
-		nodes[i] = node.PrivateIP.String()
+		nodes[i] = node.IPs[0].String()
 	}
 
 	ctx := talosclient.WithNodes(suite.ctx, nodes...)
@@ -467,9 +467,9 @@ func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *taloscli
 }
 
 func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo) {
-	suite.T().Logf("upgrading node %s", node.PrivateIP)
+	suite.T().Logf("upgrading node %s", node.IPs[0])
 
-	nodeCtx := talosclient.WithNodes(suite.ctx, node.PrivateIP.String())
+	nodeCtx := talosclient.WithNodes(suite.ctx, node.IPs[0].String())
 
 	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage, false)
 
@@ -495,7 +495,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 		if version != suite.spec.TargetVersion {
 			// upgrade not finished yet
-			return retry.ExpectedError(fmt.Errorf("node %q version doesn't match expected: expected %q, got %q", node.PrivateIP.String(), suite.spec.TargetVersion, version))
+			return retry.ExpectedError(fmt.Errorf("node %q version doesn't match expected: expected %q, got %q", node.IPs[0].String(), suite.spec.TargetVersion, version))
 		}
 
 		return nil

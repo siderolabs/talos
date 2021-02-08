@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/provision"
@@ -52,9 +54,19 @@ func showCluster(cluster provision.Cluster) error {
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
 	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
 
-	ones, _ := cluster.Info().Network.CIDR.Mask.Size()
-	fmt.Fprintf(w, "NETWORK CIDR\t%s/%d\n", cluster.Info().Network.CIDR.IP, ones)
-	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", cluster.Info().Network.GatewayAddr)
+	cidrs := make([]string, len(cluster.Info().Network.CIDRs))
+	for i := range cidrs {
+		cidrs[i] = net.FormatCIDR(cluster.Info().Network.CIDRs[i].IP, cluster.Info().Network.CIDRs[i])
+	}
+
+	fmt.Fprintf(w, "NETWORK CIDR\t%s\n", strings.Join(cidrs, ","))
+
+	gateways := make([]string, len(cluster.Info().Network.GatewayAddrs))
+	for i := range gateways {
+		gateways[i] = cluster.Info().Network.GatewayAddrs[i].String()
+	}
+
+	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
 
 	if err := w.Flush(); err != nil {
@@ -86,10 +98,15 @@ func showCluster(cluster provision.Cluster) error {
 			disk = humanize.Bytes(node.DiskSize)
 		}
 
+		ips := make([]string, len(node.IPs))
+		for i := range ips {
+			ips[i] = node.IPs[i].String()
+		}
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			node.Name,
 			node.Type,
-			node.PrivateIP,
+			strings.Join(ips, ","),
 			cpus,
 			mem,
 			disk,

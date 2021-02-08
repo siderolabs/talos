@@ -44,11 +44,11 @@ type CNIConfig struct {
 
 // NetworkRequest describes cluster network.
 type NetworkRequest struct {
-	Name        string
-	CIDR        net.IPNet
-	GatewayAddr net.IP
-	MTU         int
-	Nameservers []net.IP
+	Name         string
+	CIDRs        []net.IPNet
+	GatewayAddrs []net.IP
+	MTU          int
+	Nameservers  []net.IP
 
 	// CNI-specific parameters.
 	CNI CNIConfig
@@ -129,7 +129,7 @@ type Disk struct {
 // NodeRequest describes a request for a node.
 type NodeRequest struct {
 	Name   string
-	IP     net.IP
+	IPs    []net.IP
 	Config config.Provider
 	Type   machine.Type
 

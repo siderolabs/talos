@@ -58,6 +58,8 @@ var (
 	configDebug             bool
 	networkCIDR             string
 	networkMTU              int
+	networkIPv4             bool
+	networkIPv6             bool
 	wireguardCIDR           string
 	nameservers             []string
 	dnsDomain               string
@@ -113,26 +115,56 @@ func create(ctx context.Context) (err error) {
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving IPs")
 
-	_, cidr, err := net.ParseCIDR(networkCIDR)
+	_, cidr4, err := net.ParseCIDR(networkCIDR)
 	if err != nil {
 		return fmt.Errorf("error validating cidr block: %w", err)
 	}
 
-	// Gateway addr at 1st IP in range, ex. 192.168.0.1
-	var gatewayIP net.IP
+	if cidr4.IP.To4() == nil {
+		return fmt.Errorf("--cidr is expected to be IPV4 CIDR")
+	}
 
-	gatewayIP, err = talosnet.NthIPInNetwork(cidr, 1)
+	// use ULA IPv6 network fd00::/8, add 'TAL' in hex to build /32 network, add IPv4 CIDR to build /64 unique network
+	_, cidr6, err := net.ParseCIDR(fmt.Sprintf("fd74:616c:%02x%02x:%02x%02x::/64", cidr4.IP[0], cidr4.IP[1], cidr4.IP[2], cidr4.IP[3]))
 	if err != nil {
-		return err
+		return fmt.Errorf("error validating cidr IPv6 block: %w", err)
+	}
+
+	var cidrs []net.IPNet
+
+	if networkIPv4 {
+		cidrs = append(cidrs, *cidr4)
+	}
+
+	if networkIPv6 {
+		cidrs = append(cidrs, *cidr6)
+	}
+
+	if len(cidrs) == 0 {
+		return fmt.Errorf("neither IPv4 nor IPv6 network was enabled")
+	}
+
+	// Gateway addr at 1st IP in range, ex. 192.168.0.1
+	gatewayIPs := make([]net.IP, len(cidrs))
+
+	for j := range gatewayIPs {
+		gatewayIPs[j], err = talosnet.NthIPInNetwork(&cidrs[j], 1)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Set starting ip at 2nd ip in range, ex: 192.168.0.2
-	ips := make([]net.IP, masters+workers)
+	ips := make([][]net.IP, len(cidrs))
 
-	for i := range ips {
-		ips[i], err = talosnet.NthIPInNetwork(cidr, i+2)
-		if err != nil {
-			return err
+	for j := range cidrs {
+		ips[j] = make([]net.IP, masters+workers)
+
+		for i := range ips[j] {
+			ips[j][i], err = talosnet.NthIPInNetwork(&cidrs[j], i+2)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -158,11 +190,11 @@ func create(ctx context.Context) (err error) {
 		Name: clusterName,
 
 		Network: provision.NetworkRequest{
-			Name:        clusterName,
-			CIDR:        *cidr,
-			GatewayAddr: gatewayIP,
-			MTU:         networkMTU,
-			Nameservers: nameserverIPs,
+			Name:         clusterName,
+			CIDRs:        cidrs,
+			GatewayAddrs: gatewayIPs,
+			MTU:          networkMTU,
+			Nameservers:  nameserverIPs,
 			CNI: provision.CNIConfig{
 				BinPath:  cniBinPath,
 				ConfDir:  cniConfDir,
@@ -252,7 +284,7 @@ func create(ctx context.Context) (err error) {
 
 		if defaultInternalLB == "" {
 			// provisioner doesn't provide internal LB, so use first master node
-			defaultInternalLB = ips[0].String()
+			defaultInternalLB = ips[0][0].String()
 		}
 
 		var endpointList []string
@@ -268,11 +300,11 @@ func create(ctx context.Context) (err error) {
 			endpointList = []string{forceEndpoint}
 			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
 		case forceInitNodeAsEndpoint:
-			endpointList = []string{ips[0].String()}
+			endpointList = []string{ips[0][0].String()}
 		default:
 			// use control plane nodes as endpoints, client-side load-balancing
 			for i := 0; i < masters; i++ {
-				endpointList = append(endpointList, ips[i].String())
+				endpointList = append(endpointList, ips[0][i].String())
 			}
 		}
 
@@ -308,7 +340,7 @@ func create(ctx context.Context) (err error) {
 	// Wireguard configuration.
 	var wireguardConfigBundle *helpers.WireguardConfigBundle
 	if wireguardCIDR != "" {
-		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips, wireguardCIDR, 51111, masters)
+		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips[0], wireguardCIDR, 51111, masters)
 		if err != nil {
 			return err
 		}
@@ -321,10 +353,15 @@ func create(ctx context.Context) (err error) {
 	for i := 0; i < masters; i++ {
 		var cfg config.Provider
 
+		nodeIPs := make([]net.IP, len(cidrs))
+		for j := range nodeIPs {
+			nodeIPs[j] = ips[j][i]
+		}
+
 		nodeReq := provision.NodeRequest{
 			Name:                fmt.Sprintf("%s-master-%d", clusterName, i+1),
 			Type:                machine.TypeControlPlane,
-			IP:                  ips[i],
+			IPs:                 nodeIPs,
 			Memory:              memory,
 			NanoCPUs:            nanoCPUs,
 			Disks:               disks,
@@ -343,7 +380,7 @@ func create(ctx context.Context) (err error) {
 		}
 
 		if wireguardConfigBundle != nil {
-			cfg, err = wireguardConfigBundle.PatchConfig(nodeReq.IP, cfg)
+			cfg, err = wireguardConfigBundle.PatchConfig(nodeIPs[0], cfg)
 			if err != nil {
 				return err
 			}
@@ -358,10 +395,13 @@ func create(ctx context.Context) (err error) {
 
 		cfg := configBundle.Join()
 
-		ip := ips[masters+i-1]
+		nodeIPs := make([]net.IP, len(cidrs))
+		for j := range nodeIPs {
+			nodeIPs[j] = ips[j][masters+i-1]
+		}
 
 		if wireguardConfigBundle != nil {
-			cfg, err = wireguardConfigBundle.PatchConfig(ip, cfg)
+			cfg, err = wireguardConfigBundle.PatchConfig(nodeIPs[0], cfg)
 			if err != nil {
 				return err
 			}
@@ -371,7 +411,7 @@ func create(ctx context.Context) (err error) {
 			provision.NodeRequest{
 				Name:                name,
 				Type:                machine.TypeJoin,
-				IP:                  ip,
+				IPs:                 nodeIPs,
 				Memory:              memory,
 				NanoCPUs:            nanoCPUs,
 				Disks:               disks,
@@ -601,9 +641,11 @@ func init() {
 	createCmd.Flags().StringSliceVar(&registryInsecure, "registry-insecure-skip-verify", []string{}, "list of registry hostnames to skip TLS verification for")
 	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")
-	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network")
+	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+	createCmd.Flags().BoolVar(&networkIPv4, "ipv4", true, "enable IPv4 network in the cluster")
+	createCmd.Flags().BoolVar(&networkIPv6, "ipv6", false, "enable IPv6 network in the cluster (QEMU provisioner only)")
 	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")
-	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1"}, "list of nameservers to use")
+	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	createCmd.Flags().StringVar(&clusterCpus, "cpus", "2.0", "the share of CPUs as fraction (each container/VM)")

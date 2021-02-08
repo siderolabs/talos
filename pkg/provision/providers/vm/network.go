@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/containernetworking/cni/libcni"
@@ -23,9 +24,11 @@ import (
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
-// CreateNetwork build bridge interface name by taking part of checksum of the network name
+// CreateNetwork builds bridge interface name by taking part of checksum of the network name
 // so that interface name is defined by network name, and different networks have
 // different bridge interfaces.
+//
+//nolint: gocyclo
 func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest) error {
 	networkNameHash := sha256.Sum256([]byte(network.Name))
 	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
@@ -66,20 +69,31 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 	}()
 
 	// pick a fake address to use for provisioning an interface
-	fakeIP, err := talosnet.NthIPInNetwork(&network.CIDR, 2)
-	if err != nil {
-		return err
+	fakeIPs := make([]string, len(network.CIDRs))
+	for j := range fakeIPs {
+		var fakeIP net.IP
+
+		fakeIP, err = talosnet.NthIPInNetwork(&network.CIDRs[j], 2)
+		if err != nil {
+			return err
+		}
+
+		fakeIPs[j] = talosnet.FormatCIDR(fakeIP, network.CIDRs[j])
 	}
 
-	ones, _ := network.CIDR.Mask.Size()
+	gatewayAddrs := make([]string, len(network.GatewayAddrs))
+	for j := range gatewayAddrs {
+		gatewayAddrs[j] = network.GatewayAddrs[j].String()
+	}
+
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
 		NetNS:       ns.Path(),
 		IfName:      "veth0",
 		Args: [][2]string{
-			{"IP", fmt.Sprintf("%s/%d", fakeIP, ones)},
-			{"GATEWAY", network.GatewayAddr.String()},
+			{"IP", strings.Join(fakeIPs, ",")},
+			{"GATEWAY", strings.Join(gatewayAddrs, ",")},
 		},
 	}
 

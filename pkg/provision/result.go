@@ -35,10 +35,10 @@ type ClusterInfo struct {
 
 // NetworkInfo describes cluster network.
 type NetworkInfo struct {
-	Name        string
-	CIDR        net.IPNet
-	GatewayAddr net.IP
-	MTU         int
+	Name         string
+	CIDRs        []net.IPNet
+	GatewayAddrs []net.IP
+	MTU          int
 }
 
 // NodeInfo describes a node.
@@ -55,8 +55,7 @@ type NodeInfo struct {
 	// Disk (volume) size in bytes, if applicable
 	DiskSize uint64
 
-	PublicIP  net.IP
-	PrivateIP net.IP
+	IPs []net.IP
 
 	APIPort int
 }

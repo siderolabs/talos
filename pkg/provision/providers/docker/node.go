@@ -134,13 +134,13 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 
 		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
 
-		if nodeReq.IP == nil {
+		if nodeReq.IPs == nil {
 			return provision.NodeInfo{}, errors.New("an IP address must be provided when creating a master node")
 		}
 	}
 
-	if nodeReq.IP != nil {
-		networkConfig.EndpointsConfig[clusterReq.Network.Name].IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: nodeReq.IP.String()}
+	if nodeReq.IPs != nil {
+		networkConfig.EndpointsConfig[clusterReq.Network.Name].IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: nodeReq.IPs[0].String()}
 	}
 
 	// Create the container.
@@ -169,7 +169,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
 
-		PrivateIP: net.ParseIP(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress),
+		IPs: []net.IP{net.ParseIP(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress)},
 	}
 
 	return nodeInfo, nil

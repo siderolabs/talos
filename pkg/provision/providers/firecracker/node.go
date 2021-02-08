@@ -19,6 +19,7 @@ import (
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
+	talosnet "github.com/talos-systems/net"
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -107,8 +108,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		}
 	}
 
-	ones, _ := clusterReq.Network.CIDR.Mask.Size()
-
 	drives := make([]models.Drive, len(diskPaths))
 
 	for i, disk := range diskPaths {
@@ -139,8 +138,8 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 					CacheDir:      clusterReq.Network.CNI.CacheDir,
 					NetworkConfig: state.VMCNIConfig,
 					Args: [][2]string{
-						{"IP", fmt.Sprintf("%s/%d", nodeReq.IP, ones)},
-						{"GATEWAY", clusterReq.Network.GatewayAddr.String()},
+						{"IP", talosnet.FormatCIDR(nodeReq.IPs[0], clusterReq.Network.CIDRs[0])},
+						{"GATEWAY", clusterReq.Network.GatewayAddrs[0].String()},
 					},
 					IfName:   "veth0",
 					VMIfName: "eth0",
@@ -160,7 +159,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	launchConfig := LaunchConfig{
 		FirecrackerConfig:   cfg,
 		Config:              nodeConfig,
-		GatewayAddr:         clusterReq.Network.GatewayAddr,
+		GatewayAddr:         clusterReq.Network.GatewayAddrs[0],
 		BootloaderEmulation: opts.BootloaderEnabled,
 	}
 
@@ -206,7 +205,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		Memory:   nodeReq.Memory,
 		DiskSize: nodeReq.Disks[0].Size,
 
-		PrivateIP: nodeReq.IP,
+		IPs: nodeReq.IPs[:1],
 	}
 
 	return nodeInfo, nil

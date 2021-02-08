@@ -76,7 +76,7 @@ talosctl cluster create [flags]
 
 ```
       --arch string                             cluster architecture (default "amd64")
-      --cidr string                             CIDR of the cluster network (default "10.5.0.0/24")
+      --cidr string                             CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                    search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
       --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.9.0-alpha.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                    CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
@@ -96,12 +96,14 @@ talosctl cluster create [flags]
       --initrd-path string                      the uncompressed kernel image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string                        location of pre-generated config files
       --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
+      --ipv4                                    enable IPv4 network in the cluster (default true)
+      --ipv6                                    enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                         the ISO path to use for the initial boot (VM only)
       --kubernetes-version string               desired kubernetes version to run (default "1.20.2")
       --masters int                             the number of masters to create (default 1)
       --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
-      --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1])
+      --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for
       --registry-mirror strings                 list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                   skip injecting config from embedded metadata server, write config files to current directory
