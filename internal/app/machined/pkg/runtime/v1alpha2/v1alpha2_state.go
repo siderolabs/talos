@@ -13,11 +13,11 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state/impl/namespaced"
 	"github.com/talos-systems/os-runtime/pkg/state/registry"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // State implements runtime.V1alpha2State interface.

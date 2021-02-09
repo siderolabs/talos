@@ -13,6 +13,7 @@ type Runtime interface {
 	Config() config.Provider
 	ValidateConfig([]byte) (config.Provider, error)
 	SetConfig([]byte) error
+	CanApplyImmediate([]byte) error
 	State() State
 	Events() EventStream
 	Logging() LoggingManager

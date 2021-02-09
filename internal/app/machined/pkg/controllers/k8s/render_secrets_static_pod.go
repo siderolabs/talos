@@ -19,9 +19,9 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
 )
 
 // RenderSecretsStaticPodController manages k8s.SecretsReady and renders secrets from secrets.Kubernetes.

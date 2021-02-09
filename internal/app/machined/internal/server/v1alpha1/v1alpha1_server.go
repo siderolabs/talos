@@ -32,6 +32,7 @@ import (
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
+	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/concurrency"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -103,14 +104,33 @@ func (s *Server) Register(obj *grpc.Server) {
 }
 
 // ApplyConfiguration implements machine.MachineService.
-func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
-	if !in.OnReboot {
-		if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
+//
+//nolint: gocyclo
+func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
+
+	switch {
+	// --immediate
+	case in.Immediate:
+		if err := s.Controller.Runtime().CanApplyImmediate(in.GetData()); err != nil {
+			return nil, err
+		}
+
+		if err := s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
+			return nil, err
+		}
+
+		if err := ioutil.WriteFile(constants.ConfigPath, in.GetData(), 0o600); err != nil {
+			return nil, err
+		}
+	// default (no flags)
+	case !in.OnReboot:
+		if err := s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
 			return nil, err
 		}
 
 		go func() {
-			if err = s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
+			if err := s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("apply configuration failed:", err)
 				}
@@ -120,7 +140,8 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 				}
 			}
 		}()
-	} else {
+	// --no-reboot
+	case in.OnReboot:
 		cfg, err := s.Controller.Runtime().ValidateConfig(in.GetData())
 		if err != nil {
 			return nil, err
@@ -143,13 +164,11 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		}
 	}
 
-	reply = &machine.ApplyConfigurationResponse{
+	return &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{
 			{},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.
@@ -1720,6 +1739,33 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 	}
 
 	return reply, nil
+}
+
+// RemoveBootkubeInitializedKey implements machine.MachineService.
+//
+// Temporary API only used when converting from self-hosted to Talos-managed control plane.
+// This API can be removed once the conversion process is no longer needed (Talos 0.11?).
+func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *empty.Empty) (*machine.RemoveBootkubeInitializedKeyResponse, error) {
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	ctx = clientv3.WithRequireLeader(ctx)
+
+	_, err = client.Delete(ctx, constants.InitializedKey)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting initialized key: %w", err)
+	}
+
+	return &machine.RemoveBootkubeInitializedKeyResponse{
+		Messages: []*machine.RemoveBootkubeInitializedKey{
+			{},
+		},
+	}, nil
 }
 
 func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {

@@ -110,6 +110,8 @@ description: Talos gRPC API reference.
     - [Recover](#machine.Recover)
     - [RecoverRequest](#machine.RecoverRequest)
     - [RecoverResponse](#machine.RecoverResponse)
+    - [RemoveBootkubeInitializedKey](#machine.RemoveBootkubeInitializedKey)
+    - [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse)
     - [Reset](#machine.Reset)
     - [ResetPartitionSpec](#machine.ResetPartitionSpec)
     - [ResetRequest](#machine.ResetRequest)
@@ -616,6 +618,7 @@ node.
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  |  |
 | on_reboot | [bool](#bool) |  |  |
+| immediate | [bool](#bool) |  |  |
 
 
 
@@ -1855,6 +1858,36 @@ The recover message containing the recover status.
 
 
 
+<a name="machine.RemoveBootkubeInitializedKey"></a>
+
+### RemoveBootkubeInitializedKey
+RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RemoveBootkubeInitializedKeyResponse"></a>
+
+### RemoveBootkubeInitializedKeyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [RemoveBootkubeInitializedKey](#machine.RemoveBootkubeInitializedKey) | repeated |  |
+
+
+
+
+
+
 <a name="machine.Reset"></a>
 
 ### Reset
@@ -2785,6 +2818,7 @@ The machine service definition.
 | Rollback | [RollbackRequest](#machine.RollbackRequest) | [RollbackResponse](#machine.RollbackResponse) |  |
 | Reset | [ResetRequest](#machine.ResetRequest) | [ResetResponse](#machine.ResetResponse) |  |
 | Recover | [RecoverRequest](#machine.RecoverRequest) | [RecoverResponse](#machine.RecoverResponse) |  |
+| RemoveBootkubeInitializedKey | [.google.protobuf.Empty](#google.protobuf.Empty) | [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse) |  |
 | ServiceList | [.google.protobuf.Empty](#google.protobuf.Empty) | [ServiceListResponse](#machine.ServiceListResponse) |  |
 | ServiceRestart | [ServiceRestartRequest](#machine.ServiceRestartRequest) | [ServiceRestartResponse](#machine.ServiceRestartResponse) |  |
 | ServiceStart | [ServiceStartRequest](#machine.ServiceStartRequest) | [ServiceStartResponse](#machine.ServiceStartResponse) |  |
