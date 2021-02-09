@@ -13,9 +13,6 @@ machine:
     hostname: talos
     nameservers:
       - 10.0.0.1
-    time:
-      servers:
-        - time.cloudflare.com
     interfaces:
       - interface: eth0
         cidr: 10.0.0.201/8
@@ -25,6 +22,9 @@ machine:
             gateway: 10.0.0.1
       - interface: eth1
         ignore: true
+  time:
+    servers:
+      - time.cloudflare.com
 ```
 
 ## Additional Addresses for an Interface

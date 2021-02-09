@@ -292,7 +292,7 @@ kubelet:
     image: ghcr.io/talos-systems/kubelet:v1.20.1 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
-        --feature-gates: ServerSideApply=true
+        feature-gates: ServerSideApply=true
 
     # # The `extraMounts` field is used to add additional mounts to the kubelet container.
     # extraMounts:
@@ -829,8 +829,8 @@ apiServer:
     image: k8s.gcr.io/kube-apiserver-amd64:v1.20.1 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
-        --feature-gates: ServerSideApply=true
-        --http2-max-streams-per-connection: "32"
+        feature-gates: ServerSideApply=true
+        http2-max-streams-per-connection: "32"
     # Extra certificate subject alternative names for the API server's certificate.
     certSANs:
         - 1.2.3.4
@@ -861,7 +861,7 @@ controllerManager:
     image: k8s.gcr.io/kube-controller-manager-amd64:v1.20.1 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
-        --feature-gates: ServerSideApply=true
+        feature-gates: ServerSideApply=true
 ```
 
 
@@ -889,7 +889,7 @@ proxy:
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
-        --proxy-mode: iptables
+        proxy-mode: iptables
 ```
 
 
@@ -916,7 +916,7 @@ scheduler:
     image: k8s.gcr.io/kube-scheduler-amd64:v1.20.1 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
-        --feature-gates: AllBeta=true
+        feature-gates: AllBeta=true
 ```
 
 
@@ -947,7 +947,7 @@ etcd:
         key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
     # Extra arguments to supply to etcd.
     extraArgs:
-        --election-timeout: "5000"
+        election-timeout: "5000"
 ```
 
 
@@ -1120,7 +1120,7 @@ Appears in:
 image: ghcr.io/talos-systems/kubelet:v1.20.1 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
-    --feature-gates: ServerSideApply=true
+    feature-gates: ServerSideApply=true
 
 # # The `extraMounts` field is used to add additional mounts to the kubelet container.
 # extraMounts:
@@ -1862,8 +1862,8 @@ Appears in:
 image: k8s.gcr.io/kube-apiserver-amd64:v1.20.1 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
-    --feature-gates: ServerSideApply=true
-    --http2-max-streams-per-connection: "32"
+    feature-gates: ServerSideApply=true
+    http2-max-streams-per-connection: "32"
 # Extra certificate subject alternative names for the API server's certificate.
 certSANs:
     - 1.2.3.4
@@ -1938,7 +1938,7 @@ Appears in:
 image: k8s.gcr.io/kube-controller-manager-amd64:v1.20.1 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
-    --feature-gates: ServerSideApply=true
+    feature-gates: ServerSideApply=true
 ```
 
 <hr />
@@ -1997,7 +1997,7 @@ image: k8s.gcr.io/kube-proxy-amd64:v1.20.1 # The container image used in the kub
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
-    --proxy-mode: iptables
+    proxy-mode: iptables
 ```
 
 <hr />
@@ -2069,7 +2069,7 @@ Appears in:
 image: k8s.gcr.io/kube-scheduler-amd64:v1.20.1 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
-    --feature-gates: AllBeta=true
+    feature-gates: AllBeta=true
 ```
 
 <hr />
@@ -2131,7 +2131,7 @@ ca:
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
 # Extra arguments to supply to etcd.
 extraArgs:
-    --election-timeout: "5000"
+    election-timeout: "5000"
 ```
 
 <hr />
