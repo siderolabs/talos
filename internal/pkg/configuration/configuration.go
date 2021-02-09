@@ -112,7 +112,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 
 		switch {
 		case os.IsNotExist(err):
-			secrets, err = generate.NewSecretsBundle(clock, false)
+			secrets, err = generate.NewSecretsBundle(clock)
 			if err != nil {
 				return nil, err
 			}

@@ -15,7 +15,6 @@ type InputOptions struct {
 	Endpoint    string
 	KubeVersion string
 	GenOptions  []generate.GenOption
-	UseRSAKeys  bool
 }
 
 // Options describes generate parameters.

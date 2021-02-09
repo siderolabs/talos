@@ -86,6 +86,7 @@ var (
 	crashdumpOnFailure      bool
 	skipKubeconfig          bool
 	skipInjectingConfig     bool
+	talosVersion            string
 )
 
 // createCmd represents the cluster up command.
@@ -278,6 +279,29 @@ func create(ctx context.Context) (err error) {
 			}
 
 			genOptions = append(genOptions, generate.WithUserDisks(machineDisks))
+		}
+
+		if talosVersion == "" {
+			if provisionerName == "docker" {
+				parts := strings.Split(nodeImage, ":")
+
+				talosVersion = parts[len(parts)-1]
+			} else {
+				parts := strings.Split(nodeInstallImage, ":")
+
+				talosVersion = parts[len(parts)-1]
+			}
+		}
+
+		if talosVersion != "latest" {
+			var versionContract *config.VersionContract
+
+			versionContract, err = config.ParseContractFromVersion(talosVersion)
+			if err != nil {
+				return fmt.Errorf("error parsing Talos version %q: %w", talosVersion, err)
+			}
+
+			genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 		}
 
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
@@ -677,5 +701,6 @@ func init() {
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
 	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
+	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	Cmd.AddCommand(createCmd)
 }

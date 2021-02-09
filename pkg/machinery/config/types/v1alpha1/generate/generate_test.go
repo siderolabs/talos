@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -17,18 +18,42 @@ import (
 type GenerateSuite struct {
 	suite.Suite
 
-	input *genv1alpha1.Input
+	input      *genv1alpha1.Input
+	genOptions []genv1alpha1.GenOption
 }
 
 func TestGenerateSuite(t *testing.T) {
-	suite.Run(t, new(GenerateSuite))
+	for _, tt := range []struct {
+		label      string
+		genOptions []genv1alpha1.GenOption
+	}{
+		{
+			label: "current",
+		},
+		{
+			label:      "0.9",
+			genOptions: []genv1alpha1.GenOption{genv1alpha1.WithVersionContract(config.TalosVersion0_9)},
+		},
+		{
+			label:      "0.8",
+			genOptions: []genv1alpha1.GenOption{genv1alpha1.WithVersionContract(config.TalosVersion0_8)},
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.label, func(t *testing.T) {
+			suite.Run(t, &GenerateSuite{
+				genOptions: tt.genOptions,
+			})
+		})
+	}
 }
 
 func (suite *GenerateSuite) SetupSuite() {
 	var err error
-	secrets, err := genv1alpha1.NewSecretsBundle(genv1alpha1.NewClock(), false)
+	secrets, err := genv1alpha1.NewSecretsBundle(genv1alpha1.NewClock(), suite.genOptions...)
 	suite.Require().NoError(err)
-	suite.input, err = genv1alpha1.NewInput("test", "10.0.1.5", constants.DefaultKubernetesVersion, secrets)
+	suite.input, err = genv1alpha1.NewInput("test", "10.0.1.5", constants.DefaultKubernetesVersion, secrets, suite.genOptions...)
 	suite.Require().NoError(err)
 }
 

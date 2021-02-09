@@ -18,6 +18,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/images"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -29,6 +30,7 @@ var (
 	configVersion     string
 	dnsDomain         string
 	kubernetesVersion string
+	talosVersion      string
 	installDisk       string
 	installImage      string
 	outputDir         string
@@ -127,6 +129,17 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
 	}
 
+	if talosVersion != "" {
+		var versionContract *config.VersionContract
+
+		versionContract, err = config.ParseContractFromVersion(talosVersion)
+		if err != nil {
+			return fmt.Errorf("invalid talos-version: %w", err)
+		}
+
+		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
+	}
+
 	configBundle, err := bundle.NewConfigBundle(
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
@@ -177,6 +190,7 @@ func init() {
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
+	genConfigCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
 	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
