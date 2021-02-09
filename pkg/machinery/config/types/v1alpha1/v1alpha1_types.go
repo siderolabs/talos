@@ -121,7 +121,7 @@ var (
 	machineKubeletExample = &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
 		KubeletExtraArgs: map[string]string{
-			"--feature-gates": "ServerSideApply=true",
+			"feature-gates": "ServerSideApply=true",
 		},
 	}
 
@@ -230,8 +230,8 @@ var (
 	clusterAPIServerExample = &APIServerConfig{
 		ContainerImage: (&APIServerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"--feature-gates":                    "ServerSideApply=true",
-			"--http2-max-streams-per-connection": "32",
+			"feature-gates":                    "ServerSideApply=true",
+			"http2-max-streams-per-connection": "32",
 		},
 		CertSANs: []string{
 			"1.2.3.4",
@@ -244,7 +244,7 @@ var (
 	clusterControllerManagerExample = &ControllerManagerConfig{
 		ContainerImage: (&ControllerManagerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"--feature-gates": "ServerSideApply=true",
+			"feature-gates": "ServerSideApply=true",
 		},
 	}
 
@@ -253,7 +253,7 @@ var (
 	clusterProxyExample = &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"--proxy-mode": "iptables",
+			"proxy-mode": "iptables",
 		},
 		ModeConfig: "ipvs",
 	}
@@ -263,7 +263,7 @@ var (
 	clusterSchedulerExample = &SchedulerConfig{
 		ContainerImage: (&SchedulerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
-			"--feature-gates": "AllBeta=true",
+			"feature-gates": "AllBeta=true",
 		},
 	}
 
@@ -272,7 +272,7 @@ var (
 	clusterEtcdExample = &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
 		EtcdExtraArgs: map[string]string{
-			"--election-timeout": "5000",
+			"election-timeout": "5000",
 		},
 		RootCA: pemEncodedCertificateExample,
 	}
