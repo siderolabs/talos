@@ -5,8 +5,10 @@
 package container
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -44,7 +46,13 @@ func (c *Container) Configuration(context.Context) ([]byte, error) {
 
 // Hostname implements the platform.Platform interface.
 func (c *Container) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, nil
+	hostname, err = ioutil.ReadFile("/etc/hostname")
+
+	if err == nil {
+		hostname = bytes.TrimSpace(hostname)
+	}
+
+	return
 }
 
 // Mode implements the platform.Platform interface.
