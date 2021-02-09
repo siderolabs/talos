@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -45,13 +46,24 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 	defer clientProvider.Close() //nolint: errcheck
 
 	state := struct {
+		cluster.ClientProvider
 		cluster.K8sProvider
 	}{
+		ClientProvider: clientProvider,
 		K8sProvider: &cluster.KubernetesClient{
 			ClientProvider: clientProvider,
-			ForceEndpoint:  healthCmdFlags.forceEndpoint,
+			ForceEndpoint:  upgradeOptions.ControlPlaneEndpoint,
 		},
 	}
 
-	return k8s.Upgrade(ctx, &state, upgradeOptions)
+	selfHosted, err := k8s.IsSelfHostedControlPlane(ctx, &state, Nodes[0])
+	if err != nil {
+		return fmt.Errorf("error checking self-hosted status: %w", err)
+	}
+
+	if selfHosted {
+		return k8s.UpgradeSelfHosted(ctx, &state, upgradeOptions)
+	}
+
+	return k8s.UpgradeTalosManaged(ctx, &state, upgradeOptions)
 }

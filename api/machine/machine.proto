@@ -47,6 +47,8 @@ service MachineService {
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc Recover(RecoverRequest) returns (RecoverResponse);
+  rpc RemoveBootkubeInitializedKey(google.protobuf.Empty)
+      returns (RemoveBootkubeInitializedKeyResponse);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
@@ -64,6 +66,7 @@ service MachineService {
 message ApplyConfigurationRequest {
   bytes data = 1;
   bool on_reboot = 2;
+  bool immediate = 3;
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.
@@ -836,3 +839,7 @@ message GenerateConfiguration {
 message GenerateConfigurationResponse {
   repeated GenerateConfiguration messages = 1;
 }
+
+// RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
+message RemoveBootkubeInitializedKey { common.Metadata metadata = 1; }
+message RemoveBootkubeInitializedKeyResponse { repeated RemoveBootkubeInitializedKey messages = 1; }

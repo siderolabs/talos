@@ -14,9 +14,9 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // TimeSyncController manages v1alpha1.TimeSync based on configuration and service 'timed' status.

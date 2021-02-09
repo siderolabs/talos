@@ -19,9 +19,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
 )
 
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.

@@ -18,14 +18,14 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // KubernetesController manages secrets.Kubernetes based on configuration.

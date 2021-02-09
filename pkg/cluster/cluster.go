@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	k8s "github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -32,6 +33,7 @@ type K8sProvider interface {
 	Kubeconfig(ctx context.Context) ([]byte, error)
 	K8sRestConfig(ctx context.Context) (*rest.Config, error)
 	K8sClient(ctx context.Context) (*kubernetes.Clientset, error)
+	K8sHelper(ctx context.Context) (*k8s.Client, error)
 }
 
 // CrashDumper captures Talos cluster state to the specified writer for debugging.

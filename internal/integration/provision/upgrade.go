@@ -45,6 +45,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
 )
 
+//nolint: maligned
 type upgradeSpec struct {
 	ShortName string
 
@@ -53,10 +54,12 @@ type upgradeSpec struct {
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
+	SourceSelfHosted     bool
 
 	TargetInstallerImage string
 	TargetVersion        string
 	TargetK8sVersion     string
+	TargetSelfHosted     bool
 
 	MasterNodes int
 	WorkerNodes int
@@ -67,11 +70,11 @@ type upgradeSpec struct {
 
 const (
 	previousRelease = "v0.7.1"
-	stableRelease   = "v0.8.0"
+	stableRelease   = "v0.8.3"
 
 	previousK8sVersion = "1.19.4"
 	stableK8sVersion   = "1.20.1"
-	currentK8sVersion  = "1.20.2"
+	currentK8sVersion  = "1.20.2" //nolint: deadcode,varcheck
 )
 
 var (
@@ -99,10 +102,12 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", previousRelease),
 		SourceVersion:        previousRelease,
 		SourceK8sVersion:     previousK8sVersion,
+		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
+		TargetSelfHosted:     true,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -119,10 +124,12 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
+		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion,
+		TargetSelfHosted:     false,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -132,17 +139,19 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 // upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
 func upgradeSingeNodePreserve() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("prsrv-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
+		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     stableK8sVersion, // TODO: looks like single-node can't upgrade k8s
+		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion
+		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -153,17 +162,19 @@ func upgradeSingeNodePreserve() upgradeSpec {
 // upgradeSingeNodeStage upgrade last release of Talos to the current version of Talos for single-node cluster with preserve and stage.
 func upgradeSingeNodeStage() upgradeSpec {
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("preserve-stage-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("prsrv-stg-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
+		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     stableK8sVersion,
+		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion
+		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -470,7 +481,23 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 
 	nodeCtx := talosclient.WithNodes(suite.ctx, node.IPs[0].String())
 
-	resp, err := client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage, false)
+	var (
+		resp *machineapi.UpgradeResponse
+		err  error
+	)
+
+	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
+		resp, err = client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage, false)
+		if err != nil {
+			if strings.Contains(err.Error(), "leader changed") {
+				return retry.ExpectedError(err)
+			}
+
+			return retry.UnexpectedError(err)
+		}
+
+		return nil
+	})
 
 	err = base.IgnoreGRPCUnavailable(err)
 	suite.Require().NoError(err)
@@ -503,6 +530,27 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.waitForClusterHealth()
 }
 
+func (suite *UpgradeSuite) convertSelfHosted(fromSelfHosted, toSelfHosted bool) {
+	if fromSelfHosted == toSelfHosted {
+		suite.T().Logf("skipping control plane conversion, as self hosted is %v -> %v", fromSelfHosted, toSelfHosted)
+
+		return
+	}
+
+	if toSelfHosted {
+		suite.Require().FailNow("conversion to self-hosted is not supported")
+	}
+
+	suite.T().Logf("converting Kubernetes to static pods")
+
+	options := kubernetes.ConvertOptions{
+		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
+		ForceYes:             true,
+	}
+
+	suite.Require().NoError(kubernetes.ConvertToStaticPods(suite.ctx, suite.clusterAccess, options))
+}
+
 func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 	if fromVersion == toVersion {
 		suite.T().Logf("skipping Kubernetes upgrade, as versions are equal %q -> %q", fromVersion, toVersion)
@@ -512,12 +560,18 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 
 	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
 
-	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, kubernetes.UpgradeOptions{
+	options := kubernetes.UpgradeOptions{
 		FromVersion: fromVersion,
 		ToVersion:   toVersion,
 
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
-	}))
+	}
+
+	if suite.spec.TargetSelfHosted {
+		suite.Require().NoError(kubernetes.UpgradeSelfHosted(suite.ctx, suite.clusterAccess, options))
+	} else {
+		suite.Require().NoError(kubernetes.UpgradeTalosManaged(suite.ctx, suite.clusterAccess, options))
+	}
 }
 
 func (suite *UpgradeSuite) untaint(name string) {
@@ -561,9 +615,6 @@ func (suite *UpgradeSuite) TestRolling() {
 	// verify initial cluster version
 	suite.assertSameVersionCluster(client, suite.spec.SourceVersion)
 
-	// upgrade Kubernetes if required
-	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion)
-
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
@@ -580,6 +631,12 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify final cluster version
 	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
+
+	// convert to static pods if required
+	suite.convertSelfHosted(suite.spec.SourceSelfHosted, suite.spec.TargetSelfHosted)
+
+	// upgrade Kubernetes if required
+	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion)
 
 	// run e2e test
 	suite.runE2E(suite.spec.TargetK8sVersion)

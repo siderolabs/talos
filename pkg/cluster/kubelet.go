@@ -35,3 +35,17 @@ func (k *KubernetesFromKubeletClient) K8sClient(ctx context.Context) (*k8s.Clien
 
 	return k.clientset, nil
 }
+
+// K8sHelper returns wrapper around K8sClient.
+func (k *KubernetesFromKubeletClient) K8sHelper(ctx context.Context) (*kubernetes.Client, error) {
+	if k.KubeHelper != nil {
+		return k.KubeHelper, nil
+	}
+
+	_, err := k.K8sClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return k.KubeHelper, nil
+}

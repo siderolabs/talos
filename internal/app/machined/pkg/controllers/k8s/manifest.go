@@ -16,9 +16,9 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
 )
 
 // ManifestController renders manifests based on templates and config/secrets.

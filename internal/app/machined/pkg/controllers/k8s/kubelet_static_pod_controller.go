@@ -22,11 +22,11 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state"
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/k8s"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/secrets"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // KubeletStaticPodController renders static pod definitions and manages k8s.StaticPodStatus.

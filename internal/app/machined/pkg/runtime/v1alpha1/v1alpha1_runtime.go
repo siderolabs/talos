@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"syscall"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // Runtime implements the Runtime interface.
@@ -62,6 +64,45 @@ func (r *Runtime) SetConfig(b []byte) error {
 	r.c = cfg
 
 	return r.s.V1Alpha2().SetConfig(cfg)
+}
+
+// CanApplyImmediate implements the Runtime interface.
+func (r *Runtime) CanApplyImmediate(b []byte) error {
+	cfg, err := r.ValidateConfig(b)
+	if err != nil {
+		return err
+	}
+
+	// serialize and load back current config to remove any changes made
+	// to the config in-memory while the node was running
+	currentBytes, err := r.Config().Bytes()
+	if err != nil {
+		return fmt.Errorf("error serializing current config: %w", err)
+	}
+
+	currentConfigProvider, err := configloader.NewFromBytes(currentBytes)
+	if err != nil {
+		return fmt.Errorf("error loading current config: %w", err)
+	}
+
+	currentConfig, ok := currentConfigProvider.(*v1alpha1.Config)
+	if !ok {
+		return fmt.Errorf("current config is not v1alpha1")
+	}
+
+	newConfig, ok := cfg.(*v1alpha1.Config)
+	if !ok {
+		return fmt.Errorf("new config is not v1alpha1")
+	}
+
+	// the only allowed config change to be applied immediately for now is cluster config
+	newConfig.ClusterConfig = currentConfig.ClusterConfig
+
+	if !reflect.DeepEqual(currentConfig, newConfig) {
+		return fmt.Errorf("this config change can't be applied in immediate mode")
+	}
+
+	return nil
 }
 
 // State implements the Runtime interface.

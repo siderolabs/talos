@@ -15,10 +15,10 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state"
 	"go.etcd.io/etcd/clientv3"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // BootstrapStatusController manages v1alpha1.Service based on services subsystem state.

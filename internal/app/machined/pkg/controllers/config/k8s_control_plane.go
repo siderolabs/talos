@@ -16,11 +16,11 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/images"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/config"
 )
 
 // K8sControlPlaneController manages config.K8sControlPlane based on configuration.

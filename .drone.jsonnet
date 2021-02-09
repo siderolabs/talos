@@ -354,9 +354,9 @@ local integration_provision_tests_prepare = Step("provision-tests-prepare", priv
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
 
-local integration_cilium = Step("e2e-cilium-1.8.5", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
+local integration_cilium = Step("e2e-cilium-1.9.4", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "SHORT_INTEGRATION_TEST": "yes",
-        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.5/install/kubernetes/quick-install.yaml",
+        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.9.4/install/kubernetes/quick-install.yaml",
         "REGISTRY": local_registry,
         "CLUSTER_CIDR": 2,
 });

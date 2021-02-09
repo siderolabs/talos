@@ -19,6 +19,7 @@ talosctl apply-config [flags]
       --cert-fingerprint strings   list of server certificate fingeprints to accept (defaults to no check)
   -f, --file string                the filename of the updated configuration
   -h, --help                       help for apply-config
+      --immediate                  apply the config immediately (without a reboot)
   -i, --insecure                   apply the config using the insecure (encrypted with no auth) maintenance service
       --interactive                apply the config using text based interactive mode
       --on-reboot                  apply the config on reboot
@@ -506,6 +507,42 @@ talosctl containers [flags]
   -h, --help         help for containers
   -k, --kubernetes   use the k8s.io containerd namespace
   -c, --use-cri      use the CRI driver
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl convert-k8s
+
+Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).
+
+### Synopsis
+
+Command converts control plane bootstrapped on Talos <= 0.8 to Talos-managed control plane (Talos >= 0.9).
+As part of the conversion process tool reads existing configuration of the control plane, updates
+Talos node configuration to reflect changes made since the boostrap time. Once config is updated,
+tool releases static pods and deletes self-hosted DaemonSets.
+
+```
+talosctl convert-k8s [flags]
+```
+
+### Options
+
+```
+      --endpoint string   the cluster control plane endpoint
+      --force             skip prompts, assume yes
+  -h, --help              help for convert-k8s
 ```
 
 ### Options inherited from parent commands
@@ -1873,6 +1910,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration
 * [talosctl containers](#talosctl-containers)	 - List containers
+* [talosctl convert-k8s](#talosctl-convert-k8s)	 - Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
