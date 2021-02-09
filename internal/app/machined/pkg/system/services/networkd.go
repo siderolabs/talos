@@ -84,6 +84,12 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
+	if r.State().Platform().Mode() == runtime.ModeContainer {
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: "/etc/hostname", Source: "/etc/hostname", Options: []string{"rbind", "ro"}},
+		)
+	}
+
 	env := []string{}
 	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
