@@ -5,6 +5,7 @@
 package generate
 
 import (
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -153,6 +154,15 @@ func WithAllowSchedulingOnMasters(enabled bool) GenOption {
 	}
 }
 
+// WithVersionContract specifies version contract to use when generating.
+func WithVersionContract(versionContract *config.VersionContract) GenOption {
+	return func(o *GenOptions) error {
+		o.VersionContract = versionContract
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList              []string
@@ -169,6 +179,7 @@ type GenOptions struct {
 	Persist                   bool
 	AllowSchedulingOnMasters  bool
 	MachineDisks              []*v1alpha1.MachineDisk
+	VersionContract           *config.VersionContract
 }
 
 // DefaultGenOptions returns default options.

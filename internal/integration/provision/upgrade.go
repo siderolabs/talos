@@ -34,6 +34,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	talosclient "github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
@@ -62,7 +63,6 @@ type upgradeSpec struct {
 
 	UpgradePreserve bool
 	UpgradeStage    bool
-	UseRSAKeys      bool
 }
 
 const (
@@ -106,7 +106,6 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
-		UseRSAKeys:  true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -127,7 +126,6 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
-		UseRSAKeys:  true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -149,7 +147,6 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		MasterNodes:     1,
 		WorkerNodes:     0,
 		UpgradePreserve: true,
-		UseRSAKeys:      true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -172,7 +169,6 @@ func upgradeSingeNodeStage() upgradeSpec {
 		WorkerNodes:     0,
 		UpgradePreserve: true,
 		UpgradeStage:    true,
-		UseRSAKeys:      true, // ECDSA is supported with Talos >= 0.9
 	}
 }
 
@@ -319,17 +315,20 @@ func (suite *UpgradeSuite) setupCluster() {
 		}))
 	}
 
+	versionContract, err := config.ParseContractFromVersion(suite.spec.SourceVersion)
+	suite.Require().NoError(err)
+
 	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
 		&bundle.InputOptions{
 			ClusterName: clusterName,
 			Endpoint:    suite.controlPlaneEndpoint,
 			KubeVersion: "", // keep empty so that default version is used per Talos version
-			UseRSAKeys:  suite.spec.UseRSAKeys,
 			GenOptions: append(
 				genOptions,
 				generate.WithEndpointList(masterEndpoints),
 				generate.WithInstallImage(suite.spec.SourceInstallerImage),
 				generate.WithDNSDomain("cluster.local"),
+				generate.WithVersionContract(versionContract),
 			),
 		}))
 	suite.Require().NoError(err)

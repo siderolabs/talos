@@ -80,7 +80,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		fmt.Println("generating PKI and tokens")
 	}
 
-	secrets, err := generate.NewSecretsBundle(generate.NewClock(), options.InputOptions.UseRSAKeys)
+	secrets, err := generate.NewSecretsBundle(generate.NewClock(), options.InputOptions.GenOptions...)
 	if err != nil {
 		return bundle, err
 	}

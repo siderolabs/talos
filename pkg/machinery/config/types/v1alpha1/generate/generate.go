@@ -185,7 +185,15 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 // NewSecretsBundle creates secrets bundle generating all secrets.
 //
 //nolint: gocyclo
-func NewSecretsBundle(clock Clock, useRSA bool) (*SecretsBundle, error) {
+func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
+	options := DefaultGenOptions()
+
+	for _, opt := range opts {
+		if err := opt(&options); err != nil {
+			return nil, err
+		}
+	}
+
 	var (
 		etcd           *x509.CertificateAuthority
 		kubernetesCA   *x509.CertificateAuthority
@@ -197,24 +205,28 @@ func NewSecretsBundle(clock Clock, useRSA bool) (*SecretsBundle, error) {
 		err            error
 	)
 
-	etcd, err = NewEtcdCA(clock.Now(), useRSA)
+	etcd, err = NewEtcdCA(clock.Now(), !options.VersionContract.SupportsECDSAKeys())
 	if err != nil {
 		return nil, err
 	}
 
-	kubernetesCA, err = NewKubernetesCA(clock.Now(), useRSA)
+	kubernetesCA, err = NewKubernetesCA(clock.Now(), !options.VersionContract.SupportsECDSAKeys())
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorCA, err = NewAggregatorCA(clock.Now())
-	if err != nil {
-		return nil, err
+	if options.VersionContract.SupportsAggregatorCA() {
+		aggregatorCA, err = NewAggregatorCA(clock.Now())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	serviceAccount, err = x509.NewECDSAKey()
-	if err != nil {
-		return nil, err
+	if options.VersionContract.SupportsServiceAccount() {
+		serviceAccount, err = x509.NewECDSAKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	talosCA, err = NewTalosCA(clock.Now())
@@ -243,7 +255,7 @@ func NewSecretsBundle(clock Clock, useRSA bool) (*SecretsBundle, error) {
 		return nil, err
 	}
 
-	return &SecretsBundle{
+	result := &SecretsBundle{
 		Clock:      clock,
 		Secrets:    kubeadmTokens,
 		TrustdInfo: trustdInfo,
@@ -256,19 +268,27 @@ func NewSecretsBundle(clock Clock, useRSA bool) (*SecretsBundle, error) {
 				Crt: kubernetesCA.CrtPEM,
 				Key: kubernetesCA.KeyPEM,
 			},
-			K8sAggregator: &x509.PEMEncodedCertificateAndKey{
-				Crt: aggregatorCA.CrtPEM,
-				Key: aggregatorCA.KeyPEM,
-			},
-			K8sServiceAccount: &x509.PEMEncodedKey{
-				Key: serviceAccount.KeyPEM,
-			},
 			OS: &x509.PEMEncodedCertificateAndKey{
 				Crt: talosCA.CrtPEM,
 				Key: talosCA.KeyPEM,
 			},
 		},
-	}, nil
+	}
+
+	if aggregatorCA != nil {
+		result.Certs.K8sAggregator = &x509.PEMEncodedCertificateAndKey{
+			Crt: aggregatorCA.CrtPEM,
+			Key: aggregatorCA.KeyPEM,
+		}
+	}
+
+	if serviceAccount != nil {
+		result.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+			Key: serviceAccount.KeyPEM,
+		}
+	}
+
+	return result, nil
 }
 
 // NewSecretsBundleFromConfig creates secrets bundle using existing config.
