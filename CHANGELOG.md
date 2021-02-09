@@ -1,10 +1,27 @@
 
+<a name="v0.8.2"></a>
+## [v0.8.2](https://github.com/talos-systems/talos/compare/v0.8.1...v0.8.2) (2021-01-20)
+
+### Feat
+
+* allow fqdn to be used when registering k8s node
+
+### Fix
+
+* kill all processes and umount all disk on reboot/shutdown
+* open blockdevices with exclusive flock for partitioning
+
+
 <a name="v0.8.1"></a>
-## [v0.8.1](https://github.com/talos-systems/talos/compare/v0.8.0...v0.8.1) (2020-12-29)
+## [v0.8.1](https://github.com/talos-systems/talos/compare/v0.8.0...v0.8.1) (2021-01-12)
 
 ### Fix
 
 * networkd updates for Packet, hostname detection, console kernel arg
+
+### Release
+
+* **v0.8.1:** prepare release
 
 
 <a name="v0.8.0"></a>
