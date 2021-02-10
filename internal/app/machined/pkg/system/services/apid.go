@@ -57,7 +57,10 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 // PostFunc implements the Service interface.
 func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
-	o.cancel()
+	if o.cancel != nil {
+		o.cancel()
+	}
+
 	o.wg.Wait()
 
 	return nil
