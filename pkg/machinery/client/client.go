@@ -371,7 +371,13 @@ func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
 
 // ApplyConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.ApplyConfigurationResponse, err error) {
-	return c.MachineClient.ApplyConfiguration(ctx, req, callOptions...)
+	resp, err = c.MachineClient.ApplyConfiguration(ctx, req, callOptions...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.ApplyConfigurationResponse) //nolint: errcheck
+
+	return
 }
 
 // GenerateConfiguration implements proto.MachineServiceClient interface.
@@ -381,7 +387,13 @@ func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.Gene
 
 // Disks returns the list of block devices.
 func (c *Client) Disks(ctx context.Context, callOptions ...grpc.CallOption) (resp *storageapi.DisksResponse, err error) {
-	return c.StorageClient.Disks(ctx, &empty.Empty{}, callOptions...)
+	resp, err = c.StorageClient.Disks(ctx, &empty.Empty{}, callOptions...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*storageapi.DisksResponse) //nolint: errcheck
+
+	return
 }
 
 // Stats implements the proto.MachineServiceClient interface.
