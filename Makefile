@@ -9,7 +9,7 @@ DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-19-ge54841a
-PKGS ?= v0.3.0-69-gf9d9690
+PKGS ?= v0.3.0-71-g0368166
 EXTRAS ?= v0.1.0-8-g3cb9fc9
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
