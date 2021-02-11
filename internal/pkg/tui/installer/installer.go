@@ -344,8 +344,8 @@ func (installer *Installer) apply(conn *Connection) error {
 			return err
 		}
 
-		config = response.Data[0]
-		talosconfig, err = clientconfig.FromBytes(response.Talosconfig)
+		config = response.Messages[0].Data[0]
+		talosconfig, err = clientconfig.FromBytes(response.Messages[0].Talosconfig)
 
 		if err != nil {
 			return err

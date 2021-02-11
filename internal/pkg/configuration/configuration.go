@@ -170,8 +170,12 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 		}
 
 		reply = &machine.GenerateConfigurationResponse{
-			Data:        [][]byte{cfgBytes},
-			Talosconfig: taloscfgBytes,
+			Messages: []*machine.GenerateConfiguration{
+				{
+					Data:        [][]byte{cfgBytes},
+					Talosconfig: taloscfgBytes,
+				},
+			},
 		}
 	default:
 		return nil, fmt.Errorf("unsupported config version %s", in.ConfigVersion)

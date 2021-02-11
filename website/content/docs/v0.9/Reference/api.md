@@ -76,6 +76,7 @@ description: Talos gRPC API reference.
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FileInfo](#machine.FileInfo)
+    - [GenerateConfiguration](#machine.GenerateConfiguration)
     - [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest)
     - [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse)
     - [Hostname](#machine.Hostname)
@@ -1237,6 +1238,23 @@ TODO: unix timestamp or include proto's Date type |
 
 
 
+<a name="machine.GenerateConfiguration"></a>
+
+### GenerateConfiguration
+GenerateConfiguration describes the response to a generate configuration request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| data | [bytes](#bytes) | repeated |  |
+| talosconfig | [bytes](#bytes) |  |  |
+
+
+
+
+
+
 <a name="machine.GenerateConfigurationRequest"></a>
 
 ### GenerateConfigurationRequest
@@ -1259,14 +1277,12 @@ on a node.
 <a name="machine.GenerateConfigurationResponse"></a>
 
 ### GenerateConfigurationResponse
-GenerateConfiguration describes the response to a generate configuration request.
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| data | [bytes](#bytes) | repeated |  |
-| talosconfig | [bytes](#bytes) |  |  |
+| messages | [GenerateConfiguration](#machine.GenerateConfiguration) | repeated |  |
 
 
 

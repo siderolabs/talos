@@ -825,9 +825,14 @@ message GenerateConfigurationRequest {
   MachineConfig machine_config = 3;
   google.protobuf.Timestamp override_time = 4;
 }
+
 // GenerateConfiguration describes the response to a generate configuration request.
-message GenerateConfigurationResponse {
+message GenerateConfiguration {
   common.Metadata metadata = 1;
   repeated bytes data = 2;
   bytes talosconfig = 3;
+}
+
+message GenerateConfigurationResponse {
+  repeated GenerateConfiguration messages = 1;
 }

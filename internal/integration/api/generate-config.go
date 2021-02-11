@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/images"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -78,14 +79,17 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		},
 	}
 
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	ctx := client.WithNodes(suite.ctx, node)
+
 	reply, err := suite.Client.GenerateConfiguration(
-		suite.ctx,
+		ctx,
 		request,
 	)
 
 	suite.Require().NoError(err)
 
-	data := reply.GetData()
+	data := reply.Messages[0].GetData()
 
 	config, err := configloader.NewFromBytes(data[0])
 
@@ -104,7 +108,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
 
-	talosconfig, err := clientconfig.FromBytes(reply.Talosconfig)
+	talosconfig, err := clientconfig.FromBytes(reply.Messages[0].Talosconfig)
 
 	suite.Require().NoError(err)
 
@@ -122,13 +126,13 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	request.MachineConfig.Type = machineapi.MachineConfig_MachineType(machine.TypeControlPlane)
 
 	reply, err = suite.Client.GenerateConfiguration(
-		suite.ctx,
+		ctx,
 		request,
 	)
 
 	suite.Require().NoError(err)
 
-	data = reply.GetData()
+	data = reply.Messages[0].GetData()
 
 	joinedConfig, err := configloader.NewFromBytes(data[0])
 

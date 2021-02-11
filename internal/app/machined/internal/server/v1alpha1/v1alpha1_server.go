@@ -153,8 +153,11 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.
-// nolint:gocyclo
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
+		return nil, fmt.Errorf("config can't be generated on worker nodes")
+	}
+
 	return configuration.Generate(ctx, in)
 }
 
