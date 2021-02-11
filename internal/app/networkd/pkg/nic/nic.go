@@ -413,6 +413,8 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 		}
 
 		attr := rtnetlink.RouteAttributes{
+			Dst:      r.Destination.IP,
+			OutIface: uint32(method.Link().Index),
 			Priority: r.Metric,
 		}
 
