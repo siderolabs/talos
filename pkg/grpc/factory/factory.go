@@ -13,11 +13,14 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
 )
@@ -108,6 +111,16 @@ func WithDefaultLog() Option {
 	}
 }
 
+func recoveryHandler(logger *log.Logger) grpc_recovery.RecoveryHandlerFunc {
+	return func(p interface{}) error {
+		if logger != nil {
+			logger.Printf("panic:\n%s", string(debug.Stack()))
+		}
+
+		return status.Errorf(codes.Internal, "%v", p)
+	}
+}
+
 // NewDefaultOptions initializes the Options struct with default values.
 func NewDefaultOptions(setters ...Option) *Options {
 	opts := &Options{
@@ -119,8 +132,10 @@ func NewDefaultOptions(setters ...Option) *Options {
 		setter(opts)
 	}
 
+	var logger *log.Logger
+
 	if opts.LogDestination != nil {
-		logger := log.New(opts.LogDestination, opts.LogPrefix, log.Flags())
+		logger = log.New(opts.LogDestination, opts.LogPrefix, log.Flags())
 
 		logMiddleware := grpclog.NewMiddleware(logger)
 
@@ -134,8 +149,8 @@ func NewDefaultOptions(setters ...Option) *Options {
 	// Install default recovery interceptors.
 	// Recovery is installed as the last middleware in the chain so that earlier middlewares in the chain
 	// have a chance to process the error (e.g. logging middleware).
-	opts.StreamInterceptors = append(opts.StreamInterceptors, grpc_recovery.StreamServerInterceptor())
-	opts.UnaryInterceptors = append(opts.UnaryInterceptors, grpc_recovery.UnaryServerInterceptor())
+	opts.StreamInterceptors = append(opts.StreamInterceptors, grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))))
+	opts.UnaryInterceptors = append(opts.UnaryInterceptors, grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))))
 
 	opts.ServerOptions = append(opts.ServerOptions,
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
