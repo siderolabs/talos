@@ -141,8 +141,6 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 
 	defer os.RemoveAll(tmpDir) //nolint: errcheck
 
-	fileName := filepath.Base(manifest.URL)
-
 	// I wish we never used go-getter package, as it doesn't allow downloading into memory.
 	// But there's not much we can do about it right now, as it supports lots of magic
 	// users might rely upon now.
@@ -166,7 +164,7 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 	client := &getter.Client{
 		Ctx:     ctx,
 		Src:     manifest.URL,
-		Dst:     filepath.Join(tmpDir, fileName),
+		Dst:     filepath.Join(tmpDir, "manifest.yaml"),
 		Pwd:     tmpDir,
 		Mode:    getter.ClientModeFile,
 		Options: []getter.ClientOption{},
