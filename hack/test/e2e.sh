@@ -26,6 +26,7 @@ export TALOSCONFIG="${TMP}/talosconfig"
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
+export K8S_VERSION=1.20.2
 
 # Sonobuoy
 

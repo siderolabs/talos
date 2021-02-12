@@ -245,7 +245,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 }
 
 func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, err error) {
-	err = retry.Constant(3*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
+	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
 		var (
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
