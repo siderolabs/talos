@@ -43,7 +43,7 @@ const grubCfgTpl = `set default="{{ .Default }}"
 {{ with .Fallback -}}
 set fallback="{{ . }}"
 {{- end }}
-set timeout=0
+set timeout=3
 
 insmod all_video
 
