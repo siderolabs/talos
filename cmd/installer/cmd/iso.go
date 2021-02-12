@@ -19,7 +19,7 @@ import (
 )
 
 var cfg = []byte(`set default=0
-set timeout=0
+set timeout=3
 
 insmod all_video
 
