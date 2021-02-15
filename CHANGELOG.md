@@ -1,4 +1,15 @@
 
+<a name="v0.8.3"></a>
+## [v0.8.3](https://github.com/talos-systems/talos/compare/v0.8.2...v0.8.3) (2021-02-11)
+
+### Fix
+
+* pass attributes when adding routes
+* correctly extract wrapped error messages
+* update DHCP client to use Request-Ack sequence after an Offer
+* checkpoint controller-manager and scheduler
+
+
 <a name="v0.8.2"></a>
 ## [v0.8.2](https://github.com/talos-systems/talos/compare/v0.8.1...v0.8.2) (2021-01-20)
 
@@ -10,6 +21,10 @@
 
 * kill all processes and umount all disk on reboot/shutdown
 * open blockdevices with exclusive flock for partitioning
+
+### Release
+
+* **v0.8.2:** prepare release
 
 
 <a name="v0.8.1"></a>
