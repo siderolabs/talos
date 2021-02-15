@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
 	github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b
-	github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e
+	github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20201130171929-760e229fe7c5 // indirect
 	golang.org/x/text v0.3.4 // indirect

@@ -3136,6 +3136,13 @@ rpc Watch
 The WatchResponse message contains the Resource returned.
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+
+
 
 
 
@@ -3150,6 +3157,7 @@ The WatchResponse message contains the Resource returned.
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | event_type | [EventType](#resource.EventType) |  |  |
+| definition | [Resource](#resource.Resource) |  |  |
 | resource | [Resource](#resource.Resource) |  |  |
 
 
@@ -3168,7 +3176,7 @@ The WatchResponse message contains the Resource returned.
 | ---- | ------ | ----------- |
 | CREATED | 0 |  |
 | UPDATED | 1 |  |
-| DELETED | 2 |  |
+| DESTROYED | 2 |  |
 
 
  <!-- end enums -->

@@ -9,12 +9,13 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
+	"github.com/talos-systems/os-runtime/pkg/state"
 )
 
 // Writer interface.
 type Writer interface {
-	WriteHeader(definition resource.Resource) error
-	WriteResource(node string, r resource.Resource) error
+	WriteHeader(definition resource.Resource, withEvents bool) error
+	WriteResource(node string, r resource.Resource, event state.EventType) error
 	Flush() error
 }
 

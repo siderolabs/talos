@@ -887,8 +887,8 @@ github.com/talos-systems/grpc-proxy v0.2.0/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4K
 github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
 github.com/talos-systems/net v0.2.1-0.20210204205549-52c750994376 h1:O0umyJKK3LJdnAwtg0xnsFJb2+1qYqExvbGymfNwCA8=
 github.com/talos-systems/net v0.2.1-0.20210204205549-52c750994376/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
-github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e h1:HrAdgwnXhVr9LlWjpc+kejkLVUpTRKbNTAJe7H+kRXM=
-github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e/go.mod h1:+E9CUVoYpReh0nhOEvFpy7pwLiyq0700WF03I06giyk=
+github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6 h1:a3QXMKocLKRDRYn8iBX02wMZGQBH2XgE3EBhYHF4xws=
+github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6/go.mod h1:+E9CUVoYpReh0nhOEvFpy7pwLiyq0700WF03I06giyk=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
