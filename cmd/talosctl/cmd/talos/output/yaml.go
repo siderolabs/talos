@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
+	"github.com/talos-systems/os-runtime/pkg/state"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,12 +24,12 @@ func NewYAML() *YAML {
 }
 
 // WriteHeader implements output.Writer interface.
-func (y *YAML) WriteHeader(definition resource.Resource) error {
+func (y *YAML) WriteHeader(definition resource.Resource, withEvents bool) error {
 	return nil
 }
 
 // WriteResource implements output.Writer interface.
-func (y *YAML) WriteResource(node string, r resource.Resource) error {
+func (y *YAML) WriteResource(node string, r resource.Resource, event state.EventType) error {
 	out, err := resource.MarshalYAML(r)
 	if err != nil {
 		return err

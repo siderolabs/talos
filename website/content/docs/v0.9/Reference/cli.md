@@ -1032,6 +1032,7 @@ talosctl get <type> [<id>] [flags]
   -h, --help               help for get
       --namespace string   resource namespace (default is to use default namespace per resource)
   -o, --output string      output mode (table, yaml) (default "table")
+  -w, --watch              watch resource changes
 ```
 
 ### Options inherited from parent commands

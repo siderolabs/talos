@@ -98,8 +98,8 @@ github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54/go.mod h1:O
 github.com/talos-systems/go-retry v0.2.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b h1:y3mBkTJdW7cUn+ff53TZN0yyWCpjS6XrVmlx+vx9pwA=
 github.com/talos-systems/net v0.2.1-0.20210121122956-005a94f8b36b/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
-github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e h1:HrAdgwnXhVr9LlWjpc+kejkLVUpTRKbNTAJe7H+kRXM=
-github.com/talos-systems/os-runtime v0.0.0-20210126185717-734f1e1cee9e/go.mod h1:+E9CUVoYpReh0nhOEvFpy7pwLiyq0700WF03I06giyk=
+github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6 h1:a3QXMKocLKRDRYn8iBX02wMZGQBH2XgE3EBhYHF4xws=
+github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6/go.mod h1:+E9CUVoYpReh0nhOEvFpy7pwLiyq0700WF03I06giyk=
 go.uber.org/goleak v1.1.10/go.mod h1:8a7PlsEVH3e/a/GLqe5IIrQx6GzcnRmZEufDUTk4A7A=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 h1:psW17arqaxU48Z5kZ0CQnkZWQJsqcURM6tKiBApRjXI=
@@ -121,6 +121,7 @@ golang.org/x/net v0.0.0-20200707034311-ab3426394381/go.mod h1:/O7V0waA8r7cgGh81R
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+golang.org/x/sync v0.0.0-20190423024810-112230192c58 h1:8gQV6CLnAEikrhgkHFbMAEhagSSnXWGV915qUMm9mrU=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20180830151530-49385e6e1522/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

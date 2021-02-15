@@ -69,16 +69,21 @@ message ListResponse {
 
 // rpc Watch
 // The WatchResponse message contains the Resource returned.
-message WatchRequest {}
+message WatchRequest {
+    string namespace = 1;
+    string type = 2;
+    string id = 3;
+}
 
 enum EventType {
     CREATED = 0;
     UPDATED = 1;
-    DELETED = 2;
+    DESTROYED = 2;
 }
 
 message WatchResponse {
     common.Metadata metadata = 1;
     EventType event_type = 2;
-    Resource resource = 3;
+    Resource definition = 3;
+    Resource resource = 4;
 }

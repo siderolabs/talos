@@ -213,6 +213,76 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 }
 
 // Watch implements resource.ResourceServiceServer interface.
-func (s *ResourceServer) Watch(*resourceapi.WatchRequest, resourceapi.ResourceService_WatchServer) error {
-	return status.Error(codes.Unimplemented, "unimplemented")
+//
+//nolint: gocyclo
+func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceService_WatchServer) error {
+	kind := resourceKind{
+		Namespace: in.GetNamespace(),
+		Type:      in.GetType(),
+	}
+
+	resourceDefinition, err := s.resolveResourceKind(srv.Context(), &kind)
+	if err != nil {
+		return err
+	}
+
+	if err = s.checkReadAccess(srv.Context(), &kind); err != nil {
+		return err
+	}
+
+	resources := s.server.Controller.Runtime().State().V1Alpha2().Resources()
+
+	protoD, err := marshalResource(resourceDefinition)
+	if err != nil {
+		return err
+	}
+
+	if err = srv.Send(&resourceapi.WatchResponse{
+		Definition: protoD,
+	}); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	eventCh := make(chan state.Event)
+
+	md := resource.NewMetadata(kind.Namespace, kind.Type, in.GetId(), resource.VersionUndefined)
+
+	if in.GetId() == "" {
+		err = resources.WatchKind(ctx, md, eventCh, state.WithBootstrapContents(true))
+	} else {
+		err = resources.Watch(ctx, md, eventCh)
+	}
+
+	if err != nil {
+		return fmt.Errorf("error setting up watch: %w", err)
+	}
+
+	for event := range eventCh {
+		protoR, err := marshalResource(event.Resource)
+		if err != nil {
+			return err
+		}
+
+		resp := &resourceapi.WatchResponse{
+			Resource: protoR,
+		}
+
+		switch event.Type {
+		case state.Created:
+			resp.EventType = resourceapi.EventType_CREATED
+		case state.Updated:
+			resp.EventType = resourceapi.EventType_UPDATED
+		case state.Destroyed:
+			resp.EventType = resourceapi.EventType_DESTROYED
+		}
+
+		if err = srv.Send(resp); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
