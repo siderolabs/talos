@@ -387,6 +387,18 @@ const (
 	// NodeReadyTimeout is the timeout to wait for the node to be ready (CNI to be running).
 	// For bootstrap API, this includes time to run bootstrap.
 	NodeReadyTimeout = BootTimeout
+
+	// AnnotationCordonedKey is the annotation key for the nodes cordoned by Talos.
+	AnnotationCordonedKey = "talos.dev/cordoned"
+
+	// AnnotationCordonedValue is the annotation key for the nodes cordoned by Talos.
+	AnnotationCordonedValue = "true"
+
+	// AnnotationStaticPodSecretsVersion is the annotation key for the static pod secret version.
+	AnnotationStaticPodSecretsVersion = "talos.dev/secrets-version"
+
+	// AnnotationStaticPodConfigVersion is the annotation key for the static pod config version.
+	AnnotationStaticPodConfigVersion = "talos.dev/config-version"
 )
 
 // See https://linux.die.net/man/3/klogctl
