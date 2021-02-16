@@ -189,10 +189,13 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "kube-apiserver",
 				Namespace: "kube-system",
+				Annotations: map[string]string{
+					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
+					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
+				},
 				Labels: map[string]string{
-					"tier":            "control-plane",
-					"k8s-app":         "kube-apiserver",
-					"secrets-version": secretsVersion,
+					"tier":    "control-plane",
+					"k8s-app": "kube-apiserver",
 				},
 			},
 			Spec: v1.PodSpec{
@@ -277,10 +280,13 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "kube-controller-manager",
 				Namespace: "kube-system",
+				Annotations: map[string]string{
+					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
+					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
+				},
 				Labels: map[string]string{
-					"tier":            "control-plane",
-					"k8s-app":         "kube-controller-manager",
-					"secrets-version": secretsVersion,
+					"tier":    "control-plane",
+					"k8s-app": "kube-controller-manager",
 				},
 			},
 			Spec: v1.PodSpec{
@@ -356,10 +362,13 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "kube-scheduler",
 				Namespace: "kube-system",
+				Annotations: map[string]string{
+					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
+					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
+				},
 				Labels: map[string]string{
-					"tier":            "control-plane",
-					"k8s-app":         "kube-scheduler",
-					"secrets-version": secretsVersion,
+					"tier":    "control-plane",
+					"k8s-app": "kube-scheduler",
 				},
 			},
 			Spec: v1.PodSpec{
