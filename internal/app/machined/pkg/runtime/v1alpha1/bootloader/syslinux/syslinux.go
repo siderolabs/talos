@@ -16,12 +16,12 @@ import (
 	"regexp"
 	"text/template"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	advcommon "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv/syslinux"
-	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 

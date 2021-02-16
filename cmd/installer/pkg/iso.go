@@ -7,7 +7,7 @@ package pkg
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
 // CreateISO creates an iso by invoking the `grub-mkrescue` command.

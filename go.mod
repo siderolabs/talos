@@ -13,7 +13,6 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/Microsoft/hcsshim/test v0.0.0-20201124231931-de74fe8b94ae // indirect
-	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327
 	github.com/containerd/containerd v1.4.3
@@ -66,6 +65,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
 	github.com/talos-systems/go-blockdevice v0.2.0
+	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
 	github.com/talos-systems/go-retry v0.2.0

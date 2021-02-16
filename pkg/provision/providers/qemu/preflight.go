@@ -13,8 +13,8 @@ import (
 
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/hashicorp/go-getter"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 
-	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 )

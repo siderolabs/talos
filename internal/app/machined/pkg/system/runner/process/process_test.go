@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
@@ -23,7 +24,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {

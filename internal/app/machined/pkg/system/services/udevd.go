@@ -9,13 +9,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/conditions"
 )
 

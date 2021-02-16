@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"
@@ -22,7 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/pkg/archiver"
-	"github.com/talos-systems/talos/pkg/cmd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 

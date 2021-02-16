@@ -7,7 +7,7 @@ package makefs
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
 // XFSGrow expands a XFS filesystem to the maximum possible. The partition

@@ -13,10 +13,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
 // processRunner is a runner.Runner that runs a process on the host.

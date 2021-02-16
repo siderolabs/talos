@@ -16,9 +16,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd"
+
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
-	"github.com/talos-systems/talos/pkg/cmd"
 )
 
 const mfTpl = `SHA256({{ .VMDK }})= {{ .VMDKSHA }}
