@@ -1202,10 +1202,10 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 				continue
 			}
 
-			device := fields[0]
+			device := strings.ReplaceAll(fields[0], "/dev/mapper", "/dev")
 			mountpoint := fields[1]
 
-			if strings.HasPrefix(device, devname) {
+			if strings.HasPrefix(device, devname) && device != devname {
 				logger.Printf("unmounting %s\n", mountpoint)
 
 				if err = unix.Unmount(mountpoint, 0); err != nil {
