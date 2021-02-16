@@ -81,19 +81,6 @@ local volumes = {
     },
   },
 
-  // cache: {
-  //   pipeline: {
-  //     name: 'cache',
-  //     host: {
-  //       path: '/tmp',
-  //     },
-  //   },
-  //   step: {
-  //     name: $.cache.pipeline.name,
-  //     path: '/tmp/cache',
-  //   },
-  // },
-
   ForStep(): [
     self.dockersock.step,
     self.outerdockersock.step,
@@ -101,7 +88,6 @@ local volumes = {
     self.kube.step,
     self.dev.step,
     self.tmp.step,
-    // self.cache.step,
   ],
 
   ForPipeline(): [
@@ -111,7 +97,6 @@ local volumes = {
     self.kube.pipeline,
     self.dev.pipeline,
     self.tmp.pipeline,
-    // self.cache.pipeline,
   ],
 };
 
@@ -127,13 +112,13 @@ local docker = {
     '--mtu=1450',
     '--log-level=error',
   ],
-  // Set resource requests to ensure that only one build can be performed at a
+  // Set resource requests to ensure that only three builds can be performed at a
   // time. We set it on the service so that we get the scheduling restricitions
   // while still allowing parallel steps.
   resources: {
     requests: {
-      cpu: 24000,
-      memory: '48GiB',
+      cpu: 12000,
+      memory: '18GiB',
     },
   },
   volumes: volumes.ForStep(),
@@ -165,7 +150,6 @@ local Step(name, image='', target='', privileged=false, depends_on=[], environme
 
   local common_env_vars = {
     "PLATFORM": "linux/amd64,linux/arm64",
-    // "CI_ARGS": "--cache-to=type=local,dest=/tmp/cache --cache-from=type=local,src=/tmp/cache"
   },
 
   name: name,
@@ -207,24 +191,18 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 local generate = Step("generate", target="generate docs", depends_on=[setup_ci]);
 local check_dirty = Step("check-dirty", depends_on=[generate]);
-local talosctl_linux = Step("talosctl-linux", depends_on=[check_dirty]);
-local talosctl_darwin = Step("talosctl-darwin", depends_on=[check_dirty]);
-local kernel = Step('kernel', depends_on=[check_dirty]);
-local initramfs = Step("initramfs", depends_on=[check_dirty]);
-local installer = Step("installer", depends_on=[initramfs], environment={"REGISTRY": local_registry, "PUSH": true});
-local talos = Step("talos", depends_on=[installer], environment={"REGISTRY": local_registry, "PUSH": true});
-local lint = Step("lint", depends_on=[check_dirty]);
-local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[lint]);
-local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[installer], environment={"REGISTRY": local_registry});
-local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[installer], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local build = Step("build", target="talosctl kernel initramfs installer talos", depends_on=[check_dirty], environment={"REGISTRY": local_registry, "PUSH": true});
+local lint = Step("lint", depends_on=[build]);
+local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
+local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[build], environment={"REGISTRY": local_registry});
+local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[build], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local images_amd64 = Step("images-amd64", target="images", depends_on=[iso_amd64], environment={"REGISTRY": local_registry});
 local images_arm64 = Step("images-arm64", target="images", depends_on=[iso_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local unit_tests = Step("unit-tests", depends_on=[initramfs]);
-local unit_tests_race = Step("unit-tests-race", depends_on=[initramfs]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[talos, talosctl_linux, unit_tests, unit_tests_race], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
-local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[talosctl_linux, initramfs, kernel, installer, unit_tests, unit_tests_race, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
-local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[talosctl_linux, initramfs, iso_amd64, unit_tests, unit_tests_race], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
+local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depends_on=[build, lint]);
+local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -239,7 +217,7 @@ local coverage = {
   when: {
     event: ['pull_request'],
   },
-  depends_on: [unit_tests.name, unit_tests_race.name],
+  depends_on: [unit_tests.name],
 };
 
 local push = {
@@ -287,16 +265,42 @@ local push_latest = {
   depends_on: [push.name],
 };
 
+local save_artifacts = {
+  name: 'save-artifacts',
+  image: 'docker.io/d3fk/s3cmd:latest',
+  pull: 'always',
+  environment: {
+    AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
+    AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
+  },
+  commands: [
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl mb s3://${CI_COMMIT_SHA}',
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}',
+  ],
+  volumes: volumes.ForStep(),
+  depends_on: [build.name, images_amd64.name, images_arm64.name, iso_amd64.name, iso_arm64.name, sbcs_arm64.name, talosctl_cni_bundle.name],
+};
+
+local load_artifacts = {
+  name: 'load-artifacts',
+  image: 'docker.io/d3fk/s3cmd:latest',
+  pull: 'always',
+  environment: {
+    AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
+    AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
+  },
+  commands: [
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync s3://${CI_COMMIT_SHA} .',
+  ],
+  volumes: volumes.ForStep(),
+  depends_on: [setup_ci.name],
+};
+
 local default_steps = [
   setup_ci,
   generate,
   check_dirty,
-  talosctl_linux,
-  talosctl_darwin,
-  kernel,
-  initramfs,
-  installer,
-  talos,
+  build,
   lint,
   talosctl_cni_bundle,
   iso_amd64,
@@ -305,7 +309,7 @@ local default_steps = [
   images_arm64,
   sbcs_arm64,
   unit_tests,
-  unit_tests_race,
+  save_artifacts,
   coverage,
   e2e_iso,
   e2e_qemu,
@@ -330,15 +334,27 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
 // Full integration pipeline.
 
-local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, talosctl_cni_bundle], environment={"REGISTRY": local_registry});
-local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[initramfs, talosctl_linux, kernel, installer, unit_tests, unit_tests_race, e2e_qemu, e2e_docker]);
+local cron_trigger(schedules) = {
+  trigger: {
+    cron: {
+      include: ['thrice-daily', 'nightly'],
+    },
+  },
+};
+
+
+local default_pipeline_steps = [
+  setup_ci,
+  load_artifacts,
+];
+
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={"REGISTRY": local_registry});
+
+local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[load_artifacts]);
 local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
 local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
-// local integration_provision_tests_track_0_cilium = Step("provision-tests-track-0-cilium", target="provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_track_0], environment={
-//         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.5/install/kubernetes/quick-install.yaml",
-//         "REGISTRY": local_registry,
-// });
-local integration_cilium = Step("e2e-cilium-1.8.5", target="e2e-qemu", privileged=true, depends_on=[integration_qemu], environment={
+
+local integration_cilium = Step("e2e-cilium-1.8.5", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.8.5/install/kubernetes/quick-install.yaml",
         "REGISTRY": local_registry,
@@ -353,6 +369,7 @@ local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privile
         "USE_DISK_IMAGE": "true",
         "REGISTRY": local_registry,
 });
+
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -369,53 +386,32 @@ local push_edge = {
     ],
   },
   depends_on: [
-     // we skip track_0 dependency since it's a dependency for the cilium test below.
-    integration_provision_tests_track_0.name,
-    integration_provision_tests_track_1.name,
-    integration_uefi.name,
+    integration_qemu.name,
   ],
 };
 
-
-local integration_steps = default_steps + [
-  integration_qemu,
-  integration_provision_tests_prepare,
-  integration_provision_tests_track_0,
-  integration_provision_tests_track_1,
-  integration_cilium,
-  integration_uefi,
-  integration_disk_image,
-  push_edge,
-];
-
-local integration_trigger = {
+local integration_trigger(names) = {
   trigger: {
     target: {
-      include: ['integration'],
+      include: ['integration'] + names,
     },
   },
 };
 
-local integration_thrice_daily_trigger = {
-  trigger: {
-    cron: {
-      include: ['thrice-daily'],
-    },
-  },
-};
+local integration_pipelines = [
+  // regular pipelines, triggered on promote events
+  Pipeline('integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + integration_trigger(['integration-qemu']),
+  Pipeline('integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + integration_trigger(['integration-provision', 'integration-provision-0']),
+  Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
+  Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + integration_trigger(['integration-misc']),
 
-local integration_nightly_trigger = {
-  trigger: {
-    cron: {
-      include: ['nightly'],
-    },
-  },
-};
+  // cron pipelines, triggered on schedule events
+  Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + cron_trigger(['thrice-daily', 'nightly']),
+];
 
-
-local integration_pipeline = Pipeline('integration', integration_steps) + integration_trigger;
-local integration_thrice_daily_pipeline = Pipeline('integration-thrice-daily', integration_steps) + integration_thrice_daily_trigger;
-local integration_nightly_pipeline = Pipeline('integration-nightly', integration_steps) + integration_nightly_trigger;
 
 // E2E pipeline.
 
@@ -429,26 +425,29 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local e2e_capi = Step("e2e-capi", depends_on=[e2e_docker], environment=creds_env_vars);
+local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
+local e2e_capi = Step("e2e-capi", depends_on=[capi_docker], environment=creds_env_vars);
 local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
 local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
 local e2e_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars);
 
-local e2e_steps = default_steps + [
-  e2e_capi,
-  e2e_aws,
-  e2e_gcp,
-];
-
-local e2e_trigger = {
+local e2e_trigger(names) = {
   trigger: {
     target: {
-      include: ['e2e'],
+      include: ['e2e'] + names,
     },
   },
 };
 
-local e2e_pipeline = Pipeline('e2e', e2e_steps) + e2e_trigger;
+local e2e_pipelines = [
+  // regular pipelines, triggered on promote events
+  Pipeline('e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws]) + e2e_trigger(['e2e-aws']),
+  Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
+
+  // cron pipelines, triggered on schedule events
+  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws]) + cron_trigger(['nightly']),
+  Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + cron_trigger(['nightly']),
+];
 
 // Conformance pipeline.
 
@@ -456,39 +455,24 @@ local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds
 local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
 
-local conformance_steps = default_steps + [
-  e2e_capi,
-  conformance_aws,
-  conformance_gcp,
-];
-
-local conformance_trigger = {
+local conformance_trigger(names) = {
   trigger: {
     target: {
-      include: ['conformance'],
+      include: ['conformance'] + names,
     },
   },
 };
 
-local conformance_pipeline = Pipeline('conformance', conformance_steps) + conformance_trigger;
-
-// Nightly pipeline.
-
-local nightly_trigger = {
-  trigger: {
-    cron: {
-      include: ['nightly'],
-    },
-  },
-};
-
-local nightly_pipeline = Pipeline('nightly', conformance_steps) + nightly_trigger;
+local conformance_pipelines = [
+  Pipeline('conformance-aws', default_pipeline_steps + [capi_docker, e2e_capi, conformance_aws]) + conformance_trigger(['conformance-aws']),
+  Pipeline('conformance-gcp', default_pipeline_steps + [capi_docker, e2e_capi, conformance_gcp]) + conformance_trigger(['conformance-gcp']),
+];
 
 // Cloud images pipeline.
 
-local cloud_images = Step("cloud-images", depends_on=[images_amd64, images_arm64], environment=creds_env_vars);
+local cloud_images = Step("cloud-images", depends_on=[load_artifacts], environment=creds_env_vars);
 
-local upload_images_steps = default_steps + [
+local upload_images_steps = default_pipeline_steps + [
   cloud_images,
 ];
 
@@ -556,7 +540,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [kernel.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, sbcs_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
+  depends_on: [build.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, sbcs_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
@@ -610,19 +594,14 @@ local notify_trigger = {
   },
 };
 
-local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, e2e_pipeline, integration_pipeline, integration_thrice_daily_pipeline, integration_nightly_pipeline, conformance_pipeline, upload_images_pipeline, nightly_pipeline, release_pipeline], false, true) + notify_trigger;
+local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, upload_images_pipeline, release_pipeline] + integration_pipelines + e2e_pipelines + conformance_pipelines, false, true) + notify_trigger;
 
 // Final configuration file definition.
 
 [
   default_pipeline,
-  integration_pipeline,
-  integration_thrice_daily_pipeline,
-  integration_nightly_pipeline,
-  e2e_pipeline,
-  conformance_pipeline,
   upload_images_pipeline,
-  nightly_pipeline,
   release_pipeline,
+] + integration_pipelines + e2e_pipelines + conformance_pipelines + [
   notify_pipeline,
 ]
