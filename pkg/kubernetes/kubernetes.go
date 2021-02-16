@@ -27,6 +27,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -142,8 +143,8 @@ func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 	return addrs, nil
 }
 
-// WorkerIPs returns list of worker nodes IP addresses.
-func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
+// NodeIPs returns list of node IP addresses by machine type.
+func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs []string, err error) {
 	resp, err := h.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -152,13 +153,27 @@ func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 	addrs = []string{}
 
 	for _, node := range resp.Items {
-		if _, ok := node.Labels[constants.LabelNodeRoleMaster]; ok {
+		_, labelMaster := node.Labels[constants.LabelNodeRoleMaster]
+		_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
+
+		skip := true
+
+		switch machineType { //nolint: exhaustive
+		case machine.TypeInit, machine.TypeControlPlane:
+			skip = !(labelMaster || labelControlPlane)
+		case machine.TypeJoin:
+			skip = labelMaster || labelControlPlane
+		}
+
+		if skip {
 			continue
 		}
 
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == corev1.NodeInternalIP {
 				addrs = append(addrs, nodeAddress.Address)
+
+				break
 			}
 		}
 	}
