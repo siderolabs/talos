@@ -64,7 +64,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
-	github.com/talos-systems/go-blockdevice v0.2.0
+	github.com/talos-systems/go-blockdevice v0.2.1-0.20210216182145-8f976c203110
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24

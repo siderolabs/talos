@@ -19,24 +19,20 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/makefs"
 )
 
 // Target represents an installation partition.
 //
 //nolint: golint, maligned
 type Target struct {
+	*partition.FormatOptions
 	Device string
 
-	Label              string
-	PartitionType      PartitionType
-	FileSystemType     FileSystemType
 	LegacyBIOSBootable bool
 
-	Size   uint64
-	Force  bool
 	Assets []*Asset
 
 	// Preserve contents of the partition with the same label (if it exists).
@@ -67,18 +63,21 @@ type Asset struct {
 type PreserveSource struct {
 	Label          string
 	FnmatchFilters []string
-	FileSystemType FileSystemType
+	FileSystemType partition.FileSystemType
+}
+
+// NoFilesystem preset to override default filesystem type to none.
+var NoFilesystem = &Target{
+	FormatOptions: &partition.FormatOptions{
+		FileSystemType: partition.FilesystemTypeNone,
+	},
 }
 
 // EFITarget builds the default EFI target.
 func EFITarget(device string, extra *Target) *Target {
 	target := &Target{
-		Device:         device,
-		Label:          constants.EFIPartitionLabel,
-		PartitionType:  EFISystemPartition,
-		FileSystemType: FilesystemTypeVFAT,
-		Size:           EFISize,
-		Force:          true,
+		FormatOptions: partition.NewFormatOptions(constants.EFIPartitionLabel),
+		Device:        device,
 	}
 
 	return target.enhance(extra)
@@ -87,13 +86,9 @@ func EFITarget(device string, extra *Target) *Target {
 // BIOSTarget builds the default BIOS target.
 func BIOSTarget(device string, extra *Target) *Target {
 	target := &Target{
+		FormatOptions:      partition.NewFormatOptions(constants.BIOSGrubPartitionLabel),
 		Device:             device,
-		Label:              constants.BIOSGrubPartitionLabel,
-		PartitionType:      BIOSBootPartition,
-		FileSystemType:     FilesystemTypeNone,
 		LegacyBIOSBootable: true,
-		Size:               BIOSGrubSize,
-		Force:              true,
 	}
 
 	return target.enhance(extra)
@@ -102,12 +97,8 @@ func BIOSTarget(device string, extra *Target) *Target {
 // BootTarget builds the default boot target.
 func BootTarget(device string, extra *Target) *Target {
 	target := &Target{
-		Device:         device,
-		Label:          constants.BootPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           BootSize,
-		Force:          true,
+		FormatOptions: partition.NewFormatOptions(constants.BootPartitionLabel),
+		Device:        device,
 	}
 
 	return target.enhance(extra)
@@ -116,12 +107,8 @@ func BootTarget(device string, extra *Target) *Target {
 // MetaTarget builds the default meta target.
 func MetaTarget(device string, extra *Target) *Target {
 	target := &Target{
-		Device:         device,
-		Label:          constants.MetaPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeNone,
-		Size:           MetaSize,
-		Force:          true,
+		FormatOptions: partition.NewFormatOptions(constants.MetaPartitionLabel),
+		Device:        device,
 	}
 
 	return target.enhance(extra)
@@ -130,12 +117,8 @@ func MetaTarget(device string, extra *Target) *Target {
 // StateTarget builds the default state target.
 func StateTarget(device string, extra *Target) *Target {
 	target := &Target{
-		Device:         device,
-		Label:          constants.StatePartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           StateSize,
-		Force:          true,
+		FormatOptions: partition.NewFormatOptions(constants.StatePartitionLabel),
+		Device:        device,
 	}
 
 	return target.enhance(extra)
@@ -144,12 +127,8 @@ func StateTarget(device string, extra *Target) *Target {
 // EphemeralTarget builds the default ephemeral target.
 func EphemeralTarget(device string, extra *Target) *Target {
 	target := &Target{
-		Device:         device,
-		Label:          constants.EphemeralPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           0,
-		Force:          true,
+		FormatOptions: partition.NewFormatOptions(constants.EphemeralPartitionLabel),
+		Device:        device,
 	}
 
 	return target.enhance(extra)
@@ -164,6 +143,10 @@ func (t *Target) enhance(extra *Target) *Target {
 	t.PreserveContents = extra.PreserveContents
 	t.ExtraPreserveSources = extra.ExtraPreserveSources
 	t.Skip = extra.Skip
+
+	if extra.FormatOptions != nil {
+		t.FormatOptions.FileSystemType = extra.FormatOptions.FileSystemType
+	}
 
 	return t
 }
@@ -198,22 +181,7 @@ func (t *Target) Format() error {
 		return nil
 	}
 
-	if t.FileSystemType == FilesystemTypeNone {
-		return t.zeroPartition()
-	}
-
-	log.Printf("formatting partition %q as %q with label %q\n", t.PartitionName, t.FileSystemType, t.Label)
-
-	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
-
-	switch t.FileSystemType {
-	case FilesystemTypeVFAT:
-		return makefs.VFAT(t.PartitionName, opts...)
-	case FilesystemTypeXFS:
-		return makefs.XFS(t.PartitionName, opts...)
-	default:
-		return fmt.Errorf("unsupported filesystem type: %q", t.FileSystemType)
-	}
+	return partition.Format(t.PartitionName, t.FormatOptions)
 }
 
 // Save copies the assets to the bootloader partition.
@@ -275,7 +243,7 @@ func (t *Target) Save() (err error) {
 	return nil
 }
 
-func withTemporaryMounted(partPath string, flags uintptr, fileSystemType FileSystemType, label string, f func(mountPath string) error) error {
+func withTemporaryMounted(partPath string, flags uintptr, fileSystemType partition.FileSystemType, label string, f func(mountPath string) error) error {
 	mountPath := filepath.Join(constants.SystemPath, "mnt")
 
 	mountpoints := mount.NewMountPoints()
@@ -297,13 +265,13 @@ func withTemporaryMounted(partPath string, flags uintptr, fileSystemType FileSys
 }
 
 // SaveContents saves contents of partition to the target (in-memory).
-func (t *Target) SaveContents(device Device, source *gpt.Partition, fileSystemType FileSystemType, fnmatchFilters []string) error {
+func (t *Target) SaveContents(device Device, source *gpt.Partition, fileSystemType partition.FileSystemType, fnmatchFilters []string) error {
 	partPath, err := util.PartPath(device.Device, int(source.Number))
 	if err != nil {
 		return err
 	}
 
-	if fileSystemType == FilesystemTypeNone {
+	if fileSystemType == partition.FilesystemTypeNone {
 		err = t.saveRawContents(partPath)
 	} else {
 		err = t.saveFilesystemContents(partPath, fileSystemType, fnmatchFilters)
@@ -341,7 +309,7 @@ func (t *Target) saveRawContents(partPath string) error {
 	return src.Close()
 }
 
-func (t *Target) saveFilesystemContents(partPath string, fileSystemType FileSystemType, fnmatchFilters []string) error {
+func (t *Target) saveFilesystemContents(partPath string, fileSystemType partition.FileSystemType, fnmatchFilters []string) error {
 	t.Contents = bytes.NewBuffer(nil)
 
 	return withTemporaryMounted(partPath, unix.MS_RDONLY, fileSystemType, t.Label, func(mountPath string) error {
@@ -357,7 +325,7 @@ func (t *Target) RestoreContents() error {
 
 	var err error
 
-	if t.FileSystemType == FilesystemTypeNone {
+	if t.FileSystemType == partition.FilesystemTypeNone {
 		err = t.restoreRawContents()
 	} else {
 		err = t.restoreFilesystemContents()
@@ -399,27 +367,4 @@ func (t *Target) restoreFilesystemContents() error {
 	return withTemporaryMounted(t.PartitionName, 0, t.FileSystemType, t.Label, func(mountPath string) error {
 		return archiver.UntarGz(context.TODO(), t.Contents, mountPath)
 	})
-}
-
-// zeroPartition fills the partition with zeroes.
-func (t *Target) zeroPartition() (err error) {
-	log.Printf("zeroing out %q", t.PartitionName)
-
-	zeroes, err := os.Open("/dev/zero")
-	if err != nil {
-		return err
-	}
-
-	defer zeroes.Close() //nolint: errcheck
-
-	part, err := os.OpenFile(t.PartitionName, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-
-	defer part.Close() //nolint: errcheck
-
-	_, err = io.CopyN(part, zeroes, int64(t.Size))
-
-	return err
 }

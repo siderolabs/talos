@@ -9,12 +9,16 @@ import (
 	"os"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+var mountpoints = map[string]*Point{}
 
 // SystemMountPointsForDevice returns the mountpoints required to boot the system.
 // This function is called exclusively during installations ( both image
@@ -61,12 +65,12 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 		return nil, fmt.Errorf("unknown label: %q", label)
 	}
 
-	partition, err := device.GetPartition(label)
+	part, err := device.GetPartition(label)
 	if err != nil && err != os.ErrNotExist {
 		return nil, err
 	}
 
-	if partition == nil {
+	if part == nil {
 		// A boot partitition is not required.
 		if label == constants.BootPartitionLabel {
 			return nil, nil
@@ -75,15 +79,46 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 		return nil, fmt.Errorf("failed to find device with label %s: %w", label, err)
 	}
 
-	fsType, err := partition.Filesystem()
+	fsType, err := part.Filesystem()
 	if err != nil {
 		return nil, err
 	}
 
-	partPath, err := partition.Path()
+	partPath, err := part.Path()
 	if err != nil {
 		return nil, err
 	}
+
+	preMountHooks := []Hook{}
+
+	// Format the partition if it does not have any filesystem
+	preMountHooks = append(preMountHooks, func(p *Point) error {
+		sb, err := filesystem.Probe(p.source)
+		if err != nil {
+			return err
+		}
+
+		p.fstype = ""
+
+		// skip formatting the partition if filesystem is detected
+		// and assign proper fs type to the mountpoint
+		if sb != nil && sb.Type() != filesystem.Unknown {
+			p.fstype = sb.Type()
+
+			return nil
+		}
+
+		opts := partition.NewFormatOptions(part.Name)
+		if opts == nil {
+			return fmt.Errorf("failed to determine format options for partition label %s", part.Name)
+		}
+
+		p.fstype = opts.FileSystemType
+
+		return partition.Format(p.source, opts)
+	})
+
+	opts = append(opts, WithPreMountHooks(preMountHooks...))
 
 	mountpoint = NewMountPoint(partPath, target, fsType, unix.MS_NOATIME, "", opts...)
 
@@ -97,8 +132,6 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
 	}
 
-	mountpoints := NewMountPoints()
-
 	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label, opts...)
 	if err != nil {
 		return err
@@ -108,37 +141,24 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return fmt.Errorf("no mountpoints for label %q", label)
 	}
 
-	mountpoints.Set(label, mountpoint)
-
-	if err = Mount(mountpoints); err != nil {
+	if err = mountMountpoint(mountpoint); err != nil {
 		return err
 	}
+
+	mountpoints[label] = mountpoint
 
 	return nil
 }
 
 // SystemPartitionUnmount unmounts a system partition by the label.
 func SystemPartitionUnmount(r runtime.Runtime, label string) (err error) {
-	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
-	if device == nil {
-		return fmt.Errorf("failed to find device with partition labeled %s", label)
-	}
+	if mountpoint, ok := mountpoints[label]; ok {
+		err = mountpoint.Unmount()
+		if err != nil {
+			return err
+		}
 
-	mountpoints := NewMountPoints()
-
-	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label)
-	if err != nil {
-		return err
-	}
-
-	if mountpoint == nil {
-		return fmt.Errorf("no mountpoints for label %q", label)
-	}
-
-	mountpoints.Set(label, mountpoint)
-
-	if err = Unmount(mountpoints); err != nil {
-		return err
+		delete(mountpoints, label)
 	}
 
 	return nil

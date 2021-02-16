@@ -54,6 +54,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -882,11 +883,13 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 
 			for _, part := range disk.Partitions() {
 				extraTarget := &installer.Target{
-					Device:         disk.Device(),
-					Size:           part.Size(),
-					Force:          true,
-					PartitionType:  installer.LinuxFilesystemData,
-					FileSystemType: installer.FilesystemTypeXFS,
+					Device: disk.Device(),
+					FormatOptions: &partition.FormatOptions{
+						Size:           part.Size(),
+						Force:          true,
+						PartitionType:  partition.LinuxFilesystemData,
+						FileSystemType: partition.FilesystemTypeXFS,
+					},
 				}
 
 				m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
@@ -1580,7 +1583,7 @@ func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, mount.WithSkipIfMounted(true))
+		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, mount.WithFlags(mount.SkipIfMounted))
 	}, "mountStatePartition"
 }
 
@@ -1591,11 +1594,11 @@ func UnmountStatePartition(seq runtime.Sequence, data interface{}) (runtime.Task
 	}, "unmountStatePartition"
 }
 
-// MountEphermeralPartition mounts the ephemeral partition.
-func MountEphermeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+// MountEphemeralPartition mounts the ephemeral partition.
+func MountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionMount(r, constants.EphemeralPartitionLabel, mount.WithResize(true))
-	}, "mountEphermeralPartition"
+		return mount.SystemPartitionMount(r, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
+	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.

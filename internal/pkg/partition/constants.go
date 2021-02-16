@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package install
+package partition
 
-// PartitionType in partition table.
-type PartitionType = string
+// Type in partition table.
+type Type = string
 
 // GPT partition types.
 //
 // TODO: should be moved into the blockdevice library.
 const (
-	EFISystemPartition  PartitionType = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-	BIOSBootPartition   PartitionType = "21686148-6449-6E6F-744E-656564454649"
-	LinuxFilesystemData PartitionType = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+	EFISystemPartition  Type = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+	BIOSBootPartition   Type = "21686148-6449-6E6F-744E-656564454649"
+	LinuxFilesystemData Type = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
 )
 
 // FileSystemType is used to format partitions.
