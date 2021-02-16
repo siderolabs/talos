@@ -403,7 +403,7 @@ func (suite *UpgradeSuite) waitForClusterHealth() {
 			time.Sleep(15 * time.Second)
 		}
 
-		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 10*time.Minute)
+		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
 		defer checkCtxCancel()
 
 		suite.Require().NoError(check.Wait(checkCtx, suite.clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))

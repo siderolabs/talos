@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
@@ -22,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -131,16 +133,12 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 
 	stateTarget := StateTarget(opts.Disk, &Target{
 		PreserveContents: bootPartitionFound,
-		ExtraPreserveSources: []PreserveSource{
-			{
-				Label:          constants.LegacyBootPartitionLabel,
-				FileSystemType: FilesystemTypeVFAT,
-				FnmatchFilters: []string{"config.yaml"},
-			},
+		FormatOptions: &partition.FormatOptions{
+			FileSystemType: partition.FilesystemTypeNone,
 		},
 	})
 
-	ephemeralTarget := EphemeralTarget(opts.Disk, nil)
+	ephemeralTarget := EphemeralTarget(opts.Disk, NoFilesystem)
 
 	if opts.Force {
 		ephemeralTarget.Force = true
@@ -417,7 +415,7 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 
 		var (
 			sourcePart     *gpt.Partition
-			fileSystemType FileSystemType
+			fileSystemType partition.FileSystemType
 			fnmatchFilters []string
 		)
 
@@ -466,11 +464,11 @@ func (m *Manifest) restoreContents(targets []*Target) error {
 }
 
 // SystemMountpoints returns list of system mountpoints for the manifest.
-func (m *Manifest) SystemMountpoints() (*mount.Points, error) {
+func (m *Manifest) SystemMountpoints(opts ...mount.Option) (*mount.Points, error) {
 	mountpoints := mount.NewMountPoints()
 
 	for dev := range m.Targets {
-		mp, err := mount.SystemMountPointsForDevice(dev)
+		mp, err := mount.SystemMountPointsForDevice(dev, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -511,12 +509,7 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 // nolint: dupl, gocyclo
 func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
 	if t.Skip {
-		var part *gpt.Partition
-
-		part, err = t.Locate(pt)
-		if err != nil {
-			return err
-		}
+		part := pt.Partitions().FindByName(t.Label)
 
 		if part != nil {
 			log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
@@ -525,7 +518,7 @@ func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (e
 		return nil
 	}
 
-	log.Printf("partitioning %s - %s\n", t.Device, t.Label)
+	log.Printf("partitioning %s - %s %q\n", t.Device, t.Label, humanize.Bytes(t.Size))
 
 	opts := []gpt.PartitionOption{
 		gpt.WithPartitionType(t.PartitionType),

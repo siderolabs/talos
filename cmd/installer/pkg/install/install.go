@@ -182,10 +182,51 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	// Mount the partitions.
+	mountpoints := mount.NewMountPoints()
 
-	mountpoints, err := i.manifest.SystemMountpoints()
-	if err != nil {
-		return err
+	for _, label := range []string{constants.BootPartitionLabel, constants.EFIPartitionLabel} {
+		err = func() error {
+			var device string
+			// searching targets for the device to be used
+		OuterLoop:
+			for dev, targets := range i.manifest.Targets {
+				for _, target := range targets {
+					if target.Label == label {
+						device = dev
+
+						break OuterLoop
+					}
+				}
+			}
+
+			if device == "" {
+				return fmt.Errorf("failed to detect %s target device", label)
+			}
+
+			var bd *blockdevice.BlockDevice
+
+			bd, err = blockdevice.Open(device)
+			if err != nil {
+				return err
+			}
+
+			defer bd.Close() //nolint:errcheck
+
+			var mountpoint *mount.Point
+
+			mountpoint, err = mount.SystemMountPointForLabel(bd, label)
+			if err != nil {
+				return err
+			}
+
+			mountpoints.Set(label, mountpoint)
+
+			return nil
+		}()
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {

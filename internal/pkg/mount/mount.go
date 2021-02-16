@@ -48,13 +48,13 @@ func mountMountpoint(mountpoint *Point) (err error) {
 	var skipMount bool
 
 	// Repair the disk's partition table.
-	if mountpoint.Resize {
+	if mountpoint.MountFlags.Check(Resize) {
 		if _, err = mountpoint.ResizePartition(); err != nil {
 			return fmt.Errorf("error resizing %w", err)
 		}
 	}
 
-	if mountpoint.SkipIfMounted {
+	if mountpoint.MountFlags.Check(SkipIfMounted) {
 		skipMount, err = mountpoint.IsMounted()
 		if err != nil {
 			return fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
@@ -71,7 +71,7 @@ func mountMountpoint(mountpoint *Point) (err error) {
 	//
 	// Growfs is called always, even if ResizePartition returns false to workaround failure scenario
 	// when partition was resized, but growfs never got called.
-	if mountpoint.Resize {
+	if mountpoint.MountFlags.Check(Resize) {
 		if err = mountpoint.GrowFilesystem(); err != nil {
 			return fmt.Errorf("error resizing filesystem: %w", err)
 		}
@@ -226,16 +226,22 @@ func (p *Point) Data() string {
 func (p *Point) Mount() (err error) {
 	p.target = path.Join(p.Prefix, p.target)
 
+	for _, hook := range p.Options.PreMountHooks {
+		if err = hook(p); err != nil {
+			return err
+		}
+	}
+
 	if err = ensureDirectory(p.target); err != nil {
 		return err
 	}
 
-	if p.ReadOnly {
+	if p.MountFlags.Check(ReadOnly) {
 		p.flags |= unix.MS_RDONLY
 	}
 
 	switch {
-	case p.Overlay:
+	case p.MountFlags.Check(Overlay):
 		err = mountRetry(overlay, p, false)
 	default:
 		err = mountRetry(mount, p, false)
@@ -245,7 +251,7 @@ func (p *Point) Mount() (err error) {
 		return err
 	}
 
-	if p.Shared {
+	if p.MountFlags.Check(Shared) {
 		if err = mountRetry(share, p, false); err != nil {
 			return fmt.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
@@ -257,9 +263,23 @@ func (p *Point) Mount() (err error) {
 // Unmount attempts to retry an unmount on EBUSY. It will attempt a
 // retry every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Unmount() (err error) {
-	p.target = path.Join(p.Prefix, p.target)
-	if err := mountRetry(unmount, p, true); err != nil {
+	var mounted bool
+
+	if mounted, err = p.IsMounted(); err != nil {
 		return err
+	}
+
+	if mounted {
+		p.target = path.Join(p.Prefix, p.target)
+		if err = mountRetry(unmount, p, true); err != nil {
+			return err
+		}
+	}
+
+	for _, hook := range p.Options.PostUnmountHooks {
+		if err = hook(p); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -213,7 +213,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"ephemeral",
-		MountEphermeralPartition,
+		MountEphemeralPartition,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"verifyInstall",
