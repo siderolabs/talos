@@ -106,11 +106,11 @@ func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.K
 			return err
 		}
 
-		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.MasterIPs(ctx); err != nil {
+		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
 			return err
 		}
 
-		if cluster.workerNodes, err = k8sProvider.KubeHelper.WorkerIPs(ctx); err != nil {
+		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeJoin); err != nil {
 			return err
 		}
 	}
