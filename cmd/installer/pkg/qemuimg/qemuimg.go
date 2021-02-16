@@ -4,7 +4,7 @@
 
 package qemuimg
 
-import "github.com/talos-systems/talos/pkg/cmd"
+import "github.com/talos-systems/go-cmd/pkg/cmd"
 
 // Convert converts an image from one format to another.
 func Convert(inputFmt, outputFmt, options, src, dest string) (err error) {

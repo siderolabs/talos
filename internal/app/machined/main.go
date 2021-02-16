@@ -18,6 +18,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc"
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
@@ -31,8 +33,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/proc"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
