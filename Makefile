@@ -139,12 +139,12 @@ docs: ## Generates the documentation for machine config, and talosctl.
 
 .PHONY: kernel
 kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 	@-rm -rf $(ARTIFACTS)/modules
 
 .PHONY: initramfs
 initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false TARGET_ARGS="--allow security.insecure"
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the artifact directory.
@@ -155,7 +155,7 @@ talos: ## Builds the Talos container image and outputs it to the artifact direct
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
 
 talosctl-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64 PUSH=false
 
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
