@@ -33,7 +33,7 @@ function setup {
   export WORKER_IMAGE_ID=projects/${PROJECT}/global/images/talos-e2e-${SHA}
 
   ## TODO: update to talos-systems once merged
-  ${CLUSTERCTL} config cluster talos-e2e-${SHA}-gcp \
+  ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
     --from https://github.com/rsmitty/cluster-api-templates/blob/main/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
   

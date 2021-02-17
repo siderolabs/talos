@@ -29,6 +29,10 @@ ${CLUSTERCTL} init \
     --infrastructure "aws:v${CAPA_VERSION},gcp:v${CAPG_VERSION}" \
     --bootstrap "talos:v${CABPT_VERSION}"
 
+# Temporarily override CAPA image so secrets backend can be turned off
+${KUBECTL} patch deploy -n capa-system capa-controller-manager --type='json' \
+  -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value": "docker.io/rsmitty/cluster-api-aws-controller-amd64:dev"}]'
+
 # Wait for the talosconfig
 timeout=$(($(date +%s) + ${TIMEOUT}))
 until ${KUBECTL} wait --timeout=1s --for=condition=Ready -n ${CABPT_NS} pods --all; do

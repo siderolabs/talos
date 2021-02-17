@@ -51,10 +51,34 @@ function setup {
           --ena-support \
           --name talos-e2e-${TAG} | jq -r '.ImageId')
 
-  # Setup the cluster YAML.
-  sed -e "s#{{REGION}}#${REGION}#g" \
-      -e "s/{{TAG}}/${SHA}/" \
-      -e "s#{{AMI}}#${ami}#g" ${PWD}/hack/test/capi/cluster-aws.yaml > ${TMP}/cluster.yaml
+  ## Cluster-wide vars
+  export CLUSTER_NAME=${NAME_PREFIX}
+  export REGION=us-east-1
+  export SSH_KEY=talos-e2e
+  export VPC_ID=vpc-ff5c5687
+  export SUBNET=subnet-c4e9b3a0
+
+  ## Control plane vars
+  export CP_COUNT=3
+  export CP_INSTANCE_TYPE=t3.large
+  export CP_VOL_SIZE=50
+  export CP_AMI_ID=${ami}
+  export CP_ADDL_SEC_GROUPS='[{id: sg-ebe8e59f}]'
+  export CP_IAM_PROFILE=CAPI_AWS_ControlPlane
+
+  ## Worker vars
+  export WORKER_COUNT=3
+  export WORKER_INSTANCE_TYPE=t3.large
+  export WORKER_VOL_SIZE=50
+  export WORKER_AMI_ID=${ami}
+  export WORKER_ADDL_SEC_GROUPS='[{id: sg-ebe8e59f}]'
+  export WORKER_IAM_PROFILE=CAPI_AWS_Worker
+
+  ## TODO: update to talos-systems once merged
+  ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
+    --kubeconfig /tmp/e2e/docker/kubeconfig \
+    --from https://github.com/talos-systems/cluster-api-templates/blob/main/aws/standard/standard.yaml > ${TMP}/cluster.yaml
+  
 }
 
 setup
