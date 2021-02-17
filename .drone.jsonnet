@@ -453,8 +453,8 @@ local e2e_pipelines = [
   Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws]) + cron_trigger(['nightly']),
-  Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + cron_trigger(['nightly']),
+  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws]) + cron_trigger(['thrice-daily','nightly']),
+  Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + cron_trigger(['thrice-daily','nightly']),
 ];
 
 // Conformance pipeline.
