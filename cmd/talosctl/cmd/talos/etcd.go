@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -30,9 +31,7 @@ var etcdLeaveCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			_, err := c.MachineClient.EtcdLeaveCluster(ctx, &machine.EtcdLeaveClusterRequest{})
-
-			return err
+			return c.EtcdLeaveCluster(ctx, &machine.EtcdLeaveClusterRequest{})
 		})
 	},
 }
@@ -43,9 +42,7 @@ var etcdForfeitLeadershipCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			_, err := c.MachineClient.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
-
-			return err
+			return c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
 		})
 	},
 }
@@ -56,11 +53,14 @@ var etcdMemberListCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			response, err := c.MachineClient.EtcdMemberList(ctx, &machine.EtcdMemberListRequest{
+			response, err := c.EtcdMemberList(ctx, &machine.EtcdMemberListRequest{
 				QueryLocal: true,
 			})
 			if err != nil {
-				return fmt.Errorf("error getting members: %w", err)
+				if response == nil {
+					return fmt.Errorf("error getting members: %w", err)
+				}
+				cli.Warning("%s", err)
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)

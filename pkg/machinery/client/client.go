@@ -851,6 +851,39 @@ func (c *Client) ClusterHealthCheck(ctx context.Context, waitTimeout time.Durati
 	})
 }
 
+// EtcdLeaveCluster makes node leave etcd cluster.
+func (c *Client) EtcdLeaveCluster(ctx context.Context, req *machineapi.EtcdLeaveClusterRequest, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.EtcdLeaveCluster(ctx, req, callOptions...)
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return err
+}
+
+// EtcdForfeitLeadership makes node forfeit leadership in the etcd cluster.
+func (c *Client) EtcdForfeitLeadership(ctx context.Context, req *machineapi.EtcdForfeitLeadershipRequest, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.EtcdForfeitLeadership(ctx, req, callOptions...)
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return err
+}
+
+// EtcdMemberList lists etcd members of the cluster.
+func (c *Client) EtcdMemberList(ctx context.Context, req *machineapi.EtcdMemberListRequest, callOptions ...grpc.CallOption) (*machineapi.EtcdMemberListResponse, error) {
+	resp, err := c.MachineClient.EtcdMemberList(ctx, req, callOptions...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdMemberListResponse) //nolint: errcheck
+
+	return resp, err
+}
+
 // MachineStream is a common interface for streams returned by streaming APIs.
 type MachineStream interface {
 	Recv() (*common.Data, error)
