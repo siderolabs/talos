@@ -23,7 +23,7 @@ var applyConfigCmdFlags struct {
 	filename         string
 	insecure         bool
 	interactive      bool
-	noReboot         bool
+	onReboot         bool
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -135,7 +135,7 @@ var applyConfigCmd = &cobra.Command{
 
 			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data:     cfgBytes,
-				NoReboot: applyConfigCmdFlags.noReboot,
+				OnReboot: applyConfigCmdFlags.onReboot,
 			}); err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
 			}
@@ -150,7 +150,11 @@ func init() {
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.interactive, "interactive", false, "apply the config using text based interactive mode")
-	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.noReboot, "no-reboot", false, "apply the config only after the reboot")
+	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "on-reboot", false, "apply the config on reboot")
+
+	// deprecated, to be removed in 0.10
+	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "no-reboot", false, "apply the config only after the reboot")
+	applyConfigCmd.Flags().MarkHidden("no-reboot") //nolint: errcheck
 
 	addCommand(applyConfigCmd)
 }

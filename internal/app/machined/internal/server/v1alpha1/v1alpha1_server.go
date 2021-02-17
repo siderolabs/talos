@@ -104,7 +104,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
-	if !in.NoReboot {
+	if !in.OnReboot {
 		if err = s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
 			return nil, err
 		}

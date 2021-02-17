@@ -615,7 +615,7 @@ node.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  |  |
-| no_reboot | [bool](#bool) |  |  |
+| on_reboot | [bool](#bool) |  |  |
 
 
 
