@@ -337,7 +337,7 @@ local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 local cron_trigger(schedules) = {
   trigger: {
     cron: {
-      include: ['thrice-daily', 'nightly'],
+      include: schedules,
     },
   },
 };
