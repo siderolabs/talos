@@ -20,7 +20,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -50,13 +49,7 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (c *CRI) DependsOn(r runtime.Runtime) []string {
-	depends := []string{"networkd"}
-
-	if r.Config().Machine().Type() != machine.TypeJoin {
-		depends = append(depends, "etcd")
-	}
-
-	return depends
+	return []string{"networkd"}
 }
 
 // Runner implements the Service interface.
