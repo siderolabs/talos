@@ -274,8 +274,8 @@ local save_artifacts = {
     AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
   },
   commands: [
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl mb s3://${CI_COMMIT_SHA}',
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}',
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl mb s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
   depends_on: [build.name, images_amd64.name, images_arm64.name, iso_amd64.name, iso_arm64.name, sbcs_arm64.name, talosctl_cni_bundle.name],
@@ -290,7 +290,7 @@ local load_artifacts = {
     AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
   },
   commands: [
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync s3://${CI_COMMIT_SHA} .',
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync s3://${CI_COMMIT_SHA}${DRONE_TAG//./-} .',
   ],
   volumes: volumes.ForStep(),
   depends_on: [setup_ci.name],
