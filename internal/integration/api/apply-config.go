@@ -131,8 +131,8 @@ func (suite *ApplyConfigSuite) TestApply() {
 	)
 }
 
-// TestApplyNoReboot verifies the apply config API without reboot.
-func (suite *ApplyConfigSuite) TestApplyNoReboot() {
+// TestApplyOnReboot verifies the apply config API without reboot.
+func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 	suite.WaitForBootDone(suite.ctx)
 
 	node := suite.RandomDiscoveredNode()
@@ -149,7 +149,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		NoReboot: true,
+		OnReboot: true,
 		Data:     cfgDataOut,
 	})
 	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
@@ -173,7 +173,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		NoReboot: true,
+		OnReboot: true,
 		Data:     cfgDataOut,
 	})
 	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)

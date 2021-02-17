@@ -63,7 +63,7 @@ service MachineService {
 // node.
 message ApplyConfigurationRequest {
   bytes data = 1;
-  bool no_reboot = 2;
+  bool on_reboot = 2;
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.
