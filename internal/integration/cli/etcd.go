@@ -28,6 +28,12 @@ func (suite *EtcdSuite) TestMembers() {
 
 // TestForfeitLeadership etcd forfeit-leadership check.
 func (suite *EtcdSuite) TestForfeitLeadership() {
+	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+
+	if len(nodes) < 3 {
+		suite.T().Skip("test only can be run on HA etcd clusters")
+	}
+
 	suite.RunCLI([]string{"etcd", "forfeit-leadership", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutEmpty(),
 	)

@@ -202,7 +202,7 @@ local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, i
 local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depends_on=[build, lint]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
 local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
-local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
+local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
