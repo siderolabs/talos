@@ -1,3 +1,64 @@
+<a name="v0.9.0-alpha.1"></a>
+## [v0.9.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) (2021-02-09)
+
+### Chore
+
+* update artifacts bucket name in Drone
+* rework Drone pipelines
+* update dependencies via dependabot
+* **ci:** fix schedules in Drone pipelines
+* **ci:** update gcp templates
+
+### Docs
+
+* update AMI list for 0.8.2
+* fix typos
+
+### Feat
+
+* add a tool and package to convert self-hosted CP to static pods
+* implement ephemeral partition encryption
+* add resource watch API + CLI
+* rename apply-config --no-reboot to --on-reboot
+* skip filesystem for state and ephemeral partitions in the installer
+* stop all pods before unmounting ephemeral partition
+* bump Go to 1.15.8
+* support version contract for Talos config generation
+* update Linux to 5.10.14
+* add an option to force upgrade without checks
+* upgrade CoreDNS to 1.8.0
+* implement IPv6 DHCP client in networkd
+
+### Fix
+
+* correctly unwrap responses for etcd commands
+* drop cri dependency on etcd
+* move versions to annotations in control plane static pods
+* find master node IPs correctly in health checks
+* add 3 seconds grub boot timeout
+* don't use filename from URL when downloading manifest
+* pass attributes when adding routes
+* correct response structure for GenerateConfig API
+* correctly extract wrapped error messages
+* prevent crash in machined on apid service stop
+* wait for time sync before generating Kubernetes certificates
+* set proper hostname on docker nodes
+* mount kubelet secrets from system instead of ephemeral
+* allow loading of empty config files
+* prefer configured nameservers, fix DHCP6 in container
+* refresh control plane endpoints on worker apids on schedule
+* update DHCP client to use Request-Ack sequence after an Offer
+
+### Refactor
+
+* extract go-cmd into a separate library
+
+### Test
+
+* trigger e2e on thrice daily
+* update aws templates
+* add support for IPv6 in talosctl cluster create
+
 <a name="v0.9.0-alpha.0"></a>
 ## [v0.9.0-alpha.0](https://github.com/talos-systems/talos/compare/v0.8.1...v0.9.0-alpha.0) (2021-02-01)
 
