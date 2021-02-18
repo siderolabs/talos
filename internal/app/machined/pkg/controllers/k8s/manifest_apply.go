@@ -95,7 +95,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).Secrets()
+		secrets := secretsResources.(*secrets.Kubernetes).Certs()
 
 		bootstrapStatus, err := r.Get(ctx, v1alpha1.NewBootstrapStatus().Metadata())
 		if err != nil {

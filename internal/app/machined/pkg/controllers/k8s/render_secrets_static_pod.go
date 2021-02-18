@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	stdlibtemplate "text/template"
 
+	"github.com/AlekSi/pointer"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/os-runtime/pkg/controller"
 	"github.com/talos-systems/os-runtime/pkg/resource"
@@ -44,7 +45,19 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
 			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			Kind:      controller.DependencyWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
+			ID:        pointer.ToString(secrets.KubernetesID),
+			Kind:      controller.DependencyWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.EtcdType,
+			ID:        pointer.ToString(secrets.EtcdID),
 			Kind:      controller.DependencyWeak,
 		},
 	}); err != nil {
@@ -67,9 +80,39 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		secrets := secretsRes.(*secrets.Kubernetes).Secrets()
+		etcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
 
-		serviceAccountKey, err := secrets.ServiceAccount.GetKey()
+			return fmt.Errorf("error getting secrets resource: %w", err)
+		}
+
+		rootEtcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootEtcdID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting secrets resource: %w", err)
+		}
+
+		rootK8sRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting secrets resource: %w", err)
+		}
+
+		rootEtcdSecrets := rootEtcdRes.(*secrets.Root).EtcdSpec()
+		rootK8sSecrets := rootK8sRes.(*secrets.Root).KubernetesSpec()
+		etcdSecrets := etcdRes.(*secrets.Etcd).Certs()
+		k8sSecrets := secretsRes.(*secrets.Kubernetes).Certs()
+
+		serviceAccountKey, err := rootK8sSecrets.ServiceAccount.GetKey()
 		if err != nil {
 			return fmt.Errorf("error parsing service account key: %w", err)
 		}
@@ -96,25 +139,25 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				directory: constants.KubernetesAPIServerSecretsDir,
 				secrets: []secret{
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.EtcdCA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootEtcdSecrets.EtcdCA },
 						certFilename: "etcd-client-ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.EtcdPeer },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return etcdSecrets.EtcdPeer },
 						certFilename: "etcd-client.crt",
 						keyFilename:  "etcd-client.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.CA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.CA },
 						certFilename: "ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.APIServer },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.APIServer },
 						certFilename: "apiserver.crt",
 						keyFilename:  "apiserver.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.APIServerKubeletClient },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.APIServerKubeletClient },
 						certFilename: "apiserver-kubelet-client.crt",
 						keyFilename:  "apiserver-kubelet-client.key",
 					},
@@ -129,11 +172,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "service-account.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.AggregatorCA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.AggregatorCA },
 						certFilename: "aggregator-ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.FrontProxy },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.FrontProxy },
 						certFilename: "front-proxy-client.crt",
 						keyFilename:  "front-proxy-client.key",
 					},
@@ -154,7 +197,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				directory: constants.KubernetesControllerManagerSecretsDir,
 				secrets: []secret{
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return secrets.CA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.CA },
 						certFilename: "ca.crt",
 						keyFilename:  "ca.key",
 					},
@@ -171,7 +214,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .AdminKubeconfig }}"),
+						template: []byte("{{ .Secrets.AdminKubeconfig }}"),
 					},
 				},
 			},
@@ -181,7 +224,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .AdminKubeconfig }}"),
+						template: []byte("{{ .Secrets.AdminKubeconfig }}"),
 					},
 				},
 			},
@@ -214,6 +257,16 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				}
 			}
 
+			type templateParams struct {
+				Root    *secrets.RootKubernetesSpec
+				Secrets *secrets.KubernetesCertsSpec
+			}
+
+			params := templateParams{
+				Root:    rootK8sSecrets,
+				Secrets: k8sSecrets,
+			}
+
 			for _, templ := range pod.templates {
 				var t *stdlibtemplate.Template
 
@@ -224,7 +277,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 
 				var buf bytes.Buffer
 
-				if err = t.Execute(&buf, secrets); err != nil {
+				if err = t.Execute(&buf, &params); err != nil {
 					return fmt.Errorf("error executing template %q: %w", templ.filename, err)
 				}
 

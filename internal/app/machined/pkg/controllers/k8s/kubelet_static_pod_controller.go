@@ -132,7 +132,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).Secrets()
+		secrets := secretsResources.(*secrets.Kubernetes).Certs()
 
 		bootstrapStatus, err := r.Get(ctx, v1alpha1.NewBootstrapStatus().Metadata())
 		if err != nil {

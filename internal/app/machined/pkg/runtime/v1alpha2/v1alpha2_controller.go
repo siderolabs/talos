@@ -62,7 +62,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&secrets.EtcdController{},
 		&secrets.KubernetesController{},
+		&secrets.RootController{},
 	} {
 		if err := ctrl.controllerRuntime.RegisterController(c); err != nil {
 			return err

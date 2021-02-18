@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net/url"
 	"text/template"
 	"time"
 
@@ -38,8 +39,18 @@ contexts:
 current-context: admin@{{ .Cluster }}
 `
 
+// GenerateAdminInput is the interface for the GenerateAdmin function.
+//
+// This interface is implemented by config.Cluster().
+type GenerateAdminInput interface {
+	Name() string
+	Endpoint() *url.URL
+	CA() *x509.PEMEncodedCertificateAndKey
+	AdminKubeconfig() config.AdminKubeconfig
+}
+
 // GenerateAdmin generates admin kubeconfig for the cluster.
-func GenerateAdmin(config config.ClusterConfig, out io.Writer) error {
+func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Parse(adminKubeConfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)

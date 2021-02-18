@@ -15,7 +15,7 @@ resources:
   - aescbc:
       keys:
       - name: key1
-        secret: {{ .AESCBCEncryptionSecret }}
+        secret: {{ .Root.AESCBCEncryptionSecret }}
   - identity: {}
 `)
 

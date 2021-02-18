@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"time"
 
 	"github.com/AlekSi/pointer"
@@ -18,19 +19,15 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 
-	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
-	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // KubernetesController manages secrets.Kubernetes based on configuration.
-type KubernetesController struct {
-}
+type KubernetesController struct{}
 
 // Name implements controller.Controller interface.
 func (ctrl *KubernetesController) Name() string {
@@ -44,13 +41,13 @@ func (ctrl *KubernetesController) ManagedResources() (resource.Namespace, resour
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint: gocyclo, dupl
 func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
-		{ // TODO: should render config for kubernetes secrets controller
-			Namespace: config.NamespaceName,
-			Type:      config.V1Alpha1Type,
-			ID:        pointer.ToString(config.V1Alpha1ID),
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
 			Kind:      controller.DependencyWeak,
 		},
 		{
@@ -65,12 +62,6 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			ID:        pointer.ToString(v1alpha1.TimeSyncID),
 			Kind:      controller.DependencyWeak,
 		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
-			Kind:      controller.DependencyWeak,
-		},
 	}); err != nil {
 		return fmt.Errorf("error setting up dependencies: %w", err)
 	}
@@ -82,39 +73,20 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID, resource.VersionUndefined))
+		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error destroying static pods: %w", err)
+					return fmt.Errorf("error destroying resources: %w", err)
 				}
 
 				continue
 			}
 
-			return fmt.Errorf("error getting config: %w", err)
+			return fmt.Errorf("error getting root k8s secrets: %w", err)
 		}
 
-		cfgProvider := cfg.(*config.V1Alpha1).Config()
-
-		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting machine type: %w", err)
-		}
-
-		machineType := machineTypeRes.(*config.MachineType).MachineType()
-
-		if machineType != machine.TypeControlPlane && machineType != machine.TypeInit {
-			if err = ctrl.teardownAll(ctx, r); err != nil {
-				return fmt.Errorf("error destroying static pods: %w", err)
-			}
-
-			continue
-		}
+		k8sRoot := k8sRootRes.(*secrets.Root).KubernetesSpec()
 
 		// wait for networkd to be healthy as it might change IPs/hostname
 		networkdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "networkd", resource.VersionUndefined))
@@ -145,62 +117,29 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		if err = r.Update(ctx, secrets.NewKubernetes(), func(r resource.Resource) error {
-			k8sSecrets := r.(*secrets.Kubernetes) //nolint: errcheck
-
-			return ctrl.updateSecrets(cfgProvider, k8sSecrets)
+			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).Certs())
 		}); err != nil {
 			return err
 		}
 	}
 }
 
-//nolint: gocyclo
-func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider, k8sSecrets *secrets.Kubernetes) error {
-	k8sSecrets.Secrets().EtcdCA = cfgProvider.Cluster().Etcd().CA()
-
-	if k8sSecrets.Secrets().EtcdCA == nil {
-		return fmt.Errorf("missing cluster.etcdCA secret")
-	}
-
-	k8sSecrets.Secrets().AggregatorCA = cfgProvider.Cluster().AggregatorCA()
-
-	if k8sSecrets.Secrets().AggregatorCA == nil {
-		return fmt.Errorf("missing cluster.aggregatorCA secret")
-	}
-
-	k8sSecrets.Secrets().CA = cfgProvider.Cluster().CA()
-
-	if k8sSecrets.Secrets().CA == nil {
-		return fmt.Errorf("missing cluster.CA secret")
-	}
-
-	var err error
-
-	k8sSecrets.Secrets().EtcdPeer, err = etcd.GeneratePeerCert(cfgProvider.Cluster().Etcd().CA())
-	if err != nil {
-		return err
-	}
-
-	urls := []string{cfgProvider.Cluster().Endpoint().Hostname()}
-	urls = append(urls, cfgProvider.Cluster().CertSANs()...)
+func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesSpec, k8sSecrets *secrets.KubernetesCertsSpec) error {
+	urls := []string{k8sRoot.Endpoint.Hostname()}
+	urls = append(urls, k8sRoot.CertSANs...)
 	altNames := altNamesFromURLs(urls)
 
-	apiServiceIPs, err := cfgProvider.Cluster().Network().APIServerIPs()
-	if err != nil {
-		return fmt.Errorf("failed to calculate API service IP: %w", err)
-	}
-
-	altNames.IPs = append(altNames.IPs, apiServiceIPs...)
+	altNames.IPs = append(altNames.IPs, k8sRoot.APIServerIPs...)
 
 	// Add kubernetes default svc with cluster domain to AltNames
 	altNames.DNSNames = append(altNames.DNSNames,
 		"kubernetes",
 		"kubernetes.default",
 		"kubernetes.default.svc",
-		"kubernetes.default.svc."+cfgProvider.Cluster().Network().DNSDomain(),
+		"kubernetes.default.svc."+k8sRoot.DNSDomain,
 	)
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().CA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.CA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
@@ -216,7 +155,7 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
 	}
 
-	k8sSecrets.Secrets().APIServer = x509.NewCertificateAndKeyFromKeyPair(apiServer)
+	k8sSecrets.APIServer = x509.NewCertificateAndKeyFromKeyPair(apiServer)
 
 	apiServerKubeletClient, err := x509.NewKeyPair(ca,
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
@@ -227,11 +166,9 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
 	}
 
-	k8sSecrets.Secrets().APIServerKubeletClient = x509.NewCertificateAndKeyFromKeyPair(apiServerKubeletClient)
+	k8sSecrets.APIServerKubeletClient = x509.NewCertificateAndKeyFromKeyPair(apiServerKubeletClient)
 
-	k8sSecrets.Secrets().ServiceAccount = cfgProvider.Cluster().ServiceAccount()
-
-	aggregatorCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sSecrets.Secrets().AggregatorCA)
+	aggregatorCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.AggregatorCA)
 	if err != nil {
 		return fmt.Errorf("failed to parse aggregator CA: %w", err)
 	}
@@ -244,20 +181,15 @@ func (ctrl *KubernetesController) updateSecrets(cfgProvider talosconfig.Provider
 		return fmt.Errorf("failed to generate aggregator cert: %w", err)
 	}
 
-	k8sSecrets.Secrets().FrontProxy = x509.NewCertificateAndKeyFromKeyPair(frontProxy)
-
-	k8sSecrets.Secrets().AESCBCEncryptionSecret = cfgProvider.Cluster().AESCBCEncryptionSecret()
+	k8sSecrets.FrontProxy = x509.NewCertificateAndKeyFromKeyPair(frontProxy)
 
 	var buf bytes.Buffer
 
-	if err = kubeconfig.GenerateAdmin(cfgProvider.Cluster(), &buf); err != nil {
+	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{k8sRoot: k8sRoot}, &buf); err != nil {
 		return fmt.Errorf("failed to generate admin kubeconfig: %w", err)
 	}
 
-	k8sSecrets.Secrets().AdminKubeconfig = buf.String()
-
-	k8sSecrets.Secrets().BootstrapTokenID = cfgProvider.Cluster().Token().ID()
-	k8sSecrets.Secrets().BootstrapTokenSecret = cfgProvider.Cluster().Token().Secret()
+	k8sSecrets.AdminKubeconfig = buf.String()
 
 	return nil
 }
@@ -300,4 +232,30 @@ func altNamesFromURLs(urls []string) *AltNames {
 	}
 
 	return &an
+}
+
+// generateAdminAdapter allows to translate input config into GenerateAdmin input.
+type generateAdminAdapter struct {
+	k8sRoot *secrets.RootKubernetesSpec
+}
+
+func (adapter *generateAdminAdapter) Name() string {
+	return adapter.k8sRoot.Name
+}
+
+func (adapter *generateAdminAdapter) Endpoint() *url.URL {
+	return adapter.k8sRoot.Endpoint
+}
+
+func (adapter *generateAdminAdapter) CA() *x509.PEMEncodedCertificateAndKey {
+	return adapter.k8sRoot.CA
+}
+
+func (adapter *generateAdminAdapter) AdminKubeconfig() config.AdminKubeconfig {
+	return adapter
+}
+
+func (adapter *generateAdminAdapter) CertLifetime() time.Duration {
+	// this certificate is not delivered to the user, it's used only internally by Talos
+	return x509.DefaultCertificateValidityDuration
 }

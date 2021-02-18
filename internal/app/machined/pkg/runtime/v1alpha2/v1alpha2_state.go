@@ -80,7 +80,9 @@ func NewState() (*State, error) {
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
+		&secrets.Etcd{},
 		&secrets.Kubernetes{},
+		&secrets.Root{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {
 			return nil, err
