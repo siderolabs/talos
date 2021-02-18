@@ -22,7 +22,6 @@ The following is a list of kernel parameters required by Talos:
 
 - `talos.platform`: set this to `packet`
 - `init_on_alloc=1`: required by KSPP
-- `init_on_free=1`: required by KSPP
 - `slab_nomerge`: required by KSPP
 - `pti=on`: required by KSPP
 

@@ -19,9 +19,12 @@ The following is a list of kernel parameters required by Talos:
 - `talos.config`: the HTTP(S) URL at which the machine data can be found
 - `talos.platform`: can be one of `aws`, `azure`, `container`, `digitalocean`, `gcp`, `metal`, `packet`, or `vmware`
 - `init_on_alloc=1`: required by KSPP
-- `init_on_free=1`: required by KSPP
 - `slab_nomerge`: required by KSPP
 - `pti=on`: required by KSPP
+
+Optional arguments:
+
+- `init_on_free=1`: advised by KSPP, if minimizing stale data lifetime is important
 
 ## CLI
 

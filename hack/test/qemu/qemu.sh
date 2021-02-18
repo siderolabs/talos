@@ -38,6 +38,6 @@ qemu-system-x86_64 \
     -nographic \
     -serial mon:stdio \
     -cdrom ${ISO} \
-    -append "talos.platform=metal init_on_alloc=1 init_on_free=1 slab_nomerge pti=on printk.devkmsg=on earlyprintk=serial,tty0,keep console=tty0 talos.config=metal-iso" \
+    -append "talos.platform=metal init_on_alloc=1 slab_nomerge pti=on printk.devkmsg=on earlyprintk=serial,tty0,keep console=tty0 talos.config=metal-iso" \
     -kernel ${KERNEL} \
     -initrd ${INITRD}

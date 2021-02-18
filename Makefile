@@ -9,7 +9,7 @@ DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.3.0-21-g0026740
-PKGS ?= v0.3.0-72-ga0bb6ab
+PKGS ?= v0.3.0-74-g6748819
 EXTRAS ?= v0.1.0-9-g302cc61
 GO_VERSION ?= 1.15
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
@@ -18,7 +18,7 @@ OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
-KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.20.2/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.20.4/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 CLUSTERCTL_VERSION ?= 0.3.14
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 SONOBUOY_VERSION ?= 0.19.0

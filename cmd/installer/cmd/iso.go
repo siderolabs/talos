@@ -29,7 +29,7 @@ terminal_output console
 menuentry "Talos ISO" {
 	set gfxmode=auto
 	set gfxpayload=text
-	linux /boot/vmlinuz init_on_alloc=1 init_on_free=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal
+	linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal
 	initrd /boot/initramfs.xz
 }`)
 

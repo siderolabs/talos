@@ -117,7 +117,6 @@ Talos 0.8 comes with new [KSPP requirements](https://kernsec.org/wiki/index.php/
 Following kernel arguments are mandatory for Talos to boot successfully:
 
 - `init_on_alloc=1`: required by KSPP
-- `init_on_free=1`: required by KSPP
 - `slab_nomerge`: required by KSPP
 - `pti=on`: required by KSPP
 

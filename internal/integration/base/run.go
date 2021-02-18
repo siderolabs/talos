@@ -169,16 +169,16 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 		}
 	}
 
-	if opts.stdoutEmpty {
-		suite.Assert().Empty(stdout.String(), "stdout should be empty")
-	} else {
-		suite.Assert().NotEmpty(stdout.String(), "stdout should be not empty")
-	}
-
 	if opts.stderrNotEmpty {
 		suite.Assert().NotEmpty(stderr.String(), "stderr should be not empty")
 	} else {
 		suite.Assert().Empty(stderr.String(), "stderr should be empty")
+	}
+
+	if opts.stdoutEmpty {
+		suite.Assert().Empty(stdout.String(), "stdout should be empty")
+	} else {
+		suite.Assert().NotEmpty(stdout.String(), "stdout should be not empty")
 	}
 
 	for _, rx := range opts.stdoutRegexps {
