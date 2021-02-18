@@ -68,10 +68,8 @@ func (suite *EtcdSuite) TestEtcdForfeitLeadership() {
 	var leader string
 
 	for _, node := range nodes {
-		resp, err := suite.Client.MachineClient.EtcdForfeitLeadership(client.WithNodes(suite.ctx, node), &machineapi.EtcdForfeitLeadershipRequest{})
+		resp, err := suite.Client.EtcdForfeitLeadership(client.WithNodes(suite.ctx, node), &machineapi.EtcdForfeitLeadershipRequest{})
 		suite.Require().NoError(err)
-
-		suite.Assert().Empty(resp.Messages[0].Metadata.Error, "node: %s", node)
 
 		if resp.Messages[0].GetMember() != "" {
 			leader = resp.Messages[0].GetMember()
@@ -107,18 +105,18 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
-	_, err := suite.Client.MachineClient.EtcdForfeitLeadership(nodeCtx, &machineapi.EtcdForfeitLeadershipRequest{})
+	_, err := suite.Client.EtcdForfeitLeadership(nodeCtx, &machineapi.EtcdForfeitLeadershipRequest{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.EtcdLeaveCluster(nodeCtx, &machineapi.EtcdLeaveClusterRequest{})
+	err = suite.Client.EtcdLeaveCluster(nodeCtx, &machineapi.EtcdLeaveClusterRequest{})
 	suite.Require().NoError(err)
 
-	services, err := suite.Client.MachineClient.ServiceList(nodeCtx, &empty.Empty{})
+	services, err := suite.Client.ServiceInfo(nodeCtx, "etcd")
 	suite.Require().NoError(err)
 
-	for _, service := range services.Messages[0].GetServices() {
-		if service.Id == "etcd" && service.State != "Finished" {
-			suite.Assert().Equal("Finished", service.State)
+	for _, service := range services {
+		if service.Service.Id == "etcd" {
+			suite.Assert().Equal("Finished", service.Service.State)
 		}
 	}
 

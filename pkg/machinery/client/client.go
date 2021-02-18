@@ -863,14 +863,14 @@ func (c *Client) EtcdLeaveCluster(ctx context.Context, req *machineapi.EtcdLeave
 }
 
 // EtcdForfeitLeadership makes node forfeit leadership in the etcd cluster.
-func (c *Client) EtcdForfeitLeadership(ctx context.Context, req *machineapi.EtcdForfeitLeadershipRequest, callOptions ...grpc.CallOption) error {
+func (c *Client) EtcdForfeitLeadership(ctx context.Context, req *machineapi.EtcdForfeitLeadershipRequest, callOptions ...grpc.CallOption) (*machineapi.EtcdForfeitLeadershipResponse, error) {
 	resp, err := c.MachineClient.EtcdForfeitLeadership(ctx, req, callOptions...)
 
-	if err == nil {
-		_, err = FilterMessages(resp, err)
-	}
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdForfeitLeadershipResponse) //nolint: errcheck
 
-	return err
+	return resp, err
 }
 
 // EtcdMemberList lists etcd members of the cluster.
