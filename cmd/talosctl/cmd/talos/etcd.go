@@ -42,7 +42,9 @@ var etcdForfeitLeadershipCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			return c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
+			_, err := c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
+
+			return err
 		})
 	},
 }
