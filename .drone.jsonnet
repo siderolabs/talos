@@ -330,10 +330,6 @@ local default_trigger = {
   },
 };
 
-local default_pipeline = Pipeline('default', default_steps) + default_trigger;
-
-// Full integration pipeline.
-
 local cron_trigger(schedules) = {
   trigger: {
     cron: {
@@ -342,6 +338,11 @@ local cron_trigger(schedules) = {
   },
 };
 
+local default_pipeline = Pipeline('default', default_steps) + default_trigger;
+
+local default_cron_pipeline = Pipeline('default', default_steps) + cron_trigger(['thrice-daily', 'nightly']);
+
+// Full integration pipeline.
 
 local default_pipeline_steps = [
   setup_ci,
@@ -411,11 +412,11 @@ local integration_pipelines = [
   Pipeline('integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted]) + integration_trigger(['integration-qemu-encrypted']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-qemu-encrypted', default_pipeline_steps + [integration_qemu_encrypted], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 
 
@@ -451,8 +452,8 @@ local e2e_pipelines = [
   Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws]) + cron_trigger(['thrice-daily','nightly']),
-  Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + cron_trigger(['thrice-daily','nightly']),
+  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws], [default_cron_pipeline]) + cron_trigger(['thrice-daily','nightly']),
+  Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp], [default_cron_pipeline]) + cron_trigger(['thrice-daily','nightly']),
 ];
 
 // Conformance pipeline.
