@@ -340,7 +340,7 @@ local cron_trigger(schedules) = {
 
 local default_pipeline = Pipeline('default', default_steps) + default_trigger;
 
-local default_cron_pipeline = Pipeline('default', default_steps) + cron_trigger(['thrice-daily', 'nightly']);
+local default_cron_pipeline = Pipeline('cron-default', default_steps) + cron_trigger(['thrice-daily', 'nightly']);
 
 // Full integration pipeline.
 
@@ -607,6 +607,7 @@ local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, uplo
 
 [
   default_pipeline,
+  default_cron_pipeline,
   upload_images_pipeline,
   release_pipeline,
 ] + integration_pipelines + e2e_pipelines + conformance_pipelines + [
