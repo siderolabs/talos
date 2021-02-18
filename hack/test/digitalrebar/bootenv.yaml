@@ -45,7 +45,7 @@ Templates:
 Kernel: 'vmlinuz'
 Initrds:
   - 'initramfs.xz'
-BootParams: 'console=tty0 ip=dhcp modules=loop,squashfs nomodeset init_on_alloc=1 init_on_free=1 slab_nomerge pti=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.platform=metal talos.config={{ .ProvisionerURL }}/files/{{.Param "talos/role"}}.yaml'
+BootParams: 'console=tty0 ip=dhcp modules=loop,squashfs nomodeset init_on_alloc=1 slab_nomerge pti=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 talos.platform=metal talos.config={{ .ProvisionerURL }}/files/{{.Param "talos/role"}}.yaml'
 RequiredParams: []
 OptionalParams:
   - 'talos/role'

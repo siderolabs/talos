@@ -7,7 +7,6 @@ package kernel
 // DefaultArgs returns the Talos default kernel commandline options.
 var DefaultArgs = []string{
 	"init_on_alloc=1",
-	"init_on_free=1",
 	"slab_nomerge=",
 	"pti=on",
 	"consoleblank=0",

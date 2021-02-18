@@ -64,7 +64,6 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
     "args": [
       "initrd=initramfs.xz",
       "init_on_alloc=1",
-      "init_on_free=1",
       "slab_nomerge",
       "pti=on",
       "console=tty0",
@@ -91,7 +90,6 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
     "args": [
       "initrd=initramfs.xz",
       "init_on_alloc=1",
-      "init_on_free=1",
       "slab_nomerge",
       "pti=on",
       "console=tty0",
@@ -116,7 +114,6 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
     "args": [
       "initrd=initramfs.xz",
       "init_on_alloc=1",
-      "init_on_free=1",
       "slab_nomerge",
       "pti=on",
       "console=tty0",
