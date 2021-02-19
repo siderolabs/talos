@@ -198,6 +198,12 @@ func (o *APID) syncKubeletPKI() {
 		}
 	}
 
+	if err := os.MkdirAll(constants.KubeletPKIDir, 0o700); err != nil {
+		log.Printf("failed creating kubelet PKI directory: %s", err)
+
+		return
+	}
+
 	copyAll()
 
 	o.ctx, o.cancel = context.WithCancel(context.Background())

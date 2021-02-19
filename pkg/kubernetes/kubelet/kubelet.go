@@ -7,17 +7,16 @@ package kubelet
 
 import (
 	"context"
-	"crypto/tls"
-	stdx509 "crypto/x509"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -26,37 +25,45 @@ import (
 //
 // Client can only talk to the local kubelet on the same node.
 type Client struct {
-	httpClient *http.Client
-	hostname   string
+	client *rest.RESTClient
 }
 
 // NewClient creates new kubelet API client.
-func NewClient(clientCert tls.Certificate) (*Client, error) {
-	rootCAs := stdx509.NewCertPool()
-
-	kubeletCert, err := ioutil.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
+func NewClient(clientCert, clientKey, caPEM []byte) (*Client, error) {
+	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, fmt.Errorf("error reading kubelet certificate: %w", err)
+		return nil, err
 	}
 
-	rootCAs.AppendCertsFromPEM(kubeletCert)
+	config := &rest.Config{
+		Host: fmt.Sprintf("https://127.0.0.1:%d/", constants.KubeletPort),
+		ContentConfig: rest.ContentConfig{
+			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs},
+		},
 
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-		RootCAs:      rootCAs,
-	}
-
-	client := &Client{
-		httpClient: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsConfig,
-			},
+		TLSClientConfig: rest.TLSClientConfig{
+			CertData:   clientCert,
+			KeyData:    clientKey,
+			CAData:     caPEM,
+			ServerName: hostname,
 		},
 	}
 
-	client.hostname, err = os.Hostname()
+	kubeletCert, err := ioutil.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
+	if err == nil {
+		config.CAData = kubeletCert
+	} else if err != nil {
+		// ignore if file doesn't exist, assume cert isn't self-signed
+		if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("error reading kubelet certificate: %w", err)
+		}
+	}
+
+	client := &Client{}
+
+	client.client, err = rest.UnversionedRESTClientFor(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building REST client: %w", err)
 	}
 
 	return client, nil
@@ -64,30 +71,9 @@ func NewClient(clientCert tls.Certificate) (*Client, error) {
 
 // Pods returns list of pods running on the kubelet.
 func (c *Client) Pods(ctx context.Context) (*v1.PodList, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s:%d/pods", c.hostname, constants.KubeletPort), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error building request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error performing request: %w", err)
-	}
-
-	defer func() {
-		io.Copy(ioutil.Discard, resp.Body) //nolint: errcheck
-		resp.Body.Close()                  //nolint: errcheck
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status response %d", resp.StatusCode)
-	}
-
 	var podList v1.PodList
 
-	if err = json.NewDecoder(resp.Body).Decode(&podList); err != nil {
-		return nil, fmt.Errorf("error decoding JSON response: %w", err)
-	}
+	err := c.client.Get().AbsPath("/pods/").Timeout(30 * time.Second).Do(ctx).Into(&podList)
 
-	return &podList, nil
+	return &podList, err
 }
