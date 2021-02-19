@@ -7,7 +7,6 @@ package k8s
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -65,6 +64,12 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			Kind:      controller.DependencyWeak,
 		},
 		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Kind:      controller.DependencyWeak,
+		},
+		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.BootstrapStatusType,
 			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
@@ -119,7 +124,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		rootSecretResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.cleanupPods(logger, nil); err != nil {
@@ -132,7 +137,22 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).Certs()
+		rootSecrets := rootSecretResource.(*secrets.Root).KubernetesSpec()
+
+		secretsResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				if err = ctrl.cleanupPods(logger, nil); err != nil {
+					return fmt.Errorf("error cleaning up static pods: %w", err)
+				}
+
+				continue
+			}
+
+			return err
+		}
+
+		secrets := secretsResource.(*secrets.Kubernetes).Certs()
 
 		bootstrapStatus, err := r.Get(ctx, v1alpha1.NewBootstrapStatus().Metadata())
 		if err != nil {
@@ -151,16 +171,6 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			}
 
 			continue
-		}
-
-		kubeletClientCert, err := tls.X509KeyPair(secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key)
-		if err != nil {
-			return fmt.Errorf("error loading apiserver kubelet client cert: %w", err)
-		}
-
-		kubeletClient, err = kubelet.NewClient(kubeletClientCert)
-		if err != nil {
-			return fmt.Errorf("error building kubelet client: %w", err)
 		}
 
 		staticPods, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
@@ -183,6 +193,13 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		if err = ctrl.cleanupPods(logger, staticPods.Items); err != nil {
 			return fmt.Errorf("error cleaning up static pods: %w", err)
+		}
+
+		// render static pods first, and attempt to build kubelet client last,
+		// as if kubelet issues certs from the API server, API server should be launched first.
+		kubeletClient, err = kubelet.NewClient(secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key, rootSecrets.CA.Crt)
+		if err != nil {
+			return fmt.Errorf("error building kubelet client: %w", err)
 		}
 	}
 }
