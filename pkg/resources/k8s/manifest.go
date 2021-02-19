@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/resource/core"
@@ -115,6 +116,13 @@ func (r *Manifest) SetYAML(yamlBytes []byte) error {
 		if err != nil {
 			return fmt.Errorf("error converting manifest to JSON: %w", err)
 		}
+
+		if bytes.Equal(jsonManifest, []byte("null")) || bytes.Equal(jsonManifest, []byte("{}")) {
+			// skip YAML docs which contain only comments
+			continue
+		}
+
+		log.Printf("jsonManifest = %v", string(jsonManifest))
 
 		obj := new(unstructured.Unstructured)
 
