@@ -718,24 +718,31 @@ func init() {
 			FieldName: "proxy",
 		},
 	}
-	ProxyConfigDoc.Fields = make([]encoder.Doc, 3)
-	ProxyConfigDoc.Fields[0].Name = "image"
-	ProxyConfigDoc.Fields[0].Type = "string"
+	ProxyConfigDoc.Fields = make([]encoder.Doc, 4)
+	ProxyConfigDoc.Fields[0].Name = "disabled"
+	ProxyConfigDoc.Fields[0].Type = "bool"
 	ProxyConfigDoc.Fields[0].Note = ""
-	ProxyConfigDoc.Fields[0].Description = "The container image used in the kube-proxy manifest."
-	ProxyConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the kube-proxy manifest."
+	ProxyConfigDoc.Fields[0].Description = "Disable kube-proxy deployment on cluster bootstrap."
+	ProxyConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable kube-proxy deployment on cluster bootstrap."
 
-	ProxyConfigDoc.Fields[0].AddExample("", clusterProxyImageExample)
-	ProxyConfigDoc.Fields[1].Name = "mode"
+	ProxyConfigDoc.Fields[0].AddExample("", false)
+	ProxyConfigDoc.Fields[1].Name = "image"
 	ProxyConfigDoc.Fields[1].Type = "string"
 	ProxyConfigDoc.Fields[1].Note = ""
-	ProxyConfigDoc.Fields[1].Description = "proxy mode of kube-proxy.\nThe default is 'iptables'."
-	ProxyConfigDoc.Fields[1].Comments[encoder.LineComment] = "proxy mode of kube-proxy."
-	ProxyConfigDoc.Fields[2].Name = "extraArgs"
-	ProxyConfigDoc.Fields[2].Type = "map[string]string"
+	ProxyConfigDoc.Fields[1].Description = "The container image used in the kube-proxy manifest."
+	ProxyConfigDoc.Fields[1].Comments[encoder.LineComment] = "The container image used in the kube-proxy manifest."
+
+	ProxyConfigDoc.Fields[1].AddExample("", clusterProxyImageExample)
+	ProxyConfigDoc.Fields[2].Name = "mode"
+	ProxyConfigDoc.Fields[2].Type = "string"
 	ProxyConfigDoc.Fields[2].Note = ""
-	ProxyConfigDoc.Fields[2].Description = "Extra arguments to supply to kube-proxy."
-	ProxyConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to kube-proxy."
+	ProxyConfigDoc.Fields[2].Description = "proxy mode of kube-proxy.\nThe default is 'iptables'."
+	ProxyConfigDoc.Fields[2].Comments[encoder.LineComment] = "proxy mode of kube-proxy."
+	ProxyConfigDoc.Fields[3].Name = "extraArgs"
+	ProxyConfigDoc.Fields[3].Type = "map[string]string"
+	ProxyConfigDoc.Fields[3].Note = ""
+	ProxyConfigDoc.Fields[3].Description = "Extra arguments to supply to kube-proxy."
+	ProxyConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra arguments to supply to kube-proxy."
 
 	SchedulerConfigDoc.Type = "SchedulerConfig"
 	SchedulerConfigDoc.Comments[encoder.LineComment] = "SchedulerConfig represents the kube scheduler configuration options."

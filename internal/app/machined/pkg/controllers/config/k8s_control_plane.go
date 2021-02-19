@@ -187,6 +187,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			PodCIDRs:     cfgProvider.Cluster().Network().PodCIDR(),
 			FirstPodCIDR: strings.Split(cfgProvider.Cluster().Network().PodCIDR(), ",")[0],
 
+			ProxyEnabled:   cfgProvider.Cluster().Proxy().Enabled(),
 			ProxyImage:     cfgProvider.Cluster().Proxy().Image(),
 			ProxyMode:      cfgProvider.Cluster().Proxy().Mode(),
 			ProxyExtraArgs: cfgProvider.Cluster().Proxy().ExtraArgs(),

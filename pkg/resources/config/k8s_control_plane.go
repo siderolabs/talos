@@ -63,6 +63,8 @@ type K8sControlPlaneSchedulerSpec struct {
 }
 
 // K8sManifestsSpec is configuration for manifests.
+//
+//nolint: malign
 type K8sManifestsSpec struct {
 	Server        string `yaml:"string"`
 	ClusterDomain string `yaml:"clusterDomain"`
@@ -70,6 +72,7 @@ type K8sManifestsSpec struct {
 	PodCIDRs     string `yaml:"podCIDRs"`
 	FirstPodCIDR string `yaml:"firstPodCIDR"`
 
+	ProxyEnabled   bool              `yaml:"proxyEnabled"`
 	ProxyImage     string            `yaml:"proxyImage"`
 	ProxyMode      string            `yaml:"proxyMode"`
 	ProxyExtraArgs map[string]string `yaml:"proxyExtraArgs"`

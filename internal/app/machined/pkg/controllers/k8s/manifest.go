@@ -159,7 +159,6 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 		{"01-csr-renewal-role-binding", csrRenewalRoleBindingTemplate},
 		{"02-kube-system-sa-role-binding", kubeSystemSARoleBindingTemplate},
 		{"03-default-pod-security-policy", podSecurityPolicy},
-		{"10-kube-proxy", kubeProxyTemplate},
 		{"11-kube-config-in-cluster", kubeConfigInClusterTemplate},
 		{"11-core-dns", coreDNSTemplate},
 		{"11-core-dns-svc", coreDNSSvcTemplate},
@@ -177,6 +176,14 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 		defaultManifests = append(defaultManifests,
 			[]manifestDesc{
 				{"05-flannel", flannelTemplate},
+			}...,
+		)
+	}
+
+	if cfg.ProxyEnabled {
+		defaultManifests = append(defaultManifests,
+			[]manifestDesc{
+				{"10-kube-proxy", kubeProxyTemplate},
 			}...,
 		)
 	}

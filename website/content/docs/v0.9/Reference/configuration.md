@@ -2187,6 +2187,29 @@ extraArgs:
 
 <div class="dd">
 
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable kube-proxy deployment on cluster bootstrap.
+
+
+
+Examples:
+
+
+``` yaml
+disabled: false
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>image</code>  <i>string</i>
 
 </div>

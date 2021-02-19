@@ -894,6 +894,11 @@ type ControllerManagerConfig struct {
 // ProxyConfig represents the kube proxy configuration options.
 type ProxyConfig struct {
 	//   description: |
+	//     Disable kube-proxy deployment on cluster bootstrap.
+	//   examples:
+	//     - value: false
+	Disabled bool `yaml:"disabled,omitempty"`
+	//   description: |
 	//     The container image used in the kube-proxy manifest.
 	//   examples:
 	//     - value: clusterProxyImageExample
