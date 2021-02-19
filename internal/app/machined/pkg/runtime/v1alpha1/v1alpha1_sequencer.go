@@ -262,6 +262,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"bootloader",
 		UpdateBootloader,
+	).AppendWhen(
+		r.Config().Machine().Type() != machine.TypeJoin,
+		"checkControlPlaneStatus",
+		CheckControlPlaneStatus,
 	)
 
 	return phases
