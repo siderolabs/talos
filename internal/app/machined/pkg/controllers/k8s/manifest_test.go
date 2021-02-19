@@ -67,6 +67,7 @@ func (suite *ManifestSuite) startRuntime() {
 	}()
 }
 
+//nolint: dupl
 func (suite *ManifestSuite) assertManifests(manifests []string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {

@@ -39,6 +39,15 @@ func init() {
 	})
 }
 
+func mustParseURL(uri string) *url.URL {
+	u, err := url.Parse(uri)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
+
 var (
 	// Examples section.
 
@@ -301,6 +310,14 @@ var (
 
 	clusterAdminKubeconfigExample = AdminKubeconfigConfig{
 		AdminKubeconfigCertLifetime: time.Hour,
+	}
+
+	clusterEndpointExample1 = &Endpoint{
+		mustParseURL("https://1.2.3.4:6443"),
+	}
+
+	clusterEndpointExample2 = &Endpoint{
+		mustParseURL("https://cluster1.internal:6443"),
 	}
 
 	kubeletExtraMountsExample = []specs.Mount{
@@ -854,8 +871,8 @@ type ControlPlaneConfig struct {
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 	//     It is single-valued, and may optionally include a port number.
 	//   examples:
-	//     - value: '"https://1.2.3.4:6443"'
-	//     - value: '"https://cluster1.internal:6443"'
+	//     - value: clusterEndpointExample1
+	//     - value: clusterEndpointExample2
 	Endpoint *Endpoint `yaml:"endpoint"`
 	//   description: |
 	//     The port that the API server listens on internally.
@@ -875,6 +892,9 @@ type APIServerConfig struct {
 	//     Extra arguments to supply to the API server.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 	//   description: |
+	//     Extra volumes to mount to the API server static pod.
+	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
+	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
 	CertSANs []string `yaml:"certSANs,omitempty"`
 }
@@ -889,6 +909,9 @@ type ControllerManagerConfig struct {
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     Extra volumes to mount to the controller manager static pod.
+	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 }
 
 // ProxyConfig represents the kube proxy configuration options.
@@ -922,6 +945,9 @@ type SchedulerConfig struct {
 	//   description: |
 	//     Extra arguments to supply to the scheduler.
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     Extra volumes to mount to the scheduler static pod.
+	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 }
 
 // EtcdConfig represents the etcd configuration options.
@@ -1467,4 +1493,23 @@ type SystemDiskEncryptionConfig struct {
 	//   description: |
 	//     Ephemeral partition encryption.
 	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
+}
+
+// VolumeMountConfig struct describes extra volume mount for the static pods.
+type VolumeMountConfig struct {
+	//   description: |
+	//     Path on the host.
+	//   examples:
+	//     - value: '"/var/lib/auth"'
+	VolumeHostPath string `yaml:"hostPath"`
+	//   description: |
+	//     Path in the container.
+	//   examples:
+	//     - value: '"/etc/kubernetes/auth"'
+	VolumeMountPath string `yaml:"mountPath"`
+	//   description: |
+	//     Mount the volume read only.
+	//   examples:
+	//     - value: true
+	VolumeReadOnly bool `yaml:"readonly,omitempty"`
 }

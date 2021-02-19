@@ -2093,6 +2093,19 @@ Extra arguments to supply to the API server.
 
 <div class="dd">
 
+<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
+
+</div>
+<div class="dt">
+
+Extra volumes to mount to the API server static pod.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>certSANs</code>  <i>[]string</i>
 
 </div>
@@ -2157,6 +2170,19 @@ image: k8s.gcr.io/kube-controller-manager:v1.20.4
 <div class="dt">
 
 Extra arguments to supply to the controller manager.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
+
+</div>
+<div class="dt">
+
+Extra volumes to mount to the controller manager static pod.
 
 </div>
 
@@ -2311,6 +2337,19 @@ image: k8s.gcr.io/kube-scheduler:v1.20.4
 <div class="dt">
 
 Extra arguments to supply to the scheduler.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
+
+</div>
+<div class="dt">
+
+Extra volumes to mount to the scheduler static pod.
 
 </div>
 
@@ -4461,6 +4500,95 @@ State partition encryption.
 <div class="dt">
 
 Ephemeral partition encryption.
+
+</div>
+
+<hr />
+
+
+
+
+
+## VolumeMountConfig
+VolumeMountConfig struct describes extra volume mount for the static pods.
+
+Appears in:
+
+
+- <code><a href="#apiserverconfig">APIServerConfig</a>.extraVolumes</code>
+
+- <code><a href="#controllermanagerconfig">ControllerManagerConfig</a>.extraVolumes</code>
+
+- <code><a href="#schedulerconfig">SchedulerConfig</a>.extraVolumes</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>hostPath</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Path on the host.
+
+
+
+Examples:
+
+
+``` yaml
+hostPath: /var/lib/auth
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>mountPath</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Path in the container.
+
+
+
+Examples:
+
+
+``` yaml
+mountPath: /etc/kubernetes/auth
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>readonly</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Mount the volume read only.
+
+
+
+Examples:
+
+
+``` yaml
+readonly: true
+```
+
 
 </div>
 
