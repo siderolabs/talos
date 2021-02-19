@@ -384,6 +384,11 @@ func (c *ClusterConfig) Proxy() config.Proxy {
 	return c.ProxyConfig
 }
 
+// Enabled implements the config.Provider interface.
+func (p *ProxyConfig) Enabled() bool {
+	return !p.Disabled
+}
+
 // Image implements the config.Provider interface.
 func (p *ProxyConfig) Image() string {
 	image := p.ContainerImage

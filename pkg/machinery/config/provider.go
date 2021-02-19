@@ -302,6 +302,8 @@ type ControllerManager interface {
 // Proxy defines the requirements for a config that pertains to the kube-proxy
 // options.
 type Proxy interface {
+	Enabled() bool
+
 	Image() string
 
 	// Mode indicates the proxy mode for kube-proxy.  By default, this is `iptables`.  Other options include `ipvs`.
