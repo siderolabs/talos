@@ -7,9 +7,10 @@ package k8s
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
+	"text/template"
 
 	"github.com/AlekSi/pointer"
 	"github.com/talos-systems/os-runtime/pkg/controller"
@@ -137,6 +138,12 @@ type renderedManifest struct {
 	data []byte
 }
 
+func jsonify(input string) (string, error) {
+	out, err := json.Marshal(input)
+
+	return string(out), err
+}
+
 func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secrets.RootKubernetesSpec) ([]renderedManifest, error) {
 	templateConfig := struct {
 		config.K8sManifestsSpec
@@ -191,7 +198,11 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 	manifests := make([]renderedManifest, len(defaultManifests))
 
 	for i := range defaultManifests {
-		tmpl, err := template.New(defaultManifests[i].name).Parse(string(defaultManifests[i].template))
+		tmpl, err := template.New(defaultManifests[i].name).
+			Funcs(template.FuncMap{
+				"json": jsonify,
+			}).
+			Parse(string(defaultManifests[i].template))
 		if err != nil {
 			return nil, fmt.Errorf("error parsing manifest template %q: %w", defaultManifests[i].name, err)
 		}

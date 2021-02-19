@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/resource/core"
@@ -121,8 +120,6 @@ func (r *Manifest) SetYAML(yamlBytes []byte) error {
 			// skip YAML docs which contain only comments
 			continue
 		}
-
-		log.Printf("jsonManifest = %v", string(jsonManifest))
 
 		obj := new(unstructured.Unstructured)
 
