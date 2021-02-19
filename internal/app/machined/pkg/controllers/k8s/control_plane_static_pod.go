@@ -129,6 +129,37 @@ func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r 
 	return nil
 }
 
+func volumeMounts(volumes []config.K8sExtraVolume) []v1.VolumeMount {
+	result := make([]v1.VolumeMount, 0, len(volumes))
+
+	for _, volume := range volumes {
+		result = append(result, v1.VolumeMount{
+			Name:      volume.Name,
+			MountPath: volume.MountPath,
+			ReadOnly:  volume.ReadOnly,
+		})
+	}
+
+	return result
+}
+
+func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
+	result := make([]v1.Volume, 0, len(volumes))
+
+	for _, volume := range volumes {
+		result = append(result, v1.Volume{
+			Name: volume.Name,
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: volume.HostPath,
+				},
+			},
+		})
+	}
+
+	return result
+}
+
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *log.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.APIServer()
 
@@ -214,13 +245,13 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								},
 							},
 						},
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
 								MountPath: constants.KubernetesAPIServerSecretsDir,
 								ReadOnly:  true,
 							},
-						},
+						}, volumeMounts(cfg.ExtraVolumes)...),
 					},
 				},
 				HostNetwork: true,
@@ -228,7 +259,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 					RunAsNonRoot: pointer.ToBool(true),
 					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
 				},
-				Volumes: []v1.Volume{
+				Volumes: append([]v1.Volume{
 					{
 						Name: "secrets",
 						VolumeSource: v1.VolumeSource{
@@ -237,7 +268,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 							},
 						},
 					},
-				},
+				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
 
@@ -295,13 +326,13 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						Name:    "kube-controller-manager",
 						Image:   cfg.Image,
 						Command: args,
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
 								MountPath: constants.KubernetesControllerManagerSecretsDir,
 								ReadOnly:  true,
 							},
-						},
+						}, volumeMounts(cfg.ExtraVolumes)...),
 						LivenessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
@@ -319,7 +350,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 					RunAsNonRoot: pointer.ToBool(true),
 					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
 				},
-				Volumes: []v1.Volume{
+				Volumes: append([]v1.Volume{
 					{
 						Name: "secrets",
 						VolumeSource: v1.VolumeSource{
@@ -328,7 +359,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 							},
 						},
 					},
-				},
+				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
 
@@ -377,13 +408,13 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						Name:    "kube-scheduler",
 						Image:   cfg.Image,
 						Command: args,
-						VolumeMounts: []v1.VolumeMount{
+						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
 								MountPath: constants.KubernetesSchedulerSecretsDir,
 								ReadOnly:  true,
 							},
-						},
+						}, volumeMounts(cfg.ExtraVolumes)...),
 						LivenessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
@@ -401,7 +432,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 					RunAsNonRoot: pointer.ToBool(true),
 					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
 				},
-				Volumes: []v1.Volume{
+				Volumes: append([]v1.Volume{
 					{
 						Name: "secrets",
 						VolumeSource: v1.VolumeSource{
@@ -410,7 +441,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 							},
 						},
 					},
-				},
+				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
 

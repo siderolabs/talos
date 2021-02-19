@@ -290,6 +290,7 @@ type CNI interface {
 type APIServer interface {
 	Image() string
 	ExtraArgs() map[string]string
+	ExtraVolumes() []VolumeMount
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related
@@ -297,6 +298,7 @@ type APIServer interface {
 type ControllerManager interface {
 	Image() string
 	ExtraArgs() map[string]string
+	ExtraVolumes() []VolumeMount
 }
 
 // Proxy defines the requirements for a config that pertains to the kube-proxy
@@ -318,6 +320,7 @@ type Proxy interface {
 type Scheduler interface {
 	Image() string
 	ExtraArgs() map[string]string
+	ExtraVolumes() []VolumeMount
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
@@ -372,4 +375,12 @@ type Encryption interface {
 // SystemDiskEncryption accumulates settings for all system partitions encryption.
 type SystemDiskEncryption interface {
 	Get(label string) Encryption
+}
+
+// VolumeMount describes extra volume mount for the static pods.
+type VolumeMount interface {
+	Name() string
+	HostPath() string
+	MountPath() string
+	ReadOnly() bool
 }

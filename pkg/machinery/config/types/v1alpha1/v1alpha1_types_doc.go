@@ -51,6 +51,7 @@ var (
 	RegistryAuthConfigDoc         encoder.Doc
 	RegistryTLSConfigDoc          encoder.Doc
 	SystemDiskEncryptionConfigDoc encoder.Doc
+	VolumeMountConfigDoc          encoder.Doc
 )
 
 func init() {
@@ -614,9 +615,9 @@ func init() {
 	EndpointDoc.Comments[encoder.LineComment] = "Endpoint represents the endpoint URL parsed out of the machine config."
 	EndpointDoc.Description = "Endpoint represents the endpoint URL parsed out of the machine config."
 
-	EndpointDoc.AddExample("", "https://1.2.3.4:6443")
+	EndpointDoc.AddExample("", clusterEndpointExample1)
 
-	EndpointDoc.AddExample("", "https://cluster1.internal:6443")
+	EndpointDoc.AddExample("", clusterEndpointExample2)
 	EndpointDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "ControlPlaneConfig",
@@ -643,9 +644,9 @@ func init() {
 	ControlPlaneConfigDoc.Fields[0].Description = "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number."
 	ControlPlaneConfigDoc.Fields[0].Comments[encoder.LineComment] = "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname."
 
-	ControlPlaneConfigDoc.Fields[0].AddExample("", "https://1.2.3.4:6443")
+	ControlPlaneConfigDoc.Fields[0].AddExample("", clusterEndpointExample1)
 
-	ControlPlaneConfigDoc.Fields[0].AddExample("", "https://cluster1.internal:6443")
+	ControlPlaneConfigDoc.Fields[0].AddExample("", clusterEndpointExample2)
 	ControlPlaneConfigDoc.Fields[1].Name = "localAPIServerPort"
 	ControlPlaneConfigDoc.Fields[1].Type = "int"
 	ControlPlaneConfigDoc.Fields[1].Note = ""
@@ -663,7 +664,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 3)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 4)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -676,11 +677,16 @@ func init() {
 	APIServerConfigDoc.Fields[1].Note = ""
 	APIServerConfigDoc.Fields[1].Description = "Extra arguments to supply to the API server."
 	APIServerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the API server."
-	APIServerConfigDoc.Fields[2].Name = "certSANs"
-	APIServerConfigDoc.Fields[2].Type = "[]string"
+	APIServerConfigDoc.Fields[2].Name = "extraVolumes"
+	APIServerConfigDoc.Fields[2].Type = "[]VolumeMountConfig"
 	APIServerConfigDoc.Fields[2].Note = ""
-	APIServerConfigDoc.Fields[2].Description = "Extra certificate subject alternative names for the API server's certificate."
-	APIServerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
+	APIServerConfigDoc.Fields[2].Description = "Extra volumes to mount to the API server static pod."
+	APIServerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the API server static pod."
+	APIServerConfigDoc.Fields[3].Name = "certSANs"
+	APIServerConfigDoc.Fields[3].Type = "[]string"
+	APIServerConfigDoc.Fields[3].Note = ""
+	APIServerConfigDoc.Fields[3].Description = "Extra certificate subject alternative names for the API server's certificate."
+	APIServerConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
 
 	ControllerManagerConfigDoc.Type = "ControllerManagerConfig"
 	ControllerManagerConfigDoc.Comments[encoder.LineComment] = "ControllerManagerConfig represents the kube controller manager configuration options."
@@ -693,7 +699,7 @@ func init() {
 			FieldName: "controllerManager",
 		},
 	}
-	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 2)
+	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 3)
 	ControllerManagerConfigDoc.Fields[0].Name = "image"
 	ControllerManagerConfigDoc.Fields[0].Type = "string"
 	ControllerManagerConfigDoc.Fields[0].Note = ""
@@ -706,6 +712,11 @@ func init() {
 	ControllerManagerConfigDoc.Fields[1].Note = ""
 	ControllerManagerConfigDoc.Fields[1].Description = "Extra arguments to supply to the controller manager."
 	ControllerManagerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the controller manager."
+	ControllerManagerConfigDoc.Fields[2].Name = "extraVolumes"
+	ControllerManagerConfigDoc.Fields[2].Type = "[]VolumeMountConfig"
+	ControllerManagerConfigDoc.Fields[2].Note = ""
+	ControllerManagerConfigDoc.Fields[2].Description = "Extra volumes to mount to the controller manager static pod."
+	ControllerManagerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the controller manager static pod."
 
 	ProxyConfigDoc.Type = "ProxyConfig"
 	ProxyConfigDoc.Comments[encoder.LineComment] = "ProxyConfig represents the kube proxy configuration options."
@@ -755,7 +766,7 @@ func init() {
 			FieldName: "scheduler",
 		},
 	}
-	SchedulerConfigDoc.Fields = make([]encoder.Doc, 2)
+	SchedulerConfigDoc.Fields = make([]encoder.Doc, 3)
 	SchedulerConfigDoc.Fields[0].Name = "image"
 	SchedulerConfigDoc.Fields[0].Type = "string"
 	SchedulerConfigDoc.Fields[0].Note = ""
@@ -768,6 +779,11 @@ func init() {
 	SchedulerConfigDoc.Fields[1].Note = ""
 	SchedulerConfigDoc.Fields[1].Description = "Extra arguments to supply to the scheduler."
 	SchedulerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the scheduler."
+	SchedulerConfigDoc.Fields[2].Name = "extraVolumes"
+	SchedulerConfigDoc.Fields[2].Type = "[]VolumeMountConfig"
+	SchedulerConfigDoc.Fields[2].Note = ""
+	SchedulerConfigDoc.Fields[2].Description = "Extra volumes to mount to the scheduler static pod."
+	SchedulerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the scheduler static pod."
 
 	EtcdConfigDoc.Type = "EtcdConfig"
 	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."
@@ -1600,6 +1616,46 @@ func init() {
 	SystemDiskEncryptionConfigDoc.Fields[1].Note = ""
 	SystemDiskEncryptionConfigDoc.Fields[1].Description = "Ephemeral partition encryption."
 	SystemDiskEncryptionConfigDoc.Fields[1].Comments[encoder.LineComment] = "Ephemeral partition encryption."
+
+	VolumeMountConfigDoc.Type = "VolumeMountConfig"
+	VolumeMountConfigDoc.Comments[encoder.LineComment] = "VolumeMountConfig struct describes extra volume mount for the static pods."
+	VolumeMountConfigDoc.Description = "VolumeMountConfig struct describes extra volume mount for the static pods."
+	VolumeMountConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "APIServerConfig",
+			FieldName: "extraVolumes",
+		},
+		{
+			TypeName:  "ControllerManagerConfig",
+			FieldName: "extraVolumes",
+		},
+		{
+			TypeName:  "SchedulerConfig",
+			FieldName: "extraVolumes",
+		},
+	}
+	VolumeMountConfigDoc.Fields = make([]encoder.Doc, 3)
+	VolumeMountConfigDoc.Fields[0].Name = "hostPath"
+	VolumeMountConfigDoc.Fields[0].Type = "string"
+	VolumeMountConfigDoc.Fields[0].Note = ""
+	VolumeMountConfigDoc.Fields[0].Description = "Path on the host."
+	VolumeMountConfigDoc.Fields[0].Comments[encoder.LineComment] = "Path on the host."
+
+	VolumeMountConfigDoc.Fields[0].AddExample("", "/var/lib/auth")
+	VolumeMountConfigDoc.Fields[1].Name = "mountPath"
+	VolumeMountConfigDoc.Fields[1].Type = "string"
+	VolumeMountConfigDoc.Fields[1].Note = ""
+	VolumeMountConfigDoc.Fields[1].Description = "Path in the container."
+	VolumeMountConfigDoc.Fields[1].Comments[encoder.LineComment] = "Path in the container."
+
+	VolumeMountConfigDoc.Fields[1].AddExample("", "/etc/kubernetes/auth")
+	VolumeMountConfigDoc.Fields[2].Name = "readonly"
+	VolumeMountConfigDoc.Fields[2].Type = "bool"
+	VolumeMountConfigDoc.Fields[2].Note = ""
+	VolumeMountConfigDoc.Fields[2].Description = "Mount the volume read only."
+	VolumeMountConfigDoc.Fields[2].Comments[encoder.LineComment] = "Mount the volume read only."
+
+	VolumeMountConfigDoc.Fields[2].AddExample("", true)
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -1762,6 +1818,10 @@ func (_ SystemDiskEncryptionConfig) Doc() *encoder.Doc {
 	return &SystemDiskEncryptionConfigDoc
 }
 
+func (_ VolumeMountConfig) Doc() *encoder.Doc {
+	return &VolumeMountConfigDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1808,6 +1868,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryAuthConfigDoc,
 			&RegistryTLSConfigDoc,
 			&SystemDiskEncryptionConfigDoc,
+			&VolumeMountConfigDoc,
 		},
 	}
 }

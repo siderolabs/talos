@@ -86,6 +86,11 @@ func (r *StaticPod) ResourceDefinition() core.ResourceDefinitionSpec {
 	}
 }
 
+// Pod returns pod definition.
+func (r *StaticPod) Pod() *v1.Pod {
+	return r.spec.Pod
+}
+
 // SetPod sets pod definition.
 func (r *StaticPod) SetPod(podSpec *v1.Pod) {
 	r.spec.Pod = podSpec

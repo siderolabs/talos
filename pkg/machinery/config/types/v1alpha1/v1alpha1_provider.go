@@ -350,6 +350,17 @@ func (a *APIServerConfig) ExtraArgs() map[string]string {
 	return a.ExtraArgsConfig
 }
 
+// ExtraVolumes implements the config.Provider interface.
+func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
+	volumes := make([]config.VolumeMount, 0, len(a.ExtraVolumesConfig))
+
+	for _, volume := range a.ExtraVolumesConfig {
+		volumes = append(volumes, volume)
+	}
+
+	return volumes
+}
+
 // ControllerManager implements the config.Provider interface.
 func (c *ClusterConfig) ControllerManager() config.ControllerManager {
 	if c.ControllerManagerConfig == nil {
@@ -373,6 +384,17 @@ func (c *ControllerManagerConfig) Image() string {
 // ExtraArgs implements the config.Provider interface.
 func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 	return c.ExtraArgsConfig
+}
+
+// ExtraVolumes implements the config.Provider interface.
+func (c *ControllerManagerConfig) ExtraVolumes() []config.VolumeMount {
+	volumes := make([]config.VolumeMount, 0, len(c.ExtraVolumesConfig))
+
+	for _, volume := range c.ExtraVolumesConfig {
+		volumes = append(volumes, volume)
+	}
+
+	return volumes
 }
 
 // Proxy implements the config.Provider interface.
@@ -449,8 +471,23 @@ func (s *SchedulerConfig) ExtraArgs() map[string]string {
 	return s.ExtraArgsConfig
 }
 
+// ExtraVolumes implements the config.Provider interface.
+func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
+	volumes := make([]config.VolumeMount, 0, len(s.ExtraVolumesConfig))
+
+	for _, volume := range s.ExtraVolumesConfig {
+		volumes = append(volumes, volume)
+	}
+
+	return volumes
+}
+
 // Etcd implements the config.Provider interface.
 func (c *ClusterConfig) Etcd() config.Etcd {
+	if c.EtcdConfig == nil {
+		c.EtcdConfig = &EtcdConfig{}
+	}
+
 	return c.EtcdConfig
 }
 
@@ -1261,4 +1298,24 @@ func (e *SystemDiskEncryptionConfig) Get(label string) config.Encryption {
 	}
 
 	return nil
+}
+
+// HostPath implements the config.VolumeMount interface.
+func (v VolumeMountConfig) HostPath() string {
+	return v.VolumeHostPath
+}
+
+// MountPath implements the config.VolumeMount interface.
+func (v VolumeMountConfig) MountPath() string {
+	return v.VolumeMountPath
+}
+
+// Name implements the config.VolumeMount interface.
+func (v VolumeMountConfig) Name() string {
+	return strings.ReplaceAll(v.VolumeMountPath, "/", "-")
+}
+
+// ReadOnly implements the config.VolumeMount interface.
+func (v VolumeMountConfig) ReadOnly() bool {
+	return v.VolumeReadOnly
 }

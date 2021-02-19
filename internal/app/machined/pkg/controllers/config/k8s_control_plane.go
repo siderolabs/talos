@@ -113,6 +113,21 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 	}
 }
 
+func convertVolumes(volumes []talosconfig.VolumeMount) []config.K8sExtraVolume {
+	result := make([]config.K8sExtraVolume, 0, len(volumes))
+
+	for _, volume := range volumes {
+		result = append(result, config.K8sExtraVolume{
+			Name:      volume.Name(),
+			HostPath:  volume.HostPath(),
+			MountPath: volume.MountPath(),
+			ReadOnly:  volume.ReadOnly(),
+		})
+	}
+
+	return result
+}
+
 func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Update(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
@@ -123,6 +138,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
 			ServiceCIDR:          cfgProvider.Cluster().Network().ServiceCIDR(),
 			ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),
+			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 		})
 
 		return nil
@@ -137,6 +153,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 			PodCIDR:       cfgProvider.Cluster().Network().PodCIDR(),
 			ServiceCIDR:   cfgProvider.Cluster().Network().ServiceCIDR(),
 			ExtraArgs:     cfgProvider.Cluster().ControllerManager().ExtraArgs(),
+			ExtraVolumes:  convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
 		})
 
 		return nil
@@ -146,8 +163,9 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Update(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
-			Image:     cfgProvider.Cluster().Scheduler().Image(),
-			ExtraArgs: cfgProvider.Cluster().Scheduler().ExtraArgs(),
+			Image:        cfgProvider.Cluster().Scheduler().Image(),
+			ExtraArgs:    cfgProvider.Cluster().Scheduler().ExtraArgs(),
+			ExtraVolumes: convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
 		})
 
 		return nil

@@ -36,6 +36,14 @@ type K8sControlPlane struct {
 	spec interface{}
 }
 
+// K8sExtraVolume is a configuration of extra volume.
+type K8sExtraVolume struct {
+	Name      string `yaml:"name"`
+	HostPath  string `yaml:"hostPath"`
+	MountPath string `yaml:"mountPath"`
+	ReadOnly  bool   `yaml:"readonly"`
+}
+
 // K8sControlPlaneAPIServerSpec is configuration for kube-apiserver.
 type K8sControlPlaneAPIServerSpec struct {
 	Image                string            `yaml:"image"`
@@ -45,6 +53,7 @@ type K8sControlPlaneAPIServerSpec struct {
 	LocalPort            int               `yaml:"localPort"`
 	ServiceCIDR          string            `yaml:"serviceCIDR"`
 	ExtraArgs            map[string]string `yaml:"extraArgs"`
+	ExtraVolumes         []K8sExtraVolume  `yaml:"extraVolumes"`
 }
 
 // K8sControlPlaneControllerManagerSpec is configuration for kube-controller-manager.
@@ -54,12 +63,14 @@ type K8sControlPlaneControllerManagerSpec struct {
 	PodCIDR       string            `yaml:"podCIDR"`
 	ServiceCIDR   string            `yaml:"serviceCIDR"`
 	ExtraArgs     map[string]string `yaml:"extraArgs"`
+	ExtraVolumes  []K8sExtraVolume  `yaml:"extraVolumes"`
 }
 
 // K8sControlPlaneSchedulerSpec is configuration for kube-scheduler.
 type K8sControlPlaneSchedulerSpec struct {
-	Image     string            `yaml:"image"`
-	ExtraArgs map[string]string `yaml:"extraArgs"`
+	Image        string            `yaml:"image"`
+	ExtraArgs    map[string]string `yaml:"extraArgs"`
+	ExtraVolumes []K8sExtraVolume  `yaml:"extraVolumes"`
 }
 
 // K8sManifestsSpec is configuration for manifests.
