@@ -141,7 +141,7 @@ spec:
         - --proxy-mode={{ .ProxyMode }}
         - --conntrack-max-per-core=0
         {{- range $k, $v := .ProxyExtraArgs }}
-        - --{{ $k }}={{ $v }}
+        - {{ printf "--%s=%s" $k $v | json }}
         {{- end }}
         env:
           - name: NODE_NAME
