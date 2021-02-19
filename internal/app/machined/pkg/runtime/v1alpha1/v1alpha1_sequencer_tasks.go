@@ -64,6 +64,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	resourcev1alpha1 "github.com/talos-systems/talos/pkg/resources/v1alpha1"
 	"github.com/talos-systems/talos/pkg/sysctl"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -1802,4 +1803,22 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		return nil
 	}, "activateLogicalVolumes"
+}
+
+// CheckControlPlaneStatus represents the CheckControlPlaneStatus task.
+func CheckControlPlaneStatus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		res, err := r.State().V1Alpha2().Resources().Get(ctx, resourcev1alpha1.NewBootstrapStatus().Metadata())
+		if err != nil {
+			logger.Printf("error getting bootstrap status: %s", err)
+
+			return nil
+		}
+
+		if res.(*resourcev1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
+			log.Printf("WARNING: Talos is running self-hosted control plane, convert to static pods using `talosctl convert-k8s`.")
+		}
+
+		return nil
+	}, "checkControlPlaneStatus"
 }
