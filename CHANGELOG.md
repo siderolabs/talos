@@ -1,4 +1,12 @@
 
+<a name="v0.8.4"></a>
+## [v0.8.4](https://github.com/talos-systems/talos/compare/v0.8.3...v0.8.4) (2021-02-17)
+
+### Fix
+
+* drop cri dependency on etcd
+
+
 <a name="v0.8.3"></a>
 ## [v0.8.3](https://github.com/talos-systems/talos/compare/v0.8.2...v0.8.3) (2021-02-11)
 
@@ -8,6 +16,10 @@
 * correctly extract wrapped error messages
 * update DHCP client to use Request-Ack sequence after an Offer
 * checkpoint controller-manager and scheduler
+
+### Release
+
+* **v0.8.3:** prepare release
 
 
 <a name="v0.8.2"></a>
@@ -276,4 +288,3 @@
 ### Test
 
 * update integration test versions, clean up names
-
