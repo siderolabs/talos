@@ -28,6 +28,7 @@ type UpgradeOptions struct {
 
 	extraUpdaters                []daemonsetUpdater
 	podCheckpointerExtraUpdaters []daemonsetUpdater
+	masterNodes                  []string
 }
 
 type daemonsetUpdater func(ds string, daemonset *appsv1.DaemonSet) error

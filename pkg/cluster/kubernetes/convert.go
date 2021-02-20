@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -63,7 +64,7 @@ func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options C
 		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
 
-	options.masterNodes, err = k8sClient.MasterIPs(ctx)
+	options.masterNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeControlPlane)
 	if err != nil {
 		return fmt.Errorf("error fetching master nodes: %w", err)
 	}
