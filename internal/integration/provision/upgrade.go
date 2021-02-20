@@ -74,7 +74,7 @@ const (
 
 	previousK8sVersion = "1.19.4"
 	stableK8sVersion   = "1.20.1"
-	currentK8sVersion  = "1.20.4" //nolint: deadcode,varcheck
+	currentK8sVersion  = "1.20.4"
 )
 
 var (
@@ -128,7 +128,7 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion,
+		TargetK8sVersion:     currentK8sVersion,
 		TargetSelfHosted:     false,
 
 		MasterNodes: DefaultSettings.MasterNodes,
@@ -150,7 +150,7 @@ func upgradeSingeNodePreserve() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion
+		TargetK8sVersion:     currentK8sVersion,
 		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
@@ -173,7 +173,7 @@ func upgradeSingeNodeStage() upgradeSpec {
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     stableK8sVersion, // TODO: skip k8s upgrade: currentK8sVersion
+		TargetK8sVersion:     currentK8sVersion,
 		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
