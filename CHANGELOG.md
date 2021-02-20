@@ -1,3 +1,41 @@
+<a name="v0.9.0-alpha.2"></a>
+## [v0.9.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.1...v0.9.0-alpha.2) (2021-02-20)
+
+### Chore
+
+* add default cron pipeline to the list of pipelines
+* run default pipeline as part of the `cron` pipeline
+
+### Docs
+
+* add link to GitHub Discussions as a support forum
+
+### Feat
+
+* u-boot 2021.01, ca-certificates update, Linux file ACLs
+* support control plane upgrades with Talos managed control plane
+* add support for extra volume mounts for control plane pods
+* add a warning to boot log if running self-hosted control plane
+* add an option to disable kube-proxy manifest
+* update Kubernetes to 1.20.4
+* add state encryption support
+
+### Fix
+
+* redirect warnings in manifest apply k8s client
+* handle case when kubelet serving certificates are issued
+* correctly escape extra args in kube-proxy manifest
+* skip empty manifest YAML sub-documents
+
+### Refactor
+
+* split kubernetes/etcd resource generation into subresources
+
+### Test
+
+* enable disk encryption key rotation test
+* update integration tests to use wrapped client for etcd APIs
+
 <a name="v0.9.0-alpha.1"></a>
 ## [v0.9.0-alpha.1](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.0...v0.9.0-alpha.1) (2021-02-09)
 
