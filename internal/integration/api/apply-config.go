@@ -182,7 +182,9 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 
 // TestApplyConfigRotateEncryptionSecrets verify key rotation by sequential apply config calls.
 func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
-	suite.T().Skip("skip: this test is not stable yet")
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
 
 	node := suite.RandomDiscoveredNode(machine.TypeJoin)
 	suite.ClearConnectionRefused(suite.ctx, node)
