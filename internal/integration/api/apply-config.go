@@ -270,6 +270,8 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 			return nil
 		}, assertRebootedRebootTimeout)
 
+		suite.ClearConnectionRefused(suite.ctx, node)
+
 		// Verify configuration change
 		var newProvider config.Provider
 

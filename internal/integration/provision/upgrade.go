@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
 	corev1 "k8s.io/api/core/v1"
@@ -66,6 +67,7 @@ type upgradeSpec struct {
 
 	UpgradePreserve bool
 	UpgradeStage    bool
+	WithEncryption  bool
 }
 
 const (
@@ -133,6 +135,32 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
+	}
+}
+
+// upgradeCurrentReleaseToCurrent upgrades current version to the current version of Talos.
+func upgradeCurrentReleaseToCurrent() upgradeSpec {
+	installerImage := fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion)
+
+	return upgradeSpec{
+		ShortName: fmt.Sprintf("%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
+
+		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
+		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
+		SourceInstallerImage: installerImage,
+		SourceVersion:        DefaultSettings.CurrentVersion,
+		SourceK8sVersion:     currentK8sVersion,
+		SourceSelfHosted:     true,
+
+		TargetInstallerImage: installerImage,
+		TargetVersion:        DefaultSettings.CurrentVersion,
+		TargetK8sVersion:     currentK8sVersion,
+		TargetSelfHosted:     true,
+
+		MasterNodes: DefaultSettings.MasterNodes,
+		WorkerNodes: DefaultSettings.WorkerNodes,
+
+		WithEncryption: true,
 	}
 }
 
@@ -323,6 +351,29 @@ func (suite *UpgradeSuite) setupCluster() {
 		genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
 			CNIName: "custom",
 			CNIUrls: []string{DefaultSettings.CustomCNIURL},
+		}))
+	}
+
+	if suite.spec.WithEncryption {
+		genOptions = append(genOptions, generate.WithSystemDiskEncryption(&v1alpha1.SystemDiskEncryptionConfig{
+			StatePartition: &v1alpha1.EncryptionConfig{
+				EncryptionProvider: encryption.LUKS2,
+				EncryptionKeys: []*v1alpha1.EncryptionKey{
+					{
+						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+						KeySlot:   0,
+					},
+				},
+			},
+			EphemeralPartition: &v1alpha1.EncryptionConfig{
+				EncryptionProvider: encryption.LUKS2,
+				EncryptionKeys: []*v1alpha1.EncryptionKey{
+					{
+						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+						KeySlot:   0,
+					},
+				},
+			},
 		}))
 	}
 
@@ -655,6 +706,7 @@ func init() {
 	allSuites = append(allSuites,
 		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
 		&UpgradeSuite{specGen: upgradeStableReleaseToCurrent, track: 1},
+		&UpgradeSuite{specGen: upgradeCurrentReleaseToCurrent, track: 2},
 		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
 		&UpgradeSuite{specGen: upgradeSingeNodeStage, track: 1},
 	)
