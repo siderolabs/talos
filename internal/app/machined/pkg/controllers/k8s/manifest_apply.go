@@ -142,6 +142,10 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error loading kubeconfig: %w", err)
 			}
 
+			kubeconfig.WarningHandler = rest.NewWarningWriter(logger.Writer(), rest.WarningWriterOptions{
+				Deduplicate: true,
+			})
+
 			dc, err = discovery.NewDiscoveryClientForConfig(kubeconfig)
 			if err != nil {
 				return fmt.Errorf("error building discovery client: %w", err)
