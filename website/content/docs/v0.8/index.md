@@ -8,6 +8,7 @@ title: Welcome
 
 - GitHub: [repo](https://github.com/talos-systems/talos)
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
+- Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
 - Forum: [community](https://groups.google.com/a/talos-systems.com/forum/#!forum/community)
 - Twitter: [@talossystems](https://twitter.com/talossystems)
 - Email: [info@talos-systems.com](mailto:info@talos-systems.com)
