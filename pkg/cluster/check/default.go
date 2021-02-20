@@ -89,7 +89,7 @@ func DefaultClusterChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
 				return K8sAllNodesSchedulableAssertion(ctx, cluster)
-			}, 2*time.Minute, 5*time.Second)
+			}, 5*time.Minute, 5*time.Second)
 		},
 	}
 }
