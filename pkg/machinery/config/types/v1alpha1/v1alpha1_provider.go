@@ -1312,7 +1312,7 @@ func (v VolumeMountConfig) MountPath() string {
 
 // Name implements the config.VolumeMount interface.
 func (v VolumeMountConfig) Name() string {
-	return strings.ReplaceAll(v.VolumeMountPath, "/", "-")
+	return strings.Trim(strings.ReplaceAll(strings.ReplaceAll(v.VolumeMountPath, "/", "-"), "_", "-"), "-")
 }
 
 // ReadOnly implements the config.VolumeMount interface.

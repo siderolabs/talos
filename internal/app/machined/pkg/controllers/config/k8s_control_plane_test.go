@@ -144,7 +144,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 				ExtraVolumesConfig: []v1alpha1.VolumeMountConfig{
 					{
 						VolumeHostPath:  "/var/lib",
-						VolumeMountPath: "/var/foo",
+						VolumeMountPath: "/var/foo/",
 					},
 				},
 			},
@@ -175,9 +175,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 
 	suite.Assert().Equal([]config.K8sExtraVolume{
 		{
-			Name:      "-var-foo",
+			Name:      "var-foo",
 			HostPath:  "/var/lib",
-			MountPath: "/var/foo",
+			MountPath: "/var/foo/",
 			ReadOnly:  false,
 		},
 	}, apiServerCfg.ExtraVolumes)
