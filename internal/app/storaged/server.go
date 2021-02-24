@@ -35,7 +35,11 @@ func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.Dis
 	}
 
 	reply = &storage.DisksResponse{
-		Disks: diskList,
+		Messages: []*storage.Disks{
+			{
+				Disks: diskList,
+			},
+		},
 	}
 
 	return reply, nil

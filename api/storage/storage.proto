@@ -26,7 +26,8 @@ message Disk {
 }
 
 // DisksResponse represents the response of the `Disks` RPC.
-message DisksResponse{
+message Disks {
   common.Metadata metadata = 1;
   repeated Disk disks = 2;
 }
+message DisksResponse { repeated Disks messages = 1; }
