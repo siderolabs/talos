@@ -444,10 +444,10 @@ WORKDIR /src/cmd/installer
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.13.1 AS unicode-pf2
+FROM alpine:3.13.2 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
-FROM alpine:3.13.1 AS installer
+FROM alpine:3.13.2 AS installer
 RUN apk add --no-cache --update \
     bash \
     ca-certificates \
@@ -593,7 +593,7 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:15.8.0-alpine AS lint-markdown
+FROM node:15.9.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
