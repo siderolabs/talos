@@ -700,6 +700,44 @@ talosctl dmesg [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl edit
+
+Edit a resource from the default editor.
+
+### Synopsis
+
+The edit command allows you to directly edit any API resource 
+you can retrieve via the command line tools. 
+
+It will open the editor defined by your TALOS_EDITOR, 
+or EDITOR environment variables, or fall back to 'vi' for Linux 
+or 'notepad' for Windows.
+
+```
+talosctl edit <type> [<id>] [flags]
+```
+
+### Options
+
+```
+  -h, --help               help for edit
+      --immediate          apply the change immediately (without a reboot)
+      --namespace string   resource namespace (default is to use default namespace per resource)
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl etcd forfeit-leadership
 
 Tell node to forfeit etcd cluster leadership
@@ -1394,6 +1432,37 @@ talosctl mounts [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl patch
+
+Update field(s) of a resource using a JSON patch.
+
+```
+talosctl patch <type> [<id>] [flags]
+```
+
+### Options
+
+```
+  -h, --help                help for patch
+      --immediate           apply the change immediately (without a reboot)
+      --namespace string    resource namespace (default is to use default namespace per resource)
+  -p, --patch string        the patch to be applied to the resource file.
+      --patch-file string   a file containing a patch to be applied to the resource.
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl processes
 
 List running processes
@@ -1916,6 +1985,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
+* [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
@@ -1929,6 +1999,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
+* [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine
 * [talosctl reboot](#talosctl-reboot)	 - Reboot a node

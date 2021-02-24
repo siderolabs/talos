@@ -32,6 +32,7 @@ require (
 	github.com/elazarl/goproxy/ext v0.0.0-20191011121108-aa519ddbe484 // indirect
 	github.com/emicklei/dot v0.15.0
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
+	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
@@ -40,6 +41,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.4.3
+	github.com/google/go-cmp v0.5.4
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-getter v1.5.1
@@ -96,5 +98,6 @@ require (
 	k8s.io/apiserver v0.20.4 // indirect
 	k8s.io/client-go v0.20.4
 	k8s.io/cri-api v0.20.4
+	k8s.io/kubectl v0.20.4
 	k8s.io/kubelet v0.20.4
 )

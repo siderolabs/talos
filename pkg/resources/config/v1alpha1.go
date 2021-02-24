@@ -88,7 +88,7 @@ func (r *V1Alpha1) DeepCopy() resource.Resource {
 func (r *V1Alpha1) ResourceDefinition() core.ResourceDefinitionSpec {
 	return core.ResourceDefinitionSpec{
 		Type:             V1Alpha1Type,
-		Aliases:          []resource.Type{"config"},
+		Aliases:          []resource.Type{Type},
 		DefaultNamespace: NamespaceName,
 	}
 }

@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"syscall"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
@@ -99,7 +101,9 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
-		return fmt.Errorf("this config change can't be applied in immediate mode")
+		diff := cmp.Diff(currentConfig, newConfig)
+
+		return fmt.Errorf("this config change can't be applied in immediate mode\ndiff: %s", diff)
 	}
 
 	return nil

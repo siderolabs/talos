@@ -508,6 +508,11 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
+		err = r.State().V1Alpha2().SetConfig(r.Config())
+		if err != nil {
+			return err
+		}
+
 		var b []byte
 
 		b, err = r.Config().Bytes()

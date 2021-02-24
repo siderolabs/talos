@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/output"
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -52,8 +53,7 @@ var getCmd = &cobra.Command{
 
 			var headerWritten bool
 
-			switch {
-			case getCmdFlags.watch: // get -w <type> OR get -w <type> <id>
+			if getCmdFlags.watch { // get -w <type> OR get -w <type> <id>
 				watchClient, err := c.Resources.Watch(ctx, getCmdFlags.namespace, resourceType, resourceID)
 				if err != nil {
 					return err
@@ -93,68 +93,29 @@ var getCmd = &cobra.Command{
 						}
 					}
 				}
-			case resourceID != "": // get <type> <id>
-				resp, err := c.Resources.Get(ctx, getCmdFlags.namespace, resourceType, resourceID)
-
-				for _, msg := range resp {
-					if msg.Definition != nil && !headerWritten {
-						if e := out.WriteHeader(msg.Definition, false); e != nil {
-							return e
-						}
-
-						headerWritten = true
-					}
-
-					if msg.Resource != nil {
-						if e := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); e != nil {
-							return e
-						}
-					}
-
-				}
-
-				if err != nil {
-					return err
-				}
-			default: // get <type>
-				listClient, err := c.Resources.List(ctx, getCmdFlags.namespace, resourceType)
-				if err != nil {
-					return err
-				}
-
-				for {
-					msg, err := listClient.Recv()
-					if err != nil {
-						if err == io.EOF || status.Code(err) == codes.Canceled {
-							return nil
-						}
-
-						return err
-					}
-
-					if msg.Metadata.GetError() != "" {
-						fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-
-						continue
-					}
-
-					if msg.Definition != nil && !headerWritten {
-						if e := out.WriteHeader(msg.Definition, false); e != nil {
-							return e
-						}
-
-						headerWritten = true
-					}
-
-					if msg.Resource != nil {
-						if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); err != nil {
-							return err
-						}
-					}
-				}
 			}
 
-			return nil
+			// get <type>
+			// get <type> <id>
+			printOut := func(parentCtx context.Context, msg client.ResourceResponse) error {
+				if msg.Definition != nil && !headerWritten {
+					if e := out.WriteHeader(msg.Definition, false); e != nil {
+						return e
+					}
+
+					headerWritten = true
+				}
+
+				if msg.Resource != nil {
+					if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			}
+
+			return helpers.ForEachResource(ctx, c, printOut, getCmdFlags.namespace, args...)
 		})
 	},
 }
