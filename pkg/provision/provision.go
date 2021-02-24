@@ -23,6 +23,7 @@ type Provisioner interface {
 
 	GenOptions(NetworkRequest) []generate.GenOption
 	GetLoadBalancers(NetworkRequest) (internalEndpoint, externalEndpoint string)
+	GetFirstInterface() string
 
 	Close() error
 

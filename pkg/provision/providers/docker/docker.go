@@ -88,3 +88,8 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 func (p *provisioner) UserDiskName(index int) string {
 	return ""
 }
+
+// GetFirstInterface returns first network interface name.
+func (p *provisioner) GetFirstInterface() string {
+	return "eth0"
+}

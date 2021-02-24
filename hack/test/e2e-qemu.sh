@@ -35,6 +35,12 @@ case "${WITH_UEFI:-false}" in
     ;;
 esac
 
+case "${WITH_VIRTUAL_IP:-false}" in
+  true)
+    QEMU_FLAGS="${QEMU_FLAGS} --use-vip"
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     DISK_IMAGE_FLAG=

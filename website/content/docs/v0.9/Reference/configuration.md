@@ -377,6 +377,10 @@ network:
           #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           #           allowedIPs:
           #             - 192.168.1.0/24
+
+          # # Virtual (shared) IP address configuration.
+          # vip:
+          #     ip: 172.16.199.55 # Specifies the IP address to be used.
     # Used to statically set the nameservers for the machine.
     nameservers:
         - 9.8.7.6
@@ -1409,6 +1413,10 @@ interfaces:
       #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       #           allowedIPs:
       #             - 192.168.1.0/24
+
+      # # Virtual (shared) IP address configuration.
+      # vip:
+      #     ip: 172.16.199.55 # Specifies the IP address to be used.
 # Used to statically set the nameservers for the machine.
 nameservers:
     - 9.8.7.6
@@ -1505,6 +1513,10 @@ interfaces:
       #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       #           allowedIPs:
       #             - 192.168.1.0/24
+
+      # # Virtual (shared) IP address configuration.
+      # vip:
+      #     ip: 172.16.199.55 # Specifies the IP address to be used.
 ```
 
 
@@ -3141,6 +3153,10 @@ Appears in:
   #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
   #           allowedIPs:
   #             - 192.168.1.0/24
+
+  # # Virtual (shared) IP address configuration.
+  # vip:
+  #     ip: 172.16.199.55 # Specifies the IP address to be used.
 ```
 
 <hr />
@@ -3411,6 +3427,30 @@ wireguard:
 
 <hr />
 
+<div class="dd">
+
+<code>vip</code>  <i><a href="#devicevipconfig">DeviceVIPConfig</a></i>
+
+</div>
+<div class="dt">
+
+Virtual (shared) IP address configuration.
+
+
+
+Examples:
+
+
+``` yaml
+vip:
+    ip: 172.16.199.55 # Specifies the IP address to be used.
+```
+
+
+</div>
+
+<hr />
+
 
 
 
@@ -3625,6 +3665,38 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 <div class="dt">
 
 AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
+
+</div>
+
+<hr />
+
+
+
+
+
+## DeviceVIPConfig
+DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.
+
+Appears in:
+
+
+- <code><a href="#device">Device</a>.vip</code>
+
+
+``` yaml
+ip: 172.16.199.55 # Specifies the IP address to be used.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>ip</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies the IP address to be used.
 
 </div>
 

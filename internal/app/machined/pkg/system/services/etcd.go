@@ -183,7 +183,7 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 }
 
 func generatePKI(r runtime.Runtime) (err error) {
-	if err = os.MkdirAll(constants.EtcdPKIPath, 0o644); err != nil {
+	if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 		return err
 	}
 

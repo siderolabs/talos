@@ -97,6 +97,14 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 		}
 	}
 
+	if c.Machine().Type() == machine.TypeJoin {
+		for _, d := range c.Machine().Network().Devices() {
+			if d.VIPConfig() != nil {
+				result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
+			}
+		}
+	}
+
 	if c.MachineConfig.MachineNetwork != nil {
 		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
 			if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing); err != nil {
@@ -219,6 +227,13 @@ func CheckDeviceAddressing(d *Device) error {
 	if d.DeviceCIDR != "" {
 		if _, _, err := net.ParseCIDR(d.DeviceCIDR); err != nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", d.DeviceInterface, err))
+		}
+	}
+
+	// check VIP IP is valid
+	if d.DeviceVIPConfig != nil {
+		if ip := net.ParseIP(d.DeviceVIPConfig.IP()); ip == nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] failed to parse %q as IP address", "networking.os.device.vip", d.DeviceVIPConfig.IP()))
 		}
 	}
 

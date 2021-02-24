@@ -22,11 +22,13 @@ import (
 	"github.com/mdlayher/netlink"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/vip"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -54,10 +56,13 @@ type NetworkInterface struct {
 	AddressMethod   []address.Addressing
 	BondSettings    *netlink.AttributeEncoder
 	Vlans           []*Vlan
+	VirtualIP       net.IP
 	WireguardConfig *wgtypes.Config
 
 	rtConn   *rtnetlink.Conn
 	rtnlConn *rtnl.Conn
+
+	vipController vip.Controller
 }
 
 // New returns a NetworkInterface with all of the given setter options applied.
@@ -241,6 +246,21 @@ func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 
 		if err = n.waitForLinkToBeUp(vlan.Link); err != nil {
 			return fmt.Errorf("failed to bring up interface %q: %w", vlan.Link.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// RunControllers is used to run additional controllers per interface.
+func (n *NetworkInterface) RunControllers(ctx context.Context, eg *errgroup.Group) (err error) {
+	if n.VirtualIP != nil {
+		if n.vipController, err = vip.New(n.VirtualIP.String(), n.Link.Name); err != nil {
+			return fmt.Errorf("failed to create the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
+		}
+
+		if err = n.vipController.Start(ctx, eg); err != nil {
+			return fmt.Errorf("failed to start the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
 		}
 	}
 

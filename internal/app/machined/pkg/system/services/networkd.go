@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -82,6 +83,18 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
+	}
+
+	// etcd is used for VIP controller on control plane nodes
+	if r.Config().Machine().Type() != machine.TypeJoin {
+		// Ensure etcd PKI dir exists
+		if err := os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
+			return nil, err
+		}
+
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "ro"}},
+		)
 	}
 
 	if r.State().Platform().Mode() == runtime.ModeContainer {

@@ -43,6 +43,7 @@ var (
 	DHCPOptionsDoc                encoder.Doc
 	DeviceWireguardConfigDoc      encoder.Doc
 	DeviceWireguardPeerDoc        encoder.Doc
+	DeviceVIPConfigDoc            encoder.Doc
 	BondDoc                       encoder.Doc
 	VlanDoc                       encoder.Doc
 	RouteDoc                      encoder.Doc
@@ -1104,7 +1105,7 @@ func init() {
 			FieldName: "interfaces",
 		},
 	}
-	DeviceDoc.Fields = make([]encoder.Doc, 11)
+	DeviceDoc.Fields = make([]encoder.Doc, 12)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
 	DeviceDoc.Fields[0].Note = ""
@@ -1176,6 +1177,13 @@ func init() {
 	DeviceDoc.Fields[10].AddExample("wireguard server example", networkConfigWireguardHostExample)
 
 	DeviceDoc.Fields[10].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
+	DeviceDoc.Fields[11].Name = "vip"
+	DeviceDoc.Fields[11].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[11].Note = ""
+	DeviceDoc.Fields[11].Description = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+
+	DeviceDoc.Fields[11].AddExample("", networkConfigVIPLayer2Example)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
@@ -1270,6 +1278,24 @@ func init() {
 	DeviceWireguardPeerDoc.Fields[3].Note = ""
 	DeviceWireguardPeerDoc.Fields[3].Description = "AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer."
 	DeviceWireguardPeerDoc.Fields[3].Comments[encoder.LineComment] = "AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer."
+
+	DeviceVIPConfigDoc.Type = "DeviceVIPConfig"
+	DeviceVIPConfigDoc.Comments[encoder.LineComment] = "DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface."
+	DeviceVIPConfigDoc.Description = "DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface."
+
+	DeviceVIPConfigDoc.AddExample("", networkConfigVIPLayer2Example)
+	DeviceVIPConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "vip",
+		},
+	}
+	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 1)
+	DeviceVIPConfigDoc.Fields[0].Name = "ip"
+	DeviceVIPConfigDoc.Fields[0].Type = "string"
+	DeviceVIPConfigDoc.Fields[0].Note = ""
+	DeviceVIPConfigDoc.Fields[0].Description = "Specifies the IP address to be used."
+	DeviceVIPConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies the IP address to be used."
 
 	BondDoc.Type = "Bond"
 	BondDoc.Comments[encoder.LineComment] = "Bond contains the various options for configuring a bonded interface."
@@ -1786,6 +1812,10 @@ func (_ DeviceWireguardPeer) Doc() *encoder.Doc {
 	return &DeviceWireguardPeerDoc
 }
 
+func (_ DeviceVIPConfig) Doc() *encoder.Doc {
+	return &DeviceVIPConfigDoc
+}
+
 func (_ Bond) Doc() *encoder.Doc {
 	return &BondDoc
 }
@@ -1860,6 +1890,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&DHCPOptionsDoc,
 			&DeviceWireguardConfigDoc,
 			&DeviceWireguardPeerDoc,
+			&DeviceVIPConfigDoc,
 			&BondDoc,
 			&VlanDoc,
 			&RouteDoc,

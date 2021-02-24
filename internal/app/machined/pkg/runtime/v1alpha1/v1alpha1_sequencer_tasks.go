@@ -433,6 +433,9 @@ func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.Task
 			return err
 		}
 
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
 		if err = nwd.Configure(ctx); err != nil {
 			return err
 		}
@@ -743,6 +746,14 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		return conditions.WaitForAll(all...).Wait(ctx)
 	}, "startAllServices"
+}
+
+// StopNetworkd represents the StopNetworkd task.
+func StopNetworkd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		// stop networkd so that it gives up on VIP lease
+		return system.Services(nil).Stop(ctx, "networkd")
+	}, "stopNetworkd"
 }
 
 // StopServicesForUpgrade represents the StopServicesForUpgrade task.

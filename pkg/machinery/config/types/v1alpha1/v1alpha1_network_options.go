@@ -105,3 +105,18 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 		return nil
 	}
 }
+
+// WithNetworkInterfaceVirtualIP configures interface for Virtual IP.
+func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
+	return func(machineType machine.Type, cfg *NetworkConfig) error {
+		if machineType == machine.TypeJoin {
+			return nil
+		}
+
+		cfg.GetDevice(iface).DeviceVIPConfig = &DeviceVIPConfig{
+			SharedIP: cidr,
+		}
+
+		return nil
+	}
+}
