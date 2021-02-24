@@ -71,12 +71,12 @@ func (r *Service) ResourceDefinition() core.ResourceDefinitionSpec {
 
 // SetRunning changes .spec.running.
 func (r *Service) SetRunning(running bool) {
-	r.spec.Running = true
+	r.spec.Running = running
 }
 
 // SetHealthy changes .spec.healthy.
 func (r *Service) SetHealthy(healthy bool) {
-	r.spec.Healthy = true
+	r.spec.Healthy = healthy
 }
 
 // Running returns .spec.running.
