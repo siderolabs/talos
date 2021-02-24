@@ -19,6 +19,7 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -254,6 +255,17 @@ func (n *Networkd) Reset() {
 	for _, iface := range n.Interfaces {
 		iface.Reset()
 	}
+}
+
+// RunControllers spins up additional controllers in the errgroup.
+func (n *Networkd) RunControllers(ctx context.Context, eg *errgroup.Group) error {
+	for _, iface := range n.Interfaces {
+		if err := iface.RunControllers(ctx, eg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Hostname returns the first hostname found from the addressing methods.

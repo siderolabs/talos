@@ -117,6 +117,7 @@ type Device interface {
 	Ignore() bool
 	Dummy() bool
 	DHCPOptions() DHCPOptions
+	VIPConfig() VIPConfig
 	WireguardConfig() WireguardConfig
 }
 
@@ -125,6 +126,11 @@ type DHCPOptions interface {
 	RouteMetric() uint32
 	IPv4() bool
 	IPv6() bool
+}
+
+// VIPConfig contains settings for the Virtual (shared) IP setup.
+type VIPConfig interface {
+	IP() string
 }
 
 // WireguardConfig contains settings for configuring Wireguard network interface.

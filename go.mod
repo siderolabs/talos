@@ -55,6 +55,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc92 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/pin/tftp v2.1.0+incompatible
+	github.com/plunder-app/kube-vip v0.3.2
 	github.com/prometheus/procfs v0.2.0
 	github.com/rivo/tview v0.0.0-20201118063654-f007e9ad3893
 	github.com/rs/xid v1.2.1
@@ -71,7 +72,7 @@ require (
 	github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.2.1-0.20210204205549-52c750994376
+	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v7.0.0+incompatible
@@ -83,7 +84,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/sys v0.0.0-20201130171929-760e229fe7c5
+	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	golang.org/x/tools v0.0.0-20201217163546-c88dec5c6b05 // indirect

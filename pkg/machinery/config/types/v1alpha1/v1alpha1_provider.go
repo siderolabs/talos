@@ -100,6 +100,17 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 		log.Printf("certificates will be created without external IPs: %v", err)
 	}
 
+	if c.MachineConfig.MachineNetwork != nil {
+		for _, nc := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+			if nc.VIPConfig() != nil {
+				sharedIP := net.ParseIP(nc.VIPConfig().IP())
+				if sharedIP != nil {
+					addrs = append(addrs, sharedIP)
+				}
+			}
+		}
+	}
+
 	existingSANs := map[string]bool{}
 	for _, addr := range c.MachineConfig.MachineCertSANs {
 		existingSANs[addr] = true
@@ -107,7 +118,8 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 
 	sans := make([]string, 0, len(addrs))
 	for i, addr := range addrs {
-		sans[i] = addr.String()
+		sans = append(sans, addr.String())
+
 		if existingSANs[sans[i]] {
 			continue
 		}
@@ -898,6 +910,20 @@ func (d *Device) DHCPOptions() config.DHCPOptions {
 	}
 
 	return d.DeviceDHCPOptions
+}
+
+// VIPConfig implements the MachineNetwork interface.
+func (d *Device) VIPConfig() config.VIPConfig {
+	if d.DeviceVIPConfig == nil {
+		return nil
+	}
+
+	return d.DeviceVIPConfig
+}
+
+// IP implements the config.VIPConfig interface.
+func (d *DeviceVIPConfig) IP() string {
+	return d.SharedIP
 }
 
 // WireguardConfig implements the MachineNetwork interface.

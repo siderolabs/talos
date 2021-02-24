@@ -42,6 +42,17 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
+const (
+	// gatewayOffset is the offset from the network address of the IP address of the network gateway.
+	gatewayOffset = 1
+
+	// nodesOffset is the offset from the network address of the beginning of the IP addresses to be used for nodes.
+	nodesOffset = 2
+
+	// vipOffset is the offset from the network address of the CIDR to use for allocating the Virtual (shared) IP address, if enabled.
+	vipOffset = 50
+)
+
 var (
 	talosconfig               string
 	nodeImage                 string
@@ -90,6 +101,7 @@ var (
 	talosVersion              string
 	encryptStatePartition     bool
 	encryptEphemeralPartition bool
+	useVIP                    bool
 )
 
 // createCmd represents the cluster up command.
@@ -152,7 +164,7 @@ func create(ctx context.Context) (err error) {
 	gatewayIPs := make([]net.IP, len(cidrs))
 
 	for j := range gatewayIPs {
-		gatewayIPs[j], err = talosnet.NthIPInNetwork(&cidrs[j], 1)
+		gatewayIPs[j], err = talosnet.NthIPInNetwork(&cidrs[j], gatewayOffset)
 		if err != nil {
 			return err
 		}
@@ -165,7 +177,7 @@ func create(ctx context.Context) (err error) {
 		ips[j] = make([]net.IP, masters+workers)
 
 		for i := range ips[j] {
-			ips[j][i], err = talosnet.NthIPInNetwork(&cidrs[j], i+2)
+			ips[j][i], err = talosnet.NthIPInNetwork(&cidrs[j], nodesOffset+i)
 			if err != nil {
 				return err
 			}
@@ -179,6 +191,16 @@ func create(ctx context.Context) (err error) {
 		nameserverIPs[i] = net.ParseIP(nameservers[i])
 		if nameserverIPs[i] == nil {
 			return fmt.Errorf("failed parsing nameserver IP %q", nameservers[i])
+		}
+	}
+
+	// Virtual (shared) IP at the vipOffset IP in range, ex. 192.168.0.50
+	var vip net.IP
+
+	if useVIP {
+		vip, err = talosnet.NthIPInNetwork(&cidrs[0], vipOffset)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -337,11 +359,23 @@ func create(ctx context.Context) (err error) {
 			genOptions = append(genOptions, generate.WithSystemDiskEncryption(diskEncryptionConfig))
 		}
 
+		if useVIP {
+			genOptions = append(genOptions,
+				generate.WithNetworkOptions(
+					v1alpha1.WithNetworkInterfaceVirtualIP(provisioner.GetFirstInterface(), vip.String()),
+				),
+			)
+		}
+
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {
 			// provisioner doesn't provide internal LB, so use first master node
 			defaultInternalLB = ips[0][0].String()
+		}
+
+		if useVIP {
+			defaultInternalLB = vip.String()
 		}
 
 		var endpointList []string
@@ -737,5 +771,6 @@ func init() {
 	createCmd.Flags().BoolVar(&encryptStatePartition, "encrypt-state", false, "enable state partition encryption")
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, "encrypt-ephemeral", false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
+	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
 	Cmd.AddCommand(createCmd)
 }

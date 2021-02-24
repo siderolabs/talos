@@ -55,6 +55,8 @@ func run() error {
 		}
 	}()
 
+	var eg errgroup.Group
+
 	log.Println("starting initial network configuration")
 
 	config, err := configloader.NewFromStdin()
@@ -68,6 +70,10 @@ func run() error {
 	}
 
 	if err = nwd.Configure(ctx); err != nil {
+		return err
+	}
+
+	if err = nwd.RunControllers(ctx, &eg); err != nil {
 		return err
 	}
 
@@ -87,8 +93,6 @@ func run() error {
 	if err != nil {
 		return err
 	}
-
-	var eg errgroup.Group
 
 	eg.Go(func() error {
 		return server.Serve(listener)

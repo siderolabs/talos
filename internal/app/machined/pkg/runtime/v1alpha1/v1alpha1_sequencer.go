@@ -64,6 +64,7 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 	).Append(
 		"cleanup",
 		StopAllPods,
+		StopNetworkd,
 	).AppendList(
 		stopAllPhaselist(r),
 	).Append(
@@ -289,6 +290,7 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.Append(
 		"cleanup",
 		StopAllPods,
+		StopNetworkd,
 	).
 		AppendList(stopAllPhaselist(r)).
 		Append("reboot", Reboot)
@@ -320,10 +322,12 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			in.GetGraceful(),
 			"cleanup",
 			RemoveAllPods,
+			StopNetworkd,
 		).AppendWhen(
 			!in.GetGraceful(),
 			"cleanup",
 			StopAllPods,
+			StopNetworkd,
 		).AppendList(
 			stopAllPhaselist(r),
 		).AppendWhen(
@@ -354,6 +358,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 		Append(
 			"cleanup",
 			StopAllPods,
+			StopNetworkd,
 		).
 		AppendList(stopAllPhaselist(r)).
 		Append("shutdown", Shutdown)
@@ -376,6 +381,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		).Append(
 			"cleanup",
 			StopAllPods,
+			StopNetworkd,
 		).AppendList(
 			stopAllPhaselist(r),
 		).Append(
@@ -406,10 +412,12 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
+			StopNetworkd,
 		).AppendWhen(
 			in.GetPreserve(),
 			"cleanup",
 			StopAllPods,
+			StopNetworkd,
 		).Append(
 			"stopServices",
 			StopServicesForUpgrade,

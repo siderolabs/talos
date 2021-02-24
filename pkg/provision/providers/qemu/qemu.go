@@ -70,3 +70,8 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 	// qemu runs loadbalancer on the bridge, which is good for both internal access, external access goes via round-robin
 	return networkReq.GatewayAddrs[0].String(), ""
 }
+
+// GetFirstInterface returns first network interface name.
+func (p *provisioner) GetFirstInterface() string {
+	return "eth0"
+}

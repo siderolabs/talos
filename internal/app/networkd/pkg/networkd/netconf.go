@@ -91,6 +91,10 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 		opts = append(opts, nic.WithWireguardConfig(device.WireguardConfig()))
 	}
 
+	if device.VIPConfig() != nil {
+		opts = append(opts, nic.WithVIPConfig(device.VIPConfig()))
+	}
+
 	// Configure Bonding
 	if device.Bond() == nil {
 		return device.Interface(), opts, err

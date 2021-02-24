@@ -363,6 +363,10 @@ var (
 		DHCPRouteMetric: 1024,
 	}
 
+	networkConfigVIPLayer2Example = &DeviceVIPConfig{
+		SharedIP: "172.16.199.55",
+	}
+
 	networkConfigWireguardHostExample = &DeviceWireguardConfig{
 		WireguardPrivateKey: "ABCDEF...",
 		WireguardListenPort: 51111,
@@ -1251,6 +1255,11 @@ type Device struct {
 	//     - name: wireguard peer example
 	//       value: networkConfigWireguardPeerExample
 	DeviceWireguardConfig *DeviceWireguardConfig `yaml:"wireguard,omitempty"`
+	//   description: Virtual (shared) IP address configuration.
+	//   examples:
+	//     - name: layer2 vip example
+	//     - value: networkConfigVIPLayer2Example
+	DeviceVIPConfig *DeviceVIPConfig `yaml:"vip,omitempty"`
 }
 
 // DHCPOptions contains options for configuring the DHCP settings for a given interface.
@@ -1291,6 +1300,12 @@ type DeviceWireguardPeer struct {
 	WireguardPersistentKeepaliveInterval time.Duration `yaml:"persistentKeepaliveInterval,omitempty"`
 	//   description: AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
 	WireguardAllowedIPs []string `yaml:"allowedIPs,omitempty"`
+}
+
+// DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.
+type DeviceVIPConfig struct {
+	// description: Specifies the IP address to be used.
+	SharedIP string `yaml:"ip,omitempty"`
 }
 
 // Bond contains the various options for configuring a bonded interface.
