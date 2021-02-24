@@ -2,9 +2,10 @@ REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty)
+IMAGE_REGISTRY ?= $(REGISTRY)
 IMAGE_TAG ?= $(TAG)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
-REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
+REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
@@ -85,7 +86,7 @@ for applications using `img` tool.
 ## Artifacts
 
 All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
-registry "$(REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
+registry "$(IMAGE_REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
 The registry and username can be overriden by exporting REGISTRY, and USERNAME
 respectively.
 
@@ -160,21 +161,21 @@ talosctl-%:
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
-	@docker pull $(REGISTRY)/$(USERNAME)/installer:$(TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY)/$(USERNAME)/installer:$(TAG) image --platform $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
 images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, Metal, Openstack, and VMware).
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, and libretech_all_h3_cc_h5 (e.g. sbc-rpi_4)
-	@docker pull $(REGISTRY)/$(USERNAME)/installer:$(TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY)/$(USERNAME)/installer:$(TAG) image --platform metal --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform metal --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
 sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, and Libre Computer Board ALL-H3-CC).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
-	@docker pull $(REGISTRY)/$(USERNAME)/installer:$(TAG)
-	@docker run --rm -i $(REGISTRY)/$(USERNAME)/installer:$(TAG) iso --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
+	@docker run --rm -i $(REGISTRY_AND_USERNAME)/installer:$(TAG) iso --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
 .PHONY: boot
 boot: ## Creates a compressed tarball that includes vmlinuz-{amd64,arm64} and initramfs-{amd64,arm64}.xz. Note that these files must already be present in the artifacts directory.
@@ -252,7 +253,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		PLATFORM=$* \
 		TAG=$(TAG) \
 		SHA=$(SHA) \
-		REGISTRY=$(REGISTRY) \
+		REGISTRY=$(IMAGE_REGISTRY) \
 		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(TAG) \
 		INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(TAG) \
 		ARTIFACTS=$(ARTIFACTS) \
@@ -280,7 +281,7 @@ provision-tests-track-%:
 		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*" \
 		INTEGRATION_TEST_TRACK="$*" \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
-		REGISTRY=$(REGISTRY)
+		REGISTRY=$(IMAGE_REGISTRY)
 
 # Assets for releases
 
@@ -329,7 +330,7 @@ release-notes:
 .PHONY: login
 login: ## Logs in to the configured container registry.
 ifeq ($(DOCKER_LOGIN_ENABLED), true)
-	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(REGISTRY)
+	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(IMAGE_REGISTRY)
 endif
 
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.

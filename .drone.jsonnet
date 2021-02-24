@@ -191,18 +191,18 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 local generate = Step("generate", target="generate docs", depends_on=[setup_ci]);
 local check_dirty = Step("check-dirty", depends_on=[generate]);
-local build = Step("build", target="talosctl kernel initramfs installer talos", depends_on=[check_dirty], environment={"REGISTRY": local_registry, "PUSH": true});
+local build = Step("build", target="talosctl kernel initramfs installer talos", depends_on=[check_dirty], environment={"IMAGE_REGISTRY": local_registry, "PUSH": true});
 local lint = Step("lint", depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
-local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[build], environment={"REGISTRY": local_registry});
-local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[build], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local images_amd64 = Step("images-amd64", target="images", depends_on=[iso_amd64], environment={"REGISTRY": local_registry});
-local images_arm64 = Step("images-arm64", target="images", depends_on=[iso_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry});
+local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local images_amd64 = Step("images-amd64", target="images", depends_on=[iso_amd64], environment={"IMAGE_REGISTRY": local_registry});
+local images_arm64 = Step("images-arm64", target="images", depends_on=[iso_arm64], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
 local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depends_on=[build, lint]);
-local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
-local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
-local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"REGISTRY": local_registry});
+local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
+local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"IMAGE_REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
+local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"IMAGE_REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -349,30 +349,30 @@ local default_pipeline_steps = [
   load_artifacts,
 ];
 
-local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={"REGISTRY": local_registry});
+local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry});
 
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[load_artifacts]);
-local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
-local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"REGISTRY": local_registry});
+local integration_provision_tests_track_0 = Step("provision-tests-track-0", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"IMAGE_REGISTRY": local_registry});
+local integration_provision_tests_track_1 = Step("provision-tests-track-1", privileged=true, depends_on=[integration_provision_tests_prepare], environment={"IMAGE_REGISTRY": local_registry});
 
 local integration_cilium = Step("e2e-cilium-1.9.4", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.9.4/install/kubernetes/quick-install.yaml",
-        "REGISTRY": local_registry,
+        "IMAGE_REGISTRY": local_registry,
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_UEFI": "true",
-        "REGISTRY": local_registry,
+        "IMAGE_REGISTRY": local_registry,
 });
 local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privileged=true, depends_on=[integration_uefi], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "USE_DISK_IMAGE": "true",
-        "REGISTRY": local_registry,
+        "IMAGE_REGISTRY": local_registry,
 });
 local integration_qemu_encrypted = Step("e2e-encrypted", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "WITH_DISK_ENCRYPTION": "true",
-        "REGISTRY": local_registry,
+        "IMAGE_REGISTRY": local_registry,
 });
 
 local push_edge = {
@@ -432,7 +432,7 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "REGISTRY": local_registry});
+local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
 local e2e_capi = Step("e2e-capi", depends_on=[capi_docker], environment=creds_env_vars);
 local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
 local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
