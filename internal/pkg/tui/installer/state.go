@@ -71,12 +71,14 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 		return nil, err
 	}
 
-	for i, disk := range disks.Disks {
-		if i == 0 {
-			opts.MachineConfig.InstallConfig.InstallDisk = disk.DeviceName
-		}
+	for _, msg := range disks.Messages {
+		for i, disk := range msg.Disks {
+			if i == 0 {
+				opts.MachineConfig.InstallConfig.InstallDisk = disk.DeviceName
+			}
 
-		installDiskOptions = append(installDiskOptions, disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
+			installDiskOptions = append(installDiskOptions, disk.DeviceName, disk.Model, humanize.Bytes(disk.Size))
+		}
 	}
 
 	var machineTypes []interface{}

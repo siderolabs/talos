@@ -214,6 +214,7 @@ description: Talos gRPC API reference.
   
 - [storage/storage.proto](#storage/storage.proto)
     - [Disk](#storage.Disk)
+    - [Disks](#storage.Disks)
     - [DisksResponse](#storage.DisksResponse)
   
     - [StorageService](#storage.StorageService)
@@ -3375,9 +3376,9 @@ Disk represents a disk.
 
 
 
-<a name="storage.DisksResponse"></a>
+<a name="storage.Disks"></a>
 
-### DisksResponse
+### Disks
 DisksResponse represents the response of the `Disks` RPC.
 
 
@@ -3385,6 +3386,21 @@ DisksResponse represents the response of the `Disks` RPC.
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | disks | [Disk](#storage.Disk) | repeated |  |
+
+
+
+
+
+
+<a name="storage.DisksResponse"></a>
+
+### DisksResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Disks](#storage.Disks) | repeated |  |
 
 
 
