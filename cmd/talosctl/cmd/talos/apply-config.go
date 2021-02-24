@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/resources/config"
 )
 
 var applyConfigCmdFlags struct {
@@ -29,15 +30,26 @@ var applyConfigCmdFlags struct {
 
 // applyConfigCmd represents the applyConfiguration command.
 var applyConfigCmd = &cobra.Command{
-	Use:   "apply-config",
-	Short: "Apply a new configuration to a node",
-	Long:  ``,
-	Args:  cobra.NoArgs,
+	Use:     "apply-config",
+	Aliases: []string{"apply"},
+	Short:   "Apply a new configuration to a node",
+	Long:    ``,
+	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
 			cfgBytes []byte
 			e        error
 		)
+
+		if len(args) > 0 {
+			cmd.Help() //nolint:errcheck
+
+			if args[0] != config.Type {
+				return fmt.Errorf("unknown positional argument %s", args[0])
+			} else if cmd.CalledAs() == "apply-config" {
+				return fmt.Errorf("expected no positional arguments")
+			}
+		}
 
 		if applyConfigCmdFlags.filename != "" {
 			cfgBytes, e = ioutil.ReadFile(applyConfigCmdFlags.filename)
