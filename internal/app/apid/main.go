@@ -115,7 +115,7 @@ func main() {
 				grpc.Creds(
 					credentials.NewTLS(serverTLSConfig),
 				),
-				grpc.CustomCodec(proxy.Codec()),
+				grpc.CustomCodec(proxy.Codec()), //nolint: staticcheck
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -132,7 +132,7 @@ func main() {
 			factory.SocketPath(constants.APISocketPath),
 			factory.WithDefaultLog(),
 			factory.ServerOptions(
-				grpc.CustomCodec(proxy.Codec()),
+				grpc.CustomCodec(proxy.Codec()), //nolint: staticcheck
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
