@@ -77,8 +77,8 @@ type Input struct {
 	InstallImage           string
 	InstallExtraKernelArgs []string
 
-	NetworkConfig *v1alpha1.NetworkConfig
-	CNIConfig     *v1alpha1.CNIConfig
+	NetworkConfigOptions []v1alpha1.NetworkConfigOption
+	CNIConfig            *v1alpha1.CNIConfig
 
 	RegistryMirrors            map[string]*v1alpha1.RegistryMirrorConfig
 	RegistryConfig             map[string]*v1alpha1.RegistryConfig
@@ -450,10 +450,6 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 
 	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
 
-	if options.NetworkConfig == nil {
-		options.NetworkConfig = &v1alpha1.NetworkConfig{}
-	}
-
 	input = &Input{
 		Certs:                      secrets.Certs,
 		ControlPlaneEndpoint:       endpoint,
@@ -469,7 +465,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		InstallDisk:                options.InstallDisk,
 		InstallImage:               options.InstallImage,
 		InstallExtraKernelArgs:     options.InstallExtraKernelArgs,
-		NetworkConfig:              options.NetworkConfig,
+		NetworkConfigOptions:       options.NetworkConfigOptions,
 		CNIConfig:                  options.CNIConfig,
 		RegistryMirrors:            options.RegistryMirrors,
 		RegistryConfig:             options.RegistryConfig,

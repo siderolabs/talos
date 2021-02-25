@@ -7,8 +7,6 @@ package qemu
 import (
 	"context"
 
-	"github.com/AlekSi/pointer"
-
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/provision"
@@ -59,19 +57,10 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			// Talos-specific
 			"talos.platform=metal",
 		}),
-		generate.WithNetworkConfig(
-			&v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceInterface: "eth0",
-						DeviceDHCP:      true,
-						DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-							DHCPIPv4: pointer.ToBool(hasIPv4),
-							DHCPIPv6: pointer.ToBool(hasIPv6),
-						},
-					},
-				},
-			},
+		generate.WithNetworkOptions(
+			v1alpha1.WithNetworkInterfaceDHCP("eth0", true),
+			v1alpha1.WithNetworkInterfaceDHCPv4("eth0", hasIPv4),
+			v1alpha1.WithNetworkInterfaceDHCPv6("eth0", hasIPv6),
 		),
 	}
 }

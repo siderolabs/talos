@@ -67,7 +67,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		networkConfig.NameServers = nameservers
 	}
 
-	ret = append(ret, generate.WithNetworkConfig(networkConfig))
+	ret = append(ret, generate.WithNetworkOptions(v1alpha1.WithNetworkInterfaceIgnore("eth0")))
 
 	return ret
 }

@@ -66,7 +66,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 				}
 			}
 
-			options = append(options, generate.WithNetworkConfig(networkConfig))
+			options = append(options, generate.WithNetworkOptions(v1alpha1.WithNetworkConfig(networkConfig)))
 		}
 
 		if in.MachineConfig.InstallConfig != nil {
