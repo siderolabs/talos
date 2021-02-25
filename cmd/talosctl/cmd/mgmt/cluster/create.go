@@ -405,7 +405,7 @@ func create(ctx context.Context) (err error) {
 				&bundle.InputOptions{
 					ClusterName: clusterName,
 					Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort),
-					KubeVersion: kubernetesVersion,
+					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
 		)

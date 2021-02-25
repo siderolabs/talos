@@ -145,7 +145,7 @@ func genV1Alpha1Config(args []string) error {
 			&bundle.InputOptions{
 				ClusterName: args[0],
 				Endpoint:    args[1],
-				KubeVersion: kubernetesVersion,
+				KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 				GenOptions: append(genOptions,
 					generate.WithInstallDisk(installDisk),
 					generate.WithInstallImage(installImage),
