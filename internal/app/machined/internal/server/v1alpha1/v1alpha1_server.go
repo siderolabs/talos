@@ -32,8 +32,8 @@ import (
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/concurrency"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 

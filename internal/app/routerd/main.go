@@ -48,7 +48,7 @@ func main() {
 		factory.SocketPath(constants.RouterdSocketPath),
 		factory.WithDefaultLog(),
 		factory.ServerOptions(
-			grpc.CustomCodec(proxy.Codec()),
+			grpc.CustomCodec(proxy.Codec()), //nolint: staticcheck
 			grpc.UnknownServiceHandler(
 				proxy.TransparentHandler(
 					router.Director,

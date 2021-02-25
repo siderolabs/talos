@@ -21,7 +21,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
