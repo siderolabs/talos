@@ -1242,7 +1242,7 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			return err
 		}
 
-		if err = kubeHelper.CordonAndDrain(nodename); err != nil {
+		if err = kubeHelper.CordonAndDrain(ctx, nodename); err != nil {
 			return err
 		}
 
