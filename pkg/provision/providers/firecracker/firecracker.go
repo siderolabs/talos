@@ -55,16 +55,11 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			// Talos-specific
 			"talos.platform=metal",
 		}),
-		generate.WithNetworkConfig(&v1alpha1.NetworkConfig{
-			NameServers: nameservers,
-			NetworkInterfaces: []*v1alpha1.Device{
-				{
-					DeviceInterface: "eth0",
-					DeviceCIDR:      "169.254.128.128/32", // link-local IP just to trigger the static networkd config
-					DeviceMTU:       networkReq.MTU,
-				},
-			},
-		}),
+		generate.WithNetworkOptions(
+			v1alpha1.WithNetworkNameservers(nameservers...),
+			v1alpha1.WithNetworkInterfaceCIDR("eth0", "169.254.128.128/32"), // link-local IP just to trigger the static networkd config
+			v1alpha1.WithNetworkInterfaceMTU("eth0", networkReq.MTU),
+		),
 	}
 }
 

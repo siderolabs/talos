@@ -11,6 +11,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -21,6 +22,14 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		ConfigPersist: in.Persist,
 	}
 
+	networkConfig := &v1alpha1.NetworkConfig{}
+
+	for _, opt := range in.NetworkConfigOptions {
+		if err := opt(machine.TypeJoin, networkConfig); err != nil {
+			return nil, err
+		}
+	}
+
 	machine := &v1alpha1.MachineConfig{
 		MachineType:     "worker",
 		MachineToken:    in.TrustdInfo.Token,
@@ -28,7 +37,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		MachineKubelet: &v1alpha1.KubeletConfig{
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
-		MachineNetwork: in.NetworkConfig,
+		MachineNetwork: networkConfig,
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.InstallDisk,
 			InstallImage:           in.InstallImage,

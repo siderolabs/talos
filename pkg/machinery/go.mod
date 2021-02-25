@@ -3,6 +3,7 @@ module github.com/talos-systems/talos/pkg/machinery
 go 1.14
 
 require (
+	github.com/AlekSi/pointer v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/containerd/containerd v1.4.1
 	github.com/containerd/go-cni v1.0.1

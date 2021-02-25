@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -19,12 +20,20 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ConfigPersist: in.Persist,
 	}
 
+	networkConfig := &v1alpha1.NetworkConfig{}
+
+	for _, opt := range in.NetworkConfigOptions {
+		if err := opt(machine.TypeControlPlane, networkConfig); err != nil {
+			return nil, err
+		}
+	}
+
 	machine := &v1alpha1.MachineConfig{
 		MachineType: "init",
 		MachineKubelet: &v1alpha1.KubeletConfig{
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
-		MachineNetwork:  in.NetworkConfig,
+		MachineNetwork:  networkConfig,
 		MachineCA:       in.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.TrustdInfo.Token,

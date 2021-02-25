@@ -764,6 +764,23 @@ func (n *NetworkConfig) Devices() []config.Device {
 	return interfaces
 }
 
+// GetDevice adds or returns existing Device by name.
+func (n *NetworkConfig) GetDevice(name string) *Device {
+	for _, dev := range n.NetworkInterfaces {
+		if dev.DeviceInterface == name {
+			return dev
+		}
+	}
+
+	dev := &Device{
+		DeviceInterface: name,
+	}
+
+	n.NetworkInterfaces = append(n.NetworkInterfaces, dev)
+
+	return dev
+}
+
 // Resolvers implements the config.Provider interface.
 func (n *NetworkConfig) Resolvers() []string {
 	return n.NameServers

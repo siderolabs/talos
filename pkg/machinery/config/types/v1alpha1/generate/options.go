@@ -57,10 +57,10 @@ func WithInstallExtraKernelArgs(args []string) GenOption {
 	}
 }
 
-// WithNetworkConfig allows to pass network config to be used.
-func WithNetworkConfig(network *v1alpha1.NetworkConfig) GenOption {
+// WithNetworkOptions adds network config generation option.
+func WithNetworkOptions(opts ...v1alpha1.NetworkConfigOption) GenOption {
 	return func(o *GenOptions) error {
-		o.NetworkConfig = network
+		o.NetworkConfigOptions = append(o.NetworkConfigOptions, opts...)
 
 		return nil
 	}
@@ -179,7 +179,7 @@ type GenOptions struct {
 	InstallImage               string
 	InstallExtraKernelArgs     []string
 	AdditionalSubjectAltNames  []string
-	NetworkConfig              *v1alpha1.NetworkConfig
+	NetworkConfigOptions       []v1alpha1.NetworkConfigOption
 	CNIConfig                  *v1alpha1.CNIConfig
 	RegistryMirrors            map[string]*v1alpha1.RegistryMirrorConfig
 	RegistryConfig             map[string]*v1alpha1.RegistryConfig
