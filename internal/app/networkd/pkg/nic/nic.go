@@ -201,7 +201,7 @@ func (n *NetworkInterface) CreateSub() error {
 // Configure is used to set the link state and configure any necessary
 // bond settings ( ex, mode ).
 // nolint:gocyclo
-func (n *NetworkInterface) Configure() (err error) {
+func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 	if n.IsIgnored() {
 		return err
 	}
@@ -310,13 +310,13 @@ func (n *NetworkInterface) AddressingSub() error {
 }
 
 // Renew is the mechanism for keeping a dhcp lease active.
-func (n *NetworkInterface) Renew() {
+func (n *NetworkInterface) Renew(ctx context.Context) {
 	for _, method := range n.AddressMethod {
 		if method.TTL() == 0 {
 			continue
 		}
 
-		go n.renew(method)
+		go n.renew(ctx, method)
 	}
 }
 
@@ -324,7 +324,7 @@ func (n *NetworkInterface) Renew() {
 // up to date. We attempt to do our first reconfiguration halfway through
 // address TTL. If that fails, we'll continue to attempt to retry every
 // halflife.
-func (n *NetworkInterface) renew(method address.Addressing) {
+func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing) {
 	const minRenewDuration = 5 * time.Second // protect from renewing too often
 
 	renewDuration := method.TTL() / 2
@@ -332,7 +332,11 @@ func (n *NetworkInterface) renew(method address.Addressing) {
 	var err error
 
 	for {
-		time.Sleep(renewDuration)
+		select {
+		case <-time.After(renewDuration):
+		case <-ctx.Done():
+			return
+		}
 
 		if err = n.configureInterface(method, n.Link); err != nil {
 			log.Printf("failure to renew address for %q: %s", n.Name, err)

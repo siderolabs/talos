@@ -433,7 +433,7 @@ func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.Task
 			return err
 		}
 
-		if err = nwd.Configure(); err != nil {
+		if err = nwd.Configure(ctx); err != nil {
 			return err
 		}
 

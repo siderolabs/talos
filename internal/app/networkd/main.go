@@ -5,9 +5,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
@@ -26,31 +32,71 @@ func init() {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("networkd stopped")
+}
+
+func run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		defer cancel()
+
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
+
+		select {
+		case <-sigCh:
+		case <-ctx.Done():
+		}
+	}()
+
 	log.Println("starting initial network configuration")
 
 	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	nwd, err := networkd.New(config)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	if err = nwd.Configure(); err != nil {
-		log.Fatal(err)
+	if err = nwd.Configure(ctx); err != nil {
+		return err
 	}
 
 	log.Println("completed initial network configuration")
 
-	nwd.Renew()
+	nwd.Renew(ctx)
 
-	log.Fatalf("%+v", factory.ListenAndServe(
+	server := factory.NewServer(
 		reg.NewRegistrator(nwd),
+		factory.WithDefaultLog(),
+	)
+
+	listener, err := factory.NewListener(
 		factory.Network("unix"),
 		factory.SocketPath(constants.NetworkSocketPath),
-		factory.WithDefaultLog(),
-	),
 	)
+	if err != nil {
+		return err
+	}
+
+	var eg errgroup.Group
+
+	eg.Go(func() error {
+		return server.Serve(listener)
+	})
+
+	<-ctx.Done()
+
+	server.GracefulStop()
+
+	return eg.Wait()
 }

@@ -185,7 +185,7 @@ func New(config config.Provider) (*Networkd, error) {
 // the correct state when we get to bonding configuration.
 //
 //nolint: gocyclo
-func (n *Networkd) Configure() (err error) {
+func (n *Networkd) Configure(ctx context.Context) (err error) {
 	// Configure non-bonded interfaces first so we can ensure basic
 	// interfaces exist prior to bonding
 	for _, bonded := range []bool{false, true} {
@@ -195,7 +195,7 @@ func (n *Networkd) Configure() (err error) {
 			log.Println("configuring non-bonded interfaces")
 		}
 
-		if err = n.configureLinks(bonded); err != nil {
+		if err = n.configureLinks(ctx, bonded); err != nil {
 			// Treat errors as non-fatal
 			log.Println(err)
 		}
@@ -243,9 +243,9 @@ func (n *Networkd) Configure() (err error) {
 // Renew sets up a long running loop to refresh a network interfaces
 // addressing configuration. Currently this only applies to interfaces
 // configured by DHCP.
-func (n *Networkd) Renew() {
+func (n *Networkd) Renew(ctx context.Context) {
 	for _, iface := range n.Interfaces {
-		iface.Renew()
+		iface.Renew(ctx)
 	}
 }
 
@@ -399,7 +399,7 @@ func (n *Networkd) SetReady() {
 	n.ready = true
 }
 
-func (n *Networkd) configureLinks(bonded bool) error {
+func (n *Networkd) configureLinks(ctx context.Context, bonded bool) error {
 	errCh := make(chan error, len(n.Interfaces))
 	count := 0
 
@@ -425,7 +425,7 @@ func (n *Networkd) configureLinks(bonded bool) error {
 					return fmt.Errorf("error creating sub interface nic %q: %w", netif.Name, err)
 				}
 
-				if err := netif.Configure(); err != nil {
+				if err := netif.Configure(ctx); err != nil {
 					return fmt.Errorf("error configuring nic %q: %w", netif.Name, err)
 				}
 
