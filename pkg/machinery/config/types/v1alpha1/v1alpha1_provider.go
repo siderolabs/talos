@@ -73,6 +73,7 @@ func (c *Config) Bytes() ([]byte, error) {
 }
 
 // ApplyDynamicConfig implements the config.Provider interface.
+//nolint:gocyclo
 func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.DynamicConfigProvider) error {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -99,12 +100,20 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 		log.Printf("certificates will be created without external IPs: %v", err)
 	}
 
-	sans := make([]string, 0, len(addrs))
-	for _, addr := range addrs {
-		sans = append(sans, addr.String())
+	existingSANs := map[string]bool{}
+	for _, addr := range c.MachineConfig.MachineCertSANs {
+		existingSANs[addr] = true
 	}
 
-	c.MachineConfig.MachineCertSANs = append(c.MachineConfig.MachineCertSANs, sans...)
+	sans := make([]string, 0, len(addrs))
+	for i, addr := range addrs {
+		sans[i] = addr.String()
+		if existingSANs[sans[i]] {
+			continue
+		}
+
+		c.MachineConfig.MachineCertSANs = append(c.MachineConfig.MachineCertSANs, sans[i])
+	}
 
 	if c.ClusterConfig == nil {
 		c.ClusterConfig = &ClusterConfig{}
@@ -114,7 +123,18 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 		c.ClusterConfig.APIServerConfig = &APIServerConfig{}
 	}
 
-	c.ClusterConfig.APIServerConfig.CertSANs = append(c.ClusterConfig.APIServerConfig.CertSANs, sans...)
+	existingCertSANs := map[string]bool{}
+	for _, certSAN := range c.ClusterConfig.APIServerConfig.CertSANs {
+		existingCertSANs[certSAN] = true
+	}
+
+	for _, certSAN := range sans {
+		if existingCertSANs[certSAN] {
+			continue
+		}
+
+		c.ClusterConfig.APIServerConfig.CertSANs = append(c.ClusterConfig.APIServerConfig.CertSANs, certSAN)
+	}
 
 	return nil
 }
