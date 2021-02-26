@@ -66,6 +66,8 @@ const (
 
 	// KernelCurrentRoot is the kernel parameter name for specifying the
 	// current root partition.
+	//
+	// Deprecated: Talos now expects to use an entire disk.
 	KernelCurrentRoot = "talos.root"
 
 	// NewRoot is the path where the switchroot target is mounted.
