@@ -152,14 +152,19 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 }
 
 // LeaveCluster removes the current member from the etcd cluster.
-//
-// nolint: gocyclo
 func (c *Client) LeaveCluster(ctx context.Context) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
 	}
 
+	return c.RemoveMember(ctx, hostname)
+}
+
+// RemoveMember removes the member from the etcd cluster.
+//
+// nolint: gocyclo
+func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 	resp, err := c.MemberList(ctx)
 	if err != nil {
 		return err

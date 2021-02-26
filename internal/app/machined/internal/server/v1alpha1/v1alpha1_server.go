@@ -1692,6 +1692,29 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	return reply, nil
 }
 
+// EtcdRemoveMember implements the machine.MachineServer interface.
+func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMemberRequest) (reply *machine.EtcdRemoveMemberResponse, err error) {
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	// nolint: errcheck
+	defer client.Close()
+
+	if err = client.RemoveMember(ctx, in.Member); err != nil {
+		return nil, fmt.Errorf("failed to remove member: %w", err)
+	}
+
+	reply = &machine.EtcdRemoveMemberResponse{
+		Messages: []*machine.EtcdRemoveMember{
+			{},
+		},
+	}
+
+	return reply, nil
+}
+
 // EtcdLeaveCluster implements the machine.MachineServer interface.
 func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (reply *machine.EtcdLeaveClusterResponse, err error) {
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())

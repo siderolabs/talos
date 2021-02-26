@@ -24,6 +24,8 @@ service MachineService {
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
+  rpc EtcdRemoveMember(EtcdRemoveMemberRequest)
+      returns (EtcdRemoveMemberResponse);
   rpc EtcdLeaveCluster(EtcdLeaveClusterRequest)
       returns (EtcdLeaveClusterResponse);
   rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
@@ -735,6 +737,12 @@ message DiskStat {
 message EtcdLeaveClusterRequest {}
 message EtcdLeaveCluster { common.Metadata metadata = 1; }
 message EtcdLeaveClusterResponse { repeated EtcdLeaveCluster messages = 1; }
+
+message EtcdRemoveMemberRequest {
+  string member = 1;
+}
+message EtcdRemoveMember { common.Metadata metadata = 1; }
+message EtcdRemoveMemberResponse { repeated EtcdRemoveMember messages = 1; }
 
 message EtcdForfeitLeadershipRequest {}
 message EtcdForfeitLeadership {

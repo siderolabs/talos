@@ -36,6 +36,22 @@ var etcdLeaveCmd = &cobra.Command{
 	},
 }
 
+var etcdMemberRemoveCmd = &cobra.Command{
+	Use:   "remove-member <hostname>",
+	Short: "Remove the node from etcd cluster",
+	Long: `Use this command only if you want to remove a member which is in broken state.
+If there is no access to the node, or the node can't access etcd to call etcd leave.
+Always prefer etcd leave over this command.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			return c.EtcdRemoveMember(ctx, &machine.EtcdRemoveMemberRequest{
+				Member: args[0],
+			})
+		})
+	},
+}
+
 var etcdForfeitLeadershipCmd = &cobra.Command{
 	Use:   "forfeit-leadership",
 	Short: "Tell node to forfeit etcd cluster leadership",
@@ -102,6 +118,6 @@ var etcdMemberListCmd = &cobra.Command{
 }
 
 func init() {
-	etcdCmd.AddCommand(etcdLeaveCmd, etcdForfeitLeadershipCmd, etcdMemberListCmd)
+	etcdCmd.AddCommand(etcdLeaveCmd, etcdForfeitLeadershipCmd, etcdMemberListCmd, etcdMemberRemoveCmd)
 	addCommand(etcdCmd)
 }

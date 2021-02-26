@@ -73,6 +73,9 @@ description: Talos gRPC API reference.
     - [EtcdMemberList](#machine.EtcdMemberList)
     - [EtcdMemberListRequest](#machine.EtcdMemberListRequest)
     - [EtcdMemberListResponse](#machine.EtcdMemberListResponse)
+    - [EtcdRemoveMember](#machine.EtcdRemoveMember)
+    - [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest)
+    - [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse)
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FileInfo](#machine.FileInfo)
@@ -1177,6 +1180,51 @@ dmesg
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [EtcdMemberList](#machine.EtcdMemberList) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdRemoveMember"></a>
+
+### EtcdRemoveMember
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdRemoveMemberRequest"></a>
+
+### EtcdRemoveMemberRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| member | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdRemoveMemberResponse"></a>
+
+### EtcdRemoveMemberResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdRemoveMember](#machine.EtcdRemoveMember) | repeated |  |
 
 
 
@@ -2800,6 +2848,7 @@ The machine service definition.
 | Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
 | Events | [EventsRequest](#machine.EventsRequest) | [Event](#machine.Event) stream |  |
 | EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
+| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) |  |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
 | GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
