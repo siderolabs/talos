@@ -851,6 +851,17 @@ func (c *Client) ClusterHealthCheck(ctx context.Context, waitTimeout time.Durati
 	})
 }
 
+// EtcdRemoveMember removes a node from etcd cluster.
+func (c *Client) EtcdRemoveMember(ctx context.Context, req *machineapi.EtcdRemoveMemberRequest, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.EtcdRemoveMember(ctx, req, callOptions...)
+
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return err
+}
+
 // EtcdLeaveCluster makes node leave etcd cluster.
 func (c *Client) EtcdLeaveCluster(ctx context.Context, req *machineapi.EtcdLeaveClusterRequest, callOptions ...grpc.CallOption) error {
 	resp, err := c.MachineClient.EtcdLeaveCluster(ctx, req, callOptions...)

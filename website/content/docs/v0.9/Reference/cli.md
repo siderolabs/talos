@@ -819,6 +819,39 @@ talosctl etcd members [flags]
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 
+## talosctl etcd remove-member
+
+Remove the node from etcd cluster
+
+### Synopsis
+
+Use this command only if you want to remove a member which is in broken state.
+If there is no access to the node, or the node can't access etcd to call etcd leave.
+Always prefer etcd leave over this command.
+
+```
+talosctl etcd remove-member <hostname> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for remove-member
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
 ## talosctl etcd
 
 Manage etcd
@@ -844,6 +877,7 @@ Manage etcd
 * [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
 * [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
 * [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
+* [talosctl etcd remove-member](#talosctl-etcd-remove-member)	 - Remove the node from etcd cluster
 
 ## talosctl events
 
