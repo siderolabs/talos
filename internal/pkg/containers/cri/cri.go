@@ -139,9 +139,6 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 
 	// request for a container
 	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{
-		State: &runtimeapi.ContainerStateValue{
-			State: runtimeapi.ContainerState_CONTAINER_RUNNING,
-		},
 		LabelSelector: map[string]string{
 			"io.kubernetes.pod.name":       pod,
 			"io.kubernetes.pod.namespace":  namespace,
@@ -254,11 +251,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		return nil, err
 	}
 
-	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{
-		State: &runtimeapi.ContainerStateValue{
-			State: runtimeapi.ContainerState_CONTAINER_RUNNING,
-		},
-	})
+	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{})
 	if err != nil {
 		return nil, err
 	}

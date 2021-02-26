@@ -37,16 +37,17 @@ var logsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var namespace string
+			var (
+				namespace string
+				driver    common.ContainerDriver
+			)
+
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
+				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace
-			}
-
-			driver := common.ContainerDriver_CONTAINERD
-			if useCRI {
-				driver = common.ContainerDriver_CRI
+				driver = common.ContainerDriver_CONTAINERD
 			}
 
 			stream, err := c.Logs(ctx, namespace, driver, args[0], follow, tailLines)
@@ -185,8 +186,11 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 
 func init() {
 	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	logsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
 	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
 	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
+
+	logsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	logsCmd.Flags().MarkHidden("use-cri") //nolint: errcheck
+
 	addCommand(logsCmd)
 }

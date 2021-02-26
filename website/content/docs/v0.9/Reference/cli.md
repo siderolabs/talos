@@ -508,7 +508,6 @@ talosctl containers [flags]
 ```
   -h, --help         help for containers
   -k, --kubernetes   use the k8s.io containerd namespace
-  -c, --use-cri      use the CRI driver
 ```
 
 ### Options inherited from parent commands
@@ -1362,7 +1361,6 @@ talosctl logs <service name> [flags]
   -h, --help         help for logs
   -k, --kubernetes   use the k8s.io containerd namespace
       --tail int32   lines of log file to display (default is to show from the beginning) (default -1)
-  -c, --use-cri      use the CRI driver
 ```
 
 ### Options inherited from parent commands
@@ -1618,7 +1616,6 @@ talosctl restart <id> [flags]
 ```
   -h, --help         help for restart
   -k, --kubernetes   use the k8s.io containerd namespace
-  -c, --use-cri      use the CRI driver
 ```
 
 ### Options inherited from parent commands
@@ -1761,7 +1758,6 @@ talosctl stats [flags]
 ```
   -h, --help         help for stats
   -k, --kubernetes   use the k8s.io containerd namespace
-  -c, --use-cri      use the CRI driver
 ```
 
 ### Options inherited from parent commands

@@ -29,21 +29,11 @@ func (suite *StatsSuite) TestContainerd() {
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
 	)
-	suite.RunCLI([]string{"stats", "-k", "--nodes", suite.RandomDiscoveredNode()},
-		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),
-	)
 }
 
 // TestCRI inspects stats via CRI driver.
 func (suite *StatsSuite) TestCRI() {
-	suite.RunCLI([]string{"stats", "-c", "--nodes", suite.RandomDiscoveredNode()},
-		base.ShouldFail(),
-		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunCLI([]string{"stats", "-ck", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{"stats", "-k", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),

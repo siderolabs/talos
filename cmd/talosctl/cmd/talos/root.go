@@ -15,10 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
-var (
-	kubernetes bool
-	useCRI     bool
-)
+var kubernetes bool
 
 // Common options set on root command.
 var (
