@@ -29,19 +29,11 @@ func (suite *ContainersSuite) TestContainerd() {
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`talos/routerd`)),
 	)
-	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNode(), "-k"},
-		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
-	)
 }
 
 // TestCRI inspects containers via CRI driver.
 func (suite *ContainersSuite) TestCRI() {
-	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNode(), "-c"},
-		base.ShouldFail(),
-		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunCLI([]string{"containers", "-ck", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{"containers", "-k", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 	)
 }

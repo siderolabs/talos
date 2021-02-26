@@ -12,8 +12,6 @@ type Inspector interface {
 	Pods() ([]*Pod, error)
 	// Container returns info about a single container.
 	Container(id string) (*Container, error)
-	// Images returns a hash of image digest -> name.
-	Images() (map[string]string, error)
 	// Close frees associated resources.
 	Close() error
 	// Returns path to the container's stderr pipe
