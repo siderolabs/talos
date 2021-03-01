@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // EventsSuite verifies Events API.
@@ -36,7 +37,7 @@ func (suite *EventsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode())
+	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode(machinetype.TypeJoin))
 }
 
 // TearDownTest ...

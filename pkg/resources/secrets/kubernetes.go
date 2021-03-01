@@ -21,7 +21,7 @@ const KubernetesID = resource.ID("k8s-certs")
 // Kubernetes contains K8s generated secrets.
 type Kubernetes struct {
 	md   resource.Metadata
-	spec interface{}
+	spec *KubernetesCertsSpec
 }
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
@@ -61,9 +61,11 @@ func (r *Kubernetes) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *Kubernetes) DeepCopy() resource.Resource {
+	specCopy := *r.spec
+
 	return &Kubernetes{
 		md:   r.md,
-		spec: r.spec,
+		spec: &specCopy,
 	}
 }
 
@@ -78,5 +80,5 @@ func (r *Kubernetes) ResourceDefinition() core.ResourceDefinitionSpec {
 
 // Certs returns .spec.
 func (r *Kubernetes) Certs() *KubernetesCertsSpec {
-	return r.spec.(*KubernetesCertsSpec)
+	return r.spec
 }
