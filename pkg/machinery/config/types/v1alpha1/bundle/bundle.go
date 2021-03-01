@@ -80,6 +80,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		fmt.Println("generating PKI and tokens")
 	}
 
+	if options.InputOptions == nil {
+		return nil, fmt.Errorf("no WithInputOptions is defined")
+	}
+
 	secrets, err := generate.NewSecretsBundle(generate.NewClock(), options.InputOptions.GenOptions...)
 	if err != nil {
 		return bundle, err

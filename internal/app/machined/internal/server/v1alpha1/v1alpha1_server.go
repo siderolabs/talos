@@ -109,6 +109,20 @@ func (s *Server) Register(obj *grpc.Server) {
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
 
+	applyDynamicConfig := func() ([]byte, error) {
+		cfg, err := s.Controller.Runtime().ValidateConfig(in.GetData())
+		if err != nil {
+			return nil, err
+		}
+
+		err = cfg.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
+		if err != nil {
+			return nil, err
+		}
+
+		return cfg.Bytes()
+	}
+
 	switch {
 	// --immediate
 	case in.Immediate:
@@ -116,7 +130,12 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 			return nil, err
 		}
 
-		if err := s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
+		cfg, err := applyDynamicConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := s.Controller.Runtime().SetConfig(cfg); err != nil {
 			return nil, err
 		}
 
@@ -142,24 +161,12 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		}()
 	// --no-reboot
 	case in.OnReboot:
-		cfg, err := s.Controller.Runtime().ValidateConfig(in.GetData())
+		cfg, err := applyDynamicConfig()
 		if err != nil {
 			return nil, err
 		}
 
-		err = cfg.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
-		if err != nil {
-			return nil, err
-		}
-
-		var b []byte
-
-		b, err = cfg.Bytes()
-		if err != nil {
-			return nil, err
-		}
-
-		if err = ioutil.WriteFile(constants.ConfigPath, b, 0o600); err != nil {
+		if err = ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
 			return nil, err
 		}
 	}
