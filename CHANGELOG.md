@@ -1,3 +1,50 @@
+
+<a name="v0.9.0-alpha.3"></a>
+## [v0.9.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.2...v0.9.0-alpha.3) (2021-03-01)
+
+### Chore
+
+* bump dependencies via dependabot
+* build both Darwin and Linux versions of talosctl
+* bump dependencies via dependabot
+* switch CI to stop embedding local registry into the builds
+
+### Docs
+
+* update AMI images for 0.8.4
+
+### Feat
+
+* implement etcd remove-member cli command
+* update etcd to 3.4.15
+* talosctl: allow v-prefixed k8s versions
+* implement simple layer 2 shared IP for CP
+* implement talosctl edit and patch config commands
+* bump etcd client library to 3.5.0-alpha.0
+
+### Fix
+
+* update in-cluster kubeconfig validity to match other certs
+* add ApplyDynamicConfig call in the apply-config --immediate mode
+* set hdmi_safe=1 on Raspberry Pi for maximum HDMI compatibility
+* show stopped/exited containers via CRI inspector
+* make ApplyDynamicConfig idempotent
+* improve the drain function
+* correctly set service state in the resource
+* update the layout of the Disks API to match proxying requirements
+* stop and clean up installer container  correctly
+* sanitize volume name better in static pod extra volumes
+
+### Refactor
+
+* add context to the networkd
+* split WithNetworkConfig into sub-options
+
+### Test
+
+* add integration test with Canal CNI and reset API
+* upgrade master to master tests
+
 <a name="v0.9.0-alpha.2"></a>
 ## [v0.9.0-alpha.2](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.1...v0.9.0-alpha.2) (2021-02-20)
 
