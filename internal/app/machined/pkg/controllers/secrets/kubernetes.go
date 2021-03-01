@@ -26,6 +26,11 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
+// KubernetesCertificateValidityDuration is the validity duration for the certificates created with this controller.
+//
+// Controller automatically refreshes certs at 50% of CertificateValidityDuration.
+const KubernetesCertificateValidityDuration = constants.KubernetesDefaultCertificateValidityDuration
+
 // KubernetesController manages secrets.Kubernetes based on configuration.
 type KubernetesController struct{}
 
@@ -66,11 +71,15 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		return fmt.Errorf("error setting up dependencies: %w", err)
 	}
 
+	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
+	defer refreshTicker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		case <-refreshTicker.C:
 		}
 
 		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
@@ -149,7 +158,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		x509.DNSNames(altNames.DNSNames),
 		x509.CommonName("kube-apiserver"),
 		x509.Organization("kube-master"),
-		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
+		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
@@ -160,7 +169,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 	apiServerKubeletClient, err := x509.NewKeyPair(ca,
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
-		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
+		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
@@ -175,7 +184,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 
 	frontProxy, err := x509.NewKeyPair(aggregatorCA,
 		x509.CommonName("front-proxy-client"),
-		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
+		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate aggregator cert: %w", err)
@@ -256,6 +265,6 @@ func (adapter *generateAdminAdapter) AdminKubeconfig() config.AdminKubeconfig {
 }
 
 func (adapter *generateAdminAdapter) CertLifetime() time.Duration {
-	// this certificate is not delivered to the user, it's used only internally by Talos
-	return x509.DefaultCertificateValidityDuration
+	// this certificate is not delivered to the user, it's used only internally by control plane components
+	return KubernetesCertificateValidityDuration
 }

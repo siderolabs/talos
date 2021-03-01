@@ -21,7 +21,7 @@ const EtcdID = resource.ID("etcd")
 // Etcd contains etcd generated secrets.
 type Etcd struct {
 	md   resource.Metadata
-	spec interface{}
+	spec *EtcdCertsSpec
 }
 
 // EtcdCertsSpec describes etcd certs secrets.
@@ -57,9 +57,11 @@ func (r *Etcd) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *Etcd) DeepCopy() resource.Resource {
+	specCopy := *r.spec
+
 	return &Etcd{
 		md:   r.md,
-		spec: r.spec,
+		spec: &specCopy,
 	}
 }
 
@@ -74,5 +76,5 @@ func (r *Etcd) ResourceDefinition() core.ResourceDefinitionSpec {
 
 // Certs returns .spec.
 func (r *Etcd) Certs() *EtcdCertsSpec {
-	return r.spec.(*EtcdCertsSpec)
+	return r.spec
 }

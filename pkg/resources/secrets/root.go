@@ -86,9 +86,22 @@ func (r *Root) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *Root) DeepCopy() resource.Resource {
+	var specCopy interface{}
+
+	switch v := r.spec.(type) {
+	case *RootEtcdSpec:
+		vv := *v
+		specCopy = &vv
+	case *RootKubernetesSpec:
+		vv := *v
+		specCopy = &vv
+	default:
+		panic("unexpected spec type")
+	}
+
 	return &Root{
 		md:   r.md,
-		spec: r.spec,
+		spec: specCopy,
 	}
 }
 
