@@ -7,6 +7,7 @@ package output
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
@@ -16,6 +17,7 @@ import (
 // YAML outputs resources in YAML format.
 type YAML struct {
 	needDashes bool
+	withEvents bool
 }
 
 // NewYAML initializes YAML resource output.
@@ -25,6 +27,8 @@ func NewYAML() *YAML {
 
 // WriteHeader implements output.Writer interface.
 func (y *YAML) WriteHeader(definition resource.Resource, withEvents bool) error {
+	y.withEvents = withEvents
+
 	return nil
 }
 
@@ -42,6 +46,10 @@ func (y *YAML) WriteResource(node string, r resource.Resource, event state.Event
 	y.needDashes = true
 
 	fmt.Fprintf(os.Stdout, "node: %s\n", node)
+
+	if y.withEvents {
+		fmt.Fprintf(os.Stdout, "event: %s\n", strings.ToLower(event.String()))
+	}
 
 	return yaml.NewEncoder(os.Stdout).Encode(out)
 }

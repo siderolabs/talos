@@ -101,8 +101,8 @@ github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54/go.mod h1:O
 github.com/talos-systems/go-retry v0.2.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa h1:XqOMTt0Q6mjsk8Dea5wUpgcdtf+AzesH11m4AozWSxw=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
-github.com/talos-systems/os-runtime v0.0.0-20210302191935-8b3f192ecca2 h1:uWBn8UTaAN6oekZGSKuYhmg6Bha5Lg/T08ApLyjgRTQ=
-github.com/talos-systems/os-runtime v0.0.0-20210302191935-8b3f192ecca2/go.mod h1:Z+1phKVJ0IWH+Jd2DGufL8WKqxd3xt1xlcsxcU18ZL0=
+github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b h1:QM8V1t0QivzQzl4uuTkFDSlNzdUyG1/8bRAVwDRPQIo=
+github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b/go.mod h1:Z+1phKVJ0IWH+Jd2DGufL8WKqxd3xt1xlcsxcU18ZL0=
 go.uber.org/goleak v1.1.10/go.mod h1:8a7PlsEVH3e/a/GLqe5IIrQx6GzcnRmZEufDUTk4A7A=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
