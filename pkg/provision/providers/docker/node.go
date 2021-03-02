@@ -144,7 +144,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	// Create the container.
-	resp, err := p.client.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, nodeReq.Name)
+	resp, err := p.client.ContainerCreate(ctx, containerConfig, hostConfig, networkConfig, nil, nodeReq.Name)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
