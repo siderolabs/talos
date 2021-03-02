@@ -70,7 +70,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
-	client, err := containerdapi.New(constants.SystemContainerdAddress)
+	client, err := containerdapi.New(constants.ContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,9 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-	if _, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image()); err != nil {
+
+	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image(), image.WithSkipIfAlreadyPulled())
+	if err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
@@ -114,10 +116,10 @@ func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(r runtime.Runtime) []string {
 	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
-		return []string{"containerd", "networkd"}
+		return []string{"cri", "networkd"}
 	}
 
-	return []string{"containerd", "networkd", "timed"}
+	return []string{"cri", "networkd", "timed"}
 }
 
 // Runner implements the Service interface.
@@ -147,7 +149,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerdAddress(constants.SystemContainerdAddress),
+		runner.WithContainerImage(r.Config().Machine().Kubelet().Image()),
 		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(

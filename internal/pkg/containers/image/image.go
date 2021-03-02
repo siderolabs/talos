@@ -32,9 +32,42 @@ const (
 	ImportRetryJitter   = time.Second
 )
 
+// PullOption is an option for Pull function.
+type PullOption func(*PullOptions)
+
+// PullOptions configure Pull function.
+type PullOptions struct {
+	SkipIfAlreadyPulled bool
+}
+
+// WithSkipIfAlreadyPulled skips pulling if image is already pulled and unpacked.
+func WithSkipIfAlreadyPulled() PullOption {
+	return func(opts *PullOptions) {
+		opts.SkipIfAlreadyPulled = true
+	}
+}
+
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
-func Pull(ctx context.Context, reg config.Registries, client *containerd.Client, ref string) (img containerd.Image, err error) {
+func Pull(ctx context.Context, reg config.Registries, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
+	var opts PullOptions
+
+	for _, o := range opt {
+		o(&opts)
+	}
+
+	if opts.SkipIfAlreadyPulled {
+		img, err = client.GetImage(ctx, ref)
+		if err == nil {
+			var unpacked bool
+
+			unpacked, err = img.IsUnpacked(ctx, "")
+			if err == nil && unpacked {
+				return img, nil
+			}
+		}
+	}
+
 	resolver := NewResolver(reg)
 
 	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).Retry(func() error {
