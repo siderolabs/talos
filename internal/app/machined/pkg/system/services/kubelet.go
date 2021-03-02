@@ -19,7 +19,6 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	criconstants "github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,6 +64,8 @@ func (k *Kubelet) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//
+//nolint: gocyclo
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
@@ -110,9 +111,9 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	defer client.Close()
 
 	// Pull the image and unpack it.
-	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
+	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Machine().Kubelet().Image())
+	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Machine().Kubelet().Image(), image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return err
 	}
@@ -182,7 +183,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		r.Config().Debug(),
 		&args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithNamespace(criconstants.K8sContainerdNamespace),
+		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(r.Config().Machine().Kubelet().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
