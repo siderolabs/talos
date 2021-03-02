@@ -190,8 +190,8 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 // LabelNodeAsMaster labels a node with the required master label and NoSchedule taint.
 //
 //nolint: gocyclo
-func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error) {
-	n, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+func (h *Client) LabelNodeAsMaster(ctx context.Context, name string, taintNoSchedule bool) (err error) {
+	n, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -210,25 +210,25 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 	n.Labels[constants.LabelNodeRoleMaster] = ""
 	n.Labels[constants.LabelNodeRoleControlPlane] = ""
 
-	if taintNoSchedule {
-		taintFound := false
+	taintIndex := -1
 
-		// TODO: with K8s 1.21, add new taint LabelNodeRoleControlPlane
+	// TODO: with K8s 1.21, add new taint LabelNodeRoleControlPlane
 
-		for _, taint := range n.Spec.Taints {
-			if taint.Key == constants.LabelNodeRoleMaster {
-				taintFound = true
+	for i, taint := range n.Spec.Taints {
+		if taint.Key == constants.LabelNodeRoleMaster {
+			taintIndex = i
 
-				break
-			}
+			break
 		}
+	}
 
-		if !taintFound {
-			n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
-				Key:    constants.LabelNodeRoleMaster,
-				Effect: corev1.TaintEffectNoSchedule,
-			})
-		}
+	if taintIndex == -1 && taintNoSchedule {
+		n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
+			Key:    constants.LabelNodeRoleMaster,
+			Effect: corev1.TaintEffectNoSchedule,
+		})
+	} else if taintIndex != -1 && !taintNoSchedule {
+		n.Spec.Taints = append(n.Spec.Taints[:taintIndex], n.Spec.Taints[taintIndex+1:]...)
 	}
 
 	newData, err := json.Marshal(n)
@@ -241,7 +241,7 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}
 
-	if _, err := h.CoreV1().Nodes().Patch(context.TODO(), n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
+	if _, err := h.CoreV1().Nodes().Patch(ctx, n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
 		if apierrors.IsConflict(err) {
 			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
 		}
@@ -253,35 +253,36 @@ func (h *Client) LabelNodeAsMaster(name string, taintNoSchedule bool) (err error
 }
 
 // WaitUntilReady waits for a node to be ready.
-func (h *Client) WaitUntilReady(name string) error {
-	return retry.Exponential(10*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond), retry.WithErrorLogging(true)).Retry(func() error {
-		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 30*time.Second)
-		defer attemptCtxCancel()
+func (h *Client) WaitUntilReady(ctx context.Context, name string) error {
+	return retry.Exponential(10*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond), retry.WithErrorLogging(true)).RetryWithContext(ctx,
+		func(ctx context.Context) error {
+			attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+			defer attemptCtxCancel()
 
-		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return retry.ExpectedError(err)
+			node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return retry.ExpectedError(err)
+				}
+
+				if apierrors.ReasonForError(err) == metav1.StatusReasonUnknown {
+					// non-API error, e.g. networking error
+					return retry.ExpectedError(err)
+				}
+
+				return retry.UnexpectedError(err)
 			}
 
-			if apierrors.ReasonForError(err) == metav1.StatusReasonUnknown {
-				// non-API error, e.g. networking error
-				return retry.ExpectedError(err)
-			}
-
-			return retry.UnexpectedError(err)
-		}
-
-		for _, cond := range node.Status.Conditions {
-			if cond.Type == corev1.NodeReady {
-				if cond.Status != corev1.ConditionTrue {
-					return retry.ExpectedError(fmt.Errorf("node not ready"))
+			for _, cond := range node.Status.Conditions {
+				if cond.Type == corev1.NodeReady {
+					if cond.Status != corev1.ConditionTrue {
+						return retry.ExpectedError(fmt.Errorf("node not ready"))
+					}
 				}
 			}
-		}
 
-		return nil
-	})
+			return nil
+		})
 }
 
 // CordonAndDrain cordons and drains a node in one call.
@@ -324,9 +325,9 @@ func (h *Client) Cordon(ctx context.Context, name string) error {
 // Uncordon marks a node as schedulable.
 //
 // If force is set, node will be uncordoned even if cordoned not by Talos.
-func (h *Client) Uncordon(name string, force bool) error {
-	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 10*time.Second)
+func (h *Client) Uncordon(ctx context.Context, name string, force bool) error {
+	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
+		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 		defer attemptCtxCancel()
 
 		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})

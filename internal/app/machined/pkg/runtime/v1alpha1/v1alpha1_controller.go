@@ -83,7 +83,7 @@ func NewController(b []byte) (*Controller, error) {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
-func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runtime.ControllerOption) error {
+func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.ControllerOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.
 	if c.r == nil {
@@ -129,7 +129,7 @@ func (c *Controller) Run(seq runtime.Sequence, data interface{}, setters ...runt
 		return err
 	}
 
-	err = c.run(seq, phases, data)
+	err = c.run(ctx, seq, phases, data)
 	if err != nil {
 		c.Runtime().Events().Publish(&machine.SequenceEvent{
 			Sequence: seq.String(),
@@ -163,7 +163,7 @@ func (c *Controller) Sequencer() runtime.Sequencer {
 
 // ListenForEvents starts the event listener. The listener will trigger a
 // shutdown in response to a SIGTERM signal and ACPI button/power event.
-func (c *Controller) ListenForEvents() error {
+func (c *Controller) ListenForEvents(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs, syscall.SIGTERM)
@@ -176,7 +176,7 @@ func (c *Controller) ListenForEvents() error {
 
 		log.Printf("shutdown via SIGTERM received")
 
-		if err := c.Run(runtime.SequenceShutdown, nil); err != nil {
+		if err := c.Run(ctx, runtime.SequenceShutdown, nil); err != nil {
 			log.Printf("shutdown failed: %v", err)
 		}
 
@@ -198,7 +198,7 @@ func (c *Controller) ListenForEvents() error {
 
 		// TODO: The sequencer lock will prevent this. We need a way to force the
 		// shutdown.
-		if err := c.Run(runtime.SequenceShutdown, nil); err != nil {
+		if err := c.Run(ctx, runtime.SequenceShutdown, nil); err != nil {
 			log.Printf("shutdown failed: %v", err)
 		}
 
@@ -222,7 +222,7 @@ func (c *Controller) Unlock() bool {
 	return atomic.CompareAndSwapInt32(&c.semaphore, 1, 0)
 }
 
-func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
+func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
 	c.Runtime().Events().Publish(&machine.SequenceEvent{
 		Sequence: seq.String(),
 		Action:   machine.SequenceEvent_START,
@@ -263,12 +263,18 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 
 		log.Printf("phase %s (%s): %d tasks(s)", phase.Name, progress, len(phase.Tasks))
 
-		if err = c.runPhase(phase, seq, data); err != nil {
+		if err = c.runPhase(ctx, phase, seq, data); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Printf("phase %s (%s): failed", phase.Name, progress)
 			}
 
 			return fmt.Errorf("error running phase %d in %s sequence: %w", number, seq.String(), err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
 		}
 
 		log.Printf("phase %s (%s): done, %s", phase.Name, progress, time.Since(start))
@@ -277,7 +283,7 @@ func (c *Controller) run(seq runtime.Sequence, phases []runtime.Phase, data inte
 	return nil
 }
 
-func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
+func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
 	c.Runtime().Events().Publish(&machine.PhaseEvent{
 		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
@@ -301,7 +307,7 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 		eg.Go(func() error {
 			progress := fmt.Sprintf("%d/%d", number, len(phase.Tasks))
 
-			if err := c.runTask(progress, task, seq, data); err != nil {
+			if err := c.runTask(ctx, progress, task, seq, data); err != nil {
 				return fmt.Errorf("task %s: failed, %w", progress, err)
 			}
 
@@ -312,7 +318,7 @@ func (c *Controller) runPhase(phase runtime.Phase, seq runtime.Sequence, data in
 	return eg.Wait()
 }
 
-func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
+func (c *Controller) runTask(ctx context.Context, progress string, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
 	task, taskName := f(seq, data)
 	if task == nil {
 		return nil
@@ -346,7 +352,7 @@ func (c *Controller) runTask(progress string, f runtime.TaskSetupFunc, seq runti
 
 	logger := log.New(log.Writer(), fmt.Sprintf("[talos] task %s (%s): ", taskName, progress), log.Flags())
 
-	err = task(context.TODO(), logger, c.r)
+	err = task(ctx, logger, c.r)
 
 	return err
 }

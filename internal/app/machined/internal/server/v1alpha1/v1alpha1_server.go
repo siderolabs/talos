@@ -149,7 +149,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		}
 
 		go func() {
-			if err := s.Controller.Run(runtime.SequenceApplyConfiguration, in); err != nil {
+			if err := s.Controller.Run(context.Background(), runtime.SequenceApplyConfiguration, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("apply configuration failed:", err)
 				}
@@ -198,7 +198,7 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 	}
 
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceReboot, in); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -264,7 +264,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceReboot, in, runtime.WithForce()); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithForce()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -295,7 +295,7 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 	}
 
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceBootstrap, in); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceBootstrap, in); err != nil {
 			log.Println("bootstrap failed:", err)
 
 			if err != runtime.ErrLocked {
@@ -326,7 +326,7 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 	}
 
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceShutdown, in); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceShutdown, in); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("shutdown failed:", err)
 			}
@@ -426,7 +426,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) // nolint: errcheck
 			}
 
-			if err := s.Controller.Run(runtime.SequenceStageUpgrade, in); err != nil {
+			if err := s.Controller.Run(context.Background(), runtime.SequenceStageUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("reboot for staged upgrade failed:", err)
 				}
@@ -444,7 +444,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) // nolint: errcheck
 			}
 
-			if err := s.Controller.Run(runtime.SequenceUpgrade, in); err != nil {
+			if err := s.Controller.Run(context.Background(), runtime.SequenceUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("upgrade failed:", err)
 				}
@@ -543,7 +543,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	}
 
 	go func() {
-		if err := s.Controller.Run(runtime.SequenceReset, &opts); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReset, &opts); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reset failed:", err)
 			}

@@ -203,7 +203,7 @@ func run() error {
 
 	// Start signal and ACPI listeners.
 	go func() {
-		if e := c.ListenForEvents(); e != nil {
+		if e := c.ListenForEvents(ctx); e != nil {
 			log.Printf("WARNING: signals and ACPI events will be ignored: %s", e)
 		}
 	}()
@@ -218,12 +218,12 @@ func run() error {
 	}()
 
 	// Initialize the machine.
-	if err = c.Run(runtime.SequenceInitialize, nil); err != nil {
+	if err = c.Run(ctx, runtime.SequenceInitialize, nil); err != nil {
 		return err
 	}
 
 	// Perform an installation if required.
-	if err = c.Run(runtime.SequenceInstall, nil); err != nil {
+	if err = c.Run(ctx, runtime.SequenceInstall, nil); err != nil {
 		return err
 	}
 
@@ -231,7 +231,7 @@ func run() error {
 	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
 
 	// Boot the machine.
-	if err = c.Run(runtime.SequenceBoot, nil); err != nil {
+	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil {
 		return err
 	}
 

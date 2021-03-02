@@ -52,7 +52,7 @@ func DefaultControllerOptions() ControllerOptions {
 type Controller interface {
 	Runtime() Runtime
 	Sequencer() Sequencer
-	Run(Sequence, interface{}, ...ControllerOption) error
+	Run(context.Context, Sequence, interface{}, ...ControllerOption) error
 	V1Alpha2() V1Alpha2Controller
 }
 
