@@ -1285,11 +1285,11 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			return err
 		}
 
-		if err = kubeHelper.WaitUntilReady(nodename); err != nil {
+		if err = kubeHelper.WaitUntilReady(ctx, nodename); err != nil {
 			return err
 		}
 
-		if err = kubeHelper.Uncordon(nodename, false); err != nil {
+		if err = kubeHelper.Uncordon(ctx, nodename, false); err != nil {
 			return err
 		}
 
@@ -1503,8 +1503,8 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 			return err
 		}
 
-		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).Retry(func() error {
-			if err = h.LabelNodeAsMaster(nodename, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
+		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
+			if err = h.LabelNodeAsMaster(ctx, nodename, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
 				return retry.ExpectedError(err)
 			}
 

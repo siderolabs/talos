@@ -6,6 +6,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"reflect"
 	"strconv"
 	"testing"
@@ -63,6 +64,8 @@ func TestController_Run(t *testing.T) {
 		// TODO: Add test cases.
 	}
 
+	ctx := context.Background()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Controller{
@@ -70,7 +73,7 @@ func TestController_Run(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.Run(tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
+			if err := c.Run(ctx, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.Run() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -149,6 +152,7 @@ func TestController_ListenForEvents(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 	}
+	ctx := context.Background()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -157,7 +161,7 @@ func TestController_ListenForEvents(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.ListenForEvents(); (err != nil) != tt.wantErr {
+			if err := c.ListenForEvents(ctx); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.ListenForEvents() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -244,6 +248,8 @@ func TestController_run(t *testing.T) {
 		// TODO: Add test cases.
 	}
 
+	ctx := context.Background()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Controller{
@@ -251,7 +257,7 @@ func TestController_run(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.run(tt.args.seq, tt.args.phases, tt.args.data); (err != nil) != tt.wantErr {
+			if err := c.run(ctx, tt.args.seq, tt.args.phases, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.run() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -279,6 +285,7 @@ func TestController_runPhase(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 	}
+	ctx := context.Background()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -287,7 +294,7 @@ func TestController_runPhase(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.runPhase(tt.args.phase, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
+			if err := c.runPhase(ctx, tt.args.phase, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.runPhase() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -316,6 +323,7 @@ func TestController_runTask(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 	}
+	ctx := context.Background()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -324,7 +332,7 @@ func TestController_runTask(t *testing.T) {
 				s:         tt.fields.s,
 				semaphore: tt.fields.semaphore,
 			}
-			if err := c.runTask(strconv.Itoa(tt.args.n), tt.args.f, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
+			if err := c.runTask(ctx, strconv.Itoa(tt.args.n), tt.args.f, tt.args.seq, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("Controller.runTask() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
