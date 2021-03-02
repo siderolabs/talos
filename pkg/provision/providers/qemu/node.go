@@ -71,11 +71,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	cmdline.SetAll(kernel.DefaultArgs)
 
-	// backwards compatibility to boot initrd from Talos < 0.8
-	// we can remove it once we stop testing upgrades from versions < 0.8
-	cmdline.Append("slub_debug", "P")
-	cmdline.Append("page_poison", "1")
-
 	// required to get kernel console
 	cmdline.Append("console", arch.Console())
 
