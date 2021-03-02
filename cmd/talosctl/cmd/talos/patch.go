@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
@@ -37,10 +38,6 @@ var patchCmd = &cobra.Command{
 	Args:  cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if args[0] != config.Type {
-				return fmt.Errorf("only the config resource can be patched")
-			}
-
 			var (
 				patch     jsonpatch.Patch
 				patchData []byte
@@ -70,6 +67,10 @@ var patchCmd = &cobra.Command{
 
 			patchFn := func(parentCtx context.Context, msg client.ResourceResponse) error {
 				if msg.Resource == nil {
+					if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
+						return fmt.Errorf("only the machineconfig resource can be edited")
+					}
+
 					return nil
 				}
 

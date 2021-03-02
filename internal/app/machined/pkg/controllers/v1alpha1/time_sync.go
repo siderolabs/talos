@@ -19,29 +19,29 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
-// TimeSyncController manages v1alpha1.TimeSync based on configuration and service 'timed' status.
-type TimeSyncController struct {
+// TimeStatusController manages v1alpha1.TimeSync based on configuration and service 'timed' status.
+type TimeStatusController struct {
 	V1Alpha1State v1alpha1runtime.State
 }
 
 // Name implements controller.Controller interface.
-func (ctrl *TimeSyncController) Name() string {
-	return "v1alpha1.TimeSyncController"
+func (ctrl *TimeStatusController) Name() string {
+	return "v1alpha1.TimeStatusController"
 }
 
 // ManagedResources implements controller.Controller interface.
-func (ctrl *TimeSyncController) ManagedResources() (resource.Namespace, resource.Type) {
-	return v1alpha1.NamespaceName, v1alpha1.TimeSyncType
+func (ctrl *TimeStatusController) ManagedResources() (resource.Namespace, resource.Type) {
+	return v1alpha1.NamespaceName, v1alpha1.TimeStatusType
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint: gocyclo
-func (ctrl *TimeSyncController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *TimeStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
 			Namespace: config.NamespaceName,
-			Type:      config.V1Alpha1Type,
+			Type:      config.MachineConfigType,
 			ID:        pointer.ToString(config.V1Alpha1ID),
 			Kind:      controller.DependencyWeak,
 		},
@@ -62,7 +62,7 @@ func (ctrl *TimeSyncController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -73,7 +73,7 @@ func (ctrl *TimeSyncController) Run(ctx context.Context, r controller.Runtime, l
 
 		var inSync bool
 
-		if cfg.(*config.V1Alpha1).Config().Machine().Time().Disabled() {
+		if cfg.(*config.MachineConfig).Config().Machine().Time().Disabled() {
 			// if timed is disabled, time is always "in sync"
 			inSync = true
 		}
@@ -96,8 +96,8 @@ func (ctrl *TimeSyncController) Run(ctx context.Context, r controller.Runtime, l
 			}
 		}
 
-		if err = r.Update(ctx, v1alpha1.NewTimeSync(), func(r resource.Resource) error {
-			r.(*v1alpha1.TimeSync).SetSync(inSync)
+		if err = r.Update(ctx, v1alpha1.NewTimeStatus(), func(r resource.Resource) error {
+			r.(*v1alpha1.TimeStatus).SetSynced(inSync)
 
 			return nil
 		}); err != nil {

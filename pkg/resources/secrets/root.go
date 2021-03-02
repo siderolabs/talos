@@ -11,16 +11,16 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // RootType is type of Root secret resource.
-const RootType = resource.Type("secrets/root")
+const RootType = resource.Type("RootSecrets.secrets.talos.dev")
 
 // IDs of various resources of RootType.
 const (
-	RootEtcdID       = resource.ID("etcd-root")
-	RootKubernetesID = resource.ID("k8s-root")
+	RootEtcdID       = resource.ID("etcd")
+	RootKubernetesID = resource.ID("k8s")
 )
 
 // Root contains root (not generated) secrets.
@@ -81,7 +81,7 @@ func (r *Root) Spec() interface{} {
 }
 
 func (r *Root) String() string {
-	return fmt.Sprintf("secrets.Root(%q)", r.md.ID())
+	return fmt.Sprintf("secrets.RootSecret(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
@@ -105,9 +105,9 @@ func (r *Root) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *Root) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *Root) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             RootType,
 		Aliases:          []resource.Type{"rootSecret", "rootSecrets"},
 		DefaultNamespace: NamespaceName,

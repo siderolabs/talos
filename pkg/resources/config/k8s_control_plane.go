@@ -8,11 +8,11 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // K8sControlPlaneType is type of K8sControlPlane resource.
-const K8sControlPlaneType = resource.Type("config/k8sControlPlane")
+const K8sControlPlaneType = resource.Type("KubernetesControlPlaneConfigs.config.talos.dev")
 
 // K8sControlPlaneAPIServerID is an ID of kube-apiserver config.
 const K8sControlPlaneAPIServerID = resource.ID("kube-apiserver")
@@ -24,7 +24,7 @@ const K8sControlPlaneControllerManagerID = resource.ID("kube-controller-manager"
 const K8sControlPlaneSchedulerID = resource.ID("kube-scheduler")
 
 // K8sManifestsID is an ID of manifests config.
-const K8sManifestsID = resource.ID("manifests")
+const K8sManifestsID = resource.ID("system-manifests")
 
 // K8sExtraManifestsID is an ID of extra manifests config.
 const K8sExtraManifestsID = resource.ID("extra-manifests")
@@ -181,7 +181,7 @@ func (r *K8sControlPlane) Spec() interface{} {
 }
 
 func (r *K8sControlPlane) String() string {
-	return fmt.Sprintf("config.K8sControlPlane(%q)", r.md.ID())
+	return fmt.Sprintf("config.KubernetesControlPlaneConfig(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
@@ -192,11 +192,11 @@ func (r *K8sControlPlane) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *K8sControlPlane) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *K8sControlPlane) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             K8sControlPlaneType,
-		Aliases:          []resource.Type{"controlPlane"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
 }

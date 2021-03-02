@@ -37,7 +37,7 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
 			Namespace: config.NamespaceName,
-			Type:      config.V1Alpha1Type,
+			Type:      config.MachineConfigType,
 			ID:        pointer.ToString(config.V1Alpha1ID),
 			Kind:      controller.DependencyWeak,
 		},
@@ -54,13 +54,13 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 
 		var machineType machine.Type
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
 		} else {
-			machineType = cfg.(*config.V1Alpha1).Config().Machine().Type()
+			machineType = cfg.(*config.MachineConfig).Config().Machine().Type()
 		}
 
 		if err = r.Update(ctx, config.NewMachineType(), func(r resource.Resource) error {

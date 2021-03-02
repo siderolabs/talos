@@ -7,5 +7,5 @@ package v1alpha1
 
 import "github.com/talos-systems/os-runtime/pkg/resource"
 
-// NamespaceName contains resources linking v2alpha1 components with v1alpha1 Talos runtime.
-const NamespaceName resource.Namespace = "v1alpha1"
+// NamespaceName contains resources linking v1alpha2 components with v1alpha1 Talos runtime.
+const NamespaceName resource.Namespace = "runtime"

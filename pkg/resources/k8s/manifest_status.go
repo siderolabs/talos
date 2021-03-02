@@ -8,11 +8,11 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // ManifestStatusType is type of ManifestStatus resource.
-const ManifestStatusType = resource.Type("k8s/manifestStatus")
+const ManifestStatusType = resource.Type("ManifestStatuses.kubernetes.talos.dev")
 
 // ManifestStatusID is a singleton resource ID.
 const ManifestStatusID = resource.ID("manifests")
@@ -67,11 +67,11 @@ func (r *ManifestStatus) Status() *ManifestStatusSpec {
 	return &r.spec
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *ManifestStatus) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *ManifestStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             ManifestStatusType,
-		Aliases:          []resource.Type{"manifestStatus", "manifestStatuses"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
 	}
 }

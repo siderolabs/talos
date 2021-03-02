@@ -8,13 +8,13 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // MachineTypeType is type of MachineType resource.
-const MachineTypeType = resource.Type("config/machineType")
+const MachineTypeType = resource.Type("MachineTypes.config.talos.dev")
 
 // MachineTypeID is singleton resource ID.
 const MachineTypeID = resource.ID("machine-type")
@@ -67,12 +67,18 @@ func (r *MachineType) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *MachineType) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *MachineType) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             MachineTypeType,
-		Aliases:          []resource.Type{"machineType"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Type",
+				JSONPath: "{@}",
+			},
+		},
 	}
 }
 

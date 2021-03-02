@@ -47,23 +47,23 @@ func NewState() (*State, error) {
 	}
 
 	// register Talos namespaces
-	if err := s.namespaceRegistry.Register(ctx, v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources.", true); err != nil {
+	if err := s.namespaceRegistry.Register(ctx, v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."); err != nil {
 		return nil, err
 	}
 
-	if err := s.namespaceRegistry.Register(ctx, config.NamespaceName, "Talos node configuration.", false); err != nil {
+	if err := s.namespaceRegistry.Register(ctx, config.NamespaceName, "Talos node configuration."); err != nil {
 		return nil, err
 	}
 
-	if err := s.namespaceRegistry.Register(ctx, k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources.", true); err != nil {
+	if err := s.namespaceRegistry.Register(ctx, k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."); err != nil {
 		return nil, err
 	}
 
-	if err := s.namespaceRegistry.Register(ctx, k8s.ExtraNamespaceName, "Kubernetes extra configuration resources.", true); err != nil {
+	if err := s.namespaceRegistry.Register(ctx, k8s.ExtraNamespaceName, "Kubernetes extra configuration resources."); err != nil {
 		return nil, err
 	}
 
-	if err := s.namespaceRegistry.Register(ctx, secrets.NamespaceName, "Resources with secret material.", true); err != nil {
+	if err := s.namespaceRegistry.Register(ctx, secrets.NamespaceName, "Resources with secret material."); err != nil {
 		return nil, err
 	}
 
@@ -71,8 +71,8 @@ func NewState() (*State, error) {
 	for _, r := range []resource.Resource{
 		&v1alpha1.BootstrapStatus{},
 		&v1alpha1.Service{},
-		&v1alpha1.TimeSync{},
-		&config.V1Alpha1{},
+		&v1alpha1.TimeStatus{},
+		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},
 		&k8s.Manifest{},
@@ -109,7 +109,7 @@ func (s *State) ResourceRegistry() *registry.ResourceRegistry {
 
 // SetConfig implements runtime.V1alpha2State interface.
 func (s *State) SetConfig(cfg talosconfig.Provider) error {
-	cfgResource := config.NewV1Alpha1(cfg)
+	cfgResource := config.NewMachineConfig(cfg)
 	ctx := context.TODO()
 
 	oldCfg, err := s.resources.Get(ctx, cfgResource.Metadata())

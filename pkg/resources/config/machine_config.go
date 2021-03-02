@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
@@ -16,14 +16,14 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-// V1Alpha1Type is type of Service resource.
-const V1Alpha1Type = resource.Type("config/v1alpha1")
+// MachineConfigType is type of Service resource.
+const MachineConfigType = resource.Type("MachineConfigs.config.talos.dev")
 
 // V1Alpha1ID is the ID of V1Alpha1 resource (singleton).
 const V1Alpha1ID = resource.ID("v1alpha1")
 
-// V1Alpha1 resource holds v1alpha Talos configuration.
-type V1Alpha1 struct {
+// MachineConfig resource holds v1alpha Talos configuration.
+type MachineConfig struct {
 	md   resource.Metadata
 	spec *v1alpha1Spec
 }
@@ -36,10 +36,10 @@ func (s *v1alpha1Spec) MarshalYAML() (interface{}, error) {
 	return encoder.NewEncoder(s.cfg).Marshal()
 }
 
-// NewV1Alpha1 initializes a V1Alpha1 resource.
-func NewV1Alpha1(spec config.Provider) *V1Alpha1 {
-	r := &V1Alpha1{
-		md: resource.NewMetadata(NamespaceName, V1Alpha1Type, V1Alpha1ID, resource.VersionUndefined),
+// NewMachineConfig initializes a V1Alpha1 resource.
+func NewMachineConfig(spec config.Provider) *MachineConfig {
+	r := &MachineConfig{
+		md: resource.NewMetadata(NamespaceName, MachineConfigType, V1Alpha1ID, resource.VersionUndefined),
 		spec: &v1alpha1Spec{
 			cfg: spec,
 		},
@@ -51,21 +51,21 @@ func NewV1Alpha1(spec config.Provider) *V1Alpha1 {
 }
 
 // Metadata implements resource.Resource.
-func (r *V1Alpha1) Metadata() *resource.Metadata {
+func (r *MachineConfig) Metadata() *resource.Metadata {
 	return &r.md
 }
 
 // Spec implements resource.Resource.
-func (r *V1Alpha1) Spec() interface{} {
+func (r *MachineConfig) Spec() interface{} {
 	return r.spec
 }
 
-func (r *V1Alpha1) String() string {
-	return fmt.Sprintf("config.V1Alpha1(%q)", r.md.ID())
+func (r *MachineConfig) String() string {
+	return fmt.Sprintf("config.MachineConfig(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
-func (r *V1Alpha1) DeepCopy() resource.Resource {
+func (r *MachineConfig) DeepCopy() resource.Resource {
 	b, err := r.spec.cfg.Bytes()
 	if err != nil {
 		panic(err) // TODO: DeepCopy() should support returning errors? or config should implement DeeCopy without errors?
@@ -76,7 +76,7 @@ func (r *V1Alpha1) DeepCopy() resource.Resource {
 		panic(err)
 	}
 
-	return &V1Alpha1{
+	return &MachineConfig{
 		md: r.md,
 		spec: &v1alpha1Spec{
 			cfg: c.(*v1alpha1.Config),
@@ -84,16 +84,16 @@ func (r *V1Alpha1) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *V1Alpha1) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
-		Type:             V1Alpha1Type,
-		Aliases:          []resource.Type{Type},
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *MachineConfig) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
+		Type:             MachineConfigType,
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
 }
 
 // Config returns config.Provider.
-func (r *V1Alpha1) Config() config.Provider {
+func (r *MachineConfig) Config() config.Provider {
 	return r.spec.cfg
 }

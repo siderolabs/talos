@@ -289,7 +289,7 @@ func patchNodeConfig(ctx context.Context, cluster ConvertProvider, node string, 
 
 	ctx = client.WithNodes(ctx, node)
 
-	resources, err := c.Resources.Get(ctx, config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID)
+	resources, err := c.Resources.Get(ctx, config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID)
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}

@@ -9,6 +9,3 @@ import "github.com/talos-systems/os-runtime/pkg/resource"
 
 // NamespaceName contains configuration resources.
 const NamespaceName resource.Namespace = "config"
-
-// Type represents short resource alias.
-const Type resource.Type = "config"

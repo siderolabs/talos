@@ -706,11 +706,11 @@ Edit a resource from the default editor.
 
 ### Synopsis
 
-The edit command allows you to directly edit any API resource 
-you can retrieve via the command line tools. 
+The edit command allows you to directly edit any API resource
+you can retrieve via the command line tools.
 
-It will open the editor defined by your TALOS_EDITOR, 
-or EDITOR environment variables, or fall back to 'vi' for Linux 
+It will open the editor defined by your TALOS_EDITOR,
+or EDITOR environment variables, or fall back to 'vi' for Linux
 or 'notepad' for Windows.
 
 ```
