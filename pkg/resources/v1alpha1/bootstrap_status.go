@@ -8,14 +8,14 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // BootstrapStatusType is type of BootstrapStatus resource.
-const BootstrapStatusType = resource.Type("v1alpha1/bootstrapStatus")
+const BootstrapStatusType = resource.Type("BootstrapStatuses.v1alpha1.talos.dev")
 
 // BootstrapStatusID is a singleton instance ID.
-const BootstrapStatusID = resource.ID("bootstrapStatus")
+const BootstrapStatusID = resource.ID("control-plane")
 
 // BootstrapStatus describes v1alpha1 (bootkube) bootstrap status.
 type BootstrapStatus struct {
@@ -62,12 +62,18 @@ func (r *BootstrapStatus) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *BootstrapStatus) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *BootstrapStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             BootstrapStatusType,
 		Aliases:          []resource.Type{"bootstrapStatus"},
 		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Self Hosted",
+				JSONPath: "{.selfHostedControlPlane}",
+			},
+		},
 	}
 }
 

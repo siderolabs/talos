@@ -9,11 +9,11 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // KubernetesType is type of Kubernetes resource.
-const KubernetesType = resource.Type("secrets/kubernetes")
+const KubernetesType = resource.Type("KubernetesSecrets.secrets.talos.dev")
 
 // KubernetesID is a resource ID of singleton instance.
 const KubernetesID = resource.ID("k8s-certs")
@@ -56,7 +56,7 @@ func (r *Kubernetes) Spec() interface{} {
 }
 
 func (r *Kubernetes) String() string {
-	return fmt.Sprintf("secrets.Kubernetes(%q)", r.md.ID())
+	return fmt.Sprintf("secrets.KuberneteSecrets(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
@@ -69,11 +69,11 @@ func (r *Kubernetes) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *Kubernetes) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *Kubernetes) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesType,
-		Aliases:          []resource.Type{"k8sSecret", "k8sSecrets"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
 }

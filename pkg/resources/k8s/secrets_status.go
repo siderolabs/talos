@@ -8,14 +8,14 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // SecretsStatusType is type of SecretsStatus resource.
-const SecretsStatusType = resource.Type("k8s/secretsStatus")
+const SecretsStatusType = resource.Type("SecretStatuses.kubernetes.talos.dev")
 
 // StaticPodSecretsStaticPodID is resource ID for SecretStatus resource for static pods.
-const StaticPodSecretsStaticPodID = resource.ID("staticPods")
+const StaticPodSecretsStaticPodID = resource.ID("static-pods")
 
 // SecretsStatus resource holds definition of rendered secrets.
 type SecretsStatus struct {
@@ -52,7 +52,7 @@ func (r *SecretsStatus) Spec() interface{} {
 }
 
 func (r *SecretsStatus) String() string {
-	return fmt.Sprintf("k8s.SecretsStatus(%q)", r.md.ID())
+	return fmt.Sprintf("k8s.SecretStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
@@ -63,12 +63,22 @@ func (r *SecretsStatus) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *SecretsStatus) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *SecretsStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             SecretsStatusType,
-		Aliases:          []resource.Type{"secretStatus"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Ready",
+				JSONPath: "{.ready}",
+			},
+			{
+				Name:     "Secrets Version",
+				JSONPath: "{.version}",
+			},
+		},
 	}
 }
 

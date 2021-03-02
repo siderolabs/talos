@@ -42,7 +42,7 @@ func (suite *PatchSuite) TestSuccess() {
 	data, err := json.Marshal(patch)
 	suite.Require().NoError(err)
 
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "config", "--immediate"})
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "--immediate"})
 }
 
 // TestError runs comand with error.
@@ -62,13 +62,13 @@ func (suite *PatchSuite) TestError() {
 	data, err := json.Marshal(patch)
 	suite.Require().NoError(err)
 
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "config"},
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig"},
 		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "config", "v1alpha2"},
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "v1alpha2"},
 		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch-file", "/nnnope", "config"},
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch-file", "/nnnope", "machineconfig"},
 		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", "it's not even a json", "config"},
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", "it's not even a json", "machineconfig"},
 		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
 }
 

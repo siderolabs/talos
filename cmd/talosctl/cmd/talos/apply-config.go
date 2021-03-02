@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
@@ -16,7 +17,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/resources/config"
 )
 
 var applyConfigCmdFlags struct {
@@ -44,7 +44,7 @@ var applyConfigCmd = &cobra.Command{
 		if len(args) > 0 {
 			cmd.Help() //nolint:errcheck
 
-			if args[0] != config.Type {
+			if args[0] != "config" && !strings.EqualFold(args[0], "machineconfig") {
 				return fmt.Errorf("unknown positional argument %s", args[0])
 			} else if cmd.CalledAs() == "apply-config" {
 				return fmt.Errorf("expected no positional arguments")

@@ -94,7 +94,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewV1Alpha1(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
@@ -131,7 +131,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewV1Alpha1(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{

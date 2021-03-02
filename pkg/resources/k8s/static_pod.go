@@ -9,12 +9,12 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 	v1 "k8s.io/api/core/v1"
 )
 
 // StaticPodType is type of StaticPod resource.
-const StaticPodType = resource.Type("k8s/staticPod")
+const StaticPodType = resource.Type("StaticPods.kubernetes.talos.dev")
 
 // StaticPod resource holds definition of kubelet static pod.
 type StaticPod struct {
@@ -77,11 +77,11 @@ func (r *StaticPod) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *StaticPod) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *StaticPod) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodType,
-		Aliases:          []resource.Type{"pod", "static-pod", "pods"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
 	}
 }

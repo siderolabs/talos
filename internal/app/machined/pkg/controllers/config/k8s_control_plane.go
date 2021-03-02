@@ -44,7 +44,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
 			Namespace: config.NamespaceName,
-			Type:      config.V1Alpha1Type,
+			Type:      config.MachineConfigType,
 			ID:        pointer.ToString(config.V1Alpha1ID),
 			Kind:      controller.DependencyWeak,
 		},
@@ -65,7 +65,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.V1Alpha1Type, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r, logger); err != nil {
@@ -78,7 +78,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgProvider := cfg.(*config.V1Alpha1).Config()
+		cfgProvider := cfg.(*config.MachineConfig).Config()
 
 		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 		if err != nil {

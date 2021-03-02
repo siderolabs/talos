@@ -12,13 +12,13 @@ import (
 	"io"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // ManifestType is type of Manifest resource.
-const ManifestType = resource.Type("k8s/manifest")
+const ManifestType = resource.Type("Manifests.kubernetes.talos.dev")
 
 // Manifest resource holds definition of kubelet static pod.
 type Manifest struct {
@@ -82,11 +82,11 @@ func (r *Manifest) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *Manifest) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *Manifest) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             ManifestType,
-		Aliases:          []resource.Type{"manifest", "manifests"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
 	}
 }

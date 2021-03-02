@@ -9,11 +9,11 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // EtcdType is type of Etcd resource.
-const EtcdType = resource.Type("secrets/etcd")
+const EtcdType = resource.Type("EtcdSecrets.secrets.talos.dev")
 
 // EtcdID is a resource ID of singletone instance.
 const EtcdID = resource.ID("etcd")
@@ -52,7 +52,7 @@ func (r *Etcd) Spec() interface{} {
 }
 
 func (r *Etcd) String() string {
-	return fmt.Sprintf("secrets.Etcd(%q)", r.md.ID())
+	return fmt.Sprintf("secrets.EtcdSecrets(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
@@ -65,11 +65,11 @@ func (r *Etcd) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *Etcd) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *Etcd) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             EtcdType,
-		Aliases:          []resource.Type{"etcdSecrets", "etcdSecret"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
 }

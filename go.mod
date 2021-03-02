@@ -73,7 +73,7 @@ require (
 	github.com/talos-systems/go-smbios v0.0.0-20200807005123-80196199691e
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	github.com/talos-systems/os-runtime v0.0.0-20210216141502-28dd9aaf98d6
+	github.com/talos-systems/os-runtime v0.0.0-20210302191935-8b3f192ecca2
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20200818212414-6a7cc0264819
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.20.0

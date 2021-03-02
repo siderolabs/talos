@@ -5,6 +5,7 @@
 package output
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -12,13 +13,18 @@ import (
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
+	"k8s.io/client-go/util/jsonpath"
 )
 
 // Table outputs resources in Table view.
 type Table struct {
-	w          tabwriter.Writer
-	withEvents bool
+	w              tabwriter.Writer
+	withEvents     bool
+	displayType    string
+	dynamicColumns []dynamicColumn
 }
+
+type dynamicColumn func(value interface{}) (string, error)
 
 // NewTable initializes table resource output.
 func NewTable() *Table {
@@ -31,11 +37,36 @@ func NewTable() *Table {
 // WriteHeader implements output.Writer interface.
 func (table *Table) WriteHeader(definition resource.Resource, withEvents bool) error {
 	table.withEvents = withEvents
-
 	fields := []string{"NAMESPACE", "TYPE", "ID", "VERSION"}
 
 	if withEvents {
 		fields = append([]string{"*"}, fields...)
+	}
+
+	resourceDefinitionSpec := definition.(*resource.Any).Value().(map[string]interface{}) //nolint: errcheck
+
+	table.displayType = resourceDefinitionSpec["displayType"].(string) //nolint: errcheck
+
+	for _, col := range resourceDefinitionSpec["printColumns"].([]interface{}) {
+		column := col.(map[string]interface{}) //nolint: errcheck
+		name := column["name"].(string)        //nolint: errcheck
+
+		fields = append(fields, strings.ToUpper(name))
+
+		expr := jsonpath.New(name)
+		if err := expr.Parse(column["jsonPath"].(string)); err != nil {
+			return fmt.Errorf("error parsing column %q jsonpath: %w", name, err)
+		}
+
+		table.dynamicColumns = append(table.dynamicColumns, func(val interface{}) (string, error) {
+			var buf bytes.Buffer
+
+			if e := expr.Execute(&buf, val); e != nil {
+				return "", e
+			}
+
+			return buf.String(), nil
+		})
 	}
 
 	fields = append([]string{"NODE"}, fields...)
@@ -47,7 +78,7 @@ func (table *Table) WriteHeader(definition resource.Resource, withEvents bool) e
 
 // WriteResource implements output.Writer interface.
 func (table *Table) WriteResource(node string, r resource.Resource, event state.EventType) error {
-	values := []string{r.Metadata().Namespace(), r.Metadata().Type(), r.Metadata().ID(), r.Metadata().Version().String()}
+	values := []string{r.Metadata().Namespace(), table.displayType, r.Metadata().ID(), r.Metadata().Version().String()}
 
 	if table.withEvents {
 		var label string
@@ -62,6 +93,15 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 		}
 
 		values = append([]string{label}, values...)
+	}
+
+	for _, dynamicColumn := range table.dynamicColumns {
+		value, err := dynamicColumn(r.(*resource.Any).Value())
+		if err != nil {
+			return err
+		}
+
+		values = append(values, value)
 	}
 
 	values = append([]string{node}, values...)

@@ -8,11 +8,11 @@ import (
 	"fmt"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // ServiceType is type of Service resource.
-const ServiceType = resource.Type("v1alpha1/service")
+const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 
 // Service describes running service state.
 type Service struct {
@@ -60,12 +60,22 @@ func (r *Service) DeepCopy() resource.Resource {
 	}
 }
 
-// ResourceDefinition implements core.ResourceDefinitionProvider interface.
-func (r *Service) ResourceDefinition() core.ResourceDefinitionSpec {
-	return core.ResourceDefinitionSpec{
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *Service) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
 		Type:             ServiceType,
-		Aliases:          []resource.Type{"svc", "services", "service"},
+		Aliases:          []resource.Type{"svc"},
 		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Running",
+				JSONPath: "{.running}",
+			},
+			{
+				Name:     "Healthy",
+				JSONPath: "{.healthy}",
+			},
+		},
 	}
 }
 

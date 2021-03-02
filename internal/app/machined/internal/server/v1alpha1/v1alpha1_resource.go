@@ -7,9 +7,10 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/core"
+	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 	"github.com/talos-systems/os-runtime/pkg/state"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,50 +59,63 @@ type resourceKind struct {
 	Type      resource.Type
 }
 
-func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resourceKind) (*core.ResourceDefinition, error) {
+//nolint: gocyclo
+func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resourceKind) (*meta.ResourceDefinition, error) {
 	registeredResources, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().
-		List(ctx, resource.NewMetadata(core.NamespaceName, core.ResourceDefinitionType, "", resource.VersionUndefined))
+		List(ctx, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, err
 	}
 
+	matched := []*meta.ResourceDefinition{}
+
 	for _, item := range registeredResources.Items {
-		resourceDefinition, ok := item.(*core.ResourceDefinition)
+		resourceDefinition, ok := item.(*meta.ResourceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("unexpected resource definition type")
 		}
 
-		spec := resourceDefinition.Spec().(core.ResourceDefinitionSpec) //nolint: errcheck
+		if strings.EqualFold(resourceDefinition.Metadata().ID(), kind.Type) {
+			matched = append(matched, resourceDefinition)
 
-		matches := resourceDefinition.Metadata().ID() == kind.Type || spec.Type == kind.Type
-		if !matches {
-			for _, alias := range spec.Aliases {
-				if alias == kind.Type {
-					matches = true
-
-					break
-				}
-			}
-		}
-
-		if !matches {
 			continue
 		}
 
-		kind.Type = resourceDefinition.Metadata().ID()
+		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint: errcheck
 
-		if kind.Namespace == "" {
-			kind.Namespace = spec.DefaultNamespace
+		for _, alias := range spec.Aliases {
+			if strings.EqualFold(alias, kind.Type) {
+				matched = append(matched, resourceDefinition)
+
+				break
+			}
 		}
-
-		return resourceDefinition, nil
 	}
 
-	return nil, status.Error(codes.NotFound, fmt.Sprintf("resource %q is not registered", kind.Type))
+	switch {
+	case len(matched) == 1:
+		kind.Type = matched[0].Spec().(meta.ResourceDefinitionSpec).Type
+
+		if kind.Namespace == "" {
+			kind.Namespace = matched[0].Spec().(meta.ResourceDefinitionSpec).DefaultNamespace
+		}
+
+		return matched[0], nil
+	case len(matched) > 1:
+		matchedTypes := make([]string, len(matched))
+
+		for i := range matched {
+			matchedTypes[i] = matched[i].Metadata().ID()
+		}
+
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("resource type %q is ambiguous: %v", kind.Type, matchedTypes))
+	default:
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("resource %q is not registered", kind.Type))
+	}
 }
 
 func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind) error {
-	registeredNamespaces, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().List(ctx, resource.NewMetadata(core.NamespaceName, core.NamespaceType, "", resource.VersionUndefined))
+	registeredNamespaces, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().List(ctx, resource.NewMetadata(meta.NamespaceName, meta.NamespaceType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}

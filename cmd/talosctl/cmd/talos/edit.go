@@ -34,11 +34,11 @@ var editCmd = &cobra.Command{
 	Use:   "edit <type> [<id>]",
 	Short: "Edit a resource from the default editor.",
 	Args:  cobra.RangeArgs(1, 2),
-	Long: `The edit command allows you to directly edit any API resource 
-you can retrieve via the command line tools. 
+	Long: `The edit command allows you to directly edit any API resource
+you can retrieve via the command line tools.
 
-It will open the editor defined by your TALOS_EDITOR, 
-or EDITOR environment variables, or fall back to 'vi' for Linux 
+It will open the editor defined by your TALOS_EDITOR,
+or EDITOR environment variables, or fall back to 'vi' for Linux
 or 'notepad' for Windows.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -48,14 +48,15 @@ or 'notepad' for Windows.`,
 			})
 
 			resourceType := args[0]
-			if resourceType != config.Type {
-				return fmt.Errorf("only the config resource can be edited")
-			}
 
 			var lastError string
 
 			editFn := func(parentCtx context.Context, msg client.ResourceResponse) error {
 				if msg.Resource == nil {
+					if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
+						return fmt.Errorf("only the machineconfig resource can be edited")
+					}
+
 					return nil
 				}
 
@@ -78,7 +79,7 @@ or 'notepad' for Windows.`,
 
 					_, err := w.Write([]byte(
 						fmt.Sprintf(
-							"# Editing %s/%s at node %s\n", resourceType, id, msg.Metadata.GetHostname(),
+							"# Editing %s/%s at node %s\n", msg.Resource.Metadata().Type(), id, msg.Metadata.GetHostname(),
 						),
 					))
 					if err != nil {
