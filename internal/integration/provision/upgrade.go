@@ -71,11 +71,11 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v0.7.1"
-	stableRelease   = "v0.8.3"
+	previousRelease = "v0.8.4"
+	stableRelease   = "v0.9.0-alpha.3"
 
-	previousK8sVersion = "1.19.4"
-	stableK8sVersion   = "1.20.1"
+	previousK8sVersion = "1.20.1"
+	stableK8sVersion   = "1.20.4"
 	currentK8sVersion  = "1.20.4"
 )
 
@@ -109,7 +109,7 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
-		TargetSelfHosted:     true,
+		TargetSelfHosted:     false,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -126,12 +126,10 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
-		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
-		TargetSelfHosted:     false,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -150,12 +148,10 @@ func upgradeCurrentReleaseToCurrent() upgradeSpec {
 		SourceInstallerImage: installerImage,
 		SourceVersion:        DefaultSettings.CurrentVersion,
 		SourceK8sVersion:     currentK8sVersion,
-		SourceSelfHosted:     true,
 
 		TargetInstallerImage: installerImage,
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
-		TargetSelfHosted:     true,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -174,12 +170,10 @@ func upgradeSingeNodePreserve() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
-		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
-		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -197,12 +191,10 @@ func upgradeSingeNodeStage() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
-		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
-		TargetSelfHosted:     false,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
