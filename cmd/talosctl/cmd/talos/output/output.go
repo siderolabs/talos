@@ -26,6 +26,8 @@ func NewWriter(format string) (Writer, error) {
 		return NewTable(), nil
 	case "yaml":
 		return NewYAML(), nil
+	case "json":
+		return NewJSON(), nil
 	default:
 		return nil, fmt.Errorf("output format %q is not supported", format)
 	}
