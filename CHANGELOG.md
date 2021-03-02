@@ -1,4 +1,25 @@
 
+<a name="v0.9.0-alpha.4"></a>
+## [v0.9.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.3...v0.9.0-alpha.4) (2021-03-02)
+
+### Chore
+
+* update provision/upgrade tests to 0.9.0-alpha.3
+
+### Docs
+
+* bump v0.8 release version in the SBCs guides
+* add disk encryption guide
+
+### Feat
+
+* update linux kernel to 5.10.19
+
+### Fix
+
+* ignore 'ENOENT' (no such file directory) on mount
+* move etcd to `cri` containerd runner
+
 <a name="v0.9.0-alpha.3"></a>
 ## [v0.9.0-alpha.3](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.2...v0.9.0-alpha.3) (2021-03-01)
 
