@@ -231,7 +231,7 @@ func run() error {
 	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
 
 	// Boot the machine.
-	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil {
+	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 
