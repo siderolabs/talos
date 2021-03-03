@@ -92,6 +92,11 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			return nil, err
 		}
 
+		// Fix up permissions, as after upgrade with preserve EtcdPKIPath might retain old 0o644 permissions
+		if err := os.Chmod(constants.EtcdPKIPath, 0o700); err != nil {
+			return nil, err
+		}
+
 		mounts = append(mounts,
 			specs.Mount{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "ro"}},
 		)
