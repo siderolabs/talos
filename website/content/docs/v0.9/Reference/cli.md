@@ -723,6 +723,7 @@ talosctl edit <type> [<id>] [flags]
   -h, --help               help for edit
       --immediate          apply the change immediately (without a reboot)
       --namespace string   resource namespace (default is to use default namespace per resource)
+      --on-reboot          apply the change on next reboot
 ```
 
 ### Options inherited from parent commands
@@ -1479,6 +1480,7 @@ talosctl patch <type> [<id>] [flags]
   -h, --help                help for patch
       --immediate           apply the change immediately (without a reboot)
       --namespace string    resource namespace (default is to use default namespace per resource)
+      --on-reboot           apply the change on next reboot
   -p, --patch string        the patch to be applied to the resource file.
       --patch-file string   a file containing a patch to be applied to the resource.
 ```
