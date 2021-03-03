@@ -27,6 +27,7 @@ import (
 var editCmdFlags struct {
 	namespace string
 	immediate bool
+	onReboot  bool
 }
 
 // editCmd represents the edit command.
@@ -132,6 +133,7 @@ or 'notepad' for Windows.`,
 					_, err = c.ApplyConfiguration(parentCtx, &machine.ApplyConfigurationRequest{
 						Data:      edited,
 						Immediate: editCmdFlags.immediate,
+						OnReboot:  editCmdFlags.onReboot,
 					})
 					if err != nil {
 						lastError = err.Error()
@@ -160,5 +162,6 @@ or 'notepad' for Windows.`,
 func init() {
 	editCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	editCmd.Flags().BoolVar(&editCmdFlags.immediate, "immediate", false, "apply the change immediately (without a reboot)")
+	editCmd.Flags().BoolVar(&editCmdFlags.onReboot, "on-reboot", false, "apply the change on next reboot")
 	addCommand(editCmd)
 }

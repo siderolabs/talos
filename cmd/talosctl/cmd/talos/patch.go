@@ -29,6 +29,7 @@ var patchCmdFlags struct {
 	patch     string
 	patchFile string
 	immediate bool
+	onReboot  bool
 }
 
 // patchCmd represents the edit command.
@@ -87,6 +88,7 @@ var patchCmd = &cobra.Command{
 				_, err = c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 					Data:      patched,
 					Immediate: patchCmdFlags.immediate,
+					OnReboot:  patchCmdFlags.onReboot,
 				})
 
 				if bytes.Equal(
@@ -120,5 +122,6 @@ func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
 	patchCmd.Flags().StringVarP(&patchCmdFlags.patch, "patch", "p", "", "the patch to be applied to the resource file.")
 	patchCmd.Flags().BoolVar(&patchCmdFlags.immediate, "immediate", false, "apply the change immediately (without a reboot)")
+	patchCmd.Flags().BoolVar(&patchCmdFlags.onReboot, "on-reboot", false, "apply the change on next reboot")
 	addCommand(patchCmd)
 }
