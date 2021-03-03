@@ -27,7 +27,8 @@ type Phase struct {
 
 // ControllerOptions represents the options for a controller.
 type ControllerOptions struct {
-	Force bool
+	Force    bool
+	Takeover bool
 }
 
 // ControllerOption represents an option setter.
@@ -37,6 +38,15 @@ type ControllerOption func(o *ControllerOptions) error
 func WithForce() ControllerOption {
 	return func(o *ControllerOptions) error {
 		o.Force = true
+
+		return nil
+	}
+}
+
+// WithTakeover sets the take option to true.
+func WithTakeover() ControllerOption {
+	return func(o *ControllerOptions) error {
+		o.Takeover = true
 
 		return nil
 	}

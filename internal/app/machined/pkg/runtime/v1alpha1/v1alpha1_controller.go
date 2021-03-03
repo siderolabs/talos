@@ -13,10 +13,12 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -37,6 +39,8 @@ type Controller struct {
 	v2 *v1alpha2.Controller
 
 	semaphore int32
+	cancelCtx context.CancelFunc
+	ctxMutex  sync.Mutex
 }
 
 // NewController intializes and returns a controller.
@@ -83,6 +87,7 @@ func NewController(b []byte) (*Controller, error) {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
+//nolint:gocyclo
 func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.ControllerOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.
@@ -108,7 +113,25 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 			break
 		}
 
-		if c.TryLock() {
+		if opts.Takeover {
+			c.ctxMutex.Lock()
+			if c.cancelCtx != nil {
+				c.cancelCtx()
+			}
+
+			c.ctxMutex.Unlock()
+
+			err := retry.Constant(time.Minute*1, retry.WithUnits(time.Millisecond*100)).RetryWithContext(ctx, func(ctx context.Context) error {
+				if c.TryLock() {
+					return retry.ExpectedError(fmt.Errorf("failed to acquire lock"))
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		} else if c.TryLock() {
 			c.Runtime().Events().Publish(&machine.SequenceEvent{
 				Sequence: seq.String(),
 				Action:   machine.SequenceEvent_NOOP,
@@ -122,6 +145,16 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 		}
 
 		defer c.Unlock()
+
+		c.ctxMutex.Lock()
+		ctx, c.cancelCtx = context.WithCancel(ctx)
+		c.ctxMutex.Unlock()
+
+		defer func() {
+			c.ctxMutex.Lock()
+			c.cancelCtx = nil
+			c.ctxMutex.Unlock()
+		}()
 	}
 
 	phases, err := c.phases(seq, data)
@@ -176,7 +209,7 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 
 		log.Printf("shutdown via SIGTERM received")
 
-		if err := c.Run(ctx, runtime.SequenceShutdown, nil); err != nil {
+		if err := c.Run(ctx, runtime.SequenceShutdown, nil, runtime.WithTakeover()); err != nil {
 			log.Printf("shutdown failed: %v", err)
 		}
 
@@ -196,10 +229,8 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 
 		log.Printf("shutdown via ACPI received")
 
-		// TODO: The sequencer lock will prevent this. We need a way to force the
-		// shutdown.
-		if err := c.Run(ctx, runtime.SequenceShutdown, nil); err != nil {
-			log.Printf("shutdown failed: %v", err)
+		if err := c.Run(ctx, runtime.SequenceShutdown, nil, runtime.WithTakeover()); err != nil {
+			log.Printf("failed to run shutdown sequence: %s", err)
 		}
 
 		errCh <- nil

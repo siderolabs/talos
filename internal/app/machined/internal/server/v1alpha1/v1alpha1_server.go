@@ -199,7 +199,7 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 	}
 
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -265,7 +265,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithForce()); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithForce(), runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -327,7 +327,7 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 	}
 
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceShutdown, in); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceShutdown, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("shutdown failed:", err)
 			}
