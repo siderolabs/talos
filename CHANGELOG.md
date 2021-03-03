@@ -1,3 +1,17 @@
+<a name="v0.9.0-alpha.5"></a>
+## [v0.9.0-alpha.5](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.4...v0.9.0-alpha.5) (2021-03-03)
+
+### Chore
+
+* bump Go module dependencies
+* properly propagate context object in the controller
+
+### Feat
+
+* bypass lock if ACPI reboot/shutdown issued
+* add `--on-reboot` flag to talosctl edit/patch machineConfig
+* support JSON output in `talosctl get`, event types
+* rename namespaces, resources, types etc
 
 <a name="v0.9.0-alpha.4"></a>
 ## [v0.9.0-alpha.4](https://github.com/talos-systems/talos/compare/v0.9.0-alpha.3...v0.9.0-alpha.4) (2021-03-02)
