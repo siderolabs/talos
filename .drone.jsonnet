@@ -275,6 +275,7 @@ local save_artifacts = {
   },
   commands: [
     's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl mb s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl expire s3://${CI_COMMIT_SHA}${DRONE_TAG//./-} --expiry-days=3',
     's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
