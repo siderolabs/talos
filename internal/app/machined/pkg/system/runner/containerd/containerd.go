@@ -113,7 +113,7 @@ func (c *containerdRunner) Close() error {
 
 // Run implements runner.Runner interface
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
@@ -128,7 +128,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		return fmt.Errorf("error creating log: %w", err)
 	}
 
-	defer logW.Close() //nolint: errcheck
+	defer logW.Close() //nolint:errcheck
 
 	var w io.Writer = logW
 
@@ -156,13 +156,13 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 			case <-c.ctx.Done():
 				return
 			case <-c.stdinCloser.closer:
-				//nolint: errcheck
+				//nolint:errcheck
 				task.CloseIO(c.ctx, containerd.WithStdinCloser)
 			}
 		}()
 	}
 
-	defer task.Delete(c.ctx) // nolint: errcheck
+	defer task.Delete(c.ctx) //nolint:errcheck
 
 	if err = task.Start(c.ctx); err != nil {
 		return fmt.Errorf("failed to start task: %q: %w", c.args.ID, err)

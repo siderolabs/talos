@@ -86,7 +86,7 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 
 		return
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer w.Close()
 
 	var writer io.Writer

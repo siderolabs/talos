@@ -52,7 +52,7 @@ func WithClientNoNodes(action func(context.Context, *client.Client) error) error
 		if err != nil {
 			return fmt.Errorf("error constructing client: %w", err)
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer c.Close()
 
 		return action(ctx, c)

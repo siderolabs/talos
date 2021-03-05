@@ -45,7 +45,7 @@ type Device struct {
 
 // NewManifest initializes and returns a Manifest.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound bool, opts *Options) (manifest *Manifest, err error) {
 	if label == "" {
 		return nil, fmt.Errorf("a label is required, got \"\"")
@@ -189,7 +189,7 @@ func (m *Manifest) checkMounts(device Device) error {
 				return nil
 			}
 
-			defer f.Close() //nolint: errcheck
+			defer f.Close() //nolint:errcheck
 
 			scanner := bufio.NewScanner(f)
 			for scanner.Scan() {
@@ -213,7 +213,7 @@ func (m *Manifest) checkMounts(device Device) error {
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error) {
 	if err = m.checkMounts(device); err != nil {
 		return err
@@ -235,7 +235,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer bd.Close()
 
 	var pt *gpt.GPT
@@ -273,7 +273,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 
-		defer bd.Close() //nolint: errcheck
+		defer bd.Close() //nolint:errcheck
 
 		created = true
 	}
@@ -372,7 +372,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (m *Manifest) preserveContents(device Device, targets []*Target) (err error) {
 	anyPreserveContents := false
 
@@ -398,7 +398,7 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 		return nil
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer bd.Close()
 
 	pt, err := bd.PartitionTable()
@@ -492,7 +492,7 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 		return err
 	}
 
-	defer bd.Close() //nolint: errcheck
+	defer bd.Close() //nolint:errcheck
 
 	var method string
 
@@ -506,7 +506,7 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 }
 
 // Partition creates a new partition on the specified device.
-// nolint: dupl, gocyclo
+//nolint:dupl,gocyclo
 func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
 	if t.Skip {
 		part := pt.Partitions().FindByName(t.Label)

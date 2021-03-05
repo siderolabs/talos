@@ -18,7 +18,7 @@ import (
 )
 
 // AllNodesBootedAssertion checks whether nodes reached end of 'Boot' sequence.
-//nolint: gocyclo
+//nolint:gocyclo
 func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	cli, err := cluster.Client()
 	if err != nil {
@@ -39,7 +39,7 @@ func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 		for event := range ch {
 			if msg, ok := event.Payload.(*machineapi.SequenceEvent); ok {
 				if msg.GetSequence() == "boot" { // can't use runtime constants as they're in `internal/`
-					switch msg.GetAction() { //nolint: exhaustive
+					switch msg.GetAction() { //nolint:exhaustive
 					case machineapi.SequenceEvent_START:
 						nodesBootStarted[event.Node] = struct{}{}
 					case machineapi.SequenceEvent_STOP:

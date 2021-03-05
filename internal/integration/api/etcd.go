@@ -83,7 +83,7 @@ func (suite *EtcdSuite) TestEtcdForfeitLeadership() {
 
 // TestEtcdLeaveCluster tests removing an etcd member.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")

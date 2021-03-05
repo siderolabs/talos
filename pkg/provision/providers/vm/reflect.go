@@ -37,7 +37,7 @@ func (p *Provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		return nil, err
 	}
 
-	defer stateFile.Close() //nolint: errcheck
+	defer stateFile.Close() //nolint:errcheck
 
 	state := &State{}
 

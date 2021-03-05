@@ -61,7 +61,7 @@ func VerifyDiskAvailability(devpath, label string) (err error) {
 		return nil
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dev.Close()
 
 	part, err := dev.GetPartition(label)

@@ -79,7 +79,7 @@ var applyConfigCmd = &cobra.Command{
 					return err
 				}
 
-				//nolint: errcheck
+				//nolint:errcheck
 				defer c.Close()
 
 				tlsConfig := &tls.Config{
@@ -169,7 +169,7 @@ func init() {
 
 	// deprecated, to be removed in 0.10
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "no-reboot", false, "apply the config only after the reboot")
-	applyConfigCmd.Flags().MarkHidden("no-reboot") //nolint: errcheck
+	applyConfigCmd.Flags().MarkHidden("no-reboot") //nolint:errcheck
 
 	addCommand(applyConfigCmd)
 }

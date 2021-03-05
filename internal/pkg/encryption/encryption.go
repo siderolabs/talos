@@ -64,7 +64,7 @@ type Handler struct {
 }
 
 // Open encrypted partition.
-// nolint:gocyclo
+//nolint:gocyclo
 func (h *Handler) Open() (string, error) {
 	partPath, err := h.partition.Path()
 	if err != nil {

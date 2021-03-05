@@ -67,7 +67,7 @@ func (suite *ControlPlaneStaticPodSuite) startRuntime() {
 	}()
 }
 
-//nolint: dupl
+//nolint:dupl
 func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests []string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 	if err != nil {

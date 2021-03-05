@@ -39,7 +39,7 @@ func DumpIPAMRecord(statePath string, record IPAMRecord) error {
 		return err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	// need atomic write, buffering json
 	b, err := json.Marshal(record)
@@ -63,7 +63,7 @@ func LoadIPAMRecords(statePath string) (IPAMDatabase, error) {
 		return nil, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	result := make(IPAMDatabase)
 

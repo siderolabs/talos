@@ -21,7 +21,7 @@ import (
 
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
-// nolint: gocyclo
+//nolint:gocyclo
 func buildOptions(device config.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface()))
 
@@ -215,7 +215,7 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 	return device.Interface(), opts, err
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
 	// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>

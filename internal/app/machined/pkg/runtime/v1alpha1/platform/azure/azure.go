@@ -106,7 +106,7 @@ func (a *Azure) Hostname(ctx context.Context) (hostname []byte, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -141,7 +141,7 @@ func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

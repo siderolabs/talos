@@ -55,7 +55,7 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
 		return err
@@ -74,7 +74,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	// Pull the image and unpack it.
@@ -85,7 +85,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
-	switch r.Config().Machine().Type() { //nolint: exhaustive
+	switch r.Config().Machine().Type() { //nolint:exhaustive
 	case machine.TypeInit:
 		err = e.argsForInit(ctx, r)
 		if err != nil {
@@ -169,7 +169,7 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 			return err
 		}
 
-		defer client.Close() //nolint: errcheck
+		defer client.Close() //nolint:errcheck
 
 		return client.ValidateQuorum(ctx)
 	}
@@ -219,7 +219,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 		return nil, 0, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	list, err := client.MemberList(ctx)
@@ -299,7 +299,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 	return initial, nil
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -319,7 +319,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		if meta, err = bootloader.NewMeta(); err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		_, upgraded = meta.LegacyADV.ReadTag(adv.Upgrade)
@@ -396,7 +396,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	return nil
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -486,7 +486,7 @@ func IsDirEmpty(name string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	_, err = f.Readdirnames(1)

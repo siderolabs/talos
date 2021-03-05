@@ -50,7 +50,7 @@ func init() {
 	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
 	restartCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	restartCmd.Flags().MarkHidden("use-cri") //nolint: errcheck
+	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
 	addCommand(restartCmd)
 }

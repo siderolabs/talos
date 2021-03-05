@@ -102,7 +102,7 @@ func fixControlPlaneEndpoint(u *url.URL) *url.URL {
 	return u
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func genV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
@@ -118,7 +118,7 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	var genOptions []generate.GenOption //nolint: prealloc
+	var genOptions []generate.GenOption //nolint:prealloc
 
 	for _, registryMirror := range registryMirrors {
 		components := strings.SplitN(registryMirror, "=", 2)

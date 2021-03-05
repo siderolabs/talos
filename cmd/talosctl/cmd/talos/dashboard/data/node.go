@@ -43,7 +43,7 @@ func (node *Node) MemUsage() float64 {
 
 // CPUUsageByName returns CPU usage by name.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (node *Node) CPUUsageByName(name string) float64 {
 	if node.SystemStatDiff == nil || node.SystemStatDiff.CpuTotal == nil {
 		return 0

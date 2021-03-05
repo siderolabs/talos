@@ -78,7 +78,7 @@ func NewReader(options ...Option) (Reader, error) {
 	if r.options.tail {
 		_, err = r.f.Seek(0, os.SEEK_END)
 		if err != nil {
-			r.f.Close() //nolint: errcheck
+			r.f.Close() //nolint:errcheck
 
 			return nil, fmt.Errorf("error seeking to the tail of kmsg: %w", err)
 		}
@@ -109,7 +109,7 @@ func (r *reader) Scan(ctx context.Context) <-chan Packet {
 	return ch
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (r *reader) scanNoFollow(ctx context.Context, ch chan<- Packet) {
 	defer close(ch)
 

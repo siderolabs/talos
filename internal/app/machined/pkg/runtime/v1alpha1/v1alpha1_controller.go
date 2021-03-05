@@ -105,7 +105,7 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 
 	// Allow only one sequence to run at a time with the exception of bootstrap
 	// and reset sequences.
-	switch seq { //nolint: exhaustive
+	switch seq { //nolint:exhaustive
 	case runtime.SequenceBootstrap, runtime.SequenceReset:
 		// Do not attempt to lock.
 	default:
@@ -388,7 +388,7 @@ func (c *Controller) runTask(ctx context.Context, progress string, f runtime.Tas
 	return err
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.Phase, error) {
 	var phases []runtime.Phase
 

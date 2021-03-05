@@ -38,7 +38,7 @@ func show(ctx context.Context) error {
 		return err
 	}
 
-	defer provisioner.Close() //nolint: errcheck
+	defer provisioner.Close() //nolint:errcheck
 
 	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {

@@ -12,7 +12,7 @@ import (
 
 // Values for timex.mode.
 //
-//nolint: golint, stylecheck
+//nolint:golint,stylecheck
 const (
 	ADJ_OFFSET    = 0x0001
 	ADJ_FREQUENCY = 0x0002
@@ -32,7 +32,7 @@ type Status int32
 
 // Clock statuses.
 //
-//nolint: golint, stylecheck
+//nolint:golint,stylecheck
 const (
 	STA_PLL       = 0x0001 /* enable PLL updates (rw) */
 	STA_PPSFREQ   = 0x0002 /* enable PPS freq discipline (rw) */
@@ -86,7 +86,7 @@ type State int
 
 // Clock states.
 //
-//nolint: golint, stylecheck
+//nolint:golint,stylecheck
 const (
 	TIME_OK State = iota
 	TIME_INS

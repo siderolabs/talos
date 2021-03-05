@@ -17,10 +17,10 @@ import (
 
 // Tar creates .tar archive and writes it to output for every item in paths channel
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 	tw := tar.NewWriter(output)
-	//nolint: errcheck
+	//nolint:errcheck
 	defer tw.Close()
 
 	var multiErr *multierror.Error
@@ -73,7 +73,7 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 
 		err = tw.WriteHeader(header)
 		if err != nil {
-			//nolint: errcheck
+			//nolint:errcheck
 			fp.Close()
 
 			multiErr = multierror.Append(multiErr, err)
@@ -99,7 +99,7 @@ func Tar(ctx context.Context, paths <-chan FileItem, output io.Writer) error {
 }
 
 func archiveFile(ctx context.Context, tw io.Writer, fi FileItem, fp *os.File) error {
-	//nolint: errcheck
+	//nolint:errcheck
 	defer fp.Close()
 
 	buf := make([]byte, 4096)

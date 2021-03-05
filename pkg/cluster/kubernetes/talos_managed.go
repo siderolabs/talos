@@ -32,7 +32,7 @@ type UpgradeProvider interface {
 
 // UpgradeTalosManaged the Kubernetes control plane.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	switch {
 	case strings.HasPrefix(options.FromVersion, "1.19.") && strings.HasPrefix(options.ToVersion, "1.19."):
@@ -84,7 +84,7 @@ func upgradeConfigPatch(ctx context.Context, cluster UpgradeProvider, options Up
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -154,7 +154,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 
 var errUpdateSkipped = fmt.Errorf("update skipped")
 
-//nolint: gocyclo
+//nolint:gocyclo
 func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
 		if config.ClusterConfig == nil {
@@ -206,7 +206,7 @@ func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v
 	}
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node, configVersion string) error {
 	k8sClient, err := cluster.K8sHelper(ctx)
 	if err != nil {

@@ -57,7 +57,7 @@ func Open(p string) (c *Config, err error) {
 		return
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	return ReadFrom(f)
 }

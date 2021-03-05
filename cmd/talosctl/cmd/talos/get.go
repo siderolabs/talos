@@ -49,7 +49,7 @@ var getCmd = &cobra.Command{
 				resourceID = args[1]
 			}
 
-			defer out.Flush() //nolint: errcheck
+			defer out.Flush() //nolint:errcheck
 
 			var headerWritten bool
 

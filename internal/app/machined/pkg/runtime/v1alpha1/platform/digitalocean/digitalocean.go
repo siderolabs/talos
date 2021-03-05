@@ -61,7 +61,7 @@ func (d *DigitalOcean) Hostname(ctx context.Context) (hostname []byte, err error
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -88,7 +88,7 @@ func (d *DigitalOcean) ExternalIPs(ctx context.Context) (addrs []net.IP, err err
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

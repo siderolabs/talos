@@ -63,7 +63,7 @@ func (suite *ResetSuite) hashKubeletCert(ctx context.Context, node string) (stri
 		return "", err
 	}
 
-	defer reader.Close() //nolint: errcheck
+	defer reader.Close() //nolint:errcheck
 
 	hash := sha256.New()
 
@@ -168,7 +168,7 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 
 // TestResetWithSpecEphemeral resets only ephemeral partition on the node.
 //
-//nolint: dupl
+//nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
@@ -211,7 +211,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 //
 // As ephemeral partition is not reset, so kubelet cert shouldn't change.
 //
-//nolint: dupl
+//nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecState() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")

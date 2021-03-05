@@ -21,7 +21,7 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 
 // ServiceStateAssertion checks whether service reached some specified state.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service string, states ...string) error {
 	cli, err := cluster.Client()
 	if err != nil {
@@ -68,7 +68,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 }
 
 // ServiceHealthAssertion checks whether service reached some specified state.
-//nolint: gocyclo
+//nolint:gocyclo
 func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service string, setters ...Option) error {
 	opts := DefaultOptions()
 

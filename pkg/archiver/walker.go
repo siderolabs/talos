@@ -79,7 +79,7 @@ func WithFileTypes(fileType ...FileType) WalkerOption {
 
 // Walker provides a channel of file info/paths for archival.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
 	var opts walkerOptions
 	opts.maxRecurseDepth = -1
@@ -156,7 +156,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				var matches bool
 
 				for _, pattern := range opts.fnmatchPatterns {
-					if matches, _ = filepath.Match(pattern, item.RelPath); matches { //nolint: errcheck
+					if matches, _ = filepath.Match(pattern, item.RelPath); matches { //nolint:errcheck
 						break
 					}
 				}

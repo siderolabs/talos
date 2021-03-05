@@ -28,7 +28,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
@@ -65,7 +65,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	defer logFile.Close() //nolint: errcheck
+	defer logFile.Close() //nolint:errcheck
 
 	cmdline := procfs.NewCmdline("")
 
@@ -151,7 +151,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	defer launchConfigFile.Close() //nolint: errcheck
+	defer launchConfigFile.Close() //nolint:errcheck
 
 	cmd := exec.Command(clusterReq.SelfExecutable, "qemu-launch")
 	cmd.Stdout = logFile
@@ -238,13 +238,13 @@ func (p *provisioner) populateSystemDisk(disks []string, clusterReq provision.Cl
 		if err != nil {
 			return err
 		}
-		defer disk.Close() // nolint:errcheck
+		defer disk.Close() //nolint:errcheck
 
 		image, err := os.Open(clusterReq.DiskImagePath)
 		if err != nil {
 			return err
 		}
-		defer image.Close() // nolint:errcheck
+		defer image.Close() //nolint:errcheck
 
 		_, err = io.Copy(disk, image)
 

@@ -315,7 +315,7 @@ func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (conf
 	if err != nil {
 		return nil, fmt.Errorf("error creating reader: %w", err)
 	}
-	defer reader.Close() //nolint: errcheck
+	defer reader.Close() //nolint:errcheck
 
 	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
 		return nil, fmt.Errorf("error reading: %w", err)

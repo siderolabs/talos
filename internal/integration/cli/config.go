@@ -35,7 +35,7 @@ func (suite *TalosconfigSuite) TestList() {
 // TestMerge checks how talosctl config merge.
 func (suite *TalosconfigSuite) TestMerge() {
 	tempDir, err := ioutil.TempDir("", "talos")
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	suite.Require().NoError(err)
 

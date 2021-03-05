@@ -59,7 +59,7 @@ type resourceKind struct {
 	Type      resource.Type
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resourceKind) (*meta.ResourceDefinition, error) {
 	registeredResources, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().
 		List(ctx, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
@@ -81,7 +81,7 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 			continue
 		}
 
-		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint: errcheck
+		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck
 
 		for _, alias := range spec.Aliases {
 			if strings.EqualFold(alias, kind.Type) {
@@ -228,7 +228,7 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 
 // Watch implements resource.ResourceServiceServer interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceService_WatchServer) error {
 	kind := resourceKind{
 		Namespace: in.GetNamespace(),

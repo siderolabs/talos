@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package networkd
 
 import (
@@ -88,7 +88,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
 
-	// nolint: dogsled
+	//nolint:dogsled
 	_, _, _, err = nwd.decideHostname()
 	suite.Require().Error(err)
 

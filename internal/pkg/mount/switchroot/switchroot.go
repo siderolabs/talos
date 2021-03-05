@@ -16,7 +16,7 @@ import (
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
-// nolint: gocyclo
+//nolint:gocyclo
 func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	log.Println("moving mounts to the new rootfs")
 
@@ -36,7 +36,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 		return fmt.Errorf("error opening /: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer old.Close()
 
 	log.Printf("moving %s to /", prefix)
@@ -75,7 +75,7 @@ func recursiveDelete(fd int) error {
 	}
 
 	dir := os.NewFile(uintptr(fd), "__ignored__")
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dir.Close()
 
 	names, err := dir.Readdirnames(-1)
@@ -99,7 +99,7 @@ func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error
 			return err
 		}
 	} else {
-		// nolint: errcheck
+		//nolint:errcheck
 		defer unix.Close(childFd)
 
 		if childFdDev, err := getDev(childFd); err != nil {

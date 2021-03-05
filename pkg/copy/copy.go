@@ -29,17 +29,17 @@ func File(src, dst string, setters ...Option) error {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer s.Close()
 
 	if d, err = os.Create(dst); err != nil {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer d.Close()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer d.Sync()
 
 	if _, err = io.Copy(d, s); err != nil {

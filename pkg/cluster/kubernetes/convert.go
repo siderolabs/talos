@@ -55,7 +55,7 @@ type ConvertProvider interface {
 
 // ConvertToStaticPods the self-hosted Kubernetes control plane to Talos-managed static pods-based control plane.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options ConvertOptions) error {
 	var err error
 
@@ -179,7 +179,7 @@ func IsSelfHostedControlPlane(ctx context.Context, cluster cluster.ClientProvide
 
 // updateNodeConfig reads self-hosted settings and secrets from K8s and stores them back to node configs.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func updateNodeConfig(ctx context.Context, cluster ConvertProvider, options *ConvertOptions) error {
 	fmt.Println("gathering control plane configuration")
 
@@ -280,7 +280,7 @@ func updateNodeConfig(ctx context.Context, cluster ConvertProvider, options *Con
 
 // patchNodeConfig updates node configuration by means of patch function.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func patchNodeConfig(ctx context.Context, cluster ConvertProvider, node string, patchFunc func(config *v1alpha1config.Config) error) error {
 	c, err := cluster.Client()
 	if err != nil {
@@ -341,7 +341,7 @@ func patchNodeConfig(ctx context.Context, cluster ConvertProvider, node string, 
 
 // waitResourcesReady waits for manifests and static pod definitions to be generated.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func waitResourcesReady(ctx context.Context, cluster ConvertProvider, options *ConvertOptions) error {
 	c, err := cluster.Client()
 	if err != nil {
@@ -444,7 +444,7 @@ func removeInitializedKey(ctx context.Context, cluster cluster.ClientProvider, n
 
 // waitForStaticPods waits for static pods to be present in the API server.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func waitForStaticPods(ctx context.Context, cluster ConvertProvider, options *ConvertOptions, k8sApp string, checkReady bool) error {
 	fmt.Printf("waiting for static pods for %q to be present in the API server state\n", k8sApp)
 
@@ -589,7 +589,7 @@ func getActiveCheckpoints(ctx context.Context, k8sClient *kubernetes.Client) ([]
 
 // deleteDaemonset deletes daemonset and waits for all the pods to be removed.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func deleteDaemonset(ctx context.Context, cluster ConvertProvider, k8sApp string, anyPod bool) error {
 	fmt.Printf("deleting daemonset %q\n", k8sApp)
 

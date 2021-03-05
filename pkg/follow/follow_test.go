@@ -52,14 +52,14 @@ func (suite *FollowSuite) SetupTest() {
 func (suite *FollowSuite) TearDownTest() {
 	suite.Require().NoError(suite.writer.Close())
 
-	suite.reader.Close() //nolint: errcheck
+	suite.reader.Close() //nolint:errcheck
 }
 
 func (suite *FollowSuite) TearDownSuite() {
 	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
-//nolint: unparam
+//nolint:unparam
 func (suite *FollowSuite) readAll(ctx context.Context, expectedError string, sizeHint int, timeout time.Duration) <-chan []byte {
 	combinedCh := make(chan []byte)
 
@@ -68,7 +68,7 @@ func (suite *FollowSuite) readAll(ctx context.Context, expectedError string, siz
 
 	go func() {
 		defer ctxCancel()
-		defer suite.r.Close() //nolint: errcheck
+		defer suite.r.Close() //nolint:errcheck
 
 		contents := make([]byte, sizeHint)
 
@@ -94,7 +94,7 @@ func (suite *FollowSuite) smallReadAll(ctx context.Context, sizeHint int, timeou
 
 	go func() {
 		defer ctxCancel()
-		defer suite.r.Close() //nolint: errcheck
+		defer suite.r.Close() //nolint:errcheck
 
 		buf := make([]byte, 1)
 
@@ -116,16 +116,16 @@ func (suite *FollowSuite) TestStreaming() {
 
 	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
@@ -137,16 +137,16 @@ func (suite *FollowSuite) TestStreamingClose() {
 
 	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 	time.Sleep(150 * time.Millisecond)
 
@@ -159,20 +159,20 @@ func (suite *FollowSuite) TestStreamingWithSomeHead() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
 
 	combinedCh := suite.readAll(ctx, "", 15, time.Second)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
@@ -184,16 +184,16 @@ func (suite *FollowSuite) TestStreamingSmallBuffer() {
 
 	combinedCh := suite.smallReadAll(ctx, 15, time.Second)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 
 	// create extra file to try to confuse watch
@@ -210,15 +210,15 @@ func (suite *FollowSuite) TestDeleted() {
 	// pass sizeHint as 15+1 to make code read beyond the end and encounter file removed
 	combinedCh := suite.readAll(ctx, "file was removed while watching", 16, time.Second)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 	time.Sleep(150 * time.Millisecond)
 
@@ -236,7 +236,7 @@ func (suite *FollowSuite) TestReadWrite() {
 
 	buf := make([]byte, 256)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
 
 	n, err := r.Read(buf)
@@ -244,7 +244,7 @@ func (suite *FollowSuite) TestReadWrite() {
 	suite.Require().Equal(3, n)
 	suite.Require().Equal([]byte("abc"), buf[:n])
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
 
 	n, err = r.Read(buf)
@@ -269,7 +269,7 @@ func (suite *FollowSuite) TestReadWrite() {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	suite.Require().Equal([]byte("ghi"), <-ch)
 }

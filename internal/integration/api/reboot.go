@@ -69,7 +69,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 
 // TestRebootAllNodes reboots all cluster nodes at the same time.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *RebootSuite) TestRebootAllNodes() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboots")
@@ -118,7 +118,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 					return fmt.Errorf("bootID record not found for %q", node)
 				}
 
-				bootIDBefore := bootIDBeforeInterface.(string) //nolint: errcheck
+				bootIDBefore := bootIDBeforeInterface.(string) //nolint:errcheck
 
 				nodeCtx := client.WithNodes(suite.ctx, node)
 

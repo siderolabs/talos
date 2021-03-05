@@ -240,7 +240,7 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 
 // Pods collects information about running pods & containers.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	sandboxes, err := i.client.ListPodSandbox(i.ctx, &runtimeapi.PodSandboxFilter{
 		State: &runtimeapi.PodSandboxStateValue{

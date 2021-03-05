@@ -55,7 +55,7 @@ func (c *ConfigBundle) Write(outputDir string, types ...machine.Type) error {
 			err          error
 		)
 
-		switch t { //nolint: exhaustive
+		switch t { //nolint:exhaustive
 		case machine.TypeInit:
 			configString, err = c.Init().String()
 			if err != nil {

@@ -40,7 +40,7 @@ func convertKubernetes(ctx context.Context, c *client.Client) error {
 	clientProvider := &cluster.ConfigClientProvider{
 		DefaultClient: c,
 	}
-	defer clientProvider.Close() //nolint: errcheck
+	defer clientProvider.Close() //nolint:errcheck
 
 	state := struct {
 		cluster.ClientProvider

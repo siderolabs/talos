@@ -53,7 +53,7 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 			return err
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer reader.Close()
 
 		if _, err = io.Copy(ioutil.Discard, reader); err != nil {

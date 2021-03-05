@@ -69,7 +69,7 @@ func Prepare(dev string) (err error) {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	if _, err := f.Write(b); err != nil {
@@ -82,7 +82,7 @@ func Prepare(dev string) (err error) {
 // Install implements the Bootloader interface. It sets up syslinux with the
 // specified kernel parameters.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func Install(fallback string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
 	syslinuxcfg, ok := config.(*Cfg)
 	if !ok {
@@ -157,7 +157,7 @@ func Labels() (current, next string, err error) {
 
 // Default sets the default syslinx label.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func Default(label string) (err error) {
 	log.Printf("setting default label to %q", label)
 
@@ -243,7 +243,7 @@ func copyFile(src, dst string) error {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer s.Close()
 
 	d, err := os.Create(dst)
@@ -251,7 +251,7 @@ func copyFile(src, dst string) error {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer d.Close()
 
 	_, err = io.Copy(d, s)
@@ -299,7 +299,7 @@ func setADV(ldlinux, fallback string) (err error) {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	var adv syslinux.ADV

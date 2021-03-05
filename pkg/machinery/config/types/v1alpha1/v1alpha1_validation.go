@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package v1alpha1 provides user-facing v1alpha1 machine configs
-//nolint: dupl
+//nolint:dupl
 package v1alpha1
 
 import (
@@ -54,11 +54,11 @@ var (
 )
 
 // NetworkDeviceCheck defines the function type for checks.
-//nolint: dupl
+//nolint:dupl
 type NetworkDeviceCheck func(*Device) error
 
 // Validate implements the Configurator interface.
-//nolint: gocyclo
+//nolint:gocyclo
 func (c *Config) Validate(mode config.RuntimeMode) error {
 	var result *multierror.Error
 
@@ -173,7 +173,7 @@ func (c *ClusterConfig) Validate() error {
 
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
-//nolint: dupl
+//nolint:dupl
 func ValidateNetworkDevices(d *Device, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
@@ -193,7 +193,7 @@ func ValidateNetworkDevices(d *Device, checks ...NetworkDeviceCheck) error {
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
-//nolint: dupl
+//nolint:dupl
 func CheckDeviceInterface(d *Device) error {
 	var result *multierror.Error
 
@@ -210,7 +210,7 @@ func CheckDeviceInterface(d *Device) error {
 
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified
-//nolint: dupl
+//nolint:dupl
 func CheckDeviceAddressing(d *Device) error {
 	var result *multierror.Error
 
@@ -241,7 +241,7 @@ func CheckDeviceAddressing(d *Device) error {
 }
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
-//nolint: dupl
+//nolint:dupl
 func CheckDeviceRoutes(d *Device) error {
 	var result *multierror.Error
 

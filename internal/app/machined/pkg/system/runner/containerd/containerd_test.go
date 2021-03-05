@@ -96,8 +96,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint: errcheck
-		suite.containerdRunner.Run(MockEventSink) //nolint: errcheck
+		defer suite.containerdRunner.Close()      //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
 	suite.client, err = containerd.New(suite.containerdAddress)
@@ -129,7 +129,7 @@ func (suite *ContainerdSuite) getLogContents(filename string) []byte {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, filename))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -243,7 +243,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -257,7 +257,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(os.Mkdir(testDir, 0o770))
 
 	testFile := filepath.Join(testDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(containerdrunner.NewRunner(false, &runner.Args{
@@ -437,7 +437,7 @@ func (suite *ContainerdSuite) TestContainerStdin() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)

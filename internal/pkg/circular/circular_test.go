@@ -94,7 +94,7 @@ func (suite *CircularSuite) TestStreamingReadWriter() {
 				l = len(data) - i
 			}
 
-			r.WaitN(context.Background(), l) //nolint: errcheck
+			r.WaitN(context.Background(), l) //nolint:errcheck
 
 			n, e := buf.Write(p[:l])
 			suite.Require().NoError(e)
@@ -185,7 +185,7 @@ func (suite *CircularSuite) TestStreamingMultipleReaders() {
 			l = len(data) - i
 		}
 
-		r.WaitN(context.Background(), l) //nolint: errcheck
+		r.WaitN(context.Background(), l) //nolint:errcheck
 
 		n, e := buf.Write(p[:l])
 		suite.Require().NoError(e)

@@ -143,7 +143,7 @@ func (slicer *lineSlicer) getPipe(node string) *io.PipeWriter {
 
 func (slicer *lineSlicer) cleanupChoppers() {
 	for _, p := range slicer.pipes {
-		_ = p.Close() //nolint: errcheck
+		_ = p.Close() //nolint:errcheck
 	}
 
 	slicer.wg.Wait()
@@ -190,7 +190,7 @@ func init() {
 	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
 
 	logsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	logsCmd.Flags().MarkHidden("use-cri") //nolint: errcheck
+	logsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
 	addCommand(logsCmd)
 }

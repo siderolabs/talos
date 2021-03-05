@@ -42,7 +42,7 @@ var (
 )
 
 // Services returns the instance of the system services API.
-// nolint: golint
+//nolint:golint
 func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {
 		instance = &singleton{
@@ -183,7 +183,7 @@ func (s *singleton) StartAll() {
 
 	s.mu.Unlock()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	s.Start(serviceIDs...)
 }
 
@@ -207,7 +207,7 @@ func (s *singleton) Shutdown(ctx context.Context) {
 
 	s.terminating = true
 
-	_ = s.stopServices(ctx, nil, true) //nolint: errcheck
+	_ = s.stopServices(ctx, nil, true) //nolint:errcheck
 }
 
 // Stop will initiate a shutdown of the specified service.
@@ -244,7 +244,7 @@ func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...st
 	return s.stopServices(ctx, serviceIDs, true)
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *singleton) stopServices(ctx context.Context, services []string, waitForRevDependencies bool) error {
 	stateCopy := make(map[string]*ServiceRunner)
 

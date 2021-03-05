@@ -151,7 +151,7 @@ func contains(mode runtimeapi.NamespaceMode, modes []runtimeapi.NamespaceMode) b
 	return false
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, pod *runtimeapi.PodSandbox, mode string) (err error) {
 	action := "stopping"
 	status := "stopped"

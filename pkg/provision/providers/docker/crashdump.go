@@ -39,6 +39,6 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 			continue
 		}
 
-		_, _ = io.Copy(out, logs) //nolint: errcheck
+		_, _ = io.Copy(out, logs) //nolint:errcheck
 	}
 }

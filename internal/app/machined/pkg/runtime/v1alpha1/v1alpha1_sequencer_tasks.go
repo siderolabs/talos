@@ -302,7 +302,7 @@ func WriteIMAPolicy(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			return err
 		}
 
-		defer f.Close() //nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		for _, line := range rules {
 			if _, err = f.WriteString(line + "\n"); err != nil {
@@ -568,7 +568,7 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 			return nil, fmt.Errorf("error creating gzip reader: %w", err)
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer gzipReader.Close()
 
 		var unzippedData []byte
@@ -616,7 +616,7 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 // ResetNetwork resets the network.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		nwd, err := networkd.New(r.Config())
@@ -870,7 +870,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 				return err
 			}
 
-			// nolint: errcheck
+			//nolint:errcheck
 			defer bd.Close()
 
 			var pt *gpt.GPT
@@ -977,7 +977,7 @@ func unmountDisks(r runtime.Runtime) (err error) {
 
 // WriteUserFiles represents the WriteUserFiles task.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var result *multierror.Error
@@ -1094,7 +1094,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "writeUserFiles"
 }
 
-// nolint: deadcode,unused
+//nolint:deadcode,unused
 func doesNotExists(p string) (err error) {
 	_, err = os.Stat(p)
 	if err != nil {
@@ -1214,7 +1214,7 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 			return err
 		}
 
-		defer f.Close() //nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
@@ -1243,7 +1243,7 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 // CordonAndDrainNode represents the task for stop all containerd tasks in the
 // k8s.io namespace.
 //
-//nolint: dupl
+//nolint:dupl
 func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var nodename string
@@ -1270,7 +1270,7 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 //
 // This action undoes the CordonAndDrainNode task.
 //
-//nolint: dupl
+//nolint:dupl
 func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var nodename string
@@ -1298,7 +1298,7 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 }
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
-// nolint: gocyclo
+//nolint:gocyclo
 func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
@@ -1306,7 +1306,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 			return fmt.Errorf("failed to create etcd client: %w", err)
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer client.Close()
 
 		if err = client.LeaveCluster(ctx); err != nil {
@@ -1338,7 +1338,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 			return err
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer client.Close()
 
 		// We remove pods with POD network mode first so that the CNI can perform
@@ -1436,7 +1436,7 @@ func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.Tas
 func tryLock(path string) error {
 	fd, errno := unix.Open(path, unix.O_RDONLY|unix.O_EXCL|unix.O_CLOEXEC, 0)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer unix.Close(fd)
 
 	return errno
@@ -1450,11 +1450,11 @@ func dumpMounts(logger *log.Logger) {
 		return
 	}
 
-	defer mounts.Close() //nolint: errcheck
+	defer mounts.Close() //nolint:errcheck
 
 	logger.Printf("contents of /proc/mounts:")
 
-	_, _ = io.Copy(log.Writer(), mounts) //nolint: errcheck
+	_, _ = io.Copy(log.Writer(), mounts) //nolint:errcheck
 }
 
 // Upgrade represents the task for performing an upgrade.
@@ -1526,7 +1526,7 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		if ok := meta.LegacyADV.DeleteTag(adv.Upgrade); ok {
@@ -1588,7 +1588,7 @@ func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		var data []byte
@@ -1640,7 +1640,7 @@ func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		opts := []mount.Option{mount.WithFlags(mount.SkipIfMounted)}
@@ -1775,7 +1775,7 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			return err
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer dir.Close()
 
 		files, err := dir.Readdir(0)

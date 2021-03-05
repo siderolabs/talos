@@ -55,8 +55,8 @@ func (p *Provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 			fmt.Fprintf(out, "error seeking to the tail: %s\n", err)
 		}
 
-		_, _ = io.Copy(out, f) //nolint: errcheck
+		_, _ = io.Copy(out, f) //nolint:errcheck
 
-		f.Close() //nolint: errcheck
+		f.Close() //nolint:errcheck
 	}
 }

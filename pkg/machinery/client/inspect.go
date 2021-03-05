@@ -24,7 +24,7 @@ func (c *InspectClient) ControllerRuntimeDependencies(ctx context.Context, callO
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*inspectapi.ControllerRuntimeDependenciesResponse) //nolint: errcheck
+	resp, _ = filtered.(*inspectapi.ControllerRuntimeDependenciesResponse) //nolint:errcheck
 
 	return resp, err
 }

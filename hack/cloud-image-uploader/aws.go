@@ -145,7 +145,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 			return err
 		}
 
-		defer source.Close() //nolint: errcheck
+		defer source.Close() //nolint:errcheck
 
 		image, err := ExtractFileFromTarGz("disk.raw", source)
 		if err != nil {

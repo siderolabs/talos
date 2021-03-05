@@ -142,7 +142,7 @@ func (s *MachineState) probeMeta() {
 		return
 	}
 
-	defer meta.Close() //nolint: errcheck
+	defer meta.Close() //nolint:errcheck
 
 	stagedInstallImageRef, ok1 := meta.ADV.ReadTag(adv.StagedUpgradeImageRef)
 	stagedInstallOptions, ok2 := meta.ADV.ReadTag(adv.StagedUpgradeInstallOptions)
@@ -174,7 +174,7 @@ func (s *MachineState) Disk(options ...disk.Option) *probe.ProbedBlockDevice {
 		opt(opts)
 	}
 
-	s.probeDisks(opts.Label) //nolint: errcheck
+	s.probeDisks(opts.Label) //nolint:errcheck
 
 	return s.disks[opts.Label]
 }

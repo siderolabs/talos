@@ -26,7 +26,7 @@ import (
 
 // Target represents an installation partition.
 //
-//nolint: golint, maligned
+//nolint:golint,maligned
 type Target struct {
 	*partition.FormatOptions
 	Device string
@@ -175,7 +175,7 @@ func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
 
 // Format creates a filesystem on the device/partition.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (t *Target) Format() error {
 	if t.Skip {
 		return nil
@@ -198,7 +198,7 @@ func (t *Target) Save() (err error) {
 			if sourceFile, err = os.Open(asset.Source); err != nil {
 				return err
 			}
-			// nolint: errcheck
+			//nolint:errcheck
 			defer sourceFile.Close()
 
 			if err = os.MkdirAll(filepath.Dir(asset.Destination), os.ModeDir); err != nil {
@@ -209,7 +209,7 @@ func (t *Target) Save() (err error) {
 				return err
 			}
 
-			// nolint: errcheck
+			//nolint:errcheck
 			defer destFile.Close()
 
 			log.Printf("copying %s to %s\n", sourceFile.Name(), destFile.Name())
@@ -294,12 +294,12 @@ func (t *Target) saveRawContents(partPath string) error {
 		return fmt.Errorf("error opening source partition: %q", err)
 	}
 
-	defer src.Close() //nolint: errcheck
+	defer src.Close() //nolint:errcheck
 
 	t.Contents = bytes.NewBuffer(nil)
 
 	zw := gzip.NewWriter(t.Contents)
-	defer zw.Close() //nolint: errcheck
+	defer zw.Close() //nolint:errcheck
 
 	_, err = io.Copy(zw, src)
 	if err != nil {
@@ -348,7 +348,7 @@ func (t *Target) restoreRawContents() error {
 		return fmt.Errorf("error opening source partition: %q", err)
 	}
 
-	defer dst.Close() //nolint: errcheck
+	defer dst.Close() //nolint:errcheck
 
 	zr, err := gzip.NewReader(t.Contents)
 	if err != nil {

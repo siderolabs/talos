@@ -69,7 +69,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	defer server.GracefulStop()
 
 	go func() {
-		// nolint: errcheck
+		//nolint:errcheck
 		server.Serve(listener)
 	}()
 

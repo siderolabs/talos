@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,lll,maligned,scopelint,testpackage
+//nolint:dupl,lll,maligned,scopelint,testpackage
 package syslinux
 
 import (
@@ -21,7 +21,7 @@ func TestNewADV(t *testing.T) {
 		t.Errorf("failed to open test adv.sys: %v", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	type args struct {
@@ -46,7 +46,7 @@ func TestNewADV(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// nolint: errcheck
+			//nolint:errcheck
 			defer f.Seek(0, 0)
 
 			gotAdv, err := NewADV(tt.args.r)

@@ -83,5 +83,5 @@ func main() {
 
 	e := json.NewEncoder(os.Stdout)
 	e.SetIndent("", "  ")
-	e.Encode(&result) //nolint: errcheck
+	e.Encode(&result) //nolint:errcheck
 }

@@ -66,7 +66,7 @@ type Event struct {
 
 // EventsWatch wraps Events by providing more simple interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), opts ...EventsOptionFunc) error {
 	stream, err := c.Events(ctx, opts...)
 	if err != nil {

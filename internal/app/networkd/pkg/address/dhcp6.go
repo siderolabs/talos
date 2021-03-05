@@ -133,7 +133,7 @@ func (d *DHCP6) discover(ctx context.Context) error {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer cli.Close()
 
 	reply, err := cli.RapidSolicit(ctx)
@@ -157,7 +157,7 @@ func waitIPv6LinkReady(iface *net.Interface) error {
 		return err
 	}
 
-	defer conn.Close() //nolint: errcheck
+	defer conn.Close() //nolint:errcheck
 
 	return retry.Constant(30*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		ready, err := isIPv6LinkReady(iface, conn)

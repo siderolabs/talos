@@ -87,7 +87,7 @@ type Installer struct {
 
 // NewInstaller initializes and returns an Installer.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
@@ -120,7 +120,7 @@ func (i *Installer) probeBootPartition() error {
 			return err
 		}
 
-		defer dev.Close() // nolint:errcheck
+		defer dev.Close() //nolint:errcheck
 
 		if part, err := dev.GetPartition(constants.BootPartitionLabel); err != nil {
 			i.bootPartitionFound = false
@@ -146,7 +146,7 @@ func (i *Installer) probeBootPartition() error {
 			if err := mount.Mount(mountpoints); err != nil {
 				log.Printf("warning: failed to mount boot partition %q: %s", partPath, err)
 			} else {
-				defer mount.Unmount(mountpoints) //nolint: errcheck
+				defer mount.Unmount(mountpoints) //nolint:errcheck
 			}
 		}
 	}
@@ -162,7 +162,7 @@ func (i *Installer) probeBootPartition() error {
 // Install fetches the necessary data locations and copies or extracts
 // to the target locations.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	if i.options.Board != constants.BoardNone {
 		var b runtime.Board
@@ -308,7 +308,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			return err
 		}
 
-		//nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		if ok := meta.LegacyADV.SetTag(adv.Upgrade, i.Current); !ok {

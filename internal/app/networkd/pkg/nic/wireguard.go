@@ -16,7 +16,7 @@ import (
 )
 
 // WithWireguardConfig defines if the interface should be a Wireguard interface and supplies Wireguard configs.
-// nolint:gocyclo
+//nolint:gocyclo
 func WithWireguardConfig(cfg config.WireguardConfig) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Wireguard = true

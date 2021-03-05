@@ -34,7 +34,7 @@ var LogLinesPerService = map[string]int32{
 //
 // CrashDump implements CrashDumper interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 	cli, err := s.Client()
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 						fmt.Fprintf(out, "error streaming service logs: %s\n", err)
 					}
 
-					r.Close() //nolint: errcheck
+					r.Close() //nolint:errcheck
 				}
 			}
 		}(node)

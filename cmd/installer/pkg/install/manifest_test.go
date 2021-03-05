@@ -86,7 +86,7 @@ func (suite *manifestSuite) TearDownTest() {
 }
 
 func (suite *manifestSuite) skipUnderBuildkit() {
-	hostname, _ := os.Hostname() //nolint: errcheck
+	hostname, _ := os.Hostname() //nolint:errcheck
 
 	if hostname == "buildkitsandbox" {
 		suite.T().Skip("test not supported under buildkit as partition devices are not propagated from /dev")
@@ -103,7 +103,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
-	defer bd.Close() //nolint: errcheck
+	defer bd.Close() //nolint:errcheck
 
 	table, err := bd.PartitionTable()
 	suite.Require().NoError(err)
@@ -360,7 +360,7 @@ func (suite *manifestSuite) TestTargetInstall() {
 	dir, err := ioutil.TempDir("", "talostest")
 	suite.Require().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.RemoveAll(dir)
 
 	// Create a tempfile for local copy
@@ -394,7 +394,7 @@ func (suite *manifestSuite) createTalosLegacyLayout() {
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
-	defer bd.Close() //nolint: errcheck
+	defer bd.Close() //nolint:errcheck
 
 	// create Talos 0.6 partitions
 	table, err := gpt.New(bd.Device())

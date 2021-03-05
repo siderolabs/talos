@@ -65,7 +65,7 @@ func (s *server) AddFile(filename string, contents []byte) error {
 			w.Header().Add("Content-Length", strconv.Itoa(len(contentsCopy)))
 			w.WriteHeader(http.StatusOK)
 
-			w.Write(contentsCopy) //nolint: errcheck
+			w.Write(contentsCopy) //nolint:errcheck
 		default:
 			w.WriteHeader(http.StatusNotImplemented)
 		}
@@ -83,7 +83,7 @@ func (s *server) GetAddr() net.Addr {
 }
 
 func (s *server) Serve() {
-	go s.srv.Serve(s.l) //nolint: errcheck
+	go s.srv.Serve(s.l) //nolint:errcheck
 }
 
 func (s *server) Shutdown(ctx context.Context) error {

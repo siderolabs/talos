@@ -47,7 +47,7 @@ func (suite *FileChunkerSuite) SetupTest() {
 
 func (suite *FileChunkerSuite) TearDownTest() {
 	suite.Require().NoError(suite.writer.Close())
-	suite.reader.Close() //nolint: errcheck
+	suite.reader.Close() //nolint:errcheck
 }
 
 func (suite *FileChunkerSuite) TearDownSuite() {
@@ -79,16 +79,16 @@ func (suite *FileChunkerSuite) TestStreaming() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 	time.Sleep(50 * time.Millisecond)
 
@@ -103,21 +103,21 @@ func (suite *FileChunkerSuite) TestStreamingWithSomeHead() {
 
 	chunker := file.NewChunker(ctx, suite.reader, file.WithFollow())
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
 
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 	time.Sleep(50 * time.Millisecond)
 
@@ -135,16 +135,16 @@ func (suite *FileChunkerSuite) TestStreamingSmallBuffer() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 
 	// create extra file to try to confuse watch
@@ -167,16 +167,16 @@ func (suite *FileChunkerSuite) TestStreamingDeleted() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("jkl")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("mno")
 	time.Sleep(50 * time.Millisecond)
 
@@ -192,11 +192,11 @@ func (suite *FileChunkerSuite) TestNoFollow() {
 
 	chunker := file.NewChunker(ctx, suite.reader)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("abc")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("def")
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.WriteString("ghi")
 	time.Sleep(50 * time.Millisecond)
 

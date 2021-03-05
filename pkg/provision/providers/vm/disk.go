@@ -47,7 +47,7 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 			return
 		}
 
-		defer diskF.Close() //nolint: errcheck
+		defer diskF.Close() //nolint:errcheck
 
 		err = diskF.Truncate(int64(disk.Size))
 		diskPaths[i] = diskPath

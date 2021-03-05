@@ -19,7 +19,7 @@ func TarGz(ctx context.Context, rootPath string, output io.Writer, walkerOptions
 	}
 
 	zw := gzip.NewWriter(output)
-	//nolint: errcheck
+	//nolint:errcheck
 	defer zw.Close()
 
 	err = Tar(ctx, paths, zw)
@@ -37,7 +37,7 @@ func UntarGz(ctx context.Context, input io.Reader, rootPath string) error {
 		return err
 	}
 
-	//nolint: errcheck
+	//nolint:errcheck
 	defer zr.Close()
 
 	err = Untar(ctx, zr, rootPath)

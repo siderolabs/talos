@@ -35,7 +35,7 @@ func (ctrl *RootController) ManagedResources() (resource.Namespace, resource.Typ
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

@@ -94,7 +94,7 @@ func (i *inspector) Images() (map[string]string, error) {
 	return imageList, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) containerInfo(cntr containerd.Container, imageList map[string]string, singleLookup bool) (*ctrs.Container, error) {
 	cp := &ctrs.Container{}
 
@@ -237,7 +237,7 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 //
 // If container is not found, Container returns nil
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	var (
 		query           string
@@ -300,7 +300,7 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 
 // Pods collects information about running pods & containers.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	imageList, err := i.Images()
 	if err != nil {

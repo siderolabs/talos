@@ -26,7 +26,7 @@ import (
 
 // CurrentPlatform is a helper func for discovering the current platform.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func CurrentPlatform() (p runtime.Platform, err error) {
 	var platform string
 
@@ -50,7 +50,7 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 	return newPlatform(platform)
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":

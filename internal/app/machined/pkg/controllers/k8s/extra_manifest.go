@@ -40,7 +40,7 @@ func (ctrl *ExtraManifestController) ManagedResources() (resource.Namespace, res
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -139,7 +139,7 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 		return
 	}
 
-	defer os.RemoveAll(tmpDir) //nolint: errcheck
+	defer os.RemoveAll(tmpDir) //nolint:errcheck
 
 	// I wish we never used go-getter package, as it doesn't allow downloading into memory.
 	// But there's not much we can do about it right now, as it supports lots of magic

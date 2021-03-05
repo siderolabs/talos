@@ -65,7 +65,7 @@ func (k *Kubelet) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
@@ -107,7 +107,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	// Pull the image and unpack it.
@@ -214,7 +214,7 @@ func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {

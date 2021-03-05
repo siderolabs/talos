@@ -33,7 +33,7 @@ func (suite *KubeconfigSuite) TestDirectory() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), tempDir},
 		base.StdoutEmpty())
@@ -50,12 +50,12 @@ func (suite *KubeconfigSuite) TestCwd() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	savedCwd, err := os.Getwd()
 	suite.Require().NoError(err)
 
-	defer os.Chdir(savedCwd) //nolint: errcheck
+	defer os.Chdir(savedCwd) //nolint:errcheck
 
 	suite.Require().NoError(os.Chdir(tempDir))
 
@@ -70,7 +70,7 @@ func (suite *KubeconfigSuite) TestCustomName() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
 		base.StdoutEmpty())
@@ -92,7 +92,7 @@ func (suite *KubeconfigSuite) TestMergeRename() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	path := filepath.Join(tempDir, "config")
 
@@ -111,7 +111,7 @@ func (suite *KubeconfigSuite) TestMergeOverwrite() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	path := filepath.Join(tempDir, "config")
 

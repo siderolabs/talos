@@ -36,7 +36,7 @@ func (ctrl *TimeStatusController) ManagedResources() (resource.Namespace, resour
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *TimeStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

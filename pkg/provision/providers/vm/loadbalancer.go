@@ -30,7 +30,7 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 		return err
 	}
 
-	defer logFile.Close() //nolint: errcheck
+	defer logFile.Close() //nolint:errcheck
 
 	masterNodes := clusterReq.Nodes.MasterNodes()
 	masterIPs := make([]string, len(masterNodes))

@@ -329,7 +329,7 @@ func (c *Client) KubeconfigRaw(ctx context.Context) (io.ReadCloser, <-chan error
 }
 
 func (c *Client) extractKubeconfig(r io.ReadCloser) ([]byte, error) {
-	defer r.Close() //nolint: errcheck
+	defer r.Close() //nolint:errcheck
 
 	gzR, err := gzip.NewReader(r)
 	if err != nil {
@@ -388,7 +388,7 @@ func (c *Client) ApplyConfiguration(ctx context.Context, req *machineapi.ApplyCo
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ApplyConfigurationResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ApplyConfigurationResponse) //nolint:errcheck
 
 	return
 }
@@ -399,7 +399,7 @@ func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.Gene
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.GenerateConfigurationResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.GenerateConfigurationResponse) //nolint:errcheck
 
 	return
 }
@@ -410,7 +410,7 @@ func (c *Client) Disks(ctx context.Context, callOptions ...grpc.CallOption) (res
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*storageapi.DisksResponse) //nolint: errcheck
+	resp, _ = filtered.(*storageapi.DisksResponse) //nolint:errcheck
 
 	return
 }
@@ -427,7 +427,7 @@ func (c *Client) Stats(ctx context.Context, namespace string, driver common.Cont
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.StatsResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.StatsResponse) //nolint:errcheck
 
 	return
 }
@@ -445,7 +445,7 @@ func (c *Client) Containers(ctx context.Context, namespace string, driver common
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ContainersResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ContainersResponse) //nolint:errcheck
 
 	return
 }
@@ -573,7 +573,7 @@ func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (r
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.VersionResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.VersionResponse) //nolint:errcheck
 
 	return
 }
@@ -588,7 +588,7 @@ func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (re
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*networkapi.RoutesResponse) //nolint: errcheck
+	resp, _ = filtered.(*networkapi.RoutesResponse) //nolint:errcheck
 
 	return
 }
@@ -603,7 +603,7 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*networkapi.InterfacesResponse) //nolint: errcheck
+	resp, _ = filtered.(*networkapi.InterfacesResponse) //nolint:errcheck
 
 	return
 }
@@ -618,7 +618,7 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ProcessesResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ProcessesResponse) //nolint:errcheck
 
 	return
 }
@@ -633,7 +633,7 @@ func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (re
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.MemoryResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.MemoryResponse) //nolint:errcheck
 
 	return
 }
@@ -648,7 +648,7 @@ func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (re
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.MountsResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.MountsResponse) //nolint:errcheck
 
 	return
 }
@@ -691,7 +691,7 @@ func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, for
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.UpgradeResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.UpgradeResponse) //nolint:errcheck
 
 	return
 }
@@ -706,7 +706,7 @@ func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint:errcheck
 
 	return
 }
@@ -736,7 +736,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ServiceListResponse) //nolint:errcheck
 
 	// FilterMessages might remove responses if they actually contain errors,
 	// errors will be merged into `resp`.
@@ -768,7 +768,7 @@ func (c *Client) ServiceStart(ctx context.Context, id string, callOptions ...grp
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ServiceStartResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ServiceStartResponse) //nolint:errcheck
 
 	return
 }
@@ -783,7 +783,7 @@ func (c *Client) ServiceStop(ctx context.Context, id string, callOptions ...grpc
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ServiceStopResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ServiceStopResponse) //nolint:errcheck
 
 	return
 }
@@ -798,7 +798,7 @@ func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...g
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.ServiceRestartResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.ServiceRestartResponse) //nolint:errcheck
 
 	return
 }
@@ -813,7 +813,7 @@ func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (resp
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*timeapi.TimeResponse) //nolint: errcheck
+	resp, _ = filtered.(*timeapi.TimeResponse) //nolint:errcheck
 
 	return
 }
@@ -828,7 +828,7 @@ func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...gr
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*timeapi.TimeResponse) //nolint: errcheck
+	resp, _ = filtered.(*timeapi.TimeResponse) //nolint:errcheck
 
 	return
 }
@@ -879,7 +879,7 @@ func (c *Client) EtcdForfeitLeadership(ctx context.Context, req *machineapi.Etcd
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.EtcdForfeitLeadershipResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.EtcdForfeitLeadershipResponse) //nolint:errcheck
 
 	return resp, err
 }
@@ -890,7 +890,7 @@ func (c *Client) EtcdMemberList(ctx context.Context, req *machineapi.EtcdMemberL
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*machineapi.EtcdMemberListResponse) //nolint: errcheck
+	resp, _ = filtered.(*machineapi.EtcdMemberListResponse) //nolint:errcheck
 
 	return resp, err
 }
@@ -907,7 +907,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 	pr, pw := io.Pipe()
 
 	go func() {
-		//nolint: errcheck
+		//nolint:errcheck
 		defer pw.Close()
 		defer close(errCh)
 
@@ -917,7 +917,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 				if err == io.EOF || status.Code(err) == codes.Canceled {
 					return
 				}
-				//nolint: errcheck
+				//nolint:errcheck
 				pw.CloseWithError(err)
 
 				return

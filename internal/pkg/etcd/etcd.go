@@ -163,7 +163,7 @@ func (c *Client) LeaveCluster(ctx context.Context) error {
 
 // RemoveMember removes the member from the etcd cluster.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 	resp, err := c.MemberList(ctx)
 	if err != nil {
@@ -205,7 +205,7 @@ func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 // ForfeitLeadership transfers leadership from the current member to another
 // member.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {

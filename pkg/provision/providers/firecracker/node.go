@@ -154,7 +154,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	defer logFile.Close() //nolint: errcheck
+	defer logFile.Close() //nolint:errcheck
 
 	launchConfig := LaunchConfig{
 		FirecrackerConfig:   cfg,
@@ -176,7 +176,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, err
 	}
 
-	defer launchConfigFile.Close() //nolint: errcheck
+	defer launchConfigFile.Close() //nolint:errcheck
 
 	cmd := exec.Command(clusterReq.SelfExecutable, "firecracker-launch")
 	cmd.Stdout = logFile

@@ -19,21 +19,21 @@ func uncompressKernel(srcKernelPath, dstKernelPath string) error {
 		return fmt.Errorf("failed to open kernel asset %q: %w", srcKernelPath, err)
 	}
 
-	defer srcF.Close() //nolint: errcheck
+	defer srcF.Close() //nolint:errcheck
 
 	kernelR, err := vmlinuz.Decompress(bufio.NewReader(srcF))
 	if err != nil {
 		return fmt.Errorf("error decompressing kernel: %w", err)
 	}
 
-	defer kernelR.Close() //nolint: errcheck
+	defer kernelR.Close() //nolint:errcheck
 
 	dstF, err := os.Create(dstKernelPath)
 	if err != nil {
 		return fmt.Errorf("error creating temporary kernel image file: %w", err)
 	}
 
-	defer dstF.Close() //nolint: errcheck
+	defer dstF.Close() //nolint:errcheck
 
 	if _, err = io.Copy(dstF, kernelR); err != nil {
 		return fmt.Errorf("error extracting kernel: %w", err)

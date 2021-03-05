@@ -43,7 +43,7 @@ func (c *ResourcesClient) Get(ctx context.Context, resourceNamespace, resourceTy
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*resourceapi.GetResponse) //nolint: errcheck
+	resp, _ = filtered.(*resourceapi.GetResponse) //nolint:errcheck
 
 	if resp == nil {
 		return nil, err

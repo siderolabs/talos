@@ -59,7 +59,7 @@ type roundRobinResolver struct {
 }
 
 func (r *roundRobinResolver) start() error {
-	var addrs []resolver.Address // nolint: prealloc
+	var addrs []resolver.Address //nolint:prealloc
 
 	for _, a := range strings.Split(r.target.Endpoint, ",") {
 		addrs = append(addrs, resolver.Address{

@@ -30,7 +30,7 @@ func (suite *CopySuite) TestSuccess() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	suite.RunCLI([]string{"copy", "--nodes", suite.RandomDiscoveredNode(), "/etc/os-release", tempDir},
 		base.StdoutEmpty())

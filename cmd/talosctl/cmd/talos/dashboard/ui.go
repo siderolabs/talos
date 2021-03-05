@@ -48,7 +48,7 @@ type UI struct {
 
 // Main is the UI entrypoint.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
 	if err := ui.Init(); err != nil {
 		return err
@@ -133,7 +133,7 @@ func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
 			case "q", "<C-c>":
 				return nil
 			case "<Resize>":
-				payload := e.Payload.(ui.Resize) //nolint: errcheck
+				payload := e.Payload.(ui.Resize) //nolint:errcheck
 
 				u.Resize(payload.Width, payload.Height)
 				ui.Clear()

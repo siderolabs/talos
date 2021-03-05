@@ -169,7 +169,7 @@ var cpu = func(p1, p2 *machineapi.ProcessInfo) bool {
 	return p1.CpuTime > p2.CpuTime
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
 	var remotePeer peer.Peer
 

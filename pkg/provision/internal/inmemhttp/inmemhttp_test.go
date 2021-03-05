@@ -25,12 +25,12 @@ func TestServer(t *testing.T) {
 	assert.NoError(t, srv.AddFile("test.txt", contents))
 
 	srv.Serve()
-	defer srv.Shutdown(context.Background()) //nolint: errcheck
+	defer srv.Shutdown(context.Background()) //nolint:errcheck
 
-	resp, err := http.Get(fmt.Sprintf("http://%s/test.txt", srv.GetAddr())) //nolint: noctx
+	resp, err := http.Get(fmt.Sprintf("http://%s/test.txt", srv.GetAddr())) //nolint:noctx
 	assert.NoError(t, err)
 
-	defer resp.Body.Close() //nolint: errcheck
+	defer resp.Body.Close() //nolint:errcheck
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -41,7 +41,7 @@ func TestServer(t *testing.T) {
 
 	assert.NoError(t, resp.Body.Close())
 
-	resp, err = http.Head(fmt.Sprintf("http://%s/test.txt", srv.GetAddr())) //nolint: noctx
+	resp, err = http.Head(fmt.Sprintf("http://%s/test.txt", srv.GetAddr())) //nolint:noctx
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -50,7 +50,7 @@ func TestServer(t *testing.T) {
 
 	assert.NoError(t, resp.Body.Close())
 
-	resp, err = http.Get(fmt.Sprintf("http://%s/test.txt2", srv.GetAddr())) //nolint: noctx
+	resp, err = http.Get(fmt.Sprintf("http://%s/test.txt2", srv.GetAddr())) //nolint:noctx
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)

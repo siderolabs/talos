@@ -39,7 +39,7 @@ func (ctrl *K8sControlPlaneController) ManagedResources() (resource.Namespace, r
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

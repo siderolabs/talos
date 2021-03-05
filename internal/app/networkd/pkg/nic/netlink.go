@@ -106,7 +106,7 @@ func (n *NetworkInterface) configureWireguard(name string, config *wgtypes.Confi
 		return err
 	}
 
-	defer c.Close() // nolint:errcheck
+	defer c.Close() //nolint:errcheck
 
 	if err = c.ConfigureDevice(name, *config); err != nil {
 		return err

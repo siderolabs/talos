@@ -52,7 +52,7 @@ type Networkd struct {
 
 // New takes the supplied configuration and creates an abstract representation
 // of all interfaces (as nic.NetworkInterface).
-// nolint: gocyclo
+//nolint:gocyclo
 func New(config config.Provider) (*Networkd, error) {
 	var (
 		hostname  string
@@ -185,7 +185,7 @@ func New(config config.Provider) (*Networkd, error) {
 // here so that we can ensure any links that make up a bond will be in
 // the correct state when we get to bonding configuration.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (n *Networkd) Configure(ctx context.Context) (err error) {
 	// Configure non-bonded interfaces first so we can ensure basic
 	// interfaces exist prior to bonding
@@ -309,7 +309,7 @@ func (n *Networkd) Hostname() (err error) {
 	return nil
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP, err error) {
 	// Set hostname to default
 	address = net.ParseIP("127.0.1.1")

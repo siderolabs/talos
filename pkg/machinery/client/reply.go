@@ -31,7 +31,7 @@ func (ne *NodeError) Unwrap() error {
 
 // FilterMessages removes error Messagess from resp and builds multierror.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func FilterMessages(resp interface{}, err error) (interface{}, error) {
 	if resp == nil {
 		return nil, err

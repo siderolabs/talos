@@ -26,7 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
-//nolint: gocyclo
+//nolint:gocyclo
 func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 	return func(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 		log.Printf("DHCPv6: got %s", m.Summary())
@@ -89,7 +89,7 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 
 		resp.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionInterfaceMTU, dhcpv4.Uint16(match.MTU).ToBytes()))
 
-		switch mt := m.MessageType(); mt { //nolint: exhaustive
+		switch mt := m.MessageType(); mt { //nolint:exhaustive
 		case dhcpv4.MessageTypeDiscover:
 			resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 		case dhcpv4.MessageTypeRequest:
@@ -107,7 +107,7 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 	}
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handler {
 	return func(conn net.PacketConn, peer net.Addr, m dhcpv6.DHCPv6) {
 		log.Printf("DHCPv6: got %s", m.Summary())
@@ -169,7 +169,7 @@ func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handl
 
 		var resp *dhcpv6.Message
 
-		switch msg.MessageType { //nolint: exhaustive
+		switch msg.MessageType { //nolint:exhaustive
 		case dhcpv6.MessageTypeSolicit:
 			resp, err = dhcpv6.NewAdvertiseFromSolicit(msg, modifiers...)
 		case dhcpv6.MessageTypeRequest:
@@ -253,7 +253,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 		return err
 	}
 
-	defer logFile.Close() //nolint: errcheck
+	defer logFile.Close() //nolint:errcheck
 
 	statePath, err := state.StatePath()
 	if err != nil {

@@ -61,7 +61,7 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 	return nodesInfo, multiErr.ErrorOrNil()
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, options *provision.Options) (provision.NodeInfo, error) {
 	env := []string{"PLATFORM=container"}
 

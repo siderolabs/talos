@@ -76,7 +76,7 @@ var docsCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			// nolint: errcheck
+			//nolint:errcheck
 			defer f.Close()
 
 			if _, err := io.WriteString(f, frontmatter("CLI", cliDescription)); err != nil {

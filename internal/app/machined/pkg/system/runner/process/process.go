@@ -109,7 +109,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		return fmt.Errorf("error building command: %w", err)
 	}
 
-	defer logCloser.Close() //nolint: errcheck
+	defer logCloser.Close() //nolint:errcheck
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 
@@ -138,7 +138,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		// graceful stop the service
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		_ = cmd.Process.Signal(syscall.SIGTERM)
 	}
 
@@ -150,7 +150,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		// kill the process
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		_ = cmd.Process.Signal(syscall.SIGKILL)
 	}
 

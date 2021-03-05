@@ -70,7 +70,7 @@ func readMountInfo() ([]mountInfo, error) {
 		return nil, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	var mounts []mountInfo
 

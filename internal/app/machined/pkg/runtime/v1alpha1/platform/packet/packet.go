@@ -75,7 +75,7 @@ func (p *Packet) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-// nolint: gocyclo
+//nolint:gocyclo
 func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 	// Fetch and unmarshal both the talos machine config and the
 	// metadata about the instance from packet's metadata server

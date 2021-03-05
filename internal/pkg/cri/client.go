@@ -35,7 +35,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.FailOnNonTempDialError(false),
-		grpc.WithBackoffMaxDelay(3*time.Second), //nolint: staticcheck
+		grpc.WithBackoffMaxDelay(3*time.Second), //nolint:staticcheck
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)

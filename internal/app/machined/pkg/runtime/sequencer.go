@@ -59,7 +59,7 @@ func (s Sequence) String() string {
 
 // ParseSequence returns a `Sequence` that matches the specified string.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
 	case applyConfiguration:

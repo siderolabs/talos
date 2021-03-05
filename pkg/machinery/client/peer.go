@@ -26,7 +26,7 @@ func RemotePeer(ctx context.Context) (peerHost string) {
 // AddrFromPeer extracts peer address from grpc Peer.
 func AddrFromPeer(remote *peer.Peer) (peerHost string) {
 	peerHost = remote.Addr.String()
-	peerHost, _, _ = net.SplitHostPort(peerHost) //nolint: errcheck
+	peerHost, _, _ = net.SplitHostPort(peerHost) //nolint:errcheck
 
 	return peerHost
 }
