@@ -4,3 +4,25 @@
 
 // Package kubernetes provides cluster-wide kubernetes utilities.
 package kubernetes
+
+import (
+	"errors"
+	"net"
+	"syscall"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+)
+
+func retryableError(err error) bool {
+	if apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) || apierrors.IsInternalError(err) {
+		return true
+	}
+
+	netErr := &net.OpError{}
+
+	if errors.As(err, &netErr) {
+		return netErr.Temporary() || errors.Is(netErr.Err, syscall.ECONNREFUSED)
+	}
+
+	return false
+}
