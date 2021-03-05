@@ -3,13 +3,50 @@ title: Upgrading Talos
 ---
 
 Talos upgrades are effected by an API call.
-The `talosctl` CLI utility will facilitate this, or you can use the automatic upgrade features provided by the [talos controller manager](https://github.com/talos-systems/talos-controller-manager).
+The `talosctl` CLI utility will facilitate this.
+<!-- , or you can use the automatic upgrade features provided by the [talos controller manager](https://github.com/talos-systems/talos-controller-manager) -->
 
 ## Video Walkthrough
 
 To see a live demo of this writeup, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Upgrading from Talos 0.8
+
+Talos 0.9 drops support for `bootkube` and self-hosted control plane.
+
+Please make sure Talos is upgraded to the latest minor release of 0.8 first (0.8.4 at the moment
+of this writing), then proceed with upgrading to the latest minor release of 0.9.
+
+### Before Upgrade to 0.9
+
+If cluster was bootstrapped on Talos version < 0.8.3, add checkpointer annotations to
+the `kube-scheduler` and `kube-controller-manager` daemonsets to improve resiliency of
+self-hosted control plane to reboots (this is critical for single control-plane node clusters):
+
+```bash
+$ kubectl -n kube-system patch daemonset kube-controller-manager --type json -p '[{"op": "add", "path":"/spec/template/metadata/annotations", "value": {"checkpointer.alpha.coreos.com/checkpoint": "true"}}]'
+daemonset.apps/kube-controller-manager patched
+$ kubectl -n kube-system patch daemonset kube-scheduler --type json -p '[{"op": "add", "path":"/spec/template/metadata/annotations", "value": {"checkpointer.alpha.coreos.com/checkpoint": "true"}}]'
+daemonset.apps/kube-scheduler patched
+```
+
+Make sure cluster is running latest minor release of Talos 0.8.
+
+Prepare by downloading `talosctl` binary for Talos release 0.9.x.
+
+### After Upgrade to 0.9
+
+After upgrade to 0.9, Talos will still run self-hosted control plane until [conversion process](../converting-control-plane/) is run.
+
+> Note: Talos 0.9 doesn't include bootkube recovery option (`talosctl recover`), so
+> it's not possible to recover self-hosted control plane after upgrade to 0.9.
+
+As soon as all the nodes got upgraded to 0.9, run `talosctl convert-k8s` to convert the control plane
+to new static pod format supported for 0.9.
+
+Once conversion process is complete, Kubernetes can be upgraded.
 
 ## `talosctl` Upgrade
 
@@ -29,6 +66,10 @@ There is an option to this command: `--preserve`, which can be used to explicitl
 In most cases, it is correct to just let Talos perform its default action.
 However, if you are running a single-node control-plane, you will want to make sure that `--preserve=true`.
 
+If Talos fails to run the upgrade, `--staged` flag might be used to perform the upgrade after a reboot
+which is followed by another reboot to upgraded version.
+
+<!--
 ## Talos Controller Manager
 
 The Talos Controller Manager can coordinate upgrades of your nodes
@@ -43,16 +84,17 @@ configured, take a look at the [GitHub page](https://github.com/talos-systems/ta
 Please note that the controller manager is still in fairly early development.
 More advanced features, such as time slot scheduling, will be coming in the
 future.
+-->
 
-## Changelog and Upgrade Notes
+## Machine Configuration Changes
 
-In an effort to create more production ready clusters, Talos will now taint control plane nodes as unschedulable.
-This means that any application you might have deployed must tolerate this taint if you intend on running the application on control plane nodes.
+Talos 0.9 introduces new required parameters in machine configuration:
 
-Another feature you will notice is the automatic uncordoning of nodes that have been upgraded.
-Talos will now uncordon a node if the cordon was initiated by the upgrade process.
+* `.cluster.aggregatorCA`
+* `.cluster.serviceAccount`
 
-### Talosctl
+Talos supports both ECDSA and RSA certificates and keys for Kubernetes and etcd, with ECDSA being default.
+Talos <= 0.8 supports only RSA keys and certificates.
 
-The `talosctl` CLI now requires an explicit set of nodes.
-This can be configured with `talos config nodes` or set on the fly with `talos --nodes`.
+Utility `talosctl gen config` generates by default config in 0.9 format which is not compatible with
+Talos 0.8, but old format can be generated with `talosctl gen config --talos-version=v0.8`.
