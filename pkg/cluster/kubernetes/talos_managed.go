@@ -13,7 +13,6 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/os-runtime/pkg/state"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -217,7 +216,7 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node,
 		LabelSelector: fmt.Sprintf("k8s-app = %s", service),
 	})
 	if err != nil {
-		if apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) || apierrors.IsInternalError(err) {
+		if retryableError(err) {
 			return retry.ExpectedError(err)
 		}
 
