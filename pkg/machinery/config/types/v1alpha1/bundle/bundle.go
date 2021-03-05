@@ -60,6 +60,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			}
 		}
 
+		if err := bundle.ApplyJSONPatch(options.JSONPatch); err != nil {
+			return nil, fmt.Errorf("error patching configs: %w", err)
+		}
+
 		// Pull existing talosconfig
 		talosConfig, err := os.Open(filepath.Join(options.ExistingConfigs, "talosconfig"))
 		if err != nil {
@@ -118,6 +122,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		case machine.TypeJoin:
 			bundle.JoinCfg = generatedConfig
 		}
+	}
+
+	if err = bundle.ApplyJSONPatch(options.JSONPatch); err != nil {
+		return nil, fmt.Errorf("error patching configs: %w", err)
 	}
 
 	bundle.TalosCfg, err = generate.Talosconfig(input, options.InputOptions.GenOptions...)

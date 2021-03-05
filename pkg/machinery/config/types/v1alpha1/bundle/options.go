@@ -4,7 +4,11 @@
 
 package bundle
 
-import "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+import (
+	jsonpatch "github.com/evanphx/json-patch"
+
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+)
 
 // Option controls config options specific to config bundle generation.
 type Option func(o *Options) error
@@ -22,6 +26,7 @@ type Options struct {
 	ExistingConfigs string // path to existing config files
 	Verbose         bool   // wheither to write any logs during generate
 	InputOptions    *InputOptions
+	JSONPatch       jsonpatch.Patch
 }
 
 // DefaultOptions returns default options.
@@ -53,6 +58,15 @@ func WithInputOptions(inputOpts *InputOptions) Option {
 func WithVerbose(verbose bool) Option {
 	return func(o *Options) error {
 		o.Verbose = verbose
+
+		return nil
+	}
+}
+
+// WithJSONPatch allows patching every config in a bundle with a patch.
+func WithJSONPatch(patch jsonpatch.Patch) Option {
+	return func(o *Options) error {
+		o.JSONPatch = append(o.JSONPatch, patch...)
 
 		return nil
 	}
