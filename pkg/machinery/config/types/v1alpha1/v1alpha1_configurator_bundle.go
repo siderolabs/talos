@@ -10,8 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	jsonpatch "github.com/evanphx/json-patch"
+	"gopkg.in/yaml.v3"
+
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -78,6 +82,53 @@ func (c *ConfigBundle) Write(outputDir string, types ...machine.Type) error {
 		}
 
 		fmt.Printf("created %s\n", fullFilePath)
+	}
+
+	return nil
+}
+
+// ApplyJSONPatch patches every config type with a patch.
+func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch) error {
+	if len(patch) == 0 {
+		return nil
+	}
+
+	apply := func(in *Config) (out *Config, err error) {
+		var marshaled []byte
+
+		marshaled, err = in.Bytes()
+		if err != nil {
+			return nil, err
+		}
+
+		var patched []byte
+
+		patched, err = configpatcher.JSON6902(marshaled, patch)
+		if err != nil {
+			return nil, err
+		}
+
+		out = &Config{}
+		err = yaml.Unmarshal(patched, out)
+
+		return out, err
+	}
+
+	var err error
+
+	c.InitCfg, err = apply(c.InitCfg)
+	if err != nil {
+		return err
+	}
+
+	c.ControlPlaneCfg, err = apply(c.ControlPlaneCfg)
+	if err != nil {
+		return err
+	}
+
+	c.JoinCfg, err = apply(c.JoinCfg)
+	if err != nil {
+		return err
 	}
 
 	return nil

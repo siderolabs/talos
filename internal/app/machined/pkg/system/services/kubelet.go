@@ -172,7 +172,13 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// TODO(andrewrynhard): We should verify that the mount source is
 	// allowlisted. There is the potential that a user can expose
 	// sensitive information.
-	mounts = append(mounts, r.Config().Machine().Kubelet().ExtraMounts()...)
+	for _, mount := range r.Config().Machine().Kubelet().ExtraMounts() {
+		if err = os.MkdirAll(mount.Source, 0o700); err != nil {
+			return nil, err
+		}
+
+		mounts = append(mounts, mount)
+	}
 
 	env := []string{}
 	for key, val := range r.Config().Machine().Env() {

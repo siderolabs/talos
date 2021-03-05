@@ -19,6 +19,7 @@ import (
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	talosnet "github.com/talos-systems/net"
@@ -102,6 +103,7 @@ var (
 	encryptStatePartition     bool
 	encryptEphemeralPartition bool
 	useVIP                    bool
+	configPatch               string
 )
 
 // createCmd represents the cluster up command.
@@ -410,6 +412,17 @@ func create(ctx context.Context) (err error) {
 				}),
 		)
 	}
+
+	var jsonPatch jsonpatch.Patch
+
+	if configPatch != "" {
+		jsonPatch, err = jsonpatch.DecodePatch([]byte(configPatch))
+		if err != nil {
+			return fmt.Errorf("error parsing config JSON patch: %w", err)
+		}
+	}
+
+	configBundleOpts = append(configBundleOpts, bundle.WithJSONPatch(jsonPatch))
 
 	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
 	if err != nil {
@@ -772,5 +785,6 @@ func init() {
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, "encrypt-ephemeral", false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
+	createCmd.Flags().StringVar(&configPatch, "config-patch", "", "patch generated machineconfigs")
 	Cmd.AddCommand(createCmd)
 }

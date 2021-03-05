@@ -82,6 +82,7 @@ talosctl cluster create [flags]
       --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.9.0-alpha.5/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                    CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                     CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
+      --config-patch string                     patch generated machineconfigs
       --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
