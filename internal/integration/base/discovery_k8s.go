@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-//nolint: gocyclo
+//nolint:gocyclo
 func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
 	defer ctxCancel()

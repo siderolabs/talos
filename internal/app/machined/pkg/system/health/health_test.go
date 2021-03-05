@@ -29,7 +29,7 @@ func (suite *CheckSuite) TestHealthy() {
 
 	var called uint32
 
-	// nolint: unparam
+	//nolint:unparam
 	check := func(context.Context) error {
 		atomic.AddUint32(&called, 1)
 

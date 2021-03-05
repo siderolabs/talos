@@ -78,7 +78,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 		ctx,
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
 		grpc.WithTransportCredentials(a.creds),
-		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
+		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 	)
 
 	return outCtx, a.conn, err
@@ -221,7 +221,7 @@ func (a *APID) Close() {
 	defer a.mu.Unlock()
 
 	if a.conn != nil {
-		a.conn.Close() //nolint: errcheck
+		a.conn.Close() //nolint:errcheck
 		a.conn = nil
 	}
 }

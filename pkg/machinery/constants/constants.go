@@ -402,14 +402,14 @@ const (
 )
 
 // See https://linux.die.net/man/3/klogctl
-//nolint: stylecheck
+//nolint:stylecheck
 const (
 	// SYSLOG_ACTION_SIZE_BUFFER is a named type argument to klogctl.
-	// nolint: golint
+	//nolint:golint
 	SYSLOG_ACTION_SIZE_BUFFER = 10
 
 	// SYSLOG_ACTION_READ_ALL is a named type argument to klogctl.
-	// nolint: golint
+	//nolint:golint
 	SYSLOG_ACTION_READ_ALL = 3
 )
 

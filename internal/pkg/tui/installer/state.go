@@ -35,7 +35,7 @@ var cniPresets = map[string]*machineapi.CNIConfig{
 }
 
 // NewState creates new installer state.
-// nolint:gocyclo
+//nolint:gocyclo
 func NewState(ctx context.Context, installer *Installer, conn *Connection) (*State, error) {
 	opts := &machineapi.GenerateConfigurationRequest{
 		ConfigVersion: "v1alpha1",

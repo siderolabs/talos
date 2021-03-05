@@ -12,7 +12,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
 )
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
 	var images []string
 
@@ -25,7 +25,7 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 				return err
 			}
 
-			defer f.Close() //nolint: errcheck
+			defer f.Close() //nolint:errcheck
 
 			if err = f.Truncate(pflash.Size); err != nil {
 				return err
@@ -44,7 +44,7 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 						return err
 					}
 
-					defer src.Close() //nolint: errcheck
+					defer src.Close() //nolint:errcheck
 
 					if _, err = io.Copy(f, src); err != nil {
 						return err

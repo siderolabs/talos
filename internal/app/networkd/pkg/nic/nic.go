@@ -205,7 +205,7 @@ func (n *NetworkInterface) CreateSub() error {
 
 // Configure is used to set the link state and configure any necessary
 // bond settings ( ex, mode ).
-// nolint:gocyclo
+//nolint:gocyclo
 func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 	if n.IsIgnored() {
 		return err
@@ -374,7 +374,7 @@ func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing)
 
 // configureInterface handles the actual address discovery mechanism and
 // netlink interaction to configure the interface.
-// nolint: gocyclo
+//nolint:gocyclo
 func (n *NetworkInterface) configureInterface(method address.Addressing, link *net.Interface) error {
 	var err error
 
@@ -481,6 +481,6 @@ func (n *NetworkInterface) Reset() {
 		}
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	n.rtnlConn.LinkDown(link)
 }

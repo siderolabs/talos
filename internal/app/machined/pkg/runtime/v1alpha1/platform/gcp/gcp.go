@@ -76,7 +76,7 @@ func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

@@ -295,7 +295,7 @@ func (p *Point) IsMounted() (bool, error) {
 		return false, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -340,7 +340,7 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 		return false, fmt.Errorf("error opening block device %q: %w", devname, err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer bd.Close()
 
 	pt, err := bd.PartitionTable()

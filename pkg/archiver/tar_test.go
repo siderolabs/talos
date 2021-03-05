@@ -23,7 +23,7 @@ type TarSuite struct {
 	CommonSuite
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *TarSuite) TestArchiveDir() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir)
 	suite.Require().NoError(err)

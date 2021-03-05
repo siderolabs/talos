@@ -159,7 +159,7 @@ func addComments(node *yaml.Node, doc *Doc, comments ...int) {
 	}
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func renderExample(key string, doc *Doc) string {
 	if doc == nil {
 		return ""

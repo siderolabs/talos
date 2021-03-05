@@ -48,7 +48,7 @@ func NewReader(readCtx context.Context, source *os.File) *Reader {
 
 // Read implements io.Reader interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (r *Reader) Read(p []byte) (n int, err error) {
 	r.mu.Lock()
 	if r.closed {
@@ -115,7 +115,7 @@ func (r *Reader) startNotify() {
 	go r.notify()
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (r *Reader) notify() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *Reader) notify() {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer watcher.Close()
 
 	filename := r.source.Name()
@@ -151,7 +151,7 @@ func (r *Reader) notify() {
 				continue
 			}
 
-			switch event.Op { //nolint: exhaustive
+			switch event.Op { //nolint:exhaustive
 			case fsnotify.Write:
 				// non-blocking send, we need to keep processing fsnotify events
 				// at least signal message is in r.notifyCh which will allow Read to wake up

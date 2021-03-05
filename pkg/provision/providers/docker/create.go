@@ -13,7 +13,7 @@ import (
 
 // Create Talos cluster as a set of docker containers on docker network.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (p *provisioner) Create(ctx context.Context, request provision.ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
 	var err error
 

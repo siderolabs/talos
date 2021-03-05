@@ -46,7 +46,7 @@ func goalState(ctx context.Context) (gs *GoalState, err error) {
 		return gs, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -117,7 +117,7 @@ func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceI
 	}
 
 	// TODO probably should do some better check here ( verify status code )
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	_, err = ioutil.ReadAll(resp.Body)

@@ -23,7 +23,7 @@ import (
 // filterInterfaces filters network links by name so we only mange links
 // we need to.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err error) {
 	var conn *rtnetlink.Conn
 
@@ -45,10 +45,10 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 		return nil, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer conn.Close()
 
-	n := 0 // nolint: wsl
+	n := 0 //nolint:wsl
 	for _, iface := range filtered {
 		link, err := conn.Link.Get(uint32(iface.Index))
 		if err != nil {

@@ -83,7 +83,7 @@ func (c *vipController) maintain(ctx context.Context, netController vip.Network)
 	}
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (c *vipController) campaign(ctx context.Context, netController vip.Network) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -98,13 +98,13 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 		return fmt.Errorf("failed to create local etcd client: %w", err)
 	}
 
-	defer ec.Close() // nolint: errcheck
+	defer ec.Close() //nolint:errcheck
 
 	sess, err := concurrency.NewSession(ec.Client)
 	if err != nil {
 		return fmt.Errorf("failed to create concurrency session: %w", err)
 	}
-	defer sess.Close() // nolint: errcheck
+	defer sess.Close() //nolint:errcheck
 
 	election := concurrency.NewElection(sess, c.etcdElectionKey())
 
@@ -144,7 +144,7 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 		resignCtx, resignCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer resignCancel()
 
-		election.Resign(resignCtx) // nolint: errcheck
+		election.Resign(resignCtx) //nolint:errcheck
 	}()
 
 	if err = netController.AddIP(); err != nil {

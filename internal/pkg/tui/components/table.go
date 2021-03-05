@@ -49,7 +49,7 @@ func NewTable() *Table {
 	})
 
 	t.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		// nolint:exhaustive
+		//nolint:exhaustive
 		switch e.Key() {
 		case tcell.KeyUp:
 			if t.hoveredRow > 0 {

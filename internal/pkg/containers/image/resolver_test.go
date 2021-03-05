@@ -201,7 +201,7 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 
 	suite.Require().NotNil(registryHosts[0].Authorizer)
 
-	req, err := http.NewRequest("GET", "htts://some.host:123/v2", nil) //nolint: noctx
+	req, err := http.NewRequest("GET", "htts://some.host:123/v2", nil) //nolint:noctx
 	suite.Require().NoError(err)
 
 	resp := &http.Response{}

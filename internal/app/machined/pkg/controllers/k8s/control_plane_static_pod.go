@@ -39,7 +39,7 @@ func (ctrl *ControlPlaneStaticPodController) ManagedResources() (resource.Namesp
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -166,7 +166,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	args := []string{
 		"/go-runner",
 		"/usr/local/bin/kube-apiserver",
-		"--enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeClaimResize,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,Priority,NodeRestriction", //nolint: lll
+		"--enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeClaimResize,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,Priority,NodeRestriction", //nolint:lll
 		"--advertise-address=$(POD_IP)",
 		"--allow-privileged=true",
 		fmt.Sprintf("--api-audiences=%s", cfg.ControlPlaneEndpoint),
@@ -182,7 +182,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		fmt.Sprintf("--proxy-client-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key")),
 		fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider),
 		"--enable-bootstrap-token-auth=true",
-		"--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint: lll
+		"--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
 		fmt.Sprintf("--encryption-provider-config=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml")),
 		fmt.Sprintf("--audit-policy-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml")),
 		"--audit-log-path=-",
@@ -301,7 +301,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		args = append(args, fmt.Sprintf("--%s=%s", k, v))
 	}
 
-	//nolint: dupl
+	//nolint:dupl
 	return r.Update(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -383,7 +383,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		args = append(args, fmt.Sprintf("--%s=%s", k, v))
 	}
 
-	//nolint: dupl
+	//nolint:dupl
 	return r.Update(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{

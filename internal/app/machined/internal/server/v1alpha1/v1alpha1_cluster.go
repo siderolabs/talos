@@ -19,7 +19,7 @@ import (
 // HealthCheck implements the cluster.ClusterServer interface.
 func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.ClusterService_HealthCheckServer) error {
 	clientProvider := &cluster.LocalClientProvider{}
-	defer clientProvider.Close() //nolint: errcheck
+	defer clientProvider.Close() //nolint:errcheck
 
 	k8sProvider := &cluster.KubernetesClient{
 		ClientProvider: clientProvider,
@@ -66,7 +66,7 @@ func (hr *healthReporter) Update(condition conditions.Condition) {
 	line := fmt.Sprintf("waiting for %s", condition)
 
 	if line != hr.lastLine {
-		hr.srv.Send(&clusterapi.HealthCheckProgress{ //nolint: errcheck
+		hr.srv.Send(&clusterapi.HealthCheckProgress{ //nolint:errcheck
 			Message: strings.TrimSpace(line),
 		})
 

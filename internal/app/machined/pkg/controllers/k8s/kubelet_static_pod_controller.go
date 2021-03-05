@@ -43,7 +43,7 @@ func (ctrl *KubeletStaticPodController) ManagedResources() (resource.Namespace, 
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -269,7 +269,7 @@ func (ctrl *KubeletStaticPodController) cleanupPods(logger *log.Logger, staticPo
 		return fmt.Errorf("error opening manifests directory: %w", err)
 	}
 
-	defer manifestDir.Close() //nolint: errcheck
+	defer manifestDir.Close() //nolint:errcheck
 
 	manifests, err := manifestDir.Readdirnames(0)
 	if err != nil {

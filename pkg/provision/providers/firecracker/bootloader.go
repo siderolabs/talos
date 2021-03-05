@@ -57,7 +57,7 @@ func NewBootLoader(diskImage string) (*BootLoader, error) {
 
 // ExtractAssets from disk image.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (b *BootLoader) ExtractAssets() (assets BootAssets, err error) {
 	if err = b.findBootPartition(); err != nil {
 		return assets, err
@@ -92,12 +92,12 @@ func (b *BootLoader) ExtractAssets() (assets BootAssets, err error) {
 // Close the bootloader.
 func (b *BootLoader) Close() error {
 	if b.kernelTempPath != "" {
-		os.Remove(b.kernelTempPath) //nolint: errcheck
+		os.Remove(b.kernelTempPath) //nolint:errcheck
 		b.kernelTempPath = ""
 	}
 
 	if b.initrdTempPath != "" {
-		os.Remove(b.initrdTempPath) //nolint: errcheck
+		os.Remove(b.initrdTempPath) //nolint:errcheck
 		b.initrdTempPath = ""
 	}
 
@@ -204,14 +204,14 @@ func (b *BootLoader) extractKernel(label string) error {
 		return fmt.Errorf("error decompressing kernel: %w", err)
 	}
 
-	defer kernelR.Close() //nolint: errcheck
+	defer kernelR.Close() //nolint:errcheck
 
 	tempF, err := ioutil.TempFile("", "talos")
 	if err != nil {
 		return fmt.Errorf("error creating temporary kernel image file: %w", err)
 	}
 
-	defer tempF.Close() //nolint: errcheck
+	defer tempF.Close() //nolint:errcheck
 
 	if _, err = io.Copy(tempF, kernelR); err != nil {
 		return fmt.Errorf("error extracting kernel: %w", err)
@@ -235,7 +235,7 @@ func (b *BootLoader) extractInitrd(label string) error {
 		return fmt.Errorf("error creating temporary initrd file: %w", err)
 	}
 
-	defer tempF.Close() //nolint: errcheck
+	defer tempF.Close() //nolint:errcheck
 
 	if _, err = io.Copy(tempF, r); err != nil {
 		return fmt.Errorf("error extracting initrd: %w", err)

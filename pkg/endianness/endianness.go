@@ -12,7 +12,7 @@ import (
 // ToMiddleEndian converts a byte slice representation of a UUID to a
 // middle-endian byte slice representation of a UUID.
 //
-//nolint: dupl
+//nolint:dupl
 func ToMiddleEndian(data []byte) (b []byte, err error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 16))
 
@@ -54,7 +54,7 @@ func ToMiddleEndian(data []byte) (b []byte, err error) {
 // FromMiddleEndian converts a middle-endian byte slice representation of a
 // UUID to a big-endian byte slice representation of a UUID.
 //
-//nolint: dupl
+//nolint:dupl
 func FromMiddleEndian(data []byte) (b []byte, err error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 16))
 

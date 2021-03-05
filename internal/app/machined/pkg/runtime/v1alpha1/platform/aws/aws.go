@@ -73,7 +73,7 @@ func IsEC2() (b bool) {
 	if err != nil {
 		return
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -164,7 +164,7 @@ func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -191,7 +191,7 @@ func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

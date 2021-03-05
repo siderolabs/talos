@@ -30,7 +30,7 @@ import (
 
 // RunInstallerContainer performs an installation via the installer container.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func RunInstallerContainer(disk, platform, ref string, reg config.Registries, opts ...Option) error {
 	options := DefaultInstallOptions()
 
@@ -47,7 +47,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		return err
 	}
 
-	defer client.Close() //nolint: errcheck
+	defer client.Close() //nolint:errcheck
 
 	var img containerd.Image
 
@@ -123,13 +123,13 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		return err
 	}
 
-	defer container.Delete(ctx, containerd.WithSnapshotCleanup) //nolint: errcheck
+	defer container.Delete(ctx, containerd.WithSnapshotCleanup) //nolint:errcheck
 
 	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
 	if err != nil {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	w := &kmsg.Writer{KmsgWriter: f}
@@ -141,7 +141,7 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		return err
 	}
 
-	defer t.Delete(ctx) //nolint: errcheck
+	defer t.Delete(ctx) //nolint:errcheck
 
 	if err = t.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start %q task: %w", "upgrade", err)

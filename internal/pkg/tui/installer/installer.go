@@ -177,7 +177,7 @@ func (installer *Installer) init(conn *Connection) (err error) {
 	return err
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func (installer *Installer) configure() error {
 	var (
 		err   error

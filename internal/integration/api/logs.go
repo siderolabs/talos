@@ -160,7 +160,7 @@ func (suite *LogsSuite) TestTailStreaming0() {
 	suite.testStreaming(0)
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *LogsSuite) testStreaming(tailLines int32) {
 	if tailLines >= 0 {
 		// invoke machined enough times to generate

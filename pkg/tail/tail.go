@@ -17,7 +17,7 @@ const Window = 4096
 //
 // SeekLines might modify file offset even in case of error.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func SeekLines(r io.ReadSeeker, lines int) error {
 	offset, err := r.Seek(0, io.SeekEnd)
 	if err != nil {

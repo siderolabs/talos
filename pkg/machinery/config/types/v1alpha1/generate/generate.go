@@ -24,7 +24,7 @@ import (
 )
 
 // Config returns the talos config for a given node type.
-// nolint: gocyclo
+//nolint:gocyclo
 func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
 	case machine.TypeInit:
@@ -50,7 +50,7 @@ func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 
 // Input holds info about certs, ips, and node type.
 //
-//nolint: maligned
+//nolint:maligned
 type Input struct {
 	Certs *Certs
 
@@ -185,7 +185,7 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 
 // NewSecretsBundle creates secrets bundle generating all secrets.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 	options := DefaultGenOptions()
 
@@ -407,7 +407,7 @@ func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertifi
 
 // NewInput generates the sensitive data required to generate all config
 // types.
-// nolint: dupl,gocyclo
+//nolint:dupl,gocyclo
 func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsBundle, opts ...GenOption) (input *Input, err error) {
 	options := DefaultGenOptions()
 

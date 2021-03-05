@@ -38,7 +38,7 @@ func (ctrl *BootstrapStatusController) ManagedResources() (resource.Namespace, r
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -84,7 +84,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 		return fmt.Errorf("error creating etcd client: %w", err)
 	}
 
-	defer etcdClient.Close() //nolint: errcheck
+	defer etcdClient.Close() //nolint:errcheck
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

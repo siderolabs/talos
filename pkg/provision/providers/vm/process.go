@@ -21,7 +21,7 @@ func stopProcessByPidfile(pidPath string) error {
 		return fmt.Errorf("error checking PID file %q: %w", pidPath, err)
 	}
 
-	defer pidFile.Close() //nolint: errcheck
+	defer pidFile.Close() //nolint:errcheck
 
 	var pid int
 

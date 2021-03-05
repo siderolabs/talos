@@ -101,7 +101,7 @@ func (r *restarter) Open(ctx context.Context) error {
 }
 
 // Run implements the Runner interface
-// nolint: gocyclo
+//nolint:gocyclo
 func (r *restarter) Run(eventSink events.Recorder) error {
 	defer close(r.stopped)
 
@@ -116,7 +116,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 
 		select {
 		case <-r.stop:
-			// nolint: errcheck
+			//nolint:errcheck
 			_ = r.wrappedRunner.Stop()
 
 			return <-errCh

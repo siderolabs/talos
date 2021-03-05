@@ -144,7 +144,7 @@ func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 
 // Run executes command and asserts on its exit status/output.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 	var opts runOptions
 

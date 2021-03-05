@@ -29,7 +29,7 @@ var crashdumpCmd = &cobra.Command{
 			clientProvider := &cluster.ConfigClientProvider{
 				DefaultClient: c,
 			}
-			defer clientProvider.Close() //nolint: errcheck
+			defer clientProvider.Close() //nolint:errcheck
 
 			worker := cluster.APICrashDumper{
 				ClientProvider: clientProvider,

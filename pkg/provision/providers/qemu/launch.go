@@ -85,7 +85,7 @@ type LaunchConfig struct {
 // withCNI creates network namespace, launches CNI and passes control to the next function
 // filling config with netNS and interface details.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchConfig) error) error {
 	// random ID for the CNI, maps to single VM
 	containerID := uuid.New().String()
@@ -99,8 +99,8 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	}
 
 	defer func() {
-		ns.Close()              //nolint: errcheck
-		testutils.UnmountNS(ns) //nolint: errcheck
+		ns.Close()              //nolint:errcheck
+		testutils.UnmountNS(ns) //nolint:errcheck
 	}()
 
 	ips := make([]string, len(config.IPs))
@@ -198,7 +198,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 		return false, fmt.Errorf("failed to open disk file %w", err)
 	}
 
-	defer disk.Close() //nolint: errcheck
+	defer disk.Close() //nolint:errcheck
 
 	diskTable, err := gpt.Open(disk)
 	if err != nil {
@@ -218,7 +218,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 
 // launchVM runs qemu with args built based on config.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func launchVM(config *LaunchConfig) error {
 	bootOrder := "cn"
 
@@ -350,7 +350,7 @@ func launchVM(config *LaunchConfig) error {
 //
 // When signals SIGINT, SIGTERM are received, control process stops qemu and exits.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Launch() error {
 	var config LaunchConfig
 
@@ -369,7 +369,7 @@ func Launch() error {
 	}
 
 	httpServer.Serve()
-	defer httpServer.Shutdown(ctx) //nolint: errcheck
+	defer httpServer.Shutdown(ctx) //nolint:errcheck
 
 	// patch kernel args
 	config.KernelArgs = strings.ReplaceAll(config.KernelArgs, "{TALOS_CONFIG_URL}", fmt.Sprintf("http://%s/config.yaml", httpServer.GetAddr()))

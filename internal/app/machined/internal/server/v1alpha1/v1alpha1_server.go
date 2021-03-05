@@ -106,7 +106,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
 
@@ -190,7 +190,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 
 // Reboot implements the machine.MachineServer interface.
 //
-// nolint: dupl
+//nolint:dupl
 func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.RebootResponse, err error) {
 	log.Printf("reboot via API received")
 
@@ -223,7 +223,7 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 
 // Rollback implements the machine.MachineServer interface.
 //
-// nolint: dupl, gocyclo
+//nolint:dupl,gocyclo
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
 	log.Printf("rollback via API received")
 
@@ -287,7 +287,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 
 // Bootstrap implements the machine.MachineServer interface.
 //
-// nolint: dupl
+//nolint:dupl
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
@@ -318,7 +318,7 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 
 // Shutdown implements the machine.MachineServer interface.
 //
-// nolint: dupl
+//nolint:dupl
 func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.ShutdownResponse, err error) {
 	log.Printf("shutdown via API received")
 
@@ -351,7 +351,7 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 
 // Upgrade initiates an upgrade.
 //
-// nolint: dupl, gocyclo
+//nolint:dupl,gocyclo
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
 	var mu *concurrency.Mutex
 
@@ -386,7 +386,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		}
 
 		if err = client.ValidateForUpgrade(ctx, s.Controller.Runtime().Config(), in.GetPreserve()); err != nil {
-			mu.Unlock(ctx) // nolint: errcheck
+			mu.Unlock(ctx) //nolint:errcheck
 
 			return nil, fmt.Errorf("error validating etcd for upgrade: %w", err)
 		}
@@ -397,7 +397,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		if err != nil {
 			return nil, fmt.Errorf("error reading meta: %w", err)
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer meta.Close()
 
 		if !meta.ADV.SetTag(adv.StagedUpgradeImageRef, in.GetImage()) {
@@ -424,7 +424,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 
 		go func() {
 			if mu != nil {
-				defer mu.Unlock(ctx) // nolint: errcheck
+				defer mu.Unlock(ctx) //nolint:errcheck
 			}
 
 			if err := s.Controller.Run(context.Background(), runtime.SequenceStageUpgrade, in); err != nil {
@@ -442,7 +442,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 	} else {
 		go func() {
 			if mu != nil {
-				defer mu.Unlock(ctx) // nolint: errcheck
+				defer mu.Unlock(ctx) //nolint:errcheck
 			}
 
 			if err := s.Controller.Run(context.Background(), runtime.SequenceUpgrade, in); err != nil {
@@ -494,7 +494,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 
 // Reset resets the node.
 //
-// nolint: dupl, gocyclo
+//nolint:dupl,gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
 	log.Printf("reset request received")
 
@@ -568,7 +568,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 // Recover recovers the control plane.
 //
-// nolint: dupl
+//nolint:dupl
 func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply *machine.RecoverResponse, err error) {
 	log.Printf("recover request received")
 
@@ -669,7 +669,7 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 	defer ctxCancel()
 
 	go func() {
-		// nolint: errcheck
+		//nolint:errcheck
 		defer pw.Close()
 		errCh <- archiver.TarGz(ctx, path, pw)
 	}()
@@ -778,7 +778,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 }
 
 // DiskUsage implements the machine.MachineServer interface.
-func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint: gocyclo
+func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint:gocyclo
 	if req == nil {
 		req = new(machine.DiskUsageRequest)
 	}
@@ -964,7 +964,7 @@ func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.Mo
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer file.Close()
 
 	var (
@@ -1093,7 +1093,7 @@ func (s *Server) Kubeconfig(empty *empty.Empty, obj machine.MachineService_Kubec
 
 // Logs provides a service or container logs can be requested and the contents of the
 // log file are streamed in chunks.
-// nolint: gocyclo
+//nolint:gocyclo
 func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsServer) (err error) {
 	var chunk chunker.Chunker
 
@@ -1116,7 +1116,7 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 			return
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer logR.Close()
 
 		chunk = stream.NewChunker(l.Context(), logR)
@@ -1126,7 +1126,7 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer file.Close()
 	}
 
@@ -1144,7 +1144,7 @@ func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io
 	if err != nil {
 		return nil, nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer inspector.Close()
 
 	container, err := inspector.Container(req.Id)
@@ -1193,7 +1193,7 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 			return err
 		}
 
-		defer f.Close() //nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		ctx, cancel := context.WithCancel(srv.Context())
 		defer cancel()
@@ -1216,7 +1216,7 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 
 // Events streams runtime events.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
 	errCh := make(chan error)
 
@@ -1304,7 +1304,7 @@ func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 		return err
 	}
 
-	//nolint: errcheck
+	//nolint:errcheck
 	defer container.Delete(containerdctx, containerd.WithSnapshotCleanup)
 
 	task, err := container.NewTask(containerdctx, cio.NullIO)
@@ -1312,7 +1312,7 @@ func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 		return err
 	}
 
-	//nolint: errcheck
+	//nolint:errcheck
 	defer task.Delete(containerdctx)
 
 	exitStatusC, err := task.Wait(containerdctx)
@@ -1344,7 +1344,7 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer inspector.Close()
 
 	pods, err := inspector.Pods()
@@ -1386,13 +1386,13 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 }
 
 // Stats implements the machine.MachineServer interface.
-// nolint: gocyclo
+//nolint:gocyclo
 func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *machine.StatsResponse, err error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer inspector.Close()
 
 	pods, err := inspector.Pods()
@@ -1443,7 +1443,7 @@ func (s *Server) Restart(ctx context.Context, in *machine.RestartRequest) (*mach
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer inspector.Close()
 
 	container, err := inspector.Container(in.Id)
@@ -1469,7 +1469,7 @@ func (s *Server) Restart(ctx context.Context, in *machine.RestartRequest) (*mach
 
 // Dmesg implements the machine.MachineServer interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_DmesgServer) error {
 	ctx := srv.Context()
 
@@ -1487,7 +1487,7 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 	if err != nil {
 		return fmt.Errorf("error opening /dev/kmsg reader: %w", err)
 	}
-	defer reader.Close() //nolint: errcheck
+	defer reader.Close() //nolint:errcheck
 
 	ch := reader.Scan(ctx)
 
@@ -1675,7 +1675,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 		return nil, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	resp, err := client.MemberList(ctx)
@@ -1707,7 +1707,7 @@ func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMem
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	if err = client.RemoveMember(ctx, in.Member); err != nil {
@@ -1730,7 +1730,7 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	if err = client.LeaveCluster(ctx); err != nil {
@@ -1753,7 +1753,7 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	leader, err := client.ForfeitLeadership(ctx)
@@ -1782,7 +1782,7 @@ func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *empty.Emp
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	ctx = clientv3.WithRequireLeader(ctx)

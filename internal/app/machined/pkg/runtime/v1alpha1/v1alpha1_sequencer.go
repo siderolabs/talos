@@ -80,7 +80,7 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"logger",
@@ -146,7 +146,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
@@ -302,7 +302,7 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.AppendList(stopAllPhaselist(r)).
 			Append(
@@ -370,7 +370,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
@@ -397,7 +397,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
@@ -456,7 +456,7 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 func stopAllPhaselist(r runtime.Runtime) PhaseList {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"stopEverything",

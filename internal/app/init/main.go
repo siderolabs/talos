@@ -92,7 +92,7 @@ func recovery() {
 		}
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
 }
 

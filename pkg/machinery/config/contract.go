@@ -39,8 +39,8 @@ func ParseContractFromVersion(version string) (*VersionContract, error) {
 
 	var contract VersionContract
 
-	contract.Major, _ = strconv.Atoi(matches[1]) //nolint: errcheck
-	contract.Minor, _ = strconv.Atoi(matches[2]) //nolint: errcheck
+	contract.Major, _ = strconv.Atoi(matches[1]) //nolint:errcheck
+	contract.Minor, _ = strconv.Atoi(matches[2]) //nolint:errcheck
 
 	return &contract, nil
 }

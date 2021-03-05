@@ -95,7 +95,7 @@ func (a *ADV) Unmarshal(buf []byte) error {
 	copy(buf[len(buf)-36:len(buf)-4], make([]byte, 32))
 
 	hash := sha256.New()
-	hash.Write(buf) //nolint: errcheck
+	hash.Write(buf) //nolint:errcheck
 	actualChecksum := hash.Sum(nil)
 
 	if !bytes.Equal(checksum, actualChecksum) {
@@ -148,7 +148,7 @@ func (a *ADV) Marshal() ([]byte, error) {
 	}
 
 	hash := sha256.New()
-	hash.Write(buf) //nolint: errcheck
+	hash.Write(buf) //nolint:errcheck
 	copy(buf[len(buf)-36:len(buf)-4], hash.Sum(nil))
 
 	return buf, nil

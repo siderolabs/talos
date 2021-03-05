@@ -35,7 +35,7 @@ func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Po
 		return nil, err
 	}
 
-	defer bd.Close() // nolint:errcheck
+	defer bd.Close() //nolint:errcheck
 
 	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel} {
 		mountpoint, err := SystemMountPointForLabel(bd, name, opts...)
@@ -50,7 +50,7 @@ func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Po
 }
 
 // SystemMountPointForLabel returns a mount point for the specified device and label.
-// nolint:gocyclo
+//nolint:gocyclo
 func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
 	var target string
 

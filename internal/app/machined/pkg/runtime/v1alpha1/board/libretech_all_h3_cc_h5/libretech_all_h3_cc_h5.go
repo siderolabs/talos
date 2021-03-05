@@ -42,7 +42,7 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	var uboot []byte

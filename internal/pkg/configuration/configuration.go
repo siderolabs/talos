@@ -21,7 +21,7 @@ import (
 
 // Generate config for GenerateConfiguration grpc.
 //
-// nolint:gocyclo
+//nolint:gocyclo
 func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
 	var c config.Provider
 

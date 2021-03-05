@@ -54,7 +54,7 @@ func (suite *APIDFactorySuite) TestGetConcurrent() {
 		go func() {
 			defer wg.Done()
 
-			b, _ := suite.f.Get("10.0.0.1") //nolint: errcheck
+			b, _ := suite.f.Get("10.0.0.1") //nolint:errcheck
 			backendCh <- b
 		}()
 	}

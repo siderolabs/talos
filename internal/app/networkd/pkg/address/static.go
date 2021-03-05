@@ -46,7 +46,7 @@ func (s *Static) Address() *net.IPNet {
 	var ipn *net.IPNet
 
 	if s.CIDR != "" {
-		// nolint: errcheck
+		//nolint:errcheck
 		ip, ipn, _ = net.ParseCIDR(s.CIDR)
 		ipn.IP = ip
 	}
@@ -56,7 +56,7 @@ func (s *Static) Address() *net.IPNet {
 
 // Mask returns the netmask.
 func (s *Static) Mask() net.IPMask {
-	// nolint: errcheck
+	//nolint:errcheck
 	_, ipnet, _ := net.ParseCIDR(s.CIDR)
 
 	return ipnet.Mask

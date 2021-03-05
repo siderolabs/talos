@@ -53,7 +53,7 @@ func DefaultOptions() *Options {
 
 // Run the e2e test against cluster with provided options.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) error {
 	var waitOutput string
 
@@ -94,14 +94,14 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		return fmt.Errorf("error creating temporary file for logs: %w", err)
 	}
 
-	defer logF.Close() //nolint: errcheck
+	defer logF.Close() //nolint:errcheck
 
 	go func() {
-		io.Copy(logF, logReader) //nolint: errcheck
+		io.Copy(logF, logReader) //nolint:errcheck
 	}()
 
 	cleanup := func() error {
-		os.Remove(logF.Name()) //nolint: errcheck
+		os.Remove(logF.Name()) //nolint:errcheck
 
 		return sclient.Delete(&client.DeleteConfig{
 			Namespace:  config.DefaultNamespace,
@@ -111,7 +111,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		})
 	}
 
-	defer cleanup() //nolint: errcheck
+	defer cleanup() //nolint:errcheck
 
 	runConfig := client.NewRunConfig()
 	runConfig.Wait = options.RunTimeout
@@ -153,8 +153,8 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 
 			fmt.Println("\ne2e plugin logs:")
 
-			logF.Seek(0, io.SeekStart) //nolint: errcheck
-			io.Copy(os.Stdout, logF)   //nolint: errcheck
+			logF.Seek(0, io.SeekStart) //nolint:errcheck
+			io.Copy(os.Stdout, logF)   //nolint:errcheck
 
 			return fmt.Errorf("e2e plugin status: %q", pluginStatus.ResultStatus)
 		}

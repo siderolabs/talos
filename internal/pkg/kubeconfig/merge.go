@@ -56,7 +56,7 @@ const (
 
 // Merge the provided kubernetes config in.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (merger *Merger) Merge(config *clientcmdapi.Config, options MergeOptions) error {
 	mappedClusters := map[string]string{}
 	mappedAuthInfos := map[string]string{}

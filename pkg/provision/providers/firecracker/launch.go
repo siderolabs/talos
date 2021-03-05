@@ -38,7 +38,7 @@ type LaunchConfig struct {
 //
 // When signals SIGINT, SIGTERM are received, control process stops firecracker and exits.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Launch() error {
 	var config LaunchConfig
 
@@ -62,7 +62,7 @@ func Launch() error {
 	origKernelImagePath, origInitrdPath := config.FirecrackerConfig.KernelImagePath, config.FirecrackerConfig.InitrdPath
 
 	httpServer.Serve()
-	defer httpServer.Shutdown(ctx) //nolint: errcheck
+	defer httpServer.Shutdown(ctx) //nolint:errcheck
 
 	for {
 		err := func() error {
@@ -80,7 +80,7 @@ func Launch() error {
 				// print err but continue boot process
 				fmt.Fprintf(os.Stderr, "error initializing bootloader: %s\n", err.Error())
 			} else {
-				defer bootLoader.Close() //nolint: errcheck
+				defer bootLoader.Close() //nolint:errcheck
 
 				var assets BootAssets
 
@@ -139,7 +139,7 @@ func Launch() error {
 			case sig := <-c:
 				fmt.Fprintf(os.Stderr, "stopping VM as signal %s was received\n", sig)
 
-				m.StopVMM() //nolint: errcheck
+				m.StopVMM() //nolint:errcheck
 
 				<-waitCh // wait for process to exit
 
@@ -147,7 +147,7 @@ func Launch() error {
 			}
 
 			// restart the vm by proceeding with the for loop
-			os.Remove(config.FirecrackerConfig.SocketPath) //nolint: errcheck
+			os.Remove(config.FirecrackerConfig.SocketPath) //nolint:errcheck
 
 			return nil
 		}()

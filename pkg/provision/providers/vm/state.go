@@ -82,7 +82,7 @@ func (s *State) Save() error {
 		return err
 	}
 
-	defer stateFile.Close() //nolint: errcheck
+	defer stateFile.Close() //nolint:errcheck
 
 	if err = yaml.NewEncoder(stateFile).Encode(&s); err != nil {
 		return fmt.Errorf("error marshaling state: %w", err)

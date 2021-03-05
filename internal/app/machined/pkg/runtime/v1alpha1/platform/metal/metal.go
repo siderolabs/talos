@@ -39,7 +39,7 @@ func (m *Metal) Name() string {
 
 // Configuration implements the platform.Platform interface.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
@@ -111,7 +111,7 @@ func readConfigFromISO() (b []byte, err error) {
 		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dev.Close()
 
 	sb, err := filesystem.Probe(dev.Device().Name())

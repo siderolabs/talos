@@ -46,7 +46,7 @@ import (
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
 )
 
-//nolint: maligned
+//nolint:maligned
 type upgradeSpec struct {
 	ShortName string
 

@@ -144,7 +144,7 @@ func (suite *GoroutineSuite) TestStop() {
 func (suite *GoroutineSuite) TestRunLogs() {
 	r := goroutine.NewRunner(suite.r, "logtest",
 		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
-			// nolint: errcheck
+			//nolint:errcheck
 			_, _ = logger.Write([]byte("Test 1\nTest 2\n"))
 
 			return nil
@@ -159,7 +159,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)

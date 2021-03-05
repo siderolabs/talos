@@ -26,7 +26,7 @@ import (
 
 // UpgradeSelfHosted the Kubernetes control plane.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func UpgradeSelfHosted(ctx context.Context, cluster cluster.K8sProvider, options UpgradeOptions) error {
 	switch {
 	case strings.HasPrefix(options.FromVersion, "1.18.") && strings.HasPrefix(options.ToVersion, "1.19."):
@@ -87,7 +87,7 @@ func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, options 
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds string, updateFunc func(daemonset *appsv1.DaemonSet) error) error {
 	daemonset, err := clientset.AppsV1().DaemonSets(namespace).Get(ctx, ds, metav1.GetOptions{})
 	if err != nil {
@@ -178,7 +178,7 @@ func podCheckpointerGracePeriod(ctx context.Context, clientset *kubernetes.Clien
 	})
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds string, options UpgradeOptions) error {
 	if ds == kubeAPIServer {
 		fmt.Printf("temporarily taking %q out of pod-checkpointer control\n", ds)

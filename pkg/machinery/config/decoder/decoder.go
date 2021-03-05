@@ -95,7 +95,7 @@ func parse(source []byte) (decoded []interface{}, err error) {
 	}
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func decode(manifest *yaml.Node) (target interface{}, err error) {
 	var (
 		version string

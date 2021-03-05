@@ -103,7 +103,7 @@ func NewEvents(cap, gap int) *Events {
 
 // Watch implements the Events interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) error {
 	var opts runtime.WatchOptions
 

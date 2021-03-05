@@ -21,7 +21,7 @@ import (
 
 // CurrentBoard is a helper func for discovering the current board.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func CurrentBoard() (b runtime.Board, err error) {
 	var board string
 

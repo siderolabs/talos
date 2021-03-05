@@ -109,7 +109,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 			}()
 
 			defer wg.Wait()
-			defer r.Close() //nolint: errcheck
+			defer r.Close() //nolint:errcheck
 
 			data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
 			if err != nil {

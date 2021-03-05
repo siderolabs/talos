@@ -19,7 +19,7 @@ import (
 
 // GenerateRegistriesConfig returns a list of extra files.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
 	caPath := filepath.Join(filepath.Dir(constants.CRIContainerdConfig), "ca")
 	clientPath := filepath.Join(filepath.Dir(constants.CRIContainerdConfig), "client")

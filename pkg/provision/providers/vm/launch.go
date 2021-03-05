@@ -49,8 +49,8 @@ func ConfigureSignals() chan os.Signal {
 func httpPostWrapper(f func() error) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint: errcheck
-			req.Body.Close()                         //nolint: errcheck
+			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
+			req.Body.Close()                         //nolint:errcheck
 		}
 
 		if req.Method != http.MethodPost {
@@ -75,8 +75,8 @@ func httpPostWrapper(f func() error) http.Handler {
 func httpGetWrapper(f func(w io.Writer)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint: errcheck
-			req.Body.Close()                         //nolint: errcheck
+			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
+			req.Body.Close()                         //nolint:errcheck
 		}
 
 		switch req.Method {
@@ -131,7 +131,7 @@ func NewHTTPServer(gatewayAddr net.IP, port int, config []byte, controller Contr
 		}
 
 		httpServer.AddHandler("/status", httpGetWrapper(func(w io.Writer) {
-			json.NewEncoder(w).Encode(controller.Status()) //nolint: errcheck
+			json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck
 		}))
 	}
 

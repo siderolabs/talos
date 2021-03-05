@@ -33,7 +33,7 @@ func init() {
 	flag.Parse()
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func main() {
 	var err error
 

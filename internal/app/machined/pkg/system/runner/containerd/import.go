@@ -73,7 +73,7 @@ func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err erro
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	errCh := make(chan error)
@@ -88,7 +88,7 @@ func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err erro
 					return fmt.Errorf("error opening %s: %w", r.Path, err)
 				}
 
-				defer tarball.Close() //nolint: errcheck
+				defer tarball.Close() //nolint:errcheck
 
 				imgs, err := client.Import(ctx, tarball, r.Options...)
 				if err != nil {

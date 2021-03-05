@@ -72,7 +72,7 @@ func WithErrorOnEmptyResponse(e error) Option {
 }
 
 // Download downloads a config.
-// nolint: gocyclo
+//nolint:gocyclo
 func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
@@ -135,7 +135,7 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 	if err != nil {
 		return data, retry.ExpectedError(err)
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound && dlOpts.ErrorOnNotFound != nil {

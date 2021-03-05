@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
@@ -168,7 +168,7 @@ func (n *Networkd) HealthFunc(r runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		defer conn.Close() //nolint: errcheck
+		defer conn.Close() //nolint:errcheck
 
 		nClient := healthapi.NewHealthClient(conn)
 		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {

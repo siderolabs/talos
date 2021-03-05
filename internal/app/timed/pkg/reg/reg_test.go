@@ -47,10 +47,10 @@ func (suite *TimedSuite) TestTime() {
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(
@@ -82,10 +82,10 @@ func (suite *TimedSuite) TestTimeCheck() {
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(

@@ -141,7 +141,7 @@ func (apiSuite *APISuite) AssertClusterHealthy(ctx context.Context) {
 	}
 
 	clusterAccess := access.NewAdapter(apiSuite.Cluster, provision.WithTalosClient(apiSuite.Client))
-	defer clusterAccess.Close() //nolint: errcheck
+	defer clusterAccess.Close() //nolint:errcheck
 
 	apiSuite.Require().NoError(check.Wait(ctx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter()))
 }
@@ -160,7 +160,7 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	defer reader.Close() //nolint: errcheck
+	defer reader.Close() //nolint:errcheck
 
 	body, err := ioutil.ReadAll(reader)
 	if err != nil {

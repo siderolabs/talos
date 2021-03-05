@@ -64,14 +64,14 @@ func zeroPartition(devname string, size int64) (err error) {
 		return err
 	}
 
-	defer zeroes.Close() //nolint: errcheck
+	defer zeroes.Close() //nolint:errcheck
 
 	part, err := os.OpenFile(devname, os.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
 
-	defer part.Close() //nolint: errcheck
+	defer part.Close() //nolint:errcheck
 
 	// wipe at least minimal header size
 	if size == 0 {

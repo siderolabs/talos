@@ -16,7 +16,7 @@ import (
 
 // Create Talos cluster as a set of firecracker micro-VMs.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (p *provisioner) Create(ctx context.Context, request provision.ClusterRequest, opts ...provision.Option) (provision.Cluster, error) {
 	options := provision.DefaultOptions()
 

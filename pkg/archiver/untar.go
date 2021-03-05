@@ -17,7 +17,7 @@ import (
 
 // Untar extracts .tar archive from r into filesystem under rootPath.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func Untar(ctx context.Context, r io.Reader, rootPath string) error {
 	tr := tar.NewReader(r)
 

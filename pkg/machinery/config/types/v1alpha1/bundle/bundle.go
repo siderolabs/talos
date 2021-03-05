@@ -20,7 +20,7 @@ import (
 )
 
 // NewConfigBundle returns a new bundle.
-// nolint: gocyclo
+//nolint:gocyclo
 func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 	options := DefaultOptions()
 
@@ -50,7 +50,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 				return bundle, err
 			}
 
-			switch configType { //nolint: exhaustive
+			switch configType { //nolint:exhaustive
 			case machine.TypeInit:
 				bundle.InitCfg = unmarshalledConfig
 			case machine.TypeControlPlane:
@@ -66,7 +66,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			return bundle, err
 		}
 
-		defer talosConfig.Close() //nolint: errcheck
+		defer talosConfig.Close() //nolint:errcheck
 
 		if bundle.TalosCfg, err = config.ReadFrom(talosConfig); err != nil {
 			return bundle, err
@@ -110,7 +110,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			return bundle, err
 		}
 
-		switch configType { //nolint: exhaustive
+		switch configType { //nolint:exhaustive
 		case machine.TypeInit:
 			bundle.InitCfg = generatedConfig
 		case machine.TypeControlPlane:

@@ -22,7 +22,7 @@ type Status struct {
 
 // AsProto returns protobuf-ready health state.
 func (status *Status) AsProto() *machineapi.ServiceHealth {
-	// nolint: errcheck
+	//nolint:errcheck
 	tspb, _ := ptypes.TimestampProto(status.LastChange)
 
 	return &machineapi.ServiceHealth{

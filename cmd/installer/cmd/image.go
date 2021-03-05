@@ -49,7 +49,7 @@ func init() {
 	rootCmd.AddCommand(imageCmd)
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func runImageCmd() (err error) {
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
@@ -110,7 +110,7 @@ func runImageCmd() (err error) {
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func finalize(platform runtime.Platform, img string) (err error) {
 	dir := filepath.Dir(img)
 

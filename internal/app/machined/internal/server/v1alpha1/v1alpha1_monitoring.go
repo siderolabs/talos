@@ -254,7 +254,7 @@ func (s *Server) DiskStats(ctx context.Context, in *empty.Empty) (*machine.DiskS
 		return nil, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	resp := machine.DiskStats{
 		Devices: []*machine.DiskStat{},

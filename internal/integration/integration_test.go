@@ -47,7 +47,7 @@ var (
 
 // TestIntegration ...
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func TestIntegration(t *testing.T) {
 	if talosConfig == "" {
 		t.Error("--talos.config is not provided")
@@ -68,7 +68,7 @@ func TestIntegration(t *testing.T) {
 			t.Error("error initializing provisioner", err)
 		}
 
-		defer provisioner.Close() //nolint: errcheck
+		defer provisioner.Close() //nolint:errcheck
 
 		cluster, err = provisioner.Reflect(ctx, clusterName, stateDir)
 		if err != nil {
@@ -98,7 +98,7 @@ func TestIntegration(t *testing.T) {
 		}
 
 		t.Run(suiteName, func(tt *testing.T) {
-			suite.Run(tt, s) //nolint: scopelint
+			suite.Run(tt, s) //nolint:scopelint
 		})
 
 		if failFast && t.Failed() {
@@ -116,7 +116,7 @@ func TestIntegration(t *testing.T) {
 }
 
 func init() {
-	defaultTalosConfig, _ := config.GetDefaultPath() //nolint: errcheck
+	defaultTalosConfig, _ := config.GetDefaultPath() //nolint:errcheck
 
 	defaultStateDir, err := config.GetTalosDirectory()
 	if err == nil {

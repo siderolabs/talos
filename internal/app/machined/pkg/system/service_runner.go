@@ -183,7 +183,7 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 // Start initializes the service and runs it
 //
 // Start should be run in a goroutine.
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) Start() {
 	defer func() {
 		// reset context for the next run
@@ -261,7 +261,7 @@ func (svcrunner *ServiceRunner) Start() {
 	}
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) error {
 	if runnr == nil {
 		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
@@ -272,7 +272,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		return fmt.Errorf("error opening runner: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer runnr.Close()
 
 	errCh := make(chan error)
@@ -290,7 +290,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		go func() {
 			defer healthWg.Done()
 
-			// nolint: errcheck
+			//nolint:errcheck
 			health.Run(ctx, healthSvc.HealthSettings(svcrunner.runtime), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.runtime))
 		}()
 
@@ -414,14 +414,14 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	}
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
 		// up when:
 		//   a) either skipped or already finished
 		//   b) or running and healthy (if supports health checks)
-		switch svcrunner.state { //nolint: exhaustive
+		switch svcrunner.state { //nolint:exhaustive
 		case events.StateSkipped, events.StateFinished:
 			return true
 		case events.StateRunning:
@@ -435,7 +435,7 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		}
 	case StateEventDown:
 		// down when in any of the terminal states
-		switch svcrunner.state { //nolint: exhaustive
+		switch svcrunner.state { //nolint:exhaustive
 		case events.StateFailed, events.StateFinished, events.StateSkipped:
 			return true
 		default:

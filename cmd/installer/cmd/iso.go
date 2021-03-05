@@ -51,7 +51,7 @@ func init() {
 	rootCmd.AddCommand(isoCmd)
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func runISOCmd() error {
 	if err := os.MkdirAll(outputArg, 0o777); err != nil {
 		return err
@@ -73,14 +73,14 @@ func runISOCmd() error {
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer from.Close()
 
 		to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0o666)
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer to.Close()
 
 		_, err = io.Copy(to, from)
@@ -113,14 +113,14 @@ func runISOCmd() error {
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer from.Close()
 
 	to, err := os.OpenFile(filepath.Join(outputArg, filepath.Base(out)), os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer to.Close()
 
 	_, err = io.Copy(to, from)

@@ -80,7 +80,7 @@ func NewForConfig(config *restclient.Config) (client *Client, err error) {
 
 // NewClientFromPKI initializes and returns a Client.
 //
-// nolint: interfacer
+//nolint:interfacer
 func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, err error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,
@@ -164,7 +164,7 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 
 		skip := true
 
-		switch machineType { //nolint: exhaustive
+		switch machineType { //nolint:exhaustive
 		case machine.TypeInit, machine.TypeControlPlane:
 			skip = !(labelMaster || labelControlPlane)
 		case machine.TypeJoin:
@@ -189,7 +189,7 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 
 // LabelNodeAsMaster labels a node with the required master label and NoSchedule taint.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (h *Client) LabelNodeAsMaster(ctx context.Context, name string, taintNoSchedule bool) (err error) {
 	n, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {

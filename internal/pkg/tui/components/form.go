@@ -77,7 +77,7 @@ func (item *Item) assign(value string) error {
 }
 
 // createFormItems dynamically creates tview.FormItem list based on the wrapped type.
-// nolint:gocyclo
+//nolint:gocyclo
 func (item *Item) createFormItems() ([]tview.Primitive, error) {
 	res := []tview.Primitive{}
 
@@ -91,7 +91,7 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 	label := fmt.Sprintf("[::b]%s[::-]:", item.Name)
 	addDescription := true
 
-	// nolint:exhaustive
+	//nolint:exhaustive
 	switch v.Kind() {
 	case reflect.Func:
 		if f, ok := item.dest.(func(*Item) tview.Primitive); ok {
@@ -220,7 +220,7 @@ func NewForm(app *tview.Application) *Form {
 	f.Flex.AddItem(f.buttons, 0, 0, false)
 
 	f.SetInputCapture(func(e *tcell.EventKey) *tcell.EventKey {
-		// nolint:exhaustive
+		//nolint:exhaustive
 		switch e.Key() {
 		case tcell.KeyTAB:
 			f.group.NextFocus()

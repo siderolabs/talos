@@ -81,7 +81,7 @@ func revertBootloader() {
 			log.Printf("failed to revert upgrade: %v", err)
 		}
 
-		//nolint: errcheck
+		//nolint:errcheck
 		meta.Close()
 	} else {
 		log.Printf("failed to open meta: %v", err)
@@ -120,7 +120,7 @@ func syncNonVolatileStorageBuffers() {
 	log.Printf("sync hasn't completed in time, aborting...")
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func handle(err error) {
 	rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
 
@@ -175,7 +175,7 @@ func handle(err error) {
 	}
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func run() error {
 	errCh := make(chan error)
 
@@ -236,7 +236,7 @@ func run() error {
 	}
 
 	// Watch and handle runtime events.
-	_ = c.Runtime().Events().Watch(func(events <-chan runtime.Event) { //nolint: errcheck
+	_ = c.Runtime().Events().Watch(func(events <-chan runtime.Event) { //nolint:errcheck
 		for {
 			for event := range events {
 				switch msg := event.Payload.(type) {

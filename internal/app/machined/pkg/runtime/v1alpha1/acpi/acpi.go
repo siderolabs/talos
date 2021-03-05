@@ -27,7 +27,7 @@ const (
 
 // StartACPIListener starts listening for ACPI netlink events.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func StartACPIListener() (err error) {
 	// Get the acpi_event family.
 	conn, err := genetlink.Dial(nil)
@@ -37,7 +37,7 @@ func StartACPIListener() (err error) {
 
 	f, err := conn.GetFamily(acpiGenlFamilyName)
 	if errors.Is(err, os.ErrNotExist) {
-		// nolint: errcheck
+		//nolint:errcheck
 		conn.Close()
 
 		return fmt.Errorf(acpiGenlFamilyName+" not available: %w", err)
@@ -52,13 +52,13 @@ func StartACPIListener() (err error) {
 	}
 
 	if err = conn.JoinGroup(id); err != nil {
-		// nolint: errcheck
+		//nolint:errcheck
 		conn.Close()
 
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer conn.Close()
 
 	for {

@@ -115,7 +115,7 @@ var createCmd = &cobra.Command{
 	},
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func create(ctx context.Context) (err error) {
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
@@ -209,7 +209,7 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
-	defer provisioner.Close() //nolint: errcheck
+	defer provisioner.Close() //nolint:errcheck
 
 	// Craft cluster and node requests
 	request := provision.ClusterRequest{
@@ -522,7 +522,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	clusterAccess := access.NewAdapter(cluster, provisionOptions...)
-	defer clusterAccess.Close() //nolint: errcheck
+	defer clusterAccess.Close() //nolint:errcheck
 
 	if applyConfigEnabled {
 		err = clusterAccess.ApplyConfig(ctx, request.Nodes, os.Stdout)

@@ -90,7 +90,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -101,7 +101,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 
 func (suite *ProcessSuite) TestRunRestartFailed() {
 	testFile := filepath.Join(suite.tmpDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(process.NewRunner(false, &runner.Args{
@@ -126,7 +126,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))
 		suite.Assert().NoError(err)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer logFile.Close()
 
 		logContents, err := ioutil.ReadAll(logFile)
@@ -154,7 +154,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	testFile := filepath.Join(suite.tmpDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(process.NewRunner(false, &runner.Args{

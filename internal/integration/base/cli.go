@@ -76,7 +76,7 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	tempDir, err := ioutil.TempDir("", "talos")
 	cliSuite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	// rely on `nodes:` being set in talosconfig
 	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())

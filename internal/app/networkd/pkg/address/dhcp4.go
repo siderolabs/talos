@@ -215,7 +215,7 @@ func (d *DHCP4) discover(ctx context.Context) error {
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer cli.Close()
 
 	var lease *nclient4.Lease

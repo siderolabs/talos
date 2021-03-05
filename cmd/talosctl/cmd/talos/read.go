@@ -34,7 +34,7 @@ var readCmd = &cobra.Command{
 				return fmt.Errorf("error reading file: %w", err)
 			}
 
-			defer r.Close() //nolint: errcheck
+			defer r.Close() //nolint:errcheck
 
 			var wg sync.WaitGroup
 

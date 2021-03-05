@@ -75,7 +75,7 @@ type K8sControlPlaneSchedulerSpec struct {
 
 // K8sManifestsSpec is configuration for manifests.
 //
-//nolint: malign
+//nolint:maligned
 type K8sManifestsSpec struct {
 	Server        string `yaml:"string"`
 	ClusterDomain string `yaml:"clusterDomain"`

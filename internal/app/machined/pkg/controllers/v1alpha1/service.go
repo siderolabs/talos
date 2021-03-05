@@ -35,7 +35,7 @@ func (ctrl *ServiceController) ManagedResources() (resource.Namespace, resource.
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	var wg sync.WaitGroup
 
@@ -62,10 +62,10 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 			if msg, ok := event.Payload.(*machine.ServiceStateEvent); ok {
 				service := v1alpha1.NewService(msg.Service)
 
-				switch msg.Action { //nolint: exhaustive
+				switch msg.Action { //nolint:exhaustive
 				case machine.ServiceStateEvent_RUNNING:
 					if err := r.Update(ctx, service, func(r resource.Resource) error {
-						svc := r.(*v1alpha1.Service) //nolint: errcheck
+						svc := r.(*v1alpha1.Service) //nolint:errcheck
 
 						svc.SetRunning(true)
 						svc.SetHealthy(msg.GetHealth().GetHealthy() && !msg.GetHealth().GetUnknown())

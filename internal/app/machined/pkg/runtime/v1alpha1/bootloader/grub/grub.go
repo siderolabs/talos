@@ -106,7 +106,7 @@ func (g *Grub) Labels() (current, next string, err error) {
 // Install implements the Bootloader interface. It sets up grub with the
 // specified kernel parameters.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Sequence) (err error) {
 	grubcfg, ok := config.(*Cfg)
 	if !ok {
@@ -122,7 +122,7 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 		return err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dev.Close()
 
 	// verify that BootDisk has boot partition

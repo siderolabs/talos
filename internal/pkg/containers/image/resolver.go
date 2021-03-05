@@ -29,7 +29,7 @@ func NewResolver(reg config.Registries) remotes.Resolver {
 
 // RegistryHosts returns host configuration per registry.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost

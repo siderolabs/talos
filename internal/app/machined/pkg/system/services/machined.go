@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
@@ -41,7 +41,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	defer server.Stop()
 
 	go func() {
-		// nolint: errcheck
+		//nolint:errcheck
 		server.Serve(listener)
 	}()
 

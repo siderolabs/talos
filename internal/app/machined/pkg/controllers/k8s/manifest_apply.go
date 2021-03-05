@@ -50,7 +50,7 @@ func (ctrl *ManifestApplyController) ManagedResources() (resource.Namespace, res
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -187,14 +187,14 @@ func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *log.L
 		return fmt.Errorf("error creating etcd client: %w", err)
 	}
 
-	defer etcdClient.Close() //nolint: errcheck
+	defer etcdClient.Close() //nolint:errcheck
 
 	session, err := concurrency.NewSession(etcdClient.Client)
 	if err != nil {
 		return fmt.Errorf("error creating etcd session: %w", err)
 	}
 
-	defer session.Close() //nolint: errcheck
+	defer session.Close() //nolint:errcheck
 
 	mutex := concurrency.NewMutex(session, constants.EtcdTalosManifestApplyMutex)
 
@@ -206,12 +206,12 @@ func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *log.L
 
 	logger.Printf("mutex acquired")
 
-	defer mutex.Unlock(ctx) //nolint: errcheck
+	defer mutex.Unlock(ctx) //nolint:errcheck
 
 	return f()
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *log.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
 	// flatten list of objects to be applied
 	objects := make([]*unstructured.Unstructured, 0, len(manifests.Items))

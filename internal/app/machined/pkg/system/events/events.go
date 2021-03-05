@@ -125,7 +125,7 @@ func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 	}
 
 	for i := range eventList {
-		// nolint: errcheck
+		//nolint:errcheck
 		tspb, _ := ptypes.TimestampProto(eventList[i].Timestamp)
 
 		result.Events[i] = &machineapi.ServiceEvent{

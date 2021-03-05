@@ -77,7 +77,7 @@ func TestSkipLines(t *testing.T) {
 			err := tail.SeekLines(r, lines)
 			assert.NoError(t, err, "test %q", test.desc)
 
-			tailOffset, _ := r.Seek(0, io.SeekCurrent) //nolint: errcheck
+			tailOffset, _ := r.Seek(0, io.SeekCurrent) //nolint:errcheck
 
 			expected := test.expectLines[i]
 			actual := 0

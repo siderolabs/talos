@@ -26,7 +26,7 @@ func (suite *HealthSuite) SuiteName() string {
 
 // TestClientSide does successful health check run from client-side.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *HealthSuite) TestClientSide() {
 	if suite.Cluster == nil {
 		suite.T().Skip("Cluster is not available, skipping test")

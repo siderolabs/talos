@@ -28,7 +28,7 @@ type writerReporter struct {
 
 var spinner = []string{"◰", "◳", "◲", "◱"}
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (wr *writerReporter) Update(condition conditions.Condition) {
 	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", condition))
 	// replace tabs with spaces to get consistent output length
@@ -43,7 +43,7 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 		return
 	}
 
-	w, _, _ := term.GetSize(int(wr.w.Fd())) //nolint: errcheck
+	w, _, _ := term.GetSize(int(wr.w.Fd())) //nolint:errcheck
 	if w <= 0 {
 		w = 80
 	}
