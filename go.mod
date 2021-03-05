@@ -15,7 +15,7 @@ require (
 	github.com/Microsoft/hcsshim/test v0.0.0-20201124231931-de74fe8b94ae // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327
-	github.com/containerd/containerd v1.4.3
+	github.com/containerd/containerd v1.4.4
 	github.com/containerd/continuity v0.0.0-20200928162600-f2cc35102c2a // indirect
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.1
