@@ -45,31 +45,18 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
-	ret := []generate.GenOption{
+	nameservers := make([]string, len(networkReq.Nameservers))
+	for i := range nameservers {
+		nameservers[i] = networkReq.Nameservers[i].String()
+	}
+
+	return []generate.GenOption{
 		generate.WithPersist(false),
+		generate.WithNetworkOptions(
+			v1alpha1.WithNetworkInterfaceIgnore("eth0"),
+			v1alpha1.WithNetworkNameservers(nameservers...),
+		),
 	}
-
-	networkConfig := &v1alpha1.NetworkConfig{
-		NetworkInterfaces: []*v1alpha1.Device{
-			{
-				DeviceInterface: "eth0",
-				DeviceIgnore:    true,
-			},
-		},
-	}
-
-	if len(networkReq.Nameservers) > 0 {
-		nameservers := make([]string, len(networkReq.Nameservers))
-		for i := range nameservers {
-			nameservers[i] = networkReq.Nameservers[i].String()
-		}
-
-		networkConfig.NameServers = nameservers
-	}
-
-	ret = append(ret, generate.WithNetworkOptions(v1alpha1.WithNetworkInterfaceIgnore("eth0")))
-
-	return ret
 }
 
 // GetLoadBalancers returns internal/external loadbalancer endpoints.
