@@ -13,11 +13,11 @@ import (
 type Option func(*NTP) error
 
 const (
-	// MaxAllowablePoll is the 'recommended' interval for querying a time server
+	// MaxAllowablePoll is the 'recommended' interval for querying a time server.
 	MaxAllowablePoll = 1024
-	// MinAllowablePoll is the minimum time allowed for a client to query a time server
+	// MinAllowablePoll is the minimum time allowed for a client to query a time server.
 	MinAllowablePoll = 4
-	// AdjustTimeLimit is a maximum time drift to compensate via adjtimex()
+	// AdjustTimeLimit is a maximum time drift to compensate via adjtimex().
 	AdjustTimeLimit = 128 * time.Millisecond
 )
 
@@ -35,6 +35,7 @@ func defaultOptions() *NTP {
 func WithServer(o string) Option {
 	return func(n *NTP) (err error) {
 		n.Server = o
+
 		return err
 	}
 }

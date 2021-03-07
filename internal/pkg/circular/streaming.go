@@ -27,6 +27,7 @@ type StreamingReader struct {
 func (r *StreamingReader) Read(p []byte) (n int, err error) {
 	if atomic.LoadUint32(&r.closed) > 0 {
 		err = ErrClosed
+
 		return
 	}
 
@@ -47,6 +48,7 @@ func (r *StreamingReader) Read(p []byte) (n int, err error) {
 
 		if atomic.LoadUint32(&r.closed) > 0 {
 			err = ErrClosed
+
 			return
 		}
 	}

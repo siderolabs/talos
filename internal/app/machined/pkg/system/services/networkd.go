@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -14,23 +15,24 @@ import (
 	"path/filepath"
 	"strings"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Networkd implements the Service interface. It serves as the concrete type with
@@ -44,14 +46,7 @@ func (n *Networkd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (n *Networkd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/networkd.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/networkd"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/networkd.tar", "talos/networkd")
 }
 
 // PostFunc implements the Service interface.
@@ -76,7 +71,6 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: n.ID(r),
 		ProcessArgs: []string{
 			"/networkd",
-			"--config=" + constants.ConfigPath,
 		},
 	}
 
@@ -86,10 +80,32 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
+	}
+
+	// etcd is used for VIP controller on control plane nodes
+	if r.Config().Machine().Type() != machine.TypeJoin {
+		// Ensure etcd PKI dir exists
+		if err := os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
+			return nil, err
+		}
+
+		// Fix up permissions, as after upgrade with preserve EtcdPKIPath might retain old 0o644 permissions
+		if err := os.Chmod(constants.EtcdPKIPath, 0o700); err != nil {
+			return nil, err
+		}
+
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "ro"}},
+		)
+	}
+
+	if r.State().Platform().Mode() == runtime.ModeContainer {
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: "/etc/hostname", Source: "/etc/hostname", Options: []string{"rbind", "ro"}},
+		)
 	}
 
 	env := []string{}
@@ -102,9 +118,17 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", "PLATFORM", p))
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -115,6 +139,7 @@ func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
 				strings.ToUpper("CAP_" + capability.CAP_NET_ADMIN.String()),
 				strings.ToUpper("CAP_" + capability.CAP_SYS_ADMIN.String()),
 				strings.ToUpper("CAP_" + capability.CAP_NET_RAW.String()),
+				strings.ToUpper("CAP_" + capability.CAP_NET_BIND_SERVICE.String()),
 			}),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
@@ -143,7 +168,7 @@ func (n *Networkd) HealthFunc(r runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		defer conn.Close() //nolint: errcheck
+		defer conn.Close() //nolint:errcheck
 
 		nClient := healthapi.NewHealthClient(conn)
 		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {

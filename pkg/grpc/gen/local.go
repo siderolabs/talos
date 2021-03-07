@@ -5,7 +5,7 @@
 package gen
 
 import (
-	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/crypto/x509"
 )
 
 // LocalGenerator represents the OS identity generator.

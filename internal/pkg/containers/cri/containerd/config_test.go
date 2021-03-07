@@ -5,32 +5,42 @@
 package containerd_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/crypto/x509"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type mockConfig struct {
-	mirrors map[string]runtime.RegistryMirrorConfig
-	config  map[string]runtime.RegistryConfig
+	mirrors map[string]*v1alpha1.RegistryMirrorConfig
+	config  map[string]*v1alpha1.RegistryConfig
 }
 
-func (c *mockConfig) Mirrors() map[string]runtime.RegistryMirrorConfig {
-	return c.mirrors
+// Mirrors implements the Registries interface.
+func (c *mockConfig) Mirrors() map[string]config.RegistryMirrorConfig {
+	mirrors := make(map[string]config.RegistryMirrorConfig, len(c.mirrors))
+
+	for k, v := range c.mirrors {
+		mirrors[k] = v
+	}
+
+	return mirrors
 }
 
-func (c *mockConfig) Config() map[string]runtime.RegistryConfig {
-	return c.config
-}
+// Config implements the Registries interface.
+func (c *mockConfig) Config() map[string]config.RegistryConfig {
+	registries := make(map[string]config.RegistryConfig, len(c.config))
 
-func (c *mockConfig) ExtraFiles() ([]runtime.File, error) {
-	return nil, fmt.Errorf("not implemented")
+	for k, v := range c.config {
+		registries[k] = v
+	}
+
+	return registries
 }
 
 type ConfigSuite struct {
@@ -39,23 +49,23 @@ type ConfigSuite struct {
 
 func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	cfg := &mockConfig{
-		mirrors: map[string]runtime.RegistryMirrorConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
-				Endpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
+				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
 			},
 		},
-		config: map[string]runtime.RegistryConfig{
+		config: map[string]*v1alpha1.RegistryConfig{
 			"some.host:123": {
-				Auth: &runtime.RegistryAuthConfig{
-					Username:      "root",
-					Password:      "secret",
-					Auth:          "auth",
-					IdentityToken: "token",
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername:      "root",
+					RegistryPassword:      "secret",
+					RegistryAuth:          "auth",
+					RegistryIdentityToken: "token",
 				},
-				TLS: &runtime.RegistryTLSConfig{
-					InsecureSkipVerify: true,
-					CA:                 []byte("cacert"),
-					ClientIdentity: &x509.PEMEncodedCertificateAndKey{
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSInsecureSkipVerify: true,
+					TLSCA:                 []byte("cacert"),
+					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
 						Crt: []byte("clientcert"),
 						Key: []byte("clientkey"),
 					},
@@ -66,27 +76,27 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 
 	files, err := containerd.GenerateRegistriesConfig(cfg)
 	suite.Require().NoError(err)
-	suite.Assert().Equal([]runtime.File{
-		{
-			Content:     `cacert`,
-			Permissions: 0o600,
-			Path:        "/etc/cri/ca/some.host:123.crt",
-			Op:          "create",
+	suite.Assert().Equal([]config.File{
+		&v1alpha1.MachineFile{
+			FileContent:     `cacert`,
+			FilePermissions: 0o600,
+			FilePath:        "/etc/cri/ca/some.host:123.crt",
+			FileOp:          "create",
 		},
-		{
-			Content:     `clientcert`,
-			Permissions: 0o600,
-			Path:        "/etc/cri/client/some.host:123.crt",
-			Op:          "create",
+		&v1alpha1.MachineFile{
+			FileContent:     `clientcert`,
+			FilePermissions: 0o600,
+			FilePath:        "/etc/cri/client/some.host:123.crt",
+			FileOp:          "create",
 		},
-		{
-			Content:     `clientkey`,
-			Permissions: 0o600,
-			Path:        "/etc/cri/client/some.host:123.key",
-			Op:          "create",
+		&v1alpha1.MachineFile{
+			FileContent:     `clientkey`,
+			FilePermissions: 0o600,
+			FilePath:        "/etc/cri/client/some.host:123.key",
+			FileOp:          "create",
 		},
-		{
-			Content: `[plugins]
+		&v1alpha1.MachineFile{
+			FileContent: `[plugins]
   [plugins.cri]
     [plugins.cri.registry]
       [plugins.cri.registry.mirrors]
@@ -105,9 +115,9 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
             cert_file = "/etc/cri/client/some.host:123.crt"
             key_file = "/etc/cri/client/some.host:123.key"
 `,
-			Permissions: 0o644,
-			Path:        constants.CRIContainerdConfig,
-			Op:          "append",
+			FilePermissions: 0o644,
+			FilePath:        constants.CRIContainerdConfig,
+			FileOp:          "append",
 		},
 	}, files)
 }

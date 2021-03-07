@@ -11,9 +11,9 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // restartCmd represents the restart command.
@@ -24,16 +24,19 @@ var restartCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var namespace string
+			var (
+				namespace string
+				driver    common.ContainerDriver
+			)
+
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
+				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace
+				driver = common.ContainerDriver_CONTAINERD
 			}
-			driver := common.ContainerDriver_CONTAINERD
-			if useCRI {
-				driver = common.ContainerDriver_CRI
-			}
+
 			if err := c.Restart(ctx, namespace, driver, args[0]); err != nil {
 				return fmt.Errorf("error restarting process: %s", err)
 			}
@@ -45,6 +48,9 @@ var restartCmd = &cobra.Command{
 
 func init() {
 	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	restartCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
+
+	restartCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+
 	addCommand(restartCmd)
 }

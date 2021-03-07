@@ -13,10 +13,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // processRunner is a runner.Runner that runs a process on the host.
@@ -85,6 +86,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
+
 		return
 	}
 
@@ -107,7 +109,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		return fmt.Errorf("error building command: %w", err)
 	}
 
-	defer logCloser.Close() //nolint: errcheck
+	defer logCloser.Close() //nolint:errcheck
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 
@@ -136,7 +138,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		// graceful stop the service
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		_ = cmd.Process.Signal(syscall.SIGTERM)
 	}
 
@@ -148,7 +150,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		// kill the process
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		_ = cmd.Process.Signal(syscall.SIGKILL)
 	}
 

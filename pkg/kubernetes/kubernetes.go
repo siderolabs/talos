@@ -7,16 +7,16 @@ package kubernetes
 import (
 	"context"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
 	"net/url"
-	"sync"
 	"time"
 
-	stdlibx509 "crypto/x509"
-
+	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	policy "k8s.io/api/policy/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,9 +28,13 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+)
+
+const (
+	// DrainTimeout is maximum time to wait for the node to be drained.
+	DrainTimeout = 5 * time.Minute
 )
 
 // Client represents a set of helper methods for interacting with the
@@ -76,7 +80,7 @@ func NewForConfig(config *restclient.Config) (client *Client, err error) {
 
 // NewClientFromPKI initializes and returns a Client.
 //
-// nolint: interfacer
+//nolint:interfacer
 func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, err error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,
@@ -104,38 +108,22 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 // with a TTL of 10 minutes.
 func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	opts := []x509.Option{
-		x509.RSA(true),
 		x509.CommonName("admin"),
 		x509.Organization("system:masters"),
 		x509.NotAfter(time.Now().Add(10 * time.Minute)),
 	}
 
-	key, err := x509.NewRSAKey()
+	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(ca)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create RSA key: %w", err)
+		return nil, fmt.Errorf("failed decoding Kubernetes CA: %w", err)
 	}
 
-	keyBlock, _ := pem.Decode(key.KeyPEM)
-	if keyBlock == nil {
-		return nil, errors.New("failed to decode key")
-	}
-
-	keyRSA, err := stdlibx509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	keyPair, err := x509.NewKeyPair(k8sCA, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %w", err)
+		return nil, fmt.Errorf("failed generating temporary cert: %w", err)
 	}
 
-	csr, err := x509.NewCertificateSigningRequest(keyRSA, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CSR: %w", err)
-	}
-
-	crt, err := x509.NewCertificateFromCSRBytes(ca.Crt, ca.Key, csr.X509CertificateRequestPEM, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create certificate from CSR: %w", err)
-	}
-
-	h, err := NewClientFromPKI(ca.Crt, crt.X509CertificatePEM, key.KeyPEM, endpoint)
+	h, err := NewClientFromPKI(ca.Crt, keyPair.CrtPEM, keyPair.KeyPEM, endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
@@ -161,8 +149,8 @@ func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 	return addrs, nil
 }
 
-// WorkerIPs returns list of worker nodes IP addresses.
-func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
+// NodeIPs returns list of node IP addresses by machine type.
+func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs []string, err error) {
 	resp, err := h.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -171,13 +159,27 @@ func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 	addrs = []string{}
 
 	for _, node := range resp.Items {
-		if _, ok := node.Labels[constants.LabelNodeRoleMaster]; ok {
+		_, labelMaster := node.Labels[constants.LabelNodeRoleMaster]
+		_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
+
+		skip := true
+
+		switch machineType { //nolint:exhaustive
+		case machine.TypeInit, machine.TypeControlPlane:
+			skip = !(labelMaster || labelControlPlane)
+		case machine.TypeJoin:
+			skip = labelMaster || labelControlPlane
+		}
+
+		if skip {
 			continue
 		}
 
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == corev1.NodeInternalIP {
 				addrs = append(addrs, nodeAddress.Address)
+
+				break
 			}
 		}
 	}
@@ -185,9 +187,11 @@ func (h *Client) WorkerIPs(ctx context.Context) (addrs []string, err error) {
 	return addrs, nil
 }
 
-// LabelNodeAsMaster labels a node with the required master label.
-func (h *Client) LabelNodeAsMaster(name string) (err error) {
-	n, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+// LabelNodeAsMaster labels a node with the required master label and NoSchedule taint.
+//
+//nolint:gocyclo
+func (h *Client) LabelNodeAsMaster(ctx context.Context, name string, taintNoSchedule bool) (err error) {
+	n, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -204,6 +208,28 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 	}
 
 	n.Labels[constants.LabelNodeRoleMaster] = ""
+	n.Labels[constants.LabelNodeRoleControlPlane] = ""
+
+	taintIndex := -1
+
+	// TODO: with K8s 1.21, add new taint LabelNodeRoleControlPlane
+
+	for i, taint := range n.Spec.Taints {
+		if taint.Key == constants.LabelNodeRoleMaster {
+			taintIndex = i
+
+			break
+		}
+	}
+
+	if taintIndex == -1 && taintNoSchedule {
+		n.Spec.Taints = append(n.Spec.Taints, corev1.Taint{
+			Key:    constants.LabelNodeRoleMaster,
+			Effect: corev1.TaintEffectNoSchedule,
+		})
+	} else if taintIndex != -1 && !taintNoSchedule {
+		n.Spec.Taints = append(n.Spec.Taints[:taintIndex], n.Spec.Taints[taintIndex+1:]...)
+	}
 
 	newData, err := json.Marshal(n)
 	if err != nil {
@@ -215,7 +241,7 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}
 
-	if _, err := h.CoreV1().Nodes().Patch(context.TODO(), n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
+	if _, err := h.CoreV1().Nodes().Patch(ctx, n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
 		if apierrors.IsConflict(err) {
 			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
 		}
@@ -227,50 +253,51 @@ func (h *Client) LabelNodeAsMaster(name string) (err error) {
 }
 
 // WaitUntilReady waits for a node to be ready.
-func (h *Client) WaitUntilReady(name string) error {
-	return retry.Exponential(3*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 30*time.Second)
-		defer attemptCtxCancel()
+func (h *Client) WaitUntilReady(ctx context.Context, name string) error {
+	return retry.Exponential(10*time.Minute, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond), retry.WithErrorLogging(true)).RetryWithContext(ctx,
+		func(ctx context.Context) error {
+			attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+			defer attemptCtxCancel()
 
-		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return retry.ExpectedError(err)
+			node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return retry.ExpectedError(err)
+				}
+
+				if apierrors.ReasonForError(err) == metav1.StatusReasonUnknown {
+					// non-API error, e.g. networking error
+					return retry.ExpectedError(err)
+				}
+
+				return retry.UnexpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
-		}
-
-		for _, cond := range node.Status.Conditions {
-			if cond.Type == corev1.NodeReady {
-				if cond.Status != corev1.ConditionTrue {
-					return retry.ExpectedError(fmt.Errorf("node not ready"))
+			for _, cond := range node.Status.Conditions {
+				if cond.Type == corev1.NodeReady {
+					if cond.Status != corev1.ConditionTrue {
+						return retry.ExpectedError(fmt.Errorf("node not ready"))
+					}
 				}
 			}
-		}
 
-		return nil
-	})
+			return nil
+		})
 }
 
 // CordonAndDrain cordons and drains a node in one call.
-func (h *Client) CordonAndDrain(node string) (err error) {
-	if err = h.Cordon(node); err != nil {
+func (h *Client) CordonAndDrain(ctx context.Context, node string) (err error) {
+	if err = h.Cordon(ctx, node); err != nil {
 		return err
 	}
 
-	return h.Drain(node)
+	return h.Drain(ctx, node)
 }
 
-const (
-	talosCordonedAnnotationName  = "talos.dev/cordoned"
-	talosCordonedAnnotationValue = "true"
-)
-
 // Cordon marks a node as unschedulable.
-func (h *Client) Cordon(name string) error {
-	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		node, err := h.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+func (h *Client) Cordon(ctx context.Context, name string) error {
+	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
+		node, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}
@@ -279,10 +306,10 @@ func (h *Client) Cordon(name string) error {
 			return nil
 		}
 
-		node.ObjectMeta.Annotations[talosCordonedAnnotationName] = talosCordonedAnnotationValue
+		node.Annotations[constants.AnnotationCordonedKey] = constants.AnnotationCordonedValue
 		node.Spec.Unschedulable = true
 
-		if _, err := h.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{}); err != nil {
+		if _, err := h.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{}); err != nil {
 			return retry.ExpectedError(err)
 		}
 
@@ -296,9 +323,11 @@ func (h *Client) Cordon(name string) error {
 }
 
 // Uncordon marks a node as schedulable.
-func (h *Client) Uncordon(name string) error {
-	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).Retry(func() error {
-		attemptCtx, attemptCtxCancel := context.WithTimeout(context.TODO(), 10*time.Second)
+//
+// If force is set, node will be uncordoned even if cordoned not by Talos.
+func (h *Client) Uncordon(ctx context.Context, name string, force bool) error {
+	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
+		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 		defer attemptCtxCancel()
 
 		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
@@ -306,14 +335,14 @@ func (h *Client) Uncordon(name string) error {
 			return retry.UnexpectedError(err)
 		}
 
-		if node.ObjectMeta.Annotations[talosCordonedAnnotationName] != talosCordonedAnnotationValue {
+		if !force && node.Annotations[constants.AnnotationCordonedKey] != constants.AnnotationCordonedValue {
 			// not cordoned by Talos, skip it
 			return nil
 		}
 
 		if node.Spec.Unschedulable {
 			node.Spec.Unschedulable = false
-			delete(node.ObjectMeta.Annotations, talosCordonedAnnotationName)
+			delete(node.Annotations, constants.AnnotationCordonedKey)
 
 			if _, err := h.CoreV1().Nodes().Update(attemptCtx, node, metav1.UpdateOptions{}); err != nil {
 				return retry.ExpectedError(err)
@@ -330,51 +359,69 @@ func (h *Client) Uncordon(name string) error {
 }
 
 // Drain evicts all pods on a given node.
-func (h *Client) Drain(node string) error {
+func (h *Client) Drain(ctx context.Context, node string) error {
+	ctx, cancel := context.WithTimeout(ctx, DrainTimeout)
+	defer cancel()
+
 	opts := metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": node}).String(),
 	}
 
-	pods, err := h.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), opts)
+	pods, err := h.CoreV1().Pods(metav1.NamespaceAll).List(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("cannot get pods for node %s: %w", node, err)
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(len(pods.Items))
+	var eg errgroup.Group
 
 	// Evict each pod.
 
 	for _, pod := range pods.Items {
-		go func(p corev1.Pod) {
-			defer wg.Done()
+		p := pod
 
-			for _, ref := range p.ObjectMeta.OwnerReferences {
-				if ref.Kind == "DaemonSet" {
-					log.Printf("skipping DaemonSet pod %s\n", p.GetName())
-					return
-				}
+		eg.Go(func() error {
+			if _, ok := p.ObjectMeta.Annotations[corev1.MirrorPodAnnotationKey]; ok {
+				log.Printf("skipping mirror pod %s/%s\n", p.GetNamespace(), p.GetName())
+
+				return nil
 			}
 
-			if err := h.evict(p, int64(60)); err != nil {
+			controllerRef := metav1.GetControllerOf(&p)
+
+			if controllerRef == nil {
+				log.Printf("skipping unmanaged pod %s/%s\n", p.GetNamespace(), p.GetName())
+
+				return nil
+			}
+
+			if controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind {
+				log.Printf("skipping DaemonSet pod %s/%s\n", p.GetNamespace(), p.GetName())
+
+				return nil
+			}
+
+			if !p.DeletionTimestamp.IsZero() {
+				log.Printf("skipping deleted pod %s/%s\n", p.GetNamespace(), p.GetName())
+			}
+
+			if err := h.evict(ctx, p, int64(60)); err != nil {
 				log.Printf("WARNING: failed to evict pod: %v", err)
 			}
-		}(pod)
+
+			return nil
+		})
 	}
 
-	wg.Wait()
-
-	return nil
+	return eg.Wait()
 }
 
-func (h *Client) evict(p corev1.Pod, gracePeriod int64) error {
+func (h *Client) evict(ctx context.Context, p corev1.Pod, gracePeriod int64) error {
 	for {
 		pol := &policy.Eviction{
 			ObjectMeta:    metav1.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
 			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
-		err := h.CoreV1().Pods(p.GetNamespace()).Evict(context.TODO(), pol)
+		err := h.CoreV1().Pods(p.GetNamespace()).Evict(ctx, pol)
 
 		switch {
 		case apierrors.IsTooManyRequests(err):
@@ -384,16 +431,18 @@ func (h *Client) evict(p corev1.Pod, gracePeriod int64) error {
 		case err != nil:
 			return fmt.Errorf("failed to evict pod %s/%s: %w", p.GetNamespace(), p.GetName(), err)
 		default:
-			if err = h.waitForPodDeleted(&p); err != nil {
+			if err = h.waitForPodDeleted(ctx, &p); err != nil {
 				return fmt.Errorf("failed waiting on pod %s/%s to be deleted: %w", p.GetNamespace(), p.GetName(), err)
 			}
+
+			return nil
 		}
 	}
 }
 
-func (h *Client) waitForPodDeleted(p *corev1.Pod) error {
-	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
-		pod, err := h.CoreV1().Pods(p.GetNamespace()).Get(context.TODO(), p.GetName(), metav1.GetOptions{})
+func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
+	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
+		pod, err := h.CoreV1().Pods(p.GetNamespace()).Get(ctx, p.GetName(), metav1.GetOptions{})
 		switch {
 		case apierrors.IsNotFound(err):
 			return nil

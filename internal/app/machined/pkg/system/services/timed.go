@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,28 +14,30 @@ import (
 	"path/filepath"
 	"strings"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	"github.com/golang/protobuf/ptypes/empty"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Timed implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Timed struct{}
+type Timed struct {
+	SkipNetworkd bool
+}
 
 // ID implements the Service interface.
 func (n *Timed) ID(r runtime.Runtime) string {
@@ -43,14 +46,7 @@ func (n *Timed) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (n *Timed) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/timed.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/timed"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/timed.tar", "talos/timed")
 }
 
 // PostFunc implements the Service interface.
@@ -65,6 +61,10 @@ func (n *Timed) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *Timed) DependsOn(r runtime.Runtime) []string {
+	if n.SkipNetworkd {
+		return []string{"containerd"}
+	}
+
 	return []string{"containerd", "networkd"}
 }
 
@@ -73,7 +73,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	args := runner.Args{
 		ID:          n.ID(r),
-		ProcessArgs: []string{"/timed", "--config=" + constants.ConfigPath},
+		ProcessArgs: []string{"/timed"},
 	}
 
 	// Ensure socket dir exists
@@ -82,7 +82,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: filepath.Dir(constants.TimeSocketPath), Source: filepath.Dir(constants.TimeSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
@@ -91,9 +91,17 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -105,6 +113,7 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 			}),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
+			oci.WithAllDevicesAllowed,
 		),
 	),
 		restart.WithType(restart.Forever),
@@ -140,7 +149,7 @@ func (n *Timed) HealthFunc(runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		defer conn.Close() //nolint: errcheck
+		defer conn.Close() //nolint:errcheck
 
 		nClient := healthapi.NewHealthClient(conn)
 		if readyResp, err = nClient.Ready(ctx, &empty.Empty{}); err != nil {

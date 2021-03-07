@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // StatsSuite verifies dmesg command.
@@ -24,25 +25,15 @@ func (suite *StatsSuite) SuiteName() string {
 
 // TestContainerd inspects stats via containerd driver.
 func (suite *StatsSuite) TestContainerd() {
-	suite.RunCLI([]string{"stats"},
+	suite.RunCLI([]string{"stats", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
-	)
-	suite.RunCLI([]string{"stats", "-k"},
-		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),
 	)
 }
 
 // TestCRI inspects stats via CRI driver.
 func (suite *StatsSuite) TestCRI() {
-	suite.RunCLI([]string{"stats", "-c"},
-		base.ShouldFail(),
-		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunCLI([]string{"stats", "-ck"},
+	suite.RunCLI([]string{"stats", "-k", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`k8s.io`)),

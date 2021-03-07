@@ -20,9 +20,21 @@ type FileItem struct {
 	Error    error
 }
 
+// FileType is a file type.
+type FileType int
+
+// File types.
+const (
+	RegularFileType FileType = iota
+	DirectoryFileType
+	SymlinkFileType
+)
+
 type walkerOptions struct {
 	skipRoot        bool
 	maxRecurseDepth int
+	fnmatchPatterns []string
+	types           map[FileType]struct{}
 }
 
 // WalkerOption configures Walker.
@@ -44,9 +56,30 @@ func WithMaxRecurseDepth(maxDepth int) WalkerOption {
 	}
 }
 
-// Walker provides a channel of file info/paths for archival
+// WithFnmatchPatterns filters results to match the patterns.
 //
-//nolint: gocyclo
+// Default is not to do any filtering.
+func WithFnmatchPatterns(patterns ...string) WalkerOption {
+	return func(o *walkerOptions) {
+		o.fnmatchPatterns = append(o.fnmatchPatterns, patterns...)
+	}
+}
+
+// WithFileTypes filters results by file types.
+//
+// Default is not to do any filtering.
+func WithFileTypes(fileType ...FileType) WalkerOption {
+	return func(o *walkerOptions) {
+		o.types = make(map[FileType]struct{}, len(fileType))
+		for _, t := range fileType {
+			o.types[t] = struct{}{}
+		}
+	}
+}
+
+// Walker provides a channel of file info/paths for archival.
+//
+//nolint:gocyclo
 func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-chan FileItem, error) {
 	var opts walkerOptions
 	opts.maxRecurseDepth = -1
@@ -86,6 +119,30 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 				item.RelPath, item.Error = filepath.Rel(rootPath, path)
 			}
 
+			// TODO: refactor all those `if item.Error == nil &&` conditions
+
+			if item.Error == nil && len(opts.types) > 0 {
+				var matches bool
+
+				for t := range opts.types {
+					switch t {
+					case RegularFileType:
+						matches = fileInfo.Mode()&os.ModeType == 0
+					case DirectoryFileType:
+						matches = fileInfo.Mode()&os.ModeDir != 0
+					case SymlinkFileType:
+						matches = fileInfo.Mode()&os.ModeSymlink != 0
+					}
+					if matches {
+						break
+					}
+				}
+
+				if !matches {
+					return nil
+				}
+			}
+
 			if item.Error == nil && path == rootPath && opts.skipRoot && fileInfo.IsDir() {
 				// skip containing directory
 				return nil
@@ -93,6 +150,20 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 
 			if item.Error == nil && fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 				item.Link, item.Error = os.Readlink(path)
+			}
+
+			if item.Error == nil && len(opts.fnmatchPatterns) > 0 {
+				var matches bool
+
+				for _, pattern := range opts.fnmatchPatterns {
+					if matches, _ = filepath.Match(pattern, item.RelPath); matches { //nolint:errcheck
+						break
+					}
+				}
+
+				if !matches {
+					return nil
+				}
 			}
 
 			select {

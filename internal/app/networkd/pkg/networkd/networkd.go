@@ -8,23 +8,26 @@
 package networkd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/hashicorp/go-multierror"
-	"golang.org/x/sys/unix"
-
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Set up default nameservers.
@@ -38,7 +41,7 @@ const (
 // and/or a specified configuration file.
 type Networkd struct {
 	Interfaces map[string]*nic.NetworkInterface
-	Config     runtime.Configurator
+	Config     config.Provider
 
 	hostname  string
 	resolvers []string
@@ -49,16 +52,14 @@ type Networkd struct {
 
 // New takes the supplied configuration and creates an abstract representation
 // of all interfaces (as nic.NetworkInterface).
-// nolint: gocyclo
-func New(config runtime.Configurator) (*Networkd, error) {
+//nolint:gocyclo
+func New(config config.Provider) (*Networkd, error) {
 	var (
 		hostname  string
 		option    *string
 		result    *multierror.Error
 		resolvers []string
 	)
-
-	resolvers = []string{DefaultPrimaryResolver, DefaultSecondaryResolver}
 
 	netconf := make(map[string][]nic.Option)
 
@@ -76,6 +77,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 			name, opts, err := buildOptions(device, config.Machine().Network().Hostname())
 			if err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
@@ -99,6 +101,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 	localInterfaces, err := net.Interfaces()
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return &Networkd{}, result.ErrorOrNil()
 	}
 
@@ -107,6 +110,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 	filtered, err := filterInterfaces(localInterfaces)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return &Networkd{}, result.ErrorOrNil()
 	}
 
@@ -135,6 +139,13 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		}
 	}
 
+	// add local interfaces which were filtered out with Ignore
+	for _, device := range localInterfaces {
+		if _, ok := netconf[device.Name]; !ok {
+			netconf[device.Name] = []nic.Option{nic.WithName(device.Name), nic.WithIgnore()}
+		}
+	}
+
 	interfaces := make(map[string]*nic.NetworkInterface)
 
 	// Create nic.NetworkInterface representation of the interface
@@ -142,6 +153,7 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		netif, err := nic.New(opts...)
 		if err != nil {
 			result = multierror.Append(result, err)
+
 			continue
 		}
 
@@ -155,6 +167,12 @@ func New(config runtime.Configurator) (*Networkd, error) {
 		}
 
 		for _, subif := range netif.SubInterfaces {
+			if _, ok := interfaces[subif.Name]; !ok {
+				result = multierror.Append(result, fmt.Errorf("bond subinterface %s does not exist", subif.Name))
+
+				continue
+			}
+
 			interfaces[subif.Name].Ignore = true
 		}
 	}
@@ -167,8 +185,8 @@ func New(config runtime.Configurator) (*Networkd, error) {
 // here so that we can ensure any links that make up a bond will be in
 // the correct state when we get to bonding configuration.
 //
-//nolint: gocyclo
-func (n *Networkd) Configure() (err error) {
+//nolint:gocyclo
+func (n *Networkd) Configure(ctx context.Context) (err error) {
 	// Configure non-bonded interfaces first so we can ensure basic
 	// interfaces exist prior to bonding
 	for _, bonded := range []bool{false, true} {
@@ -178,24 +196,33 @@ func (n *Networkd) Configure() (err error) {
 			log.Println("configuring non-bonded interfaces")
 		}
 
-		if err = n.configureLinks(bonded); err != nil {
+		if err = n.configureLinks(ctx, bonded); err != nil {
 			// Treat errors as non-fatal
 			log.Println(err)
 		}
 	}
 
-	resolvers := []string{}
+	// prefer resolvers from the configuration
+	resolvers := append([]string(nil), n.resolvers...)
 
-	for _, netif := range n.Interfaces {
-		for _, method := range netif.AddressMethod {
-			if !method.Valid() {
-				continue
-			}
+	// if no resolvers configured, use addressing method resolvers
+	if len(resolvers) == 0 {
+		for _, netif := range n.Interfaces {
+			for _, method := range netif.AddressMethod {
+				if !method.Valid() {
+					continue
+				}
 
-			for _, resolver := range method.Resolvers() {
-				resolvers = append(resolvers, resolver.String())
+				for _, resolver := range method.Resolvers() {
+					resolvers = append(resolvers, resolver.String())
+				}
 			}
 		}
+	}
+
+	// use default resolvers if nothing is configured
+	if len(resolvers) == 0 {
+		resolvers = append(resolvers, DefaultPrimaryResolver, DefaultSecondaryResolver)
 	}
 
 	// Set hostname must be before the resolv configuration
@@ -203,10 +230,6 @@ func (n *Networkd) Configure() (err error) {
 	// before we write the search stanza
 	if err = n.Hostname(); err != nil {
 		return err
-	}
-
-	if len(resolvers) == 0 {
-		resolvers = n.resolvers
 	}
 
 	if err = writeResolvConf(resolvers); err != nil {
@@ -221,9 +244,9 @@ func (n *Networkd) Configure() (err error) {
 // Renew sets up a long running loop to refresh a network interfaces
 // addressing configuration. Currently this only applies to interfaces
 // configured by DHCP.
-func (n *Networkd) Renew() {
+func (n *Networkd) Renew(ctx context.Context) {
 	for _, iface := range n.Interfaces {
-		iface.Renew()
+		iface.Renew(ctx)
 	}
 }
 
@@ -232,6 +255,17 @@ func (n *Networkd) Reset() {
 	for _, iface := range n.Interfaces {
 		iface.Reset()
 	}
+}
+
+// RunControllers spins up additional controllers in the errgroup.
+func (n *Networkd) RunControllers(ctx context.Context, eg *errgroup.Group) error {
+	for _, iface := range n.Interfaces {
+		if err := iface.RunControllers(ctx, eg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Hostname returns the first hostname found from the addressing methods.
@@ -275,7 +309,7 @@ func (n *Networkd) Hostname() (err error) {
 	return nil
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP, err error) {
 	// Set hostname to default
 	address = net.ParseIP("127.0.1.1")
@@ -291,6 +325,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 	// Loop through address responses and use the first hostname
 	// and address response.
+outer:
 	for _, intName := range interfaceNames {
 		iface := n.Interfaces[intName]
 
@@ -310,7 +345,7 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 
 				address = method.Address().IP
 
-				break
+				break outer
 			}
 		}
 	}
@@ -318,11 +353,14 @@ func (n *Networkd) decideHostname() (hostname, domainname string, address net.IP
 	// Platform
 	var p runtime.Platform
 
+	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer ctxCancel()
+
 	p, err = platform.CurrentPlatform()
 	if err == nil {
 		var pHostname []byte
 
-		if pHostname, err = p.Hostname(); err == nil && string(pHostname) != "" {
+		if pHostname, err = p.Hostname(ctx); err == nil && string(pHostname) != "" {
 			hostname = string(pHostname)
 		}
 	}
@@ -373,7 +411,7 @@ func (n *Networkd) SetReady() {
 	n.ready = true
 }
 
-func (n *Networkd) configureLinks(bonded bool) error {
+func (n *Networkd) configureLinks(ctx context.Context, bonded bool) error {
 	errCh := make(chan error, len(n.Interfaces))
 	count := 0
 
@@ -385,7 +423,9 @@ func (n *Networkd) configureLinks(bonded bool) error {
 		count++
 
 		go func(netif *nic.NetworkInterface) {
-			log.Printf("setting up %s", netif.Name)
+			if !netif.IsIgnored() {
+				log.Printf("setting up %s", netif.Name)
+			}
 
 			errCh <- func() error {
 				// Ensure link exists
@@ -397,7 +437,7 @@ func (n *Networkd) configureLinks(bonded bool) error {
 					return fmt.Errorf("error creating sub interface nic %q: %w", netif.Name, err)
 				}
 
-				if err := netif.Configure(); err != nil {
+				if err := netif.Configure(ctx); err != nil {
 					return fmt.Errorf("error configuring nic %q: %w", netif.Name, err)
 				}
 

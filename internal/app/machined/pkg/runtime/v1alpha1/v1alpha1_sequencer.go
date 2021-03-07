@@ -5,8 +5,9 @@
 package v1alpha1
 
 import (
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // Sequencer implements the sequencer interface.
@@ -39,14 +40,52 @@ func (p PhaseList) AppendWhen(when bool, name string, tasks ...runtime.TaskSetup
 	return p
 }
 
+// AppendList appends an additional PhaseList to the existing one.
+func (p PhaseList) AppendList(list PhaseList) PhaseList {
+	return append(p, list...)
+}
+
+// ApplyConfiguration defines a sequence which applies a new machine configuration to the node, rebooting to make it active.
+func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyConfigurationRequest) []runtime.Phase {
+	phases := PhaseList{}
+
+	phases = phases.Append(
+		"saveStateEncryptionConfig",
+		SaveStateEncryptionConfig,
+	).Append(
+		"mountState",
+		MountStatePartition,
+	).Append(
+		"saveConfig",
+		SaveConfig,
+	).Append(
+		"unmountState",
+		UnmountStatePartition,
+	).Append(
+		"cleanup",
+		StopAllPods,
+		StopNetworkd,
+	).AppendList(
+		stopAllPhaselist(r),
+	).Append(
+		"reboot",
+		Reboot,
+	)
+
+	return phases
+}
+
 // Initialize is the initialize sequence. The primary goals of this sequence is
 // to load the config and enforce kernel security requirements.
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
+			"logger",
+			SetupLogger,
+		).Append(
 			"systemRequirements",
 			WriteRequiredSysctlsForContainer,
 			SetupSystemDirectory,
@@ -80,22 +119,17 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"discoverNetwork",
 			SetupDiscoveryNetwork,
-			// We MUST mount the boot partition so that this task can attempt to read
-			// the config on disk.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"mountBoot",
-			MountBootPartition,
+			"mountSystem",
+			MountStatePartition,
 		).Append(
 			"config",
 			LoadConfig,
-			// We unmount the boot partition here to simplify subsequent sequences.
-			// If we leave it mounted, it becomes tricky trying to figure out if we
-			// need to mount the boot partition.
 		).AppendWhen(
 			r.State().Machine().Installed(),
-			"unmountBoot",
-			UnmountBootPartition,
+			"unmountSystem",
+			UnmountStatePartition,
 		).Append(
 			"resetNetwork",
 			ResetNetwork,
@@ -112,11 +146,11 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
-		if !r.State().Machine().Installed() {
+		if !r.State().Machine().Installed() || r.State().Machine().IsInstallStaged() {
 			phases = phases.Append(
 				"validateConfig",
 				ValidateConfig,
@@ -127,17 +161,23 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"containerd",
 				StartContainerd,
 			).Append(
+				"timed",
+				StartTimedAtInstall,
+			).Append(
 				"install",
 				Install,
 			).Append(
-				"mountBoot",
-				MountBootPartition,
+				"saveStateEncryptionConfig",
+				SaveStateEncryptionConfig,
+			).Append(
+				"mountState",
+				MountStatePartition,
 			).Append(
 				"saveConfig",
 				SaveConfig,
 			).Append(
-				"unmountBoot",
-				UnmountBootPartition,
+				"unmountState",
+				UnmountStatePartition,
 			).Append(
 				"stopEverything",
 				StopAllServices,
@@ -159,8 +199,8 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
-		"mountBoot",
-		MountBootPartition,
+		"mountState",
+		MountStatePartition,
 	).Append(
 		"validateConfig",
 		ValidateConfig,
@@ -180,7 +220,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"ephemeral",
-		MountEphermeralPartition,
+		MountEphemeralPartition,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"verifyInstall",
@@ -212,7 +252,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"startEverything",
 		StartAllServices,
 	).AppendWhen(
-		r.Config().Machine().Type() != runtime.MachineTypeJoin,
+		r.Config().Machine().Type() != machine.TypeJoin,
 		"labelMaster",
 		LabelNodeAsMaster,
 	).AppendWhen(
@@ -223,6 +263,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"bootloader",
 		UpdateBootloader,
+	).AppendWhen(
+		r.Config().Machine().Type() != machine.TypeJoin,
+		"checkControlPlaneStatus",
+		CheckControlPlaneStatus,
 	)
 
 	return phases
@@ -236,13 +280,6 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 	phases = phases.Append(
 		"etcd",
 		BootstrapEtcd,
-	).Append(
-		"kubernetes",
-		BootstrapKubernetes,
-		LabelNodeAsMaster,
-	).Append(
-		"initStatus",
-		SetInitStatus,
 	)
 
 	return phases
@@ -250,96 +287,65 @@ func (*Sequencer) Bootstrap(r runtime.Runtime) []runtime.Phase {
 
 // Reboot is the reboot sequence.
 func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
-	phases := PhaseList{}
-
-	switch r.State().Platform().Mode() { //nolint: exhaustive
-	case runtime.ModeContainer:
-		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
-			"reboot",
-			Reboot,
-		)
-	default:
-		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
-			"umount",
-			UnmountOverlayFilesystems,
-			UnmountPodMounts,
-		).Append(
-			"unmountSystem",
-			UnmountBootPartition,
-			UnmountEphemeralPartition,
-		).Append(
-			"unmountBind",
-			UnmountSystemDiskBindMounts,
-		).Append(
-			"reboot",
-			Reboot,
-		)
-	}
-
-	return phases
-}
-
-// Recover is the recover sequence.
-func (*Sequencer) Recover(r runtime.Runtime, in *machine.RecoverRequest) []runtime.Phase {
-	phases := PhaseList{}
-
-	phases = phases.Append("recover", Recover)
+	phases := PhaseList{}.Append(
+		"cleanup",
+		StopAllPods,
+		StopNetworkd,
+	).
+		AppendList(stopAllPhaselist(r)).
+		Append("reboot", Reboot)
 
 	return phases
 }
 
 // Reset is the reset sequence.
-func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.Phase {
+func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
-		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
-			"shutdown",
-			Shutdown,
-		)
+		phases = phases.AppendList(stopAllPhaselist(r)).
+			Append(
+				"shutdown",
+				Shutdown,
+			)
 	default:
 		phases = phases.AppendWhen(
 			in.GetGraceful(),
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			in.GetGraceful() && (r.Config().Machine().Type() != runtime.MachineTypeJoin),
+			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
 			LeaveEtcd,
 		).AppendWhen(
 			in.GetGraceful(),
 			"cleanup",
 			RemoveAllPods,
-		).Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
-			"umount",
-			UnmountOverlayFilesystems,
-			UnmountPodMounts,
-		).Append(
-			"unmountSystem",
-			UnmountBootPartition,
-			UnmountEphemeralPartition,
-		).Append(
-			"unmountBind",
-			UnmountSystemDiskBindMounts,
-		).Append(
+			StopNetworkd,
+		).AppendWhen(
+			!in.GetGraceful(),
+			"cleanup",
+			StopAllPods,
+			StopNetworkd,
+		).AppendList(
+			stopAllPhaselist(r),
+		).AppendWhen(
+			len(in.GetSystemDiskTargets()) == 0,
 			"reset",
 			ResetSystemDisk,
-		).Append(
+		).AppendWhen(
+			len(in.GetSystemDiskTargets()) > 0,
+			"resetSpec",
+			ResetSystemDiskSpec,
+		).AppendWhen(
+			in.GetReboot(),
 			"reboot",
 			Reboot,
+		).AppendWhen(
+			!in.GetReboot(),
+			"shutdown",
+			Shutdown,
 		)
 	}
 
@@ -348,35 +354,39 @@ func (*Sequencer) Reset(r runtime.Runtime, in *machine.ResetRequest) []runtime.P
 
 // Shutdown is the shutdown sequence.
 func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
+	phases := PhaseList{}.
+		Append(
+			"cleanup",
+			StopAllPods,
+			StopNetworkd,
+		).
+		AppendList(stopAllPhaselist(r)).
+		Append("shutdown", Shutdown)
+
+	return phases
+}
+
+// StageUpgrade is the stage upgrade sequence.
+func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
-		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
-			"shutdown",
-			Shutdown,
-		)
+		return nil
 	default:
-		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
+		phases = phases.AppendWhen(
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			"leave",
+			LeaveEtcd,
 		).Append(
-			"umount",
-			UnmountOverlayFilesystems,
-			UnmountPodMounts,
+			"cleanup",
+			StopAllPods,
+			StopNetworkd,
+		).AppendList(
+			stopAllPhaselist(r),
 		).Append(
-			"unmountSystem",
-			UnmountBootPartition,
-			UnmountEphemeralPartition,
-		).Append(
-			"unmountBind",
-			UnmountSystemDiskBindMounts,
-		).Append(
-			"shutdown",
-			Shutdown,
+			"reboot",
+			Reboot,
 		)
 	}
 
@@ -384,10 +394,10 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 }
 
 // Upgrade is the upgrade sequence.
-func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runtime.Phase {
+func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
-	switch r.State().Platform().Mode() { //nolint: exhaustive
+	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
@@ -395,26 +405,36 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runti
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != runtime.MachineTypeJoin),
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
 			LeaveEtcd,
-		).Append(
+		).AppendWhen(
+			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
+			StopNetworkd,
+		).AppendWhen(
+			in.GetPreserve(),
+			"cleanup",
+			StopAllPods,
+			StopNetworkd,
 		).Append(
 			"stopServices",
 			StopServicesForUpgrade,
+		).Append(
+			"unmountUser",
+			UnmountUserDisks,
 		).Append(
 			"unmount",
 			UnmountOverlayFilesystems,
 			UnmountPodMounts,
 		).Append(
-			"unmountSystem",
-			UnmountBootPartition,
-			UnmountEphemeralPartition,
-		).Append(
 			"unmountBind",
 			UnmountSystemDiskBindMounts,
+		).Append(
+			"unmountSystem",
+			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		).Append(
 			"verifyDisk",
 			VerifyDiskAvailability,
@@ -427,6 +447,39 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machine.UpgradeRequest) []runti
 		).Append(
 			"reboot",
 			Reboot,
+		)
+	}
+
+	return phases
+}
+
+func stopAllPhaselist(r runtime.Runtime) PhaseList {
+	phases := PhaseList{}
+
+	switch r.State().Platform().Mode() { //nolint:exhaustive
+	case runtime.ModeContainer:
+		phases = phases.Append(
+			"stopEverything",
+			StopAllServices,
+		)
+	default:
+		phases = phases.Append(
+			"stopEverything",
+			StopAllServices,
+		).Append(
+			"unmountUser",
+			UnmountUserDisks,
+		).Append(
+			"umount",
+			UnmountOverlayFilesystems,
+			UnmountPodMounts,
+		).Append(
+			"unmountBind",
+			UnmountSystemDiskBindMounts,
+		).Append(
+			"unmountSystem",
+			UnmountEphemeralPartition,
+			UnmountStatePartition,
 		)
 	}
 

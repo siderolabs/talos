@@ -11,30 +11,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 // This should provide the bare minimum to trigger a node in ready condition to allow
 // azure to be happy with the node and let it on it's lawn.
-func linuxAgent() (err error) {
+func linuxAgent(ctx context.Context) (err error) {
 	var gs *GoalState
 
-	gs, err = goalState()
+	gs, err = goalState(ctx)
 	if err != nil {
 		return err
 	}
 
-	return reportHealth(gs.Incarnation, gs.Container.ContainerID, gs.Container.RoleInstanceList.RoleInstance.InstanceID)
+	return reportHealth(ctx, gs.Incarnation, gs.Container.ContainerID, gs.Container.RoleInstanceList.RoleInstance.InstanceID)
 }
 
-func goalState() (gs *GoalState, err error) {
+func goalState(ctx context.Context) (gs *GoalState, err error) {
 	u, err := url.Parse(AzureInternalEndpoint + "/machine/?comp=goalstate")
 	if err != nil {
 		return gs, nil
 	}
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
@@ -50,7 +46,7 @@ func goalState() (gs *GoalState, err error) {
 		return gs, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -64,7 +60,7 @@ func goalState() (gs *GoalState, err error) {
 	return gs, err
 }
 
-func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error) {
+func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceID string) (err error) {
 	// Construct health response
 	h := &Health{
 		Xsi: "http://www.w3.org/2001/XMLSchema-instance",
@@ -106,9 +102,6 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 		resp *http.Response
 	)
 
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
-
 	req, err = http.NewRequestWithContext(ctx, "POST", u.String(), b)
 	if err != nil {
 		return err
@@ -124,7 +117,7 @@ func reportHealth(gsIncarnation, gsContainerID, gsInstanceID string) (err error)
 	}
 
 	// TODO probably should do some better check here ( verify status code )
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	_, err = ioutil.ReadAll(resp.Body)

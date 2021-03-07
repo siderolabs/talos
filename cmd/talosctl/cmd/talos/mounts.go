@@ -15,15 +15,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // mountsCmd represents the mounts command.
 var mountsCmd = &cobra.Command{
 	Use:     "mounts",
-	Aliases: []string{"m"},
+	Aliases: []string{"mount"},
 	Short:   "List mounts",
 	Long:    ``,
 	Args:    cobra.NoArgs,

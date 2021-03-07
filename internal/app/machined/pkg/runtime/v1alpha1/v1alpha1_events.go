@@ -103,7 +103,7 @@ func NewEvents(cap, gap int) *Events {
 
 // Watch implements the Events interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) error {
 	var opts runtime.WatchOptions
 
@@ -178,6 +178,7 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 				select {
 				case <-ctx.Done():
 					e.mu.Unlock()
+
 					return
 				default:
 				}
@@ -187,6 +188,7 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 				// buffer overrun, there's no way to signal error in this case,
 				// so for now just return
 				e.mu.Unlock()
+
 				return
 			}
 

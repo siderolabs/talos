@@ -54,7 +54,7 @@ func (l *Local) GetConnection(ctx context.Context) (context.Context, *grpc.Clien
 		ctx,
 		"unix:"+l.socketPath,
 		grpc.WithInsecure(),
-		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
+		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 
 	)
 

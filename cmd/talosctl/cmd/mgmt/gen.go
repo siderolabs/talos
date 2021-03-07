@@ -5,6 +5,7 @@
 package mgmt
 
 import (
+	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -13,12 +14,10 @@ import (
 	"strings"
 	"time"
 
-	stdlibx509 "crypto/x509"
-
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
 )
 
 var (

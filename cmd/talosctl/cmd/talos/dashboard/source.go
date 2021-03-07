@@ -13,7 +13,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // APISource provides monitoring data via Talos API.
@@ -75,7 +75,7 @@ func (source *APISource) run(dataCh chan<- *data.Data) {
 	}
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (source *APISource) gather() *data.Data {
 	result := &data.Data{
 		Timestamp: time.Now(),

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: scopelint,dupl
+//nolint:scopelint
 package runtime_test
 
 import (
@@ -86,6 +86,7 @@ func TestParseMode(t *testing.T) {
 			gotM, err := runtime.ParseMode(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseMode() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if !reflect.DeepEqual(gotM, tt.wantM) {

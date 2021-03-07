@@ -14,9 +14,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var verbose bool
@@ -24,7 +24,7 @@ var verbose bool
 // memoryCmd represents the processes command.
 var memoryCmd = &cobra.Command{
 	Use:     "memory",
-	Aliases: []string{"m"},
+	Aliases: []string{"m", "free"},
 	Short:   "Show memory usage",
 	Long:    ``,
 	Args:    cobra.NoArgs,

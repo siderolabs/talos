@@ -31,7 +31,7 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -96,8 +96,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint: errcheck
-		suite.containerdRunner.Run(MockEventSink) //nolint: errcheck
+		defer suite.containerdRunner.Close()      //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
 	suite.client, err = containerd.New(suite.containerdAddress)
@@ -129,7 +129,7 @@ func (suite *ContainerdSuite) getLogContents(filename string) []byte {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, filename))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -243,7 +243,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -257,7 +257,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(os.Mkdir(testDir, 0o770))
 
 	testFile := filepath.Join(testDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(containerdrunner.NewRunner(false, &runner.Args{
@@ -299,6 +299,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	select {
 	case err := <-done:
 		suite.Assert().Failf("task should be running", "error: %s", err)
+
 		return
 	default:
 	}
@@ -318,6 +319,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	select {
 	case err = <-done:
 		suite.Assert().Failf("task should be running", "error: %s", err)
+
 		return
 	default:
 	}
@@ -382,7 +384,7 @@ func (suite *ContainerdSuite) TestImportSuccess() {
 		},
 	}
 	suite.Assert().NoError(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
 
 	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
 
@@ -409,7 +411,39 @@ func (suite *ContainerdSuite) TestImportFail() {
 		},
 	}
 	suite.Assert().Error(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(reqs...))
+		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
+}
+
+func (suite *ContainerdSuite) TestContainerStdin() {
+	stdin := bytes.Repeat([]byte{0xde, 0xad, 0xbe, 0xef}, 2000)
+
+	r := containerdrunner.NewRunner(false, &runner.Args{
+		ID:          suite.containerID,
+		ProcessArgs: []string{"/bin/cat"},
+	},
+		runner.WithStdin(bytes.NewReader(stdin)),
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithNamespace(suite.containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
+	)
+
+	suite.Require().NoError(r.Open(context.Background()))
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	suite.Assert().NoError(r.Run(MockEventSink))
+
+	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
+	suite.Assert().NoError(err)
+
+	//nolint:errcheck
+	defer logFile.Close()
+
+	logContents, err := ioutil.ReadAll(logFile)
+	suite.Assert().NoError(err)
+
+	suite.Assert().Equal(stdin, logContents)
 }
 
 func TestContainerdSuite(t *testing.T) {

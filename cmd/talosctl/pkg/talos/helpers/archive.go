@@ -56,9 +56,9 @@ func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
 
 // ExtractTarGz extracts .tar.gz archive from r into filesystem under localPath.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func ExtractTarGz(localPath string, r io.ReadCloser) error {
-	defer r.Close() //nolint: errcheck
+	defer r.Close() //nolint:errcheck
 
 	zr, err := gzip.NewReader(r)
 	if err != nil {

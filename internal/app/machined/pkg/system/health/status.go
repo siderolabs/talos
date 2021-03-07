@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Status of the healthcheck.
@@ -18,6 +18,19 @@ type Status struct {
 	Healthy     *bool
 	LastChange  time.Time
 	LastMessage string
+}
+
+// AsProto returns protobuf-ready health state.
+func (status *Status) AsProto() *machineapi.ServiceHealth {
+	//nolint:errcheck
+	tspb, _ := ptypes.TimestampProto(status.LastChange)
+
+	return &machineapi.ServiceHealth{
+		Unknown:     status.Healthy == nil,
+		Healthy:     status.Healthy != nil && *status.Healthy,
+		LastMessage: status.LastMessage,
+		LastChange:  tspb,
+	}
 }
 
 // StateChange is used to notify about status changes.
@@ -114,13 +127,5 @@ func (state *State) Get() Status {
 func (state *State) AsProto() *machineapi.ServiceHealth {
 	status := state.Get()
 
-	// nolint: errcheck
-	tspb, _ := ptypes.TimestampProto(status.LastChange)
-
-	return &machineapi.ServiceHealth{
-		Unknown:     status.Healthy == nil,
-		Healthy:     status.Healthy != nil && *status.Healthy,
-		LastMessage: status.LastMessage,
-		LastChange:  tspb,
-	}
+	return status.AsProto()
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package machine;
 
-option go_package = "github.com/talos-systems/talos/api/machine";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/machine";
 option java_multiple_files = true;
 option java_outer_classname = "MachineApi";
 option java_package = "com.machine.api";
@@ -14,6 +14,8 @@ import "common/common.proto";
 
 // The machine service definition.
 service MachineService {
+  rpc ApplyConfiguration(ApplyConfigurationRequest)
+      returns (ApplyConfigurationResponse);
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
@@ -21,14 +23,25 @@ service MachineService {
   rpc DiskStats(google.protobuf.Empty) returns (DiskStatsResponse);
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
+  rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
+  rpc EtcdRemoveMember(EtcdRemoveMemberRequest)
+      returns (EtcdRemoveMemberResponse);
+  rpc EtcdLeaveCluster(EtcdLeaveClusterRequest)
+      returns (EtcdLeaveClusterResponse);
+  rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
+      returns (EtcdForfeitLeadershipResponse);
+  rpc GenerateConfiguration(GenerateConfigurationRequest)
+      returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
+  rpc DiskUsage(DiskUsageRequest) returns (stream DiskUsageInfo);
   rpc LoadAvg(google.protobuf.Empty) returns (LoadAvgResponse);
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
-  rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
+  rpc NetworkDeviceStats(google.protobuf.Empty)
+      returns (NetworkDeviceStatsResponse);
   rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
@@ -36,6 +49,8 @@ service MachineService {
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc Recover(RecoverRequest) returns (RecoverResponse);
+  rpc RemoveBootkubeInitializedKey(google.protobuf.Empty)
+      returns (RemoveBootkubeInitializedKeyResponse);
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
@@ -46,6 +61,19 @@ service MachineService {
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
+
+// rpc applyConfiguration
+// ApplyConfiguration describes a request to assert a new configuration upon a
+// node.
+message ApplyConfigurationRequest {
+  bytes data = 1;
+  bool on_reboot = 2;
+  bool immediate = 3;
+}
+
+// ApplyConfigurationResponse describes the response to a configuration request.
+message ApplyConfiguration { common.Metadata metadata = 1; }
+message ApplyConfigurationResponse { repeated ApplyConfiguration messages = 1; }
 
 // rpc reboot
 // The reboot message containing the reboot status.
@@ -103,6 +131,11 @@ message ServiceStateEvent {
   };
   Action action = 2;
   string message = 3;
+  ServiceHealth health = 4;
+};
+
+message RestartEvent {
+  int64 cmd = 1;
 };
 
 message EventsRequest {
@@ -118,9 +151,20 @@ message Event {
 }
 
 // rpc reset
+message ResetPartitionSpec {
+  string label = 1;
+  bool wipe = 2;
+}
+
 message ResetRequest {
+  // Graceful indicates whether node should leave etcd before the upgrade, it also
+  // enforces etcd checks before leaving.
   bool graceful = 1;
+  // Reboot indicates whether node should reboot or halt after resetting.
   bool reboot = 2;
+  // System_partitions_to_wipe lists specific system disk partitions to be reset (wiped).
+  // If system_partitions_to_wipe is empty, all the partitions are erased.
+  repeated ResetPartitionSpec system_partitions_to_wipe = 3;
 }
 
 // The reset message containing the restart status.
@@ -151,6 +195,8 @@ message ShutdownResponse { repeated Shutdown messages = 1; }
 message UpgradeRequest {
   string image = 1;
   bool preserve = 2;
+  bool stage = 3;
+  bool force = 4;
 }
 
 message Upgrade {
@@ -241,16 +287,42 @@ message CopyRequest {
   string root_path = 1;
 }
 
-// ListRequest describes a request to list the contents of a directory
+// ListRequest describes a request to list the contents of a directory.
 message ListRequest {
-  // Root indicates the root directory for the list.  If not indicated, '/' is
+  // Root indicates the root directory for the list. If not indicated, '/' is
   // presumed.
   string root = 1;
   // Recurse indicates that subdirectories should be recursed.
   bool recurse = 2;
   // RecursionDepth indicates how many levels of subdirectories should be
-  // recursed.  The default (0) indicates that no limit should be enforced.
+  // recursed. The default (0) indicates that no limit should be enforced.
   int32 recursion_depth = 3;
+  // File type.
+  enum Type {
+    // Regular file (not directory, symlink, etc).
+    REGULAR = 0;
+    // Directory.
+    DIRECTORY = 1;
+    // Symbolic link.
+    SYMLINK = 2;
+  }
+  // Types indicates what file type should be returned. If not indicated,
+  // all files will be returned.
+  repeated Type types = 4;
+}
+
+// DiskUsageRequest describes a request to list disk usage of directories and regular files
+message DiskUsageRequest {
+  // RecursionDepth indicates how many levels of subdirectories should be
+  // recursed. The default (0) indicates that no limit should be enforced.
+  int32 recursion_depth = 1;
+  // All write sizes for all files, not just directories.
+  bool all = 2;
+  // Threshold exclude entries smaller than SIZE if positive,
+  // or entries greater than SIZE if negative.
+  int64 threshold = 3;
+  // DiskUsagePaths is the list of directories to calculate disk usage for.
+  repeated string paths = 4;
 }
 
 // FileInfo describes a file or directory's information
@@ -273,6 +345,20 @@ message FileInfo {
   string link = 8;
   // RelativeName is the name of the file or directory relative to the RootPath
   string relative_name = 9;
+}
+
+// DiskUsageInfo describes a file or directory's information for du command
+message DiskUsageInfo {
+  common.Metadata metadata = 1;
+  // Name is the name (including prefixed path) of the file or directory
+  string name = 2;
+  // Size indicates the number of bytes contained within the file
+  int64 size = 3;
+  // Error describes any error encountered while trying to read the file
+  // information.
+  string error = 4;
+  // RelativeName is the name of the file or directory relative to the RootPath
+  string relative_name = 5;
 }
 
 // The messages message containing the requested df stats.
@@ -488,9 +574,7 @@ message MemInfo {
 
 // rpc Hostname
 
-message HostnameResponse {
-  repeated Hostname messages = 1;
-}
+message HostnameResponse { repeated Hostname messages = 1; }
 
 message Hostname {
   common.Metadata metadata = 1;
@@ -499,9 +583,7 @@ message Hostname {
 
 // rpc LoadAvg
 
-message LoadAvgResponse {
-  repeated LoadAvg messages = 1;
-}
+message LoadAvgResponse { repeated LoadAvg messages = 1; }
 
 message LoadAvg {
   common.Metadata metadata = 1;
@@ -510,12 +592,9 @@ message LoadAvg {
   double load15 = 4;
 }
 
-
 // rpc SystemStat
 
-message SystemStatResponse {
-  repeated SystemStat messages = 1;
-}
+message SystemStatResponse { repeated SystemStat messages = 1; }
 
 message SystemStat {
   common.Metadata metadata = 1;
@@ -558,12 +637,9 @@ message SoftIRQStat {
   uint64 rcu = 10;
 }
 
-
 // rpc CPUInfo
 
-message CPUInfoResponse {
-  repeated CPUsInfo messages = 1;
-}
+message CPUInfoResponse { repeated CPUsInfo messages = 1; }
 
 message CPUsInfo {
   common.Metadata metadata = 1;
@@ -599,12 +675,9 @@ message CPUInfo {
   string power_management = 26;
 }
 
-
 // rpc NetworkDeviceStats
 
-message NetworkDeviceStatsResponse {
-  repeated NetworkDeviceStats messages = 1;
-}
+message NetworkDeviceStatsResponse { repeated NetworkDeviceStats messages = 1; }
 
 message NetworkDeviceStats {
   common.Metadata metadata = 1;
@@ -632,12 +705,9 @@ message NetDev {
   uint64 tx_compressed = 17;
 }
 
-
 // rpc DiskStats
 
-message DiskStatsResponse {
-  repeated DiskStats messages = 1;
-}
+message DiskStatsResponse { repeated DiskStats messages = 1; }
 
 message DiskStats {
   common.Metadata metadata = 1;
@@ -663,3 +733,121 @@ message DiskStat {
   uint64 discard_sectors = 15;
   uint64 discard_time_ms = 16;
 }
+
+message EtcdLeaveClusterRequest {}
+message EtcdLeaveCluster { common.Metadata metadata = 1; }
+message EtcdLeaveClusterResponse { repeated EtcdLeaveCluster messages = 1; }
+
+message EtcdRemoveMemberRequest {
+  string member = 1;
+}
+message EtcdRemoveMember { common.Metadata metadata = 1; }
+message EtcdRemoveMemberResponse { repeated EtcdRemoveMember messages = 1; }
+
+message EtcdForfeitLeadershipRequest {}
+message EtcdForfeitLeadership {
+  common.Metadata metadata = 1;
+  string member = 2;
+}
+message EtcdForfeitLeadershipResponse {
+  repeated EtcdForfeitLeadership messages = 1;
+}
+
+message EtcdMemberListRequest {
+  bool query_local = 1;
+}
+message EtcdMemberList {
+  common.Metadata metadata = 1;
+  repeated string members = 2;
+}
+message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
+
+// rpc generateConfiguration
+
+message RouteConfig {
+  string network = 1;
+  string gateway = 2;
+  uint32 metric = 3;
+}
+
+message DHCPOptionsConfig {
+  uint32 route_metric = 1;
+}
+
+message NetworkDeviceConfig {
+  string interface = 1;
+  string cidr = 2;
+  int32 mtu = 3;
+  bool dhcp = 4;
+  bool ignore = 5;
+  DHCPOptionsConfig dhcp_options = 6;
+  repeated RouteConfig routes = 7;
+}
+
+message NetworkConfig {
+  string hostname = 1;
+  repeated NetworkDeviceConfig interfaces = 2;
+}
+
+message InstallConfig {
+  string install_disk = 1;
+  string install_image = 2;
+}
+
+message MachineConfig {
+  enum MachineType {
+    TYPE_UNKNOWN = 0;
+    TYPE_INIT = 1;
+    TYPE_CONTROL_PLANE = 2;
+    TYPE_JOIN = 3;
+  };
+  MachineType type = 1;
+  InstallConfig install_config = 2;
+  NetworkConfig network_config = 3;
+  string kubernetes_version = 4;
+}
+
+message ControlPlaneConfig {
+  string endpoint = 1;
+}
+
+message CNIConfig {
+  string name = 1;
+  repeated string urls = 2;
+}
+
+message ClusterNetworkConfig {
+  string dns_domain = 1;
+  CNIConfig cni_config = 2;
+}
+
+message ClusterConfig {
+  string name = 1;
+  ControlPlaneConfig control_plane = 2;
+  ClusterNetworkConfig cluster_network = 3;
+  bool allow_scheduling_on_masters = 4;
+}
+
+// GenerateConfigurationRequest describes a request to generate a new configuration
+// on a node.
+message GenerateConfigurationRequest {
+  string config_version = 1;
+  ClusterConfig cluster_config = 2;
+  MachineConfig machine_config = 3;
+  google.protobuf.Timestamp override_time = 4;
+}
+
+// GenerateConfiguration describes the response to a generate configuration request.
+message GenerateConfiguration {
+  common.Metadata metadata = 1;
+  repeated bytes data = 2;
+  bytes talosconfig = 3;
+}
+
+message GenerateConfigurationResponse {
+  repeated GenerateConfiguration messages = 1;
+}
+
+// RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
+message RemoveBootkubeInitializedKey { common.Metadata metadata = 1; }
+message RemoveBootkubeInitializedKeyResponse { repeated RemoveBootkubeInitializedKey messages = 1; }

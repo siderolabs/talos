@@ -13,23 +13,25 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/pkg/constants"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // RunInstallerContainer performs an installation via the installer container.
 //
-//nolint: gocyclo
-func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, opts ...Option) error {
+//nolint:gocyclo
+func RunInstallerContainer(disk, platform, ref string, reg config.Registries, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
@@ -45,20 +47,22 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 		return err
 	}
 
+	defer client.Close() //nolint:errcheck
+
 	var img containerd.Image
 
-	if options.Pull {
+	if !options.Pull {
+		img, err = client.GetImage(ctx, ref)
+	}
+
+	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
 		img, err = image.Pull(ctx, reg, client, ref)
-		if err != nil {
-			return err
-		}
-	} else {
-		img, err = client.GetImage(ctx, ref)
-		if err != nil {
-			return err
-		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	mounts := []specs.Mount{
@@ -67,9 +71,9 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
-	var config *string
-	if config = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); config == nil {
-		return fmt.Errorf("no config option was found")
+	config := constants.ConfigNone
+	if c := procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); c != nil {
+		config = *c
 	}
 
 	upgrade := strconv.FormatBool(options.Upgrade)
@@ -81,10 +85,14 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 		"install",
 		"--disk=" + disk,
 		"--platform=" + platform,
-		"--config=" + *config,
+		"--config=" + config,
 		"--upgrade=" + upgrade,
 		"--force=" + force,
 		"--zero=" + zero,
+	}
+
+	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
+		args = append(args, "--board="+*c)
 	}
 
 	for _, arg := range options.ExtraKernelArgs {
@@ -101,6 +109,7 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 		oci.WithHostResolvconf,
 		oci.WithParentCgroupDevices,
 		oci.WithPrivileged,
+		oci.WithAllDevicesAllowed,
 	}
 
 	containerOpts := []containerd.NewContainerOpts{
@@ -114,11 +123,13 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 		return err
 	}
 
+	defer container.Delete(ctx, containerd.WithSnapshotCleanup) //nolint:errcheck
+
 	f, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0o666)
 	if err != nil {
 		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer f.Close()
 
 	w := &kmsg.Writer{KmsgWriter: f}
@@ -129,6 +140,8 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 	if err != nil {
 		return err
 	}
+
+	defer t.Delete(ctx) //nolint:errcheck
 
 	if err = t.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start %q task: %w", "upgrade", err)
@@ -147,4 +160,14 @@ func RunInstallerContainer(disk, platform, ref string, reg runtime.Registries, o
 	}
 
 	return nil
+}
+
+// OptionsFromUpgradeRequest builds installer options from upgrade request.
+func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest) []Option {
+	return []Option{
+		WithPull(false),
+		WithUpgrade(true),
+		WithForce(!in.GetPreserve()),
+		WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+	}
 }

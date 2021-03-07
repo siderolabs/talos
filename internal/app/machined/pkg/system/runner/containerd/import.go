@@ -14,8 +14,8 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	multierror "github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // ImportRequest represents an image import request.
@@ -61,19 +61,19 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 }
 
 // Import imports the images specified by the import requests.
-func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
+func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err error) {
 	err = conditions.WaitForFileToExist(i.options.containerdAddress).Wait(context.Background())
 	if err != nil {
 		return err
 	}
 
-	ctx := namespaces.WithNamespace(context.Background(), i.namespace)
+	ctx = namespaces.WithNamespace(ctx, i.namespace)
 
 	client, err := containerd.New(i.options.containerdAddress)
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	errCh := make(chan error)
@@ -88,7 +88,7 @@ func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
 					return fmt.Errorf("error opening %s: %w", r.Path, err)
 				}
 
-				defer tarball.Close() //nolint: errcheck
+				defer tarball.Close() //nolint:errcheck
 
 				imgs, err := client.Import(ctx, tarball, r.Options...)
 				if err != nil {
@@ -120,6 +120,6 @@ func (i *Importer) Import(reqs ...*ImportRequest) (err error) {
 }
 
 // Import imports the images specified by the import requests.
-func Import(namespace string, reqs ...*ImportRequest) error {
-	return NewImporter(namespace).Import(reqs...)
+func Import(ctx context.Context, namespace string, reqs ...*ImportRequest) error {
+	return NewImporter(namespace).Import(ctx, reqs...)
 }

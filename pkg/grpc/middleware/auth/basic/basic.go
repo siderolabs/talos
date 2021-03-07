@@ -6,12 +6,9 @@ package basic
 
 import (
 	"crypto/tls"
-	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	"github.com/talos-systems/talos/pkg/net"
 )
 
 // Credentials describes an authorization method.
@@ -23,7 +20,7 @@ type Credentials interface {
 
 // NewConnection initializes a grpc.ClientConn configured for basic
 // authentication.
-func NewConnection(address string, port int, creds credentials.PerRPCCredentials) (conn *grpc.ClientConn, err error) {
+func NewConnection(address string, creds credentials.PerRPCCredentials) (conn *grpc.ClientConn, err error) {
 	grpcOpts := []grpc.DialOption{}
 
 	grpcOpts = append(
@@ -35,7 +32,7 @@ func NewConnection(address string, port int, creds credentials.PerRPCCredentials
 		grpc.WithPerRPCCredentials(creds),
 	)
 
-	conn, err = grpc.Dial(fmt.Sprintf("%s:%d", net.FormatAddress(address), port), grpcOpts...)
+	conn, err = grpc.Dial(address, grpcOpts...)
 	if err != nil {
 		return
 	}

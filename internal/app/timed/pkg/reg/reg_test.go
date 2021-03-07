@@ -16,11 +16,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 )
 
 type TimedSuite struct {
@@ -47,10 +47,10 @@ func (suite *TimedSuite) TestTime() {
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(
@@ -82,10 +82,10 @@ func (suite *TimedSuite) TestTimeCheck() {
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(

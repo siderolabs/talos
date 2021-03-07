@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package health;
 
-option go_package = "github.com/talos-systems/talos/api/health";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/health";
 
 import "google/protobuf/empty.proto";
 

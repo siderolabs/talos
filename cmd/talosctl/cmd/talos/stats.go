@@ -17,30 +17,32 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/api/common"
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-// statsCmd represents the processes command.
+// statsCmd represents the stats command.
 var statsCmd = &cobra.Command{
 	Use:   "stats",
-	Short: "Get processes stats",
+	Short: "Get container stats",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var namespace string
+			var (
+				namespace string
+				driver    common.ContainerDriver
+			)
+
 			if kubernetes {
 				namespace = criconstants.K8sContainerdNamespace
+				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace
-			}
-			driver := common.ContainerDriver_CONTAINERD
-			if useCRI {
-				driver = common.ContainerDriver_CRI
+				driver = common.ContainerDriver_CONTAINERD
 			}
 
 			var remotePeer peer.Peer
@@ -95,6 +97,9 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 
 func init() {
 	statsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	statsCmd.Flags().BoolVarP(&useCRI, "use-cri", "c", false, "use the CRI driver")
+
+	statsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	statsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+
 	addCommand(statsCmd)
 }

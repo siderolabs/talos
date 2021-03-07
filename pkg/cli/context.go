@@ -28,15 +28,11 @@ func WithContext(ctx context.Context, f func(context.Context) error) error {
 		select {
 		case <-sigCh:
 			wrappedCtxCancel()
-		case <-wrappedCtx.Done():
-			return
-		case <-exited:
-		}
 
-		select {
-		case <-sigCh:
 			signal.Stop(sigCh)
 			fmt.Fprintln(os.Stderr, "Signal received, aborting, press Ctrl+C once again to abort immediately...")
+		case <-wrappedCtx.Done():
+			return
 		case <-exited:
 		}
 	}()

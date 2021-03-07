@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package networkd
 
 import (
@@ -11,8 +11,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type NetconfSuite struct {
@@ -69,71 +70,71 @@ func (suite *NetconfSuite) TestKernelNetconfIncomplete() {
 	suite.Assert().Equal(len(addr.Routes()), 1)
 }
 
-func sampleConfig() []runtime.Device {
-	return []runtime.Device{
-		{
-			Interface: "eth0",
-			CIDR:      "192.168.0.10/24",
+func sampleConfig() []config.Device {
+	return []config.Device{
+		&v1alpha1.Device{
+			DeviceInterface: "eth0",
+			DeviceCIDR:      "192.168.0.10/24",
 		},
-		{
-			Interface: "bond0",
-			CIDR:      "192.168.0.10/24",
-			Bond:      &runtime.Bond{Interfaces: []string{"lo"}},
+		&v1alpha1.Device{
+			DeviceInterface: "bond0",
+			DeviceCIDR:      "192.168.0.10/24",
+			DeviceBond:      &v1alpha1.Bond{BondInterfaces: []string{"lo"}},
 		},
-		{
-			Interface: "bond0",
-			Bond:      &runtime.Bond{Interfaces: []string{"lo"}, Mode: "balance-rr"},
+		&v1alpha1.Device{
+			DeviceInterface: "bond0",
+			DeviceBond:      &v1alpha1.Bond{BondInterfaces: []string{"lo"}, BondMode: "balance-rr"},
 		},
-		{
-			Interface: "eth0",
-			Ignore:    true,
+		&v1alpha1.Device{
+			DeviceInterface: "eth0",
+			DeviceIgnore:    true,
 		},
-		{
-			Interface: "eth0",
-			MTU:       9100,
-			CIDR:      "192.168.0.10/24",
-			Routes:    []runtime.Route{{Network: "10.0.0.0/8", Gateway: "10.0.0.1"}},
+		&v1alpha1.Device{
+			DeviceInterface: "eth0",
+			DeviceMTU:       9100,
+			DeviceCIDR:      "192.168.0.10/24",
+			DeviceRoutes:    []*v1alpha1.Route{{RouteNetwork: "10.0.0.0/8", RouteGateway: "10.0.0.1"}},
 		},
-		{
-			Interface: "bond0",
-			Bond: &runtime.Bond{
-				Interfaces: []string{"lo"},
-				Mode:       "balance-rr",
-				HashPolicy: "layer2",
-				LACPRate:   "fast",
-				MIIMon:     200,
-				UpDelay:    100,
-				DownDelay:  100,
+		&v1alpha1.Device{
+			DeviceInterface: "bond0",
+			DeviceBond: &v1alpha1.Bond{
+				BondInterfaces: []string{"lo"},
+				BondMode:       "balance-rr",
+				BondHashPolicy: "layer2",
+				BondLACPRate:   "fast",
+				BondMIIMon:     200,
+				BondUpDelay:    100,
+				BondDownDelay:  100,
 			},
 		},
-		{
-			Interface: "bondyolo0",
-			Bond: &runtime.Bond{
-				Interfaces:      []string{"lo"},
-				Mode:            "balance-rr",
-				HashPolicy:      "layer2",
-				LACPRate:        "fast",
-				MIIMon:          200,
-				UpDelay:         100,
-				DownDelay:       100,
-				UseCarrier:      false,
-				ARPInterval:     230,
-				ARPValidate:     "all",
-				ARPAllTargets:   "all",
-				Primary:         "lo",
-				PrimaryReselect: "better",
-				FailOverMac:     "none",
-				ResendIGMP:      10,
-				NumPeerNotif:    5,
-				AllSlavesActive: 1,
-				MinLinks:        1,
-				LPInterval:      100,
-				PacketsPerSlave: 50,
-				ADSelect:        "bandwidth",
-				ADActorSysPrio:  23,
-				ADUserPortKey:   323,
-				TLBDynamicLB:    1,
-				PeerNotifyDelay: 200,
+		&v1alpha1.Device{
+			DeviceInterface: "bondyolo0",
+			DeviceBond: &v1alpha1.Bond{
+				BondInterfaces:      []string{"lo"},
+				BondMode:            "balance-rr",
+				BondHashPolicy:      "layer2",
+				BondLACPRate:        "fast",
+				BondMIIMon:          200,
+				BondUpDelay:         100,
+				BondDownDelay:       100,
+				BondUseCarrier:      false,
+				BondARPInterval:     230,
+				BondARPValidate:     "all",
+				BondARPAllTargets:   "all",
+				BondPrimary:         "lo",
+				BondPrimaryReselect: "better",
+				BondFailOverMac:     "none",
+				BondResendIGMP:      10,
+				BondNumPeerNotif:    5,
+				BondAllSlavesActive: 1,
+				BondMinLinks:        1,
+				BondLPInterval:      100,
+				BondPacketsPerSlave: 50,
+				BondADSelect:        "bandwidth",
+				BondADActorSysPrio:  23,
+				BondADUserPortKey:   323,
+				BondTLBDynamicLB:    1,
+				BondPeerNotifyDelay: 200,
 			},
 		},
 	}

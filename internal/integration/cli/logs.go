@@ -8,7 +8,6 @@ package cli
 
 import (
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strings"
 
@@ -27,15 +26,12 @@ func (suite *LogsSuite) SuiteName() string {
 
 // TestServiceLogs verifies that logs are displayed.
 func (suite *LogsSuite) TestServiceLogs() {
-	suite.RunCLI([]string{"logs", "kubelet"}) // default checks for stdout not empty
+	suite.RunCLI([]string{"logs", "kubelet", "--nodes", suite.RandomDiscoveredNode()}) // default checks for stdout not empty
 }
 
 // TestTailLogs verifies that logs can be displayed with tail lines.
 func (suite *LogsSuite) TestTailLogs() {
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-
-	node := nodes[rand.Intn(len(nodes))]
+	node := suite.RandomDiscoveredNode()
 
 	// run some machined API calls to produce enough log lines
 	for i := 0; i < 10; i++ {
@@ -55,11 +51,10 @@ func (suite *LogsSuite) TestTailLogs() {
 
 // TestServiceNotFound verifies that logs displays an error if service is not found.
 func (suite *LogsSuite) TestServiceNotFound() {
-	suite.RunCLI([]string{"logs", "servicenotfound"},
-		base.ShouldFail(),
+	suite.RunCLI([]string{"logs", "--nodes", suite.RandomDiscoveredNode(), "servicenotfound"},
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`error getting logs:.+ log "servicenotfound" was not registered`)),
+		base.StderrShouldMatch(regexp.MustCompile(`ERROR:.+ log "servicenotfound" was not registered`)),
 	)
 }
 

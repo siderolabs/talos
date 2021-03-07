@@ -10,18 +10,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	criconstants "github.com/containerd/cri/pkg/constants"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,11 +31,10 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/constants"
-	tnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
@@ -68,6 +64,8 @@ func (k *Kubelet) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//
+//nolint:gocyclo
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
@@ -109,13 +107,13 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	if err != nil {
 		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer client.Close()
 
 	// Pull the image and unpack it.
-	containerdctx := namespaces.WithNamespace(ctx, "k8s.io")
+	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Machine().Kubelet().Image())
+	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Machine().Kubelet().Image(), image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return err
 	}
@@ -135,7 +133,7 @@ func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer {
+	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
 		return []string{"cri", "networkd"}
 	}
 
@@ -174,7 +172,13 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// TODO(andrewrynhard): We should verify that the mount source is
 	// allowlisted. There is the potential that a user can expose
 	// sensitive information.
-	mounts = append(mounts, r.Config().Machine().Kubelet().ExtraMounts()...)
+	for _, mount := range r.Config().Machine().Kubelet().ExtraMounts() {
+		if err = os.MkdirAll(mount.Source, 0o700); err != nil {
+			return nil, err
+		}
+
+		mounts = append(mounts, mount)
+	}
 
 	env := []string{}
 	for key, val := range r.Config().Machine().Env() {
@@ -185,7 +189,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		r.Config().Debug(),
 		&args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithNamespace(criconstants.K8sContainerdNamespace),
+		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(r.Config().Machine().Kubelet().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
@@ -195,6 +199,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithParentCgroupDevices,
 			oci.WithPrivileged,
+			oci.WithAllDevicesAllowed,
 		),
 	),
 		restart.WithType(restart.Forever),
@@ -215,7 +220,7 @@ func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
@@ -243,9 +248,9 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
 			Kind:       "KubeletConfiguration",
 		},
-		StaticPodPath:      "/etc/kubernetes/manifests",
+		StaticPodPath:      constants.ManifestsDirectory,
 		Address:            "0.0.0.0",
-		Port:               10250,
+		Port:               constants.KubeletPort,
 		RotateCertificates: true,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
@@ -269,6 +274,11 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 }
 
 func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
+	nodename, err := r.NodeName()
+	if err != nil {
+		return nil, err
+	}
+
 	denyListArgs := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
@@ -277,8 +287,10 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"config":                     "/etc/kubernetes/kubelet.yaml",
 		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
 
-		"cert-dir":     "/var/lib/kubelet/pki",
+		"cert-dir":     constants.KubeletPKIDir,
 		"cni-conf-dir": cni.DefaultNetDir,
+
+		"hostname-override": nodename,
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
@@ -293,23 +305,18 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 }
 
 func writeKubeletConfig(r runtime.Runtime) error {
-	dnsServiceIPs := []string{}
-
-	for _, cidr := range strings.Split(r.Config().Cluster().Network().ServiceCIDR(), ",") {
-		_, svcCIDR, err := net.ParseCIDR(cidr)
-		if err != nil {
-			return fmt.Errorf("failed to parse service CIDR %s: %v", cidr, err)
-		}
-
-		dnsIP, err := tnet.NthIPInNetwork(svcCIDR, 10)
-		if err != nil {
-			return fmt.Errorf("failed to calculate Nth IP in CIDR %s: %v", svcCIDR, err)
-		}
-
-		dnsServiceIPs = append(dnsServiceIPs, dnsIP.String())
+	dnsServiceIPs, err := r.Config().Cluster().Network().DNSServiceIPs()
+	if err != nil {
+		return fmt.Errorf("failed to get DNS service IPs: %w", err)
 	}
 
-	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPs, r.Config().Cluster().Network().DNSDomain())
+	dnsServiceIPsString := make([]string, 0, len(dnsServiceIPs))
+
+	for _, dnsIP := range dnsServiceIPs {
+		dnsServiceIPsString = append(dnsServiceIPsString, dnsIP.String())
+	}
+
+	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPsString, r.Config().Cluster().Network().DNSDomain())
 
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,

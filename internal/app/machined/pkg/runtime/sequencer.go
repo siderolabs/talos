@@ -7,15 +7,17 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Sequence represents a sequence type.
 type Sequence int
 
 const (
+	// SequenceApplyConfiguration is the apply configuration sequence.
+	SequenceApplyConfiguration Sequence = iota
 	// SequenceBoot is the boot sequence.
-	SequenceBoot Sequence = iota
+	SequenceBoot
 	// SequenceBootstrap is the boot sequence.
 	SequenceBootstrap
 	// SequenceInitialize is the initialize sequence.
@@ -26,39 +28,42 @@ const (
 	SequenceShutdown
 	// SequenceUpgrade is the upgrade sequence.
 	SequenceUpgrade
+	// SequenceStageUpgrade is the stage upgrade sequence.
+	SequenceStageUpgrade
 	// SequenceReset is the reset sequence.
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
 	SequenceReboot
-	// SequenceRecover is the recover sequence.
-	SequenceRecover
 	// SequenceNoop is the noop sequence.
 	SequenceNoop
 )
 
 const (
-	boot       = "boot"
-	bootstrap  = "bootstrap"
-	initialize = "initialize"
-	install    = "install"
-	shutdown   = "shutdown"
-	upgrade    = "upgrade"
-	reset      = "reset"
-	reboot     = "reboot"
-	recover    = "recover"
-	noop       = "noop"
+	applyConfiguration = "applyConfiguration"
+	boot               = "boot"
+	bootstrap          = "bootstrap"
+	initialize         = "initialize"
+	install            = "install"
+	shutdown           = "shutdown"
+	upgrade            = "upgrade"
+	stageUpgrade       = "stageUpgrade"
+	reset              = "reset"
+	reboot             = "reboot"
+	noop               = "noop"
 )
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{boot, bootstrap, initialize, install, shutdown, upgrade, reset, reboot, recover, noop}[s]
+	return [...]string{applyConfiguration, boot, bootstrap, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot, noop}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
+	case applyConfiguration:
+		seq = SequenceApplyConfiguration
 	case boot:
 		seq = SequenceBoot
 	case bootstrap:
@@ -71,12 +76,12 @@ func ParseSequence(s string) (seq Sequence, err error) {
 		seq = SequenceShutdown
 	case upgrade:
 		seq = SequenceUpgrade
+	case stageUpgrade:
+		seq = SequenceStageUpgrade
 	case reset:
 		seq = SequenceReset
 	case reboot:
 		seq = SequenceReboot
-	case recover:
-		seq = SequenceRecover
 	case noop:
 		seq = SequenceNoop
 	default:
@@ -86,17 +91,31 @@ func ParseSequence(s string) (seq Sequence, err error) {
 	return seq, nil
 }
 
+// ResetOptions are parameters to Reset sequence.
+type ResetOptions interface {
+	GetGraceful() bool
+	GetReboot() bool
+	GetSystemDiskTargets() []PartitionTarget
+}
+
+// PartitionTarget provides interface to the disk partition.
+type PartitionTarget interface {
+	fmt.Stringer
+	Format() error
+}
+
 // Sequencer describes the set of sequences required for the lifecycle
 // management of the operating system.
 type Sequencer interface {
+	ApplyConfiguration(Runtime, *machine.ApplyConfigurationRequest) []Phase
 	Boot(Runtime) []Phase
 	Bootstrap(Runtime) []Phase
 	Initialize(Runtime) []Phase
 	Install(Runtime) []Phase
 	Reboot(Runtime) []Phase
-	Recover(Runtime, *machine.RecoverRequest) []Phase
-	Reset(Runtime, *machine.ResetRequest) []Phase
+	Reset(Runtime, ResetOptions) []Phase
 	Shutdown(Runtime) []Phase
+	StageUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }
 

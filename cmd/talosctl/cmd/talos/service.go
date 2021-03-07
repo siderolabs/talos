@@ -16,9 +16,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // serviceCmd represents the service command.
@@ -136,7 +136,7 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 		for i := range svc.Events.Events {
 			event := svc.Events.Events[len(svc.Events.Events)-1-i]
 
-			// nolint: errcheck
+			//nolint:errcheck
 			ts, _ := ptypes.Timestamp(event.Ts)
 			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
 			label = ""
@@ -249,7 +249,7 @@ func (svc serviceInfoWrapper) LastUpdated() string {
 		return ""
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	ts, _ := ptypes.Timestamp(svc.Events.Events[len(svc.Events.Events)-1].Ts)
 
 	return time.Since(ts).Round(time.Second).String()

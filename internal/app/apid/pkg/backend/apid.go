@@ -10,15 +10,16 @@ import (
 	"sync"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/talos-systems/talos/api/common"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // APID backend performs proxying to another apid instance.
@@ -77,7 +78,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 		ctx,
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
 		grpc.WithTransportCredentials(a.creds),
-		grpc.WithCodec(proxy.Codec()), //nolint: staticcheck
+		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 	)
 
 	return outCtx, a.conn, err
@@ -199,6 +200,7 @@ func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
 		Metadata: &common.Metadata{
 			Hostname: a.target,
 			Error:    err.Error(),
+			Status:   status.Convert(err).Proto(),
 		},
 	}
 
@@ -219,7 +221,7 @@ func (a *APID) Close() {
 	defer a.mu.Unlock()
 
 	if a.conn != nil {
-		a.conn.Close() //nolint: errcheck
+		a.conn.Close() //nolint:errcheck
 		a.conn = nil
 	}
 }

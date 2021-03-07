@@ -11,7 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/circular"
-	"github.com/talos-systems/talos/internal/pkg/tail"
+	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // These constants should some day move to config.
@@ -132,7 +132,8 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 	if opt.TailLines != nil {
 		err := tail.SeekLines(r, *opt.TailLines)
 		if err != nil {
-			r.Close() //nolint: errcheck
+			r.Close() //nolint:errcheck
+
 			return nil, fmt.Errorf("error tailing log: %w", err)
 		}
 	}

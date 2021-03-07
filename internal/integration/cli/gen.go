@@ -9,6 +9,7 @@ package cli
 import (
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 )
@@ -26,6 +27,7 @@ func (suite *GenSuite) SuiteName() string {
 	return "cli.GenSuite"
 }
 
+// SetupTest ...
 func (suite *GenSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -37,6 +39,7 @@ func (suite *GenSuite) SetupTest() {
 	suite.Require().NoError(os.Chdir(suite.tmpDir))
 }
 
+// TearDownTest ...
 func (suite *GenSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))
@@ -100,6 +103,33 @@ func (suite *GenSuite) TestKeypair() {
 
 	suite.Assert().FileExists("Foo.crt")
 	suite.Assert().FileExists("Foo.key")
+}
+
+// TestGenConfigURLValidation ...
+func (suite *GenSuite) TestGenConfigURLValidation() {
+	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1"},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:6443"`))))
+
+	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1:6443"},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:6443"`))))
+
+	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1:2000"},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
+
+	suite.RunCLI([]string{"gen", "config", "foo", "http://192.168.0.1:2000"},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
 }
 
 func init() {

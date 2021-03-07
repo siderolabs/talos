@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
-
 	stdlibruntime "runtime"
+	"sync"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -84,9 +83,10 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	w, err = r.opts.LoggingManager.ServiceLog(r.id).Writer()
 	if err != nil {
 		err = fmt.Errorf("service log handler: %w", err)
+
 		return
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer w.Close()
 
 	var writer io.Writer

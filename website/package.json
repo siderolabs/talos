@@ -1,0 +1,31 @@
+{
+  "name": "sidero",
+  "private": true,
+  "scripts": {
+    "build": "gridsome build",
+    "develop": "gridsome develop",
+    "explore": "gridsome explore"
+  },
+  "dependencies": {
+    "@gridsome/source-graphql": "^0.1.0",
+    "gridsome": "^0.7.21",
+    "gridsome-source-docs": "github:andrewrynhard/gridsome-source-docs#main",
+    "slugify": "^1.4.5",
+    "tailwindcss-grid": "^1.2.1",
+    "vuex": "^3.6.0"
+  },
+  "devDependencies": {
+    "@gridsome/plugin-google-analytics": "^0.1.2",
+    "@gridsome/plugin-sitemap": "^0.2.3",
+    "@gridsome/remark-prismjs": "^0.3.0",
+    "@gridsome/source-filesystem": "^0.6.2",
+    "@gridsome/transformer-remark": "^0.6.3",
+    "fuse.js": "^3.4.6",
+    "gridsome-plugin-tailwindcss": "^3.0.1",
+    "node-sass": "^4.13.1",
+    "prism-themes": "^1.5.0",
+    "sass-loader": "^8.0.2",
+    "tailwindcss": "^1.9.6",
+    "vue-feather-icons": "^5.0.0"
+  }
+}

@@ -9,13 +9,16 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/providers"
 )
 
 // showCmd represents the cluster show command.
@@ -35,24 +38,38 @@ func show(ctx context.Context) error {
 		return err
 	}
 
-	defer provisioner.Close() //nolint: errcheck
+	defer provisioner.Close() //nolint:errcheck
 
 	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {
 		return err
 	}
 
+	return showCluster(cluster)
+}
+
+func showCluster(cluster provision.Cluster) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "PROVISIONER\t%s\n", cluster.Provisioner())
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
 	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
 
-	ones, _ := cluster.Info().Network.CIDR.Mask.Size()
-	fmt.Fprintf(w, "NETWORK CIDR\t%s/%d\n", cluster.Info().Network.CIDR.IP, ones)
-	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", cluster.Info().Network.GatewayAddr)
+	cidrs := make([]string, len(cluster.Info().Network.CIDRs))
+	for i := range cidrs {
+		cidrs[i] = net.FormatCIDR(cluster.Info().Network.CIDRs[i].IP, cluster.Info().Network.CIDRs[i])
+	}
+
+	fmt.Fprintf(w, "NETWORK CIDR\t%s\n", strings.Join(cidrs, ","))
+
+	gateways := make([]string, len(cluster.Info().Network.GatewayAddrs))
+	for i := range gateways {
+		gateways[i] = cluster.Info().Network.GatewayAddrs[i].String()
+	}
+
+	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
 
-	if err = w.Flush(); err != nil {
+	if err := w.Flush(); err != nil {
 		return err
 	}
 
@@ -78,13 +95,18 @@ func show(ctx context.Context) error {
 
 		disk := "-"
 		if node.DiskSize > 0 {
-			disk = humanize.Bytes(uint64(node.DiskSize))
+			disk = humanize.Bytes(node.DiskSize)
+		}
+
+		ips := make([]string, len(node.IPs))
+		for i := range ips {
+			ips[i] = node.IPs[i].String()
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			node.Name,
 			node.Type,
-			node.PrivateIP,
+			strings.Join(ips, ","),
 			cpus,
 			mem,
 			disk,

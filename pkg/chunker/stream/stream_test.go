@@ -56,16 +56,16 @@ func (suite *StreamChunkerSuite) TestStreaming() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("abc"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("def"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("ghi"))
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("jkl"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("mno"))
 
 	suite.Require().NoError(suite.writer.Close())
@@ -82,16 +82,16 @@ func (suite *StreamChunkerSuite) TestStreamingSmallBuf() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("abc"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("def"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("ghi"))
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("jkl"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("mno"))
 
 	suite.Require().NoError(suite.writer.Close())
@@ -108,23 +108,23 @@ func (suite *StreamChunkerSuite) TestStreamingCancel() {
 	chunksCh := chunker.Read()
 	combinedCh := collectChunks(chunksCh)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("abc"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("def"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("ghi"))
 	time.Sleep(50 * time.Millisecond)
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("jkl"))
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte("mno"))
 	time.Sleep(50 * time.Millisecond)
 
 	ctxCancel()
 
 	// need any I/O for chunker to notice that context got canceled
-	// nolint: errcheck
+	//nolint:errcheck
 	suite.writer.Write([]byte(""))
 
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)

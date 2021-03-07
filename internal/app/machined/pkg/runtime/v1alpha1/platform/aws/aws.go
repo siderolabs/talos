@@ -16,15 +16,15 @@ import (
 	"time"
 
 	"github.com/fullsailor/pkcs7"
-
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 )
 
 const (
-	// AWSExternalIPEndpoint displays all external addresses associated with the instance
+	// AWSExternalIPEndpoint displays all external addresses associated with the instance.
 	AWSExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
 	// AWSHostnameEndpoint is the local EC2 endpoint for the hostname.
 	AWSHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
@@ -73,17 +73,19 @@ func IsEC2() (b bool) {
 	if err != nil {
 		return
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("failed to download PKCS7 signature: %d\n", resp.StatusCode)
+
 		return
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
+
 		return
 	}
 
@@ -93,24 +95,28 @@ func IsEC2() (b bool) {
 	pemBlock, _ := pem.Decode(data)
 	if pemBlock == nil {
 		log.Println("failed to decode PEM block")
+
 		return
 	}
 
 	p7, err := pkcs7.Parse(pemBlock.Bytes)
 	if err != nil {
 		log.Printf("failed to parse PKCS7 signature: %v\n", err)
+
 		return
 	}
 
 	pemBlock, _ = pem.Decode([]byte(AWSPublicCertificate))
 	if pemBlock == nil {
 		log.Println("failed to decode PEM block")
+
 		return
 	}
 
 	certificate, err := x509.ParseCertificate(pemBlock.Bytes)
 	if err != nil {
 		log.Printf("failed to parse X509 certificate: %v\n", err)
+
 		return
 	}
 
@@ -119,6 +125,7 @@ func IsEC2() (b bool) {
 	err = p7.Verify()
 	if err != nil {
 		log.Printf("failed to verify PKCS7 signature: %v", err)
+
 		return
 	}
 
@@ -133,10 +140,12 @@ func (a *AWS) Name() string {
 }
 
 // Configuration implements the runtime.Platform interface.
-func (a *AWS) Configuration() ([]byte, error) {
+func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", AWSUserDataEndpoint)
 
-	return download.Download(AWSUserDataEndpoint)
+	return download.Download(ctx, AWSUserDataEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Mode implements the runtime.Platform interface.
@@ -145,10 +154,7 @@ func (a *AWS) Mode() runtime.Mode {
 }
 
 // Hostname implements the runtime.Platform interface.
-func (a *AWS) Hostname() (hostname []byte, err error) {
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
-
+func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSHostnameEndpoint, nil)
 	if err != nil {
 		return nil, err
@@ -158,7 +164,7 @@ func (a *AWS) Hostname() (hostname []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -169,15 +175,12 @@ func (a *AWS) Hostname() (hostname []byte, err error) {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
+func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	if req, err = http.NewRequestWithContext(ctx, "GET", AWSExternalIPEndpoint, nil); err != nil {
 		return
@@ -188,7 +191,7 @@ func (a *AWS) ExternalIPs() (addrs []net.IP, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

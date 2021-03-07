@@ -13,10 +13,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/chunker"
 	"github.com/talos-systems/talos/pkg/chunker/file"
 	"github.com/talos-systems/talos/pkg/chunker/stream"
+	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // Container presents information about a container.
@@ -79,7 +79,8 @@ func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines in
 		if tailLines >= 0 {
 			err = tail.SeekLines(f, tailLines)
 			if err != nil {
-				f.Close() //nolint: errcheck
+				f.Close() //nolint:errcheck
+
 				return nil, nil, fmt.Errorf("error tailing log: %w", err)
 			}
 		}

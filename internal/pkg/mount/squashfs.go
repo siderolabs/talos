@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/freddierice/go-losetup.v1"
 
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // SquashfsMountPoints returns the mountpoints required to boot the system.
@@ -21,7 +21,7 @@ func SquashfsMountPoints(prefix string) (mountpoints *Points, err error) {
 	}
 
 	squashfs := NewMountPoints()
-	squashfs.Set("squashfs", NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", WithPrefix(prefix), WithReadOnly(true), WithShared(true)))
+	squashfs.Set("squashfs", NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", WithPrefix(prefix), WithFlags(ReadOnly|Shared)))
 
 	return squashfs, nil
 }

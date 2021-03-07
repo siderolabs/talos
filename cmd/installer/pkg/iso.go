@@ -7,36 +7,20 @@ package pkg
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
-// Mkisofs creates an iso by invoking the `mkisofs` command.
-func Mkisofs(iso, dir string) (err error) {
+// CreateISO creates an iso by invoking the `grub-mkrescue` command.
+func CreateISO(iso, dir string) (err error) {
 	_, err = cmd.Run(
-		"mkisofs",
-		"-V", "TALOS",
-		"-o", iso,
-		"-r",
-		"-b", "isolinux/isolinux.bin",
-		"-c", "isolinux/boot.cat",
-		"-no-emul-boot",
-		"-boot-load-size",
-		"4",
-		"-boot-info-table",
+		"grub-mkrescue",
+		"--compress=xz",
+		"--output="+iso,
 		dir,
 	)
 
 	if err != nil {
 		return fmt.Errorf("failed to create ISO: %w", err)
-	}
-
-	return nil
-}
-
-// Isohybrid creates a hybrid iso by invoking the `isohybrid` command.
-func Isohybrid(iso string) (err error) {
-	if _, err = cmd.Run("isohybrid", iso); err != nil {
-		return fmt.Errorf("failed to create hybrid ISO: %w", err)
 	}
 
 	return nil

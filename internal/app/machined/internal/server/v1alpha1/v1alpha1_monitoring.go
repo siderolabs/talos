@@ -14,7 +14,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/prometheus/procfs"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Hostname implements the machine.MachineServer interface.
@@ -254,7 +254,7 @@ func (s *Server) DiskStats(ctx context.Context, in *empty.Empty) (*machine.DiskS
 		return nil, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	resp := machine.DiskStats{
 		Devices: []*machine.DiskStat{},

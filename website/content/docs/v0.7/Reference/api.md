@@ -1,0 +1,2673 @@
+---
+title: API
+---
+
+## Table of Contents
+
+- [health/health.proto](#health/health.proto)
+    - [HealthCheck](#health.HealthCheck)
+    - [HealthCheckResponse](#health.HealthCheckResponse)
+    - [HealthWatchRequest](#health.HealthWatchRequest)
+    - [ReadyCheck](#health.ReadyCheck)
+    - [ReadyCheckResponse](#health.ReadyCheckResponse)
+  
+    - [HealthCheck.ServingStatus](#health.HealthCheck.ServingStatus)
+    - [ReadyCheck.ReadyStatus](#health.ReadyCheck.ReadyStatus)
+  
+    - [Health](#health.Health)
+  
+- [machine/machine.proto](#machine/machine.proto)
+    - [ApplyConfiguration](#machine.ApplyConfiguration)
+    - [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest)
+    - [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse)
+    - [Bootstrap](#machine.Bootstrap)
+    - [BootstrapRequest](#machine.BootstrapRequest)
+    - [BootstrapResponse](#machine.BootstrapResponse)
+    - [CPUInfo](#machine.CPUInfo)
+    - [CPUInfoResponse](#machine.CPUInfoResponse)
+    - [CPUStat](#machine.CPUStat)
+    - [CPUsInfo](#machine.CPUsInfo)
+    - [Container](#machine.Container)
+    - [ContainerInfo](#machine.ContainerInfo)
+    - [ContainersRequest](#machine.ContainersRequest)
+    - [ContainersResponse](#machine.ContainersResponse)
+    - [CopyRequest](#machine.CopyRequest)
+    - [DiskStat](#machine.DiskStat)
+    - [DiskStats](#machine.DiskStats)
+    - [DiskStatsResponse](#machine.DiskStatsResponse)
+    - [DiskUsageInfo](#machine.DiskUsageInfo)
+    - [DiskUsageRequest](#machine.DiskUsageRequest)
+    - [DmesgRequest](#machine.DmesgRequest)
+    - [EtcdForfeitLeadership](#machine.EtcdForfeitLeadership)
+    - [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest)
+    - [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse)
+    - [EtcdLeaveCluster](#machine.EtcdLeaveCluster)
+    - [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest)
+    - [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse)
+    - [EtcdMemberList](#machine.EtcdMemberList)
+    - [EtcdMemberListRequest](#machine.EtcdMemberListRequest)
+    - [EtcdMemberListResponse](#machine.EtcdMemberListResponse)
+    - [Event](#machine.Event)
+    - [EventsRequest](#machine.EventsRequest)
+    - [FileInfo](#machine.FileInfo)
+    - [Hostname](#machine.Hostname)
+    - [HostnameResponse](#machine.HostnameResponse)
+    - [ListRequest](#machine.ListRequest)
+    - [LoadAvg](#machine.LoadAvg)
+    - [LoadAvgResponse](#machine.LoadAvgResponse)
+    - [LogsRequest](#machine.LogsRequest)
+    - [MemInfo](#machine.MemInfo)
+    - [Memory](#machine.Memory)
+    - [MemoryResponse](#machine.MemoryResponse)
+    - [MountStat](#machine.MountStat)
+    - [Mounts](#machine.Mounts)
+    - [MountsResponse](#machine.MountsResponse)
+    - [NetDev](#machine.NetDev)
+    - [NetworkDeviceStats](#machine.NetworkDeviceStats)
+    - [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse)
+    - [PhaseEvent](#machine.PhaseEvent)
+    - [PlatformInfo](#machine.PlatformInfo)
+    - [Process](#machine.Process)
+    - [ProcessInfo](#machine.ProcessInfo)
+    - [ProcessesRequest](#machine.ProcessesRequest)
+    - [ProcessesResponse](#machine.ProcessesResponse)
+    - [ReadRequest](#machine.ReadRequest)
+    - [Reboot](#machine.Reboot)
+    - [RebootResponse](#machine.RebootResponse)
+    - [Recover](#machine.Recover)
+    - [RecoverRequest](#machine.RecoverRequest)
+    - [RecoverResponse](#machine.RecoverResponse)
+    - [Reset](#machine.Reset)
+    - [ResetRequest](#machine.ResetRequest)
+    - [ResetResponse](#machine.ResetResponse)
+    - [Restart](#machine.Restart)
+    - [RestartRequest](#machine.RestartRequest)
+    - [RestartResponse](#machine.RestartResponse)
+    - [Rollback](#machine.Rollback)
+    - [RollbackRequest](#machine.RollbackRequest)
+    - [RollbackResponse](#machine.RollbackResponse)
+    - [SequenceEvent](#machine.SequenceEvent)
+    - [ServiceEvent](#machine.ServiceEvent)
+    - [ServiceEvents](#machine.ServiceEvents)
+    - [ServiceHealth](#machine.ServiceHealth)
+    - [ServiceInfo](#machine.ServiceInfo)
+    - [ServiceList](#machine.ServiceList)
+    - [ServiceListResponse](#machine.ServiceListResponse)
+    - [ServiceRestart](#machine.ServiceRestart)
+    - [ServiceRestartRequest](#machine.ServiceRestartRequest)
+    - [ServiceRestartResponse](#machine.ServiceRestartResponse)
+    - [ServiceStart](#machine.ServiceStart)
+    - [ServiceStartRequest](#machine.ServiceStartRequest)
+    - [ServiceStartResponse](#machine.ServiceStartResponse)
+    - [ServiceStateEvent](#machine.ServiceStateEvent)
+    - [ServiceStop](#machine.ServiceStop)
+    - [ServiceStopRequest](#machine.ServiceStopRequest)
+    - [ServiceStopResponse](#machine.ServiceStopResponse)
+    - [Shutdown](#machine.Shutdown)
+    - [ShutdownResponse](#machine.ShutdownResponse)
+    - [SoftIRQStat](#machine.SoftIRQStat)
+    - [StartRequest](#machine.StartRequest)
+    - [StartResponse](#machine.StartResponse)
+    - [Stat](#machine.Stat)
+    - [Stats](#machine.Stats)
+    - [StatsRequest](#machine.StatsRequest)
+    - [StatsResponse](#machine.StatsResponse)
+    - [StopRequest](#machine.StopRequest)
+    - [StopResponse](#machine.StopResponse)
+    - [SystemStat](#machine.SystemStat)
+    - [SystemStatResponse](#machine.SystemStatResponse)
+    - [TaskEvent](#machine.TaskEvent)
+    - [Upgrade](#machine.Upgrade)
+    - [UpgradeRequest](#machine.UpgradeRequest)
+    - [UpgradeResponse](#machine.UpgradeResponse)
+    - [Version](#machine.Version)
+    - [VersionInfo](#machine.VersionInfo)
+    - [VersionResponse](#machine.VersionResponse)
+  
+    - [PhaseEvent.Action](#machine.PhaseEvent.Action)
+    - [RecoverRequest.Source](#machine.RecoverRequest.Source)
+    - [SequenceEvent.Action](#machine.SequenceEvent.Action)
+    - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
+    - [TaskEvent.Action](#machine.TaskEvent.Action)
+  
+    - [MachineService](#machine.MachineService)
+    - [MaintenanceService](#machine.MaintenanceService)
+  
+- [network/network.proto](#network/network.proto)
+    - [Interface](#network.Interface)
+    - [Interfaces](#network.Interfaces)
+    - [InterfacesResponse](#network.InterfacesResponse)
+    - [Route](#network.Route)
+    - [Routes](#network.Routes)
+    - [RoutesResponse](#network.RoutesResponse)
+  
+    - [AddressFamily](#network.AddressFamily)
+    - [InterfaceFlags](#network.InterfaceFlags)
+    - [RouteProtocol](#network.RouteProtocol)
+  
+    - [NetworkService](#network.NetworkService)
+  
+- [os/os.proto](#os/os.proto)
+    - [OSService](#os.OSService)
+  
+- [security/security.proto](#security/security.proto)
+    - [CertificateRequest](#securityapi.CertificateRequest)
+    - [CertificateResponse](#securityapi.CertificateResponse)
+    - [ReadFileRequest](#securityapi.ReadFileRequest)
+    - [ReadFileResponse](#securityapi.ReadFileResponse)
+    - [WriteFileRequest](#securityapi.WriteFileRequest)
+    - [WriteFileResponse](#securityapi.WriteFileResponse)
+  
+    - [SecurityService](#securityapi.SecurityService)
+  
+- [time/time.proto](#time/time.proto)
+    - [Time](#time.Time)
+    - [TimeRequest](#time.TimeRequest)
+    - [TimeResponse](#time.TimeResponse)
+  
+    - [TimeService](#time.TimeService)
+  
+- [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="health/health.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## health/health.proto
+
+
+
+<a name="health.HealthCheck"></a>
+
+### HealthCheck
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [HealthCheck.ServingStatus](#health.HealthCheck.ServingStatus) |  |  |
+
+
+
+
+
+
+<a name="health.HealthCheckResponse"></a>
+
+### HealthCheckResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [HealthCheck](#health.HealthCheck) | repeated |  |
+
+
+
+
+
+
+<a name="health.HealthWatchRequest"></a>
+
+### HealthWatchRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interval_seconds | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="health.ReadyCheck"></a>
+
+### ReadyCheck
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [ReadyCheck.ReadyStatus](#health.ReadyCheck.ReadyStatus) |  |  |
+
+
+
+
+
+
+<a name="health.ReadyCheckResponse"></a>
+
+### ReadyCheckResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ReadyCheck](#health.ReadyCheck) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="health.HealthCheck.ServingStatus"></a>
+
+### HealthCheck.ServingStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNKNOWN | 0 |  |
+| SERVING | 1 |  |
+| NOT_SERVING | 2 |  |
+
+
+
+<a name="health.ReadyCheck.ReadyStatus"></a>
+
+### ReadyCheck.ReadyStatus
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNKNOWN | 0 |  |
+| READY | 1 |  |
+| NOT_READY | 2 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="health.Health"></a>
+
+### Health
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Check | [.google.protobuf.Empty](#google.protobuf.Empty) | [HealthCheckResponse](#health.HealthCheckResponse) |  |
+| Watch | [HealthWatchRequest](#health.HealthWatchRequest) | [HealthCheckResponse](#health.HealthCheckResponse) stream |  |
+| Ready | [.google.protobuf.Empty](#google.protobuf.Empty) | [ReadyCheckResponse](#health.ReadyCheckResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="machine/machine.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/machine.proto
+
+
+
+<a name="machine.ApplyConfiguration"></a>
+
+### ApplyConfiguration
+ApplyConfigurationResponse describes the response to a configuration request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.ApplyConfigurationRequest"></a>
+
+### ApplyConfigurationRequest
+rpc applyConfiguration
+ApplyConfiguration describes a request to assert a new configuration upon a
+node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.ApplyConfigurationResponse"></a>
+
+### ApplyConfigurationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ApplyConfiguration](#machine.ApplyConfiguration) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Bootstrap"></a>
+
+### Bootstrap
+The bootstrap message containing the bootstrap status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.BootstrapRequest"></a>
+
+### BootstrapRequest
+rpc bootstrap
+
+
+
+
+
+
+<a name="machine.BootstrapResponse"></a>
+
+### BootstrapResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Bootstrap](#machine.Bootstrap) | repeated |  |
+
+
+
+
+
+
+<a name="machine.CPUInfo"></a>
+
+### CPUInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| processor | [uint32](#uint32) |  |  |
+| vendor_id | [string](#string) |  |  |
+| cpu_family | [string](#string) |  |  |
+| model | [string](#string) |  |  |
+| model_name | [string](#string) |  |  |
+| stepping | [string](#string) |  |  |
+| microcode | [string](#string) |  |  |
+| cpu_mhz | [double](#double) |  |  |
+| cache_size | [string](#string) |  |  |
+| physical_id | [string](#string) |  |  |
+| siblings | [uint32](#uint32) |  |  |
+| core_id | [string](#string) |  |  |
+| cpu_cores | [uint32](#uint32) |  |  |
+| apic_id | [string](#string) |  |  |
+| initial_apic_id | [string](#string) |  |  |
+| fpu | [string](#string) |  |  |
+| fpu_exception | [string](#string) |  |  |
+| cpu_id_level | [uint32](#uint32) |  |  |
+| wp | [string](#string) |  |  |
+| flags | [string](#string) | repeated |  |
+| bugs | [string](#string) | repeated |  |
+| bogo_mips | [double](#double) |  |  |
+| cl_flush_size | [uint32](#uint32) |  |  |
+| cache_alignment | [uint32](#uint32) |  |  |
+| address_sizes | [string](#string) |  |  |
+| power_management | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.CPUInfoResponse"></a>
+
+### CPUInfoResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [CPUsInfo](#machine.CPUsInfo) | repeated |  |
+
+
+
+
+
+
+<a name="machine.CPUStat"></a>
+
+### CPUStat
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| user | [double](#double) |  |  |
+| nice | [double](#double) |  |  |
+| system | [double](#double) |  |  |
+| idle | [double](#double) |  |  |
+| iowait | [double](#double) |  |  |
+| irq | [double](#double) |  |  |
+| soft_irq | [double](#double) |  |  |
+| steal | [double](#double) |  |  |
+| guest | [double](#double) |  |  |
+| guest_nice | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="machine.CPUsInfo"></a>
+
+### CPUsInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| cpu_info | [CPUInfo](#machine.CPUInfo) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Container"></a>
+
+### Container
+The messages message containing the requested containers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| containers | [ContainerInfo](#machine.ContainerInfo) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ContainerInfo"></a>
+
+### ContainerInfo
+The messages message containing the requested containers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+| image | [string](#string) |  |  |
+| pid | [uint32](#uint32) |  |  |
+| status | [string](#string) |  |  |
+| pod_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ContainersRequest"></a>
+
+### ContainersRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
+
+
+
+
+
+
+<a name="machine.ContainersResponse"></a>
+
+### ContainersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Container](#machine.Container) | repeated |  |
+
+
+
+
+
+
+<a name="machine.CopyRequest"></a>
+
+### CopyRequest
+CopyRequest describes a request to copy data out of Talos node
+
+Copy produces .tar.gz archive which is streamed back to the caller
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| root_path | [string](#string) |  | Root path to start copying data out, it might be either a file or directory |
+
+
+
+
+
+
+<a name="machine.DiskStat"></a>
+
+### DiskStat
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| read_completed | [uint64](#uint64) |  |  |
+| read_merged | [uint64](#uint64) |  |  |
+| read_sectors | [uint64](#uint64) |  |  |
+| read_time_ms | [uint64](#uint64) |  |  |
+| write_completed | [uint64](#uint64) |  |  |
+| write_merged | [uint64](#uint64) |  |  |
+| write_sectors | [uint64](#uint64) |  |  |
+| write_time_ms | [uint64](#uint64) |  |  |
+| io_in_progress | [uint64](#uint64) |  |  |
+| io_time_ms | [uint64](#uint64) |  |  |
+| io_time_weighted_ms | [uint64](#uint64) |  |  |
+| discard_completed | [uint64](#uint64) |  |  |
+| discard_merged | [uint64](#uint64) |  |  |
+| discard_sectors | [uint64](#uint64) |  |  |
+| discard_time_ms | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.DiskStats"></a>
+
+### DiskStats
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| total | [DiskStat](#machine.DiskStat) |  |  |
+| devices | [DiskStat](#machine.DiskStat) | repeated |  |
+
+
+
+
+
+
+<a name="machine.DiskStatsResponse"></a>
+
+### DiskStatsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [DiskStats](#machine.DiskStats) | repeated |  |
+
+
+
+
+
+
+<a name="machine.DiskUsageInfo"></a>
+
+### DiskUsageInfo
+DiskUsageInfo describes a file or directory's information for du command
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| name | [string](#string) |  | Name is the name (including prefixed path) of the file or directory |
+| size | [int64](#int64) |  | Size indicates the number of bytes contained within the file |
+| error | [string](#string) |  | Error describes any error encountered while trying to read the file information. |
+| relative_name | [string](#string) |  | RelativeName is the name of the file or directory relative to the RootPath |
+
+
+
+
+
+
+<a name="machine.DiskUsageRequest"></a>
+
+### DiskUsageRequest
+DiskUsageRequest describes a request to list disk usage of directories and regular files
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| recursion_depth | [int32](#int32) |  | RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced. |
+| all | [bool](#bool) |  | All write sizes for all files, not just directories. |
+| threshold | [int64](#int64) |  | Threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative. |
+| paths | [string](#string) | repeated | DiskUsagePaths is the list of directories to calculate disk usage for. |
+
+
+
+
+
+
+<a name="machine.DmesgRequest"></a>
+
+### DmesgRequest
+dmesg
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| follow | [bool](#bool) |  |  |
+| tail | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdForfeitLeadership"></a>
+
+### EtcdForfeitLeadership
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| member | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdForfeitLeadershipRequest"></a>
+
+### EtcdForfeitLeadershipRequest
+
+
+
+
+
+
+
+<a name="machine.EtcdForfeitLeadershipResponse"></a>
+
+### EtcdForfeitLeadershipResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdForfeitLeadership](#machine.EtcdForfeitLeadership) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdLeaveCluster"></a>
+
+### EtcdLeaveCluster
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdLeaveClusterRequest"></a>
+
+### EtcdLeaveClusterRequest
+
+
+
+
+
+
+
+<a name="machine.EtcdLeaveClusterResponse"></a>
+
+### EtcdLeaveClusterResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdLeaveCluster](#machine.EtcdLeaveCluster) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdMemberList"></a>
+
+### EtcdMemberList
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| members | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdMemberListRequest"></a>
+
+### EtcdMemberListRequest
+
+
+
+
+
+
+
+<a name="machine.EtcdMemberListResponse"></a>
+
+### EtcdMemberListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdMemberList](#machine.EtcdMemberList) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Event"></a>
+
+### Event
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| data | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.EventsRequest"></a>
+
+### EventsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tail_events | [int32](#int32) |  |  |
+| tail_id | [string](#string) |  |  |
+| tail_seconds | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.FileInfo"></a>
+
+### FileInfo
+FileInfo describes a file or directory's information
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| name | [string](#string) |  | Name is the name (including prefixed path) of the file or directory |
+| size | [int64](#int64) |  | Size indicates the number of bytes contained within the file |
+| mode | [uint32](#uint32) |  | Mode is the bitmap of UNIX mode/permission flags of the file |
+| modified | [int64](#int64) |  | Modified indicates the UNIX timestamp at which the file was last modified
+
+TODO: unix timestamp or include proto's Date type |
+| is_dir | [bool](#bool) |  | IsDir indicates that the file is a directory |
+| error | [string](#string) |  | Error describes any error encountered while trying to read the file information. |
+| link | [string](#string) |  | Link is filled with symlink target |
+| relative_name | [string](#string) |  | RelativeName is the name of the file or directory relative to the RootPath |
+
+
+
+
+
+
+<a name="machine.Hostname"></a>
+
+### Hostname
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| hostname | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.HostnameResponse"></a>
+
+### HostnameResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Hostname](#machine.Hostname) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ListRequest"></a>
+
+### ListRequest
+ListRequest describes a request to list the contents of a directory
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| root | [string](#string) |  | Root indicates the root directory for the list. If not indicated, '/' is presumed. |
+| recurse | [bool](#bool) |  | Recurse indicates that subdirectories should be recursed. |
+| recursion_depth | [int32](#int32) |  | RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced. |
+
+
+
+
+
+
+<a name="machine.LoadAvg"></a>
+
+### LoadAvg
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| load1 | [double](#double) |  |  |
+| load5 | [double](#double) |  |  |
+| load15 | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="machine.LoadAvgResponse"></a>
+
+### LoadAvgResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [LoadAvg](#machine.LoadAvg) | repeated |  |
+
+
+
+
+
+
+<a name="machine.LogsRequest"></a>
+
+### LogsRequest
+rpc logs
+The request message containing the process name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+| driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
+| follow | [bool](#bool) |  |  |
+| tail_lines | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.MemInfo"></a>
+
+### MemInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memtotal | [uint64](#uint64) |  |  |
+| memfree | [uint64](#uint64) |  |  |
+| memavailable | [uint64](#uint64) |  |  |
+| buffers | [uint64](#uint64) |  |  |
+| cached | [uint64](#uint64) |  |  |
+| swapcached | [uint64](#uint64) |  |  |
+| active | [uint64](#uint64) |  |  |
+| inactive | [uint64](#uint64) |  |  |
+| activeanon | [uint64](#uint64) |  |  |
+| inactiveanon | [uint64](#uint64) |  |  |
+| activefile | [uint64](#uint64) |  |  |
+| inactivefile | [uint64](#uint64) |  |  |
+| unevictable | [uint64](#uint64) |  |  |
+| mlocked | [uint64](#uint64) |  |  |
+| swaptotal | [uint64](#uint64) |  |  |
+| swapfree | [uint64](#uint64) |  |  |
+| dirty | [uint64](#uint64) |  |  |
+| writeback | [uint64](#uint64) |  |  |
+| anonpages | [uint64](#uint64) |  |  |
+| mapped | [uint64](#uint64) |  |  |
+| shmem | [uint64](#uint64) |  |  |
+| slab | [uint64](#uint64) |  |  |
+| sreclaimable | [uint64](#uint64) |  |  |
+| sunreclaim | [uint64](#uint64) |  |  |
+| kernelstack | [uint64](#uint64) |  |  |
+| pagetables | [uint64](#uint64) |  |  |
+| nfsunstable | [uint64](#uint64) |  |  |
+| bounce | [uint64](#uint64) |  |  |
+| writebacktmp | [uint64](#uint64) |  |  |
+| commitlimit | [uint64](#uint64) |  |  |
+| committedas | [uint64](#uint64) |  |  |
+| vmalloctotal | [uint64](#uint64) |  |  |
+| vmallocused | [uint64](#uint64) |  |  |
+| vmallocchunk | [uint64](#uint64) |  |  |
+| hardwarecorrupted | [uint64](#uint64) |  |  |
+| anonhugepages | [uint64](#uint64) |  |  |
+| shmemhugepages | [uint64](#uint64) |  |  |
+| shmempmdmapped | [uint64](#uint64) |  |  |
+| cmatotal | [uint64](#uint64) |  |  |
+| cmafree | [uint64](#uint64) |  |  |
+| hugepagestotal | [uint64](#uint64) |  |  |
+| hugepagesfree | [uint64](#uint64) |  |  |
+| hugepagesrsvd | [uint64](#uint64) |  |  |
+| hugepagessurp | [uint64](#uint64) |  |  |
+| hugepagesize | [uint64](#uint64) |  |  |
+| directmap4k | [uint64](#uint64) |  |  |
+| directmap2m | [uint64](#uint64) |  |  |
+| directmap1g | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.Memory"></a>
+
+### Memory
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| meminfo | [MemInfo](#machine.MemInfo) |  |  |
+
+
+
+
+
+
+<a name="machine.MemoryResponse"></a>
+
+### MemoryResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Memory](#machine.Memory) | repeated |  |
+
+
+
+
+
+
+<a name="machine.MountStat"></a>
+
+### MountStat
+The messages message containing the requested processes.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filesystem | [string](#string) |  |  |
+| size | [uint64](#uint64) |  |  |
+| available | [uint64](#uint64) |  |  |
+| mounted_on | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.Mounts"></a>
+
+### Mounts
+The messages message containing the requested df stats.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| stats | [MountStat](#machine.MountStat) | repeated |  |
+
+
+
+
+
+
+<a name="machine.MountsResponse"></a>
+
+### MountsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Mounts](#machine.Mounts) | repeated |  |
+
+
+
+
+
+
+<a name="machine.NetDev"></a>
+
+### NetDev
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| rx_bytes | [uint64](#uint64) |  |  |
+| rx_packets | [uint64](#uint64) |  |  |
+| rx_errors | [uint64](#uint64) |  |  |
+| rx_dropped | [uint64](#uint64) |  |  |
+| rx_fifo | [uint64](#uint64) |  |  |
+| rx_frame | [uint64](#uint64) |  |  |
+| rx_compressed | [uint64](#uint64) |  |  |
+| rx_multicast | [uint64](#uint64) |  |  |
+| tx_bytes | [uint64](#uint64) |  |  |
+| tx_packets | [uint64](#uint64) |  |  |
+| tx_errors | [uint64](#uint64) |  |  |
+| tx_dropped | [uint64](#uint64) |  |  |
+| tx_fifo | [uint64](#uint64) |  |  |
+| tx_collisions | [uint64](#uint64) |  |  |
+| tx_carrier | [uint64](#uint64) |  |  |
+| tx_compressed | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.NetworkDeviceStats"></a>
+
+### NetworkDeviceStats
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| total | [NetDev](#machine.NetDev) |  |  |
+| devices | [NetDev](#machine.NetDev) | repeated |  |
+
+
+
+
+
+
+<a name="machine.NetworkDeviceStatsResponse"></a>
+
+### NetworkDeviceStatsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [NetworkDeviceStats](#machine.NetworkDeviceStats) | repeated |  |
+
+
+
+
+
+
+<a name="machine.PhaseEvent"></a>
+
+### PhaseEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [string](#string) |  |  |
+| action | [PhaseEvent.Action](#machine.PhaseEvent.Action) |  |  |
+
+
+
+
+
+
+<a name="machine.PlatformInfo"></a>
+
+### PlatformInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| mode | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.Process"></a>
+
+### Process
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| processes | [ProcessInfo](#machine.ProcessInfo) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ProcessInfo"></a>
+
+### ProcessInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pid | [int32](#int32) |  |  |
+| ppid | [int32](#int32) |  |  |
+| state | [string](#string) |  |  |
+| threads | [int32](#int32) |  |  |
+| cpu_time | [double](#double) |  |  |
+| virtual_memory | [uint64](#uint64) |  |  |
+| resident_memory | [uint64](#uint64) |  |  |
+| command | [string](#string) |  |  |
+| executable | [string](#string) |  |  |
+| args | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ProcessesRequest"></a>
+
+### ProcessesRequest
+rpc processes
+
+
+
+
+
+
+<a name="machine.ProcessesResponse"></a>
+
+### ProcessesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Process](#machine.Process) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ReadRequest"></a>
+
+### ReadRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.Reboot"></a>
+
+### Reboot
+rpc reboot
+The reboot message containing the reboot status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RebootResponse"></a>
+
+### RebootResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Reboot](#machine.Reboot) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Recover"></a>
+
+### Recover
+The recover message containing the recover status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RecoverRequest"></a>
+
+### RecoverRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source | [RecoverRequest.Source](#machine.RecoverRequest.Source) |  |  |
+
+
+
+
+
+
+<a name="machine.RecoverResponse"></a>
+
+### RecoverResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Recover](#machine.Recover) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Reset"></a>
+
+### Reset
+The reset message containing the restart status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.ResetRequest"></a>
+
+### ResetRequest
+rpc reset
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| graceful | [bool](#bool) |  |  |
+| reboot | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.ResetResponse"></a>
+
+### ResetResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Reset](#machine.Reset) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Restart"></a>
+
+### Restart
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RestartRequest"></a>
+
+### RestartRequest
+rpc restart
+The request message containing the process to restart.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+| driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
+
+
+
+
+
+
+<a name="machine.RestartResponse"></a>
+
+### RestartResponse
+The messages message containing the restart status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Restart](#machine.Restart) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Rollback"></a>
+
+### Rollback
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RollbackRequest"></a>
+
+### RollbackRequest
+rpc rollback
+
+
+
+
+
+
+<a name="machine.RollbackResponse"></a>
+
+### RollbackResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Rollback](#machine.Rollback) | repeated |  |
+
+
+
+
+
+
+<a name="machine.SequenceEvent"></a>
+
+### SequenceEvent
+rpc events
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| sequence | [string](#string) |  |  |
+| action | [SequenceEvent.Action](#machine.SequenceEvent.Action) |  |  |
+| error | [common.Error](#common.Error) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceEvent"></a>
+
+### ServiceEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| msg | [string](#string) |  |  |
+| state | [string](#string) |  |  |
+| ts | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceEvents"></a>
+
+### ServiceEvents
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| events | [ServiceEvent](#machine.ServiceEvent) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ServiceHealth"></a>
+
+### ServiceHealth
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| unknown | [bool](#bool) |  |  |
+| healthy | [bool](#bool) |  |  |
+| last_message | [string](#string) |  |  |
+| last_change | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceInfo"></a>
+
+### ServiceInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| state | [string](#string) |  |  |
+| events | [ServiceEvents](#machine.ServiceEvents) |  |  |
+| health | [ServiceHealth](#machine.ServiceHealth) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceList"></a>
+
+### ServiceList
+rpc servicelist
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| services | [ServiceInfo](#machine.ServiceInfo) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ServiceListResponse"></a>
+
+### ServiceListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ServiceList](#machine.ServiceList) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ServiceRestart"></a>
+
+### ServiceRestart
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| resp | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceRestartRequest"></a>
+
+### ServiceRestartRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceRestartResponse"></a>
+
+### ServiceRestartResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ServiceRestart](#machine.ServiceRestart) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ServiceStart"></a>
+
+### ServiceStart
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| resp | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceStartRequest"></a>
+
+### ServiceStartRequest
+rpc servicestart
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceStartResponse"></a>
+
+### ServiceStartResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ServiceStart](#machine.ServiceStart) | repeated |  |
+
+
+
+
+
+
+<a name="machine.ServiceStateEvent"></a>
+
+### ServiceStateEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| service | [string](#string) |  |  |
+| action | [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action) |  |  |
+| message | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceStop"></a>
+
+### ServiceStop
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| resp | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceStopRequest"></a>
+
+### ServiceStopRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ServiceStopResponse"></a>
+
+### ServiceStopResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ServiceStop](#machine.ServiceStop) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Shutdown"></a>
+
+### Shutdown
+rpc shutdown
+The messages message containing the shutdown status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.ShutdownResponse"></a>
+
+### ShutdownResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Shutdown](#machine.Shutdown) | repeated |  |
+
+
+
+
+
+
+<a name="machine.SoftIRQStat"></a>
+
+### SoftIRQStat
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hi | [uint64](#uint64) |  |  |
+| timer | [uint64](#uint64) |  |  |
+| net_tx | [uint64](#uint64) |  |  |
+| net_rx | [uint64](#uint64) |  |  |
+| block | [uint64](#uint64) |  |  |
+| block_io_poll | [uint64](#uint64) |  |  |
+| tasklet | [uint64](#uint64) |  |  |
+| sched | [uint64](#uint64) |  |  |
+| hrtimer | [uint64](#uint64) |  |  |
+| rcu | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.StartRequest"></a>
+
+### StartRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.StartResponse"></a>
+
+### StartResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resp | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.Stat"></a>
+
+### Stat
+The messages message containing the requested stat.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| id | [string](#string) |  |  |
+| memory_usage | [uint64](#uint64) |  |  |
+| cpu_usage | [uint64](#uint64) |  |  |
+| pod_id | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.Stats"></a>
+
+### Stats
+The messages message containing the requested stats.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| stats | [Stat](#machine.Stat) | repeated |  |
+
+
+
+
+
+
+<a name="machine.StatsRequest"></a>
+
+### StatsRequest
+The request message containing the containerd namespace.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  |  |
+| driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
+
+
+
+
+
+
+<a name="machine.StatsResponse"></a>
+
+### StatsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Stats](#machine.Stats) | repeated |  |
+
+
+
+
+
+
+<a name="machine.StopRequest"></a>
+
+### StopRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.StopResponse"></a>
+
+### StopResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resp | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.SystemStat"></a>
+
+### SystemStat
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| boot_time | [uint64](#uint64) |  |  |
+| cpu_total | [CPUStat](#machine.CPUStat) |  |  |
+| cpu | [CPUStat](#machine.CPUStat) | repeated |  |
+| irq_total | [uint64](#uint64) |  |  |
+| irq | [uint64](#uint64) | repeated |  |
+| context_switches | [uint64](#uint64) |  |  |
+| process_created | [uint64](#uint64) |  |  |
+| process_running | [uint64](#uint64) |  |  |
+| process_blocked | [uint64](#uint64) |  |  |
+| soft_irq_total | [uint64](#uint64) |  |  |
+| soft_irq | [SoftIRQStat](#machine.SoftIRQStat) |  |  |
+
+
+
+
+
+
+<a name="machine.SystemStatResponse"></a>
+
+### SystemStatResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [SystemStat](#machine.SystemStat) | repeated |  |
+
+
+
+
+
+
+<a name="machine.TaskEvent"></a>
+
+### TaskEvent
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| task | [string](#string) |  |  |
+| action | [TaskEvent.Action](#machine.TaskEvent.Action) |  |  |
+
+
+
+
+
+
+<a name="machine.Upgrade"></a>
+
+### Upgrade
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| ack | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.UpgradeRequest"></a>
+
+### UpgradeRequest
+rpc upgrade
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+| preserve | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.UpgradeResponse"></a>
+
+### UpgradeResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Upgrade](#machine.Upgrade) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Version"></a>
+
+### Version
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| version | [VersionInfo](#machine.VersionInfo) |  |  |
+| platform | [PlatformInfo](#machine.PlatformInfo) |  |  |
+
+
+
+
+
+
+<a name="machine.VersionInfo"></a>
+
+### VersionInfo
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tag | [string](#string) |  |  |
+| sha | [string](#string) |  |  |
+| built | [string](#string) |  |  |
+| go_version | [string](#string) |  |  |
+| os | [string](#string) |  |  |
+| arch | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.VersionResponse"></a>
+
+### VersionResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Version](#machine.Version) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="machine.PhaseEvent.Action"></a>
+
+### PhaseEvent.Action
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| START | 0 |  |
+| STOP | 1 |  |
+
+
+
+<a name="machine.RecoverRequest.Source"></a>
+
+### RecoverRequest.Source
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ETCD | 0 |  |
+| APISERVER | 1 |  |
+
+
+
+<a name="machine.SequenceEvent.Action"></a>
+
+### SequenceEvent.Action
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NOOP | 0 |  |
+| START | 1 |  |
+| STOP | 2 |  |
+
+
+
+<a name="machine.ServiceStateEvent.Action"></a>
+
+### ServiceStateEvent.Action
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| INITIALIZED | 0 |  |
+| PREPARING | 1 |  |
+| WAITING | 2 |  |
+| RUNNING | 3 |  |
+| STOPPING | 4 |  |
+| FINISHED | 5 |  |
+| FAILED | 6 |  |
+| SKIPPED | 7 |  |
+
+
+
+<a name="machine.TaskEvent.Action"></a>
+
+### TaskEvent.Action
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| START | 0 |  |
+| STOP | 1 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.MachineService"></a>
+
+### MachineService
+The machine service definition.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
+| Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) |  |
+| Containers | [ContainersRequest](#machine.ContainersRequest) | [ContainersResponse](#machine.ContainersResponse) |  |
+| Copy | [CopyRequest](#machine.CopyRequest) | [.common.Data](#common.Data) stream |  |
+| CPUInfo | [.google.protobuf.Empty](#google.protobuf.Empty) | [CPUInfoResponse](#machine.CPUInfoResponse) |  |
+| DiskStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [DiskStatsResponse](#machine.DiskStatsResponse) |  |
+| Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
+| Events | [EventsRequest](#machine.EventsRequest) | [Event](#machine.Event) stream |  |
+| EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
+| EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
+| EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
+| Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
+| Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |
+| List | [ListRequest](#machine.ListRequest) | [FileInfo](#machine.FileInfo) stream |  |
+| DiskUsage | [DiskUsageRequest](#machine.DiskUsageRequest) | [DiskUsageInfo](#machine.DiskUsageInfo) stream |  |
+| LoadAvg | [.google.protobuf.Empty](#google.protobuf.Empty) | [LoadAvgResponse](#machine.LoadAvgResponse) |  |
+| Logs | [LogsRequest](#machine.LogsRequest) | [.common.Data](#common.Data) stream |  |
+| Memory | [.google.protobuf.Empty](#google.protobuf.Empty) | [MemoryResponse](#machine.MemoryResponse) |  |
+| Mounts | [.google.protobuf.Empty](#google.protobuf.Empty) | [MountsResponse](#machine.MountsResponse) |  |
+| NetworkDeviceStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse) |  |
+| Processes | [.google.protobuf.Empty](#google.protobuf.Empty) | [ProcessesResponse](#machine.ProcessesResponse) |  |
+| Read | [ReadRequest](#machine.ReadRequest) | [.common.Data](#common.Data) stream |  |
+| Reboot | [.google.protobuf.Empty](#google.protobuf.Empty) | [RebootResponse](#machine.RebootResponse) |  |
+| Restart | [RestartRequest](#machine.RestartRequest) | [RestartResponse](#machine.RestartResponse) |  |
+| Rollback | [RollbackRequest](#machine.RollbackRequest) | [RollbackResponse](#machine.RollbackResponse) |  |
+| Reset | [ResetRequest](#machine.ResetRequest) | [ResetResponse](#machine.ResetResponse) |  |
+| Recover | [RecoverRequest](#machine.RecoverRequest) | [RecoverResponse](#machine.RecoverResponse) |  |
+| ServiceList | [.google.protobuf.Empty](#google.protobuf.Empty) | [ServiceListResponse](#machine.ServiceListResponse) |  |
+| ServiceRestart | [ServiceRestartRequest](#machine.ServiceRestartRequest) | [ServiceRestartResponse](#machine.ServiceRestartResponse) |  |
+| ServiceStart | [ServiceStartRequest](#machine.ServiceStartRequest) | [ServiceStartResponse](#machine.ServiceStartResponse) |  |
+| ServiceStop | [ServiceStopRequest](#machine.ServiceStopRequest) | [ServiceStopResponse](#machine.ServiceStopResponse) |  |
+| Shutdown | [.google.protobuf.Empty](#google.protobuf.Empty) | [ShutdownResponse](#machine.ShutdownResponse) |  |
+| Stats | [StatsRequest](#machine.StatsRequest) | [StatsResponse](#machine.StatsResponse) |  |
+| SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
+| Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
+| Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
+
+
+<a name="machine.MaintenanceService"></a>
+
+### MaintenanceService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="network/network.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## network/network.proto
+
+
+
+<a name="network.Interface"></a>
+
+### Interface
+Interface represents a net.Interface
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| index | [uint32](#uint32) |  |  |
+| mtu | [uint32](#uint32) |  |  |
+| name | [string](#string) |  |  |
+| hardwareaddr | [string](#string) |  |  |
+| flags | [InterfaceFlags](#network.InterfaceFlags) |  |  |
+| ipaddress | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="network.Interfaces"></a>
+
+### Interfaces
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| interfaces | [Interface](#network.Interface) | repeated |  |
+
+
+
+
+
+
+<a name="network.InterfacesResponse"></a>
+
+### InterfacesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Interfaces](#network.Interfaces) | repeated |  |
+
+
+
+
+
+
+<a name="network.Route"></a>
+
+### Route
+The messages message containing a route.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interface | [string](#string) |  | Interface is the interface over which traffic to this destination should be sent |
+| destination | [string](#string) |  | Destination is the network prefix CIDR which this route provides |
+| gateway | [string](#string) |  | Gateway is the gateway address to which traffic to this destination should be sent |
+| metric | [uint32](#uint32) |  | Metric is the priority of the route, where lower metrics have higher priorities |
+| scope | [uint32](#uint32) |  | Scope desribes the scope of this route |
+| source | [string](#string) |  | Source is the source prefix CIDR for the route, if one is defined |
+| family | [AddressFamily](#network.AddressFamily) |  | Family is the address family of the route. Currently, the only options are AF_INET (IPV4) and AF_INET6 (IPV6). |
+| protocol | [RouteProtocol](#network.RouteProtocol) |  | Protocol is the protocol by which this route came to be in place |
+| flags | [uint32](#uint32) |  | Flags indicate any special flags on the route |
+
+
+
+
+
+
+<a name="network.Routes"></a>
+
+### Routes
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| routes | [Route](#network.Route) | repeated |  |
+
+
+
+
+
+
+<a name="network.RoutesResponse"></a>
+
+### RoutesResponse
+The messages message containing the routes.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Routes](#network.Routes) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="network.AddressFamily"></a>
+
+### AddressFamily
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AF_UNSPEC | 0 |  |
+| AF_INET | 2 |  |
+| IPV4 | 2 |  |
+| AF_INET6 | 10 |  |
+| IPV6 | 10 |  |
+
+
+
+<a name="network.InterfaceFlags"></a>
+
+### InterfaceFlags
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FLAG_UNKNOWN | 0 |  |
+| FLAG_UP | 1 |  |
+| FLAG_BROADCAST | 2 |  |
+| FLAG_LOOPBACK | 3 |  |
+| FLAG_POINT_TO_POINT | 4 |  |
+| FLAG_MULTICAST | 5 |  |
+
+
+
+<a name="network.RouteProtocol"></a>
+
+### RouteProtocol
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RTPROT_UNSPEC | 0 |  |
+| RTPROT_REDIRECT | 1 | Route installed by ICMP redirects |
+| RTPROT_KERNEL | 2 | Route installed by kernel |
+| RTPROT_BOOT | 3 | Route installed during boot |
+| RTPROT_STATIC | 4 | Route installed by administrator |
+| RTPROT_GATED | 8 | Route installed by gated |
+| RTPROT_RA | 9 | Route installed by router advertisement |
+| RTPROT_MRT | 10 | Route installed by Merit MRT |
+| RTPROT_ZEBRA | 11 | Route installed by Zebra/Quagga |
+| RTPROT_BIRD | 12 | Route installed by Bird |
+| RTPROT_DNROUTED | 13 | Route installed by DECnet routing daemon |
+| RTPROT_XORP | 14 | Route installed by XORP |
+| RTPROT_NTK | 15 | Route installed by Netsukuku |
+| RTPROT_DHCP | 16 | Route installed by DHCP |
+| RTPROT_MROUTED | 17 | Route installed by Multicast daemon |
+| RTPROT_BABEL | 42 | Route installed by Babel daemon |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="network.NetworkService"></a>
+
+### NetworkService
+The network service definition.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Routes | [.google.protobuf.Empty](#google.protobuf.Empty) | [RoutesResponse](#network.RoutesResponse) |  |
+| Interfaces | [.google.protobuf.Empty](#google.protobuf.Empty) | [InterfacesResponse](#network.InterfacesResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="os/os.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## os/os.proto
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="os.OSService"></a>
+
+### OSService
+The OS service definition.
+
+Deprecated: this API is deprecated and merged into Machine API.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Containers | [.machine.ContainersRequest](#machine.ContainersRequest) | [.machine.ContainersResponse](#machine.ContainersResponse) |  |
+| Dmesg | [.machine.DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
+| Memory | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.MemoryResponse](#machine.MemoryResponse) |  |
+| Processes | [.google.protobuf.Empty](#google.protobuf.Empty) | [.machine.ProcessesResponse](#machine.ProcessesResponse) |  |
+| Restart | [.machine.RestartRequest](#machine.RestartRequest) | [.machine.RestartResponse](#machine.RestartResponse) |  |
+| Stats | [.machine.StatsRequest](#machine.StatsRequest) | [.machine.StatsResponse](#machine.StatsResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="security/security.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## security/security.proto
+
+
+
+<a name="securityapi.CertificateRequest"></a>
+
+### CertificateRequest
+The request message containing the process name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| csr | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="securityapi.CertificateResponse"></a>
+
+### CertificateResponse
+The response message containing the requested logs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ca | [bytes](#bytes) |  |  |
+| crt | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="securityapi.ReadFileRequest"></a>
+
+### ReadFileRequest
+The request message for reading a file on disk.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="securityapi.ReadFileResponse"></a>
+
+### ReadFileResponse
+The response message for reading a file on disk.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="securityapi.WriteFileRequest"></a>
+
+### WriteFileRequest
+The request message containing the process name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  |  |
+| data | [bytes](#bytes) |  |  |
+| perm | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="securityapi.WriteFileResponse"></a>
+
+### WriteFileResponse
+The response message containing the requested logs.
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="securityapi.SecurityService"></a>
+
+### SecurityService
+The security service definition.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Certificate | [CertificateRequest](#securityapi.CertificateRequest) | [CertificateResponse](#securityapi.CertificateResponse) |  |
+| ReadFile | [ReadFileRequest](#securityapi.ReadFileRequest) | [ReadFileResponse](#securityapi.ReadFileResponse) |  |
+| WriteFile | [WriteFileRequest](#securityapi.WriteFileRequest) | [WriteFileResponse](#securityapi.WriteFileResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="time/time.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## time/time.proto
+
+
+
+<a name="time.Time"></a>
+
+### Time
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| server | [string](#string) |  |  |
+| localtime | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| remotetime | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="time.TimeRequest"></a>
+
+### TimeRequest
+The response message containing the ntp server
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| server | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="time.TimeResponse"></a>
+
+### TimeResponse
+The response message containing the ntp server, time, and offset
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Time](#time.Time) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="time.TimeService"></a>
+
+### TimeService
+The time service definition.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Time | [.google.protobuf.Empty](#google.protobuf.Empty) | [TimeResponse](#time.TimeResponse) |  |
+| TimeCheck | [TimeRequest](#time.TimeRequest) | [TimeResponse](#time.TimeResponse) |  |
+
+ <!-- end services -->
+
+
+
+## Scalar Value Types
+
+| .proto Type | Notes | C++ | Java | Python | Go | C# | PHP | Ruby |
+| ----------- | ----- | --- | ---- | ------ | -- | -- | --- | ---- |
+| <a name="double" /> double |  | double | double | float | float64 | double | float | Float |
+| <a name="float" /> float |  | float | float | float | float32 | float | float | Float |
+| <a name="int32" /> int32 | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <a name="int64" /> int64 | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <a name="uint32" /> uint32 | Uses variable-length encoding. | uint32 | int | int/long | uint32 | uint | integer | Bignum or Fixnum (as required) |
+| <a name="uint64" /> uint64 | Uses variable-length encoding. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum or Fixnum (as required) |
+| <a name="sint32" /> sint32 | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <a name="sint64" /> sint64 | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <a name="fixed32" /> fixed32 | Always four bytes. More efficient than uint32 if values are often greater than 2^28. | uint32 | int | int | uint32 | uint | integer | Bignum or Fixnum (as required) |
+| <a name="fixed64" /> fixed64 | Always eight bytes. More efficient than uint64 if values are often greater than 2^56. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum |
+| <a name="sfixed32" /> sfixed32 | Always four bytes. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <a name="sfixed64" /> sfixed64 | Always eight bytes. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <a name="bool" /> bool |  | bool | boolean | boolean | bool | bool | boolean | TrueClass/FalseClass |
+| <a name="string" /> string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
+| <a name="bytes" /> bytes | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
+

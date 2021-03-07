@@ -5,13 +5,14 @@
 package ntp_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type NtpSuite struct {
@@ -28,7 +29,7 @@ func (suite *NtpSuite) TestQuery() {
 	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
 	suite.Assert().NoError(err)
 
-	_, err = n.Query()
+	_, err = n.Query(context.Background())
 	suite.Assert().NoError(err)
 }
 
@@ -36,7 +37,7 @@ func (suite *NtpSuite) TestNtpConfig() {
 	server := "time.cloudflare.com"
 
 	// Test unset config, single server config, multiple server config
-	for _, conf := range []runtime.Configurator{&v1alpha1.Config{MachineConfig: &v1alpha1.MachineConfig{}}, sampleConfigSingleServer(), sampleConfigMultipleServers()} {
+	for _, conf := range []config.Provider{&v1alpha1.Config{MachineConfig: &v1alpha1.MachineConfig{}}, sampleConfigSingleServer(), sampleConfigMultipleServers()} {
 		// Check if ntp servers are defined
 		// Support for only a single time server currently
 		if len(conf.Machine().Time().Servers()) >= 1 {
@@ -51,7 +52,7 @@ func (suite *NtpSuite) TestNtpConfig() {
 	}
 }
 
-func sampleConfigSingleServer() runtime.Configurator {
+func sampleConfigSingleServer() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{
@@ -61,7 +62,7 @@ func sampleConfigSingleServer() runtime.Configurator {
 	}
 }
 
-func sampleConfigMultipleServers() runtime.Configurator {
+func sampleConfigMultipleServers() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{

@@ -18,9 +18,9 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
-	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -93,41 +93,7 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 
 // Interfaces returns the hosts network interfaces and addresses.
 func (r *Registrator) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesResponse, err error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return reply, err
-	}
-
-	resp := &networkapi.Interfaces{}
-
-	for _, iface := range ifaces {
-		ifaceaddrs, err := iface.Addrs()
-		if err != nil {
-			return reply, err
-		}
-
-		addrs := make([]string, 0, len(ifaceaddrs))
-		for _, addr := range ifaceaddrs {
-			addrs = append(addrs, addr.String())
-		}
-
-		ifmsg := &networkapi.Interface{
-			Index:        uint32(iface.Index),
-			Mtu:          uint32(iface.MTU),
-			Name:         iface.Name,
-			Hardwareaddr: iface.HardwareAddr.String(),
-			Flags:        networkapi.InterfaceFlags(iface.Flags),
-			Ipaddress:    addrs,
-		}
-
-		resp.Interfaces = append(resp.Interfaces, ifmsg)
-	}
-
-	return &networkapi.InterfacesResponse{
-		Messages: []*networkapi.Interfaces{
-			resp,
-		},
-	}, nil
+	return networkd.GetDevices()
 }
 
 func toCIDR(family uint8, prefix net.IP, prefixLen int) string {

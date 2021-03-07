@@ -15,12 +15,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	clusterapi "github.com/talos-systems/talos/api/cluster"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/cluster"
-	"github.com/talos-systems/talos/internal/pkg/cluster/check"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/cluster/check"
+	"github.com/talos-systems/talos/pkg/cluster/sonobuoy"
+	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 type clusterNodes struct {
@@ -30,17 +31,29 @@ type clusterNodes struct {
 }
 
 func (cluster *clusterNodes) Nodes() []string {
-	return append([]string{cluster.InitNode}, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
+	var initNodes []string
+
+	if cluster.InitNode != "" {
+		initNodes = []string{cluster.InitNode}
+	}
+
+	return append(initNodes, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
 }
 
-func (cluster *clusterNodes) NodesByType(t runtime.MachineType) []string {
+func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
 	switch t {
-	case runtime.MachineTypeInit:
+	case machine.TypeInit:
+		if cluster.InitNode == "" {
+			return nil
+		}
+
 		return []string{cluster.InitNode}
-	case runtime.MachineTypeControlPlane:
-		return cluster.ControlPlaneNodes
-	case runtime.MachineTypeJoin:
-		return cluster.WorkerNodes
+	case machine.TypeControlPlane:
+		return append([]string(nil), cluster.ControlPlaneNodes...)
+	case machine.TypeJoin:
+		return append([]string(nil), cluster.WorkerNodes...)
+	case machine.TypeUnknown:
+		return nil
 	default:
 		panic("unsupported machine type")
 	}
@@ -51,6 +64,7 @@ var healthCmdFlags struct {
 	clusterWaitTimeout time.Duration
 	forceEndpoint      string
 	runOnServer        bool
+	runE2E             bool
 }
 
 // healthCmd represents the health command.
@@ -60,21 +74,31 @@ var healthCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if healthCmdFlags.runOnServer {
-				return healthOnServer(ctx, c)
-			}
+		if err := runHealth(); err != nil {
+			return err
+		}
 
-			return healthOnClient(ctx, c)
-		})
+		if healthCmdFlags.runE2E {
+			return runE2E()
+		}
+
+		return nil
 	},
+}
+
+func runHealth() error {
+	if healthCmdFlags.runOnServer {
+		return WithClient(healthOnServer)
+	}
+
+	return WithClientNoNodes(healthOnClient)
 }
 
 func healthOnClient(ctx context.Context, c *client.Client) error {
 	clientProvider := &cluster.ConfigClientProvider{
 		DefaultClient: c,
 	}
-	defer clientProvider.Close() //nolint: errcheck
+	defer clientProvider.Close() //nolint:errcheck
 
 	state := struct {
 		cluster.ClientProvider
@@ -137,6 +161,33 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 	}
 }
 
+func runE2E() error {
+	return WithClient(func(ctx context.Context, c *client.Client) error {
+		clientProvider := &cluster.ConfigClientProvider{
+			DefaultClient: c,
+		}
+		defer clientProvider.Close() //nolint:errcheck
+
+		state := struct {
+			cluster.K8sProvider
+		}{
+			K8sProvider: &cluster.KubernetesClient{
+				ClientProvider: clientProvider,
+				ForceEndpoint:  healthCmdFlags.forceEndpoint,
+			},
+		}
+
+		// Run cluster readiness checks
+		checkCtx, checkCtxCancel := context.WithTimeout(ctx, healthCmdFlags.clusterWaitTimeout)
+		defer checkCtxCancel()
+
+		options := sonobuoy.DefaultOptions()
+		options.UseSpinner = true
+
+		return sonobuoy.Run(checkCtx, &state, options)
+	})
+}
+
 func init() {
 	addCommand(healthCmd)
 	healthCmd.Flags().StringVar(&healthCmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
@@ -145,4 +196,5 @@ func init() {
 	healthCmd.Flags().DurationVar(&healthCmdFlags.clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
 	healthCmd.Flags().StringVar(&healthCmdFlags.forceEndpoint, "k8s-endpoint", "", "use endpoint instead of kubeconfig default")
 	healthCmd.Flags().BoolVar(&healthCmdFlags.runOnServer, "server", true, "run server-side check")
+	healthCmd.Flags().BoolVar(&healthCmdFlags.runE2E, "run-e2e", false, "run Kubernetes e2e test")
 }

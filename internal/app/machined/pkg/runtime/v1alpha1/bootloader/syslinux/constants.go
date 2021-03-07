@@ -4,7 +4,7 @@
 
 package syslinux
 
-import "github.com/talos-systems/talos/pkg/constants"
+import "github.com/talos-systems/talos/pkg/machinery/constants"
 
 const (
 	// BootA is a syslinux label.

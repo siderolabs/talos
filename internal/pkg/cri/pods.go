@@ -10,6 +10,8 @@ import (
 	"log"
 
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
@@ -82,11 +84,18 @@ func (c *Client) PodSandboxStatus(ctx context.Context, podSandBoxID string) (*ru
 	return resp.Status, resp.Info, nil
 }
 
-// RemovePodSandboxes removes all pods with the specified network mode. If no
-// network mode is specified, all pods will be removed.
-func (c *Client) RemovePodSandboxes(modes ...runtimeapi.NamespaceMode) (err error) {
-	ctx := context.Background()
+// StopAction for StopAndRemovePodSandboxes.
+type StopAction int
 
+// Stop actions.
+const (
+	StopOnly StopAction = iota
+	StopAndRemove
+)
+
+// StopAndRemovePodSandboxes stops and removes all pods with the specified network mode. If no
+// network mode is specified, all pods will be removed.
+func (c *Client) StopAndRemovePodSandboxes(ctx context.Context, stopAction StopAction, modes ...runtimeapi.NamespaceMode) (err error) {
 	pods, err := c.ListPodSandbox(ctx, nil)
 	if err != nil {
 		return err
@@ -97,21 +106,35 @@ func (c *Client) RemovePodSandboxes(modes ...runtimeapi.NamespaceMode) (err erro
 	for _, pod := range pods {
 		pod := pod // https://golang.org/doc/faq#closures_and_goroutines
 
-		status, _, err := c.PodSandboxStatus(ctx, pod.GetId())
-		if err != nil {
-			return err
-		}
-
-		networkMode := status.GetLinux().GetNamespaces().GetOptions().GetNetwork()
-
-		// If any modes are specified, we verify that the current pod is
-		// running any one of the modes. If it doesn't, we skip it.
-		if len(modes) > 0 && !contains(networkMode, modes) {
-			continue
-		}
-
 		g.Go(func() error {
-			return remove(ctx, c, pod, networkMode.String())
+			status, _, e := c.PodSandboxStatus(ctx, pod.GetId())
+			if e != nil {
+				if grpcstatus.Code(e) == codes.NotFound {
+					return nil
+				}
+
+				return e
+			}
+
+			networkMode := status.GetLinux().GetNamespaces().GetOptions().GetNetwork()
+
+			// If any modes are specified, we verify that the current pod is
+			// running any one of the modes. If it doesn't, we skip it.
+			if len(modes) > 0 && !contains(networkMode, modes) {
+				return nil
+			}
+
+			if pod.GetState() != runtimeapi.PodSandboxState_SANDBOX_READY {
+				log.Printf("skipping pod %s/%s, state %s", pod.Metadata.Namespace, pod.Metadata.Name, pod.GetState())
+
+				return nil
+			}
+
+			if e = stopAndRemove(ctx, stopAction, c, pod, networkMode.String()); e != nil {
+				return fmt.Errorf("failed stopping pod %s/%s: %w", pod.Metadata.Namespace, pod.Metadata.Name, e)
+			}
+
+			return nil
 		})
 	}
 
@@ -128,8 +151,17 @@ func contains(mode runtimeapi.NamespaceMode, modes []runtimeapi.NamespaceMode) b
 	return false
 }
 
-func remove(ctx context.Context, client *Client, pod *runtimeapi.PodSandbox, mode string) (err error) {
-	log.Printf("removing pod %s/%s with network mode %q", pod.Metadata.Namespace, pod.Metadata.Name, mode)
+//nolint:gocyclo
+func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, pod *runtimeapi.PodSandbox, mode string) (err error) {
+	action := "stopping"
+	status := "stopped"
+
+	if stopAction == StopAndRemove {
+		action = "removing"
+		status = "removed"
+	}
+
+	log.Printf("%s pod %s/%s with network mode %q", action, pod.Metadata.Namespace, pod.Metadata.Name, mode)
 
 	filter := &runtimeapi.ContainerFilter{
 		PodSandboxId: pod.Id,
@@ -137,6 +169,10 @@ func remove(ctx context.Context, client *Client, pod *runtimeapi.PodSandbox, mod
 
 	containers, err := client.ListContainers(ctx, filter)
 	if err != nil {
+		if grpcstatus.Code(err) == codes.NotFound {
+			return nil
+		}
+
 		return err
 	}
 
@@ -146,18 +182,28 @@ func remove(ctx context.Context, client *Client, pod *runtimeapi.PodSandbox, mod
 		container := container // https://golang.org/doc/faq#closures_and_goroutines
 
 		g.Go(func() error {
-			log.Printf("removing container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
+			log.Printf("%s container %s/%s:%s", action, pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
 			// TODO(andrewrynhard): Can we set the timeout dynamically?
 			if err = client.StopContainer(ctx, container.Id, 30); err != nil {
+				if grpcstatus.Code(err) == codes.NotFound {
+					return nil
+				}
+
 				return err
 			}
 
-			if err = client.RemoveContainer(ctx, container.Id); err != nil {
-				return err
+			if stopAction == StopAndRemove {
+				if err = client.RemoveContainer(ctx, container.Id); err != nil {
+					if grpcstatus.Code(err) == codes.NotFound {
+						return nil
+					}
+
+					return err
+				}
 			}
 
-			log.Printf("removed container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
+			log.Printf("%s container %s/%s:%s", status, pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
 			return nil
 		})
@@ -168,14 +214,28 @@ func remove(ctx context.Context, client *Client, pod *runtimeapi.PodSandbox, mod
 	}
 
 	if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
-		return err
+		if grpcstatus.Code(err) == codes.NotFound {
+			return nil
+		}
+
+		log.Printf("error stopping pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
+
+		return nil
 	}
 
-	if err = client.RemovePodSandbox(ctx, pod.Id); err != nil {
-		return err
+	if stopAction == StopAndRemove {
+		if err = client.RemovePodSandbox(ctx, pod.Id); err != nil {
+			if grpcstatus.Code(err) == codes.NotFound {
+				return nil
+			}
+
+			log.Printf("error removing pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
+
+			return nil
+		}
 	}
 
-	log.Printf("removed pod %s/%s", pod.Metadata.Namespace, pod.Metadata.Name)
+	log.Printf("%s pod %s/%s", status, pod.Metadata.Namespace, pod.Metadata.Name)
 
 	return nil
 }

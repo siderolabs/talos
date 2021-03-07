@@ -6,6 +6,7 @@ package kmsg_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ func skipIfNoKmsg(t *testing.T) {
 		t.Skip("/dev/kmsg is not available", err.Error())
 	}
 
-	f.Close() //nolint: errcheck
+	f.Close() //nolint:errcheck
 }
 
 func TestReaderNoFollow(t *testing.T) {
@@ -30,7 +31,7 @@ func TestReaderNoFollow(t *testing.T) {
 	r, err := kmsg.NewReader()
 	assert.NoError(t, err)
 
-	defer r.Close() //nolint: errcheck
+	defer r.Close() //nolint:errcheck
 
 	messageCount := 0
 
@@ -59,7 +60,7 @@ func testReaderFollow(t *testing.T, expectMessages bool, options ...kmsg.Option)
 	r, err := kmsg.NewReader(append([]kmsg.Option{kmsg.Follow()}, options...)...)
 	assert.NoError(t, err)
 
-	defer r.Close() //nolint: errcheck
+	defer r.Close() //nolint:errcheck
 
 	messageCount := 0
 
@@ -80,6 +81,13 @@ LOOP:
 				}
 
 				break LOOP
+			}
+
+			if closed && errors.Is(packet.Err, os.ErrClosed) {
+				// ignore 'file already closed' error as it might happen
+				// from the branch below depending on whether context cancel or
+				// read() finishes first
+				continue
 			}
 
 			assert.NoError(t, packet.Err)

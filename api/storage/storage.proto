@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package storage;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/storage";
+option java_multiple_files = true;
+option java_outer_classname = "StorageApi";
+option java_package = "com.storage.api";
+
+import "google/protobuf/empty.proto";
+import "common/common.proto";
+
+// StorageService represents the storage service.
+service StorageService {
+  rpc Disks(google.protobuf.Empty) returns (DisksResponse);
+}
+
+// Disk represents a disk.
+message Disk {
+  // Size indicates the disk size in bytes.
+  uint64 size = 1;
+  // Model idicates the disk model.
+  string model = 2;
+  // DeviceName indicates the disk name (e.g. `sda`).
+  string device_name = 3;
+}
+
+// DisksResponse represents the response of the `Disks` RPC.
+message Disks {
+  common.Metadata metadata = 1;
+  repeated Disk disks = 2;
+}
+message DisksResponse { repeated Disks messages = 1; }

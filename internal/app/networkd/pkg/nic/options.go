@@ -27,6 +27,7 @@ func defaultOptions() *NetworkInterface {
 func WithDummy() Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Dummy = true
+
 		return
 	}
 }
@@ -35,6 +36,7 @@ func WithDummy() Option {
 func WithIgnore() Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Ignore = true
+
 		return
 	}
 }
@@ -43,6 +45,7 @@ func WithIgnore() Option {
 func WithName(o string) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.Name = o
+
 		return err
 	}
 }
@@ -52,6 +55,7 @@ func WithName(o string) Option {
 func WithAddressing(a address.Addressing) Option {
 	return func(n *NetworkInterface) (err error) {
 		n.AddressMethod = append(n.AddressMethod, a)
+
 		return err
 	}
 }
@@ -61,6 +65,7 @@ func WithAddressing(a address.Addressing) Option {
 func WithNoAddressing() Option {
 	return func(n *NetworkInterface) (err error) {
 		n.AddressMethod = []address.Addressing{}
+
 		return err
 	}
 }

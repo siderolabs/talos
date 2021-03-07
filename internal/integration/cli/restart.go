@@ -7,12 +7,12 @@
 package cli
 
 import (
-	"math/rand"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // RestartSuite verifies dmesg command.
@@ -31,11 +31,8 @@ func (suite *RestartSuite) TestSystem() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-
 	// trustd only runs on control plane nodes
-	node := nodes[0]
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
 
 	suite.RunCLI([]string{"restart", "-n", node, "trustd"},
 		base.StdoutEmpty())
@@ -43,25 +40,6 @@ func (suite *RestartSuite) TestSystem() {
 	time.Sleep(200 * time.Millisecond)
 
 	suite.RunAndWaitForMatch([]string{"service", "-n", node, "trustd"}, regexp.MustCompile(`EVENTS\s+\[Running\]: Health check successful`), 30*time.Second)
-}
-
-// TestKubernetes restarts K8s container.
-func (suite *RestartSuite) TestK8s() {
-	if testing.Short() {
-		suite.T().Skip("skipping in short mode")
-	}
-
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-
-	node := nodes[rand.Intn(len(nodes))]
-
-	suite.RunCLI([]string{"restart", "-n", node, "-k", "kubelet"},
-		base.StdoutEmpty())
-
-	time.Sleep(200 * time.Millisecond)
-
-	suite.RunAndWaitForMatch([]string{"service", "-n", node, "kubelet"}, regexp.MustCompile(`EVENTS\s+\[Running\]: Health check successful`), 30*time.Second)
 }
 
 func init() {

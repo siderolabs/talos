@@ -20,42 +20,49 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/jsimonetti/rtnetlink/rtnl"
 	"github.com/mdlayher/netlink"
+	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/talos-systems/go-procfs/procfs"
-
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/vip"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
 	// ref: https://tools.ietf.org/html/rfc791
 
-	// MinimumMTU is the lowest allowed MTU for an interface
+	// MinimumMTU is the lowest allowed MTU for an interface.
 	MinimumMTU = 68
-	// MaximumMTU is the highest allowed MTU for an interface
+	// MaximumMTU is the highest allowed MTU for an interface.
 	MaximumMTU = 65536
 )
 
 // NetworkInterface provides an abstract configuration representation for a
 // network interface.
 type NetworkInterface struct {
-	Name          string
-	Type          int
-	Ignore        bool
-	Dummy         bool
-	Bonded        bool
-	MTU           uint32
-	Link          *net.Interface
-	SubInterfaces []*net.Interface
-	AddressMethod []address.Addressing
-	BondSettings  *netlink.AttributeEncoder
-	Vlans         []*Vlan
+	Name            string
+	Type            int
+	Ignore          bool
+	Dummy           bool
+	Bonded          bool
+	Wireguard       bool
+	MTU             uint32
+	Link            *net.Interface
+	SubInterfaces   []*net.Interface
+	AddressMethod   []address.Addressing
+	BondSettings    *netlink.AttributeEncoder
+	Vlans           []*Vlan
+	VirtualIP       net.IP
+	WireguardConfig *wgtypes.Config
 
 	rtConn   *rtnetlink.Conn
 	rtnlConn *rtnl.Conn
+
+	vipController vip.Controller
 }
 
 // New returns a NetworkInterface with all of the given setter options applied.
@@ -78,13 +85,14 @@ func New(setters ...Option) (*NetworkInterface, error) {
 	// If no addressing methods have been configured, default to DHCP.
 	// If VLANs exist do not force DHCP on master device
 	if len(iface.AddressMethod) == 0 && len(iface.Vlans) == 0 {
-		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP{})
+		iface.AddressMethod = append(iface.AddressMethod, &address.DHCP4{}) // TODO: enable DHCPv6 by default?
 	}
 
 	// Handle netlink connection
 	conn, err := rtnl.Dial(nil)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return nil, result.ErrorOrNil()
 	}
 
@@ -94,6 +102,7 @@ func New(setters ...Option) (*NetworkInterface, error) {
 	nlConn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		result = multierror.Append(result, err)
+
 		return nil, result.ErrorOrNil()
 	}
 
@@ -118,15 +127,19 @@ func (n *NetworkInterface) Create() error {
 	iface, err := net.InterfaceByName(n.Name)
 	if err == nil {
 		n.Link = iface
+
 		return err
 	}
 
-	if n.Bonded {
+	switch {
+	case n.Bonded:
 		info = &rtnetlink.LinkInfo{Kind: "bond"}
-	}
-
-	if n.Dummy {
+	case n.Dummy:
 		info = &rtnetlink.LinkInfo{Kind: "dummy"}
+	case n.Wireguard:
+		info = &rtnetlink.LinkInfo{Kind: "wireguard"}
+	default:
+		return fmt.Errorf("unknown device type")
 	}
 
 	if err = n.createLink(n.Name, info); err != nil {
@@ -156,12 +169,14 @@ func (n *NetworkInterface) CreateSub() error {
 
 		if err == nil {
 			vlan.Link = iface
+
 			continue
 		}
 
 		data, err := vlan.VlanSettings.Encode()
 		if err != nil {
 			log.Println("failed to encode vlan link parameters: " + err.Error())
+
 			continue
 		}
 
@@ -171,12 +186,14 @@ func (n *NetworkInterface) CreateSub() error {
 
 		if err = n.createSubLink(name, info, &masterIdx); err != nil {
 			log.Println("failed to create vlan link " + err.Error())
+
 			return err
 		}
 
 		iface, err = net.InterfaceByName(name)
 		if err != nil {
 			log.Println("failed to get vlan interface ")
+
 			return err
 		}
 
@@ -188,7 +205,8 @@ func (n *NetworkInterface) CreateSub() error {
 
 // Configure is used to set the link state and configure any necessary
 // bond settings ( ex, mode ).
-func (n *NetworkInterface) Configure() (err error) {
+//nolint:gocyclo
+func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 	if n.IsIgnored() {
 		return err
 	}
@@ -202,6 +220,12 @@ func (n *NetworkInterface) Configure() (err error) {
 
 		// TODO: Add check if link is already part of a bond
 		if err = n.enslaveLink(bondIndex, n.SubInterfaces...); err != nil {
+			return err
+		}
+	}
+
+	if n.Wireguard {
+		if err = n.configureWireguard(n.Name, n.WireguardConfig); err != nil {
 			return err
 		}
 	}
@@ -222,6 +246,21 @@ func (n *NetworkInterface) Configure() (err error) {
 
 		if err = n.waitForLinkToBeUp(vlan.Link); err != nil {
 			return fmt.Errorf("failed to bring up interface %q: %w", vlan.Link.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// RunControllers is used to run additional controllers per interface.
+func (n *NetworkInterface) RunControllers(ctx context.Context, eg *errgroup.Group) (err error) {
+	if n.VirtualIP != nil {
+		if n.vipController, err = vip.New(n.VirtualIP.String(), n.Link.Name); err != nil {
+			return fmt.Errorf("failed to create the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
+		}
+
+		if err = n.vipController.Start(ctx, eg); err != nil {
+			return fmt.Errorf("failed to start the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
 		}
 	}
 
@@ -291,13 +330,13 @@ func (n *NetworkInterface) AddressingSub() error {
 }
 
 // Renew is the mechanism for keeping a dhcp lease active.
-func (n *NetworkInterface) Renew() {
+func (n *NetworkInterface) Renew(ctx context.Context) {
 	for _, method := range n.AddressMethod {
 		if method.TTL() == 0 {
 			continue
 		}
 
-		go n.renew(method)
+		go n.renew(ctx, method)
 	}
 }
 
@@ -305,61 +344,80 @@ func (n *NetworkInterface) Renew() {
 // up to date. We attempt to do our first reconfiguration halfway through
 // address TTL. If that fails, we'll continue to attempt to retry every
 // halflife.
-func (n *NetworkInterface) renew(method address.Addressing) {
+func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing) {
+	const minRenewDuration = 5 * time.Second // protect from renewing too often
+
 	renewDuration := method.TTL() / 2
 
 	var err error
 
 	for {
-		<-time.After(renewDuration)
+		select {
+		case <-time.After(renewDuration):
+		case <-ctx.Done():
+			return
+		}
 
 		if err = n.configureInterface(method, n.Link); err != nil {
+			log.Printf("failure to renew address for %q: %s", n.Name, err)
+
 			renewDuration = (renewDuration / 2)
 		} else {
 			renewDuration = method.TTL() / 2
+		}
+
+		if renewDuration < minRenewDuration {
+			renewDuration = minRenewDuration
 		}
 	}
 }
 
 // configureInterface handles the actual address discovery mechanism and
 // netlink interaction to configure the interface.
-// nolint: gocyclo
+//nolint:gocyclo
 func (n *NetworkInterface) configureInterface(method address.Addressing, link *net.Interface) error {
 	var err error
 
-	if err = method.Discover(context.Background(), link); err != nil {
-		return err
-	}
+	discoverErr := method.Discover(context.Background(), link)
 
-	// Set link MTU if we got a response
+	// Set link MTU in any case
 	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {
-		return err
+		return fmt.Errorf("error setting MTU %d on %q: %w", method.MTU(), n.Name, err)
 	}
 
-	// Check to see if we need to configure the address
-	addrs, err := n.rtnlConn.Addrs(method.Link(), method.Family())
-	if err != nil {
-		return err
+	if discoverErr != nil {
+		return discoverErr
 	}
 
-	addressExists := false
+	if method.Address() != nil {
+		// Check to see if we need to configure the address
+		var addrs []*net.IPNet
 
-	for _, addr := range addrs {
-		if method.Address().String() == addr.String() {
-			addressExists = true
-			break
+		addrs, err = n.rtnlConn.Addrs(method.Link(), method.Family())
+		if err != nil {
+			return err
 		}
-	}
 
-	if !addressExists {
-		if err = n.rtnlConn.AddrAdd(method.Link(), method.Address()); err != nil {
-			switch err := err.(type) {
-			case *netlink.OpError:
-				if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
-					return err
+		addressExists := false
+
+		for _, addr := range addrs {
+			if method.Address().String() == addr.String() {
+				addressExists = true
+
+				break
+			}
+		}
+
+		if !addressExists && method.Address() != nil {
+			if err = n.rtnlConn.AddrAdd(method.Link(), method.Address()); err != nil {
+				switch err := err.(type) {
+				case *netlink.OpError:
+					if !os.IsExist(err.Err) && err.Err != syscall.ESRCH {
+						return fmt.Errorf("error adding address %s on %q: %w", method.Address(), n.Name, err)
+					}
+				default:
+					return fmt.Errorf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
 				}
-			default:
-				return fmt.Errorf("failed to add address (already exists) %+v to %s: %v", method.Address(), method.Link().Name, err)
 			}
 		}
 	}
@@ -367,19 +425,33 @@ func (n *NetworkInterface) configureInterface(method address.Addressing, link *n
 	// Add any routes
 	for _, r := range method.Routes() {
 		// If gateway/router is 0.0.0.0 we'll set to nil so route scope decision will be correct
-		gw := r.Router
-		if net.IPv4zero.Equal(gw) {
+		gw := r.Gateway
+		if net.IPv4zero.Equal(gw) || net.IPv6zero.Equal(gw) {
 			gw = nil
 		}
 
 		src := method.Address()
-		// if destination is the ipv6 route,and gateway is LL do not pass a src address to set the default geteway
-		if net.IPv6zero.Equal(r.Dest.IP) && gw.IsLinkLocalUnicast() {
+		// if destination is the ipv6 default route,and gateway is LL do not pass a src address to set the default geteway
+		if net.IPv6zero.Equal(r.Destination.IP) && gw.IsLinkLocalUnicast() {
 			src = nil
 		}
 
-		if err := n.rtnlConn.RouteAddSrc(method.Link(), *r.Dest, src, gw); err != nil {
-			log.Println("failed to configure route: " + err.Error())
+		attr := rtnetlink.RouteAttributes{
+			Dst:      r.Destination.IP,
+			OutIface: uint32(method.Link().Index),
+			Priority: r.Metric,
+		}
+
+		if gw != nil {
+			attr.Gateway = gw
+		}
+
+		err = n.rtnlConn.RouteAdd(method.Link(), *r.Destination, gw, rtnl.WithRouteSrc(src), rtnl.WithRouteAttrs(attr))
+		if err != nil {
+			// ignore "EEXIST" errors for routes which are already present
+			if opErr, ok := err.(*netlink.OpError); !ok || !os.IsExist(opErr.Err) {
+				return fmt.Errorf("error adding route %s %s on %q: %s", *r.Destination, gw, n.Name, err)
+			}
 		}
 	}
 
@@ -409,6 +481,6 @@ func (n *NetworkInterface) Reset() {
 		}
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	n.rtnlConn.LinkDown(link)
 }

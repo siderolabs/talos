@@ -41,7 +41,7 @@ func New(wrapRunner runner.Runner, opts ...Option) runner.Runner {
 type Options struct {
 	// Type describes the service's restart policy.
 	Type Type
-	// RestartInterval is the interval between restarts for failed runs
+	// RestartInterval is the interval between restarts for failed runs.
 	RestartInterval time.Duration
 }
 
@@ -54,9 +54,9 @@ type Type int
 const (
 	// Forever will always restart a process.
 	Forever Type = iota
-	// Once will run process exactly once
+	// Once will run process exactly once.
 	Once
-	// UntilSuccess will restart process until run succeeds
+	// UntilSuccess will restart process until run succeeds.
 	UntilSuccess
 )
 
@@ -101,7 +101,7 @@ func (r *restarter) Open(ctx context.Context) error {
 }
 
 // Run implements the Runner interface
-// nolint: gocyclo
+//nolint:gocyclo
 func (r *restarter) Run(eventSink events.Recorder) error {
 	defer close(r.stopped)
 
@@ -116,7 +116,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 
 		select {
 		case <-r.stop:
-			// nolint: errcheck
+			//nolint:errcheck
 			_ = r.wrappedRunner.Stop()
 
 			return <-errCh
@@ -148,6 +148,7 @@ func (r *restarter) Run(eventSink events.Recorder) error {
 		select {
 		case <-r.stop:
 			eventSink(events.StateStopping, "Aborting restart sequence")
+
 			return nil
 		case <-time.After(r.opts.RestartInterval):
 		}

@@ -4,15 +4,15 @@
 
 package runtime
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	// ErrLocked indicates that the sequencer is currently locked, and processing
 	// another sequence.
 	ErrLocked = errors.New("locked")
-
-	// ErrReboot indicates that a task is requesting a reboot.
-	ErrReboot = errors.New("reboot")
 
 	// ErrInvalidSequenceData indicates that the sequencer got data the wrong
 	// data type for a sequence.
@@ -21,3 +21,19 @@ var (
 	// ErrUndefinedRuntime indicates that the sequencer's runtime is not defined.
 	ErrUndefinedRuntime = errors.New("undefined runtime")
 )
+
+// RebootError encapsulates unix.Reboot() cmd argument.
+type RebootError struct {
+	Cmd int
+}
+
+func (e RebootError) Error() string {
+	return fmt.Sprintf("unix.Reboot(%x)", e.Cmd)
+}
+
+// IsRebootError checks whether given error is RebootError.
+func IsRebootError(err error) bool {
+	var rebootErr RebootError
+
+	return errors.As(err, &rebootErr)
+}

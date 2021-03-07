@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: dupl,scopelint,testpackage
+//nolint:dupl,scopelint,testpackage
 package v1alpha1
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 func TestNewSequencer(t *testing.T) {
@@ -211,7 +211,7 @@ func TestSequencer_Reboot(t *testing.T) {
 func TestSequencer_Reset(t *testing.T) {
 	type args struct {
 		r  runtime.Runtime
-		in *machine.ResetRequest
+		in runtime.ResetOptions
 	}
 
 	tests := []struct {

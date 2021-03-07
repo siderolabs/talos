@@ -3,20 +3,20 @@ Available: true
 Errors: []
 ReadOnly: false
 Meta:
-  color: "yellow"
-  icon: "spinner"
-  title: "talos"
-Endpoint: ""
-Bundle: ""
-Name: "Talos"
-Description: "Talos"
-Documentation: ""
+  color: 'yellow'
+  icon: 'spinner'
+  title: 'talos'
+Endpoint: ''
+Bundle: ''
+Name: 'Talos'
+Description: 'Talos'
+Documentation: ''
 Templates: []
 RequiredParams:
-  - "talos/role"
+  - 'talos/role'
 OptionalParams: []
 Params: {}
-BootEnv: "talos-0.6"
+BootEnv: 'talos'
 Tasks: []
 Profiles: []
 Reboot: false

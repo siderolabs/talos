@@ -26,6 +26,7 @@ type Reader struct {
 func (r *Reader) Read(p []byte) (n int, err error) {
 	if atomic.LoadUint32(&r.closed) > 0 {
 		err = ErrClosed
+
 		return
 	}
 

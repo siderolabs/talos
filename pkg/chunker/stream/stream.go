@@ -64,7 +64,7 @@ func (c *Stream) Read() <-chan []byte {
 
 	go func(ch chan []byte) {
 		defer close(ch)
-		// nolint: errcheck
+		//nolint:errcheck
 		defer c.source.Close()
 
 		buf := make([]byte, c.options.Size)

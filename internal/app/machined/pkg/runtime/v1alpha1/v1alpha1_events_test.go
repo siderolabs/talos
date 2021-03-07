@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: scopelint,testpackage
+//nolint:scopelint,testpackage
 package v1alpha1
 
 import (
@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/time/rate"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 func TestEvents_Publish(t *testing.T) {
@@ -100,7 +100,7 @@ func TestEvents_Publish(t *testing.T) {
 
 						atomic.AddUint32(&got, 1)
 
-						_ = l.Wait(context.Background()) //nolint: errcheck
+						_ = l.Wait(context.Background()) //nolint:errcheck
 					}
 				}); err != nil {
 					t.Errorf("Watch error %s", err)
@@ -110,7 +110,7 @@ func TestEvents_Publish(t *testing.T) {
 			l := rate.NewLimiter(500, tt.cap/2)
 
 			for i := 0; i < tt.messages; i++ {
-				_ = l.Wait(context.Background()) //nolint: errcheck
+				_ = l.Wait(context.Background()) //nolint:errcheck
 
 				e.Publish(&machine.SequenceEvent{
 					Sequence: strconv.Itoa(i),
@@ -262,7 +262,7 @@ func BenchmarkWatch(b *testing.B) {
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		_ = e.Watch(func(events <-chan runtime.Event) { wg.Done() }) //nolint: errcheck
+		_ = e.Watch(func(events <-chan runtime.Event) { wg.Done() }) //nolint:errcheck
 	}
 
 	wg.Wait()
@@ -280,7 +280,7 @@ func BenchmarkPublish(bb *testing.B) {
 			wg.Add(watchers)
 
 			for j := 0; j < watchers; j++ {
-				_ = e.Watch(func(events <-chan runtime.Event) { //nolint: errcheck
+				_ = e.Watch(func(events <-chan runtime.Event) { //nolint:errcheck
 					defer wg.Done()
 
 					for i := 0; i < b.N; i++ {

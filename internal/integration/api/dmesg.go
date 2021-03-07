@@ -12,9 +12,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // DmesgSuite verifies Dmesg API.
@@ -85,6 +85,7 @@ func (suite *DmesgSuite) TestStreaming() {
 			msg, err := dmesgStream.Recv()
 			if err != nil {
 				errCh <- err
+
 				return
 			}
 
@@ -119,7 +120,7 @@ DrainLoop:
 
 // TestClusterHasDmesg verifies that all the cluster nodes have dmesg.
 func (suite *DmesgSuite) TestClusterHasDmesg() {
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes().Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	ctx := client.WithNodes(suite.ctx, nodes...)
@@ -139,6 +140,7 @@ func (suite *DmesgSuite) TestClusterHasDmesg() {
 			if err == io.EOF {
 				break
 			}
+
 			suite.Require().NoError(err)
 		}
 

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
@@ -23,7 +24,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/pkg/proc/reaper"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -90,7 +90,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)
@@ -101,7 +101,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 
 func (suite *ProcessSuite) TestRunRestartFailed() {
 	testFile := filepath.Join(suite.tmpDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(process.NewRunner(false, &runner.Args{
@@ -126,7 +126,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		logFile, err := os.Open(filepath.Join(suite.tmpDir, "restarter.log"))
 		suite.Assert().NoError(err)
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer logFile.Close()
 
 		logContents, err := ioutil.ReadAll(logFile)
@@ -154,7 +154,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 
 func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	testFile := filepath.Join(suite.tmpDir, "talos-test")
-	// nolint: errcheck
+	//nolint:errcheck
 	_ = os.Remove(testFile)
 
 	r := restart.New(process.NewRunner(false, &runner.Args{
@@ -177,6 +177,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	select {
 	case <-done:
 		suite.Assert().Fail("task should be running")
+
 		return
 	default:
 	}
@@ -190,6 +191,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	select {
 	case <-done:
 		suite.Assert().Fail("task should be running")
+
 		return
 	default:
 	}

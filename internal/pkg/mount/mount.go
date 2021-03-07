@@ -13,14 +13,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/filesystem/xfs"
-	gptpartition "github.com/talos-systems/talos/pkg/blockdevice/table/gpt/partition"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/makefs"
 )
 
 // RetryFunc defines the requirements for retrying a mount point operation.
@@ -33,28 +32,49 @@ func Mount(mountpoints *Points) (err error) {
 	//  Mount the device(s).
 
 	for iter.Next() {
-		mountpoint := iter.Value()
-		// Repair the disk's partition table.
-		if mountpoint.Resize {
-			if err = mountpoint.ResizePartition(); err != nil {
-				return fmt.Errorf("error resizing %q: %w", iter.Value().Source(), err)
-			}
-		}
-
-		if err = mountpoint.Mount(); err != nil {
+		if err = mountMountpoint(iter.Value()); err != nil {
 			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
-		}
-
-		// Grow the filesystem to the maximum allowed size.
-		if mountpoint.Resize {
-			if err = mountpoint.GrowFilesystem(); err != nil {
-				return fmt.Errorf("grow: %w", err)
-			}
 		}
 	}
 
 	if iter.Err() != nil {
 		return iter.Err()
+	}
+
+	return nil
+}
+
+func mountMountpoint(mountpoint *Point) (err error) {
+	var skipMount bool
+
+	// Repair the disk's partition table.
+	if mountpoint.MountFlags.Check(Resize) {
+		if _, err = mountpoint.ResizePartition(); err != nil {
+			return fmt.Errorf("error resizing %w", err)
+		}
+	}
+
+	if mountpoint.MountFlags.Check(SkipIfMounted) {
+		skipMount, err = mountpoint.IsMounted()
+		if err != nil {
+			return fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
+		}
+	}
+
+	if !skipMount {
+		if err = mountpoint.Mount(); err != nil {
+			return fmt.Errorf("error mounting: %w", err)
+		}
+	}
+
+	// Grow the filesystem to the maximum allowed size.
+	//
+	// Growfs is called always, even if ResizePartition returns false to workaround failure scenario
+	// when partition was resized, but growfs never got called.
+	if mountpoint.MountFlags.Check(Resize) {
+		if err = mountpoint.GrowFilesystem(); err != nil {
+			return fmt.Errorf("error resizing filesystem: %w", err)
+		}
 	}
 
 	return nil
@@ -97,11 +117,25 @@ func Move(mountpoints *Points, prefix string) (err error) {
 	return nil
 }
 
-func mountRetry(f RetryFunc, p *Point) (err error) {
+// PrefixMountTargets prefixes all mountpoints targets with fixed path.
+func PrefixMountTargets(mountpoints *Points, targetPrefix string) error {
+	iter := mountpoints.Iter()
+	for iter.Next() {
+		mountpoint := iter.Value()
+		mountpoint.target = filepath.Join(targetPrefix, mountpoint.target)
+	}
+
+	return iter.Err()
+}
+
+func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if err = f(p); err != nil {
 			switch err {
 			case unix.EBUSY:
+				return retry.ExpectedError(err)
+			case unix.ENOENT:
+				// if udevd triggers BLKRRPART ioctl, partition device entry might disappear temporarily
 				return retry.ExpectedError(err)
 			case unix.EINVAL:
 				isMounted, checkErr := p.IsMounted()
@@ -109,7 +143,7 @@ func mountRetry(f RetryFunc, p *Point) (err error) {
 					return retry.ExpectedError(checkErr)
 				}
 
-				if !isMounted {
+				if !isMounted && isUnmount { // if partition is already unmounted, ignore EINVAL
 					return nil
 				}
 
@@ -195,27 +229,33 @@ func (p *Point) Data() string {
 func (p *Point) Mount() (err error) {
 	p.target = path.Join(p.Prefix, p.target)
 
+	for _, hook := range p.Options.PreMountHooks {
+		if err = hook(p); err != nil {
+			return err
+		}
+	}
+
 	if err = ensureDirectory(p.target); err != nil {
 		return err
 	}
 
-	if p.ReadOnly {
+	if p.MountFlags.Check(ReadOnly) {
 		p.flags |= unix.MS_RDONLY
 	}
 
 	switch {
-	case p.Overlay:
-		err = mountRetry(overlay, p)
+	case p.MountFlags.Check(Overlay):
+		err = mountRetry(overlay, p, false)
 	default:
-		err = mountRetry(mount, p)
+		err = mountRetry(mount, p, false)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	if p.Shared {
-		if err = mountRetry(share, p); err != nil {
+	if p.MountFlags.Check(Shared) {
+		if err = mountRetry(share, p, false); err != nil {
 			return fmt.Errorf("error sharing mount point %s: %+v", p.target, err)
 		}
 	}
@@ -226,9 +266,23 @@ func (p *Point) Mount() (err error) {
 // Unmount attempts to retry an unmount on EBUSY. It will attempt a
 // retry every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Unmount() (err error) {
-	p.target = path.Join(p.Prefix, p.target)
-	if err := mountRetry(unmount, p); err != nil {
+	var mounted bool
+
+	if mounted, err = p.IsMounted(); err != nil {
 		return err
+	}
+
+	if mounted {
+		p.target = path.Join(p.Prefix, p.target)
+		if err = mountRetry(unmount, p, true); err != nil {
+			return err
+		}
+	}
+
+	for _, hook := range p.Options.PostUnmountHooks {
+		if err = hook(p); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -241,7 +295,7 @@ func (p *Point) IsMounted() (bool, error) {
 		return false, err
 	}
 
-	defer f.Close() //nolint: errcheck
+	defer f.Close() //nolint:errcheck
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -274,49 +328,54 @@ func (p *Point) Move(prefix string) (err error) {
 }
 
 // ResizePartition resizes a partition to the maximum size allowed.
-func (p *Point) ResizePartition() (err error) {
+func (p *Point) ResizePartition() (resized bool, err error) {
 	var devname string
 
 	if devname, err = util.DevnameFromPartname(p.Source()); err != nil {
-		return err
+		return false, err
 	}
 
-	bd, err := blockdevice.Open("/dev/" + devname)
+	bd, err := blockdevice.Open("/dev/"+devname, blockdevice.WithExclusiveLock(true))
 	if err != nil {
-		return fmt.Errorf("error opening block device %q: %w", devname, err)
+		return false, fmt.Errorf("error opening block device %q: %w", devname, err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer bd.Close()
 
 	pt, err := bd.PartitionTable()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if err := pt.Repair(); err != nil {
-		return err
+		return false, err
 	}
 
-	for _, partition := range pt.Partitions() {
-		if partition.(*gptpartition.Partition).Name == constants.EphemeralPartitionLabel {
-			if err := pt.Resize(partition); err != nil {
-				return err
+	for _, partition := range pt.Partitions().Items() {
+		if partition.Name == constants.EphemeralPartitionLabel {
+			resized, err := pt.Resize(partition)
+			if err != nil {
+				return false, err
+			}
+
+			if !resized {
+				return false, nil
 			}
 		}
 	}
 
 	if err := pt.Write(); err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
 // GrowFilesystem grows a partition's filesystem to the maximum size allowed.
 // NB: An XFS partition MUST be mounted, or this will fail.
 func (p *Point) GrowFilesystem() (err error) {
-	if err = xfs.GrowFS(p.Target()); err != nil {
+	if err = makefs.XFSGrow(p.Target()); err != nil {
 		return fmt.Errorf("xfs_growfs: %w", err)
 	}
 

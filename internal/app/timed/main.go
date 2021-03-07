@@ -7,12 +7,13 @@ package main
 import (
 	"flag"
 	"log"
+	"runtime"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -25,12 +26,11 @@ const (
 	DefaultServer = "pool.ntp.org"
 )
 
-var configPath *string
-
 func init() {
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
 
-	configPath = flag.String("config", "", "the path to the config")
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	flag.Parse()
 }
@@ -44,9 +44,9 @@ func main() {
 
 	server := DefaultServer
 
-	config, err := config.NewFromFile(*configPath)
+	config, err := configloader.NewFromStdin()
 	if err != nil {
-		log.Fatalf("failed to create config from file: %v", err)
+		log.Fatal(err)
 	}
 
 	// Check if ntp servers are defined

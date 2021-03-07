@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/talos-systems/talos/pkg/cmd"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
 // Loattach attaches a loopback device by inoking the `losetup` command.

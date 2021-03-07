@@ -13,8 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/api/machine"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var eventsCmdFlags struct {
@@ -89,7 +89,7 @@ var eventsCmd = &cobra.Command{
 					args = append([]interface{}{event.Node, event.ID, event.TypeURL}, args...)
 					fmt.Fprintf(w, format, args...)
 
-					// nolint: errcheck
+					//nolint:errcheck
 					w.Flush()
 				}
 			}, opts...)

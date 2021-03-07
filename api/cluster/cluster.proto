@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package cluster;
 
-option go_package = "github.com/talos-systems/talos/api/cluster";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/cluster";
 option java_multiple_files = true;
 option java_outer_classname = "ClusterApi";
 option java_package = "com.cluster.api";

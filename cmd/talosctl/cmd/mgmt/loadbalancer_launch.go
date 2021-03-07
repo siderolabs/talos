@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/go-loadbalancer/loadbalancer"
 
-	"github.com/talos-systems/talos/internal/pkg/loadbalancer"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var loadbalancerLaunchCmdFlags struct {
@@ -29,17 +29,10 @@ var loadbalancerLaunchCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var lb loadbalancer.TCP
 
-		for _, port := range []int{constants.ApidPort, 6443} { // TODO: need to put 6443 as constant or use config?
+		for _, port := range []int{constants.DefaultControlPlanePort} {
 			upstreams := make([]string, len(loadbalancerLaunchCmdFlags.upstreams))
 			for i := range upstreams {
 				upstreams[i] = fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.upstreams[i], port)
-			}
-
-			if loadbalancerLaunchCmdFlags.apidOnlyInitNode {
-				// for apid, add only init node for now (first item)
-				if port == constants.ApidPort && len(upstreams) > 1 {
-					upstreams = upstreams[:1]
-				}
 			}
 
 			if err := lb.AddRoute(fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.addr, port), upstreams); err != nil {
@@ -54,6 +47,5 @@ var loadbalancerLaunchCmd = &cobra.Command{
 func init() {
 	loadbalancerLaunchCmd.Flags().StringVar(&loadbalancerLaunchCmdFlags.addr, "loadbalancer-addr", "localhost", "load balancer listen address (IP or host)")
 	loadbalancerLaunchCmd.Flags().StringSliceVar(&loadbalancerLaunchCmdFlags.upstreams, "loadbalancer-upstreams", []string{}, "load balancer upstreams (nodes to proxy to)")
-	loadbalancerLaunchCmd.Flags().BoolVar(&loadbalancerLaunchCmdFlags.apidOnlyInitNode, "apid-only-init-node", false, "use only apid init node for load balancing")
 	addCommand(loadbalancerLaunchCmd)
 }

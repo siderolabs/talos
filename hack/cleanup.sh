@@ -21,6 +21,8 @@ remove_symlinks
 # Remove any archives as we do not need them since everything is dynamically linked.
 find ${PREFIX} -type f -name \*.a -print0 | xargs -0 rm -rf || true
 find ${PREFIX} -type f -name \*.la -print0 | xargs -0 rm -rf || true
+# Remove static binaries.
+find ${PREFIX} -type f -name \*.static -print0 | xargs -0 rm -rf || true
 # Strip debug symbols from all libraries and binaries.
 find ${PREFIX}/{lib,usr/lib} -type f \( -name \*.so* -a ! -name \*dbg \) -exec strip --strip-unneeded {} ';' || true
 find ${PREFIX}/{bin,sbin,usr/bin,usr/sbin} -type f -exec strip --strip-all {} ';' || true

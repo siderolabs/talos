@@ -11,14 +11,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
-var (
-	kubernetes bool
-	useCRI     bool
-)
+var kubernetes bool
 
 // Common options set on root command.
 var (
@@ -28,8 +25,10 @@ var (
 	Cmdcontext  string
 )
 
-// WithClient wraps common code to initialize Talos client and provide cancellable context.
-func WithClient(action func(context.Context, *client.Client) error) error {
+// WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
+//
+// WithClientNoNodes doesn't set any node information on request context.
+func WithClientNoNodes(action func(context.Context, *client.Client) error) error {
 	return cli.WithContext(context.Background(), func(ctx context.Context) error {
 		cfg, err := config.Open(Talosconfig)
 		if err != nil {
@@ -49,27 +48,34 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 			opts = append(opts, client.WithEndpoints(Endpoints...))
 		}
 
+		c, err := client.New(ctx, opts...)
+		if err != nil {
+			return fmt.Errorf("error constructing client: %w", err)
+		}
+		//nolint:errcheck
+		defer c.Close()
+
+		return action(ctx, c)
+	})
+}
+
+// WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
+func WithClient(action func(context.Context, *client.Client) error) error {
+	return WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
 		if len(Nodes) < 1 {
-			// Load nodes from config, if present
-			if Cmdcontext == "" {
-				Cmdcontext = cfg.Context
-			}
-			configContext, ok := cfg.Contexts[Cmdcontext]
-			if !ok {
-				return fmt.Errorf("failed to locate context %q in config", Cmdcontext)
+			configContext := c.GetConfigContext()
+			if configContext == nil {
+				return fmt.Errorf("failed to resolve config context")
 			}
 
 			Nodes = configContext.Nodes
 		}
 
-		ctx = client.WithNodes(ctx, Nodes...)
-
-		c, err := client.New(ctx, opts...)
-		if err != nil {
-			return fmt.Errorf("error constructing client: %w", err)
+		if len(Nodes) < 1 {
+			return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
 		}
-		// nolint: errcheck
-		defer c.Close()
+
+		ctx = client.WithNodes(ctx, Nodes...)
 
 		return action(ctx, c)
 	})

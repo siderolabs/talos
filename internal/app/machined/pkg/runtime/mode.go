@@ -11,6 +11,9 @@ import (
 // Mode is a runtime mode.
 type Mode int
 
+// ModeCapability describes mode capability flags.
+type ModeCapability uint64
+
 const (
 	// ModeCloud is the cloud runtime mode.
 	ModeCloud Mode = iota
@@ -18,6 +21,17 @@ const (
 	ModeContainer
 	// ModeMetal is the metal runtime mode.
 	ModeMetal
+)
+
+const (
+	// Reboot node reboot.
+	Reboot ModeCapability = 1 << iota
+	// Rollback node rollback.
+	Rollback
+	// Shutdown node shutdown.
+	Shutdown
+	// Upgrade node upgrade.
+	Upgrade
 )
 
 const (
@@ -29,6 +43,16 @@ const (
 // String returns the string representation of a Mode.
 func (m Mode) String() string {
 	return [...]string{cloud, container, metal}[m]
+}
+
+// RequiresInstall implements config.RuntimeMode.
+func (m Mode) RequiresInstall() bool {
+	return m == ModeMetal
+}
+
+// Supports returns mode capability.
+func (m Mode) Supports(feature ModeCapability) bool {
+	return (m.capabilities() & uint64(feature)) != 0
 }
 
 // ParseMode returns a `Mode` that matches the specified string.
@@ -45,4 +69,17 @@ func ParseMode(s string) (mod Mode, err error) {
 	}
 
 	return mod, nil
+}
+
+func (m Mode) capabilities() uint64 {
+	all := ^uint64(0)
+
+	return [...]uint64{
+		// metal
+		all,
+		// container
+		all ^ uint64(Reboot|Shutdown|Upgrade|Rollback),
+		// cloud
+		all,
+	}[m]
 }

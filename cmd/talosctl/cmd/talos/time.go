@@ -16,10 +16,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	timeapi "github.com/talos-systems/talos/api/time"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
+
+var timeCmdFlags struct {
+	ntpServer string
+}
 
 // timeCmd represents the time command.
 var timeCmd = &cobra.Command{
@@ -29,20 +33,16 @@ var timeCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			server, err := cmd.Flags().GetString("check")
-			if err != nil {
-				return fmt.Errorf("failed to parse check flag: %w", err)
-			}
-
 			var (
 				resp       *timeapi.TimeResponse
 				remotePeer peer.Peer
+				err        error
 			)
 
-			if server == "" {
+			if timeCmdFlags.ntpServer == "" {
 				resp, err = c.Time(ctx, grpc.Peer(&remotePeer))
 			} else {
-				resp, err = c.TimeCheck(ctx, server, grpc.Peer(&remotePeer))
+				resp, err = c.TimeCheck(ctx, timeCmdFlags.ntpServer, grpc.Peer(&remotePeer))
 			}
 
 			if err != nil {
@@ -54,7 +54,7 @@ var timeCmd = &cobra.Command{
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tNTP-SERVER\tLOCAL-TIME\tREMOTE-TIME")
+			fmt.Fprintln(w, "NODE\tNTP-SERVER\tNODE-TIME\tNTP-SERVER-TIME")
 
 			defaultNode := client.AddrFromPeer(&remotePeer)
 
@@ -70,6 +70,7 @@ var timeCmd = &cobra.Command{
 				if err != nil {
 					return fmt.Errorf("error parsing local time: %w", err)
 				}
+
 				remotetime, err = ptypes.Timestamp(msg.Remotetime)
 				if err != nil {
 					return fmt.Errorf("error parsing remote time: %w", err)
@@ -84,6 +85,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().StringP("check", "c", "pool.ntp.org", "checks server time against specified ntp server")
+	timeCmd.Flags().StringVarP(&timeCmdFlags.ntpServer, "check", "c", "", "checks server time against specified ntp server")
 	addCommand(timeCmd)
 }

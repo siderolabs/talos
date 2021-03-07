@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
@@ -14,9 +14,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type machinedService struct {
@@ -41,7 +41,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	defer server.Stop()
 
 	go func() {
-		// nolint: errcheck
+		//nolint:errcheck
 		server.Serve(listener)
 	}()
 

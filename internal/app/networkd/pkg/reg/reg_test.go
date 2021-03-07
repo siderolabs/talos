@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package reg
 
 import (
@@ -18,11 +18,11 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	healthapi "github.com/talos-systems/talos/api/health"
-	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
+	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
 
 type NetworkdSuite struct {
@@ -33,16 +33,16 @@ func TestNetworkdSuite(t *testing.T) {
 	suite.Run(t, new(NetworkdSuite))
 }
 
-// nolint: dupl
+//nolint:dupl
 func (suite *NetworkdSuite) TestRoutes() {
 	_, server, listener := suite.fakeNetworkdRPC()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(
@@ -58,16 +58,16 @@ func (suite *NetworkdSuite) TestRoutes() {
 	suite.Assert().Greater(len(resp.Messages[0].Routes), 0)
 }
 
-// nolint: dupl
+//nolint:dupl
 func (suite *NetworkdSuite) TestInterfaces() {
 	_, server, listener := suite.fakeNetworkdRPC()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(
@@ -113,12 +113,12 @@ func (suite *NetworkdSuite) TestToCIDR() {
 func (suite *NetworkdSuite) TestHealthAPI() {
 	nwd, server, listener := suite.fakeNetworkdRPC()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer os.Remove(listener.Addr().String())
 
 	defer server.Stop()
 
-	// nolint: errcheck
+	//nolint:errcheck
 	go server.Serve(listener)
 
 	conn, err := grpc.Dial(

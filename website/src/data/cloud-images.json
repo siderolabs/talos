@@ -1,0 +1,482 @@
+[
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-3",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-029d9eddf5bcef0d7"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ca-central-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0afce0a480e3ddd94"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-3",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-05eec2f235d51daac"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-02ecda0baa9f3ac64"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0e6da1ab2d3140c45"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "sa-east-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0a43f1944618f03a2"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "sa-east-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-02e12f81e389ed084"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-northeast-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-05cc2b8a006df0641"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-northeast-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-00f8f7b2ab6bb886a"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-southeast-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-009139d175cd17bcc"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-southeast-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-08daae6af02cef420"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ca-central-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0b175a97166e4ee43"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-southeast-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0b7283f50724015bc"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-southeast-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-01fdead280aceb4f4"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-south-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-023f72ee686580018"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-south-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-092685ca92eaf6a4c"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-northeast-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0e50c63dae380eea2"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "ap-northeast-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-00eac9fdbf0d24f70"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-west-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0aaabf780fb09c411"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-west-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-04db2aa242c330a1b"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-east-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0777bf9fc4965d800"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-east-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-02e7ff495f5d92a31"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-central-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-08474f2f11cae9e6b"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-central-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-099413edb51e561ad"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-036a8daa623c4bfb7"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "eu-west-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-017dc59f9a96a44e7"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-west-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-051150bb1d73b8f0d"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-west-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-084d4068f237bdd1e"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-east-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0a2e7854c875f9150"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.7.0",
+    "region": "us-east-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-03ad06cfef9a825bb"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-east-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0e3ff2acdae002ac6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0742d60f76c81a96d"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-west-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-091046ae7793a3085"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-west-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-014f8b27f8c3291ff"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-05dff90cd8fb4dcab"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-northeast-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0116337007641bad6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-northeast-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0406678363dfd0d2c"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ca-central-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-047cc7c375bdec5d6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ca-central-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-04b3b1e7133ba012a"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-east-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-03e8509670646d366"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-east-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-03ab5ded68583d3a9"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0aed214e5ca0a2a2a"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-3",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-02c65e948756a92e8"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-central-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0565f778caa85797f"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-03e1a49c050d57d51"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-west-3",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-06392d9d2f3e381a1"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-west-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-04b806d580e09e004"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "eu-central-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-055de639aa222a680"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-west-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-04b6ec4ab7e0f02c6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-south-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-066765cf76d3d2e59"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-south-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0241a9a208961c3b6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-northeast-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0358566a4c9141d55"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-northeast-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-046a48f01f815af04"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "us-east-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0e0f374b78edecbc6"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "sa-east-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0bdc22d8bfbbbf614"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "sa-east-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0f59c4ac8d455135e"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-southeast-2",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0705f23399e88e6ca"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-southeast-2",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0d6af513fbbd8c49c"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-southeast-1",
+    "arch": "arm64",
+    "type": "hvm",
+    "id": "ami-0c01f1fb3df69143b"
+  },
+  {
+    "cloud": "aws",
+    "version": "v0.8.4",
+    "region": "ap-southeast-1",
+    "arch": "amd64",
+    "type": "hvm",
+    "id": "ami-0f07d433b86d6302a"
+  }
+]

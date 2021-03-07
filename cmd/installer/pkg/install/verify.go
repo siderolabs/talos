@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // VerifyEphemeralPartition verifies the supplied data device options.
@@ -49,9 +51,9 @@ func VerifyBootPartition(opts *Options) (err error) {
 // VerifyDiskAvailability verifies that no filesystems currently exist with
 // the labels used by the OS.
 func VerifyDiskAvailability(devpath, label string) (err error) {
-	var dev *probe.ProbedBlockDevice
+	var dev *blockdevice.BlockDevice
 
-	if dev, err = probe.DevForFileSystemLabel(devpath, label); err != nil {
+	if dev, err = blockdevice.Open(devpath); err != nil {
 		// We return here because we only care if we can discover the
 		// device successfully and confirm that the disk is not in use.
 		// TODO(andrewrynhard): We should return a custom error type here
@@ -59,11 +61,21 @@ func VerifyDiskAvailability(devpath, label string) (err error) {
 		return nil
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dev.Close()
 
-	if dev.SuperBlock != nil {
-		return fmt.Errorf("target install device %s is not empty, found existing %s file system", label, dev.SuperBlock.Type())
+	part, err := dev.GetPartition(label)
+	if err != nil {
+		return err
+	}
+
+	fsType, err := part.Filesystem()
+	if err != nil {
+		return err
+	}
+
+	if fsType != filesystem.Unknown {
+		return fmt.Errorf("target install device %s is not empty, found existing %s file system", label, fsType)
 	}
 
 	return nil

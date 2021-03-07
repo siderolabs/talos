@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: scopelint
+//nolint:scopelint
 package runtime_test
 
 import (
@@ -38,6 +38,11 @@ func TestSequence_String(t *testing.T) {
 			want: "upgrade",
 		},
 		{
+			name: "stageUpgrade",
+			s:    runtime.SequenceStageUpgrade,
+			want: "stageUpgrade",
+		},
+		{
 			name: "reboot",
 			s:    runtime.SequenceReboot,
 			want: "reboot",
@@ -46,11 +51,6 @@ func TestSequence_String(t *testing.T) {
 			name: "reset",
 			s:    runtime.SequenceReset,
 			want: "reset",
-		},
-		{
-			name: "recover",
-			s:    runtime.SequenceRecover,
-			want: "recover",
 		},
 	}
 
@@ -99,6 +99,12 @@ func TestParseSequence(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "stageUpgrade",
+			args:    args{"stageUpgrade"},
+			wantSeq: runtime.SequenceStageUpgrade,
+			wantErr: false,
+		},
+		{
 			name:    "reboot",
 			args:    args{"reboot"},
 			wantSeq: runtime.SequenceReboot,
@@ -108,12 +114,6 @@ func TestParseSequence(t *testing.T) {
 			name:    "reset",
 			args:    args{"reset"},
 			wantSeq: runtime.SequenceReset,
-			wantErr: false,
-		},
-		{
-			name:    "recover",
-			args:    args{"recover"},
-			wantSeq: runtime.SequenceRecover,
 			wantErr: false,
 		},
 		{
@@ -129,6 +129,7 @@ func TestParseSequence(t *testing.T) {
 			gotSeq, err := runtime.ParseSequence(tt.args.s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseSequence() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if gotSeq != tt.wantSeq {

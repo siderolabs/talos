@@ -8,7 +8,9 @@
 package base
 
 import (
-	"github.com/talos-systems/talos/internal/pkg/provision"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/access"
 )
 
 // TalosSuite defines most common settings for integration test suites.
@@ -23,21 +25,21 @@ type TalosSuite struct {
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
 	Version string
-	// TalosctlPath is path to talosctl binary
+	// TalosctlPath is a path to talosctl binary
 	TalosctlPath string
+	// KubectlPath is a path to kubectl binary
+	KubectlPath string
 
-	discoveredNodes []string
+	discoveredNodes cluster.Info
 }
 
 // DiscoverNodes provides basic functionality to discover cluster nodes via test settings.
 //
 // This method is overridden in specific suites to allow for specific discovery.
-func (talosSuite *TalosSuite) DiscoverNodes() []string {
+func (talosSuite *TalosSuite) DiscoverNodes() cluster.Info {
 	if talosSuite.discoveredNodes == nil {
 		if talosSuite.Cluster != nil {
-			for _, node := range talosSuite.Cluster.Info().Nodes {
-				talosSuite.discoveredNodes = append(talosSuite.discoveredNodes, node.PrivateIP.String())
-			}
+			talosSuite.discoveredNodes = access.NewAdapter(talosSuite.Cluster).Info
 		}
 	}
 
@@ -50,8 +52,8 @@ type ConfiguredSuite interface {
 }
 
 // SetConfig implements ConfiguredSuite.
-func (suite *TalosSuite) SetConfig(config TalosSuite) {
-	*suite = config
+func (talosSuite *TalosSuite) SetConfig(config TalosSuite) {
+	*talosSuite = config
 }
 
 // NamedSuite interface provides names for test suites.

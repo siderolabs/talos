@@ -5,6 +5,7 @@
 package download
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/go-retry/retry"
 )
 
 const b64 = "base64"
@@ -20,6 +21,9 @@ const b64 = "base64"
 type downloadOptions struct {
 	Headers map[string]string
 	Format  string
+
+	ErrorOnNotFound      error
+	ErrorOnEmptyResponse error
 }
 
 // Option configures the download options.
@@ -53,9 +57,23 @@ func WithHeaders(headers map[string]string) Option {
 	}
 }
 
+// WithErrorOnNotFound provides specific error to return when response has HTTP 404 error.
+func WithErrorOnNotFound(e error) Option {
+	return func(d *downloadOptions) {
+		d.ErrorOnNotFound = e
+	}
+}
+
+// WithErrorOnEmptyResponse provides specific error to return when response is empty.
+func WithErrorOnEmptyResponse(e error) Option {
+	return func(d *downloadOptions) {
+		d.ErrorOnEmptyResponse = e
+	}
+}
+
 // Download downloads a config.
-// nolint: gocyclo
-func Download(endpoint string, opts ...Option) (b []byte, err error) {
+//nolint:gocyclo
+func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return b, err
@@ -73,7 +91,7 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 
 	var req *http.Request
 
-	if req, err = http.NewRequest(http.MethodGet, u.String(), nil); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
 		return b, err
 	}
 
@@ -81,13 +99,16 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 		req.Header.Set(k, v)
 	}
 
-	err = retry.Exponential(60*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second)).Retry(func() error {
-		b, err = download(req)
-		if err != nil {
-			return retry.ExpectedError(err)
+	err = retry.Exponential(180*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second), retry.WithErrorLogging(true)).Retry(func() error {
+		select {
+		case <-ctx.Done():
+			return retry.UnexpectedError(context.Canceled)
+		default:
 		}
 
-		return nil
+		b, err = download(req, dlOpts)
+
+		return err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to download config from %q: %w", u.String(), err)
@@ -107,26 +128,34 @@ func Download(endpoint string, opts ...Option) (b []byte, err error) {
 	return b, nil
 }
 
-func download(req *http.Request) (data []byte, err error) {
+func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err error) {
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return data, err
+		return data, retry.ExpectedError(err)
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound && dlOpts.ErrorOnNotFound != nil {
+		return data, dlOpts.ErrorOnNotFound
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return data, fmt.Errorf("failed to download config, received %d", resp.StatusCode)
+		return data, retry.ExpectedError(fmt.Errorf("failed to download config, received %d", resp.StatusCode))
 	}
 
 	data, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return data, fmt.Errorf("read config: %s", err.Error())
+		return data, retry.ExpectedError(fmt.Errorf("read config: %s", err.Error()))
 	}
 
-	return data, err
+	if len(data) == 0 && dlOpts.ErrorOnEmptyResponse != nil {
+		return data, dlOpts.ErrorOnEmptyResponse
+	}
+
+	return data, nil
 }
 
 func init() {

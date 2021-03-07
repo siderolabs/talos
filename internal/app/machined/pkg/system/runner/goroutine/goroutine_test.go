@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
-	v1alpha1cfg "github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	v1alpha1cfg "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -144,8 +144,9 @@ func (suite *GoroutineSuite) TestStop() {
 func (suite *GoroutineSuite) TestRunLogs() {
 	r := goroutine.NewRunner(suite.r, "logtest",
 		func(ctx context.Context, data runtime.Runtime, logger io.Writer) error {
-			// nolint: errcheck
+			//nolint:errcheck
 			_, _ = logger.Write([]byte("Test 1\nTest 2\n"))
+
 			return nil
 		}, runner.WithLoggingManager(suite.loggingManager))
 
@@ -158,7 +159,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer logFile.Close()
 
 	logContents, err := ioutil.ReadAll(logFile)

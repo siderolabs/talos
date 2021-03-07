@@ -10,13 +10,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
-var (
-	graceful bool
-	reboot   bool
-)
+var resetCmdFlags struct {
+	graceful           bool
+	reboot             bool
+	systemLabelsToWipe []string
+}
 
 // resetCmd represents the reset command.
 var resetCmd = &cobra.Command{
@@ -26,7 +28,20 @@ var resetCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if err := c.Reset(ctx, graceful, reboot); err != nil {
+			var systemPartitionsToWipe []*machine.ResetPartitionSpec
+
+			for _, label := range resetCmdFlags.systemLabelsToWipe {
+				systemPartitionsToWipe = append(systemPartitionsToWipe, &machine.ResetPartitionSpec{
+					Label: label,
+					Wipe:  true,
+				})
+			}
+
+			if err := c.ResetGeneric(ctx, &machine.ResetRequest{
+				Graceful:               resetCmdFlags.graceful,
+				Reboot:                 resetCmdFlags.reboot,
+				SystemPartitionsToWipe: systemPartitionsToWipe,
+			}); err != nil {
 				return fmt.Errorf("error executing reset: %s", err)
 			}
 
@@ -36,7 +51,8 @@ var resetCmd = &cobra.Command{
 }
 
 func init() {
-	resetCmd.Flags().BoolVar(&graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
-	resetCmd.Flags().BoolVar(&reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
+	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
+	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
+	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")
 	addCommand(resetCmd)
 }

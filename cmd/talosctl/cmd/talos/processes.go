@@ -12,18 +12,18 @@ import (
 	"strings"
 	"time"
 
-	"code.cloudfoundry.org/bytefmt"
+	"github.com/dustin/go-humanize"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 // processesCmd represents the processes command.
 var processesCmd = &cobra.Command{
 	Use:     "processes",
-	Aliases: []string{"p"},
+	Aliases: []string{"p", "ps"},
 	Short:   "List running processes",
 	Long:    ``,
 	Args:    cobra.NoArgs,
@@ -85,7 +85,7 @@ func processesUI(ctx context.Context, c *client.Client) {
 		// Attempt to get terminal dimensions
 		// Since we're getting this data on each call
 		// we'll be able to handle terminal window resizing
-		w, h, err := terminal.GetSize(0)
+		w, h, err := term.GetSize(0)
 		cli.Should(err)
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
@@ -169,7 +169,7 @@ var cpu = func(p1, p2 *machineapi.ProcessInfo) bool {
 	return p1.CpuTime > p2.CpuTime
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
 	var remotePeer peer.Peer
 
@@ -218,7 +218,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 			s = append(s,
 				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %s",
-					node, p.Pid, p.State, p.Threads, p.CpuTime, bytefmt.ByteSize(p.VirtualMemory), bytefmt.ByteSize(p.ResidentMemory), args))
+					node, p.Pid, p.State, p.Threads, p.CpuTime, humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory), args))
 		}
 	}
 

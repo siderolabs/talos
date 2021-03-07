@@ -29,7 +29,7 @@ function usage {
 
 NODES=(control-plane-1 control-plane-2 control-plane-3 worker-1)
 
-INSTALLER=${INSTALLER:-docker.io/autonomy/installer:latest}
+INSTALLER=${INSTALLER:-ghcr.io/talos-systems/installer:latest}
 
 VM_MEMORY=${VM_MEMORY:-2048}
 VM_DISK=${VM_DISK:-10}

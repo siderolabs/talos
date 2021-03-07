@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // KubeconfigSuite verifies dmesg command.
@@ -32,9 +33,9 @@ func (suite *KubeconfigSuite) TestDirectory() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
-	suite.RunCLI([]string{"kubeconfig", tempDir},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), tempDir},
 		base.StdoutEmpty())
 
 	path := filepath.Join(tempDir, "kubeconfig")
@@ -49,47 +50,80 @@ func (suite *KubeconfigSuite) TestCwd() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	savedCwd, err := os.Getwd()
 	suite.Require().NoError(err)
 
-	defer os.Chdir(savedCwd) //nolint: errcheck
+	defer os.Chdir(savedCwd) //nolint:errcheck
 
 	suite.Require().NoError(os.Chdir(tempDir))
 
-	suite.RunCLI([]string{"kubeconfig"},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
 }
 
+// TestCustomName generates kubeconfig with custom name.
+func (suite *KubeconfigSuite) TestCustomName() {
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint:errcheck
+
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
+		base.StdoutEmpty())
+
+	suite.Require().FileExists(filepath.Join(tempDir, "k8sconfig"))
+}
+
 // TestMultiNodeFail verifies that command fails with multiple nodes.
 func (suite *KubeconfigSuite) TestMultiNodeFail() {
-	suite.RunCLI([]string{"kubeconfig", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
 		base.ShouldFail(),
 		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
 }
 
-// TestMerge test merge config into existing kubeconfig
-func (suite *KubeconfigSuite) TestMerge() {
+// TestMergeRename tests merge config into existing kubeconfig with default rename conflict resolution.
+func (suite *KubeconfigSuite) TestMergeRename() {
 	tempDir, err := ioutil.TempDir("", "talos")
 	suite.Require().NoError(err)
 
-	defer os.RemoveAll(tempDir) //nolint: errcheck
+	defer os.RemoveAll(tempDir) //nolint:errcheck
 
 	path := filepath.Join(tempDir, "config")
 
-	suite.RunCLI([]string{"kubeconfig", path, "-m"},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
 		base.StdoutEmpty())
-	suite.RunCLI([]string{"kubeconfig", path, "-m"})
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path})
 
 	config, err := clientcmd.LoadFromFile(path)
 	suite.Require().NoError(err)
 
 	suite.Require().Equal(len(config.Contexts), 2)
+}
+
+// TestMergeOverwrite test merge config into existing kubeconfig with overwrite conflict resolution.
+func (suite *KubeconfigSuite) TestMergeOverwrite() {
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer os.RemoveAll(tempDir) //nolint:errcheck
+
+	path := filepath.Join(tempDir, "config")
+
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
+		base.StdoutEmpty())
+	suite.RunCLI([]string{"kubeconfig", "--force", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
+		base.StdoutEmpty())
+
+	config, err := clientcmd.LoadFromFile(path)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal(len(config.Contexts), 1)
 }
 
 func init() {

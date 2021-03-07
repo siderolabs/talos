@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"google.golang.org/grpc"
@@ -23,9 +22,10 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Routerd implements the Service interface. It serves as the concrete type with
@@ -39,14 +39,7 @@ func (o *Routerd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *Routerd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/routerd.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/routerd"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/routerd.tar", "talos/routerd")
 }
 
 // PostFunc implements the Service interface.

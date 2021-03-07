@@ -7,6 +7,8 @@ package runtime
 import (
 	"context"
 	"log"
+
+	"github.com/talos-systems/os-runtime/pkg/controller"
 )
 
 // TaskSetupFunc defines the function that a task will execute for a specific runtime
@@ -25,7 +27,8 @@ type Phase struct {
 
 // ControllerOptions represents the options for a controller.
 type ControllerOptions struct {
-	Force bool
+	Force    bool
+	Takeover bool
 }
 
 // ControllerOption represents an option setter.
@@ -35,6 +38,15 @@ type ControllerOption func(o *ControllerOptions) error
 func WithForce() ControllerOption {
 	return func(o *ControllerOptions) error {
 		o.Force = true
+
+		return nil
+	}
+}
+
+// WithTakeover sets the take option to true.
+func WithTakeover() ControllerOption {
+	return func(o *ControllerOptions) error {
+		o.Takeover = true
 
 		return nil
 	}
@@ -50,5 +62,12 @@ func DefaultControllerOptions() ControllerOptions {
 type Controller interface {
 	Runtime() Runtime
 	Sequencer() Sequencer
-	Run(Sequence, interface{}, ...ControllerOption) error
+	Run(context.Context, Sequence, interface{}, ...ControllerOption) error
+	V1Alpha2() V1Alpha2Controller
+}
+
+// V1Alpha2Controller provides glue into v2alpha1 controller runtime.
+type V1Alpha2Controller interface {
+	Run(context.Context) error
+	DependencyGraph() (*controller.DependencyGraph, error)
 }

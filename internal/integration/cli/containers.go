@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // ContainersSuite verifies dmesg command.
@@ -24,23 +25,15 @@ func (suite *ContainersSuite) SuiteName() string {
 
 // TestContainerd inspects containers via containerd driver.
 func (suite *ContainersSuite) TestContainerd() {
-	suite.RunCLI([]string{"containers"},
+	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`talos/routerd`)),
-	)
-	suite.RunCLI([]string{"containers", "-k"},
-		base.StdoutShouldMatch(regexp.MustCompile(`kubelet`)),
 	)
 }
 
 // TestCRI inspects containers via CRI driver.
 func (suite *ContainersSuite) TestCRI() {
-	suite.RunCLI([]string{"containers", "-c"},
-		base.ShouldFail(),
-		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`CRI inspector is supported only for K8s namespace`)))
-	suite.RunCLI([]string{"containers", "-ck"},
+	suite.RunCLI([]string{"containers", "-k", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 	)
 }

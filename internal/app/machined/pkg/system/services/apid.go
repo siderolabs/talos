@@ -2,20 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
+	"sync"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+	"github.com/fsnotify/fsnotify"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -24,15 +26,20 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/kubernetes"
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/copy"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // APID implements the Service interface. It serves as the concrete type with
 // the required methods.
-type APID struct{}
+type APID struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+}
 
 // ID implements the Service interface.
 func (o *APID) ID(r runtime.Runtime) string {
@@ -41,24 +48,27 @@ func (o *APID) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
+	if r.Config().Machine().Type() == machine.TypeJoin {
+		o.syncKubeletPKI()
+	}
 
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/apid.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/apid"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/apid.tar", "talos/apid")
 }
 
 // PostFunc implements the Service interface.
 func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if o.cancel != nil {
+		o.cancel()
+	}
+
+	o.wg.Wait()
+
 	return nil
 }
 
 // Condition implements the Service interface.
 func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
-	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
+	if r.Config().Machine().Type() == machine.TypeJoin {
 		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
 	}
 
@@ -67,7 +77,7 @@ func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer {
+	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
 		return []string{"containerd", "networkd"}
 	}
 
@@ -75,40 +85,12 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 }
 
 // Runner implements the Service interface.
-//
-//nolint: gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	image := "talos/apid"
-
-	endpoints := []string{"127.0.0.1"}
 
 	// Ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
 		return nil, err
-	}
-
-	if r.Config().Machine().Type() == runtime.MachineTypeJoin {
-		opts := []retry.Option{retry.WithUnits(3 * time.Second), retry.WithJitter(time.Second)}
-
-		err := retry.Constant(4*time.Minute, opts...).Retry(func() error {
-			ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer ctxCancel()
-
-			h, err := kubernetes.NewClientFromKubeletKubeconfig()
-			if err != nil {
-				return retry.ExpectedError(fmt.Errorf("failed to create client: %w", err))
-			}
-
-			endpoints, err = h.MasterIPs(ctx)
-			if err != nil {
-				return retry.ExpectedError(err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Set the process arguments.
@@ -116,17 +98,30 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: o.ID(r),
 		ProcessArgs: []string{
 			"/apid",
-			"--config=" + constants.ConfigPath,
-			"--endpoints=" + strings.Join(endpoints, ","),
 		},
+	}
+
+	isWorker := r.Config().Machine().Type() == machine.TypeJoin
+
+	if !isWorker {
+		args.ProcessArgs = append(args.ProcessArgs, "--endpoints="+strings.Join([]string{"127.0.0.1"}, ","))
+	} else {
+		args.ProcessArgs = append(args.ProcessArgs, "--use-kubernetes-endpoints")
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.RouterdSocketPath), Source: filepath.Dir(constants.RouterdSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
+	}
+
+	if isWorker {
+		// worker requires kubelet config to refresh the certs via Kubernetes
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: filepath.Dir(constants.KubeletKubeconfig), Source: constants.SystemKubeletPKIDir, Options: []string{"rbind", "ro"}},
+			specs.Mount{Type: "bind", Destination: constants.KubeletPKIDir, Source: constants.SystemKubeletPKIDir, Options: []string{"rbind", "ro"}},
+		)
 	}
 
 	env := []string{}
@@ -145,9 +140,17 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		}
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),
@@ -178,4 +181,62 @@ func (o *APID) HealthFunc(runtime.Runtime) health.Check {
 // HealthSettings implements the HealthcheckedService interface.
 func (o *APID) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.DefaultSettings
+}
+
+func (o *APID) syncKubeletPKI() {
+	copyAll := func() {
+		if err := copy.Dir(constants.KubeletPKIDir, constants.SystemKubeletPKIDir, copy.WithMode(0o700)); err != nil {
+			log.Printf("failed to sync %s dir contents into %s: %s", constants.KubeletPKIDir, constants.SystemKubeletPKIDir, err)
+
+			return
+		}
+
+		if err := copy.File(constants.KubeletKubeconfig, filepath.Join(constants.SystemKubeletPKIDir, filepath.Base(constants.KubeletKubeconfig)), copy.WithMode(0o700)); err != nil {
+			log.Printf("failed to sync %s into %s: %s", constants.KubeletKubeconfig, constants.SystemKubeletPKIDir, err)
+
+			return
+		}
+	}
+
+	if err := os.MkdirAll(constants.KubeletPKIDir, 0o700); err != nil {
+		log.Printf("failed creating kubelet PKI directory: %s", err)
+
+		return
+	}
+
+	copyAll()
+
+	o.ctx, o.cancel = context.WithCancel(context.Background())
+	o.wg.Add(1)
+
+	go func() {
+		defer o.wg.Done()
+
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Printf("failed to create directory watcher %s", err)
+
+			return
+		}
+
+		defer watcher.Close() //nolint:errcheck
+
+		err = watcher.Add(constants.KubeletPKIDir)
+		if err != nil {
+			log.Printf("failed to watch dir %s %s", constants.KubeletPKIDir, err)
+
+			return
+		}
+
+		for {
+			select {
+			case <-o.ctx.Done():
+				return
+			case <-watcher.Events:
+				copyAll()
+			case err = <-watcher.Errors:
+				log.Printf("directory watch error %s", err)
+			}
+		}
+	}()
 }

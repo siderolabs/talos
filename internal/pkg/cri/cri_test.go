@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -79,8 +79,8 @@ func (suite *CRISuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint: errcheck
-		suite.containerdRunner.Run(MockEventSink) //nolint: errcheck
+		defer suite.containerdRunner.Close()      //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
 	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)

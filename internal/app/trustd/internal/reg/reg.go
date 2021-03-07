@@ -11,17 +11,17 @@ import (
 	"os"
 	"path"
 
+	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"
 
-	securityapi "github.com/talos-systems/talos/api/security"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
+	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
 // securityapi.SecurityServer interfaces.
 type Registrator struct {
-	Config runtime.Configurator
+	Config config.Provider
 }
 
 // Register implements the factory.Registrator interface.

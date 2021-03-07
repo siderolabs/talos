@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/conditions"
 )
 
 // StateEvent is a service event (e.g. 'up', 'down').

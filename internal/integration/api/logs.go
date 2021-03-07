@@ -12,13 +12,12 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"time"
 
-	"github.com/talos-systems/talos/api/common"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // LogsSuite verifies Logs API.
@@ -41,11 +40,7 @@ func (suite *LogsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-	node := nodes[rand.Intn(len(nodes))]
-
-	suite.nodeCtx = client.WithNodes(suite.ctx, node)
+	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode())
 }
 
 // TearDownTest ...
@@ -165,6 +160,7 @@ func (suite *LogsSuite) TestTailStreaming0() {
 	suite.testStreaming(0)
 }
 
+//nolint:gocyclo
 func (suite *LogsSuite) testStreaming(tailLines int32) {
 	if tailLines >= 0 {
 		// invoke machined enough times to generate
@@ -194,9 +190,12 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		defer close(respCh)
 
 		for {
-			msg, err := logsStream.Recv()
+			var msg *common.Data
+
+			msg, err = logsStream.Recv()
 			if err != nil {
 				errCh <- err
+
 				return
 			}
 

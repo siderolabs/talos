@@ -6,17 +6,22 @@ package main
 
 import (
 	"log"
-
-	"google.golang.org/grpc"
+	"runtime"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/routerd/pkg/director"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
+
+func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+}
 
 func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
@@ -31,6 +36,8 @@ func main() {
 	machinedBackend := backend.NewLocal("machined", constants.MachineSocketPath)
 	router.RegisterLocalBackend("os.OSService", machinedBackend)
 	router.RegisterLocalBackend("machine.MachineService", machinedBackend)
+	router.RegisterLocalBackend("resource.ResourceService", machinedBackend)
+	router.RegisterLocalBackend("inspect.InspectService", machinedBackend)
 	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
 	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
 	router.RegisterLocalBackend("cluster.ClusterService", machinedBackend)
@@ -41,7 +48,7 @@ func main() {
 		factory.SocketPath(constants.RouterdSocketPath),
 		factory.WithDefaultLog(),
 		factory.ServerOptions(
-			grpc.CustomCodec(proxy.Codec()),
+			grpc.CustomCodec(proxy.Codec()), //nolint:staticcheck
 			grpc.UnknownServiceHandler(
 				proxy.TransparentHandler(
 					router.Director,

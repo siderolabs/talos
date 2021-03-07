@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/provision/providers"
 )
 
 // destroyCmd represents the cluster destroy command.
@@ -30,7 +30,7 @@ func destroy(ctx context.Context) error {
 		return err
 	}
 
-	defer provisioner.Close() //nolint: errcheck
+	defer provisioner.Close() //nolint:errcheck
 
 	cluster, err := provisioner.Reflect(ctx, clusterName, stateDir)
 	if err != nil {

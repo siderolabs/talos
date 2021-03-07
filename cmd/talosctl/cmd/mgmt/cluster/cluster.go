@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	clientconfig "github.com/talos-systems/talos/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // Cmd represents the cluster command.
@@ -24,12 +24,16 @@ var (
 	provisionerName string
 	stateDir        string
 	clusterName     string
+
+	defaultStateDir string
+	defaultCNIDir   string
 )
 
 func init() {
-	defaultStateDir, err := clientconfig.GetTalosDirectory()
+	talosDir, err := clientconfig.GetTalosDirectory()
 	if err == nil {
-		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
+		defaultStateDir = filepath.Join(talosDir, "clusters")
+		defaultCNIDir = filepath.Join(talosDir, "cni")
 	}
 
 	Cmd.PersistentFlags().StringVar(&provisionerName, "provisioner", "docker", "Talos cluster provisioner to use")

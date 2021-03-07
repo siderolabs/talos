@@ -14,16 +14,16 @@ import (
 	"text/template"
 
 	"github.com/jsimonetti/rtnetlink"
+	talosnet "github.com/talos-systems/net"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	talosnet "github.com/talos-systems/talos/pkg/net"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
 // filterInterfaces filters network links by name so we only mange links
 // we need to.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err error) {
 	var conn *rtnetlink.Conn
 
@@ -45,10 +45,10 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 		return nil, err
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer conn.Close()
 
-	n := 0 // nolint: wsl
+	n := 0 //nolint:wsl
 	for _, iface := range filtered {
 		link, err := conn.Link.Get(uint32(iface.Index))
 		if err != nil {
@@ -83,6 +83,7 @@ func writeResolvConf(resolvers []string) (err error) {
 
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
 			log.Println("failed to add some resolver to resolvconf:", resolver)
+
 			return err
 		}
 	}
@@ -114,18 +115,18 @@ ff02::2         ip6-allrouters
 {{ end }}
 `
 
-func writeHosts(hostname string, address net.IP, config runtime.Configurator) (err error) {
-	extraHosts := []runtime.ExtraHost{}
+func writeHosts(hostname string, address net.IP, cfg config.Provider) (err error) {
+	extraHosts := []config.ExtraHost{}
 
-	if config != nil {
-		extraHosts = config.Machine().Network().ExtraHosts()
+	if cfg != nil {
+		extraHosts = cfg.Machine().Network().ExtraHosts()
 	}
 
 	data := struct {
 		IP         string
 		Hostname   string
 		Alias      string
-		ExtraHosts []runtime.ExtraHost
+		ExtraHosts []config.ExtraHost
 	}{
 		IP:         address.String(),
 		Hostname:   hostname,

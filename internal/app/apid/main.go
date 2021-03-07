@@ -8,6 +8,7 @@ import (
 	"flag"
 	"log"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
@@ -18,24 +19,26 @@ import (
 	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
 var (
-	configPath *string
-	endpoints  *string
+	endpoints       *string
+	useK8sEndpoints *bool
 )
 
 func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	configPath = flag.String("config", "", "the path to the config")
-	endpoints = flag.String("endpoints", "", "the IPs of the control plane nodes")
+	endpoints = flag.String("endpoints", "", "the static list of IPs of the control plane nodes")
+	useK8sEndpoints = flag.Bool("use-kubernetes-endpoints", false, "use Kubernetes master node endpoints as control plane endpoints")
 
 	flag.Parse()
 }
@@ -45,12 +48,22 @@ func main() {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
-	config, err := loadConfig()
+	config, err := configloader.NewFromStdin()
 	if err != nil {
 		log.Fatalf("open config: %v", err)
 	}
 
-	tlsConfig, err := provider.NewTLSConfig(config, strings.Split(*endpoints, ","))
+	var endpointsProvider provider.Endpoints
+
+	if *useK8sEndpoints {
+		endpointsProvider = &provider.KubernetesEndpoints{}
+	} else {
+		endpointsProvider = &provider.StaticEndpoints{
+			Endpoints: strings.Split(*endpoints, ","),
+		}
+	}
+
+	tlsConfig, err := provider.NewTLSConfig(config, endpointsProvider)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
@@ -73,12 +86,15 @@ func main() {
 	// all existing streaming methods
 	for _, methodName := range []string{
 		"/machine.MachineService/Copy",
+		"/machine.MachineService/DiskUsage",
 		"/machine.MachineService/Dmesg",
 		"/machine.MachineService/Events",
 		"/machine.MachineService/Kubeconfig",
 		"/machine.MachineService/List",
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/Read",
+		"/resource.ResourceService/List",
+		"/resource.ResourceService/Watch",
 		"/os.OSService/Dmesg",
 		"/cluster.ClusterService/HealthCheck",
 	} {
@@ -99,7 +115,7 @@ func main() {
 				grpc.Creds(
 					credentials.NewTLS(serverTLSConfig),
 				),
-				grpc.CustomCodec(proxy.Codec()),
+				grpc.CustomCodec(proxy.Codec()), //nolint:staticcheck
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -116,7 +132,7 @@ func main() {
 			factory.SocketPath(constants.APISocketPath),
 			factory.WithDefaultLog(),
 			factory.ServerOptions(
-				grpc.CustomCodec(proxy.Codec()),
+				grpc.CustomCodec(proxy.Codec()), //nolint:staticcheck
 				grpc.UnknownServiceHandler(
 					proxy.TransparentHandler(
 						router.Director,
@@ -129,8 +145,4 @@ func main() {
 	if err := errGroup.Wait(); err != nil {
 		log.Fatalf("listen: %v", err)
 	}
-}
-
-func loadConfig() (runtime.Configurator, error) {
-	return config.NewFromFile(*configPath)
 }

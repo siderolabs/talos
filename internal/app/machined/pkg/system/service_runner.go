@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
-	machineapi "github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/conditions"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // WaitConditionCheckInterval is time between checking for wait condition
@@ -111,6 +111,7 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	// service not running, suppress event
 	if svcrunner.state != events.StateRunning {
 		svcrunner.mu.Unlock()
+
 		return
 	}
 
@@ -124,6 +125,7 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 	event := events.ServiceEvent{
 		Message:   message,
 		State:     svcrunner.state,
+		Health:    change.New,
 		Timestamp: time.Now(),
 	}
 	svcrunner.events.Push(event)
@@ -135,6 +137,10 @@ func (svcrunner *ServiceRunner) healthUpdate(change health.StateChange) {
 
 	if isUp {
 		svcrunner.notifyEvent(StateEventUp)
+	}
+
+	if svcrunner.runtime != nil {
+		svcrunner.runtime.Events().Publish(event.AsProto(svcrunner.id))
 	}
 }
 
@@ -177,7 +183,7 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 // Start initializes the service and runs it
 //
 // Start should be run in a goroutine.
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) Start() {
 	defer func() {
 		// reset context for the next run
@@ -211,6 +217,7 @@ func (svcrunner *ServiceRunner) Start() {
 	if condition != nil {
 		if err := svcrunner.waitFor(ctx, condition); err != nil {
 			svcrunner.UpdateState(events.StateFailed, "Condition failed: %v", err)
+
 			return
 		}
 	}
@@ -219,6 +226,7 @@ func (svcrunner *ServiceRunner) Start() {
 
 	if err := svcrunner.service.PreFunc(ctx, svcrunner.runtime); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run pre stage: %v", err)
+
 		return
 	}
 
@@ -227,11 +235,13 @@ func (svcrunner *ServiceRunner) Start() {
 	runnr, err := svcrunner.service.Runner(svcrunner.runtime)
 	if err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to create runner: %v", err)
+
 		return
 	}
 
 	if runnr == nil {
 		svcrunner.UpdateState(events.StateSkipped, "Service skipped")
+
 		return
 	}
 
@@ -246,11 +256,12 @@ func (svcrunner *ServiceRunner) Start() {
 
 	if err := svcrunner.service.PostFunc(svcrunner.runtime, state); err != nil {
 		svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
+
 		return
 	}
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) error {
 	if runnr == nil {
 		// special case - run nothing (TODO: we should handle it better, e.g. in PreFunc)
@@ -261,7 +272,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		return fmt.Errorf("error opening runner: %w", err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer runnr.Close()
 
 	errCh := make(chan error)
@@ -279,7 +290,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		go func() {
 			defer healthWg.Done()
 
-			// nolint: errcheck
+			//nolint:errcheck
 			health.Run(ctx, healthSvc.HealthSettings(svcrunner.runtime), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.runtime))
 		}()
 
@@ -403,14 +414,14 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	}
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
 		// up when:
 		//   a) either skipped or already finished
 		//   b) or running and healthy (if supports health checks)
-		switch svcrunner.state { //nolint: exhaustive
+		switch svcrunner.state { //nolint:exhaustive
 		case events.StateSkipped, events.StateFinished:
 			return true
 		case events.StateRunning:
@@ -424,7 +435,7 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 		}
 	case StateEventDown:
 		// down when in any of the terminal states
-		switch svcrunner.state { //nolint: exhaustive
+		switch svcrunner.state { //nolint:exhaustive
 		case events.StateFailed, events.StateFinished, events.StateSkipped:
 			return true
 		default:

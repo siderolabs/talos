@@ -28,6 +28,7 @@ func WithMemoryLimit(limit int64) oci.SpecOpts {
 func WithRootfsPropagation(rp string) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
 		s.Linux.RootfsPropagation = rp
+
 		return nil
 	}
 }

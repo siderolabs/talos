@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var crashdumpCmdFlags struct {
@@ -25,11 +25,11 @@ var crashdumpCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
+		return WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
 			clientProvider := &cluster.ConfigClientProvider{
 				DefaultClient: c,
 			}
-			defer clientProvider.Close() //nolint: errcheck
+			defer clientProvider.Close() //nolint:errcheck
 
 			worker := cluster.APICrashDumper{
 				ClientProvider: clientProvider,

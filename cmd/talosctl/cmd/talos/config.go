@@ -8,11 +8,15 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"sort"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	clientconfig "github.com/talos-systems/talos/pkg/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 var (
@@ -36,12 +40,9 @@ var configEndpointCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext("")
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
-		}
-		if c.Context == "" {
-			return fmt.Errorf("no context is set")
+			return err
 		}
 
 		c.Contexts[c.Context].Endpoints = args
@@ -61,12 +62,9 @@ var configNodeCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext("")
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
-		}
-		if c.Context == "" {
-			return fmt.Errorf("no context is set")
+			return err
 		}
 
 		c.Contexts[c.Context].Nodes = args
@@ -78,18 +76,19 @@ var configNodeCmd = &cobra.Command{
 	},
 }
 
-// configContextCmd represents the configc context command.
+// configContextCmd represents the config context command.
 var configContextCmd = &cobra.Command{
-	Use:   "context <context>",
-	Short: "Set the current context",
-	Long:  ``,
-	Args:  cobra.ExactArgs(1),
+	Use:     "context <context>",
+	Short:   "Set the current context",
+	Aliases: []string{"use-context"},
+	Long:    ``,
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
 
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := openConfigAndContext(context)
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
+			return err
 		}
 
 		c.Context = context
@@ -160,8 +159,112 @@ var configGenerateCmd = &cobra.Command{
 	},
 }
 
+func openConfigAndContext(context string) (*clientconfig.Config, error) {
+	c, err := clientconfig.Open(Talosconfig)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config: %w", err)
+	}
+
+	if context == "" {
+		context = c.Context
+	}
+
+	if context == "" {
+		return nil, fmt.Errorf("no context is set")
+	}
+
+	if _, ok := c.Contexts[context]; !ok {
+		return nil, fmt.Errorf("context %q is not defined", context)
+	}
+
+	return c, nil
+}
+
+// configGetContexts represents config contexts command.
+var configGetContexts = &cobra.Command{
+	Use:     "contexts",
+	Short:   "List contexts defined in Talos config",
+	Aliases: []string{"get-contexts"},
+	Long:    ``,
+	Hidden:  false,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := clientconfig.Open(Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		keys := make([]string, len(c.Contexts))
+		i := 0
+		for key := range c.Contexts {
+			keys[i] = key
+			i++
+		}
+		sort.Strings(keys)
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "CURRENT\tNAME\tENDPOINTS\tNODES")
+		for _, name := range keys {
+			context := c.Contexts[name]
+
+			var (
+				current   string
+				endpoints string
+				nodes     string
+			)
+
+			if name == c.Context {
+				current = "*"
+			}
+
+			endpoints = strings.Join(context.Endpoints, ",")
+			if len(context.Nodes) > 3 {
+				nodes = strings.Join(context.Nodes[:3], ",")
+				nodes += "..."
+			} else {
+				nodes = strings.Join(context.Nodes, ",")
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", current, name, endpoints, nodes)
+		}
+
+		return w.Flush()
+	},
+}
+
+// configMergeCmd represents the config merge command.
+var configMergeCmd = &cobra.Command{
+	Use:    "merge <from>",
+	Short:  "Merge additional contexts from another Talos config into the default config",
+	Long:   "Contexts with the same name are renamed while merging configs.",
+	Hidden: false,
+	Args:   cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		from := args[0]
+		c, err := clientconfig.Open(Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		secondConfig, err := clientconfig.Open(from)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		renames := c.Merge(secondConfig)
+		for _, rename := range renames {
+			fmt.Printf("renamed talosconfig context %s\n", rename.String())
+		}
+
+		if err := c.Save(Talosconfig); err != nil {
+			return fmt.Errorf("error writing config: %s", err)
+		}
+
+		return nil
+	},
+}
+
 func init() {
-	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd)
+	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd, configMergeCmd, configGetContexts)
 	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")

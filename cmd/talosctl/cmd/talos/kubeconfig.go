@@ -5,26 +5,28 @@
 package talos
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
+	"strings"
 	"sync"
 
-	"github.com/particledecay/kconf/pkg/kubeconfig"
+	"github.com/mattn/go-isatty"
+	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/spf13/cobra"
-
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var (
-	force bool
-	merge bool
+	force            bool
+	forceContextName string
+	merge            bool
 )
 
 // kubeconfigCmd represents the kubeconfig command.
@@ -32,13 +34,63 @@ var kubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
-Kubeconfig will be written to PWD/kubeconfig or [local-path]/kubeconfig if specified.
-If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.`,
+If merge flag is defined, config will be merged with ~/.kube/config or [local-path] if specified.
+Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "kubeconfig"); err != nil {
 				return err
+			}
+
+			var localPath string
+
+			if len(args) == 0 {
+				// no path given, use defaults
+				var err error
+
+				if merge {
+					localPath, err = kubeconfig.DefaultPath()
+					if err != nil {
+						return err
+					}
+				} else {
+					localPath, err = os.Getwd()
+					if err != nil {
+						return fmt.Errorf("error getting current working directory: %s", err)
+					}
+				}
+			} else {
+				localPath = args[0]
+			}
+
+			localPath = filepath.Clean(localPath)
+
+			st, err := os.Stat(localPath)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					return fmt.Errorf("error checking path %q: %w", localPath, err)
+				}
+
+				err = os.MkdirAll(filepath.Dir(localPath), 0o755)
+				if err != nil {
+					return err
+				}
+			} else if st.IsDir() {
+				// only dir name was given, append `kubeconfig` by default
+				localPath = filepath.Join(localPath, "kubeconfig")
+			}
+
+			_, err = os.Stat(localPath)
+			if err == nil && !(force || merge) {
+				return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
+			} else if err != nil {
+				if os.IsNotExist(err) {
+					// merge doesn't make sense if target path doesn't exist
+					merge = false
+				} else {
+					return fmt.Errorf("error checking path %q: %w", localPath, err)
+				}
 			}
 
 			r, errCh, err := c.KubeconfigRaw(ctx)
@@ -57,86 +109,82 @@ If merge flag is defined, config will be merged with ~/.kube/config or [local-pa
 			}()
 
 			defer wg.Wait()
+			defer r.Close() //nolint:errcheck
+
+			data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
+			if err != nil {
+				return err
+			}
 
 			if merge {
-				return extractAndMerge(args, r)
+				return extractAndMerge(data, localPath)
 			}
 
-			localPath, err := os.Getwd()
-			if err != nil {
-				return fmt.Errorf("error getting current working directory: %s", err)
-			}
-			if len(args) == 1 {
-				localPath = args[0]
-			}
-			localPath = filepath.Clean(localPath)
-
-			// Drop the existing kubeconfig before writing the new one if force flag is specified.
-			if force {
-				err = os.Remove(filepath.Join(localPath, "kubeconfig"))
-				if err != nil && !os.IsNotExist(err) {
-					return fmt.Errorf("error deleting existing kubeconfig: %s", err)
-				}
-			}
-
-			return helpers.ExtractTarGz(localPath, r)
+			return ioutil.WriteFile(localPath, data, 0o640)
 		})
 	},
 }
 
-func extractAndMerge(args []string, r io.ReadCloser) error {
-	data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
-	if err != nil {
-		return err
-	}
-
-	var localPath string
-
-	if len(args) == 1 {
-		localPath = filepath.Clean(args[0])
-	} else {
-		var usr *user.User
-		usr, err = user.Current()
-
-		if err != nil {
-			return err
-		}
-
-		localPath = filepath.Join(usr.HomeDir, ".kube/config")
-	}
-
+func extractAndMerge(data []byte, localPath string) error {
 	config, err := clientcmd.Load(data)
 	if err != nil {
 		return err
 	}
 
-	// base file does not exist, dump config as is
-	if _, err = os.Stat(localPath); os.IsNotExist(err) {
-		err = os.MkdirAll(filepath.Dir(localPath), 0o755)
+	merger, err := kubeconfig.Load(localPath)
+	if err != nil {
+		return err
+	}
+
+	interactive := isatty.IsTerminal(os.Stdout.Fd())
+
+	err = merger.Merge(config, kubeconfig.MergeOptions{
+		ActivateContext:  true,
+		ForceContextName: forceContextName,
+		OutputWriter:     os.Stdout,
+		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {
+			if force {
+				return kubeconfig.OverwriteDecision, nil
+			}
+
+			if !interactive {
+				return kubeconfig.RenameDecision, nil
+			}
+
+			return askOverwriteOrRename(fmt.Sprintf("%s %q already exists", component, name))
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return merger.Write(localPath)
+}
+
+func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [rename/overwrite]: ", prompt)
+
+		response, err := reader.ReadString('\n')
 		if err != nil {
-			return err
+			return "", err
 		}
 
-		return clientcmd.WriteToFile(*config, localPath)
+		switch strings.ToLower(strings.TrimSpace(response)) {
+		case "overwrite", "o":
+			return kubeconfig.OverwriteDecision, nil
+		case "rename", "r":
+			return kubeconfig.RenameDecision, nil
+		}
 	}
-
-	baseConfig, err := clientcmd.LoadFromFile(localPath)
-	if err != nil {
-		return err
-	}
-
-	kconf := kubeconfig.KConf{Config: *baseConfig}
-	err = kconf.Merge(config, Cmdcontext)
-
-	if err != nil {
-		return err
-	}
-
-	return clientcmd.WriteToFile(kconf.Config, localPath)
 }
 
 func init() {
-	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present")
-	kubeconfigCmd.Flags().BoolVarP(&merge, "merge", "m", false, "Merge with existing kubeconfig")
+	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
+	kubeconfigCmd.Flags().StringVar(&forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
+	kubeconfigCmd.Flags().BoolVarP(&merge, "merge", "m", true, "Merge with existing kubeconfig")
 	addCommand(kubeconfigCmd)
 }

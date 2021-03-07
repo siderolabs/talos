@@ -16,7 +16,7 @@ import (
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
 	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type inspector struct {
@@ -139,9 +139,6 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 
 	// request for a container
 	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{
-		State: &runtimeapi.ContainerStateValue{
-			State: runtimeapi.ContainerState_CONTAINER_RUNNING,
-		},
 		LabelSelector: map[string]string{
 			"io.kubernetes.pod.name":       pod,
 			"io.kubernetes.pod.namespace":  namespace,
@@ -243,7 +240,7 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 
 // Pods collects information about running pods & containers.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	sandboxes, err := i.client.ListPodSandbox(i.ctx, &runtimeapi.PodSandboxFilter{
 		State: &runtimeapi.PodSandboxStateValue{
@@ -254,11 +251,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		return nil, err
 	}
 
-	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{
-		State: &runtimeapi.ContainerStateValue{
-			State: runtimeapi.ContainerState_CONTAINER_RUNNING,
-		},
-	})
+	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{})
 	if err != nil {
 		return nil, err
 	}

@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type inspector struct {
@@ -94,7 +94,7 @@ func (i *inspector) Images() (map[string]string, error) {
 	return imageList, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) containerInfo(cntr containerd.Container, imageList map[string]string, singleLookup bool) (*ctrs.Container, error) {
 	cp := &ctrs.Container{}
 
@@ -216,6 +216,7 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 
 					if sandbox, found := infraSpec.Annotations["io.kubernetes.cri.sandbox-log-directory"]; found {
 						cp.Sandbox = sandbox
+
 						break
 					}
 				}
@@ -236,7 +237,7 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 //
 // If container is not found, Container returns nil
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	var (
 		query           string
@@ -299,7 +300,7 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 
 // Pods collects information about running pods & containers.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 	imageList, err := i.Images()
 	if err != nil {
@@ -320,6 +321,7 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 		cp, err := i.containerInfo(cntr, imageList, false)
 		if err != nil {
 			multiErr = multierror.Append(multiErr, err)
+
 			continue
 		}
 
@@ -386,5 +388,6 @@ func (i *inspector) GetProcessStderr(id string) (string, error) {
 // Kill sends signal to container task.
 func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
 	_, err := i.client.TaskService().Kill(i.nsctx, &tasks.KillRequest{ContainerID: id, Signal: uint32(signal)})
+
 	return err
 }

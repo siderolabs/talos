@@ -11,15 +11,17 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 )
+
+const staticRouteDefaultMetric uint32 = 10
 
 // Static implements the Addressing interface.
 type Static struct {
 	CIDR        string
 	Mtu         int
 	FQDN        string
-	RouteList   []runtime.Route
+	RouteList   []config.Route
 	NetIf       *net.Interface
 	NameServers []net.IP
 }
@@ -28,6 +30,7 @@ type Static struct {
 // the necessary configuration data is supplied via config.
 func (s *Static) Discover(ctx context.Context, link *net.Interface) error {
 	s.NetIf = link
+
 	return nil
 }
 
@@ -38,17 +41,24 @@ func (s *Static) Name() string {
 
 // Address returns the IP address.
 func (s *Static) Address() *net.IPNet {
-	// nolint: errcheck
-	ip, ipn, _ := net.ParseCIDR(s.CIDR)
-	ipn.IP = ip
+	var ip net.IP
+
+	var ipn *net.IPNet
+
+	if s.CIDR != "" {
+		//nolint:errcheck
+		ip, ipn, _ = net.ParseCIDR(s.CIDR)
+		ipn.IP = ip
+	}
 
 	return ipn
 }
 
 // Mask returns the netmask.
 func (s *Static) Mask() net.IPMask {
-	// nolint: errcheck
+	//nolint:errcheck
 	_, ipnet, _ := net.ParseCIDR(s.CIDR)
+
 	return ipnet.Mask
 }
 
@@ -70,6 +80,10 @@ func (s *Static) TTL() time.Duration {
 
 // Family qualifies the address as ipv4 or ipv6.
 func (s *Static) Family() int {
+	if s.Address() == nil {
+		panic("unable to determine address family as address is nil")
+	}
+
 	if s.Address().IP.To4() != nil {
 		return unix.AF_INET
 	}
@@ -86,10 +100,23 @@ func (s *Static) Scope() uint8 {
 // TODO: do we need to be explicit on route vs gateway?
 func (s *Static) Routes() (routes []*Route) {
 	for _, route := range s.RouteList {
-		// nolint: errcheck
-		_, ipnet, _ := net.ParseCIDR(route.Network)
+		_, ipnet, err := net.ParseCIDR(route.Network())
+		if err != nil {
+			// TODO: we should at least log the error
+			continue
+		}
 
-		routes = append(routes, &Route{Dest: ipnet, Router: net.ParseIP(route.Gateway)})
+		metric := staticRouteDefaultMetric
+
+		if route.Metric() != 0 {
+			metric = route.Metric()
+		}
+
+		routes = append(routes, &Route{
+			Destination: ipnet,
+			Gateway:     net.ParseIP(route.Gateway()),
+			Metric:      metric,
+		})
 	}
 
 	return routes

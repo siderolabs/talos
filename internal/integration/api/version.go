@@ -10,10 +10,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/talos-systems/talos/api/machine"
+	"github.com/talos-systems/go-retry/retry"
+
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
-	"github.com/talos-systems/talos/pkg/retry"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // VersionSuite verifies version API.
@@ -52,7 +53,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 
 // TestSameVersionCluster verifies that all the nodes are on the same version.
 func (suite *VersionSuite) TestSameVersionCluster() {
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes().Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	ctx := client.WithNodes(suite.ctx, nodes...)
@@ -73,6 +74,7 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	suite.Require().Len(v.Messages, len(nodes))
 
 	expectedVersion := v.Messages[0].Version.Tag
+
 	for _, version := range v.Messages {
 		suite.Assert().Equal(expectedVersion, version.Version.Tag)
 	}

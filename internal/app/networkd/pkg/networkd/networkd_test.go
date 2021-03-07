@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: testpackage
+//nolint:testpackage
 package networkd
 
 import (
@@ -12,9 +12,9 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type NetworkdSuite struct {
@@ -46,7 +46,7 @@ func (suite *NetworkdSuite) TestHostname() {
 		err          error
 		hostname     string
 		nwd          *Networkd
-		sampleConfig runtime.Configurator
+		sampleConfig config.Provider
 	)
 
 	nwd, err = New(nil)
@@ -72,7 +72,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.10"))
 
 	// Static for computed hostname ( talos-ip )
-	sampleConfig.Machine().Network().SetHostname("")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = ""
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
@@ -83,17 +83,17 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.10"))
 
 	// Static for hostname too long
-	sampleConfig.Machine().Network().SetHostname("somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit"
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
 
-	// nolint: dogsled
+	//nolint:dogsled
 	_, _, _, err = nwd.decideHostname()
 	suite.Require().Error(err)
 
 	// Static for hostname vs domain name
-	sampleConfig.Machine().Network().SetHostname("dadjokes.biz.dev.com.org.io")
+	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "dadjokes.biz.dev.com.org.io"
 
 	nwd, err = New(sampleConfig)
 	suite.Require().NoError(err)
@@ -110,7 +110,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{
@@ -131,7 +131,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{
@@ -148,7 +148,7 @@ func (suite *NetworkdSuite) TestHostname() {
 
 	// DHCP without OptionHostname and with OptionDomainName
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
-		&address.DHCP{
+		&address.DHCP4{
 			Ack: &dhcpv4.DHCPv4{
 				YourIPAddr: net.ParseIP("192.168.0.11"),
 				Options: dhcpv4.Options{
@@ -165,24 +165,24 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr, net.ParseIP("192.168.0.11"))
 }
 
-func sampleConfigFile() runtime.Configurator {
+func sampleConfigFile() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
 				NameServers:     []string{"1.2.3.4", "2.3.4.5"},
 				NetworkHostname: "myhostname",
-				NetworkInterfaces: []runtime.Device{
+				NetworkInterfaces: []*v1alpha1.Device{
 					{
-						Interface: "eth0",
-						CIDR:      "192.168.0.10/24",
-						MTU:       9100,
+						DeviceInterface: "eth0",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceMTU:       9100,
 					},
 					{
-						Interface: "bond0",
-						CIDR:      "192.168.0.10/24",
-						Bond: &runtime.Bond{
-							Interfaces: []string{"lo"},
-							Mode:       "balance-rr",
+						DeviceInterface: "bond0",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceBond: &v1alpha1.Bond{
+							BondInterfaces: []string{"lo"},
+							BondMode:       "balance-rr",
 						},
 					},
 				},
@@ -191,13 +191,18 @@ func sampleConfigFile() runtime.Configurator {
 	}
 }
 
-func dhcpConfigFile() runtime.Configurator {
+func dhcpConfigFile() config.Provider {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []runtime.Device{
+				NetworkInterfaces: []*v1alpha1.Device{
 					{
-						Interface: "eth0",
+						DeviceInterface: "eth0",
+					},
+					{
+						DeviceInterface: "eth1",
+						DeviceCIDR:      "192.168.0.10/24",
+						DeviceMTU:       9100,
 					},
 				},
 			},

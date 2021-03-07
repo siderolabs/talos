@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -42,6 +42,7 @@ var versionCmd = &cobra.Command{
 		}
 
 		fmt.Println("Server:")
+
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer
 

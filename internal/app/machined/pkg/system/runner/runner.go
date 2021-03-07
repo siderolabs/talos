@@ -7,6 +7,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/containerd/containerd"
@@ -15,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Runner describes the requirements for running a process.
@@ -53,6 +54,8 @@ type Options struct {
 	// GracefulShutdownTimeout is the time to wait for process to exit after SIGTERM
 	// before sending SIGKILL
 	GracefulShutdownTimeout time.Duration
+	// Stdin is the process standard input.
+	Stdin io.ReadSeeker
 }
 
 // Option is the functional option func.
@@ -66,6 +69,7 @@ func DefaultOptions() *Options {
 		Namespace:               constants.SystemContainerdNamespace,
 		GracefulShutdownTimeout: 10 * time.Second,
 		ContainerdAddress:       constants.ContainerdAddress,
+		Stdin:                   nil,
 	}
 }
 
@@ -122,5 +126,12 @@ func WithLoggingManager(manager runtime.LoggingManager) Option {
 func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 	return func(args *Options) {
 		args.GracefulShutdownTimeout = timeout
+	}
+}
+
+// WithStdin sets the standard input.
+func WithStdin(stdin io.ReadSeeker) Option {
+	return func(args *Options) {
+		args.Stdin = stdin
 	}
 }

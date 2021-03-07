@@ -4,7 +4,7 @@
 
 // +build integration
 
-// Package provision provides integration tests which rely on on provisioning cluster per test.
+// Package provision provides integration tests which rely on provisioning cluster per test.
 package provision
 
 import (
@@ -33,7 +33,7 @@ type Settings struct {
 	// VM parameters
 	CPUs   int64
 	MemMB  int64
-	DiskGB int64
+	DiskGB uint64
 	// Node count for the tests
 	MasterNodes int
 	WorkerNodes int
@@ -41,16 +41,20 @@ type Settings struct {
 	TargetInstallImageRegistry string
 	// Current version of the cluster (built in the CI pass)
 	CurrentVersion string
+	// Custom CNI URL to use.
+	CustomCNIURL string
+	// Enable crashdump on failure.
+	CrashdumpEnabled bool
 }
 
 // DefaultSettings filled in by test runner.
 var DefaultSettings Settings = Settings{
 	CIDR:                       "172.21.0.0/24",
 	MTU:                        1500,
-	CPUs:                       1,
-	MemMB:                      1.5 * 1024,
-	DiskGB:                     4,
+	CPUs:                       2,
+	MemMB:                      2 * 1024,
+	DiskGB:                     8,
 	MasterNodes:                3,
 	WorkerNodes:                1,
-	TargetInstallImageRegistry: "docker.io",
+	TargetInstallImageRegistry: "ghcr.io",
 }

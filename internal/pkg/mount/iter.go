@@ -60,6 +60,11 @@ func (p *Points) Get(key string) (value *Point, ok bool) {
 	return nil, false
 }
 
+// Len returns number of mount points.
+func (p *Points) Len() int {
+	return len(p.points)
+}
+
 // Key returns the current key.
 func (i *PointsIterator) Key() string {
 	return i.key

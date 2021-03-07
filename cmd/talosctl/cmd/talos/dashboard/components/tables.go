@@ -70,12 +70,14 @@ func (widget *ProcessTable) Update(node string, data *data.Data) {
 			totalWeightedCPU = 1
 		}
 
-		sort.Slice(nodeData.Processes.Processes, func(i, j int) bool {
-			proc1 := nodeData.Processes.Processes[i]
-			proc2 := nodeData.Processes.Processes[j]
+		if nodeData.ProcsDiff != nil {
+			sort.Slice(nodeData.Processes.Processes, func(i, j int) bool {
+				proc1 := nodeData.Processes.Processes[i]
+				proc2 := nodeData.Processes.Processes[j]
 
-			return nodeData.ProcsDiff[proc1.Pid].CpuTime > nodeData.ProcsDiff[proc2.Pid].CpuTime
-		})
+				return nodeData.ProcsDiff[proc1.Pid].CpuTime > nodeData.ProcsDiff[proc2.Pid].CpuTime
+			})
+		}
 
 		for _, proc := range nodeData.Processes.Processes {
 			var args string

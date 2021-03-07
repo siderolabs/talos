@@ -2,11 +2,15 @@ syntax = "proto3";
 
 package common;
 
-option go_package = "github.com/talos-systems/talos/api/common";
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/common";
 
 import "google/protobuf/any.proto";
+import "google/rpc/status.proto";
 
-enum Code { FATAL = 0; }
+enum Code {
+  FATAL = 0;
+  LOCKED = 1;
+}
 
 message Error {
   Code code = 1;
@@ -21,6 +25,8 @@ message Metadata {
   // error is set if request failed to the upstream (rest of response is
   // undefined)
   string error = 2;
+  // error as gRPC Status
+  google.rpc.Status status = 3;
 }
 
 message Data {

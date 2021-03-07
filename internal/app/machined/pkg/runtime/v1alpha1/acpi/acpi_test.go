@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint: scopelint,testpackage
+//nolint:scopelint,testpackage
 package acpi
 
 import (
@@ -64,6 +64,7 @@ func Test_parse(t *testing.T) {
 			got, err := parse(tt.args.msgs, tt.args.event)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 			if got != tt.want {

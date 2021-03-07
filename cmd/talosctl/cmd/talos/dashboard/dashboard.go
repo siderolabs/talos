@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // Main is the entrypoint into talosctl dashboard command.

@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package archiver provides a service to archive part of the filesystem into tar archive
 package archiver_test
 
 import (
@@ -45,6 +44,28 @@ func (suite *WalkerSuite) TestIterationDir() {
 		relPaths)
 }
 
+func (suite *WalkerSuite) TestIterationFilter() {
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithSkipRoot(), archiver.WithFnmatchPatterns("dev/*", "lib"))
+	suite.Require().NoError(err)
+
+	relPaths := []string(nil)
+
+	for fi := range ch {
+		suite.Require().NoError(fi.Error)
+		relPaths = append(relPaths, fi.RelPath)
+
+		if fi.RelPath == "usr/bin/mv" {
+			suite.Assert().Equal("/usr/bin/cp", fi.Link)
+		}
+	}
+
+	suite.Assert().Equal([]string{
+		"dev/random",
+		"lib",
+	},
+		relPaths)
+}
+
 func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(1))
 	suite.Require().NoError(err)
@@ -82,11 +103,20 @@ func (suite *WalkerSuite) TestIterationSymlink() {
 	err := os.Mkdir(original, 0o755)
 	suite.Require().NoError(err)
 
-	newname := filepath.Join(suite.tmpDir, "new")
+	defer func() {
+		err = os.RemoveAll(original)
+		suite.Require().NoError(err)
+	}()
 
 	// NB: We make this a relative symlink to make the test more complete.
+	newname := filepath.Join(suite.tmpDir, "new")
 	err = os.Symlink("original", newname)
 	suite.Require().NoError(err)
+
+	defer func() {
+		err = os.Remove(newname)
+		suite.Require().NoError(err)
+	}()
 
 	err = ioutil.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0o666)
 	suite.Require().NoError(err)
@@ -107,6 +137,23 @@ func (suite *WalkerSuite) TestIterationSymlink() {
 func (suite *WalkerSuite) TestIterationNotFound() {
 	_, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "doesntlivehere"))
 	suite.Require().Error(err)
+}
+
+func (suite *WalkerSuite) TestIterationTypes() {
+	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithFileTypes(archiver.DirectoryFileType))
+	suite.Require().NoError(err)
+
+	relPaths := []string(nil)
+
+	for fi := range ch {
+		suite.Require().NoError(fi.Error)
+		relPaths = append(relPaths, fi.RelPath)
+	}
+
+	suite.Assert().Equal([]string{
+		".", "dev", "etc", "etc/certs", "lib", "usr", "usr/bin",
+	},
+		relPaths)
 }
 
 func TestWalkerSuite(t *testing.T) {

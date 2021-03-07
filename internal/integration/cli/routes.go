@@ -24,7 +24,7 @@ func (suite *RoutesSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *RoutesSuite) TestSuccess() {
-	suite.RunCLI([]string{"routes"},
+	suite.RunCLI([]string{"routes", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`GATEWAY`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`127\.0\.0\.0/8`)),
 	)

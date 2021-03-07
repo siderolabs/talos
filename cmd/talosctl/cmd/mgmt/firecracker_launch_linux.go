@@ -7,7 +7,7 @@ package mgmt
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/internal/pkg/provision/providers/firecracker"
+	"github.com/talos-systems/talos/pkg/provision/providers/firecracker"
 )
 
 // firecrackerLaunchCmd represents the firecracker-launch command.

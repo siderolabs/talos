@@ -18,8 +18,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Containerd implements the Service interface. It serves as the concrete type with
@@ -86,7 +86,7 @@ func (c *Containerd) HealthFunc(runtime.Runtime) health.Check {
 		if err != nil {
 			return err
 		}
-		// nolint: errcheck
+		//nolint:errcheck
 		defer client.Close()
 
 		resp, err := client.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{})

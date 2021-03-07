@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,40 +21,50 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"text/template"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-	"go.etcd.io/etcd/clientv3"
+	multierror "github.com/hashicorp/go-multierror"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-cmd/pkg/cmd"
+	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/kubernetes-sigs/bootkube/pkg/recovery"
-
-	"github.com/talos-systems/talos/api/machine"
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/syslinux"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
+	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
-	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/blockdevice"
-	"github.com/talos-systems/talos/pkg/blockdevice/table"
-	"github.com/talos-systems/talos/pkg/blockdevice/util"
-	"github.com/talos-systems/talos/pkg/cmd"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/partition"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/kubernetes"
-	"github.com/talos-systems/talos/pkg/retry"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	resourcev1alpha1 "github.com/talos-systems/talos/pkg/resources/v1alpha1"
 	"github.com/talos-systems/talos/pkg/sysctl"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -61,13 +72,30 @@ import (
 // SetupLogger represents the SetupLogger task.
 func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if r.State().Platform().Mode() == runtime.ModeContainer {
-			return nil
-		}
-
 		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
 		if err != nil {
 			return err
+		}
+
+		if r.State().Platform().Mode() == runtime.ModeContainer {
+			// send all the logs to machinedLog as well, but skip /dev/kmsg logging
+			log.SetOutput(io.MultiWriter(log.Writer(), machinedLog))
+			log.SetPrefix("[talos] ")
+
+			return nil
+		}
+
+		// disable ratelimiting for kmsg, otherwise logs might be not visible.
+		// this should be set via kernel arg, but in case it's not set, try to force it.
+		if err = sysctl.WriteSystemProperty(&sysctl.SystemProperty{
+			Key:   "kernel.printk_devkmsg",
+			Value: "on\n",
+		}); err != nil {
+			var serr syscall.Errno
+
+			if !(errors.As(err, &serr) && serr == syscall.EINVAL) { // ignore EINVAL which is returned when kernel arg is set
+				log.Printf("failed setting kernel.printk_devkmsg: %s, error ignored", err)
+			}
 		}
 
 		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
@@ -96,7 +124,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 // SetupSystemDirectory represents the SetupSystemDirectory task.
 func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath} {
+		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath, constants.StateMountPoint} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}
@@ -274,7 +302,7 @@ func WriteIMAPolicy(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			return err
 		}
 
-		defer f.Close() //nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		for _, line := range rules {
 			if _, err = f.WriteString(line + "\n"); err != nil {
@@ -405,7 +433,10 @@ func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.Task
 			return err
 		}
 
-		if err = nwd.Configure(); err != nil {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		if err = nwd.Configure(ctx); err != nil {
 			return err
 		}
 
@@ -419,7 +450,19 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		download := func() error {
 			var b []byte
 
-			b, e := fetchConfig(r)
+			fetchCtx, ctxCancel := context.WithTimeout(context.Background(), 70*time.Second)
+			defer ctxCancel()
+
+			b, e := fetchConfig(fetchCtx, r)
+			if errors.Is(e, perrors.ErrNoConfigSource) {
+				logger.Println("starting maintenance service")
+
+				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
+				if e != nil {
+					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
+				}
+			}
+
 			if e != nil {
 				return e
 			}
@@ -433,7 +476,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return nil
 		}
 
-		cfg, err := config.NewFromFile(constants.ConfigPath)
+		cfg, err := configloader.NewFromFile(constants.ConfigPath)
 		if err != nil {
 			logger.Printf("downloading config")
 
@@ -441,12 +484,12 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		}
 
 		if !cfg.Persist() {
-			logger.Printf("found existing config, but peristence is disabled, downloading config")
+			logger.Printf("found existing config, but persistence is disabled, downloading config")
 
 			return download()
 		}
 
-		logger.Printf("peristence is enabled, using existing config on disk")
+		logger.Printf("persistence is enabled, using existing config on disk")
 
 		b, err := cfg.Bytes()
 		if err != nil {
@@ -464,27 +507,14 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // SaveConfig represents the SaveConfig task.
 func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		hostname, err := r.State().Platform().Hostname()
-		if err != nil {
+		if err = r.Config().ApplyDynamicConfig(ctx, r.State().Platform()); err != nil {
 			return err
 		}
 
-		if hostname != nil {
-			r.Config().Machine().Network().SetHostname(string(hostname))
-		}
-
-		addrs, err := r.State().Platform().ExternalIPs()
+		err = r.State().V1Alpha2().SetConfig(r.Config())
 		if err != nil {
-			logger.Printf("certificates will be created without external IPs: %v", err)
+			return err
 		}
-
-		sans := make([]string, 0, len(addrs))
-		for _, addr := range addrs {
-			sans = append(sans, addr.String())
-		}
-
-		r.Config().Machine().Security().SetCertSANs(sans)
-		r.Config().Cluster().SetCertSANs(sans)
 
 		var b []byte
 
@@ -497,10 +527,34 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 	}, "saveConfig"
 }
 
-func fetchConfig(r runtime.Runtime) (out []byte, err error) {
+func singleTimeSync(ctx context.Context) (cancel context.CancelFunc) {
+	ctx, cancel = context.WithCancel(ctx)
+
+	go func() {
+		ntpClient, err := ntp.NewNTPClient()
+		if err != nil {
+			log.Printf("failed to build one-time ntp client")
+
+			return
+		}
+
+		if err = ntpClient.QueryAndSetTime(ctx); err != nil {
+			if !errors.Is(err, context.Canceled) {
+				log.Printf("failed to do one-time time sync: %s", err)
+			}
+		}
+	}()
+
+	return
+}
+
+func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
+	cancel := singleTimeSync(ctx)
+	defer cancel()
+
 	var b []byte
 
-	if b, err = r.State().Platform().Configuration(); err != nil {
+	if b, err = r.State().Platform().Configuration(ctx); err != nil {
 		return nil, err
 	}
 
@@ -514,7 +568,7 @@ func fetchConfig(r runtime.Runtime) (out []byte, err error) {
 			return nil, fmt.Errorf("error creating gzip reader: %w", err)
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer gzipReader.Close()
 
 		var unzippedData []byte
@@ -530,6 +584,29 @@ func fetchConfig(r runtime.Runtime) (out []byte, err error) {
 	return b, nil
 }
 
+func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+	cfgBytes, err := maintenance.Run(ctx, logger, r)
+	if err != nil {
+		return nil, fmt.Errorf("maintenance service failed: %w", err)
+	}
+
+	provider, err := configloader.NewFromBytes(cfgBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create config provider: %w", err)
+	}
+
+	if err = provider.Validate(r.State().Platform().Mode()); err != nil {
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
+	processedBytes, err := provider.Bytes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to export validated config: %w", err)
+	}
+
+	return processedBytes, nil
+}
+
 // ValidateConfig validates the config.
 func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -539,7 +616,7 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 // ResetNetwork resets the network.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		nwd, err := networkd.New(r.Config())
@@ -580,6 +657,26 @@ func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "startContainerd"
 }
 
+// StartTimedAtInstall represents the task to start timed at install time without dependency on networkd.
+func StartTimedAtInstall(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		svc := &services.Timed{
+			SkipNetworkd: true,
+		}
+
+		system.Services(r).LoadAndStart(svc)
+
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		if err := system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
+			logger.Printf("skipped waiting for time sync to finish")
+		}
+
+		return nil
+	}, "startTimedAtInstall"
+}
+
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -591,17 +688,6 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		defer cancel()
 
 		if err = system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
-			return err
-		}
-
-		if _, err = cmd.Run("/sbin/udevadm", "trigger"); err != nil {
-			return err
-		}
-
-		// This ensures that `udevd` finishes processing kernel events, triggered by
-		// `udevd trigger`, to prevent a race condition when a user specifies a path
-		// under `/dev/disk/*` in any disk definitions.
-		if _, err = cmd.Run("/sbin/udevadm", "settle"); err != nil {
 			return err
 		}
 
@@ -622,25 +708,26 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			&services.Kubelet{},
 		)
 
-		if r.State().Platform().Mode() != runtime.ModeContainer {
+		if r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Time().Disabled() {
 			svcs.Load(
 				&services.Timed{},
 			)
 		}
 
 		switch r.Config().Machine().Type() {
-		case runtime.MachineTypeInit:
+		case machine.TypeInit:
 			svcs.Load(
 				&services.Trustd{},
 				&services.Etcd{Bootstrap: true},
-				&services.Bootkube{},
 			)
-		case runtime.MachineTypeControlPlane:
+		case machine.TypeControlPlane:
 			svcs.Load(
 				&services.Trustd{},
 				&services.Etcd{},
 			)
-		case runtime.MachineTypeJoin:
+		case machine.TypeJoin:
+		case machine.TypeUnknown:
+			return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
 		}
 
 		system.Services(r).StartAll()
@@ -654,31 +741,32 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			all = append(all, cond)
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-
+		ctx, cancel := context.WithTimeout(ctx, constants.BootTimeout)
 		defer cancel()
 
 		return conditions.WaitForAll(all...).Wait(ctx)
 	}, "startAllServices"
 }
 
+// StopNetworkd represents the StopNetworkd task.
+func StopNetworkd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		// stop networkd so that it gives up on VIP lease
+		return system.Services(nil).Stop(ctx, "networkd")
+	}, "stopNetworkd"
+}
+
 // StopServicesForUpgrade represents the StopServicesForUpgrade task.
 func StopServicesForUpgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, service := range []string{"cri", "udevd"} {
-			if err = system.Services(nil).Stop(context.Background(), service); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "etcd", "kubelet", "udevd")
 	}, "stopServicesForUpgrade"
 }
 
 // StopAllServices represents the StopAllServices task.
 func StopAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		system.Services(nil).Shutdown()
+		system.Services(nil).Shutdown(ctx)
 
 		return nil
 	}, "stopAllServices"
@@ -692,13 +780,17 @@ func VerifyInstallation(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			next    string
 		)
 
-		current, next, err = syslinux.Labels()
+		grub := &grub.Grub{
+			BootDisk: r.Config().Machine().Install().Disk(),
+		}
+
+		current, next, err = grub.Labels()
 		if err != nil {
 			return err
 		}
 
 		if current == "" && next == "" {
-			return fmt.Errorf("syslinux.cfg is not configured")
+			return fmt.Errorf("bootloader is not configured")
 		}
 
 		return err
@@ -763,85 +855,93 @@ func MountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 // TODO(andrewrynhard): We shouldn't pull in the installer command package
 // here.
-func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) (err error) {
+func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 	m := &installer.Manifest{
+		Devices: map[string]installer.Device{},
 		Targets: map[string][]*installer.Target{},
 	}
 
 	for _, disk := range r.Config().Machine().Disks() {
-		var bd *blockdevice.BlockDevice
+		disk := disk
 
-		bd, err = blockdevice.Open(disk.Device)
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer bd.Close()
-
-		var pt table.PartitionTable
-
-		pt, err = bd.PartitionTable()
-		if err != nil {
-			if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+		if err := func() error {
+			bd, err := blockdevice.Open(disk.Device())
+			if err != nil {
 				return err
 			}
-		}
 
-		// Partitions will be created/recreated if either of the following
-		//  conditions are true:
-		// - a partition table exists AND there are no partitions
-		// - a partition table does not exist
+			//nolint:errcheck
+			defer bd.Close()
 
-		if pt != nil {
-			if len(pt.Partitions()) > 0 {
-				logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device)
-				continue
-			}
-		}
+			var pt *gpt.GPT
 
-		if m.Targets[disk.Device] == nil {
-			m.Targets[disk.Device] = []*installer.Target{}
-		}
-
-		for _, part := range disk.Partitions {
-			extraTarget := &installer.Target{
-				Device: disk.Device,
-				Size:   part.Size,
-				Force:  true,
-				Test:   false,
+			pt, err = bd.PartitionTable()
+			if err != nil {
+				if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+					return err
+				}
 			}
 
-			m.Targets[disk.Device] = append(m.Targets[disk.Device], extraTarget)
+			// Partitions will be created/recreated if either of the following
+			//  conditions are true:
+			// - a partition table exists AND there are no partitions
+			// - a partition table does not exist
+
+			if pt != nil {
+				if len(pt.Partitions().Items()) > 0 {
+					logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
+
+					return nil
+				}
+			}
+
+			m.Devices[disk.Device()] = installer.Device{
+				Device:              disk.Device(),
+				ResetPartitionTable: true,
+			}
+
+			for _, part := range disk.Partitions() {
+				extraTarget := &installer.Target{
+					Device: disk.Device(),
+					FormatOptions: &partition.FormatOptions{
+						Size:           part.Size(),
+						Force:          true,
+						PartitionType:  partition.LinuxFilesystemData,
+						FileSystemType: partition.FilesystemTypeXFS,
+					},
+				}
+
+				m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
+			}
+
+			return nil
+		}(); err != nil {
+			return err
 		}
 	}
 
-	if err = m.ExecuteManifest(); err != nil {
-		return err
-	}
-
-	return nil
+	return m.Execute()
 }
 
 func mountDisks(r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
 	for _, disk := range r.Config().Machine().Disks() {
-		for i, part := range disk.Partitions {
+		for i, part := range disk.Partitions() {
 			var partname string
 
-			partname, err = util.PartPath(disk.Device, i+1)
+			partname, err = util.PartPath(disk.Device(), i+1)
 			if err != nil {
 				return err
 			}
 
-			if _, err = os.Stat(part.MountPoint); errors.Is(err, os.ErrNotExist) {
-				if err = os.MkdirAll(part.MountPoint, 0o700); err != nil {
+			if _, err = os.Stat(part.MountPoint()); errors.Is(err, os.ErrNotExist) {
+				if err = os.MkdirAll(part.MountPoint(), 0o700); err != nil {
 					return err
 				}
 			}
 
-			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint, "xfs", unix.MS_NOATIME, ""))
+			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
 		}
 	}
 
@@ -852,9 +952,32 @@ func mountDisks(r runtime.Runtime) (err error) {
 	return nil
 }
 
+func unmountDisks(r runtime.Runtime) (err error) {
+	mountpoints := mount.NewMountPoints()
+
+	for _, disk := range r.Config().Machine().Disks() {
+		for i, part := range disk.Partitions() {
+			var partname string
+
+			partname, err = util.PartPath(disk.Device(), i+1)
+			if err != nil {
+				return err
+			}
+
+			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
+		}
+	}
+
+	if err = mount.Unmount(mountpoints); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // WriteUserFiles represents the WriteUserFiles task.
 //
-// nolint: gocyclo
+//nolint:gocyclo
 func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var result *multierror.Error
@@ -864,73 +987,104 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			return fmt.Errorf("error generating extra files: %w", err)
 		}
 
-		for _, f := range files {
-			content := f.Content
+		extra, err := containerd.GenerateRegistriesConfig(r.Config().Machine().Registries())
+		if err != nil {
+			return err
+		}
 
-			switch f.Op {
+		files = append(files, extra...)
+
+		for _, f := range files {
+			content := f.Content()
+
+			switch f.Op() {
 			case "create":
-				if err = doesNotExists(f.Path); err != nil {
-					result = multierror.Append(result, fmt.Errorf("file must not exist: %q", f.Path))
-					continue
-				}
+				// Allow create at all times.
 			case "overwrite":
-				if err = existsAndIsFile(f.Path); err != nil {
+				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 			case "append":
-				if err = existsAndIsFile(f.Path); err != nil {
+				if err = existsAndIsFile(f.Path()); err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
 				var existingFileContents []byte
 
-				existingFileContents, err = ioutil.ReadFile(f.Path)
+				existingFileContents, err = ioutil.ReadFile(f.Path())
 				if err != nil {
 					result = multierror.Append(result, err)
+
 					continue
 				}
 
-				content = string(existingFileContents) + "\n" + f.Content
+				content = string(existingFileContents) + "\n" + f.Content()
 			default:
-				result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path, f.Op))
+				result = multierror.Append(result, fmt.Errorf("unknown operation for file %q: %q", f.Path(), f.Op()))
+
+				continue
+			}
+
+			if filepath.Dir(f.Path()) == constants.ManifestsDirectory {
+				if err = ioutil.WriteFile(f.Path(), []byte(content), f.Permissions()); err != nil {
+					result = multierror.Append(result, err)
+
+					continue
+				}
+
+				if err = os.Chmod(f.Path(), f.Permissions()); err != nil {
+					result = multierror.Append(result, err)
+
+					continue
+				}
+
 				continue
 			}
 
 			// Determine if supplied path is in /var or not.
 			// If not, we'll write it to /var anyways and bind mount below
-			p := f.Path
+			p := f.Path()
 			inVar := true
-			explodedPath := strings.Split(
-				strings.TrimLeft(f.Path, "/"),
+			parts := strings.Split(
+				strings.TrimLeft(f.Path(), "/"),
 				string(os.PathSeparator),
 			)
 
-			if explodedPath[0] != "var" {
-				p = filepath.Join("/var", f.Path)
+			if parts[0] != "var" {
+				p = filepath.Join("/var", f.Path())
 				inVar = false
 			}
 
 			// We do not want to support creating new files anywhere outside of
 			// /var. If a valid use case comes up, we can reconsider then.
-			if !inVar && f.Op == "create" {
-				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path)
+			if !inVar && f.Op() == "create" {
+				return fmt.Errorf("create operation not allowed outside of /var: %q", f.Path())
 			}
 
-			if err = os.MkdirAll(filepath.Dir(p), os.ModeDir); err != nil {
+			if err = os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
-			if err = ioutil.WriteFile(p, []byte(content), f.Permissions); err != nil {
+			if err = ioutil.WriteFile(p, []byte(content), f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
+
 				continue
 			}
 
-			// File path was not /var/... so we assume a bind mount is wanted
+			if err = os.Chmod(p, f.Permissions()); err != nil {
+				result = multierror.Append(result, err)
+
+				continue
+			}
+
 			if !inVar {
-				if err = unix.Mount(p, f.Path, "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
+				if err = unix.Mount(p, f.Path(), "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
 					result = multierror.Append(result, fmt.Errorf("failed to create bind mount for %s: %w", p, err))
 				}
 			}
@@ -940,6 +1094,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "writeUserFiles"
 }
 
+//nolint:deadcode,unused
 func doesNotExists(p string) (err error) {
 	_, err = os.Stat(p)
 	if err != nil {
@@ -1005,6 +1160,13 @@ func UnmountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.
 	}, "unmountOverlayFilesystems"
 }
 
+// UnmountUserDisks represents the UnmountUserDisks task.
+func UnmountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return unmountDisks(r)
+	}, "unmountUserDisks"
+}
+
 // UnmountPodMounts represents the UnmountPodMounts task.
 func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -1052,7 +1214,7 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 			return err
 		}
 
-		defer f.Close() //nolint: errcheck
+		defer f.Close() //nolint:errcheck
 
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
@@ -1062,10 +1224,10 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 				continue
 			}
 
-			device := fields[0]
+			device := strings.ReplaceAll(fields[0], "/dev/mapper", "/dev")
 			mountpoint := fields[1]
 
-			if strings.HasPrefix(device, devname) {
+			if strings.HasPrefix(device, devname) && device != devname {
 				logger.Printf("unmounting %s\n", mountpoint)
 
 				if err = unix.Unmount(mountpoint, 0); err != nil {
@@ -1081,12 +1243,12 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 // CordonAndDrainNode represents the task for stop all containerd tasks in the
 // k8s.io namespace.
 //
-//nolint: dupl
+//nolint:dupl
 func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var hostname string
+		var nodename string
 
-		if hostname, err = os.Hostname(); err != nil {
+		if nodename, err = r.NodeName(); err != nil {
 			return err
 		}
 
@@ -1096,7 +1258,7 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			return err
 		}
 
-		if err = kubeHelper.CordonAndDrain(hostname); err != nil {
+		if err = kubeHelper.CordonAndDrain(ctx, nodename); err != nil {
 			return err
 		}
 
@@ -1108,12 +1270,12 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 //
 // This action undoes the CordonAndDrainNode task.
 //
-//nolint: dupl
+//nolint:dupl
 func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var hostname string
+		var nodename string
 
-		if hostname, err = os.Hostname(); err != nil {
+		if nodename, err = r.NodeName(); err != nil {
 			return err
 		}
 
@@ -1123,11 +1285,11 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			return err
 		}
 
-		if err = kubeHelper.WaitUntilReady(hostname); err != nil {
+		if err = kubeHelper.WaitUntilReady(ctx, nodename); err != nil {
 			return err
 		}
 
-		if err = kubeHelper.Uncordon(hostname); err != nil {
+		if err = kubeHelper.Uncordon(ctx, nodename, false); err != nil {
 			return err
 		}
 
@@ -1136,66 +1298,38 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 }
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
-// nolint: gocyclo
+//nolint:gocyclo
 func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return err
-		}
-
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create etcd client: %w", err)
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer client.Close()
 
-		resp, err := client.MemberList(ctx)
-		if err != nil {
-			return err
-		}
-
-		var id *uint64
-
-		for _, member := range resp.Members {
-			if member.Name == hostname {
-				member := member
-				id = &member.ID
-
-				break
-			}
-		}
-
-		if id == nil {
-			return fmt.Errorf("failed to find %q in list of etcd members", hostname)
-		}
-
-		logger.Println("leaving etcd cluster")
-
-		_, err = client.MemberRemove(ctx, *id)
-		if err != nil {
-			return err
-		}
-
-		if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
-			return err
-		}
-
-		// Once the member is removed, the data is no longer valid.
-		if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
-			return err
+		if err = client.LeaveCluster(ctx); err != nil {
+			return fmt.Errorf("failed to leave cluster: %w", err)
 		}
 
 		return nil
 	}, "leaveEtcd"
 }
 
-// RemoveAllPods represents the task for stopping all pods.
+// RemoveAllPods represents the task for stopping and removing all pods.
 func RemoveAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return stopAndRemoveAllPods(cri.StopAndRemove), "removeAllPods"
+}
+
+// StopAllPods represents the task for stopping all pods.
+func StopAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return stopAndRemoveAllPods(cri.StopOnly), "stopAllPods"
+}
+
+func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if err = system.Services(nil).Stop(context.Background(), "kubelet"); err != nil {
+		if err = system.Services(nil).Stop(ctx, "kubelet"); err != nil {
 			return err
 		}
 
@@ -1204,26 +1338,26 @@ func RemoveAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			return err
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer client.Close()
 
 		// We remove pods with POD network mode first so that the CNI can perform
 		// any cleanup tasks. If we don't do this, we run the risk of killing the
 		// CNI, preventing the CRI from cleaning up the pod's netwokring.
 
-		if err = client.RemovePodSandboxes(runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
+		if err = client.StopAndRemovePodSandboxes(ctx, stopAction, runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
 			return err
 		}
 
 		// With the POD network mode pods out of the way, we kill the remaining
 		// pods.
 
-		if err = client.RemovePodSandboxes(); err != nil {
+		if err = client.StopAndRemovePodSandboxes(ctx, stopAction); err != nil {
 			return err
 		}
 
 		return nil
-	}, "removeAllPods"
+	}
 }
 
 // ResetSystemDisk represents the task to reset the system disk.
@@ -1233,16 +1367,30 @@ func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "resetSystemDisk"
 }
 
+// ResetSystemDiskSpec represents the task to reset the system disk by spec.
+func ResetSystemDiskSpec(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		in, ok := data.(runtime.ResetOptions)
+		if !ok {
+			return fmt.Errorf("unexpected runtime data")
+		}
+
+		for _, target := range in.GetSystemDiskTargets() {
+			if err = target.Format(); err != nil {
+				return fmt.Errorf("failed wiping partition %s: %w", target, err)
+			}
+		}
+
+		logger.Printf("successfully reset system disk by the spec")
+
+		return nil
+	}, "resetSystemDiskSpec"
+}
+
 // VerifyDiskAvailability represents the task for verifying that the system
 // disk is not in use.
 func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		//  We only need to verify system disk availability if we are going to
-		// reformat the ephemeral partition.
-		if !r.Config().Machine().Install().Force() {
-			return nil
-		}
-
 		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
 
 		// We MUST close this in order to avoid EBUSY.
@@ -1288,7 +1436,7 @@ func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.Tas
 func tryLock(path string) error {
 	fd, errno := unix.Open(path, unix.O_RDONLY|unix.O_EXCL|unix.O_CLOEXEC, 0)
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer unix.Close(fd)
 
 	return errno
@@ -1298,14 +1446,15 @@ func dumpMounts(logger *log.Logger) {
 	mounts, err := os.Open("/proc/mounts")
 	if err != nil {
 		logger.Printf("failed to read mounts: %s", err)
+
 		return
 	}
 
-	defer mounts.Close() //nolint: errcheck
+	defer mounts.Close() //nolint:errcheck
 
 	logger.Printf("contents of /proc/mounts:")
 
-	_, _ = io.Copy(log.Writer(), mounts) //nolint: errcheck
+	_, _ = io.Copy(log.Writer(), mounts) //nolint:errcheck
 }
 
 // Upgrade represents the task for performing an upgrade.
@@ -1313,7 +1462,7 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// This should be checked by the gRPC server, but we double check here just
 		// to be safe.
-		in, ok := data.(*machine.UpgradeRequest)
+		in, ok := data.(*machineapi.UpgradeRequest)
 		if !ok {
 			return runtime.ErrInvalidSequenceData
 		}
@@ -1328,10 +1477,7 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			devname, r.State().Platform().Name(),
 			in.GetImage(),
 			r.Config().Machine().Registries(),
-			install.WithPull(false),
-			install.WithUpgrade(true),
-			install.WithForce(!in.GetPreserve()),
-			install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+			install.OptionsFromUpgradeRequest(r, in)...,
 		)
 		if err != nil {
 			return err
@@ -1351,13 +1497,14 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 			return err
 		}
 
-		hostname, err := os.Hostname()
-		if err != nil {
+		var nodename string
+
+		if nodename, err = r.NodeName(); err != nil {
 			return err
 		}
 
-		err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second)).Retry(func() error {
-			if err = h.LabelNodeAsMaster(hostname); err != nil {
+		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
+			if err = h.LabelNodeAsMaster(ctx, nodename, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
 				return retry.ExpectedError(err)
 			}
 
@@ -1375,23 +1522,17 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 // UpdateBootloader represents the UpdateBootloader task.
 func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		f, err := os.OpenFile(syslinux.SyslinuxLdlinux, os.O_RDWR, 0o700)
+		meta, err := bootloader.NewMeta()
 		if err != nil {
 			return err
 		}
+		//nolint:errcheck
+		defer meta.Close()
 
-		// nolint: errcheck
-		defer f.Close()
-
-		adv, err := syslinux.NewADV(f)
-		if err != nil {
-			return err
-		}
-
-		if ok := adv.DeleteTag(syslinux.AdvUpgrade); ok {
+		if ok := meta.LegacyADV.DeleteTag(adv.Upgrade); ok {
 			logger.Println("removing fallback")
 
-			if _, err = f.Write(adv); err != nil {
+			if err = meta.Write(); err != nil {
 				return err
 			}
 		}
@@ -1403,225 +1544,211 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 // Reboot represents the Reboot task.
 func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		SyncNonVolatileStorageBuffers()
+		r.Events().Publish(&machineapi.RestartEvent{
+			Cmd: unix.LINUX_REBOOT_CMD_RESTART,
+		})
 
-		return unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
+		return runtime.RebootError{Cmd: unix.LINUX_REBOOT_CMD_RESTART}
 	}, "reboot"
 }
 
 // Shutdown represents the Shutdown task.
 func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		SyncNonVolatileStorageBuffers()
+		cmd := unix.LINUX_REBOOT_CMD_POWER_OFF
 
-		return unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+		if p := procfs.ProcCmdline().Get(constants.KernelParamShutdown).First(); p != nil {
+			if *p == "halt" {
+				cmd = unix.LINUX_REBOOT_CMD_HALT
+			}
+		}
+
+		r.Events().Publish(&machineapi.RestartEvent{
+			Cmd: int64(cmd),
+		})
+
+		return runtime.RebootError{Cmd: cmd}
 	}, "shutdown"
 }
 
-// SyncNonVolatileStorageBuffers invokes unix.Sync and waits up to 30 seconds
-// for it to finish.
-//
-// See http://man7.org/linux/man-pages/man2/reboot.2.html.
-func SyncNonVolatileStorageBuffers() {
-	syncdone := make(chan struct{})
-
-	go func() {
-		defer close(syncdone)
-
-		unix.Sync()
-	}()
-
-	log.Printf("waiting for sync...")
-
-	for i := 29; i >= 0; i-- {
-		select {
-		case <-syncdone:
-			log.Printf("sync done")
-			return
-		case <-time.After(time.Second):
+// SaveStateEncryptionConfig saves state partition encryption info in the meta partition.
+func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		config := r.Config()
+		if config == nil {
+			return nil
 		}
 
-		if i != 0 {
-			log.Printf("waiting %d more seconds for sync to finish", i)
+		encryption := config.Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		if encryption == nil {
+			return nil
 		}
-	}
 
-	log.Printf("sync hasn't completed in time, aborting...")
+		meta, err := bootloader.NewMeta()
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer meta.Close()
+
+		var data []byte
+
+		if data, err = json.Marshal(encryption); err != nil {
+			return err
+		}
+
+		if !meta.ADV.SetTagBytes(adv.StateEncryptionConfig, data) {
+			return fmt.Errorf("failed to save state encryption config in the META partition")
+		}
+
+		return meta.Write()
+	}, "SaveStateEncryptionConfig"
 }
 
 // MountBootPartition mounts the boot partition.
 func MountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mountSystemPartition(constants.BootPartitionLabel)
+		return mount.SystemPartitionMount(r, constants.BootPartitionLabel)
 	}, "mountBootPartition"
 }
 
 // UnmountBootPartition unmounts the boot partition.
 func UnmountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return unmountSystemPartition(constants.BootPartitionLabel)
+		return mount.SystemPartitionUnmount(r, constants.BootPartitionLabel)
 	}, "unmountBootPartition"
 }
 
-// MountEphermeralPartition mounts the ephemeral partition.
-func MountEphermeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+// MountEFIPartition mounts the EFI partition.
+func MountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return mount.SystemPartitionMount(r, constants.EFIPartitionLabel)
+	}, "mountEFIPartition"
+}
+
+// UnmountEFIPartition unmounts the EFI partition.
+func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mountSystemPartition(constants.EphemeralPartitionLabel)
-	}, "mountEphermeralPartition"
+		return mount.SystemPartitionUnmount(r, constants.EFIPartitionLabel)
+	}, "unmountEFIPartition"
+}
+
+// MountStatePartition mounts the system partition.
+func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		meta, err := bootloader.NewMeta()
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer meta.Close()
+
+		opts := []mount.Option{mount.WithFlags(mount.SkipIfMounted)}
+
+		var encryption config.Encryption
+		// first try reading encryption from the config
+		// config always has the priority here
+		if r.Config() != nil && r.Config().Machine() != nil {
+			encryption = r.Config().Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
+		}
+
+		// then try reading it from the META partition
+		if encryption == nil {
+			var encryptionFromMeta *v1alpha1.EncryptionConfig
+
+			data, ok := meta.ADV.ReadTagBytes(adv.StateEncryptionConfig)
+			if ok {
+				if err = json.Unmarshal(data, &encryptionFromMeta); err != nil {
+					return err
+				}
+
+				encryption = encryptionFromMeta
+			}
+		}
+
+		if encryption != nil {
+			opts = append(opts, mount.WithEncryptionConfig(encryption))
+		}
+
+		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, opts...)
+	}, "mountStatePartition"
+}
+
+// UnmountStatePartition unmounts the system partition.
+func UnmountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return mount.SystemPartitionUnmount(r, constants.StatePartitionLabel)
+	}, "unmountStatePartition"
+}
+
+// MountEphemeralPartition mounts the ephemeral partition.
+func MountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return mount.SystemPartitionMount(r, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
+	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return unmountSystemPartition(constants.EphemeralPartitionLabel)
+		return mount.SystemPartitionUnmount(r, constants.EphemeralPartitionLabel)
 	}, "unmountEphemeralPartition"
-}
-
-func mountSystemPartition(label string) (err error) {
-	mountpoints := mount.NewMountPoints()
-
-	mountpoint, err := mount.SystemMountPointForLabel(label)
-	if err != nil {
-		return err
-	}
-
-	if mountpoint == nil {
-		return fmt.Errorf("no mountpoints for label %q", label)
-	}
-
-	mountpoints.Set(label, mountpoint)
-
-	if err = mount.Mount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func unmountSystemPartition(label string) (err error) {
-	mountpoints := mount.NewMountPoints()
-
-	mountpoint, err := mount.SystemMountPointForLabel(label)
-	if err != nil {
-		return err
-	}
-
-	if mountpoint == nil {
-		return fmt.Errorf("no mountpoints for label %q", label)
-	}
-
-	mountpoints.Set(label, mountpoint)
-
-	if err = mount.Unmount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Install mounts or installs the system partitions.
 func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if r.Config().Machine().Install().Image() == "" {
-			return errors.New("an install image is required")
-		}
+		switch {
+		case !r.State().Machine().Installed():
+			installerImage := r.Config().Machine().Install().Image()
+			if installerImage == "" {
+				installerImage = images.DefaultInstallerImage
+			}
 
-		err = install.RunInstallerContainer(
-			r.Config().Machine().Install().Disk(),
-			r.State().Platform().Name(),
-			r.Config().Machine().Install().Image(),
-			r.Config().Machine().Registries(),
-			install.WithForce(r.Config().Machine().Install().Force()),
-			install.WithZero(r.Config().Machine().Install().Zero()),
-			install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
-		)
-		if err != nil {
-			return err
-		}
+			err = install.RunInstallerContainer(
+				r.Config().Machine().Install().Disk(),
+				r.State().Platform().Name(),
+				installerImage,
+				r.Config().Machine().Registries(),
+				install.WithForce(true),
+				install.WithZero(r.Config().Machine().Install().Zero()),
+				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
+			)
+			if err != nil {
+				return err
+			}
 
-		logger.Println("install successful")
+			logger.Println("install successful")
+
+		case r.State().Machine().IsInstallStaged():
+			devname := r.State().Machine().Disk().BlockDevice.Device().Name()
+
+			var options install.Options
+
+			if err = json.Unmarshal(r.State().Machine().StagedInstallOptions(), &options); err != nil {
+				return fmt.Errorf("error unserializing install options: %w", err)
+			}
+
+			logger.Printf("performing staged upgrade via %q", r.State().Machine().StagedInstallImageRef())
+
+			err = install.RunInstallerContainer(
+				devname, r.State().Platform().Name(),
+				r.State().Machine().StagedInstallImageRef(),
+				r.Config().Machine().Registries(),
+				install.WithOptions(options),
+			)
+			if err != nil {
+				return err
+			}
+
+			logger.Println("staged upgrade successful")
+
+		default:
+			return fmt.Errorf("unsupported configuration for install task")
+		}
 
 		return nil
 	}, "install"
-}
-
-// Recover attempts to recover the control plane.
-//
-// nolint: gocyclo
-func Recover(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var (
-			in *machine.RecoverRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.RecoverRequest); !ok {
-			return runtime.ErrInvalidSequenceData
-		}
-
-		kubeconfigPath := "/etc/kubernetes/recovery.yaml"
-
-		var b bytes.Buffer
-
-		if err = kubeconfig.GenerateAdmin(r.Config().Cluster(), &b); err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile(kubeconfigPath, b.Bytes(), 0o600); err != nil {
-			return fmt.Errorf("failed to create recovery kubeconfig: %w", err)
-		}
-
-		// nolint: errcheck
-		defer os.Remove(kubeconfigPath)
-
-		var backend recovery.Backend
-
-		switch in.Source {
-		case machine.RecoverRequest_ETCD:
-			var client *clientv3.Client
-
-			client, err = etcd.NewClient([]string{"127.0.0.1:2379"})
-			if err != nil {
-				return err
-			}
-
-			backend = recovery.NewEtcdBackend(client, "/registry")
-
-		case machine.RecoverRequest_APISERVER:
-			backend, err = recovery.NewAPIServerBackend(kubeconfigPath)
-			if err != nil {
-				return err
-			}
-		}
-
-		as, err := recovery.Recover(context.Background(), backend, kubeconfigPath)
-		if err != nil {
-			return err
-		}
-
-		if err = os.MkdirAll(constants.AssetsDirectory, 0o600); err != nil {
-			return err
-		}
-
-		if err = as.WriteFiles(constants.AssetsDirectory); err != nil {
-			return fmt.Errorf("failed to write recovered assets: %w", err)
-		}
-
-		svc := &services.Bootkube{Recover: true}
-
-		// unload bootkube (if any instance ran before)
-		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
-			return err
-		}
-
-		system.Services(r).Load(svc)
-
-		if err = system.Services(r).Start(svc.ID(r)); err != nil {
-			return fmt.Errorf("failed to start bootkube: %w", err)
-		}
-
-		return nil
-	}, "recover"
 }
 
 // BootstrapEtcd represents the task for bootstrapping etcd.
@@ -1648,7 +1775,7 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			return err
 		}
 
-		// nolint: errcheck
+		//nolint:errcheck
 		defer dir.Close()
 
 		files, err := dir.Readdir(0)
@@ -1683,50 +1810,6 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 	}, "bootstrapEtcd"
 }
 
-// BootstrapKubernetes represents the task for bootstrapping Kubernetes.
-func BootstrapKubernetes(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		svc := &services.Bootkube{}
-
-		system.Services(r).LoadAndStart(svc)
-
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		defer cancel()
-
-		return system.WaitForService(system.StateEventFinished, svc.ID(r)).Wait(ctx)
-	}, "bootstrapKubernetes"
-}
-
-// SetInitStatus represents the task for setting the initialization status
-// in etcd.
-func SetInitStatus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
-		if err != nil {
-			return err
-		}
-
-		// nolint: errcheck
-		defer client.Close()
-
-		err = retry.Exponential(15*time.Second, retry.WithUnits(50*time.Millisecond), retry.WithJitter(25*time.Millisecond)).Retry(func() error {
-			ctx := clientv3.WithRequireLeader(context.Background())
-			if _, err = client.Put(ctx, constants.InitializedKey, "true"); err != nil {
-				return retry.ExpectedError(err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to put state into etcd: %w", err)
-		}
-
-		logger.Println("updated initialization status in etcd")
-
-		return nil
-	}, "SetInitStatus"
-}
-
 // ActivateLogicalVolumes represents the task for activating logical volumes.
 func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -1736,4 +1819,22 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		return nil
 	}, "activateLogicalVolumes"
+}
+
+// CheckControlPlaneStatus represents the CheckControlPlaneStatus task.
+func CheckControlPlaneStatus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		res, err := r.State().V1Alpha2().Resources().Get(ctx, resourcev1alpha1.NewBootstrapStatus().Metadata())
+		if err != nil {
+			logger.Printf("error getting bootstrap status: %s", err)
+
+			return nil
+		}
+
+		if res.(*resourcev1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
+			log.Printf("WARNING: Talos is running self-hosted control plane, convert to static pods using `talosctl convert-k8s`.")
+		}
+
+		return nil
+	}, "checkControlPlaneStatus"
 }

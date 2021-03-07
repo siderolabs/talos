@@ -14,17 +14,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	networkapi "github.com/talos-systems/talos/api/network"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/client"
+	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // routesCmd represents the net routes command.
 var routesCmd = &cobra.Command{
-	Use:   "routes",
-	Short: "List network routes",
-	Long:  ``,
-	Args:  cobra.NoArgs,
+	Use:     "routes",
+	Aliases: []string{"route"},
+	Short:   "List network routes",
+	Long:    ``,
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer

@@ -38,6 +38,7 @@ func (m *MockRunner) Open(ctx context.Context) error {
 
 func (m *MockRunner) Close() error {
 	close(m.exitCh)
+
 	return nil
 }
 
@@ -47,6 +48,7 @@ func (m *MockRunner) Run(eventSink events.Recorder) error {
 	select {
 	case err := <-m.exitCh:
 		m.times++
+
 		return err
 	case <-m.stop:
 		return nil

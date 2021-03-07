@@ -6,6 +6,7 @@ package ntp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -15,9 +16,10 @@ import (
 
 	"github.com/beevik/ntp"
 	"github.com/hashicorp/go-multierror"
+	"github.com/talos-systems/go-retry/retry"
+	"github.com/u-root/u-root/pkg/rtc"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/timex"
-	"github.com/talos-systems/talos/pkg/retry"
 )
 
 // NTP contains a server address.
@@ -26,7 +28,8 @@ type NTP struct {
 	MinPoll time.Duration
 	MaxPoll time.Duration
 
-	ready uint32
+	ready    uint32
+	rtcClock *rtc.RTC
 }
 
 // NewNTPClient instantiates a new ntp client for the
@@ -37,6 +40,13 @@ func NewNTPClient(opts ...Option) (*NTP, error) {
 	var result *multierror.Error
 	for _, setter := range opts {
 		result = multierror.Append(setter(ntp))
+	}
+
+	var err error
+
+	ntp.rtcClock, err = rtc.OpenRTC()
+	if err != nil {
+		log.Printf("failure opening RTC, ignored: %s", err)
 	}
 
 	return ntp, result.ErrorOrNil()
@@ -51,8 +61,11 @@ func (n *NTP) Ready() bool {
 // We dont ever want the daemon to stop, so we only log
 // errors.
 func (n *NTP) Daemon() (err error) {
-	if err = n.QueryAndSetTime(); err != nil {
+	if err = n.QueryAndSetTime(context.Background()); err != nil {
 		log.Println(err)
+
+		// if initial time sync fails, restart the service for more aggressive retry
+		return err
 	}
 
 	for {
@@ -62,18 +75,25 @@ func (n *NTP) Daemon() (err error) {
 		randSleep := time.Duration(rand.Intn(int(n.MaxPoll.Seconds()))) * time.Second
 		time.Sleep(randSleep + n.MinPoll)
 
-		if err = n.QueryAndSetTime(); err != nil {
+		if err = n.QueryAndSetTime(context.Background()); err != nil {
 			log.Println(err)
 		}
 	}
 }
 
 // Query polls the ntp server and verifies a successful response.
-func (n *NTP) Query() (resp *ntp.Response, err error) {
+func (n *NTP) Query(ctx context.Context) (resp *ntp.Response, err error) {
 	err = retry.Constant(n.MaxPoll, retry.WithUnits(n.MinPoll), retry.WithJitter(250*time.Millisecond)).Retry(func() error {
+		select {
+		case <-ctx.Done():
+			return retry.UnexpectedError(ctx.Err())
+		default:
+		}
+
 		resp, err = ntp.Query(n.Server)
 		if err != nil {
 			log.Printf("query error: %v", err)
+
 			return retry.ExpectedError(err)
 		}
 
@@ -97,14 +117,14 @@ func (n *NTP) GetTime() time.Time {
 }
 
 // QueryAndSetTime queries the NTP server and sets the time.
-func (n *NTP) QueryAndSetTime() (err error) {
+func (n *NTP) QueryAndSetTime(ctx context.Context) (err error) {
 	var resp *ntp.Response
 
-	if resp, err = n.Query(); err != nil {
+	if resp, err = n.Query(ctx); err != nil {
 		return fmt.Errorf("error querying %s for time, %s", n.Server, err)
 	}
 
-	if err = adjustTime(resp.ClockOffset); err != nil {
+	if err = n.adjustTime(resp.ClockOffset); err != nil {
 		return fmt.Errorf("failed to set time, %s", err)
 	}
 
@@ -114,30 +134,45 @@ func (n *NTP) QueryAndSetTime() (err error) {
 }
 
 // SetTime sets the system time based on the query response.
-func setTime(adjustedTime time.Time) error {
+func (n *NTP) setTime(adjustedTime time.Time) error {
 	log.Printf("setting time to %s", adjustedTime)
 
 	timeval := syscall.NsecToTimeval(adjustedTime.UnixNano())
 
-	return syscall.Settimeofday(&timeval)
+	if err := syscall.Settimeofday(&timeval); err != nil {
+		return err
+	}
+
+	if n.rtcClock != nil {
+		if err := n.rtcClock.Set(adjustedTime); err != nil {
+			log.Printf("error syncing RTC: %s", err)
+		} else {
+			log.Printf("synchronized RTC with system clock")
+		}
+	}
+
+	return nil
 }
 
 // adjustTime adds an offset to the current time.
-func adjustTime(offset time.Duration) error {
+func (n *NTP) adjustTime(offset time.Duration) error {
 	if offset < -AdjustTimeLimit || offset > AdjustTimeLimit {
-		return setTime(time.Now().Add(offset))
+		return n.setTime(time.Now().Add(offset))
 	}
 
 	var buf bytes.Buffer
 
 	fmt.Fprintf(&buf, "adjusting time by %s", offset)
 
-	state, err := timex.Adjtimex(&syscall.Timex{
-		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO,
+	req := syscall.Timex{
+		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO | timex.ADJ_STATUS,
 		Offset: int64(offset / time.Nanosecond),
-	})
+		Status: timex.STA_PLL,
+	}
 
-	fmt.Fprintf(&buf, ", state %s", state)
+	state, err := timex.Adjtimex(&req)
+
+	fmt.Fprintf(&buf, ", state %s, status %s", state, timex.Status(req.Status))
 
 	if err != nil {
 		fmt.Println(&buf, ", error was %s", err)

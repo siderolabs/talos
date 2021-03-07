@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/tail"
 	"github.com/talos-systems/talos/pkg/follow"
+	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // FileLoggingManager implements simple logging to files.
@@ -85,7 +85,8 @@ func (handler *fileLogHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser,
 	if opt.TailLines != nil {
 		err = tail.SeekLines(f, *opt.TailLines)
 		if err != nil {
-			f.Close() //nolint: errcheck
+			f.Close() //nolint:errcheck
+
 			return nil, fmt.Errorf("error tailing log: %w", err)
 		}
 	}

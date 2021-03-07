@@ -1,0 +1,8 @@
+---
+rules:
+  - regexp: ^github.com/talos-systems/talos/
+    action: deny
+  - regexp: ^github.com/talos-systems/talos/pkg
+    action: allow
+  - regexp: ^github.com/talos-systems/talos/pkg/machinery/api
+    action: allow

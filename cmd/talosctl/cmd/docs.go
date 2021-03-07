@@ -5,41 +5,121 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+
+	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-func filePrepender(filename string) string {
-	return "<!-- markdownlint-disable -->\n"
+func frontmatter(title, description string) string {
+	frontmatter := "---\n"
+
+	frontmatter += "title: " + title + "\n"
+	frontmatter += "desription: " + description + "\n"
+
+	frontmatter += "---\n\n"
+
+	return frontmatter + "<!-- markdownlint-disable -->\n\n"
 }
 
-func linkHandler(s string) string { return s }
+func linkHandler(name string) string {
+	base := strings.TrimSuffix(name, path.Ext(name))
+
+	base = strings.ReplaceAll(base, "_", "-")
+
+	return "#" + strings.ToLower(base)
+}
+
+const (
+	cliDescription           = "Talosctl CLI tool reference."
+	configurationDescription = "Talos node configuration file reference."
+)
+
+var (
+	cliDocs    bool
+	configDocs bool
+)
 
 // docsCmd represents the docs command.
 var docsCmd = &cobra.Command{
-	Use:    "docs <output>",
-	Short:  "Generate documentation for the CLI",
+	Use:    "docs <output> [flags]",
+	Short:  "Generate documentation for the CLI or config",
 	Long:   ``,
 	Args:   cobra.ExactArgs(1),
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		out := args[0]
+		dir := args[0]
 
-		if err := os.MkdirAll(out, 0o777); err != nil {
-			return fmt.Errorf("failed to create output directory %q", out)
+		if err := os.MkdirAll(dir, 0o777); err != nil {
+			return fmt.Errorf("failed to create output directory %q", dir)
 		}
 
-		if err := doc.GenMarkdownTreeCustom(rootCmd, out, filePrepender, linkHandler); err != nil {
-			return fmt.Errorf("failed to generate docs: %w", err)
+		all := !cliDocs && !configDocs
+
+		if cliDocs || all {
+			w := &bytes.Buffer{}
+
+			if err := GenMarkdownReference(rootCmd, w, linkHandler); err != nil {
+				return fmt.Errorf("failed to generate docs: %w", err)
+			}
+
+			filename := filepath.Join(dir, "cli.md")
+			f, err := os.Create(filename)
+			if err != nil {
+				return err
+			}
+			//nolint:errcheck
+			defer f.Close()
+
+			if _, err := io.WriteString(f, frontmatter("CLI", cliDescription)); err != nil {
+				return err
+			}
+
+			if _, err := io.WriteString(f, w.String()); err != nil {
+				return err
+			}
+		}
+
+		if configDocs || all {
+			if err := v1alpha1.GetConfigurationDoc().Write(dir, frontmatter("Configuration", configurationDescription)); err != nil {
+				return fmt.Errorf("failed to generate docs: %w", err)
+			}
 		}
 
 		return nil
 	},
 }
 
+// GenMarkdownReference is the the same as GenMarkdownTree, but
+// with custom filePrepender and linkHandler.
+func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
+	for _, c := range cmd.Commands() {
+		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+			continue
+		}
+
+		if err := GenMarkdownReference(c, w, linkHandler); err != nil {
+			return err
+		}
+	}
+
+	if err := doc.GenMarkdownCustom(cmd, w, linkHandler); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func init() {
+	docsCmd.Flags().BoolVar(&configDocs, "config", false, "generate documentation for the default configuration schema")
+	docsCmd.Flags().BoolVar(&cliDocs, "cli", false, "generate documentation for the CLI")
 	rootCmd.AddCommand(docsCmd)
 }

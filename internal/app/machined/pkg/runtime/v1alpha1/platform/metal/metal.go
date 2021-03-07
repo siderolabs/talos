@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,15 +13,16 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"golang.org/x/sys/unix"
-
+	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
+	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/blockdevice/probe"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -37,11 +39,11 @@ func (m *Metal) Name() string {
 
 // Configuration implements the platform.Platform interface.
 //
-// nolint: gocyclo
-func (m *Metal) Configuration() ([]byte, error) {
+//nolint:gocyclo
+func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
-		return nil, fmt.Errorf("no config option was found")
+		return nil, errors.ErrNoConfigSource
 	}
 
 	log.Printf("fetching machine config from: %q", *option)
@@ -82,12 +84,12 @@ func (m *Metal) Configuration() ([]byte, error) {
 	case constants.MetalConfigISOLabel:
 		return readConfigFromISO()
 	default:
-		return download.Download(*option)
+		return download.Download(ctx, *option)
 	}
 }
 
 // Hostname implements the platform.Platform interface.
-func (m *Metal) Hostname() (hostname []byte, err error) {
+func (m *Metal) Hostname(context.Context) (hostname []byte, err error) {
 	return nil, nil
 }
 
@@ -97,7 +99,7 @@ func (m *Metal) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the platform.Platform interface.
-func (m *Metal) ExternalIPs() (addrs []net.IP, err error) {
+func (m *Metal) ExternalIPs(context.Context) (addrs []net.IP, err error) {
 	return addrs, err
 }
 
@@ -109,10 +111,19 @@ func readConfigFromISO() (b []byte, err error) {
 		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer dev.Close()
 
-	if err = unix.Mount(dev.Path, mnt, dev.SuperBlock.Type(), unix.MS_RDONLY, ""); err != nil {
+	sb, err := filesystem.Probe(dev.Device().Name())
+	if err != nil {
+		return nil, err
+	}
+
+	if sb == nil {
+		return nil, fmt.Errorf("failed to get filesystem type")
+	}
+
+	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
 		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}
 
@@ -130,5 +141,7 @@ func readConfigFromISO() (b []byte, err error) {
 
 // KernelArgs implements the runtime.Platform interface.
 func (m *Metal) KernelArgs() procfs.Parameters {
-	return nil
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS0").Append("tty0"),
+	}
 }

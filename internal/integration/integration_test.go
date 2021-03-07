@@ -21,9 +21,9 @@ import (
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
 	provision_test "github.com/talos-systems/talos/internal/integration/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision"
-	"github.com/talos-systems/talos/internal/pkg/provision/providers"
-	"github.com/talos-systems/talos/pkg/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/talos-systems/talos/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -39,11 +39,15 @@ var (
 	k8sEndpoint      string
 	expectedVersion  string
 	talosctlPath     string
+	kubectlPath      string
 	provisionerName  string
 	clusterName      string
 	stateDir         string
 )
 
+// TestIntegration ...
+//
+//nolint:gocyclo
 func TestIntegration(t *testing.T) {
 	if talosConfig == "" {
 		t.Error("--talos.config is not provided")
@@ -64,7 +68,7 @@ func TestIntegration(t *testing.T) {
 			t.Error("error initializing provisioner", err)
 		}
 
-		defer provisioner.Close() //nolint: errcheck
+		defer provisioner.Close() //nolint:errcheck
 
 		cluster, err = provisioner.Reflect(ctx, clusterName, stateDir)
 		if err != nil {
@@ -73,6 +77,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	provision_test.DefaultSettings.CurrentVersion = expectedVersion
+	provision_test.DefaultSettings.CrashdumpEnabled = crashdumpEnabled
 
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
@@ -83,6 +88,7 @@ func TestIntegration(t *testing.T) {
 				TalosConfig:  talosConfig,
 				Version:      expectedVersion,
 				TalosctlPath: talosctlPath,
+				KubectlPath:  kubectlPath,
 			})
 		}
 
@@ -92,11 +98,12 @@ func TestIntegration(t *testing.T) {
 		}
 
 		t.Run(suiteName, func(tt *testing.T) {
-			suite.Run(tt, s) //nolint: scopelint
+			suite.Run(tt, s) //nolint:scopelint
 		})
 
 		if failFast && t.Failed() {
 			t.Log("fastfail mode enabled, aborting on first failure")
+
 			break
 		}
 	}
@@ -109,7 +116,7 @@ func TestIntegration(t *testing.T) {
 }
 
 func init() {
-	defaultTalosConfig, _ := config.GetDefaultPath() //nolint: errcheck
+	defaultTalosConfig, _ := config.GetDefaultPath() //nolint:errcheck
 
 	defaultStateDir, err := config.GetTalosDirectory()
 	if err == nil {
@@ -127,16 +134,19 @@ func init() {
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
+	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.MTU, "talos.provision.mtu", provision_test.DefaultSettings.MTU, "MTU to use for cluster network (provision tests only)")
 	flag.Int64Var(&provision_test.DefaultSettings.CPUs, "talos.provision.cpu", provision_test.DefaultSettings.CPUs, "CPU count for each VM (provision tests only)")
 	flag.Int64Var(&provision_test.DefaultSettings.MemMB, "talos.provision.mem", provision_test.DefaultSettings.MemMB, "memory (in MiB) for each VM (provision tests only)")
-	flag.Int64Var(&provision_test.DefaultSettings.DiskGB, "talos.provision.disk", provision_test.DefaultSettings.DiskGB, "disk size (in GiB) for each VM (provision tests only)")
+	flag.Uint64Var(&provision_test.DefaultSettings.DiskGB, "talos.provision.disk", provision_test.DefaultSettings.DiskGB, "disk size (in GiB) for each VM (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.MasterNodes, "talos.provision.masters", provision_test.DefaultSettings.MasterNodes, "master node count (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.WorkerNodes, "talos.provision.workers", provision_test.DefaultSettings.WorkerNodes, "worker node count (provision tests only)")
-	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry", provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
+	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry",
+		provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
+	flag.StringVar(&provision_test.DefaultSettings.CustomCNIURL, "talos.provision.custom-cni-url", provision_test.DefaultSettings.CustomCNIURL, "custom CNI URL for the cluster (provision tests only)")
 
 	allSuites = append(allSuites, api.GetAllSuites()...)
 	allSuites = append(allSuites, cli.GetAllSuites()...)

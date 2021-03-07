@@ -11,7 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 var (
@@ -26,7 +26,7 @@ var validateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := config.NewFromFile(validateConfigArg)
+		config, err := configloader.NewFromFile(validateConfigArg)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("%s is valid for %s mode", validateConfigArg, validateModeArg)
+		fmt.Printf("%s is valid for %s mode\n", validateConfigArg, validateModeArg)
 
 		return nil
 	},
@@ -47,7 +47,13 @@ var validateCmd = &cobra.Command{
 
 func init() {
 	validateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
-	validateCmd.Flags().StringVarP(&validateModeArg, "mode", "m", "", "the mode to validate the config for")
+	validateCmd.Flags().StringVarP(
+		&validateModeArg,
+		"mode",
+		"m",
+		"",
+		fmt.Sprintf("the mode to validate the config for (valid values are %s, %s, and %s)", runtime.ModeMetal.String(), runtime.ModeCloud.String(), runtime.ModeContainer.String()),
+	)
 	cli.Should(validateCmd.MarkFlagRequired("mode"))
 	addCommand(validateCmd)
 }

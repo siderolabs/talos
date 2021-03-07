@@ -27,6 +27,7 @@ func (suite *ValidateSuite) SuiteName() string {
 	return "cli.ValidateSuite"
 }
 
+// SetupTest ...
 func (suite *ValidateSuite) SetupTest() {
 	var err error
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -38,6 +39,7 @@ func (suite *ValidateSuite) SetupTest() {
 	suite.Require().NoError(os.Chdir(suite.tmpDir))
 }
 
+// TearDownTest ...
 func (suite *ValidateSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))
@@ -53,7 +55,11 @@ func (suite *ValidateSuite) TestValidate() {
 	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
 	for _, configFile := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
+		configFile := configFile
+
 		for _, mode := range []string{"cloud", "container"} {
+			mode := mode
+
 			suite.Run(fmt.Sprintf("%s-%s", configFile, mode), func() {
 				suite.RunCLI([]string{"validate", "-m", mode, "-c", configFile})
 			})

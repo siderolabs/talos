@@ -9,18 +9,17 @@ import (
 	"fmt"
 	"strings"
 
-	clusterapi "github.com/talos-systems/talos/api/cluster"
-
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/cluster"
-	"github.com/talos-systems/talos/internal/pkg/cluster/check"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/cluster/check"
+	"github.com/talos-systems/talos/pkg/conditions"
+	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // HealthCheck implements the cluster.ClusterServer interface.
 func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.ClusterService_HealthCheckServer) error {
 	clientProvider := &cluster.LocalClientProvider{}
-	defer clientProvider.Close() //nolint: errcheck
+	defer clientProvider.Close() //nolint:errcheck
 
 	k8sProvider := &cluster.KubernetesClient{
 		ClientProvider: clientProvider,
@@ -67,7 +66,7 @@ func (hr *healthReporter) Update(condition conditions.Condition) {
 	line := fmt.Sprintf("waiting for %s", condition)
 
 	if line != hr.lastLine {
-		hr.srv.Send(&clusterapi.HealthCheckProgress{ //nolint: errcheck
+		hr.srv.Send(&clusterapi.HealthCheckProgress{ //nolint:errcheck
 			Message: strings.TrimSpace(line),
 		})
 
@@ -81,41 +80,37 @@ type clusterState struct {
 }
 
 func (cluster *clusterState) Nodes() []string {
-	return append(cluster.controlPlaneNodes, cluster.workerNodes...)
+	return append([]string(nil), append(cluster.controlPlaneNodes, cluster.workerNodes...)...)
 }
 
-func (cluster *clusterState) NodesByType(t runtime.MachineType) []string {
+func (cluster *clusterState) NodesByType(t machine.Type) []string {
 	switch t {
-	case runtime.MachineTypeInit:
+	case machine.TypeInit:
 		return nil
-	case runtime.MachineTypeControlPlane:
-		return cluster.controlPlaneNodes
-	case runtime.MachineTypeJoin:
-		return cluster.workerNodes
+	case machine.TypeControlPlane:
+		return append([]string(nil), cluster.controlPlaneNodes...)
+	case machine.TypeJoin:
+		return append([]string(nil), cluster.workerNodes...)
+	case machine.TypeUnknown:
+		return nil
 	default:
 		panic("unsupported machine type")
 	}
 }
 
 func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
-	var err error
+	if len(cluster.controlPlaneNodes) == 0 && len(cluster.workerNodes) == 0 {
+		var err error
 
-	if len(cluster.controlPlaneNodes) == 0 {
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
 			return err
 		}
 
-		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.MasterIPs(ctx); err != nil {
-			return err
-		}
-	}
-
-	if len(cluster.workerNodes) == 0 {
-		if _, err = k8sProvider.K8sClient(ctx); err != nil {
+		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
 			return err
 		}
 
-		if cluster.workerNodes, err = k8sProvider.KubeHelper.WorkerIPs(ctx); err != nil {
+		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeJoin); err != nil {
 			return err
 		}
 	}

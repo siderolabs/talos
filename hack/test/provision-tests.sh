@@ -1,11 +1,23 @@
 #!/bin/bash
 
-set -eou pipefail
+set -eoux pipefail
 
-case "${REGISTRY:-false}" in
-  registry.ci.svc:5000)
-    REGISTRY_ADDR=`python -c "import socket; print socket.gethostbyname('registry.ci.svc')"`
-    INTEGRATION_TEST_FLAGS="-talos.provision.registry-mirror ${REGISTRY}=http://${REGISTRY_ADDR}:5000 -talos.provision.target-installer-registry=${REGISTRY}"
+case "${CI:-false}" in
+  true)
+    mirror_flag=""
+
+    for registry in docker.io ghcr.io k8s.gcr.io quay.io gcr.io registry.dev.talos-systems.io; do
+      service="registry-${registry//./-}.ci.svc"
+      addr=`python3 -c "import socket; print(socket.gethostbyname('${service}'))"`
+
+      if [[ ! -z "${mirror_flag}" ]]; then
+        mirror_flag="${mirror_flag},"
+      fi
+
+      mirror_flag="${mirror_flag}${registry}=http://${addr}:5000"
+    done
+
+    INTEGRATION_TEST_FLAGS="-talos.provision.target-installer-registry=${REGISTRY} -talos.provision.registry-mirror ${mirror_flag}"
     ;;
   *)
     INTEGRATION_TEST_FLAGS=
@@ -16,4 +28,16 @@ if [ "${INTEGRATION_TEST_RUN:-undefined}" != "undefined" ]; then
   INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -test.run ${INTEGRATION_TEST_RUN}"
 fi
 
-"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mem 2048 -talos.provision.cpu 2 ${INTEGRATION_TEST_FLAGS}
+if [ "${INTEGRATION_TEST_TRACK:-undefined}" != "undefined" ]; then
+  INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -talos.provision.cidr 172.$(( ${INTEGRATION_TEST_TRACK} + 21 )).0.0/24"
+fi
+
+case "${CUSTOM_CNI_URL:-false}" in
+  false)
+    ;;
+  *)
+    INTEGRATION_TEST_FLAGS="${INTEGRATION_TEST_FLAGS} -talos.provision.custom-cni-url=${CUSTOM_CNI_URL}"
+    ;;
+esac
+
+"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mtu 1450 ${INTEGRATION_TEST_FLAGS}

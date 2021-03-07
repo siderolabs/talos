@@ -26,7 +26,7 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	ctrd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
 }
 
-// nolint: maligned
+//nolint:maligned
 type ContainerdSuite struct {
 	suite.Suite
 
@@ -95,8 +95,8 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint: errcheck
-		suite.containerdRunner.Run(MockEventSink) //nolint: errcheck
+		defer suite.containerdRunner.Close()      //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
 	}()
 
 	suite.client, err = containerd.New(suite.containerdAddress)

@@ -22,6 +22,14 @@ run:
   skip-files:
     - .*\\.pb\\.go$
 
+  # list of build tags, all linters use it. Default is empty list.
+  build-tags:
+    - integration
+    - integration_api
+    - integration_cli
+    - integration_k8s
+    - integration_provision
+
 # output configuration options
 output:
   # colored-line-number|line-number|json|tab|checkstyle, default is "colored-line-number"
@@ -100,6 +108,8 @@ linters-settings:
     simple: true
     range-loops: true # Report preallocation suggestions on range loops, true by default
     for-loops: false # Report preallocation suggestions on for loops, false by default
+  gci:
+    local-prefixes: github.com/talos-systems/talos
 
 linters:
   enable-all: true
@@ -114,6 +124,9 @@ linters:
     - gomnd
     - goerr113
     - nestif
+    - exhaustivestruct
+    - errorlint
+    - wrapcheck
   disable-all: false
   fast: false
 

@@ -9,12 +9,12 @@ package api
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
-	"github.com/talos-systems/talos/api/machine"
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/client"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
+	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // EventsSuite verifies Events API.
@@ -37,11 +37,7 @@ func (suite *EventsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-	nodes := suite.DiscoverNodes()
-	suite.Require().NotEmpty(nodes)
-	node := nodes[rand.Intn(len(nodes))]
-
-	suite.nodeCtx = client.WithNodes(suite.ctx, node)
+	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode(machinetype.TypeJoin))
 }
 
 // TearDownTest ...
@@ -97,7 +93,7 @@ func (suite *EventsSuite) TestServiceEvents() {
 	}()
 
 	// wait for event watcher to start
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	_, err = suite.Client.ServiceRestart(suite.nodeCtx, service)
 	suite.Assert().NoError(err)

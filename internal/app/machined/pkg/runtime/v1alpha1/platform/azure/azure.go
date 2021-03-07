@@ -17,7 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
@@ -29,7 +28,7 @@ import (
 const (
 	// AzureUserDataEndpoint is the local endpoint for the config.
 	// By specifying format=text and drilling down to the actual key we care about
-	// we get a base64 encoded config response
+	// we get a base64 encoded config response.
 	AzureUserDataEndpoint = "http://169.254.169.254/metadata/instance/compute/customData?api-version=2019-06-01&format=text"
 	// AzureHostnameEndpoint is the local endpoint for the hostname.
 	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2019-06-01&format=text"
@@ -57,12 +56,14 @@ func (a *Azure) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (a *Azure) Configuration() ([]byte, error) {
+func (a *Azure) Configuration(ctx context.Context) ([]byte, error) {
+	// TODO: support ErrNoConfigSource, requires handling of both CD-ROM & user-data sources
+	//       requires splitting `linuxAgent` into separate platform task which is called when node is up (or close to that)
 	// attempt to download from metadata endpoint
 	// disabled by default
 	log.Printf("fetching machine config from: %q", AzureUserDataEndpoint)
 
-	config, err := download.Download(AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
+	config, err := download.Download(ctx, AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
 	if err != nil {
 		fmt.Printf("metadata download failed, falling back to ovf-env.xml file. err: %s", err.Error())
 	}
@@ -77,7 +78,7 @@ func (a *Azure) Configuration() ([]byte, error) {
 		}
 	}
 
-	if err := linuxAgent(); err != nil {
+	if err := linuxAgent(ctx); err != nil {
 		return nil, err
 	}
 
@@ -85,14 +86,11 @@ func (a *Azure) Configuration() ([]byte, error) {
 }
 
 // Hostname implements the platform.Platform interface.
-func (a *Azure) Hostname() (hostname []byte, err error) {
+func (a *Azure) Hostname(ctx context.Context) (hostname []byte, err error) {
 	var (
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	req, err = http.NewRequestWithContext(ctx, "GET", AzureHostnameEndpoint, nil)
 	if err != nil {
@@ -108,7 +106,7 @@ func (a *Azure) Hostname() (hostname []byte, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -124,15 +122,12 @@ func (a *Azure) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
-func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
+func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
 		req  *http.Request
 		resp *http.Response
 	)
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer ctxCancel()
 
 	if req, err = http.NewRequestWithContext(ctx, "GET", AzureInterfacesEndpoint, nil); err != nil {
 		return
@@ -146,7 +141,7 @@ func (a *Azure) ExternalIPs() (addrs []net.IP, err error) {
 		return
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -214,6 +209,7 @@ func (a *Azure) configFromCD() ([]byte, error) {
 			// Mount and slurp xml from disk
 			if err = unix.Mount(filepath.Join("/dev", dev.Name()), mnt, "udf", unix.MS_RDONLY, ""); err != nil {
 				fmt.Printf("unable to mount %s, possibly not udf: %s", dev.Name(), err.Error())
+
 				continue
 			}
 

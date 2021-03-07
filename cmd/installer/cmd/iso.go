@@ -5,23 +5,33 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 )
 
-var isolinuxCfg = []byte(`DEFAULT ISO
-  SAY Talos
-LABEL ISO
-  KERNEL /vmlinuz
-  INITRD /initramfs.xz
-  APPEND page_poison=1 slab_nomerge slub_debug=P pti=on consoleblank=0 console=tty0 talos.platform=iso`)
+var cfg = []byte(`set default=0
+set timeout=3
+
+insmod all_video
+
+terminal_input console
+terminal_output console
+
+menuentry "Talos ISO" {
+	set gfxmode=auto
+	set gfxpayload=text
+	linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal
+	initrd /boot/initramfs.xz
+}`)
 
 // isoCmd represents the iso command.
 var isoCmd = &cobra.Command{
@@ -36,86 +46,92 @@ var isoCmd = &cobra.Command{
 }
 
 func init() {
+	isoCmd.Flags().StringVar(&outputArg, "output", "/out", "The output path")
+	isoCmd.Flags().BoolVar(&tarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
 	rootCmd.AddCommand(isoCmd)
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func runISOCmd() error {
-	for _, dir := range []string{"/mnt/isolinux", "/mnt/usr/install"} {
-		log.Printf("creating %s", dir)
+	if err := os.MkdirAll(outputArg, 0o777); err != nil {
+		return err
+	}
 
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+	files := map[string]string{
+		"/usr/install/vmlinuz":      "/mnt/boot/vmlinuz",
+		"/usr/install/initramfs.xz": "/mnt/boot/initramfs.xz",
+	}
+
+	for src, dest := range files {
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			return err
+		}
+
+		log.Printf("copying %s to %s", src, dest)
+
+		from, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer from.Close()
+
+		to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0o666)
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer to.Close()
+
+		_, err = io.Copy(to, from)
+		if err != nil {
 			return err
 		}
 	}
 
-	files := map[string][]string{
-		"/usr/lib/syslinux/isolinux.bin": {"/mnt/isolinux/isolinux.bin"},
-		"/usr/lib/syslinux/ldlinux.c32":  {"/mnt/isolinux/ldlinux.c32"},
-		"/usr/install/vmlinuz":           {"/mnt/vmlinuz", "/mnt/usr/install/vmlinuz"},
-		"/usr/install/initramfs.xz":      {"/mnt/initramfs.xz", "/mnt/usr/install/initramfs.xz"},
+	log.Println("creating grub.cfg")
+
+	cfgPath := "/mnt/boot/grub/grub.cfg"
+
+	if err := os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
+		return err
 	}
 
-	for src, dest := range files {
-		for _, f := range dest {
-			log.Printf("copying %s to %s", src, f)
-
-			from, err := os.Open(src)
-			if err != nil {
-				return err
-			}
-			// nolint: errcheck
-			defer from.Close()
-
-			to, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0o666)
-			if err != nil {
-				return err
-			}
-			// nolint: errcheck
-			defer to.Close()
-
-			_, err = io.Copy(to, from)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	log.Println("creating isolinux.cfg")
-
-	if err := ioutil.WriteFile("/mnt/isolinux/isolinux.cfg", isolinuxCfg, 0o666); err != nil {
+	if err := ioutil.WriteFile(cfgPath, cfg, 0o666); err != nil {
 		return err
 	}
 
 	log.Println("creating ISO")
 
-	if err := pkg.Mkisofs("/tmp/talos.iso", "/mnt"); err != nil {
+	out := fmt.Sprintf("/tmp/talos-%s.iso", runtime.GOARCH)
+
+	if err := pkg.CreateISO(out, "/mnt"); err != nil {
 		return err
 	}
 
-	log.Println("creating hybrid ISO")
-
-	if err := pkg.Isohybrid("/tmp/talos.iso"); err != nil {
-		return err
-	}
-
-	from, err := os.Open("/tmp/talos.iso")
+	from, err := os.Open(out)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer from.Close()
 
-	to, err := os.OpenFile(filepath.Join(outputArg, "talos.iso"), os.O_RDWR|os.O_CREATE, 0o666)
+	to, err := os.OpenFile(filepath.Join(outputArg, filepath.Base(out)), os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	// nolint: errcheck
+	//nolint:errcheck
 	defer to.Close()
 
 	_, err = io.Copy(to, from)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	if tarToStdout {
+		if err := tarOutput(); err != nil {
+			return err
+		}
 	}
 
 	return nil

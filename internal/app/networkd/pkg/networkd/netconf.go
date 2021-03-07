@@ -12,27 +12,29 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
-// nolint: gocyclo
-func buildOptions(device runtime.Device, hostname string) (name string, opts []nic.Option, err error) {
-	opts = append(opts, nic.WithName(device.Interface))
+//nolint:gocyclo
+func buildOptions(device config.Device, hostname string) (name string, opts []nic.Option, err error) {
+	opts = append(opts, nic.WithName(device.Interface()))
 
-	if device.Ignore || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface) {
+	if device.Ignore() || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface()) {
 		opts = append(opts, nic.WithIgnore())
-		return device.Interface, opts, err
+
+		return device.Interface(), opts, err
 	}
 
 	// Configure Addressing
 	switch {
-	case device.CIDR != "":
-		s := &address.Static{CIDR: device.CIDR, RouteList: device.Routes, Mtu: device.MTU}
+	case device.CIDR() != "":
+		s := &address.Static{CIDR: device.CIDR(), RouteList: device.Routes(), Mtu: device.MTU()}
 
 		// Set a default for the hostname to ensure we always have a valid
 		// ip + hostname pair
@@ -44,159 +46,176 @@ func buildOptions(device runtime.Device, hostname string) (name string, opts []n
 		}
 
 		opts = append(opts, nic.WithAddressing(s))
-	case device.DHCP:
-		d := &address.DHCP{}
-		opts = append(opts, nic.WithAddressing(d))
+	case device.DHCP():
+		if device.DHCPOptions().IPv4() {
+			d := &address.DHCP4{DHCPOptions: device.DHCPOptions(), RouteList: device.Routes(), Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(d))
+		}
+
+		if device.DHCPOptions().IPv6() {
+			d := &address.DHCP6{Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(d))
+		}
 	default:
 		// Allow master interface without any addressing if VLANs exist
-		if len(device.Vlans) > 0 {
-			log.Printf("no addressing for master device %s", device.Interface)
+		if len(device.Vlans()) > 0 {
+			log.Printf("no addressing for master device %s", device.Interface())
 
 			opts = append(opts, nic.WithNoAddressing())
 		} else {
-			d := &address.DHCP{}
-			opts = append(opts, nic.WithAddressing(d))
+			// No CIDR and DHCP==false results in a static without an IP.
+			// This handles cases like slaac addressing.
+			s := &address.Static{RouteList: device.Routes(), Mtu: device.MTU()}
+			opts = append(opts, nic.WithAddressing(s))
 		}
 	}
 
 	// Configure Vlan interfaces
-	for _, vlan := range device.Vlans {
-		opts = append(opts, nic.WithVlan(vlan.ID))
-		if vlan.CIDR != "" {
-			opts = append(opts, nic.WithVlanCIDR(vlan.ID, vlan.CIDR, vlan.Routes))
+	for _, vlan := range device.Vlans() {
+		opts = append(opts, nic.WithVlan(vlan.ID()))
+		if vlan.CIDR() != "" {
+			opts = append(opts, nic.WithVlanCIDR(vlan.ID(), vlan.CIDR(), vlan.Routes()))
 		}
 
-		if vlan.DHCP {
-			opts = append(opts, nic.WithVlanDhcp(vlan.ID))
+		if vlan.DHCP() {
+			opts = append(opts, nic.WithVlanDhcp(vlan.ID()))
 		}
 	}
 
 	// Handle dummy interface
-	if device.Dummy {
+	if device.Dummy() {
 		opts = append(opts, nic.WithDummy())
 	}
 
+	if device.WireguardConfig() != nil {
+		opts = append(opts, nic.WithWireguardConfig(device.WireguardConfig()))
+	}
+
+	if device.VIPConfig() != nil {
+		opts = append(opts, nic.WithVIPConfig(device.VIPConfig()))
+	}
+
 	// Configure Bonding
-	if device.Bond == nil {
-		return device.Interface, opts, err
+	if device.Bond() == nil {
+		return device.Interface(), opts, err
 	}
 
 	opts = append(opts, nic.WithBond(true))
 
-	if len(device.Bond.Interfaces) == 0 {
-		return device.Interface, opts, fmt.Errorf("invalid bond configuration for %s: must supply sub interfaces for bonded interface", device.Interface)
+	if len(device.Bond().Interfaces()) == 0 {
+		return device.Interface(), opts, fmt.Errorf("invalid bond configuration for %s: must supply sub interfaces for bonded interface", device.Interface())
 	}
 
-	opts = append(opts, nic.WithSubInterface(device.Bond.Interfaces...))
+	opts = append(opts, nic.WithSubInterface(device.Bond().Interfaces()...))
 
-	if device.Bond.Mode != "" {
-		opts = append(opts, nic.WithBondMode(device.Bond.Mode))
+	if device.Bond().Mode() != "" {
+		opts = append(opts, nic.WithBondMode(device.Bond().Mode()))
 	}
 
-	if device.Bond.HashPolicy != "" {
-		opts = append(opts, nic.WithHashPolicy(device.Bond.HashPolicy))
+	if device.Bond().HashPolicy() != "" {
+		opts = append(opts, nic.WithHashPolicy(device.Bond().HashPolicy()))
 	}
 
-	if device.Bond.LACPRate != "" {
-		opts = append(opts, nic.WithLACPRate(device.Bond.LACPRate))
+	if device.Bond().LACPRate() != "" {
+		opts = append(opts, nic.WithLACPRate(device.Bond().LACPRate()))
 	}
 
-	if device.Bond.MIIMon > 0 {
-		opts = append(opts, nic.WithMIIMon(device.Bond.MIIMon))
+	if device.Bond().MIIMon() > 0 {
+		opts = append(opts, nic.WithMIIMon(device.Bond().MIIMon()))
 	}
 
-	if device.Bond.UpDelay > 0 {
-		opts = append(opts, nic.WithUpDelay(device.Bond.UpDelay))
+	if device.Bond().UpDelay() > 0 {
+		opts = append(opts, nic.WithUpDelay(device.Bond().UpDelay()))
 	}
 
-	if device.Bond.DownDelay > 0 {
-		opts = append(opts, nic.WithDownDelay(device.Bond.DownDelay))
+	if device.Bond().DownDelay() > 0 {
+		opts = append(opts, nic.WithDownDelay(device.Bond().DownDelay()))
 	}
 
-	if !device.Bond.UseCarrier {
-		opts = append(opts, nic.WithUseCarrier(device.Bond.UseCarrier))
+	if !device.Bond().UseCarrier() {
+		opts = append(opts, nic.WithUseCarrier(device.Bond().UseCarrier()))
 	}
 
-	if device.Bond.ARPInterval > 0 {
-		opts = append(opts, nic.WithARPInterval(device.Bond.ARPInterval))
+	if device.Bond().ARPInterval() > 0 {
+		opts = append(opts, nic.WithARPInterval(device.Bond().ARPInterval()))
 	}
 
 	// if device.Bond.ARPIPTarget {
 	//	opts = append(opts, nic.WithARPIPTarget(device.Bond.ARPIPTarget))
 	//}
 
-	if device.Bond.ARPValidate != "" {
-		opts = append(opts, nic.WithARPValidate(device.Bond.ARPValidate))
+	if device.Bond().ARPValidate() != "" {
+		opts = append(opts, nic.WithARPValidate(device.Bond().ARPValidate()))
 	}
 
-	if device.Bond.ARPAllTargets != "" {
-		opts = append(opts, nic.WithARPAllTargets(device.Bond.ARPAllTargets))
+	if device.Bond().ARPAllTargets() != "" {
+		opts = append(opts, nic.WithARPAllTargets(device.Bond().ARPAllTargets()))
 	}
 
-	if device.Bond.Primary != "" {
-		opts = append(opts, nic.WithPrimary(device.Bond.Primary))
+	if device.Bond().Primary() != "" {
+		opts = append(opts, nic.WithPrimary(device.Bond().Primary()))
 	}
 
-	if device.Bond.PrimaryReselect != "" {
-		opts = append(opts, nic.WithPrimaryReselect(device.Bond.PrimaryReselect))
+	if device.Bond().PrimaryReselect() != "" {
+		opts = append(opts, nic.WithPrimaryReselect(device.Bond().PrimaryReselect()))
 	}
 
-	if device.Bond.FailOverMac != "" {
-		opts = append(opts, nic.WithFailOverMAC(device.Bond.FailOverMac))
+	if device.Bond().FailOverMac() != "" {
+		opts = append(opts, nic.WithFailOverMAC(device.Bond().FailOverMac()))
 	}
 
-	if device.Bond.ResendIGMP > 0 {
-		opts = append(opts, nic.WithResendIGMP(device.Bond.ResendIGMP))
+	if device.Bond().ResendIGMP() > 0 {
+		opts = append(opts, nic.WithResendIGMP(device.Bond().ResendIGMP()))
 	}
 
-	if device.Bond.NumPeerNotif > 0 {
-		opts = append(opts, nic.WithNumPeerNotif(device.Bond.NumPeerNotif))
+	if device.Bond().NumPeerNotif() > 0 {
+		opts = append(opts, nic.WithNumPeerNotif(device.Bond().NumPeerNotif()))
 	}
 
-	if device.Bond.AllSlavesActive > 0 {
-		opts = append(opts, nic.WithAllSlavesActive(device.Bond.AllSlavesActive))
+	if device.Bond().AllSlavesActive() > 0 {
+		opts = append(opts, nic.WithAllSlavesActive(device.Bond().AllSlavesActive()))
 	}
 
-	if device.Bond.MinLinks > 0 {
-		opts = append(opts, nic.WithMinLinks(device.Bond.MinLinks))
+	if device.Bond().MinLinks() > 0 {
+		opts = append(opts, nic.WithMinLinks(device.Bond().MinLinks()))
 	}
 
-	if device.Bond.LPInterval > 0 {
-		opts = append(opts, nic.WithLPInterval(device.Bond.LPInterval))
+	if device.Bond().LPInterval() > 0 {
+		opts = append(opts, nic.WithLPInterval(device.Bond().LPInterval()))
 	}
 
-	if device.Bond.PacketsPerSlave > 0 {
-		opts = append(opts, nic.WithPacketsPerSlave(device.Bond.PacketsPerSlave))
+	if device.Bond().PacketsPerSlave() > 0 {
+		opts = append(opts, nic.WithPacketsPerSlave(device.Bond().PacketsPerSlave()))
 	}
 
-	if device.Bond.ADSelect != "" {
-		opts = append(opts, nic.WithADSelect(device.Bond.ADSelect))
+	if device.Bond().ADSelect() != "" {
+		opts = append(opts, nic.WithADSelect(device.Bond().ADSelect()))
 	}
 
-	if device.Bond.ADActorSysPrio > 0 {
-		opts = append(opts, nic.WithADActorSysPrio(device.Bond.ADActorSysPrio))
+	if device.Bond().ADActorSysPrio() > 0 {
+		opts = append(opts, nic.WithADActorSysPrio(device.Bond().ADActorSysPrio()))
 	}
 
-	if device.Bond.ADUserPortKey > 0 {
-		opts = append(opts, nic.WithADUserPortKey(device.Bond.ADUserPortKey))
+	if device.Bond().ADUserPortKey() > 0 {
+		opts = append(opts, nic.WithADUserPortKey(device.Bond().ADUserPortKey()))
 	}
 
 	// if device.Bond.ADActorSystem != "" {
 	//	opts = append(opts, nic.WithADActorSystem(device.Bond.ADActorSystem))
 	//}
 
-	if device.Bond.TLBDynamicLB > 0 {
-		opts = append(opts, nic.WithTLBDynamicLB(device.Bond.TLBDynamicLB))
+	if device.Bond().TLBDynamicLB() > 0 {
+		opts = append(opts, nic.WithTLBDynamicLB(device.Bond().TLBDynamicLB()))
 	}
 
-	if device.Bond.PeerNotifyDelay > 0 {
-		opts = append(opts, nic.WithPeerNotifyDelay(device.Bond.PeerNotifyDelay))
+	if device.Bond().PeerNotifyDelay() > 0 {
+		opts = append(opts, nic.WithPeerNotifyDelay(device.Bond().PeerNotifyDelay()))
 	}
 
-	return device.Interface, opts, err
+	return device.Interface(), opts, err
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
 	// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
@@ -214,7 +233,7 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 	}
 
 	var (
-		device    = &runtime.Device{}
+		device    = &v1alpha1.Device{}
 		hostname  string
 		link      *net.Interface
 		resolvers = []net.IP{}
@@ -224,15 +243,15 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 		switch idx {
 		// Address
 		case 0:
-			device.CIDR = field
+			device.DeviceCIDR = field
 		// NFS Server
 		// case 1:
 		// Gateway
 		case 2:
-			device.Routes = []runtime.Route{
+			device.DeviceRoutes = []*v1alpha1.Route{
 				{
-					Network: "0.0.0.0/0",
-					Gateway: field,
+					RouteNetwork: "0.0.0.0/0",
+					RouteGateway: field,
 				},
 			}
 		// Netmask
@@ -240,7 +259,7 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 			mask := net.ParseIP(field).To4()
 			ipmask := net.IPv4Mask(mask[0], mask[1], mask[2], mask[3])
 			ones, _ := ipmask.Size()
-			device.CIDR = fmt.Sprintf("%s/%d", device.CIDR, ones)
+			device.DeviceCIDR = fmt.Sprintf("%s/%d", device.CIDR(), ones)
 		// Hostname
 		case 4:
 			hostname = field
@@ -287,11 +306,17 @@ func buildKernelOptions(cmdline string) (name string, opts []nic.Option) {
 		}
 	}
 
-	if device.Interface == "" {
+	if device.DeviceInterface == "" {
 		opts = append(opts, nic.WithName(link.Name))
 	}
 
-	s := &address.Static{Mtu: device.MTU, NameServers: resolvers, FQDN: hostname, NetIf: link, CIDR: device.CIDR, RouteList: device.Routes}
+	routes := make([]config.Route, len(device.DeviceRoutes))
+
+	for i := 0; i < len(device.DeviceRoutes); i++ {
+		routes[i] = device.DeviceRoutes[i]
+	}
+
+	s := &address.Static{Mtu: device.DeviceMTU, NameServers: resolvers, FQDN: hostname, NetIf: link, CIDR: device.DeviceCIDR, RouteList: routes}
 	opts = append(opts, nic.WithAddressing(s))
 
 	return link.Name, opts

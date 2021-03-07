@@ -10,19 +10,24 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/talos-systems/go-procfs/procfs"
+	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/version"
 )
+
+func init() {
+	// Explicitly disable memory profiling to save around 1.4MiB of memory.
+	runtime.MemProfileRate = 0
+}
 
 func run() (err error) {
 	// Mount the pseudo devices.
@@ -87,7 +92,7 @@ func recovery() {
 		}
 	}
 
-	// nolint: errcheck
+	//nolint:errcheck
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
 }
 

@@ -8,12 +8,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net/url"
 	"text/template"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/constants"
-	"github.com/talos-systems/talos/pkg/crypto/x509"
+	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 const adminKubeConfigTemplate = `apiVersion: v1
@@ -24,43 +26,50 @@ clusters:
     server: {{ .Server }}
     certificate-authority-data: {{ .CACert }}
 users:
-- name: admin
+- name: admin@{{ .Cluster }}
   user:
     client-certificate-data: {{ .AdminCert }}
     client-key-data: {{ .AdminKey }}
 contexts:
 - context:
     cluster: {{ .Cluster }}
-    user: admin
+    namespace: default
+    user: admin@{{ .Cluster }}
   name: admin@{{ .Cluster }}
 current-context: admin@{{ .Cluster }}
 `
 
+// GenerateAdminInput is the interface for the GenerateAdmin function.
+//
+// This interface is implemented by config.Cluster().
+type GenerateAdminInput interface {
+	Name() string
+	Endpoint() *url.URL
+	CA() *x509.PEMEncodedCertificateAndKey
+	AdminKubeconfig() config.AdminKubeconfig
+}
+
 // GenerateAdmin generates admin kubeconfig for the cluster.
-func GenerateAdmin(config runtime.ClusterConfig, out io.Writer) error {
+func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Parse(adminKubeConfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)
 	}
 
-	k8sCA, err := config.CA().GetCert()
+	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(config.CA())
 	if err != nil {
-		return fmt.Errorf("error getting Kubernetes CA certificate: %w", err)
+		return fmt.Errorf("error getting Kubernetes CA: %w", err)
 	}
 
-	k8sKey, err := config.CA().GetRSAKey()
-	if err != nil {
-		return fmt.Errorf("error parseing Kubernetes key: %w", err)
-	}
-
-	adminCert, err := x509.NewCertficateAndKey(k8sCA, k8sKey,
-		x509.RSA(true),
+	adminCert, err := x509.NewKeyPair(k8sCA,
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
 		x509.NotAfter(time.Now().Add(config.AdminKubeconfig().CertLifetime())))
 	if err != nil {
 		return fmt.Errorf("error generating admin certificate: %w", err)
 	}
+
+	adminCertPEM := x509.NewCertificateAndKeyFromKeyPair(adminCert)
 
 	input := struct {
 		Cluster   string
@@ -71,8 +80,8 @@ func GenerateAdmin(config runtime.ClusterConfig, out io.Writer) error {
 	}{
 		Cluster:   config.Name(),
 		CACert:    base64.StdEncoding.EncodeToString(config.CA().Crt),
-		AdminCert: base64.StdEncoding.EncodeToString(adminCert.Crt),
-		AdminKey:  base64.StdEncoding.EncodeToString(adminCert.Key),
+		AdminCert: base64.StdEncoding.EncodeToString(adminCertPEM.Crt),
+		AdminKey:  base64.StdEncoding.EncodeToString(adminCertPEM.Key),
 		Server:    config.Endpoint().String(),
 	}
 

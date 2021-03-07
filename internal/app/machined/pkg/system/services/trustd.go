@@ -2,15 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// nolint: golint
+//nolint:golint
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
 
-	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
@@ -20,8 +20,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Trustd implements the Service interface. It serves as the concrete type with
@@ -35,14 +36,7 @@ func (t *Trustd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	importer := containerd.NewImporter(constants.SystemContainerdNamespace, containerd.WithContainerdAddress(constants.SystemContainerdAddress))
-
-	return importer.Import(&containerd.ImportRequest{
-		Path: "/usr/images/trustd.tar",
-		Options: []containerdapi.ImportOpt{
-			containerdapi.WithIndexName("talos/trustd"),
-		},
-	})
+	return image.Import(ctx, "/usr/images/trustd.tar", "talos/trustd")
 }
 
 // PostFunc implements the Service interface.
@@ -57,7 +51,7 @@ func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (t *Trustd) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer {
+	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
 		return []string{"containerd", "networkd"}
 	}
 
@@ -69,17 +63,13 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	// Set the process arguments.
 	args := runner.Args{
-		ID: t.ID(r),
-		ProcessArgs: []string{
-			"/trustd",
-			"--config=" + constants.ConfigPath,
-		},
+		ID:          t.ID(r),
+		ProcessArgs: []string{"/trustd"},
 	}
 
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
-		{Type: "bind", Destination: constants.ConfigPath, Source: constants.ConfigPath, Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
@@ -87,9 +77,17 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
 	}
 
+	b, err := r.Config().Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	stdin := bytes.NewReader(b)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
+		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithContainerImage(image),

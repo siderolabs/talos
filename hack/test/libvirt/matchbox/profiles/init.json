@@ -6,9 +6,8 @@
     "initrd": ["/assets/initramfs.xz"],
     "args": [
       "initrd=initramfs.xz",
-      "page_poison=1",
+      "init_on_alloc=1",
       "slab_nomerge",
-      "slub_debug=P",
       "pti=on",
       "ima_template=ima-ng",
       "ima_appraise=fix",

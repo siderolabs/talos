@@ -13,13 +13,16 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	talosnet "github.com/talos-systems/net"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/config"
-	"github.com/talos-systems/talos/pkg/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/constants"
+	"github.com/talos-systems/talos/pkg/images"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (
@@ -27,10 +30,12 @@ var (
 	configVersion     string
 	dnsDomain         string
 	kubernetesVersion string
+	talosVersion      string
 	installDisk       string
 	installImage      string
 	outputDir         string
 	registryMirrors   []string
+	persistConfig     bool
 )
 
 // genConfigCmd represents the gen config command.
@@ -46,10 +51,30 @@ var genConfigCmd = &cobra.Command{
 		// Validate url input to ensure it has https:// scheme before we attempt to gen
 		u, err := url.Parse(args[1])
 		if err != nil {
-			return fmt.Errorf("failed to parse load balancer IP or DNS name: %w", err)
+			if !strings.Contains(args[1], "/") {
+				// not a URL, could be just host:port
+				u = &url.URL{
+					Host: args[1],
+				}
+			} else {
+				return fmt.Errorf("failed to parse the cluster endpoint URL: %w", err)
+			}
 		}
+
 		if u.Scheme == "" {
-			return fmt.Errorf("no scheme specified for load balancer IP or DNS name\ntry \"https://<load balancer IP or DNS name>\"")
+			if u.Port() == "" {
+				return fmt.Errorf("no scheme and port specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+			}
+
+			return fmt.Errorf("no scheme specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+		}
+
+		if u.Scheme != "https" {
+			return fmt.Errorf("the control plane endpoint URL should have scheme https://\ntry: %q", fixControlPlaneEndpoint(u))
+		}
+
+		if err = talosnet.ValidateEndpointURI(args[1]); err != nil {
+			return fmt.Errorf("error validating the cluster endpoint URL: %w", err)
 		}
 
 		switch configVersion {
@@ -61,7 +86,23 @@ var genConfigCmd = &cobra.Command{
 	},
 }
 
-//nolint: gocyclo
+func fixControlPlaneEndpoint(u *url.URL) *url.URL {
+	// handle the case when the hostname/IP is given without the port, it parses as URL Path
+	if u.Scheme == "" && u.Host == "" && u.Path != "" {
+		u.Host = u.Path
+		u.Path = ""
+	}
+
+	u.Scheme = "https"
+
+	if u.Port() == "" {
+		u.Host = fmt.Sprintf("%s:%d", u.Host, constants.DefaultControlPlanePort)
+	}
+
+	return u
+}
+
+//nolint:gocyclo
 func genV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
@@ -77,7 +118,7 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	var genOptions []generate.GenOption //nolint: prealloc
+	var genOptions []generate.GenOption //nolint:prealloc
 
 	for _, registryMirror := range registryMirrors {
 		components := strings.SplitN(registryMirror, "=", 2)
@@ -88,17 +129,29 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithRegistryMirror(components[0], components[1]))
 	}
 
-	configBundle, err := config.NewConfigBundle(
-		config.WithInputOptions(
-			&config.InputOptions{
+	if talosVersion != "" {
+		var versionContract *config.VersionContract
+
+		versionContract, err = config.ParseContractFromVersion(talosVersion)
+		if err != nil {
+			return fmt.Errorf("invalid talos-version: %w", err)
+		}
+
+		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
+	}
+
+	configBundle, err := bundle.NewConfigBundle(
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
 				ClusterName: args[0],
 				Endpoint:    args[1],
-				KubeVersion: kubernetesVersion,
+				KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 				GenOptions: append(genOptions,
 					generate.WithInstallDisk(installDisk),
 					generate.WithInstallImage(installImage),
 					generate.WithAdditionalSubjectAltNames(additionalSANs),
 					generate.WithDNSDomain(dnsDomain),
+					generate.WithPersist(persistConfig),
 				),
 			},
 		),
@@ -107,35 +160,8 @@ func genV1Alpha1Config(args []string) error {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	for _, t := range []runtime.MachineType{runtime.MachineTypeInit, runtime.MachineTypeControlPlane, runtime.MachineTypeJoin} {
-		name := strings.ToLower(t.String()) + ".yaml"
-		fullFilePath := filepath.Join(outputDir, name)
-
-		var configString string
-
-		switch t {
-		case runtime.MachineTypeInit:
-			configString, err = configBundle.Init().String()
-			if err != nil {
-				return err
-			}
-		case runtime.MachineTypeControlPlane:
-			configString, err = configBundle.ControlPlane().String()
-			if err != nil {
-				return err
-			}
-		case runtime.MachineTypeJoin:
-			configString, err = configBundle.Join().String()
-			if err != nil {
-				return err
-			}
-		}
-
-		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
-			return err
-		}
-
-		fmt.Printf("created %s\n", fullFilePath)
+	if err = configBundle.Write(outputDir, machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+		return err
 	}
 
 	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
@@ -160,11 +186,13 @@ func genV1Alpha1Config(args []string) error {
 func init() {
 	genCmd.AddCommand(genConfigCmd)
 	genConfigCmd.Flags().StringVar(&installDisk, "install-disk", "/dev/sda", "the disk to install to")
-	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(constants.DefaultInstallerImageRepository), "the image used to perform an installation")
+	genConfigCmd.Flags().StringVar(&installImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
 	genConfigCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
 	genConfigCmd.Flags().StringVar(&configVersion, "version", "v1alpha1", "the desired machine config version to generate")
-	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
+	genConfigCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
+	genConfigCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	genConfigCmd.Flags().BoolVarP(&persistConfig, "persist", "p", true, "the desired persist value for configs")
 }
