@@ -17,6 +17,7 @@ aws ec2 create-subnet \
     --vpc-id $VPC \
     --cidr-block ${CIDR_BLOCK}
 ```
+Take a note of the subnet-id, as we will refer to it later.
 
 ### Create the AMI
 
@@ -91,7 +92,7 @@ aws ec2 create-security-group \
     --description "Security Group for EC2 instances to allow ports required by Talos"
 ```
 
-Using the security group ID from above, allow all internal traffic within the same security group:
+Allow all internal traffic within the same security group:
 
 ```bash
 aws ec2 authorize-security-group-ingress \
@@ -99,8 +100,7 @@ aws ec2 authorize-security-group-ingress \
     --group-name talos-aws-tutorial-sg \
     --protocol all \
     --port 0 \
-    --group-id $SECURITY_GROUP \
-    --source-group $SECURITY_GROUP
+    --source-group talos-aws-tutorial-sg
 ```
 
 and expose the Talos and Kubernetes APIs:
@@ -111,15 +111,13 @@ aws ec2 authorize-security-group-ingress \
     --group-name talos-aws-tutorial-sg \
     --protocol tcp \
     --port 6443 \
-    --cidr 0.0.0.0/0 \
-    --group-id $SECURITY_GROUP
+    --cidr 0.0.0.0/0 
 aws ec2 authorize-security-group-ingress \
     --region $REGION \
     --group-name talos-aws-tutorial-sg \
     --protocol tcp \
     --port 50000-50001 \
-    --cidr 0.0.0.0/0 \
-    --group-id $SECURITY_GROUP
+    --cidr 0.0.0.0/0 
 ```
 
 ### Create a Load Balancer
@@ -130,6 +128,7 @@ aws elbv2 create-load-balancer \
     --name talos-aws-tutorial-lb \
     --type network --subnets $SUBNET
 ```
+Replace $SUBNET with the subnet-id from above.
 
 Take note of the DNS name and ARN.
 We will need these soon.
@@ -141,7 +140,7 @@ We will need these soon.
 Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
 
 ```bash
-$ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:<port>
+$ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:6443
 created init.yaml
 created controlplane.yaml
 created join.yaml
