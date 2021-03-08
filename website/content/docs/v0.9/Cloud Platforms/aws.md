@@ -215,7 +215,8 @@ aws elbv2 create-target-group \
     --name talos-aws-tutorial-tg \
     --protocol TCP \
     --port 6443 \
-    --vpc-id $VPC
+    --vpc-id $VPC \
+    --target-type ip
 ```
 
 Now, using the target group's ARN, and the **PrivateIpAddress** from the instances that you created :
