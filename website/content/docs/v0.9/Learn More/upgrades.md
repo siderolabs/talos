@@ -109,19 +109,3 @@ automatically?
 **A.** Yes.
 
 We provide the [Talos Controller Manager](https://github.com/talos-systems/talos-controller-manager) to perform this maintenance in a simple, controllable fashion.
-
-## Upgrade Notes for Talos 0.8
-
-Talos 0.8 comes with new [KSPP requirements](https://kernsec.org/wiki/index.php/Kernel_Self_Protection_Project/Recommended_Settings) compliance check.
-
-Following kernel arguments are mandatory for Talos to boot successfully:
-
-- `init_on_alloc=1`: required by KSPP
-- `slab_nomerge`: required by KSPP
-- `pti=on`: required by KSPP
-
-Talos installer automatically injects those args while installing Talos, so this mostly is required when PXE booting Talos.
-
-## Kubernetes
-
-Kubernetes upgrades with Talos are covered in a [separate document](../../guides/upgrading-kubernetes/).
