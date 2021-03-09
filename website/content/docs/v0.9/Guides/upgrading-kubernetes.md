@@ -2,15 +2,65 @@
 title: Upgrading Kubernetes
 ---
 
+This guide covers Kubernetes control plane upgrade for clusters running Talos-managed control plane.
+If the cluster is still running self-hosted control plane (after upgrade from Talos 0.8), please
+refer to 0.8 docs.
+
 ## Video Walkthrough
 
 To see a live demo of this writeup, see the video below:
 
-<!-- TODO: update the video for 0.8 -->
+<!-- TODO: update the video for 0.9 -->
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-## Kubeconfig
+## Automated Kubernetes Upgrade
+
+To upgrade from Kubernetes v1.20.1 to v1.20.4 run:
+
+```bash
+$ talosctl --nodes <master node> upgrade-k8s --from 1.20.1 --to 1.20.4
+discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
+updating "kube-apiserver" to version "1.20.4"
+ > updating node "172.20.0.2"
+2021/03/09 19:55:01 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.3"
+2021/03/09 19:55:05 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.4"
+2021/03/09 19:55:07 retrying error: config version mismatch: got "2", expected "3"
+updating "kube-controller-manager" to version "1.20.4"
+ > updating node "172.20.0.2"
+2021/03/09 19:55:27 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.3"
+2021/03/09 19:55:47 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.4"
+2021/03/09 19:56:07 retrying error: config version mismatch: got "2", expected "3"
+updating "kube-scheduler" to version "1.20.4"
+ > updating node "172.20.0.2"
+2021/03/09 19:56:27 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.3"
+2021/03/09 19:56:47 retrying error: config version mismatch: got "2", expected "3"
+ > updating node "172.20.0.4"
+2021/03/09 19:57:08 retrying error: config version mismatch: got "2", expected "3"
+updating daemonset "kube-proxy" to version "1.20.4"
+```
+
+Script runs in two phases:
+
+1. In the first phase every control plane node machine configuration is patched with new image version for each control plane component.
+   Talos renders new static pod definition on configuration update which is picked up by the kubelet.
+   Script waits for the change to propagate to the API server state.
+   Messages `config version mismatch` indicate that script is waiting for the updated container to be registered in the API server.
+2. In the second phase script updates `kube-proxy` daemonset with the new image version.
+
+If script fails for any reason, it can be safely restarted to continue upgrade process.
+
+## Manual Kubernetes Upgrade
+
+Kubernetes can be upgraded manually as well by following the steps outlined below.
+They are equivalent to the steps performed by the `talosctl upgrade-k8s` command.
+
+### Kubeconfig
 
 In order to edit the control plane, we will need a working `kubectl` config.
 If you don't already have one, you can get one by running:
@@ -19,268 +69,158 @@ If you don't already have one, you can get one by running:
 talosctl --nodes <master node> kubeconfig
 ```
 
-### Automated Kubernetes Upgrade
+### API Server
 
-To upgrade from Kubernetes v1.19.4 to v1.20.1 run:
-
-```bash
-$ talosctl --nodes <master node> upgrade-k8s --from 1.19.4 --to 1.20.1
-patched kube-apiserver secrets for "service-account.key"
-updating pod-checkpointer grace period to "0m"
-sleeping 5m0s to let the pod-checkpointer self-checkpoint be updated
-temporarily taking "kube-apiserver" out of pod-checkpointer control
-updating daemonset "kube-apiserver" to version "1.20.1"
-updating daemonset "kube-controller-manager" to version "1.20.1"
-updating daemonset "kube-scheduler" to version "1.20.1"
-updating daemonset "kube-proxy" to version "1.20.1"
-updating pod-checkpointer grace period to "5m0s"
-```
-
-### Manual Kubernetes Upgrade
-
-Kubernetes can be upgraded manually as well by following the steps outlined below.
-They are equivalent to the steps performed by the `talosctl upgrade-k8s` command.
-
-#### Patching `kube-apiserver` Secrets
-
-Copy secret value `service-account.key` from the secret `kube-controller-manager` in `kube-system` namespace to the
-secret `kube-apiserver`.
-
-After these changes, `kube-apiserver` secret should contain the following entries:
+Patch machine configuration using `talosctl patch` command:
 
 ```bash
-Data
-====
-service-account.key:
-apiserver.key:
-ca.crt:
-front-proxy-client.crt:
-apiserver-kubelet-client.crt:
-encryptionconfig.yaml:
-etcd-client.crt:
-front-proxy-client.key:
-service-account.pub:
-apiserver.crt:
-auditpolicy.yaml:
-etcd-client.key:
-apiserver-kubelet-client.key:
-front-proxy-ca.crt:
-etcd-client-ca.crt:
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.4"}]'
+patched mc at the node 172.20.0.2
 ```
 
-#### pod-checkpointer
+JSON patch might need to be adjusted if current machine configuration is missing `.cluster.apiServer.image` key.
 
-Talos runs `pod-checkpointer` component which helps to recover control plane components (specifically, API server) if control plane is not healthy.
+Also machine configuration can be edited manually with `talosctl -n <IP>  edit mc --immediate`.
 
-However, the way checkpoints interact with API server upgrade may make an upgrade take a lot longer due to a race condition on API server listen port.
-
-In order to speed up upgrades, first lower `pod-checkpointer` grace period to zero (`kubectl -n kube-system edit daemonset pod-checkpointer`), change:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-      - name: pod-checkpointer
-        command:
-        ...
-        - --checkpoint-grace-period=5m0s
-```
-
-to:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-      - name: pod-checkpointer
-        command:
-        ...
-        - --checkpoint-grace-period=0s
-```
-
-Wait for 5 minutes to let `pod-checkpointer` update self-checkpoint to the new grace period.
-
-#### API Server
-
-In the API server's `DaemonSet`, change:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-apiserver
-          image: k8s.gcr.io/kube-apiserver:v1.19.4
-          command:
-            - /go-runner
-            - /usr/local/bin/kube-apiserver
-      tolerations:
-        - ...
-```
-
-to:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-apiserver
-          image: k8s.gcr.io/kube-apiserver:v1.20.1
-          command:
-            - /go-runner
-            - /usr/local/bin/kube-apiserver
-            - ...
-            - --api-audiences=<control plane endpoint>
-            - --service-account-issuer=<control plane endpoint>
-            - --service-account-signing-key-file=/etc/kubernetes/secrets/service-account.key
-      tolerations:
-        - ...
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-```
-
-Summary of the changes:
-
-- update image version
-- add new toleration
-- add three new flags (replace `<control plane endpoint>` with the actual endpoint of the cluster, e.g. `https://10.5.0.1:6443`)
-
-To edit the `DaemonSet`, run:
+Capture new version of `kube-apiserver` config with:
 
 ```bash
-kubectl edit daemonsets -n kube-system kube-apiserver
-```
-
-#### Controller Manager
-
-In the controller manager's `DaemonSet`, change:
-
-```yaml
-kind: DaemonSet
-...
+$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-apiserver -o yaml
+node: 172.20.0.2
+metadata:
+    namespace: config
+    type: KubernetesControlPlaneConfigs.config.talos.dev
+    id: kube-apiserver
+    version: 5
+    phase: running
 spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-controller-manager
-          image: k8s.gcr.io/kube-controller-manager:v1.19.4
-      tolerations:
-        - ...
+    image: k8s.gcr.io/kube-apiserver:v1.20.4
+    cloudProvider: ""
+    controlPlaneEndpoint: https://172.20.0.1:6443
+    etcdServers:
+        - https://127.0.0.1:2379
+    localPort: 6443
+    serviceCIDR: 10.96.0.0/12
+    extraArgs: {}
+    extraVolumes: []
 ```
 
-to:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-controller-manager
-          image: k8s.gcr.io/kube-controller-manager:v1.20.1
-      tolerations:
-        - ...
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-```
-
-To edit the `DaemonSet`, run:
+In this example, new version is `5`.
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
 
 ```bash
-kubectl edit daemonsets -n kube-system kube-controller-manager
+$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+5
 ```
 
-#### Scheduler
-
-In the scheduler's `DaemonSet`, change:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-scheduler
-          image: k8s.gcr.io/kube-scheduler:v1.19.4
-      tolerations:
-        - ...
-```
-
-to:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-sceduler
-          image: k8s.gcr.io/kube-scheduler:v1.20.1
-      tolerations:
-        - ...
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-```
-
-To edit the `DaemonSet`, run:
+Check that the pod is running:
 
 ```bash
-kubectl edit daemonsets -n kube-system kube-scheduler
+$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-master-1
+NAME                                    READY   STATUS    RESTARTS   AGE
+kube-apiserver-talos-default-master-1   1/1     Running   0          16m
 ```
 
-#### Proxy
+Repeat this process for every control plane node, verifying that state got propagated successfully between each node update.
+
+### Controller Manager
+
+Patch machine configuration using `talosctl patch` command:
+
+```bash
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v1.20.4"}]'
+patched mc at the node 172.20.0.2
+```
+
+JSON patch might need be adjusted if current machine configuration is missing `.cluster.controllerManager.image` key.
+
+Capture new version of `kube-controller-manager` config with:
+
+```bash
+$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-controller-manager -o yaml
+node: 172.20.0.2
+metadata:
+    namespace: config
+    type: KubernetesControlPlaneConfigs.config.talos.dev
+    id: kube-controller-manager
+    version: 3
+    phase: running
+spec:
+    image: k8s.gcr.io/kube-controller-manager:v1.20.4
+    cloudProvider: ""
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12
+    extraArgs: {}
+    extraVolumes: []
+```
+
+In this example, new version is `3`.
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
+
+```bash
+$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+3
+```
+
+Check that the pod is running:
+
+```bash
+$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-master-1
+NAME                                             READY   STATUS    RESTARTS   AGE
+kube-controller-manager-talos-default-master-1   1/1     Running   0          35m
+```
+
+Repeat this process for every control plane node, verifying that state got propagated successfully between each node update.
+
+### Scheduler
+
+Patch machine configuration using `talosctl patch` command:
+
+```bash
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v1.20.4"}]'
+patched mc at the node 172.20.0.2
+```
+
+JSON patch might need be adjusted if current machine configuration is missing `.cluster.scheduler.image` key.
+
+Capture new version of `kube-scheduler` config with:
+
+```bash
+$ talosctl -n <CONTROL_PLANE_IP_1> get kcpc kube-scheduler -o yaml
+node: 172.20.0.2
+metadata:
+    namespace: config
+    type: KubernetesControlPlaneConfigs.config.talos.dev
+    id: kube-scheduler
+    version: 3
+    phase: running
+spec:
+    image: k8s.gcr.io/kube-scheduler:v1.20.4
+    extraArgs: {}
+    extraVolumes: []
+```
+
+In this example, new version is `3`.
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
+
+```bash
+$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+3
+```
+
+Check that the pod is running:
+
+```bash
+$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-master-1
+NAME                                    READY   STATUS    RESTARTS   AGE
+kube-scheduler-talos-default-master-1   1/1     Running   0          39m
+```
+
+Repeat this process for every control plane node, verifying that state got propagated successfully between each node update.
+
+### Proxy
 
 In the proxy's `DaemonSet`, change:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-        - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v1.19.4
-      tolerations:
-        - ...
-```
-
-to:
 
 ```yaml
 kind: DaemonSet
@@ -295,36 +235,6 @@ spec:
           image: k8s.gcr.io/kube-proxy:v1.20.1
       tolerations:
         - ...
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-```
-
-To edit the `DaemonSet`, run:
-
-```bash
-kubectl edit daemonsets -n kube-system kube-proxy
-```
-
-#### Restoring pod-checkpointer
-
-Restore grace period of 5 minutes (`kubectl -n kube-system edit daemonset pod-checkpointer`) and add new toleration, change:
-
-```yaml
-kind: DaemonSet
-...
-spec:
-  ...
-  template:
-    ...
-    spec:
-      containers:
-      - name: pod-checkpointer
-        command:
-        ...
-        - --checkpoint-grace-period=0s
-      tolerations:
-        - ...
 ```
 
 to:
@@ -338,10 +248,8 @@ spec:
     ...
     spec:
       containers:
-      - name: pod-checkpointer
-        command:
-        ...
-        - --checkpoint-grace-period=5m0s
+        - name: kube-proxy
+          image: k8s.gcr.io/kube-proxy:v1.20.4
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane
@@ -349,16 +257,27 @@ spec:
           effect: NoSchedule
 ```
 
-### Kubelet
+To edit the `DaemonSet`, run:
 
-The Talos team now maintains an image for the `kubelet` that should be used starting with Kubernetes 1.20.
-The image for this release is `ghcr.io/talos-systems/kubelet:v1.20.1`.
-To explicitly set the image, we can use the [official documentation](/v0.9/en/configuration/v1alpha1#kubelet).
-For example:
+```bash
+kubectl edit daemonsets -n kube-system kube-proxy
+```
 
-```yaml
-machine:
-  ...
-  kubelet:
-    image: ghcr.io/talos-systems/kubelet:v1.20.1
+## Kubelet
+
+Upgrading Kubelet version requires Talos node reboot after machine configuration change.
+
+For every node, patch machine configuration with new kubelet version, wait for the node to reboot:
+
+```bash
+$ talosctl -n <IP> patch mc -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.4"}]'
+patched mc at the node 172.20.0.2
+```
+
+Once node boots with the new configuration, confirm upgrade with `kubectl get nodes <name>`:
+
+```bash
+$ kubectl get nodes talos-default-master-1
+NAME                     STATUS   ROLES                  AGE    VERSION
+talos-default-master-1   Ready    control-plane,master   123m   v1.20.4
 ```
