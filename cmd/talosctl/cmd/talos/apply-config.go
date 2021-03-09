@@ -42,11 +42,13 @@ var applyConfigCmd = &cobra.Command{
 		)
 
 		if len(args) > 0 {
-			cmd.Help() //nolint:errcheck
-
 			if args[0] != "config" && !strings.EqualFold(args[0], "machineconfig") {
+				cmd.Help() //nolint:errcheck
+
 				return fmt.Errorf("unknown positional argument %s", args[0])
 			} else if cmd.CalledAs() == "apply-config" {
+				cmd.Help() //nolint:errcheck
+
 				return fmt.Errorf("expected no positional arguments")
 			}
 		}
