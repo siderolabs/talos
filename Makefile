@@ -9,10 +9,10 @@ REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.4.0
-PKGS ?= v0.4.1
-EXTRAS ?= v0.2.0
-GO_VERSION ?= 1.15
+TOOLS ?= ghcr.io/talos-systems/tools:v0.5.0-alpha.0
+PKGS ?= v0.5.0-alpha.0-1-gdbae83e
+EXTRAS ?= v0.3.0-alpha.0
+GO_VERSION ?= 1.16
 GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
 IMPORTVET ?= autonomy/importvet:f6b07d9
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
