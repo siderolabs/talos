@@ -33,6 +33,11 @@ var convertOptions k8s.ConvertOptions
 func init() {
 	convertK8sCmd.Flags().StringVar(&convertOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	convertK8sCmd.Flags().BoolVar(&convertOptions.ForceYes, "force", false, "skip prompts, assume yes")
+	convertK8sCmd.Flags().BoolVar(&convertOptions.OnlyRemoveInitializedKey, "remove-initialized-key", false, "only remove bootkube initialized key (used in manual conversion)")
+
+	// hiding this flag as it should only be used in manual process (and it's documented there), but should never be used in automatic conversion
+	convertK8sCmd.Flags().MarkHidden("remove-initialized-key") //nolint: errcheck
+
 	addCommand(convertK8sCmd)
 }
 
