@@ -15,6 +15,7 @@ import (
 	bananapim64 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
 	libretechallh3cch5 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
+	rockpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
 	rpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -55,6 +56,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &bananapim64.BananaPiM64{}
 	case constants.BoardRock64:
 		b = &rock64.Rock64{}
+	case constants.BoardRockpi4:
+		b = &rockpi4.Rockpi4{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}
