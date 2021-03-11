@@ -186,7 +186,7 @@ func (m *Manifest) checkMounts(device Device) error {
 			f, err = os.Open(path)
 			if err != nil {
 				// ignore error in case process got removed
-				return nil
+				return nil //nolint:nilerr
 			}
 
 			defer f.Close() //nolint:errcheck
@@ -213,7 +213,7 @@ func (m *Manifest) checkMounts(device Device) error {
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error) {
 	if err = m.checkMounts(device); err != nil {
 		return err
@@ -365,11 +365,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		}
 	}
 
-	if err = m.restoreContents(targets); err != nil {
-		return err
-	}
-
-	return nil
+	return m.restoreContents(targets)
 }
 
 //nolint:gocyclo
@@ -506,7 +502,6 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 }
 
 // Partition creates a new partition on the specified device.
-//nolint:dupl,gocyclo
 func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
 	if t.Skip {
 		part := pt.Partitions().FindByName(t.Label)

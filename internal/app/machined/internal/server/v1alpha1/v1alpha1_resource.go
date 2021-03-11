@@ -81,7 +81,7 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 			continue
 		}
 
-		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck
+		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
 
 		for _, alias := range spec.Aliases {
 			if strings.EqualFold(alias, kind.Type) {

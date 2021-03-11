@@ -49,9 +49,5 @@ func runInstallCmd() (err error) {
 		return err
 	}
 
-	if err = install.Install(p, seq, options); err != nil {
-		return err
-	}
-
-	return nil
+	return install.Install(p, seq, options)
 }

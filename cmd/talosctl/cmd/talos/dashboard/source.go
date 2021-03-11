@@ -75,7 +75,7 @@ func (source *APISource) run(dataCh chan<- *data.Data) {
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (source *APISource) gather() *data.Data {
 	result := &data.Data{
 		Timestamp: time.Now(),

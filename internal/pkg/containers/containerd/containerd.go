@@ -94,7 +94,7 @@ func (i *inspector) Images() (map[string]string, error) {
 	return imageList, nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *inspector) containerInfo(cntr containerd.Container, imageList map[string]string, singleLookup bool) (*ctrs.Container, error) {
 	cp := &ctrs.Container{}
 

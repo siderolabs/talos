@@ -24,8 +24,7 @@ import (
 )
 
 // K8sControlPlaneController manages config.K8sControlPlane based on configuration.
-type K8sControlPlaneController struct {
-}
+type K8sControlPlaneController struct{}
 
 // Name implements controller.Controller interface.
 func (ctrl *K8sControlPlaneController) Name() string {

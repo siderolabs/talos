@@ -56,7 +56,7 @@ type ConvertProvider interface {
 
 // ConvertToStaticPods the self-hosted Kubernetes control plane to Talos-managed static pods-based control plane.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options ConvertOptions) error {
 	var err error
 

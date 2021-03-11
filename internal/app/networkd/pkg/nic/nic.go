@@ -128,7 +128,7 @@ func (n *NetworkInterface) Create() error {
 	if err == nil {
 		n.Link = iface
 
-		return err
+		return nil
 	}
 
 	switch {
@@ -374,7 +374,7 @@ func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing)
 
 // configureInterface handles the actual address discovery mechanism and
 // netlink interaction to configure the interface.
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (n *NetworkInterface) configureInterface(method address.Addressing, link *net.Interface) error {
 	var err error
 

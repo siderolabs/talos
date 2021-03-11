@@ -113,11 +113,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 			return err
 		}
 
-		if err = kspp.EnforceKSPPSysctls(); err != nil {
-			return err
-		}
-
-		return nil
+		return kspp.EnforceKSPPSysctls()
 	}, "enforceKSPPRequirements"
 }
 
@@ -144,18 +140,14 @@ func MountBPFFS(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
-		if err = mount.Mount(mountpoints); err != nil {
-			return err
-		}
-
-		return nil
+		return mount.Mount(mountpoints)
 	}, "mountBPFFS"
 }
 
 const (
 	memoryCgroup                  = "memory"
 	memoryUseHierarchy            = "memory.use_hierarchy"
-	memoryUseHierarchyPermissions = os.FileMode(400)
+	memoryUseHierarchyPermissions = os.FileMode(0o400)
 )
 
 var memoryUseHierarchyContents = []byte(strconv.Itoa(1))
@@ -194,11 +186,7 @@ func MountPseudoFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 			return err
 		}
 
-		if err = mount.Mount(mountpoints); err != nil {
-			return err
-		}
-
-		return nil
+		return mount.Mount(mountpoints)
 	}, "mountPseudoFilesystems"
 }
 
@@ -256,11 +244,7 @@ func WriteRequiredSysctls(seq runtime.Sequence, data interface{}) (runtime.TaskE
 func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// TODO(andrewrynhard): Should we read limit from /proc/sys/fs/nr_open?
-		if err = unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576}); err != nil {
-			return err
-		}
-
-		return nil
+		return unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576})
 	}, "setRLimit"
 }
 
@@ -409,11 +393,7 @@ func CreateEtcNetworkFiles(seq runtime.Sequence, data interface{}) (runtime.Task
 		}
 
 		// Create /etc/hosts
-		if err = Hosts(); err != nil {
-			return err
-		}
-
-		return nil
+		return Hosts()
 	}, "createEtcNetworkFiles"
 }
 
@@ -436,11 +416,7 @@ func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.Task
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		if err = nwd.Configure(ctx); err != nil {
-			return err
-		}
-
-		return nil
+		return nwd.Configure(ctx)
 	}, "setupDiscoveryNetwork"
 }
 
@@ -469,11 +445,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			logger.Printf("storing config in memory")
 
-			if err = r.SetConfig(b); err != nil {
-				return err
-			}
-
-			return nil
+			return r.SetConfig(b)
 		}
 
 		cfg, err := configloader.NewFromFile(constants.ConfigPath)
@@ -496,11 +468,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
-		if err = r.SetConfig(b); err != nil {
-			return err
-		}
-
-		return nil
+		return r.SetConfig(b)
 	}, "loadConfig"
 }
 
@@ -615,8 +583,6 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 }
 
 // ResetNetwork resets the network.
-//
-//nolint:gocyclo
 func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		nwd, err := networkd.New(r.Config())
@@ -687,11 +653,7 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
-		if err = system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
-			return err
-		}
-
-		return nil
+		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
 	}, "startUdevd"
 }
 
@@ -807,11 +769,7 @@ func MountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.Ta
 			return err
 		}
 
-		if err = mount.Mount(mountpoints); err != nil {
-			return err
-		}
-
-		return nil
+		return mount.Mount(mountpoints)
 	}, "mountOverlayFilesystems"
 }
 
@@ -945,11 +903,7 @@ func mountDisks(r runtime.Runtime) (err error) {
 		}
 	}
 
-	if err = mount.Mount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
+	return mount.Mount(mountpoints)
 }
 
 func unmountDisks(r runtime.Runtime) (err error) {
@@ -968,16 +922,12 @@ func unmountDisks(r runtime.Runtime) (err error) {
 		}
 	}
 
-	if err = mount.Unmount(mountpoints); err != nil {
-		return err
-	}
-
-	return nil
+	return mount.Unmount(mountpoints)
 }
 
 // WriteUserFiles represents the WriteUserFiles task.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var result *multierror.Error
@@ -1152,11 +1102,7 @@ func UnmountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.
 			return err
 		}
 
-		if err = mount.Unmount(mountpoints); err != nil {
-			return err
-		}
-
-		return nil
+		return mount.Unmount(mountpoints)
 	}, "unmountOverlayFilesystems"
 }
 
@@ -1196,11 +1142,7 @@ func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			}
 		}
 
-		if err = scanner.Err(); err != nil {
-			return err
-		}
-
-		return nil
+		return scanner.Err()
 	}, "unmountPodMounts"
 }
 
@@ -1242,8 +1184,6 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 
 // CordonAndDrainNode represents the task for stop all containerd tasks in the
 // k8s.io namespace.
-//
-//nolint:dupl
 func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var nodename string
@@ -1258,19 +1198,13 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			return err
 		}
 
-		if err = kubeHelper.CordonAndDrain(ctx, nodename); err != nil {
-			return err
-		}
-
-		return nil
+		return kubeHelper.CordonAndDrain(ctx, nodename)
 	}, "cordonAndDrainNode"
 }
 
 // UncordonNode represents the task for mark node as scheduling enabled.
 //
 // This action undoes the CordonAndDrainNode task.
-//
-//nolint:dupl
 func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var nodename string
@@ -1289,16 +1223,11 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			return err
 		}
 
-		if err = kubeHelper.Uncordon(ctx, nodename, false); err != nil {
-			return err
-		}
-
-		return nil
+		return kubeHelper.Uncordon(ctx, nodename, false)
 	}, "uncordonNode"
 }
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
-//nolint:gocyclo
 func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
@@ -1352,11 +1281,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 		// With the POD network mode pods out of the way, we kill the remaining
 		// pods.
 
-		if err = client.StopAndRemovePodSandboxes(ctx, stopAction); err != nil {
-			return err
-		}
-
-		return nil
+		return client.StopAndRemovePodSandboxes(ctx, stopAction)
 	}
 }
 

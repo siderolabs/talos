@@ -21,7 +21,7 @@ import (
 
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func buildOptions(device config.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface()))
 

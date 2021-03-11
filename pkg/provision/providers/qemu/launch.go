@@ -210,7 +210,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 	}
 
 	if err = diskTable.Read(); err != nil {
-		return false, nil
+		return false, err
 	}
 
 	return len(diskTable.Partitions().Items()) > 0, nil
@@ -349,8 +349,6 @@ func launchVM(config *LaunchConfig) error {
 // logfile in state directory.
 //
 // When signals SIGINT, SIGTERM are received, control process stops qemu and exits.
-//
-//nolint:gocyclo
 func Launch() error {
 	var config LaunchConfig
 

@@ -81,8 +81,6 @@ func Prepare(dev string) (err error) {
 
 // Install implements the Bootloader interface. It sets up syslinux with the
 // specified kernel parameters.
-//
-//nolint:gocyclo
 func Install(fallback string, config interface{}, sequence runtime.Sequence, bootPartitionFound bool) (err error) {
 	syslinuxcfg, ok := config.(*Cfg)
 	if !ok {
@@ -156,8 +154,6 @@ func Labels() (current, next string, err error) {
 }
 
 // Default sets the default syslinx label.
-//
-//nolint:gocyclo
 func Default(label string) (err error) {
 	log.Printf("setting default label to %q", label)
 
@@ -176,11 +172,7 @@ func Default(label string) (err error) {
 
 	b = re.ReplaceAll(b, []byte(fmt.Sprintf("DEFAULT %s", label)))
 
-	if err = ioutil.WriteFile(SyslinuxConfig, b, 0o600); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(SyslinuxConfig, b, 0o600)
 }
 
 func writeCfg(base, path string, syslinuxcfg *Cfg) (err error) {

@@ -162,8 +162,6 @@ func (c *Client) LeaveCluster(ctx context.Context) error {
 }
 
 // RemoveMember removes the member from the etcd cluster.
-//
-//nolint:gocyclo
 func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 	resp, err := c.MemberList(ctx)
 	if err != nil {

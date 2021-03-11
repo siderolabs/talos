@@ -223,7 +223,7 @@ func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.Re
 
 // Rollback implements the machine.MachineServer interface.
 //
-//nolint:dupl,gocyclo
+//nolint:gocyclo
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
 	log.Printf("rollback via API received")
 
@@ -286,8 +286,6 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 }
 
 // Bootstrap implements the machine.MachineServer interface.
-//
-//nolint:dupl
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
@@ -351,7 +349,7 @@ func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.
 
 // Upgrade initiates an upgrade.
 //
-//nolint:dupl,gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
 	var mu *concurrency.Mutex
 
@@ -494,7 +492,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 
 // Reset resets the node.
 //
-//nolint:dupl,gocyclo
+//nolint:gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
 	log.Printf("reset request received")
 
@@ -567,8 +565,6 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 }
 
 // Recover recovers the control plane.
-//
-//nolint:dupl
 func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply *machine.RecoverResponse, err error) {
 	log.Printf("recover request received")
 
@@ -778,6 +774,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 }
 
 // DiskUsage implements the machine.MachineServer interface.
+//nolint:cyclop
 func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint:gocyclo
 	if req == nil {
 		req = new(machine.DiskUsageRequest)
@@ -1093,7 +1090,6 @@ func (s *Server) Kubeconfig(empty *empty.Empty, obj machine.MachineService_Kubec
 
 // Logs provides a service or container logs can be requested and the contents of the
 // log file are streamed in chunks.
-//nolint:gocyclo
 func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsServer) (err error) {
 	var chunk chunker.Chunker
 
@@ -1386,7 +1382,6 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 }
 
 // Stats implements the machine.MachineServer interface.
-//nolint:gocyclo
 func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *machine.StatsResponse, err error) {
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {

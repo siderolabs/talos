@@ -155,7 +155,7 @@ var (
 		NameServers: []string{"9.8.7.6", "8.7.6.5"},
 	}
 
-	machineDisksExample []*MachineDisk = []*MachineDisk{
+	machineDisksExample = []*MachineDisk{
 		{
 			DeviceName: "/dev/sdb",
 			DiskPartitions: []*DiskPartition{
@@ -202,7 +202,7 @@ var (
 		TimeServers: []string{"time.cloudflare.com"},
 	}
 
-	machineSysctlsExample map[string]string = map[string]string{
+	machineSysctlsExample = map[string]string{
 		"kernel.domainname":   "talos.dev",
 		"net.ipv4.ip_forward": "0",
 	}

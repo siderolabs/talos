@@ -37,8 +37,6 @@ func (ctrl *BootstrapStatusController) ManagedResources() (resource.Namespace, r
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo
 func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

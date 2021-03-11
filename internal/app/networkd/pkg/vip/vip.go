@@ -83,7 +83,7 @@ func (c *vipController) maintain(ctx context.Context, netController vip.Network)
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *vipController) campaign(ctx context.Context, netController vip.Network) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

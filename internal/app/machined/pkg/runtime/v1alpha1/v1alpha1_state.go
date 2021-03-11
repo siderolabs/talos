@@ -40,8 +40,7 @@ type MachineState struct {
 }
 
 // ClusterState represents the cluster's state.
-type ClusterState struct {
-}
+type ClusterState struct{}
 
 // NewState initializes and returns the v1alpha1 state.
 func NewState() (s *State, err error) {

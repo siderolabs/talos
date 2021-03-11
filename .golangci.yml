@@ -110,6 +110,9 @@ linters-settings:
     for-loops: false # Report preallocation suggestions on for loops, false by default
   gci:
     local-prefixes: github.com/talos-systems/talos
+  cyclop:
+    # the maximal code complexity to report
+    max-complexity: 20
 
 linters:
   enable-all: true
@@ -118,6 +121,8 @@ linters:
     - typecheck
     - gochecknoglobals
     - gochecknoinits
+    - ifshort
+    - forbidigo
     - funlen
     - godox
     - gocognit
@@ -126,7 +131,12 @@ linters:
     - nestif
     - exhaustivestruct
     - errorlint
+    - paralleltest
+    - thelper
     - wrapcheck
+    # abandoned linters for which golangci shows the warning that the repo is archived by the owner
+    - interfacer
+    - maligned
   disable-all: false
   fast: false
 

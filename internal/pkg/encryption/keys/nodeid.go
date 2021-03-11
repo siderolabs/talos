@@ -13,8 +13,7 @@ import (
 
 // NodeIDKeyHandler generates the key based on current node information
 // and provided template string.
-type NodeIDKeyHandler struct {
-}
+type NodeIDKeyHandler struct{}
 
 // NewNodeIDKeyHandler creates new NodeIDKeyHandler.
 func NewNodeIDKeyHandler() (*NodeIDKeyHandler, error) {
