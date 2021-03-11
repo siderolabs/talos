@@ -20,7 +20,7 @@ To see a live demo of this writeup, see the video below:
 The follow are requirements for creating the set of caching proxies:
 
 - Docker 18.03 or greater
-- Local cluster requirements for either [docker](docker) or [QEMU](qemu).
+- Local cluster requirements for either [docker](../../local-platforms/docker/) or [QEMU](../../local-platforms/qemu/).
 
 ## Launch the Caching Docker Registry Proxies
 
@@ -62,7 +62,7 @@ host port (5000, 5001, 5002, 5003 and 5004).
 
 ## Using Caching Registries with `QEMU` Local Cluster
 
-With a [QEMU](qemu) local cluster, a bridge interface is created on the host.
+With a [QEMU](../../local-platforms/qemu/) local cluster, a bridge interface is created on the host.
 As registry containers expose their ports on the host, we can use bridge IP to direct proxy requests.
 
 ```bash
@@ -82,7 +82,7 @@ The first time cluster boots, images are pulled and cached, so next cluster boot
 
 ## Using Caching Registries with `docker` Local Cluster
 
-With a [docker](docker) local cluster we can use docker bridge IP, default value for that IP is `172.17.0.1`.
+With a [docker](../../local-platforms/docker/) local cluster we can use docker bridge IP, default value for that IP is `172.17.0.1`.
 On Linux, the docker bridge address can be inspected with `ip addr show docker0`.
 
 ```bash

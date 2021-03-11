@@ -10,7 +10,7 @@ This change makes bootstrap process much more stable and resilient to failures.
 For single control plane node clusters it eliminates bugs with control plane being unavailable after a reboot.
 As control plane configuration is managed via Talos API, even if control plane configuration was wrong and
 API server is not available, change can be rolled back using `talosctl` to bring the control plane back up.
-When upgrading from Talos 0.8, control plane can be [converted](../Guides/converting-control-plane/) to run as static pods.
+When upgrading from Talos 0.8, control plane can be [converted](../../guides/converting-control-plane/) to run as static pods.
 
 ## ECDSA Certificates and Keys for Kubernetes
 
@@ -20,7 +20,7 @@ leads to much faster bootstrap and boot times.
 
 ## Immediate Machine Configuration Updates
 
-Changes to `.cluster` part of Talos machine configuration can now be applied immediately (without a reboot).
+Changes to `.cluster` part of Talos machine configuration can now be [applied immediately](../../guides/editing-machine-configuration) (without a reboot).
 This allows for example updating versions of control plane components, adding additional arguments or modifying bootstrap manifests.
 Future versions of Talos will expand on that to allow most of the machine configuration to be applied without a reboot.
 
@@ -30,7 +30,7 @@ Talos now supports encryption for `STATE` and `EPHEMERAL` partitions of the syst
 `STATE` partition holds machine configuration and `EPHEMERAL` partition is mounted as `/var` which stores container runtime
 state, configuration files laid on top of Talos read-only immutable root filesystem.
 Encryption key in Talos 0.9 is derived from the Node UUID which is unique machine identifier provided by the manufacturer.
-Disk encryption is not enabled by default, it needs to be [enabled](../Guides/disk-encryption/) via machine configuration.
+Disk encryption is not enabled by default, it needs to be [enabled](../../guides/disk-encryption/) via machine configuration.
 
 ## Virtual IP for the Control Plane Endpoint
 

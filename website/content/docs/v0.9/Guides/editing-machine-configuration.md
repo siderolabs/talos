@@ -3,7 +3,7 @@ title: "Editing Machine Configuration"
 description: "How to edit and patch Talos machine configuration, with reboot, immediately, or stage update on reboot."
 ---
 
-Talos node state is fully defined by [machine configuration](../Reference/configuration/).
+Talos node state is fully defined by [machine configuration](../../reference/configuration/).
 Initial configuration is delivered to the node at bootstrap time, but configuration can be updated while the node is running.
 
 > Note: Be sure that config is persisted so that configuration updates are not overwritten on reboots.

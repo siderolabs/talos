@@ -98,4 +98,4 @@ network:
 
 When `networkd` gets this configuration it will create the device, configure it and will bring it up (equivalent to `ip link set up dev wg0`).
 
-All supported config parameters are described in the [Machine Config Reference](/docs/v0.9/reference/configuration/#devicewireguardconfig).
+All supported config parameters are described in the [Machine Config Reference](../../reference/configuration/#devicewireguardconfig).
