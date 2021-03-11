@@ -46,6 +46,9 @@ const (
 	// BoardRock64 is the  name of the Pine64 Rock64.
 	BoardRock64 = "rock64"
 
+	// BoardRockpi4 is the name of the Radxa Rock pi 4.
+	BoardRockpi4 = "rockpi_4"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"
