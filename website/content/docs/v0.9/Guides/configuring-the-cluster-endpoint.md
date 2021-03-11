@@ -31,7 +31,7 @@ The configuration can either be done on a Loadbalancer, or simply trough DNS.
 For example:
 
 > This is in the config file for the cluster e.g. init.yaml, controlplane.yaml and join.yaml.
-> for more details, please see: [v1alpha1 endpoint configuration](/v0.9/en/configuration/v1alpha1#controlplane)
+> for more details, please see: [v1alpha1 endpoint configuration](../../reference/configuration/#controlplaneconfig)
 
 ```yaml
 .....

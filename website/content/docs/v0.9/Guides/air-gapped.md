@@ -3,14 +3,14 @@ title: Air-gapped Environments
 ---
 
 In this guide we will create a Talos cluster running in an air-gapped environment with all the required images being pulled from an internal registry.
-We will use the [QEMU](qemu) provisioner available in `talosctl` to create a local cluster, but the same approach could be used to deploy Talos in bigger air-gapped networks.
+We will use the [QEMU](../../local-platforms/qemu/) provisioner available in `talosctl` to create a local cluster, but the same approach could be used to deploy Talos in bigger air-gapped networks.
 
 ## Requirements
 
 The follow are requirements for this guide:
 
 - Docker 18.03 or greater
-- Requirements for the Talos [QEMU](qemu) cluster
+- Requirements for the Talos [QEMU](../../local-platforms/qemu/) cluster
 
 ## Identifying Images
 

@@ -5,10 +5,10 @@ description: "In this guide we will create an Kubernetes cluster with 1 worker n
 
 ## Prerequisites
 
-- 3 nodes (please see [hardware requirements](/v0.9/en/guides/getting-started#system-requirements))
+- 3 nodes (please see [hardware requirements](../../guides/getting-started#system-requirements))
 - Loadbalancer
 - Digital Rebar Server
-- Talosctl access (see [talosctl setup](/v0.9/en/guides/getting-started/talosctl))
+- Talosctl access (see [talosctl setup](../../guides/getting-started/talosctl))
 
 ## Creating a Cluster
 
