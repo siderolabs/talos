@@ -368,8 +368,7 @@ type EncryptionKeyStatic interface {
 }
 
 // EncryptionKeyNodeID deterministically generated encryption key.
-type EncryptionKeyNodeID interface {
-}
+type EncryptionKeyNodeID interface{}
 
 // Encryption defines settings for the partition encryption.
 type Encryption interface {

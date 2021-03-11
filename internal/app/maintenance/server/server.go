@@ -79,7 +79,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.
-//nolint:gocyclo
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
 	if in.MachineConfig == nil {
 		return nil, fmt.Errorf("invalid generate request")

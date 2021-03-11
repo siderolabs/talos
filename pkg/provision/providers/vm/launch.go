@@ -29,11 +29,7 @@ func ReadConfig(config interface{}) error {
 		return fmt.Errorf("extra unexpected input on stdin")
 	}
 
-	if err := os.Stdin.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return os.Stdin.Close()
 }
 
 // ConfigureSignals configures signal handling for the process.

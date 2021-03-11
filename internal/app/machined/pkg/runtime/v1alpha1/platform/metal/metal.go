@@ -38,8 +38,6 @@ func (m *Metal) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-//
-//nolint:gocyclo
 func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {

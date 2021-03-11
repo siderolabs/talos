@@ -111,11 +111,7 @@ func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(stri
 		}
 	}
 
-	if err := doc.GenMarkdownCustom(cmd, w, linkHandler); err != nil {
-		return err
-	}
-
-	return nil
+	return doc.GenMarkdownCustom(cmd, w, linkHandler)
 }
 
 func init() {

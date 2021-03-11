@@ -139,7 +139,7 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 			//nolint:errcheck
 			ts, _ := ptypes.Timestamp(event.Ts)
 			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-			label = ""
+			label = "" //nolint:wastedassign
 		}
 	}
 

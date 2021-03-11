@@ -48,7 +48,7 @@ type Settings struct {
 }
 
 // DefaultSettings filled in by test runner.
-var DefaultSettings Settings = Settings{
+var DefaultSettings = Settings{
 	CIDR:                       "172.21.0.0/24",
 	MTU:                        1500,
 	CPUs:                       2,

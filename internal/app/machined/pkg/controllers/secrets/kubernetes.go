@@ -46,7 +46,7 @@ func (ctrl *KubernetesController) ManagedResources() (resource.Namespace, resour
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,dupl
+//nolint:gocyclo
 func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

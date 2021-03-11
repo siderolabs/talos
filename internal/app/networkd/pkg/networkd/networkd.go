@@ -52,7 +52,7 @@ type Networkd struct {
 
 // New takes the supplied configuration and creates an abstract representation
 // of all interfaces (as nic.NetworkInterface).
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func New(config config.Provider) (*Networkd, error) {
 	var (
 		hostname  string
@@ -302,11 +302,7 @@ func (n *Networkd) Hostname() (err error) {
 		return err
 	}
 
-	if err = unix.Setdomainname([]byte(domainname)); err != nil {
-		return err
-	}
-
-	return nil
+	return unix.Setdomainname([]byte(domainname))
 }
 
 //nolint:gocyclo
@@ -366,8 +362,8 @@ outer:
 	}
 
 	// Kernel
-	if kHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
-		hostname = *kHostname
+	if kernelHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kernelHostname != nil {
+		hostname = *kernelHostname
 	}
 
 	// Allow user supplied hostname to win

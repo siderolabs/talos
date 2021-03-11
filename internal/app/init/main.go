@@ -63,11 +63,7 @@ func run() (err error) {
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
-	if err = switchroot.Switch(constants.NewRoot, pseudo); err != nil {
-		return err
-	}
-
-	return nil
+	return switchroot.Switch(constants.NewRoot, pseudo)
 }
 
 func recovery() {

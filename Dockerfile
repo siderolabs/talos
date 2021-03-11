@@ -48,7 +48,7 @@ ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.32.2
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.38.0
 ARG GOFUMPT_VERSION
 RUN cd $(mktemp -d) \
     && go mod init tmp \

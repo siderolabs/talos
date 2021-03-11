@@ -24,7 +24,6 @@ import (
 )
 
 // Config returns the talos config for a given node type.
-//nolint:gocyclo
 func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 	switch t {
 	case machine.TypeInit:
@@ -407,7 +406,6 @@ func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertifi
 
 // NewInput generates the sensitive data required to generate all config
 // types.
-//nolint:dupl,gocyclo
 func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsBundle, opts ...GenOption) (input *Input, err error) {
 	options := DefaultGenOptions()
 

@@ -84,7 +84,7 @@ func isSet(value reflect.Value) bool {
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func toYamlNode(in interface{}) (*yaml.Node, error) {
 	node := &yaml.Node{}
 
@@ -143,7 +143,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 			}
 
 			var (
-				defined bool = isSet(v.Field(i))
+				defined = isSet(v.Field(i))
 
 				skip   bool
 				inline bool

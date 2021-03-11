@@ -117,7 +117,7 @@ var createCmd = &cobra.Command{
 	},
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func create(ctx context.Context) (err error) {
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
@@ -707,7 +707,7 @@ func getDisks() ([]*provision.Disk, error) {
 				DiskMountPoint: partitionPath,
 			}
 			diskSize += partitionSize
-			partitionIndex++
+			partitionIndex++ //nolint:wastedassign
 		}
 
 		disks = append(disks, &provision.Disk{

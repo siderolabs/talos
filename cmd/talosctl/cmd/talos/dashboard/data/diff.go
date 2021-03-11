@@ -6,80 +6,80 @@ package data
 
 import "github.com/talos-systems/talos/pkg/machinery/api/machine"
 
-func cpuInfoDiff(old, new *machine.CPUStat) *machine.CPUStat {
-	if old == nil || new == nil {
+func cpuInfoDiff(old, next *machine.CPUStat) *machine.CPUStat {
+	if old == nil || next == nil {
 		return &machine.CPUStat{}
 	}
 
 	// TODO: support wraparound
 	return &machine.CPUStat{
-		User:      new.User - old.User,
-		Nice:      new.Nice - old.Nice,
-		System:    new.System - old.System,
-		Idle:      new.Idle - old.Idle,
-		Iowait:    new.Iowait - old.Iowait,
-		Irq:       new.Irq - old.Irq,
-		SoftIrq:   new.SoftIrq - old.SoftIrq,
-		Steal:     new.Steal - old.Steal,
-		Guest:     new.Guest - old.Guest,
-		GuestNice: new.GuestNice - old.GuestNice,
+		User:      next.User - old.User,
+		Nice:      next.Nice - old.Nice,
+		System:    next.System - old.System,
+		Idle:      next.Idle - old.Idle,
+		Iowait:    next.Iowait - old.Iowait,
+		Irq:       next.Irq - old.Irq,
+		SoftIrq:   next.SoftIrq - old.SoftIrq,
+		Steal:     next.Steal - old.Steal,
+		Guest:     next.Guest - old.Guest,
+		GuestNice: next.GuestNice - old.GuestNice,
 	}
 }
 
-func netDevDiff(old, new *machine.NetDev) *machine.NetDev {
-	if old == nil || new == nil {
+func netDevDiff(old, next *machine.NetDev) *machine.NetDev {
+	if old == nil || next == nil {
 		return &machine.NetDev{}
 	}
 
 	// TODO: support wraparound
 	return &machine.NetDev{
-		Name:         new.Name,
-		RxBytes:      new.RxBytes - old.RxBytes,
-		RxPackets:    new.RxPackets - old.RxPackets,
-		RxErrors:     new.RxErrors - old.RxErrors,
-		RxDropped:    new.RxDropped - old.RxDropped,
-		RxFifo:       new.RxFifo - old.RxFifo,
-		RxFrame:      new.RxFrame - old.RxFrame,
-		RxCompressed: new.RxCompressed - old.RxCompressed,
-		RxMulticast:  new.RxMulticast - old.RxMulticast,
-		TxBytes:      new.TxBytes - old.TxBytes,
-		TxPackets:    new.TxPackets - old.TxPackets,
-		TxErrors:     new.TxErrors - old.TxErrors,
-		TxDropped:    new.TxDropped - old.TxDropped,
-		TxFifo:       new.TxFifo - old.TxFifo,
-		TxCollisions: new.TxCollisions - old.TxCollisions,
-		TxCarrier:    new.TxCarrier - old.TxCarrier,
-		TxCompressed: new.TxCompressed - old.TxCompressed,
+		Name:         next.Name,
+		RxBytes:      next.RxBytes - old.RxBytes,
+		RxPackets:    next.RxPackets - old.RxPackets,
+		RxErrors:     next.RxErrors - old.RxErrors,
+		RxDropped:    next.RxDropped - old.RxDropped,
+		RxFifo:       next.RxFifo - old.RxFifo,
+		RxFrame:      next.RxFrame - old.RxFrame,
+		RxCompressed: next.RxCompressed - old.RxCompressed,
+		RxMulticast:  next.RxMulticast - old.RxMulticast,
+		TxBytes:      next.TxBytes - old.TxBytes,
+		TxPackets:    next.TxPackets - old.TxPackets,
+		TxErrors:     next.TxErrors - old.TxErrors,
+		TxDropped:    next.TxDropped - old.TxDropped,
+		TxFifo:       next.TxFifo - old.TxFifo,
+		TxCollisions: next.TxCollisions - old.TxCollisions,
+		TxCarrier:    next.TxCarrier - old.TxCarrier,
+		TxCompressed: next.TxCompressed - old.TxCompressed,
 	}
 }
 
-func diskStatDiff(old, new *machine.DiskStat) *machine.DiskStat {
-	if old == nil || new == nil {
+func diskStatDiff(old, next *machine.DiskStat) *machine.DiskStat {
+	if old == nil || next == nil {
 		return &machine.DiskStat{}
 	}
 
 	// TODO: support wraparound
 	return &machine.DiskStat{
-		Name:             new.Name,
-		ReadCompleted:    new.ReadCompleted - old.ReadCompleted,
-		ReadMerged:       new.ReadMerged - old.ReadMerged,
-		ReadSectors:      new.ReadSectors - old.ReadSectors,
-		WriteCompleted:   new.WriteCompleted - old.WriteCompleted,
-		WriteMerged:      new.WriteMerged - old.WriteMerged,
-		WriteSectors:     new.WriteSectors - old.WriteSectors,
-		DiscardCompleted: new.DiscardCompleted - old.DiscardCompleted,
-		DiscardMerged:    new.DiscardMerged - old.DiscardMerged,
-		DiscardSectors:   new.DiscardSectors - old.DiscardSectors,
+		Name:             next.Name,
+		ReadCompleted:    next.ReadCompleted - old.ReadCompleted,
+		ReadMerged:       next.ReadMerged - old.ReadMerged,
+		ReadSectors:      next.ReadSectors - old.ReadSectors,
+		WriteCompleted:   next.WriteCompleted - old.WriteCompleted,
+		WriteMerged:      next.WriteMerged - old.WriteMerged,
+		WriteSectors:     next.WriteSectors - old.WriteSectors,
+		DiscardCompleted: next.DiscardCompleted - old.DiscardCompleted,
+		DiscardMerged:    next.DiscardMerged - old.DiscardMerged,
+		DiscardSectors:   next.DiscardSectors - old.DiscardSectors,
 	}
 }
 
-func procDiff(old, new *machine.ProcessInfo) *machine.ProcessInfo {
-	if old == nil || new == nil {
+func procDiff(old, next *machine.ProcessInfo) *machine.ProcessInfo {
+	if old == nil || next == nil {
 		return &machine.ProcessInfo{}
 	}
 
 	// TODO: support wraparound
 	return &machine.ProcessInfo{
-		CpuTime: new.CpuTime - old.CpuTime,
+		CpuTime: next.CpuTime - old.CpuTime,
 	}
 }

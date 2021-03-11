@@ -26,7 +26,7 @@ import (
 
 // Target represents an installation partition.
 //
-//nolint:golint,maligned
+//nolint:maligned
 type Target struct {
 	*partition.FormatOptions
 	Device string
@@ -174,8 +174,6 @@ func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
 }
 
 // Format creates a filesystem on the device/partition.
-//
-//nolint:gocyclo
 func (t *Target) Format() error {
 	if t.Skip {
 		return nil

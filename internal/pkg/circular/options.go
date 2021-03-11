@@ -26,26 +26,26 @@ func defaultOptions() Options {
 type OptionFunc func(*Options) error
 
 // WithInitialCapacity sets initial buffer capacity.
-func WithInitialCapacity(cap int) OptionFunc {
+func WithInitialCapacity(capacity int) OptionFunc {
 	return func(opt *Options) error {
-		if cap <= 0 {
-			return fmt.Errorf("initial capacity should be positive: %d", cap)
+		if capacity <= 0 {
+			return fmt.Errorf("initial capacity should be positive: %d", capacity)
 		}
 
-		opt.InitialCapacity = cap
+		opt.InitialCapacity = capacity
 
 		return nil
 	}
 }
 
 // WithMaxCapacity sets maximum buffer capacity.
-func WithMaxCapacity(cap int) OptionFunc {
+func WithMaxCapacity(capacity int) OptionFunc {
 	return func(opt *Options) error {
-		if cap <= 0 {
-			return fmt.Errorf("max capacity should be positive: %d", cap)
+		if capacity <= 0 {
+			return fmt.Errorf("max capacity should be positive: %d", capacity)
 		}
 
-		opt.MaxCapacity = cap
+		opt.MaxCapacity = capacity
 
 		return nil
 	}

@@ -64,8 +64,6 @@ func (k *Kubelet) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
-//
-//nolint:gocyclo
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
@@ -335,9 +333,5 @@ func writeKubeletConfig(r runtime.Runtime) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
 }

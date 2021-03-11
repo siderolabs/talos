@@ -55,7 +55,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 // K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
