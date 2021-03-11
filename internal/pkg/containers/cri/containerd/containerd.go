@@ -21,8 +21,8 @@ import (
 //
 //nolint: gocyclo
 func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
-	caPath := filepath.Join(filepath.Dir(constants.CRIContainerdConfig), "ca")
-	clientPath := filepath.Join(filepath.Dir(constants.CRIContainerdConfig), "client")
+	caPath := filepath.Join("/var", filepath.Dir(constants.CRIContainerdConfig), "ca")
+	clientPath := filepath.Join("/var", filepath.Dir(constants.CRIContainerdConfig), "client")
 
 	var ctrdCfg Config
 	ctrdCfg.Plugins.CRI.Registry.Mirrors = make(map[string]Mirror)

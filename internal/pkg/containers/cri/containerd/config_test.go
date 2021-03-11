@@ -80,19 +80,19 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 		&v1alpha1.MachineFile{
 			FileContent:     `cacert`,
 			FilePermissions: 0o600,
-			FilePath:        "/etc/cri/ca/some.host:123.crt",
+			FilePath:        "/var/etc/cri/ca/some.host:123.crt",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
 			FileContent:     `clientcert`,
 			FilePermissions: 0o600,
-			FilePath:        "/etc/cri/client/some.host:123.crt",
+			FilePath:        "/var/etc/cri/client/some.host:123.crt",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
 			FileContent:     `clientkey`,
 			FilePermissions: 0o600,
-			FilePath:        "/etc/cri/client/some.host:123.key",
+			FilePath:        "/var/etc/cri/client/some.host:123.key",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
@@ -111,9 +111,9 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
             identitytoken = "token"
           [plugins.cri.registry.configs."some.host:123".tls]
             insecure_skip_verify = true
-            ca_file = "/etc/cri/ca/some.host:123.crt"
-            cert_file = "/etc/cri/client/some.host:123.crt"
-            key_file = "/etc/cri/client/some.host:123.key"
+            ca_file = "/var/etc/cri/ca/some.host:123.crt"
+            cert_file = "/var/etc/cri/client/some.host:123.crt"
+            key_file = "/var/etc/cri/client/some.host:123.key"
 `,
 			FilePermissions: 0o644,
 			FilePath:        constants.CRIContainerdConfig,
