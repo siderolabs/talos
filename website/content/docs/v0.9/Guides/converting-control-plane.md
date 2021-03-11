@@ -39,7 +39,8 @@ Talos generated control plane static pod definitions and bootstrap manifests, pl
     talosctl -n <master node IP> get StaticPods.kubernetes.talos.dev
     talosctl -n <master node IP> get Manifests.kubernetes.talos.dev
 
-bootstrap manifests will only be applied for missing resources, existing resources will not be updated
+in order to remove self-hosted control plane, pod-checkpointer component needs to be disabled
+once pod-checkpointer is disabled, the cluster shouldn't be rebooted until the entire conversion process is complete
 confirm disabling pod-checkpointer to proceed with control plane update [yes/no]:
 ```
 
