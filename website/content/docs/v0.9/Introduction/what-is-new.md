@@ -34,7 +34,7 @@ Disk encryption is not enabled by default, it needs to be [enabled](../../guides
 
 ## Virtual IP for the Control Plane Endpoint
 
-Talos adds support for Virtual L2 shared IP for the control plane: control plane nodes make sure only one of the nodes
+Talos adds support for Virtual L2 [shared IP](../../guides/vip/) for the control plane: control plane nodes make sure only one of the nodes
 adverties shared IP via ARP.
 If one of the control plane nodes goes down, another node takes over shared IP.
 
