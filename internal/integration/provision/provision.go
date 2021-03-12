@@ -8,9 +8,14 @@
 package provision
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 var allSuites []suite.TestingSuite
@@ -45,6 +50,8 @@ type Settings struct {
 	CustomCNIURL string
 	// Enable crashdump on failure.
 	CrashdumpEnabled bool
+	// CNI bundle for QEMU provisioner.
+	CNIBundleURL string
 }
 
 // DefaultSettings filled in by test runner.
@@ -57,4 +64,10 @@ var DefaultSettings = Settings{
 	MasterNodes:                3,
 	WorkerNodes:                1,
 	TargetInstallImageRegistry: "ghcr.io",
+	CNIBundleURL:               fmt.Sprintf("https://github.com/talos-systems/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz", trimVersion(version.Tag), constants.ArchVariable),
+}
+
+func trimVersion(version string) string {
+	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
+	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
 }
