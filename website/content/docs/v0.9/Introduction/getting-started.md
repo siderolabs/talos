@@ -55,7 +55,7 @@ Thus, it is safe to boot the ISO onto any machine.
 If you wish to use a different boot mechanism (such as network boot or a custom ISO), there
 are a number of required kernel parameters.
 
-Please see [https://talos.dev/docs/v0.9/reference/kernel/] for more information.
+Please see the [kernel](https://talos.dev/docs/v0.9/reference/kernel/) docs for more information.
 
 ## Decide the Kubernetes Endpoint
 
@@ -80,7 +80,7 @@ There are three common ways to do this.
 
 If you are using a cloud provider or have your own load-balancer available (such
 as HAProxy, nginx reverse proxy, or an F5 load-balancer), using
-a dedicated loader a natural choice.
+a dedicated load balancer is a natural choice.
 Just create an appropriate frontend matching the endpoint, and point the backends at each of the addresses of the Talos controlplane nodes.
 
 This is convenient if a load-balancer is available, but don't worry if that is
@@ -104,18 +104,19 @@ You could choose the ip `192.168.0.15` as your shared IP address.
 Just make sure that `192.168.0.15` is not used by any other machine and that your DHCP
 will not serve it to any other machine.
 
-Once chosen, just form the full HTTPS URL from this IP:
+Once chosen, form the full HTTPS URL from this IP:
 
 ```url
 https://192.168.0.15:6443
 ```
 
 You are also free to set a DNS record to this IP address instead, but you will
-still need to know the IP address to set up the shared IP inside the Talos
+still need to use the IP address to set up the shared IP
+(`machine.network.interfaces[].vip.ip`) inside the Talos
 configuration.
 
 For more information about using a shared IP, see the related
-[Guide](../Guides/vip/)
+[Guide](../../guides/vip/)
 
 ### DNS records
 
@@ -166,7 +167,7 @@ The dynamic options above for the Kubernetes API endpoint also apply to the
 Talos API endpoints.
 The difference is that the Talos API runs on port `50000/tcp`.
 
-Whatever way you wish to access the Talos API, be sure to note the IP(s) or
+Whichever way you wish to access the Talos API, be sure to note the IP(s) or
 hostname(s) so that you can configure your `talosctl` tool's `endpoints` below.
 
 ## Configure Talos
@@ -181,22 +182,22 @@ In cases where a PXE server can be available, this is much more efficient than
 manually configuring each node.
 If you do use this method, just note that Talos does require a number of other
 kernel commandline parameters.
-See the [required kernel parameters](https://talos.dev/docs/v0.9/reference/kernel/) for more information.
+See the [required kernel parameters](../../reference/kernel/) for more information.
 
 In either case, we need to generate the configuration which is to be provided.
 Luckily, the `talosctl` tool comes with a configuration generator for exactly
 this purpose.
 
 ```sh
-  talosctl gen config <cluster name> <cluster endpoint>
+  talosctl gen config "cluster-name" "cluster-endpoint"
 ```
 
-Here, `<cluster name>` is an arbitrary name for the cluster which will be used
+Here, `cluster-name` is an arbitrary name for the cluster which will be used
 in your local client configuration as a label.
 It does not affect anything in the cluster itself.
 It is arbitrary, but it should be unique in the configuration on your local workstation.
 
-The `<cluster endpoint>` is where you insert the Kubernetes Endpoint you
+The `cluster-endpoint` is where you insert the Kubernetes Endpoint you
 selected from above.
 This is the Kubernetes API URL, and it should be a complete URL, with `https://`
 and port, if not `443`.
@@ -390,14 +391,15 @@ Server:
 ```
 
 For a more in-depth discussion of Endpoints and Nodes, please see
-[talosctl](../Learn More/talosctl.md).
+[talosctl](../../learn-more/talosctl/).
 
 ### Default configuration file
 
 You _can_ reference which configuration file to use directly with the `--talosconfig` parameter:
 
 ```sh
-  talosctl --talosconfig=./talosconfig --nodes 192.168.0.2 version
+  talosctl --talosconfig=./talosconfig \
+    --nodes 192.168.0.2 version
 ```
 
 However, `talosctl` comes with tooling to help you integrate and merge this
