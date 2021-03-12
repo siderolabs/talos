@@ -126,6 +126,9 @@ COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/ma
 FROM build AS base
 COPY ./go.mod ./go.sum ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
+WORKDIR /src/pkg/machinery
+RUN go mod download
+WORKDIR /src
 RUN go mod download
 RUN go mod verify
 COPY ./cmd ./cmd
