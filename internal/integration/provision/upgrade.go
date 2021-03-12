@@ -13,7 +13,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -79,20 +78,7 @@ const (
 	currentK8sVersion  = "1.20.4"
 )
 
-var (
-	defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
-	defaultCNIBinPath  = []string{"/opt/cni/bin"}
-)
-
-const (
-	defaultCNIConfDir  = "/etc/cni/conf.d"
-	defaultCNICacheDir = "/var/lib/cni"
-)
-
-func trimVersion(version string) string {
-	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
-	return regexp.MustCompile(`(-\d+-g[0-9a-f]+)$`).ReplaceAllString(version, "")
-}
+var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
 
 // upgradeBetweenTwoLastReleases upgrades between two last releases of Talos.
 func upgradeBetweenTwoLastReleases() upgradeSpec {
@@ -224,6 +210,7 @@ type UpgradeSuite struct {
 	ctxCancel context.CancelFunc
 
 	stateDir string
+	cniDir   string
 }
 
 // SetupSuite ...
@@ -279,6 +266,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	suite.Require().NoError(err)
 
 	suite.stateDir = filepath.Join(defaultStateDir, "clusters")
+	suite.cniDir = filepath.Join(defaultStateDir, "cni")
 
 	clusterName := suite.spec.ShortName
 
@@ -309,9 +297,11 @@ func (suite *UpgradeSuite) setupCluster() {
 			MTU:          DefaultSettings.MTU,
 			Nameservers:  defaultNameservers,
 			CNI: provision.CNIConfig{
-				BinPath:  defaultCNIBinPath,
-				ConfDir:  defaultCNIConfDir,
-				CacheDir: defaultCNICacheDir,
+				BinPath:  []string{filepath.Join(suite.cniDir, "bin")},
+				ConfDir:  filepath.Join(suite.cniDir, "conf.d"),
+				CacheDir: filepath.Join(suite.cniDir, "cache"),
+
+				BundleURL: DefaultSettings.CNIBundleURL,
 			},
 		},
 
