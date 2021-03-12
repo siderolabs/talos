@@ -158,13 +158,13 @@ func (n *NetworkInterface) Create() error {
 }
 
 // CreateSub create VLAN devices that belongs to a master device.
-func (n *NetworkInterface) CreateSub() error {
+func (n *NetworkInterface) CreateSub(logger *log.Logger) error {
 	var info *rtnetlink.LinkInfo
 
 	// Create all the VLAN devices
 	for _, vlan := range n.Vlans {
 		name := n.Name + "." + strconv.Itoa(int(vlan.ID))
-		log.Printf("setting up %s", name)
+		logger.Printf("setting up %s", name)
 		iface, err := net.InterfaceByName(name)
 
 		if err == nil {
@@ -175,7 +175,7 @@ func (n *NetworkInterface) CreateSub() error {
 
 		data, err := vlan.VlanSettings.Encode()
 		if err != nil {
-			log.Println("failed to encode vlan link parameters: " + err.Error())
+			logger.Println("failed to encode vlan link parameters: " + err.Error())
 
 			continue
 		}
@@ -185,14 +185,14 @@ func (n *NetworkInterface) CreateSub() error {
 		info = &rtnetlink.LinkInfo{Kind: "vlan", Data: data}
 
 		if err = n.createSubLink(name, info, &masterIdx); err != nil {
-			log.Println("failed to create vlan link " + err.Error())
+			logger.Println("failed to create vlan link " + err.Error())
 
 			return err
 		}
 
 		iface, err = net.InterfaceByName(name)
 		if err != nil {
-			log.Println("failed to get vlan interface ")
+			logger.Println("failed to get vlan interface ")
 
 			return err
 		}
@@ -253,13 +253,13 @@ func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 }
 
 // RunControllers is used to run additional controllers per interface.
-func (n *NetworkInterface) RunControllers(ctx context.Context, eg *errgroup.Group) (err error) {
+func (n *NetworkInterface) RunControllers(ctx context.Context, logger *log.Logger, eg *errgroup.Group) (err error) {
 	if n.VirtualIP != nil {
 		if n.vipController, err = vip.New(n.VirtualIP.String(), n.Link.Name); err != nil {
 			return fmt.Errorf("failed to create the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
 		}
 
-		if err = n.vipController.Start(ctx, eg); err != nil {
+		if err = n.vipController.Start(ctx, logger, eg); err != nil {
 			return fmt.Errorf("failed to start the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
 		}
 	}
@@ -294,13 +294,13 @@ func (n *NetworkInterface) waitForLinkToBeUp(linkDev *net.Interface) error {
 
 // Addressing handles the address method for a configured interface ( dhcp/static ).
 // This is inclusive of the address itself as well as any defined routes.
-func (n *NetworkInterface) Addressing() error {
+func (n *NetworkInterface) Addressing(logger *log.Logger) error {
 	if n.IsIgnored() {
 		return nil
 	}
 
 	for _, method := range n.AddressMethod {
-		if err := n.configureInterface(method, n.Link); err != nil {
+		if err := n.configureInterface(logger, method, n.Link); err != nil {
 			// Treat as non fatal error when failing to configure an interface
 			continue
 		}
@@ -311,15 +311,15 @@ func (n *NetworkInterface) Addressing() error {
 
 // AddressingSub handles the address method for a configured sub interface ( dhcp/static ).
 // This is inclusive of the address itself as well as any defined routes.
-func (n *NetworkInterface) AddressingSub() error {
+func (n *NetworkInterface) AddressingSub(logger *log.Logger) error {
 	if n.IsIgnored() {
 		return nil
 	}
 
 	for _, vlan := range n.Vlans {
 		for _, method := range vlan.AddressMethod {
-			if err := n.configureInterface(method, vlan.Link); err != nil {
-				log.Println("failed to configure address on vlan link: " + err.Error())
+			if err := n.configureInterface(logger, method, vlan.Link); err != nil {
+				logger.Println("failed to configure address on vlan link: " + err.Error())
 				// Treat as non fatal error when failing to configure an interface
 				continue
 			}
@@ -330,13 +330,13 @@ func (n *NetworkInterface) AddressingSub() error {
 }
 
 // Renew is the mechanism for keeping a dhcp lease active.
-func (n *NetworkInterface) Renew(ctx context.Context) {
+func (n *NetworkInterface) Renew(ctx context.Context, logger *log.Logger) {
 	for _, method := range n.AddressMethod {
 		if method.TTL() == 0 {
 			continue
 		}
 
-		go n.renew(ctx, method)
+		go n.renew(ctx, logger, method)
 	}
 }
 
@@ -344,7 +344,7 @@ func (n *NetworkInterface) Renew(ctx context.Context) {
 // up to date. We attempt to do our first reconfiguration halfway through
 // address TTL. If that fails, we'll continue to attempt to retry every
 // halflife.
-func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing) {
+func (n *NetworkInterface) renew(ctx context.Context, logger *log.Logger, method address.Addressing) {
 	const minRenewDuration = 5 * time.Second // protect from renewing too often
 
 	renewDuration := method.TTL() / 2
@@ -358,8 +358,8 @@ func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing)
 			return
 		}
 
-		if err = n.configureInterface(method, n.Link); err != nil {
-			log.Printf("failure to renew address for %q: %s", n.Name, err)
+		if err = n.configureInterface(logger, method, n.Link); err != nil {
+			logger.Printf("failure to renew address for %q: %s", n.Name, err)
 
 			renewDuration = (renewDuration / 2)
 		} else {
@@ -375,10 +375,10 @@ func (n *NetworkInterface) renew(ctx context.Context, method address.Addressing)
 // configureInterface handles the actual address discovery mechanism and
 // netlink interaction to configure the interface.
 //nolint:gocyclo,cyclop
-func (n *NetworkInterface) configureInterface(method address.Addressing, link *net.Interface) error {
+func (n *NetworkInterface) configureInterface(logger *log.Logger, method address.Addressing, link *net.Interface) error {
 	var err error
 
-	discoverErr := method.Discover(context.Background(), link)
+	discoverErr := method.Discover(context.Background(), logger, link)
 
 	// Set link MTU in any case
 	if err = n.setMTU(method.Link().Index, method.MTU()); err != nil {

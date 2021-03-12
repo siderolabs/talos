@@ -6,7 +6,9 @@
 package networkd
 
 import (
+	"log"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -28,7 +30,7 @@ func TestNetconfSuite(t *testing.T) {
 
 func (suite *NetconfSuite) TestBaseNetconf() {
 	for _, device := range sampleConfig() {
-		_, opts, err := buildOptions(device, "")
+		_, opts, err := buildOptions(log.New(os.Stderr, "", log.LstdFlags), device, "")
 		suite.Require().NoError(err)
 
 		_, err = nic.New(opts...)
