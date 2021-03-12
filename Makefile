@@ -281,7 +281,8 @@ provision-tests-track-%:
 		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*" \
 		INTEGRATION_TEST_TRACK="$*" \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
-		REGISTRY=$(IMAGE_REGISTRY)
+		REGISTRY=$(IMAGE_REGISTRY) \
+		ARTIFACTS=$(ARTIFACTS)
 
 # Assets for releases
 
