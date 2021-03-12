@@ -408,7 +408,7 @@ func CreateOSReleaseFile(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 // SetupDiscoveryNetwork represents the task for setting up the initial network.
 func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		nwd, err := networkd.New(r.Config())
+		nwd, err := networkd.New(logger, r.Config())
 		if err != nil {
 			return err
 		}
@@ -585,7 +585,7 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 // ResetNetwork resets the network.
 func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		nwd, err := networkd.New(r.Config())
+		nwd, err := networkd.New(logger, r.Config())
 		if err != nil {
 			return err
 		}

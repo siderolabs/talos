@@ -6,6 +6,7 @@ package address
 
 import (
 	"context"
+	"log"
 	"net"
 	"time"
 
@@ -28,7 +29,7 @@ type Static struct {
 
 // Discover doesnt do anything in the static configuration since all
 // the necessary configuration data is supplied via config.
-func (s *Static) Discover(ctx context.Context, link *net.Interface) error {
+func (s *Static) Discover(ctx context.Context, logger *log.Logger, link *net.Interface) error {
 	s.NetIf = link
 
 	return nil

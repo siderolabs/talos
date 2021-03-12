@@ -22,7 +22,7 @@ import (
 // buildOptions translates the supplied config to nic.Option used for
 // configuring the interface.
 //nolint:gocyclo,cyclop
-func buildOptions(device config.Device, hostname string) (name string, opts []nic.Option, err error) {
+func buildOptions(logger *log.Logger, device config.Device, hostname string) (name string, opts []nic.Option, err error) {
 	opts = append(opts, nic.WithName(device.Interface()))
 
 	if device.Ignore() || procfs.ProcCmdline().Get(constants.KernelParamNetworkInterfaceIgnore).Contains(device.Interface()) {
@@ -59,7 +59,7 @@ func buildOptions(device config.Device, hostname string) (name string, opts []ni
 	default:
 		// Allow master interface without any addressing if VLANs exist
 		if len(device.Vlans()) > 0 {
-			log.Printf("no addressing for master device %s", device.Interface())
+			logger.Printf("no addressing for master device %s", device.Interface())
 
 			opts = append(opts, nic.WithNoAddressing())
 		} else {

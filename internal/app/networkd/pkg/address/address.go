@@ -6,6 +6,7 @@ package address
 
 import (
 	"context"
+	"log"
 	"net"
 	"time"
 )
@@ -15,7 +16,7 @@ import (
 // supported.
 type Addressing interface {
 	Address() *net.IPNet
-	Discover(context.Context, *net.Interface) error
+	Discover(context.Context, *log.Logger, *net.Interface) error
 	Family() int
 	Hostname() string
 	Link() *net.Interface

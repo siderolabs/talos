@@ -38,9 +38,9 @@ func (d *DHCP6) Link() *net.Interface {
 }
 
 // Discover handles the DHCP client exchange stores the DHCP Ack.
-func (d *DHCP6) Discover(ctx context.Context, link *net.Interface) error {
+func (d *DHCP6) Discover(ctx context.Context, logger *log.Logger, link *net.Interface) error {
 	d.NetIf = link
-	err := d.discover(ctx)
+	err := d.discover(ctx, logger)
 
 	return err
 }
@@ -119,16 +119,16 @@ func (d *DHCP6) Hostname() (hostname string) {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP6) discover(ctx context.Context) error {
-	if err := waitIPv6LinkReady(d.NetIf); err != nil {
-		log.Printf("failed waiting for IPv6 readiness: %s", err)
+func (d *DHCP6) discover(ctx context.Context, logger *log.Logger) error {
+	if err := waitIPv6LinkReady(logger, d.NetIf); err != nil {
+		logger.Printf("failed waiting for IPv6 readiness: %s", err)
 
 		return err
 	}
 
 	cli, err := nclient6.New(d.NetIf.Name)
 	if err != nil {
-		log.Printf("failed to create dhcp6 client: %s", err)
+		logger.Printf("failed to create dhcp6 client: %s", err)
 
 		return err
 	}
@@ -139,19 +139,19 @@ func (d *DHCP6) discover(ctx context.Context) error {
 	reply, err := cli.RapidSolicit(ctx)
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
-		log.Printf("failed dhcp6 request for %q: %v", d.NetIf.Name, err)
+		logger.Printf("failed dhcp6 request for %q: %v", d.NetIf.Name, err)
 
 		return err
 	}
 
-	log.Printf("DHCP6 REPLY on %q: %s", d.NetIf.Name, collapseSummary(reply.Summary()))
+	logger.Printf("DHCP6 REPLY on %q: %s", d.NetIf.Name, collapseSummary(reply.Summary()))
 
 	d.Reply = reply
 
 	return nil
 }
 
-func waitIPv6LinkReady(iface *net.Interface) error {
+func waitIPv6LinkReady(logger *log.Logger, iface *net.Interface) error {
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func waitIPv6LinkReady(iface *net.Interface) error {
 	defer conn.Close() //nolint:errcheck
 
 	return retry.Constant(30*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
-		ready, err := isIPv6LinkReady(iface, conn)
+		ready, err := isIPv6LinkReady(logger, iface, conn)
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}
@@ -175,7 +175,7 @@ func waitIPv6LinkReady(iface *net.Interface) error {
 
 // isIPv6LinkReady returns true if the interface has a link-local address
 // which is not tentative.
-func isIPv6LinkReady(iface *net.Interface, conn *rtnetlink.Conn) (bool, error) {
+func isIPv6LinkReady(logger *log.Logger, iface *net.Interface, conn *rtnetlink.Conn) (bool, error) {
 	addrs, err := conn.Address.List()
 	if err != nil {
 		return false, err
@@ -192,7 +192,7 @@ func isIPv6LinkReady(iface *net.Interface, conn *rtnetlink.Conn) (bool, error) {
 
 		if addr.Attributes.Address.IsLinkLocalUnicast() && (addr.Flags&unix.IFA_F_TENTATIVE == 0) {
 			if addr.Flags&unix.IFA_F_DADFAILED != 0 {
-				log.Printf("DADFAILED for %v, continuing anyhow", addr.Attributes.Address)
+				logger.Printf("DADFAILED for %v, continuing anyhow", addr.Attributes.Address)
 			}
 
 			return true, nil

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"testing"
@@ -85,11 +86,13 @@ func (suite *NetworkdSuite) TestInterfaces() {
 
 func (suite *NetworkdSuite) fakeNetworkdRPC() (*networkd.Networkd, *grpc.Server, net.Listener) {
 	// Create networkd instance
-	n, err := networkd.New(nil)
+	n, err := networkd.New(log.New(os.Stderr, "", log.LstdFlags), nil)
 	suite.Assert().NoError(err)
 
 	// Create gRPC server
-	api := NewRegistrator(n)
+	api, err := NewRegistrator(log.New(os.Stderr, "", log.LstdFlags), n)
+	suite.Require().NoError(err)
+
 	server := factory.NewServer(api)
 	tmpfile, err := ioutil.TempFile("", "networkd")
 	suite.Assert().NoError(err)
