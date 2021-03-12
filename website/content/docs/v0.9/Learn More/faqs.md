@@ -26,3 +26,10 @@ We envision Talos being a great place for the application of [control theory](ht
 
 Talos was an automaton created by the Greek God of the forge to protect the island of Crete.
 He would patrol the coast and enforce laws throughout the land. We felt it was a fitting name for a security focused operating system designed to run Kubernetes.
+
+## Why does Talos query `pool.ntp.org` on boot even if configured to use a different time server?
+
+When Talos boots, before the config is loaded, Talos performs a non-blocking attempt to sync the time with the default nameserver (`pool.ntp.org`).
+This initial time sync is required if the node doesn't have an RTC or the RTC is out of sync because TLS (e.g. HTTPS) requires time to be in sync for certificate validation.
+As soon as the config is available, Talos starts syncing the time with the configured time server.
+Time sync errors on initial boot can be safely ignored.

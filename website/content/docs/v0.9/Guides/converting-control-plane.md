@@ -9,6 +9,12 @@ After Talos OS upgrade to version 0.9 Kubernetes control plane should be convert
 
 This guide describes automated conversion script and also shows detailed manual conversion process.
 
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/nUuFYLEp7wQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Automated Conversion
 
 First, make sure all nodes are updated to Talos 0.9:

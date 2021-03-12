@@ -25,6 +25,12 @@ Talos has (as of version 0.9) built-in support for this form of shared IP addres
 and it can utilize this for both the Kubernetes API server and the Talos endpoint set.
 Talos uses `etcd` for elections and leadership (control) of the IP address.
 
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BfMGInHtFBc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Choose your Shared IP
 
 To begin with, you should choose your shared IP address.
