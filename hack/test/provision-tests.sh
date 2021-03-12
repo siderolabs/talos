@@ -40,4 +40,8 @@ case "${CUSTOM_CNI_URL:-false}" in
     ;;
 esac
 
-"${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.provision.mtu 1450 ${INTEGRATION_TEST_FLAGS}
+"${INTEGRATION_TEST}" -test.v \
+  -talos.talosctlpath "${TALOSCTL}" \
+  -talos.provision.mtu 1450  \
+  -talos.provision.cni-bundle-url ${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
+  ${INTEGRATION_TEST_FLAGS}
