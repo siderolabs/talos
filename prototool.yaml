@@ -10,7 +10,7 @@ protoc:
   # The Protobuf version to use from https://github.com/protocolbuffers/protobuf/releases.
   # By default use 3.8.0.
   # You probably want to set this to make your builds completely reproducible.
-  version: 3.14.0
+  version: 3.15.3
 
   # Additional paths to include with -I to protoc.
   # By default, the directory of the config file is included,
