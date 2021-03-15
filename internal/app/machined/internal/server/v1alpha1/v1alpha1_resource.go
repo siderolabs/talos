@@ -21,6 +21,8 @@ import (
 
 // ResourceServer implements ResourceService API.
 type ResourceServer struct {
+	resourceapi.UnimplementedResourceServiceServer
+
 	server *Server
 }
 

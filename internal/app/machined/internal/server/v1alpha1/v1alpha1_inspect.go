@@ -16,6 +16,8 @@ import (
 
 // InspectServer implements InspectService API.
 type InspectServer struct {
+	inspectapi.UnimplementedInspectServiceServer
+
 	server *Server
 }
 

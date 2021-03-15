@@ -9,7 +9,7 @@ REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.5.0-alpha.0
+TOOLS ?= ghcr.io/talos-systems/tools:v0.5.0-alpha.0-1-gbcf3380
 PKGS ?= v0.5.0-alpha.0-2-g35f9b6f
 EXTRAS ?= v0.3.0-alpha.0
 GO_VERSION ?= 1.16

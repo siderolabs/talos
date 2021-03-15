@@ -17,7 +17,7 @@ import (
 // TODO: this is not a full blown service yet, it's used as the common base in the machine and the maintenance services.
 type Server struct{}
 
-// Disks implements machine.MaintenanceService.
+// Disks implements storage.StorageService.
 func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.DisksResponse, err error) {
 	disks, err := util.GetDisks()
 	if err != nil {
