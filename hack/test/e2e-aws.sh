@@ -57,7 +57,8 @@ function setup {
   export SSH_KEY=talos-e2e
   export VPC_ID=vpc-ff5c5687
   export SUBNET=subnet-c4e9b3a0
-
+  export CLOUD_PROVIDER_VERSION=v1.20.0-alpha.0
+  
   ## Control plane vars
   export CP_COUNT=3
   export CP_INSTANCE_TYPE=t3.large
