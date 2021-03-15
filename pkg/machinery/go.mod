@@ -2,6 +2,10 @@ module github.com/talos-systems/talos/pkg/machinery
 
 go 1.14
 
+// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
+// which are then encoded as a valid YAML blocks with proper indentiation
+replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
+
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef

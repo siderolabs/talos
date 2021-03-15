@@ -6,6 +6,9 @@ replace (
 	github.com/Azure/go-autorest v10.8.1+incompatible => github.com/Azure/go-autorest/autorest v0.9.1
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
+	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
+	// which are then encoded as a valid YAML blocks with proper indentiation
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 )
 
 require (
@@ -74,7 +77,7 @@ require (
 	github.com/talos-systems/go-smbios v0.0.0-20201228201610-fb425d4727e6
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b
+	github.com/talos-systems/os-runtime v0.0.0-20210315190223-7b3d14457439
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20210302191918-8ffb55943c71
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.20.0
