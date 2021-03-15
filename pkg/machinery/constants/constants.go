@@ -101,9 +101,6 @@ const (
 	// the boot path.
 	BootMountPoint = "/boot"
 
-	// LegacyBootPartitionLabel is the label of the boot partition in older versions of Talos.
-	LegacyBootPartitionLabel = "ESP"
-
 	// EphemeralPartitionLabel is the label of the partition to use for
 	// mounting at the data path.
 	EphemeralPartitionLabel = "EPHEMERAL"
