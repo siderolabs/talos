@@ -112,6 +112,8 @@ github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa h1:XqOMTt0Q6mj
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
 github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b h1:QM8V1t0QivzQzl4uuTkFDSlNzdUyG1/8bRAVwDRPQIo=
 github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b/go.mod h1:Z+1phKVJ0IWH+Jd2DGufL8WKqxd3xt1xlcsxcU18ZL0=
+github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b h1:8pnPjZJU0SYanlmHnhMTeR8OR148K9yStwBz1GsjBsQ=
+github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.uber.org/goleak v1.1.10/go.mod h1:8a7PlsEVH3e/a/GLqe5IIrQx6GzcnRmZEufDUTk4A7A=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
@@ -213,8 +215,5 @@ gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.4/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
 gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
-gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=
-gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
