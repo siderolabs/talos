@@ -11,7 +11,7 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.4.3
-	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kr/text v0.2.0 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
