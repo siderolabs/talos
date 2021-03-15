@@ -1,4 +1,17 @@
 
+<a name="v0.8.5"></a>
+## [v0.8.5](https://github.com/talos-systems/talos/compare/v0.8.4...v0.8.5) (2021-03-12)
+
+### Chore
+
+* fix provision tests after changes to build-container
+
+### Fix
+
+* move containerd CRI config files under `/var/`
+* ignore 'ENOENT' (no such file directory) on mount
+
+
 <a name="v0.8.4"></a>
 ## [v0.8.4](https://github.com/talos-systems/talos/compare/v0.8.3...v0.8.4) (2021-02-17)
 
