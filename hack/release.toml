@@ -1,0 +1,37 @@
+# commit to be tagged for new release
+commit = "HEAD"
+
+project_name = "Talos"
+github_repo = "talos-systems/talos"
+match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
+
+# previous release
+previous = "v0.9.0-beta.0"
+
+pre_release = true
+
+preface = """\
+"""
+
+[notes]
+
+    [notes.sbcs]
+        title = "SBCs"
+        description = """\
+* u-boot version was updated to fix the boot and USB issues on Raspberry Pi 4 8GiB version.
+* added support for Rock Pi 4.
+"""
+
+[make_deps]
+
+    [make_deps.tools]
+        variable = "TOOLS"
+        repository = "github.com/talos-systems/tools"
+
+    [make_deps.pkgs]
+        variable = "PKGS"
+        repository = "github.com/talos-systems/pkgs"
+
+    [make_deps.extras]
+        variable = "EXTRAS"
+        repository = "github.com/talos-systems/extras"
