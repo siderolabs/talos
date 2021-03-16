@@ -59,8 +59,11 @@ func (wr *writerReporter) Update(condition conditions.Condition) {
 		coloredLine = color.YellowString("%s", line)
 		wr.lastLineTemporary = true
 		showSpinner = true
-	case strings.HasSuffix(line, "OK"):
-		coloredLine = line
+	case strings.HasSuffix(line, conditions.OK):
+		coloredLine = color.GreenString("%s", line)
+		wr.lastLineTemporary = false
+	case strings.HasSuffix(line, conditions.ErrSkipAssertion.Error()):
+		coloredLine = color.BlueString("%s", line)
 		wr.lastLineTemporary = false
 	default:
 		line = fmt.Sprintf("%s %s", spinner[wr.spinnerIdx], line)
