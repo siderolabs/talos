@@ -6,10 +6,17 @@ package conditions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 )
+
+// ErrSkipAssertion is used as a return value from AssertionFunc to indicate that this assertion
+// (and, by extension, condition, and check) is to be skipped.
+// It is not returned as an error by any Condition's Wait method
+// but recorded as description and returned by String method.
+var ErrSkipAssertion = errors.New("SKIP")
 
 // AssertionFunc is called every poll interval until it returns nil.
 type AssertionFunc func(ctx context.Context) error
@@ -32,7 +39,7 @@ func (p *pollingCondition) String() string {
 		if p.lastErr != nil {
 			lastErr = p.lastErr.Error()
 		} else {
-			lastErr = "OK"
+			lastErr = OK
 		}
 	}
 	p.lastErrMu.Unlock()
@@ -62,7 +69,7 @@ func (p *pollingCondition) Wait(ctx context.Context) error {
 			return err
 		}()
 
-		if err == nil {
+		if err == nil || err == ErrSkipAssertion {
 			return nil
 		}
 
