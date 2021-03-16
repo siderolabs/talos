@@ -1,0 +1,47 @@
+# commit to be tagged for new release
+commit = "HEAD"
+
+project_name = "Talos"
+github_repo = "talos-systems/talos"
+match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
+
+# previous release
+previous = "v0.8.0"
+
+pre_release = true
+
+preface = """\
+"""
+
+[notes]
+
+    [notes.features]
+        title = "New Features"
+        description = """\
+* Control Plane as Static Pods
+* ECDSA Keys for Kubernetes PKI
+* Disk Encryption
+* Virtual Shared IP for Control Plane Endpoint
+
+More in the [docs](https://www.talos.dev/docs/v0.9/introduction/what-is-new/).
+"""
+
+    [notes.upgrades]
+        title = "Upgrading"
+        description = """\
+Please read [upgrade notes](https://www.talos.dev/docs/v0.9/guides/upgrading-talos/#upgrading-from-talos-08) before upgrading from Talos 0.8.
+"""
+
+[make_deps]
+
+    [make_deps.tools]
+        variable = "TOOLS"
+        repository = "github.com/talos-systems/tools"
+
+    [make_deps.pkgs]
+        variable = "PKGS"
+        repository = "github.com/talos-systems/pkgs"
+
+    [make_deps.extras]
+        variable = "EXTRAS"
+        repository = "github.com/talos-systems/extras"
