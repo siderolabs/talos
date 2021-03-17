@@ -60,7 +60,11 @@ talosctl completion zsh > "${fpath[1]}/_talosctl"`,
 		case "bash":
 			return rootCmd.GenBashCompletion(os.Stdout)
 		case "zsh":
-			return rootCmd.GenZshCompletion(os.Stdout)
+			err := rootCmd.GenZshCompletion(os.Stdout)
+			// cobra does not hook the completion, so let's do it manually
+			fmt.Printf("compdef _talosctl talosctl")
+
+			return err
 		default:
 			return fmt.Errorf("unsupported shell %q", args[0])
 		}
