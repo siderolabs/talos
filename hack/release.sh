@@ -11,7 +11,7 @@ function release-tool {
 
 function changelog {
   if [ "$#" -eq 1 ]; then
-    echo "$(release-tool ${1})\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
+    (release-tool ${1}; echo; cat CHANGELOG.md) > CHANGELOG.md- && mv CHANGELOG.md- CHANGELOG.md
   else
     echo 1>&2 "Usage: $0 changelog [tag]"
     exit 1
