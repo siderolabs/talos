@@ -55,7 +55,7 @@ COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
 CI_ARGS ?=
 
-all: initramfs kernel installer talosctl talos
+all: initramfs kernel installer talosctl talosctl-image talos
 
 # Help Menu
 
@@ -154,6 +154,10 @@ installer: ## Builds the container image for the installer and outputs it to the
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the artifact directory.
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+
+.PHONY: talosctl-image
+talosctl-image: ## Builds the talosctl container image and outputs it to the artifact directory.
+	@$(MAKE) registry-talosctl TARGET_ARGS="--allow security.insecure"
 
 talosctl-%:
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64 PUSH=false
@@ -337,6 +341,7 @@ endif
 push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
 	@$(MAKE) installer PUSH=true
 	@$(MAKE) talos PUSH=true
+	@$(MAKE) talosctl-image PUSH=true
 
 push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
 	@$(MAKE) push IMAGE_TAG=$*

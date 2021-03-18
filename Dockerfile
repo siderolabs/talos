@@ -329,6 +329,15 @@ COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd
 COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
 COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
 
+FROM scratch as talosctl
+ARG TARGETARCH
+COPY --from=talosctl-linux /talosctl-linux-${TARGETARCH} /talosctl
+ARG TAG
+ENV VERSION ${TAG}
+LABEL "alpha.talos.dev/version"="${VERSION}"
+LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
+ENTRYPOINT ["/talosctl"]
+
 FROM base AS talosctl-darwin-build
 ARG SHA
 ARG TAG
