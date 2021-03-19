@@ -42,7 +42,7 @@ If one of the control plane nodes goes down, another node takes over shared IP.
 
 Linux: 5.10.1 -> 5.10.19
 
-Kubernetes: 1.20.1 -> 1.20.4
+Kubernetes: 1.20.1 -> 1.20.5
 
 CoreDNS: 1.7.0 -> 1.8.0
 
