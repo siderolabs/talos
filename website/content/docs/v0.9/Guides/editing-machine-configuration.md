@@ -80,14 +80,14 @@ Command `talosctl patch` works similar to `talosctl edit` command - it loads cur
 Example, updating kubelet version (with a reboot):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.4"}]'
+$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.5"}]'
 patched mc at the node <IP>
 ```
 
 Updating kube-apiserver version in immediate mode (without a reboot):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig --immediate -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.4"}]'
+$ talosctl -n <IP> patch machineconfig --immediate -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.5"}]'
 patched mc at the node <IP>
 ```
 
