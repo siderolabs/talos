@@ -276,7 +276,7 @@ talosctl completion SHELL [flags]
 # Load the talosctl completion code for zsh[1] into the current shell
 	source <(talosctl completion zsh)
 # Set the talosctl completion code for zsh[1] to autoload on startup
-talosctl completion zsh > "${fpath[1]}/_osctl"
+talosctl completion zsh > "${fpath[1]}/_talosctl"
 ```
 
 ### Options
