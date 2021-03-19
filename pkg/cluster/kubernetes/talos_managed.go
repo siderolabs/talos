@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
+	"github.com/talos-systems/os-runtime/pkg/resource"
 	"github.com/talos-systems/os-runtime/pkg/state"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -120,7 +121,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 
 	skipConfigWait := false
 
-	err = patchNodeConfig(ctx, cluster, node, upgradeConfigPatcher(options, service))
+	err = patchNodeConfig(ctx, cluster, node, upgradeConfigPatcher(options, service, watchInitial.Resource))
 	if err != nil {
 		if errors.Is(err, errUpdateSkipped) {
 			skipConfigWait = true
@@ -154,11 +155,14 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 var errUpdateSkipped = fmt.Errorf("update skipped")
 
 //nolint:gocyclo
-func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v1alpha1config.Config) error {
+func upgradeConfigPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
 		if config.ClusterConfig == nil {
 			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
 		}
+
+		configData := configResource.(*resource.Any).Value().(map[string]interface{}) //nolint: errcheck,forcetypeassert
+		configImage := configData["image"].(string)                                   //nolint: errcheck,forcetypeassert
 
 		switch service {
 		case kubeAPIServer:
@@ -168,7 +172,7 @@ func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v
 
 			image := fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.ToVersion)
 
-			if config.ClusterConfig.APIServerConfig.ContainerImage == image {
+			if config.ClusterConfig.APIServerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
 			}
 
@@ -180,7 +184,7 @@ func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v
 
 			image := fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.ToVersion)
 
-			if config.ClusterConfig.ControllerManagerConfig.ContainerImage == image {
+			if config.ClusterConfig.ControllerManagerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
 			}
 
@@ -192,7 +196,7 @@ func upgradeConfigPatcher(options UpgradeOptions, service string) func(config *v
 
 			image := fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.ToVersion)
 
-			if config.ClusterConfig.SchedulerConfig.ContainerImage == image {
+			if config.ClusterConfig.SchedulerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
 			}
 
