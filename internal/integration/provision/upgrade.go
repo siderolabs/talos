@@ -75,7 +75,7 @@ const (
 
 	previousK8sVersion = "1.20.1"
 	stableK8sVersion   = "1.20.4"
-	currentK8sVersion  = "1.20.4"
+	currentK8sVersion  = "1.20.5"
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
