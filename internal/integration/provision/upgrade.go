@@ -366,7 +366,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		&bundle.InputOptions{
 			ClusterName: clusterName,
 			Endpoint:    suite.controlPlaneEndpoint,
-			KubeVersion: "", // keep empty so that default version is used per Talos version
+			KubeVersion: suite.spec.SourceK8sVersion,
 			GenOptions: append(
 				genOptions,
 				generate.WithEndpointList(masterEndpoints),
