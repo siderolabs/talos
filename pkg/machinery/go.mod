@@ -16,12 +16,12 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/kr/text v0.2.0 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200520003142-237cc4f519e2
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
+	github.com/talos-systems/go-blockdevice v0.2.1-0.20210322192639-776b37d31de0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect

@@ -57,8 +57,10 @@ type NetworkDeviceCheck func(*Device) error
 
 // Validate implements the Configurator interface.
 //nolint:gocyclo,cyclop
-func (c *Config) Validate(mode config.RuntimeMode) error {
+func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationOption) error {
 	var result *multierror.Error
+
+	opts := config.NewValidationOptions(options...)
 
 	if c.MachineConfig == nil {
 		result = multierror.Append(result, errors.New("machine instructions are required"))
@@ -73,12 +75,24 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", mode))
 		}
 
-		if c.MachineConfig.MachineInstall.InstallDisk == "" {
-			result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
-		}
+		if opts.Local {
+			if c.MachineConfig.MachineInstall.InstallDisk == "" && len(c.MachineConfig.MachineInstall.DiskMatchers()) == 0 {
+				result = multierror.Append(result, fmt.Errorf("either install disk or diskSelector should be defined"))
+			}
+		} else {
+			disk, err := c.MachineConfig.MachineInstall.Disk()
 
-		if _, err := os.Stat(c.MachineConfig.MachineInstall.InstallDisk); os.IsNotExist(err) {
-			result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
+			if err != nil {
+				result = multierror.Append(result, err)
+			} else {
+				if disk == "" {
+					result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
+				}
+
+				if _, err := os.Stat(disk); os.IsNotExist(err) {
+					result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
+				}
+			}
 		}
 	}
 

@@ -25,15 +25,13 @@ import (
 
 // Server implements machine.MachineService, network.NetworkService, and storage.StorageService.
 type Server struct {
-	storage.UnimplementedStorageServiceServer
 	machine.UnimplementedMachineServiceServer
 	network.UnimplementedNetworkServiceServer
 
-	runtime  runtime.Runtime
-	logger   *log.Logger
-	cfgCh    chan []byte
-	server   *grpc.Server
-	storaged storaged.Server
+	runtime runtime.Runtime
+	logger  *log.Logger
+	cfgCh   chan []byte
+	server  *grpc.Server
 }
 
 // New initializes and returns a `Server`.
@@ -49,14 +47,9 @@ func New(r runtime.Runtime, logger *log.Logger, cfgCh chan []byte) *Server {
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
-	storage.RegisterStorageServiceServer(obj, s)
+	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	machine.RegisterMachineServiceServer(obj, s)
 	network.RegisterNetworkServiceServer(obj, s)
-}
-
-// Disks implements storage.StorageService.
-func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.DisksResponse, err error) {
-	return s.storaged.Disks(ctx, in)
 }
 
 // ApplyConfiguration implements machine.MachineService.

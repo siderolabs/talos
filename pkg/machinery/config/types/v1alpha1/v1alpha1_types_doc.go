@@ -17,6 +17,8 @@ var (
 	KubeletConfigDoc              encoder.Doc
 	NetworkConfigDoc              encoder.Doc
 	InstallConfigDoc              encoder.Doc
+	InstallDiskSizeMatcherDoc     encoder.Doc
+	InstallDiskSelectorDoc        encoder.Doc
 	TimeConfigDoc                 encoder.Doc
 	RegistriesConfigDoc           encoder.Doc
 	PodCheckpointerDoc            encoder.Doc
@@ -479,7 +481,7 @@ func init() {
 			FieldName: "install",
 		},
 	}
-	InstallConfigDoc.Fields = make([]encoder.Doc, 5)
+	InstallConfigDoc.Fields = make([]encoder.Doc, 6)
 	InstallConfigDoc.Fields[0].Name = "disk"
 	InstallConfigDoc.Fields[0].Type = "string"
 	InstallConfigDoc.Fields[0].Note = ""
@@ -489,41 +491,130 @@ func init() {
 	InstallConfigDoc.Fields[0].AddExample("", "/dev/sda")
 
 	InstallConfigDoc.Fields[0].AddExample("", "/dev/nvme0")
-	InstallConfigDoc.Fields[1].Name = "extraKernelArgs"
-	InstallConfigDoc.Fields[1].Type = "[]string"
+	InstallConfigDoc.Fields[1].Name = "diskSelector"
+	InstallConfigDoc.Fields[1].Type = "InstallDiskSelector"
 	InstallConfigDoc.Fields[1].Note = ""
-	InstallConfigDoc.Fields[1].Description = "Allows for supplying extra kernel args via the bootloader."
-	InstallConfigDoc.Fields[1].Comments[encoder.LineComment] = "Allows for supplying extra kernel args via the bootloader."
+	InstallConfigDoc.Fields[1].Description = "Look up disk using disk characteristics like model, size, serial and others.\nAlways has priority over `disk`."
+	InstallConfigDoc.Fields[1].Comments[encoder.LineComment] = "Look up disk using disk characteristics like model, size, serial and others."
 
-	InstallConfigDoc.Fields[1].AddExample("", []string{"talos.platform=metal", "reboot=k"})
-	InstallConfigDoc.Fields[2].Name = "image"
-	InstallConfigDoc.Fields[2].Type = "string"
+	InstallConfigDoc.Fields[1].AddExample("", machineInstallDiskSelectorExample)
+	InstallConfigDoc.Fields[2].Name = "extraKernelArgs"
+	InstallConfigDoc.Fields[2].Type = "[]string"
 	InstallConfigDoc.Fields[2].Note = ""
-	InstallConfigDoc.Fields[2].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/talos-systems/talos/releases)."
-	InstallConfigDoc.Fields[2].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
+	InstallConfigDoc.Fields[2].Description = "Allows for supplying extra kernel args via the bootloader."
+	InstallConfigDoc.Fields[2].Comments[encoder.LineComment] = "Allows for supplying extra kernel args via the bootloader."
 
-	InstallConfigDoc.Fields[2].AddExample("", "ghcr.io/talos-systems/installer:latest")
-	InstallConfigDoc.Fields[3].Name = "bootloader"
-	InstallConfigDoc.Fields[3].Type = "bool"
+	InstallConfigDoc.Fields[2].AddExample("", []string{"talos.platform=metal", "reboot=k"})
+	InstallConfigDoc.Fields[3].Name = "image"
+	InstallConfigDoc.Fields[3].Type = "string"
 	InstallConfigDoc.Fields[3].Note = ""
-	InstallConfigDoc.Fields[3].Description = "Indicates if a bootloader should be installed."
-	InstallConfigDoc.Fields[3].Comments[encoder.LineComment] = "Indicates if a bootloader should be installed."
-	InstallConfigDoc.Fields[3].Values = []string{
-		"true",
-		"yes",
-		"false",
-		"no",
-	}
-	InstallConfigDoc.Fields[4].Name = "wipe"
+	InstallConfigDoc.Fields[3].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/talos-systems/talos/releases)."
+	InstallConfigDoc.Fields[3].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
+
+	InstallConfigDoc.Fields[3].AddExample("", "ghcr.io/talos-systems/installer:latest")
+	InstallConfigDoc.Fields[4].Name = "bootloader"
 	InstallConfigDoc.Fields[4].Type = "bool"
 	InstallConfigDoc.Fields[4].Note = ""
-	InstallConfigDoc.Fields[4].Description = "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`."
-	InstallConfigDoc.Fields[4].Comments[encoder.LineComment] = "Indicates if the installation disk should be wiped at installation time."
+	InstallConfigDoc.Fields[4].Description = "Indicates if a bootloader should be installed."
+	InstallConfigDoc.Fields[4].Comments[encoder.LineComment] = "Indicates if a bootloader should be installed."
 	InstallConfigDoc.Fields[4].Values = []string{
 		"true",
 		"yes",
 		"false",
 		"no",
+	}
+	InstallConfigDoc.Fields[5].Name = "wipe"
+	InstallConfigDoc.Fields[5].Type = "bool"
+	InstallConfigDoc.Fields[5].Note = ""
+	InstallConfigDoc.Fields[5].Description = "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`."
+	InstallConfigDoc.Fields[5].Comments[encoder.LineComment] = "Indicates if the installation disk should be wiped at installation time."
+	InstallConfigDoc.Fields[5].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
+
+	InstallDiskSizeMatcherDoc.Type = "InstallDiskSizeMatcher"
+	InstallDiskSizeMatcherDoc.Comments[encoder.LineComment] = "InstallDiskSizeMatcher disk size condition parser."
+	InstallDiskSizeMatcherDoc.Description = "InstallDiskSizeMatcher disk size condition parser."
+
+	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is equal to 4GB.", machineInstallDiskSizeMatcherExamples[0])
+
+	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is greater than 1TB.", machineInstallDiskSizeMatcherExamples[1])
+
+	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples[2])
+	InstallDiskSizeMatcherDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "InstallDiskSelector",
+			FieldName: "size",
+		},
+	}
+	InstallDiskSizeMatcherDoc.Fields = make([]encoder.Doc, 0)
+
+	InstallDiskSelectorDoc.Type = "InstallDiskSelector"
+	InstallDiskSelectorDoc.Comments[encoder.LineComment] = "InstallDiskSelector represents a disk query parameters for the install disk lookup."
+	InstallDiskSelectorDoc.Description = "InstallDiskSelector represents a disk query parameters for the install disk lookup."
+
+	InstallDiskSelectorDoc.AddExample("", machineInstallDiskSelectorExample)
+	InstallDiskSelectorDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "InstallConfig",
+			FieldName: "diskSelector",
+		},
+	}
+	InstallDiskSelectorDoc.Fields = make([]encoder.Doc, 8)
+	InstallDiskSelectorDoc.Fields[0].Name = "size"
+	InstallDiskSelectorDoc.Fields[0].Type = "InstallDiskSizeMatcher"
+	InstallDiskSelectorDoc.Fields[0].Note = ""
+	InstallDiskSelectorDoc.Fields[0].Description = "Disk size."
+	InstallDiskSelectorDoc.Fields[0].Comments[encoder.LineComment] = "Disk size."
+
+	InstallDiskSelectorDoc.Fields[0].AddExample("Select a disk which size is equal to 4GB.", machineInstallDiskSizeMatcherExamples[0])
+
+	InstallDiskSelectorDoc.Fields[0].AddExample("Select a disk which size is greater than 1TB.", machineInstallDiskSizeMatcherExamples[1])
+
+	InstallDiskSelectorDoc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples[2])
+	InstallDiskSelectorDoc.Fields[1].Name = "name"
+	InstallDiskSelectorDoc.Fields[1].Type = "string"
+	InstallDiskSelectorDoc.Fields[1].Note = ""
+	InstallDiskSelectorDoc.Fields[1].Description = "Disk name `/sys/block/<dev>/device/name`."
+	InstallDiskSelectorDoc.Fields[1].Comments[encoder.LineComment] = "Disk name `/sys/block/<dev>/device/name`."
+	InstallDiskSelectorDoc.Fields[2].Name = "model"
+	InstallDiskSelectorDoc.Fields[2].Type = "string"
+	InstallDiskSelectorDoc.Fields[2].Note = ""
+	InstallDiskSelectorDoc.Fields[2].Description = "Disk model `/sys/block/<dev>/device/model`."
+	InstallDiskSelectorDoc.Fields[2].Comments[encoder.LineComment] = "Disk model `/sys/block/<dev>/device/model`."
+	InstallDiskSelectorDoc.Fields[3].Name = "serial"
+	InstallDiskSelectorDoc.Fields[3].Type = "string"
+	InstallDiskSelectorDoc.Fields[3].Note = ""
+	InstallDiskSelectorDoc.Fields[3].Description = "Disk serial number `/sys/block/<dev>/serial`."
+	InstallDiskSelectorDoc.Fields[3].Comments[encoder.LineComment] = "Disk serial number `/sys/block/<dev>/serial`."
+	InstallDiskSelectorDoc.Fields[4].Name = "modalias"
+	InstallDiskSelectorDoc.Fields[4].Type = "string"
+	InstallDiskSelectorDoc.Fields[4].Note = ""
+	InstallDiskSelectorDoc.Fields[4].Description = "Disk modalias `/sys/block/<dev>/device/modalias`."
+	InstallDiskSelectorDoc.Fields[4].Comments[encoder.LineComment] = "Disk modalias `/sys/block/<dev>/device/modalias`."
+	InstallDiskSelectorDoc.Fields[5].Name = "uuid"
+	InstallDiskSelectorDoc.Fields[5].Type = "string"
+	InstallDiskSelectorDoc.Fields[5].Note = ""
+	InstallDiskSelectorDoc.Fields[5].Description = "Disk UUID `/sys/block/<dev>/uuid`."
+	InstallDiskSelectorDoc.Fields[5].Comments[encoder.LineComment] = "Disk UUID `/sys/block/<dev>/uuid`."
+	InstallDiskSelectorDoc.Fields[6].Name = "wwid"
+	InstallDiskSelectorDoc.Fields[6].Type = "string"
+	InstallDiskSelectorDoc.Fields[6].Note = ""
+	InstallDiskSelectorDoc.Fields[6].Description = "Disk WWID `/sys/block/<dev>/wwid`."
+	InstallDiskSelectorDoc.Fields[6].Comments[encoder.LineComment] = "Disk WWID `/sys/block/<dev>/wwid`."
+	InstallDiskSelectorDoc.Fields[7].Name = "type"
+	InstallDiskSelectorDoc.Fields[7].Type = "InstallDiskType"
+	InstallDiskSelectorDoc.Fields[7].Note = ""
+	InstallDiskSelectorDoc.Fields[7].Description = "Disk Type."
+	InstallDiskSelectorDoc.Fields[7].Comments[encoder.LineComment] = "Disk Type."
+	InstallDiskSelectorDoc.Fields[7].Values = []string{
+		"ssd",
+		"hdd",
+		"nvme",
+		"sd",
 	}
 
 	TimeConfigDoc.Type = "TimeConfig"
@@ -1708,6 +1799,14 @@ func (_ InstallConfig) Doc() *encoder.Doc {
 	return &InstallConfigDoc
 }
 
+func (_ InstallDiskSizeMatcher) Doc() *encoder.Doc {
+	return &InstallDiskSizeMatcherDoc
+}
+
+func (_ InstallDiskSelector) Doc() *encoder.Doc {
+	return &InstallDiskSelectorDoc
+}
+
 func (_ TimeConfig) Doc() *encoder.Doc {
 	return &TimeConfigDoc
 }
@@ -1864,6 +1963,8 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&KubeletConfigDoc,
 			&NetworkConfigDoc,
 			&InstallConfigDoc,
+			&InstallDiskSizeMatcherDoc,
+			&InstallDiskSelectorDoc,
 			&TimeConfigDoc,
 			&RegistriesConfigDoc,
 			&PodCheckpointerDoc,

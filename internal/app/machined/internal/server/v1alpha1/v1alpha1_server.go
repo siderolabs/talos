@@ -41,10 +41,12 @@ import (
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	storaged "github.com/talos-systems/talos/internal/app/storaged"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
@@ -62,6 +64,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -106,6 +109,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	cluster.RegisterClusterServiceServer(obj, s)
 	resource.RegisterResourceServiceServer(obj, &ResourceServer{server: s})
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
+	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 }
 
 // ApplyConfiguration implements machine.MachineService.
@@ -246,8 +250,13 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 			}
 		}()
 
+		disk := s.Controller.Runtime().State().Machine().Disk(disk.WithPartitionLabel(constants.BootPartitionLabel))
+		if disk == nil {
+			return fmt.Errorf("boot disk not found")
+		}
+
 		grub := &grub.Grub{
-			BootDisk: s.Controller.Runtime().Config().Machine().Install().Disk(),
+			BootDisk: disk.Device().Name(),
 		}
 
 		_, next, err := grub.Labels()

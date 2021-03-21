@@ -220,6 +220,8 @@ description: Talos gRPC API reference.
     - [Disks](#storage.Disks)
     - [DisksResponse](#storage.DisksResponse)
   
+    - [Disk.DiskType](#storage.Disk.DiskType)
+  
     - [StorageService](#storage.StorageService)
   
 - [time/time.proto](#time/time.proto)
@@ -3419,6 +3421,12 @@ Disk represents a disk.
 | size | [uint64](#uint64) |  | Size indicates the disk size in bytes. |
 | model | [string](#string) |  | Model idicates the disk model. |
 | device_name | [string](#string) |  | DeviceName indicates the disk name (e.g. `sda`). |
+| name | [string](#string) |  | Name as in `/sys/block/<dev>/device/name`. |
+| serial | [string](#string) |  | Serial as in `/sys/block/<dev>/device/serial`. |
+| modalias | [string](#string) |  | Modalias as in `/sys/block/<dev>/device/modalias`. |
+| uuid | [string](#string) |  | Uuid as in `/sys/block/<dev>/device/uuid`. |
+| wwid | [string](#string) |  | Wwid as in `/sys/block/<dev>/device/wwid`. |
+| type | [Disk.DiskType](#storage.Disk.DiskType) |  | Type is a type of the disk: nvme, ssd, hdd, sd card. |
 
 
 
@@ -3456,6 +3464,21 @@ DisksResponse represents the response of the `Disks` RPC.
 
 
  <!-- end messages -->
+
+
+<a name="storage.Disk.DiskType"></a>
+
+### Disk.DiskType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNKNOWN | 0 |  |
+| SSD | 1 |  |
+| HDD | 2 |  |
+| NVME | 3 |  |
+| SD | 4 |  |
+
 
  <!-- end enums -->
 

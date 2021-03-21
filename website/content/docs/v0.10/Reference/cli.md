@@ -672,6 +672,34 @@ talosctl dashboard [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl disks
+
+Get the list of disks from /sys/block on the machine
+
+```
+talosctl disks [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for disks
+  -i, --insecure   get disks using the insecure (encrypted with no auth) maintenance service
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl dmesg
 
 Retrieve kernel logs
@@ -2018,6 +2046,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
+* [talosctl disks](#talosctl-disks)	 - Get the list of disks from /sys/block on the machine
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd

@@ -151,6 +151,11 @@ install:
     image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
+
+    # # Look up disk using disk characteristics like model, size, serial and others.
+    # diskSelector:
+    #     size: 4GB # Disk size.
+    #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 ```
 
 <hr />
@@ -464,6 +469,11 @@ install:
     image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
+
+    # # Look up disk using disk characteristics like model, size, serial and others.
+    # diskSelector:
+    #     size: 4GB # Disk size.
+    #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 ```
 
 
@@ -1600,6 +1610,11 @@ extraKernelArgs:
 image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
 bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if the installation disk should be wiped at installation time.
+
+# # Look up disk using disk characteristics like model, size, serial and others.
+# diskSelector:
+#     size: 4GB # Disk size.
+#     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 ```
 
 <hr />
@@ -1624,6 +1639,32 @@ disk: /dev/sda
 
 ``` yaml
 disk: /dev/nvme0
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>diskSelector</code>  <i><a href="#installdiskselector">InstallDiskSelector</a></i>
+
+</div>
+<div class="dt">
+
+Look up disk using disk characteristics like model, size, serial and others.
+Always has priority over `disk`.
+
+
+
+Examples:
+
+
+``` yaml
+diskSelector:
+    size: 4GB # Disk size.
+    model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 ```
 
 
@@ -1726,6 +1767,180 @@ Valid values:
   - <code>false</code>
 
   - <code>no</code>
+</div>
+
+<hr />
+
+
+
+
+
+## InstallDiskSizeMatcher
+InstallDiskSizeMatcher disk size condition parser.
+
+Appears in:
+
+
+- <code><a href="#installdiskselector">InstallDiskSelector</a>.size</code>
+
+
+``` yaml
+4GB
+```
+``` yaml
+'> 1TB'
+```
+``` yaml
+<= 2TB
+```
+
+
+
+## InstallDiskSelector
+InstallDiskSelector represents a disk query parameters for the install disk lookup.
+
+Appears in:
+
+
+- <code><a href="#installconfig">InstallConfig</a>.diskSelector</code>
+
+
+``` yaml
+size: 4GB # Disk size.
+model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>size</code>  <i><a href="#installdisksizematcher">InstallDiskSizeMatcher</a></i>
+
+</div>
+<div class="dt">
+
+Disk size.
+
+
+
+Examples:
+
+
+``` yaml
+size: 4GB
+```
+
+``` yaml
+size: '> 1TB'
+```
+
+``` yaml
+size: <= 2TB
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>name</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk name `/sys/block/<dev>/device/name`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>model</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk model `/sys/block/<dev>/device/model`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>serial</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk serial number `/sys/block/<dev>/serial`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>modalias</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk modalias `/sys/block/<dev>/device/modalias`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>uuid</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk UUID `/sys/block/<dev>/uuid`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>wwid</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk WWID `/sys/block/<dev>/wwid`.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>type</code>  <i>InstallDiskType</i>
+
+</div>
+<div class="dt">
+
+Disk Type.
+
+
+Valid values:
+
+
+  - <code>ssd</code>
+
+  - <code>hdd</code>
+
+  - <code>nvme</code>
+
+  - <code>sd</code>
 </div>
 
 <hr />

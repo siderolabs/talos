@@ -8,18 +8,20 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 )
 
 // Server implements storage.StorageService.
 // TODO: this is not a full blown service yet, it's used as the common base in the machine and the maintenance services.
-type Server struct{}
+type Server struct {
+	storage.UnimplementedStorageServiceServer
+}
 
 // Disks implements storage.StorageService.
 func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.DisksResponse, err error) {
-	disks, err := util.GetDisks()
+	disks, err := disk.List()
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +33,10 @@ func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.Dis
 			DeviceName: disk.DeviceName,
 			Model:      disk.Model,
 			Size:       disk.Size,
+			Name:       disk.Name,
+			Serial:     disk.Serial,
+			Modalias:   disk.Modalias,
+			Type:       storage.Disk_DiskType(disk.Type),
 		}
 	}
 
