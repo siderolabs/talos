@@ -17,14 +17,17 @@ package v1alpha1
 //go:generate docgen ./v1alpha1_types.go ./v1alpha1_types_doc.go Configuration
 
 import (
+	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -172,6 +175,25 @@ var (
 		InstallImage:           "ghcr.io/talos-systems/installer:latest",
 		InstallBootloader:      true,
 		InstallWipe:            false,
+	}
+
+	machineInstallDiskSelectorExample = &InstallDiskSelector{
+		Model: "WDC*",
+		Size: &InstallDiskSizeMatcher{
+			condition: ">= 1TB",
+		},
+	}
+
+	machineInstallDiskSizeMatcherExamples = []*InstallDiskSizeMatcher{
+		{
+			condition: "4GB",
+		},
+		{
+			condition: "> 1TB",
+		},
+		{
+			condition: "<= 2TB",
+		},
 	}
 
 	machineFilesExample = []*MachineFile{
@@ -761,6 +783,12 @@ type InstallConfig struct {
 	//     - value: '"/dev/nvme0"'
 	InstallDisk string `yaml:"disk,omitempty"`
 	//   description: |
+	//     Look up disk using disk characteristics like model, size, serial and others.
+	//     Always has priority over `disk`.
+	//   examples:
+	//     - value: machineInstallDiskSelectorExample
+	InstallDiskSelector *InstallDiskSelector `yaml:"diskSelector,omitempty"`
+	//   description: |
 	//     Allows for supplying extra kernel args via the bootloader.
 	//   examples:
 	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
@@ -789,6 +817,133 @@ type InstallConfig struct {
 	//     - false
 	//     - no
 	InstallWipe bool `yaml:"wipe"`
+}
+
+// InstallDiskSizeMatcher disk size condition parser.
+type InstallDiskSizeMatcher struct {
+	// docgen:nodoc
+	matcher disk.Matcher
+	// docgen:nodoc
+	condition string
+}
+
+// MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
+func (m *InstallDiskSizeMatcher) MarshalYAML() (interface{}, error) {
+	return m.condition, nil
+}
+
+// UnmarshalYAML is a custom unmarshaller for `Endpoint`.
+func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if err := unmarshal(&m.condition); err != nil {
+		return err
+	}
+
+	re := regexp.MustCompile(`(>=|<=|>|<|==)?\b*(.+)$`)
+
+	parts := re.FindStringSubmatch(m.condition)
+	if len(parts) == 0 {
+		return fmt.Errorf("failed to parse the condition: expected [>=|<=|>|<|==]<size>[units], got %s", m.condition)
+	}
+
+	var compare func(*disk.Disk, uint64) bool
+
+	if len(parts) > 1 {
+		switch parts[0] {
+		case ">=":
+			compare = func(d *disk.Disk, size uint64) bool {
+				return d.Size >= size
+			}
+		case "<=":
+			compare = func(d *disk.Disk, size uint64) bool {
+				return d.Size <= size
+			}
+		case ">":
+			compare = func(d *disk.Disk, size uint64) bool {
+				return d.Size > size
+			}
+		case "<":
+			compare = func(d *disk.Disk, size uint64) bool {
+				return d.Size < size
+			}
+		case "==":
+			compare = func(d *disk.Disk, size uint64) bool {
+				return d.Size == size
+			}
+		default:
+			return fmt.Errorf("unknown binary operator %s", parts[0])
+		}
+	}
+
+	size, err := humanize.ParseBytes(parts[1])
+	if err != nil {
+		return err
+	}
+
+	m.matcher = func(d *disk.Disk) bool {
+		return compare(d, size)
+	}
+
+	return nil
+}
+
+// InstallDiskType custom type for disk type selector.
+type InstallDiskType disk.Type
+
+// MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
+func (it InstallDiskType) MarshalYAML() (interface{}, error) {
+	return disk.Type(it).String(), nil
+}
+
+// UnmarshalYAML is a custom unmarshaller for `Endpoint`.
+func (it *InstallDiskType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var (
+		t   string
+		err error
+	)
+
+	if err = unmarshal(&t); err != nil {
+		return err
+	}
+
+	if dt, err := disk.ParseType(t); err == nil {
+		*it = InstallDiskType(dt)
+	} else {
+		return err
+	}
+
+	return nil
+}
+
+// InstallDiskSelector represents a disk query parameters for the install disk lookup.
+type InstallDiskSelector struct {
+	//   description: Disk size.
+	//   examples:
+	//     - name: Select a disk which size is equal to 4GB.
+	//       value: machineInstallDiskSizeMatcherExamples[0]
+	//     - name: Select a disk which size is greater than 1TB.
+	//       value: machineInstallDiskSizeMatcherExamples[1]
+	//     - name: Select a disk which size is less or equal than 2TB.
+	//       value: machineInstallDiskSizeMatcherExamples[2]
+	Size *InstallDiskSizeMatcher `yaml:"size,omitempty"`
+	//   description: Disk name `/sys/block/<dev>/device/name`.
+	Name string `yaml:"name,omitempty"`
+	//   description: Disk model `/sys/block/<dev>/device/model`.
+	Model string `yaml:"model,omitempty"`
+	//   description: Disk serial number `/sys/block/<dev>/serial`.
+	Serial string `yaml:"serial,omitempty"`
+	//   description: Disk modalias `/sys/block/<dev>/device/modalias`.
+	Modalias string `yaml:"modalias,omitempty"`
+	//   description: Disk UUID `/sys/block/<dev>/uuid`.
+	UUID string `yaml:"uuid,omitempty"`
+	//   description: Disk WWID `/sys/block/<dev>/wwid`.
+	WWID string `yaml:"wwid,omitempty"`
+	//   description: Disk Type.
+	//   values:
+	//     - ssd
+	//     - hdd
+	//     - nvme
+	//     - sd
+	Type InstallDiskType `yaml:"type,omitempty"`
 }
 
 // TimeConfig represents the options for configuring time on a machine.
@@ -864,7 +1019,7 @@ func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// MarshalYAML is a custom unmarshaller for `Endpoint`.
+// MarshalYAML is a custom marshaller for `Endpoint`.
 func (e *Endpoint) MarshalYAML() (interface{}, error) {
 	return e.URL.String(), nil
 }

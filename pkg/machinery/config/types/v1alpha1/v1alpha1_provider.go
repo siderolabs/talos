@@ -19,6 +19,7 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -1204,8 +1205,62 @@ func (i *InstallConfig) Image() string {
 }
 
 // Disk implements the config.Provider interface.
-func (i *InstallConfig) Disk() string {
-	return i.InstallDisk
+func (i *InstallConfig) Disk() (string, error) {
+	matchers := i.DiskMatchers()
+	if len(matchers) > 0 {
+		d, err := disk.Find(matchers...)
+		if err != nil {
+			return "", err
+		}
+
+		if d != nil {
+			return d.DeviceName, nil
+		}
+
+		return "", fmt.Errorf("no disk found matching provided parameters")
+	}
+
+	return i.InstallDisk, nil
+}
+
+// DiskMatchers implements the config.Provider interface.
+func (i *InstallConfig) DiskMatchers() []disk.Matcher {
+	if i.InstallDiskSelector != nil {
+		selector := i.InstallDiskSelector
+
+		matchers := []disk.Matcher{}
+		if selector.Size != nil {
+			matchers = append(matchers, selector.Size.matcher)
+		}
+
+		if selector.UUID != "" {
+			matchers = append(matchers, disk.WithUUID(selector.UUID))
+		}
+
+		if selector.WWID != "" {
+			matchers = append(matchers, disk.WithWWID(selector.WWID))
+		}
+
+		if selector.Model != "" {
+			matchers = append(matchers, disk.WithModel(selector.Model))
+		}
+
+		if selector.Name != "" {
+			matchers = append(matchers, disk.WithName(selector.Name))
+		}
+
+		if selector.Serial != "" {
+			matchers = append(matchers, disk.WithSerial(selector.Serial))
+		}
+
+		if selector.Modalias != "" {
+			matchers = append(matchers, disk.WithModalias(selector.Modalias))
+		}
+
+		return matchers
+	}
+
+	return nil
 }
 
 // ExtraKernelArgs implements the config.Provider interface.

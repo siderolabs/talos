@@ -23,6 +23,25 @@ message Disk {
   string model = 2;
   // DeviceName indicates the disk name (e.g. `sda`).
   string device_name = 3;
+  // Name as in `/sys/block/<dev>/device/name`.
+  string name = 4;
+  // Serial as in `/sys/block/<dev>/device/serial`.
+  string serial = 5;
+  // Modalias as in `/sys/block/<dev>/device/modalias`.
+  string modalias = 6;
+  // Uuid as in `/sys/block/<dev>/device/uuid`.
+  string uuid = 7;
+  // Wwid as in `/sys/block/<dev>/device/wwid`.
+  string wwid = 8;
+  enum DiskType {
+    UNKNOWN = 0;
+    SSD = 1;
+    HDD = 2;
+    NVME = 3;
+    SD = 4;
+  }
+  // Type is a type of the disk: nvme, ssd, hdd, sd card.
+  DiskType type = 9;
 }
 
 // DisksResponse represents the response of the `Disks` RPC.

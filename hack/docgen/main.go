@@ -319,6 +319,10 @@ func collectFields(s *structType) (fields []*Field) {
 			log.Fatalf("field %q is missing a documentation", f.Names[0].Name)
 		}
 
+		if strings.Contains(f.Doc.Text(), "docgen:nodoc") {
+			continue
+		}
+
 		name := f.Names[0].Name
 
 		fieldType := formatFieldType(f.Type)

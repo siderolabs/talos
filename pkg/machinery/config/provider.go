@@ -25,7 +25,7 @@ type Provider interface {
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
-	Validate(RuntimeMode) error
+	Validate(RuntimeMode, ...ValidationOption) error
 	ApplyDynamicConfig(context.Context, DynamicConfigProvider) error
 	String() (string, error)
 	Bytes() ([]byte, error)
@@ -76,7 +76,7 @@ type File interface {
 // related options.
 type Install interface {
 	Image() string
-	Disk() string
+	Disk() (string, error)
 	ExtraKernelArgs() []string
 	Zero() bool
 	WithBootloader() bool

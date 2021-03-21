@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.9.0-beta.0"
+previous = "v0.9.0"
 
 pre_release = true
 
@@ -24,8 +24,25 @@ preface = """\
 
     [notes.optimize]
         title = "Optmizations"
-        descriptions = """\
+        description = """\
 * Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
+"""
+
+    [notes.machineconfig]
+        title = "Install Disk Selector"
+        description = """\
+Install section of the machine config now has `diskSelector` field that allows querying install disk using the list of qualifiers:
+
+```yaml
+...
+  install:
+    diskSelector:
+      size: >= 500GB
+      model: WDC*
+...
+```
+
+`talosctl disks -n <node> -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
 """
 
 [make_deps]

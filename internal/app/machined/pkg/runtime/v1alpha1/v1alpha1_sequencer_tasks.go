@@ -740,10 +740,16 @@ func VerifyInstallation(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 		var (
 			current string
 			next    string
+			disk    string
 		)
 
+		disk, err = r.Config().Machine().Install().Disk()
+		if err != nil {
+			return err
+		}
+
 		grub := &grub.Grub{
-			BootDisk: r.Config().Machine().Install().Disk(),
+			BootDisk: disk,
 		}
 
 		current, next, err = grub.Labels()
@@ -1630,8 +1636,15 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				installerImage = images.DefaultInstallerImage
 			}
 
+			var disk string
+
+			disk, err = r.Config().Machine().Install().Disk()
+			if err != nil {
+				return err
+			}
+
 			err = install.RunInstallerContainer(
-				r.Config().Machine().Install().Disk(),
+				disk,
 				r.State().Platform().Name(),
 				installerImage,
 				r.Config().Machine().Registries(),

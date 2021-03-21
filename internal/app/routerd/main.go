@@ -36,6 +36,7 @@ func Main() {
 	router.RegisterLocalBackend("time.TimeService", backend.NewLocal("timed", constants.TimeSocketPath))
 	router.RegisterLocalBackend("network.NetworkService", backend.NewLocal("networkd", constants.NetworkSocketPath))
 	router.RegisterLocalBackend("cluster.ClusterService", machinedBackend)
+	router.RegisterLocalBackend("storage.StorageService", machinedBackend)
 
 	err := factory.ListenAndServe(
 		router,

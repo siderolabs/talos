@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
@@ -26,7 +27,7 @@ var validateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := configloader.NewFromFile(validateConfigArg)
+		cfg, err := configloader.NewFromFile(validateConfigArg)
 		if err != nil {
 			return err
 		}
@@ -35,7 +36,7 @@ var validateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if err := config.Validate(mode); err != nil {
+		if err := cfg.Validate(mode, config.WithLocal()); err != nil {
 			return err
 		}
 
