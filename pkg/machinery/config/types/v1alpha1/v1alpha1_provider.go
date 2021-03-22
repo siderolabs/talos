@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/url"
 	"os"
 	goruntime "runtime"
 	"strings"
@@ -19,7 +18,6 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
-	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
@@ -308,64 +306,6 @@ func (k *KubeletConfig) RegisterWithFQDN() bool {
 	return k.KubeletRegisterWithFQDN
 }
 
-// Name implements the config.Provider interface.
-func (c *ClusterConfig) Name() string {
-	return c.ClusterName
-}
-
-// Endpoint implements the config.Provider interface.
-func (c *ClusterConfig) Endpoint() *url.URL {
-	return c.ControlPlane.Endpoint.URL
-}
-
-// LocalAPIServerPort implements the config.Provider interface.
-func (c *ClusterConfig) LocalAPIServerPort() int {
-	if c.ControlPlane.LocalAPIServerPort == 0 {
-		return constants.DefaultControlPlanePort
-	}
-
-	return c.ControlPlane.LocalAPIServerPort
-}
-
-// CertSANs implements the config.Provider interface.
-func (c *ClusterConfig) CertSANs() []string {
-	return c.APIServerConfig.CertSANs
-}
-
-// CA implements the config.Provider interface.
-func (c *ClusterConfig) CA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterCA
-}
-
-// AggregatorCA implements the config.Provider interface.
-func (c *ClusterConfig) AggregatorCA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterAggregatorCA
-}
-
-// ServiceAccount implements the config.Provider interface.
-func (c *ClusterConfig) ServiceAccount() *x509.PEMEncodedKey {
-	return c.ClusterServiceAccount
-}
-
-// AESCBCEncryptionSecret implements the config.Provider interface.
-func (c *ClusterConfig) AESCBCEncryptionSecret() string {
-	return c.ClusterAESCBCEncryptionSecret
-}
-
-// Config implements the config.Provider interface.
-func (c *ClusterConfig) Config(t machine.Type) (string, error) {
-	return "", nil
-}
-
-// APIServer implements the config.Provider interface.
-func (c *ClusterConfig) APIServer() config.APIServer {
-	if c.APIServerConfig == nil {
-		return &APIServerConfig{}
-	}
-
-	return c.APIServerConfig
-}
-
 // Image implements the config.Provider interface.
 func (a *APIServerConfig) Image() string {
 	image := a.ContainerImage
@@ -393,15 +333,6 @@ func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
 	return volumes
 }
 
-// ControllerManager implements the config.Provider interface.
-func (c *ClusterConfig) ControllerManager() config.ControllerManager {
-	if c.ControllerManagerConfig == nil {
-		return &ControllerManagerConfig{}
-	}
-
-	return c.ControllerManagerConfig
-}
-
 // Image implements the config.Provider interface.
 func (c *ControllerManagerConfig) Image() string {
 	image := c.ContainerImage
@@ -427,15 +358,6 @@ func (c *ControllerManagerConfig) ExtraVolumes() []config.VolumeMount {
 	}
 
 	return volumes
-}
-
-// Proxy implements the config.Provider interface.
-func (c *ClusterConfig) Proxy() config.Proxy {
-	if c.ProxyConfig == nil {
-		return &ProxyConfig{}
-	}
-
-	return c.ProxyConfig
 }
 
 // Enabled implements the config.Provider interface.
@@ -468,25 +390,6 @@ func (p *ProxyConfig) ExtraArgs() map[string]string {
 	return p.ExtraArgsConfig
 }
 
-// Scheduler implements the config.Provider interface.
-func (c *ClusterConfig) Scheduler() config.Scheduler {
-	if c.SchedulerConfig == nil {
-		return &SchedulerConfig{}
-	}
-
-	return c.SchedulerConfig
-}
-
-// AdminKubeconfig implements the config.Provider interface.
-func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
-	return c.AdminKubeconfigConfig
-}
-
-// ScheduleOnMasters implements the config.Provider interface.
-func (c *ClusterConfig) ScheduleOnMasters() bool {
-	return c.AllowSchedulingOnMasters
-}
-
 // Image implements the config.Provider interface.
 func (s *SchedulerConfig) Image() string {
 	image := s.ContainerImage
@@ -512,15 +415,6 @@ func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
 	}
 
 	return volumes
-}
-
-// Etcd implements the config.Provider interface.
-func (c *ClusterConfig) Etcd() config.Etcd {
-	if c.EtcdConfig == nil {
-		c.EtcdConfig = &EtcdConfig{}
-	}
-
-	return c.EtcdConfig
 }
 
 // Image implements the config.Provider interface.
@@ -651,123 +545,6 @@ func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
-}
-
-// Token implements the config.Provider interface.
-func (c *ClusterConfig) Token() config.Token {
-	return c
-}
-
-// ID implements the config.Provider interface.
-func (c *ClusterConfig) ID() string {
-	parts := strings.Split(c.BootstrapToken, ".")
-	if len(parts) != 2 {
-		return ""
-	}
-
-	return parts[0]
-}
-
-// Secret implements the config.Provider interface.
-func (c *ClusterConfig) Secret() string {
-	parts := strings.Split(c.BootstrapToken, ".")
-	if len(parts) != 2 {
-		return ""
-	}
-
-	return parts[1]
-}
-
-// Network implements the config.Provider interface.
-func (c *ClusterConfig) Network() config.ClusterNetwork {
-	return c
-}
-
-// DNSDomain implements the config.Provider interface.
-func (c *ClusterConfig) DNSDomain() string {
-	if c.ClusterNetwork == nil {
-		return constants.DefaultDNSDomain
-	}
-
-	return c.ClusterNetwork.DNSDomain
-}
-
-// CNI implements the config.Provider interface.
-func (c *ClusterConfig) CNI() config.CNI {
-	switch {
-	case c.ClusterNetwork == nil:
-		fallthrough
-
-	case c.ClusterNetwork.CNI == nil:
-		return &CNIConfig{
-			CNIName: constants.DefaultCNI,
-		}
-	}
-
-	return c.ClusterNetwork.CNI
-}
-
-// PodCIDR implements the config.Provider interface.
-func (c *ClusterConfig) PodCIDR() string {
-	switch {
-	case c.ClusterNetwork == nil:
-		fallthrough
-	case len(c.ClusterNetwork.PodSubnet) == 0:
-		return constants.DefaultIPv4PodNet
-	}
-
-	return strings.Join(c.ClusterNetwork.PodSubnet, ",")
-}
-
-// ServiceCIDR implements the config.Provider interface.
-func (c *ClusterConfig) ServiceCIDR() string {
-	switch {
-	case c.ClusterNetwork == nil:
-		fallthrough
-	case len(c.ClusterNetwork.ServiceSubnet) == 0:
-		return constants.DefaultIPv4ServiceNet
-	}
-
-	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
-}
-
-// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
-func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
-	if err != nil {
-		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
-	}
-
-	return talosnet.NthIPInCIDRSet(serviceCIDRs, 1)
-}
-
-// DNSServiceIPs returns DNS service IPs in the ServiceCIDR.
-func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
-	if err != nil {
-		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
-	}
-
-	return talosnet.NthIPInCIDRSet(serviceCIDRs, 10)
-}
-
-// ExtraManifestURLs implements the config.Provider interface.
-func (c *ClusterConfig) ExtraManifestURLs() []string {
-	return c.ExtraManifests
-}
-
-// ExtraManifestHeaderMap implements the config.Provider interface.
-func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
-	return c.ExtraManifestHeaders
-}
-
-// CoreDNS implements the config.Provider interface.
-func (c *ClusterConfig) CoreDNS() config.CoreDNS {
-	if c.CoreDNSConfig == nil {
-		return &CoreDNS{}
-	}
-
-	return c.CoreDNSConfig
 }
 
 // Name implements the config.Provider interface.
