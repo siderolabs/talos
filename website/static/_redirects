@@ -2,5 +2,5 @@
 #
 # The Netlify documentation says that the following redirect rules are
 # equivalent, but that is not what is observed in practice.
-/docs/latest /docs/v0.8
-/docs/latest/ /docs/v0.8
+/docs/latest /docs/v0.9
+/docs/latest/ /docs/v0.9
