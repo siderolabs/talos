@@ -8,7 +8,7 @@ match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 # previous release
 previous = "v0.8.0"
 
-pre_release = true
+pre_release = false
 
 preface = """\
 """
@@ -29,7 +29,7 @@ More in the [docs](https://www.talos.dev/docs/v0.9/introduction/what-is-new/).
     [notes.upgrades]
         title = "Upgrading"
         description = """\
-Please read [upgrade notes](https://www.talos.dev/docs/v0.9/guides/upgrading-talos/#upgrading-from-talos-08) before upgrading from Talos 0.8.
+Please read the [upgrade notes](https://www.talos.dev/docs/v0.9/guides/upgrading-talos/#upgrading-from-talos-08) before upgrading from Talos 0.8.
 """
 
 [make_deps]
