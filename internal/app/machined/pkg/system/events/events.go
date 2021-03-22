@@ -7,7 +7,7 @@ package events
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -125,8 +125,7 @@ func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 	}
 
 	for i := range eventList {
-		//nolint:errcheck
-		tspb, _ := ptypes.TimestampProto(eventList[i].Timestamp)
+		tspb := timestamppb.New(eventList[i].Timestamp)
 
 		result.Events[i] = &machineapi.ServiceEvent{
 			Msg:   eventList[i].Message,

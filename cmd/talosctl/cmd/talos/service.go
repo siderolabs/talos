@@ -11,7 +11,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -136,8 +135,7 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 		for i := range svc.Events.Events {
 			event := svc.Events.Events[len(svc.Events.Events)-1-i]
 
-			//nolint:errcheck
-			ts, _ := ptypes.Timestamp(event.Ts)
+			ts := event.Ts.AsTime()
 			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
 			label = "" //nolint:wastedassign
 		}
@@ -249,8 +247,7 @@ func (svc serviceInfoWrapper) LastUpdated() string {
 		return ""
 	}
 
-	//nolint:errcheck
-	ts, _ := ptypes.Timestamp(svc.Events.Events[len(svc.Events.Events)-1].Ts)
+	ts := svc.Events.Events[len(svc.Events.Events)-1].Ts.AsTime()
 
 	return time.Since(ts).Round(time.Second).String()
 }

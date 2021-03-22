@@ -11,7 +11,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -66,15 +65,16 @@ var timeCmd = &cobra.Command{
 					node = msg.Metadata.Hostname
 				}
 
-				localtime, err = ptypes.Timestamp(msg.Localtime)
-				if err != nil {
-					return fmt.Errorf("error parsing local time: %w", err)
+				if !msg.Localtime.IsValid() {
+					return fmt.Errorf("error parsing local time")
 				}
 
-				remotetime, err = ptypes.Timestamp(msg.Remotetime)
-				if err != nil {
-					return fmt.Errorf("error parsing remote time: %w", err)
+				if !msg.Remotetime.IsValid() {
+					return fmt.Errorf("error parsing remote time")
 				}
+
+				localtime = msg.Localtime.AsTime()
+				remotetime = msg.Remotetime.AsTime()
 
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, msg.Server, localtime.String(), remotetime.String())
 			}

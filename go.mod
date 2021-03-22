@@ -42,8 +42,8 @@ require (
 	github.com/gdamore/tcell/v2 v2.2.0
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/golang/protobuf v1.5.1
+	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-getter v1.5.2
@@ -92,7 +92,7 @@ require (
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20200609130330-bd2cb7843e1b
 	google.golang.org/grpc v1.36.0
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	honnef.co/go/tools v0.1.2 // indirect
