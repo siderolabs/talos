@@ -151,14 +151,27 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 	return c.ValidateQuorum(ctx)
 }
 
-// LeaveCluster removes the current member from the etcd cluster.
+// LeaveCluster removes the current member from the etcd cluster and nukes etcd data directory.
 func (c *Client) LeaveCluster(ctx context.Context) error {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return err
 	}
 
-	return c.RemoveMember(ctx, hostname)
+	if err = c.RemoveMember(ctx, hostname); err != nil {
+		return err
+	}
+
+	if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
+		return fmt.Errorf("failed to stop etcd: %w", err)
+	}
+
+	// Once the member is removed, the data is no longer valid.
+	if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
+		return fmt.Errorf("failed to remove %s: %w", constants.EtcdDataPath, err)
+	}
+
+	return nil
 }
 
 // RemoveMember removes the member from the etcd cluster.
@@ -186,15 +199,6 @@ func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 	_, err = c.MemberRemove(ctx, *id)
 	if err != nil {
 		return fmt.Errorf("failed to remove member %d: %w", *id, err)
-	}
-
-	if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
-		return fmt.Errorf("failed to stop etcd: %w", err)
-	}
-
-	// Once the member is removed, the data is no longer valid.
-	if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
-		return fmt.Errorf("failed to remove %s: %w", constants.EtcdDataPath, err)
 	}
 
 	return nil
