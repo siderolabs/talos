@@ -13,6 +13,10 @@
 #  - CUSTOM_CNI_URL
 #  - IMAGE
 #  - INSTALLER_IMAGE
+#
+# Some environment variables set in this file (e. g. TALOS_VERSION and K8S_VERSION)
+# are referenced by https://github.com/talos-systems/cluster-api-templates.
+# See other e2e-*.sh scripts.
 
 set -eoux pipefail
 
@@ -27,7 +31,7 @@ export TALOS_VERSION=v0.9
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export K8S_VERSION=1.20.5
+export K8S_VERSION=1.21.0-beta.0
 
 # Sonobuoy
 

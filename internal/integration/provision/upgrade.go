@@ -70,18 +70,19 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v0.8.4"
-	stableRelease   = "v0.9.0-alpha.5"
+	previousRelease = "v0.8.5"
+	stableRelease   = "v0.9.0" // or soon-to-be-stable
+	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.20.1"
-	stableK8sVersion   = "1.20.4"
-	currentK8sVersion  = "1.20.5"
+	previousK8sVersion = "1.20.1"        // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.20.5"        // constants.DefaultKubernetesVersion in the stableRelease
+	currentK8sVersion  = "1.21.0-beta.0" // next k8s version being tested
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
 
-// upgradeBetweenTwoLastReleases upgrades between two last releases of Talos.
-func upgradeBetweenTwoLastReleases() upgradeSpec {
+// upgradePreviousToStable upgrades from the previous Talos release to the stable release.
+func upgradePreviousToStable() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
 
@@ -102,8 +103,8 @@ func upgradeBetweenTwoLastReleases() upgradeSpec {
 	}
 }
 
-// upgradeStableReleaseToCurrent upgrades last release to the current version of Talos.
-func upgradeStableReleaseToCurrent() upgradeSpec {
+// upgradeStableToCurrent upgrades from the stable Talos release to the current version.
+func upgradeStableToCurrent() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
@@ -122,8 +123,8 @@ func upgradeStableReleaseToCurrent() upgradeSpec {
 	}
 }
 
-// upgradeCurrentReleaseToCurrent upgrades current version to the current version of Talos.
-func upgradeCurrentReleaseToCurrent() upgradeSpec {
+// upgradeCurrentToCurrent upgrades the current version to itself.
+func upgradeCurrentToCurrent() upgradeSpec {
 	installerImage := fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion)
 
 	return upgradeSpec{
@@ -146,8 +147,8 @@ func upgradeCurrentReleaseToCurrent() upgradeSpec {
 	}
 }
 
-// upgradeSingeNodePreserve upgrade last release of Talos to the current version of Talos for single-node cluster with preserve.
-func upgradeSingeNodePreserve() upgradeSpec {
+// upgradeStableToCurrentPreserve upgrades from the stable Talos release to the current version for single-node cluster with preserve.
+func upgradeStableToCurrentPreserve() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("prsrv-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
@@ -167,8 +168,8 @@ func upgradeSingeNodePreserve() upgradeSpec {
 	}
 }
 
-// upgradeSingeNodeStage upgrade last release of Talos to the current version of Talos for single-node cluster with preserve and stage.
-func upgradeSingeNodeStage() upgradeSpec {
+// upgradeStableToCurrentPreserveStage upgrades from the stable Talos release to the current version for single-node cluster with preserve and stage.
+func upgradeStableToCurrentPreserveStage() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("prsrv-stg-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
 
@@ -686,10 +687,10 @@ func (suite *UpgradeSuite) SuiteName() string {
 
 func init() {
 	allSuites = append(allSuites,
-		&UpgradeSuite{specGen: upgradeBetweenTwoLastReleases, track: 0},
-		&UpgradeSuite{specGen: upgradeStableReleaseToCurrent, track: 1},
-		&UpgradeSuite{specGen: upgradeCurrentReleaseToCurrent, track: 2},
-		&UpgradeSuite{specGen: upgradeSingeNodePreserve, track: 0},
-		&UpgradeSuite{specGen: upgradeSingeNodeStage, track: 1},
+		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
+		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
+		&UpgradeSuite{specGen: upgradeStableToCurrentPreserve, track: 0},
+		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
 	)
 }

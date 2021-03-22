@@ -190,7 +190,7 @@ const (
 	SystemKubeletPKIDir = "/system/secrets/kubelet"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.20.5"
+	DefaultKubernetesVersion = "1.21.0-beta.0"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
