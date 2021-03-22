@@ -20,7 +20,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -36,7 +35,7 @@ func (t *Trustd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	return image.Import(ctx, "/usr/images/trustd.tar", "talos/trustd")
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -59,8 +58,6 @@ func (t *Trustd) DependsOn(r runtime.Runtime) []string {
 }
 
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/trustd"
-
 	// Set the process arguments.
 	args := runner.Args{
 		ID:          t.ID(r),
@@ -90,12 +87,13 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
+			oci.WithRootFSPath("/opt/trustd"),
+			oci.WithRootFSReadonly(),
 		),
 	),
 		restart.WithType(restart.Forever),

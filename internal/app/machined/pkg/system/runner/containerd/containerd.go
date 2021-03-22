@@ -65,9 +65,13 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 		return err
 	}
 
-	image, err := c.client.GetImage(c.ctx, c.opts.ContainerImage)
-	if err != nil {
-		return err
+	var image containerd.Image
+
+	if c.opts.ContainerImage != "" {
+		image, err = c.client.GetImage(c.ctx, c.opts.ContainerImage)
+		if err != nil {
+			return err
+		}
 	}
 
 	// See if there's previous container/snapshot to clean up
@@ -223,25 +227,45 @@ func (c *containerdRunner) Stop() error {
 }
 
 func (c *containerdRunner) newContainerOpts(image containerd.Image, specOpts []oci.SpecOpts) []containerd.NewContainerOpts {
-	containerOpts := []containerd.NewContainerOpts{
-		containerd.WithImage(image),
-		containerd.WithNewSnapshot(c.args.ID, image),
-		containerd.WithNewSpec(specOpts...),
+	containerOpts := []containerd.NewContainerOpts{}
+
+	if image != nil {
+		containerOpts = append(containerOpts,
+			containerd.WithImage(image),
+			containerd.WithNewSnapshot(c.args.ID, image),
+		)
 	}
-	containerOpts = append(containerOpts, c.opts.ContainerOpts...)
+
+	containerOpts = append(containerOpts,
+		containerd.WithNewSpec(specOpts...),
+	)
+
+	containerOpts = append(containerOpts,
+		c.opts.ContainerOpts...,
+	)
 
 	return containerOpts
 }
 
 func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
-	specOpts := []oci.SpecOpts{
-		oci.WithImageConfig(image),
+	specOpts := []oci.SpecOpts{}
+
+	if image != nil {
+		specOpts = append(specOpts,
+			oci.WithImageConfig(image),
+		)
+	}
+
+	specOpts = append(specOpts,
 		oci.WithProcessArgs(c.args.ProcessArgs...),
 		oci.WithEnv(c.opts.Env),
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
-	}
-	specOpts = append(specOpts, c.opts.OCISpecOpts...)
+	)
+
+	specOpts = append(specOpts,
+		c.opts.OCISpecOpts...,
+	)
 
 	return specOpts
 }

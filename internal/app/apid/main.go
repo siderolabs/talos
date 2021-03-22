@@ -2,13 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main
+package apid
 
 import (
 	"flag"
 	"log"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
@@ -31,19 +30,15 @@ var (
 	useK8sEndpoints *bool
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	runtime.MemProfileRate = 0
-
+// Main is the entrypoint of apid.
+func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	endpoints = flag.String("endpoints", "", "the static list of IPs of the control plane nodes")
 	useK8sEndpoints = flag.Bool("use-kubernetes-endpoints", false, "use Kubernetes master node endpoints as control plane endpoints")
 
 	flag.Parse()
-}
 
-func main() {
 	if err := startup.RandSeed(); err != nil {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}

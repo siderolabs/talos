@@ -2,12 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main
+package timed
 
 import (
 	"flag"
 	"log"
-	"runtime"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
@@ -26,18 +25,15 @@ const (
 	DefaultServer = "pool.ntp.org"
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	runtime.MemProfileRate = 0
-
+// Main is the entrypoint into timed.
+//
+// New instantiates a new ntp instance against a given server
+// If no servers are specified, the default will be used.
+func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	flag.Parse()
-}
 
-// New instantiates a new ntp instance against a given server
-// If no servers are specified, the default will be used.
-func main() {
 	if err := startup.RandSeed(); err != nil {
 		log.Fatalf("startup: %v", err)
 	}

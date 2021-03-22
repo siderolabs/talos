@@ -2,13 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main
+package trustd
 
 import (
 	"flag"
 	"log"
 	stdlibnet "net"
-	"runtime"
 
 	"github.com/talos-systems/crypto/tls"
 	"github.com/talos-systems/net"
@@ -24,17 +23,14 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	runtime.MemProfileRate = 0
-
+// Main is the entrypoint into trustd.
+//
+//nolint:gocyclo
+func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	flag.Parse()
-}
 
-//nolint:gocyclo
-func main() {
 	var err error
 
 	if err = startup.RandSeed(); err != nil {

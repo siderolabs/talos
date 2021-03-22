@@ -158,7 +158,7 @@ RUN chmod +x /init
 FROM scratch AS init
 COPY --from=init-build /init /init
 
-# The machined target builds the machined image.
+# The machined target builds the machined binary.
 
 FROM base AS machined-build
 ARG SHA
@@ -176,9 +176,10 @@ RUN chmod +x /machined
 FROM scratch AS machined
 COPY --from=machined-build /machined /machined
 
-# The timed target builds the timed image.
+# The timed target builds the timed binary.
 
 FROM base AS timed-build
+
 ARG SHA
 ARG TAG
 ARG PKGS
@@ -188,15 +189,7 @@ WORKDIR /src/internal/app/timed
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /timed
 RUN chmod +x /timed
 
-FROM base AS timed-image
-ARG TAG
-ARG USERNAME
-COPY --from=timed-build /timed /scratch/timed
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./timed /timed\nENTRYPOINT [\"/timed\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/timed:${TAG} --output type=docker,dest=/timed.tar --no-console  .
-
-# The apid target builds the api image.
+# The apid target builds the apid binary.
 
 FROM base AS apid-build
 ARG SHA
@@ -208,15 +201,7 @@ WORKDIR /src/internal/app/apid
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /apid
 RUN chmod +x /apid
 
-FROM base AS apid-image
-ARG TAG
-ARG USERNAME
-COPY --from=apid-build /apid /scratch/apid
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./apid /apid\nENTRYPOINT [\"/apid\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/apid:${TAG} --output type=docker,dest=/apid.tar --no-console  .
-
-# The trustd target builds the trustd image.
+# The trustd target builds the trustd binary.
 
 FROM base AS trustd-build
 ARG SHA
@@ -228,15 +213,7 @@ WORKDIR /src/internal/app/trustd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /trustd
 RUN chmod +x /trustd
 
-FROM base AS trustd-image
-ARG TAG
-ARG USERNAME
-COPY --from=trustd-build /trustd /scratch/trustd
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./trustd /trustd\nENTRYPOINT [\"/trustd\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/trustd:${TAG} --output type=docker,dest=/trustd.tar --no-console  .
-
-# The routerd target builds the routerd image.
+# The routerd target builds the routerd binary.
 
 FROM base AS routerd-build
 ARG SHA
@@ -247,15 +224,6 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/routerd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /routerd
 RUN chmod +x /routerd
-
-FROM base AS routerd-image
-ARG TAG
-ARG USERNAME
-COPY --from=routerd-build /routerd /scratch/routerd
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./routerd /routerd\nENTRYPOINT [\"/routerd\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/routerd:${TAG} --output type=docker,dest=/routerd.tar --no-console  .
-
 
 # The talosctl targets build the talosctl binaries.
 
@@ -371,10 +339,6 @@ COPY --from=pkg-util-linux /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kernel /lib/modules /rootfs/lib/modules
 COPY --from=machined /machined /rootfs/sbin/init
-COPY --from=apid-image /apid.tar /rootfs/usr/images/
-COPY --from=timed-image /timed.tar /rootfs/usr/images/
-COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
-COPY --from=routerd-image /routerd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -389,6 +353,11 @@ RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
+RUN mkdir -pv /rootfs/opt/{apid,routerd,timed,trustd}
+RUN ln /rootfs/sbin/init /rootfs/opt/apid/apid
+RUN ln /rootfs/sbin/init /rootfs/opt/routerd/routerd
+RUN ln /rootfs/sbin/init /rootfs/opt/timed/timed
+RUN ln /rootfs/sbin/init /rootfs/opt/trustd/trustd
 
 FROM rootfs-base AS rootfs-squashfs
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
