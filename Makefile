@@ -19,13 +19,13 @@ OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
-KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.20.5/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.21.0-beta.0/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 CLUSTERCTL_VERSION ?= 0.3.14
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 SONOBUOY_VERSION ?= 0.50.0
 SONOBUOY_URL ?= https://github.com/vmware-tanzu/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
-RELEASES ?= v0.8.4 v0.9.0-alpha.5
+RELEASES ?= v0.8.5 v0.9.0
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 

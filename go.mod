@@ -84,7 +84,6 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/pkg/v3 v3.5.0-alpha.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b
@@ -96,11 +95,11 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	honnef.co/go/tools v0.1.2 // indirect
-	k8s.io/api v0.20.5
-	k8s.io/apimachinery v0.20.5
-	k8s.io/apiserver v0.20.5 // indirect
-	k8s.io/client-go v0.20.5
-	k8s.io/cri-api v0.20.5
-	k8s.io/kubectl v0.20.5
-	k8s.io/kubelet v0.20.5
+	k8s.io/api v0.21.0-beta.0
+	k8s.io/apimachinery v0.21.0-beta.0
+	k8s.io/apiserver v0.21.0-beta.0 // indirect
+	k8s.io/client-go v0.21.0-beta.0
+	k8s.io/cri-api v0.21.0-beta.0
+	k8s.io/kubectl v0.21.0-beta.0
+	k8s.io/kubelet v0.21.0-beta.0
 )
