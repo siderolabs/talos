@@ -24,11 +24,15 @@ import (
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/internal/app/apid"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/app/routerd"
+	"github.com/talos-systems/talos/internal/app/timed"
+	"github.com/talos-systems/talos/internal/app/trustd"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -260,6 +264,26 @@ func run() error {
 }
 
 func main() {
+	switch os.Args[0] {
+	case "/apid":
+		apid.Main()
+
+		return
+	case "/routerd":
+		routerd.Main()
+
+		return
+	case "/timed":
+		timed.Main()
+
+		return
+	case "/trustd":
+		trustd.Main()
+
+		return
+	default:
+	}
+
 	// Setup panic handler.
 	defer recovery()
 

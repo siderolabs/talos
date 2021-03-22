@@ -27,7 +27,7 @@ func (suite *ContainersSuite) SuiteName() string {
 func (suite *ContainersSuite) TestContainerd() {
 	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`talos/routerd`)),
+		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 	)
 }
 

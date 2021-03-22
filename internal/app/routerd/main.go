@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main
+package routerd
 
 import (
 	"log"
-	"runtime"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
@@ -18,12 +17,8 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	runtime.MemProfileRate = 0
-}
-
-func main() {
+// Main is the entrypoint into routerd.
+func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	if err := startup.RandSeed(); err != nil {

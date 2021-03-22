@@ -26,7 +26,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
@@ -46,7 +45,7 @@ func (n *Timed) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (n *Timed) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	return image.Import(ctx, "/usr/images/timed.tar", "talos/timed")
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -69,8 +68,6 @@ func (n *Timed) DependsOn(r runtime.Runtime) []string {
 }
 
 func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/timed"
-
 	args := runner.Args{
 		ID:          n.ID(r),
 		ProcessArgs: []string{"/timed"},
@@ -104,7 +101,6 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*32)),
@@ -114,6 +110,8 @@ func (n *Timed) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 			oci.WithAllDevicesAllowed,
+			oci.WithRootFSPath("/opt/timed"),
+			oci.WithRootFSReadonly(),
 		),
 	),
 		restart.WithType(restart.Forever),

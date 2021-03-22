@@ -368,52 +368,6 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 	<-done
 }
 
-func (suite *ContainerdSuite) TestImportSuccess() {
-	reqs := []*containerdrunner.ImportRequest{
-		{
-			Path: "/usr/images/timed.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/timed"),
-			},
-		},
-		{
-			Path: "/usr/images/trustd.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/trustd"),
-			},
-		},
-	}
-	suite.Assert().NoError(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
-
-	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
-
-	for _, imageName := range []string{"testtalos/timed", "testtalos/trustd"} {
-		image, err := suite.client.ImageService().Get(ctx, imageName)
-		suite.Require().NoError(err)
-		suite.Require().Equal(imageName, image.Name)
-	}
-}
-
-func (suite *ContainerdSuite) TestImportFail() {
-	reqs := []*containerdrunner.ImportRequest{
-		{
-			Path: "/usr/images/timed.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/timed2"),
-			},
-		},
-		{
-			Path: "/usr/images/nothere.tar",
-			Options: []containerd.ImportOpt{
-				containerd.WithIndexName("testtalos/nothere"),
-			},
-		},
-	}
-	suite.Assert().Error(containerdrunner.NewImporter(
-		suite.containerdNamespace, containerdrunner.WithContainerdAddress(suite.containerdAddress)).Import(context.Background(), reqs...))
-}
-
 func (suite *ContainerdSuite) TestContainerStdin() {
 	stdin := bytes.Repeat([]byte{0xde, 0xad, 0xbe, 0xef}, 2000)
 

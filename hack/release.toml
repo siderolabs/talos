@@ -22,6 +22,12 @@ preface = """\
 * added support for Rock Pi 4.
 """
 
+    [notes.optimize]
+        title = "Optmizations"
+        descriptions = """\
+* Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -26,7 +26,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/copy"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -52,7 +51,7 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		o.syncKubeletPKI()
 	}
 
-	return image.Import(ctx, "/usr/images/apid.tar", "talos/apid")
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -86,8 +85,6 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 
 // Runner implements the Service interface.
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/apid"
-
 	// Ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
 		return nil, err
@@ -153,11 +150,12 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
+			oci.WithRootFSPath("/opt/apid"),
+			oci.WithRootFSReadonly(),
 		),
 	),
 		restart.WithType(restart.Forever),

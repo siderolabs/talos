@@ -110,7 +110,9 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 
 	img, err := cntr.Image(i.nsctx)
 	if err != nil {
-		return nil, fmt.Errorf("error getting container image for %q: %w", cntr.ID(), err)
+		if !errdefs.IsNotFound(err) {
+			return nil, fmt.Errorf("error getting container image for %q: %w", cntr.ID(), err)
+		}
 	}
 
 	task, err := cntr.Task(i.nsctx, nil)
@@ -133,7 +135,11 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 	cp.Name = cntr.ID()
 	cp.Display = cntr.ID()
 	cp.RestartCount = "0"
-	cp.Digest = img.Target().Digest.String()
+
+	if img != nil {
+		cp.Digest = img.Target().Digest.String()
+	}
+
 	cp.Image = cp.Digest
 
 	if imageList != nil {

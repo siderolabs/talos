@@ -22,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -39,7 +38,7 @@ func (o *Routerd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *Routerd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	return image.Import(ctx, "/usr/images/routerd.tar", "talos/routerd")
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -58,8 +57,6 @@ func (o *Routerd) DependsOn(r runtime.Runtime) []string {
 }
 
 func (o *Routerd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/routerd"
-
 	// Set the process arguments.
 	args := runner.Args{
 		ID: o.ID(r),
@@ -101,10 +98,11 @@ func (o *Routerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithContainerImage(image),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithMounts(mounts),
+			oci.WithRootFSPath("/opt/routerd"),
+			oci.WithRootFSReadonly(),
 		),
 	),
 		restart.WithType(restart.Forever),
