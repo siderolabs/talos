@@ -236,26 +236,6 @@ WORKDIR /scratch
 RUN printf "FROM scratch\nCOPY ./trustd /trustd\nENTRYPOINT [\"/trustd\"]" > Dockerfile
 RUN --security=insecure img build --tag ${USERNAME}/trustd:${TAG} --output type=docker,dest=/trustd.tar --no-console  .
 
-# The networkd target builds the networkd image.
-
-FROM base AS networkd-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/networkd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /networkd
-RUN chmod +x /networkd
-
-FROM base AS networkd-image
-ARG TAG
-ARG USERNAME
-COPY --from=networkd-build /networkd /scratch/networkd
-WORKDIR /scratch
-RUN printf "FROM scratch\nCOPY ./networkd /networkd\nENTRYPOINT [\"/networkd\"]" > Dockerfile
-RUN --security=insecure img build --tag ${USERNAME}/networkd:${TAG} --output type=docker,dest=/networkd.tar --no-console  .
-
 # The routerd target builds the routerd image.
 
 FROM base AS routerd-build
@@ -394,7 +374,6 @@ COPY --from=machined /machined /rootfs/sbin/init
 COPY --from=apid-image /apid.tar /rootfs/usr/images/
 COPY --from=timed-image /timed.tar /rootfs/usr/images/
 COPY --from=trustd-image /trustd.tar /rootfs/usr/images/
-COPY --from=networkd-image /networkd.tar /rootfs/usr/images/
 COPY --from=routerd-image /routerd.tar /rootfs/usr/images/
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.

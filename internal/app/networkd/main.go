@@ -2,66 +2,37 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main
+package networkd
 
 import (
 	"context"
+	"io"
 	"log"
-	"os"
-	"os/signal"
-	"runtime"
-	"syscall"
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/reg"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	runtime.MemProfileRate = 0
+// Main is the entrypoint into networkd.
+func Main(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error {
+	logger := log.New(logOutput, "", log.Lshortfile|log.Ldate|log.Lmicroseconds|log.Ltime)
+
+	defer logger.Println("networkd stopped")
+
+	return run(ctx, r, logger)
 }
 
-func main() {
-	logger := log.New(os.Stderr, "", log.Lshortfile|log.Ldate|log.Lmicroseconds|log.Ltime)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		defer cancel()
-
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
-
-		select {
-		case <-sigCh:
-		case <-ctx.Done():
-		}
-	}()
-
-	if err := run(ctx, logger); err != nil {
-		logger.Fatal(err)
-	}
-
-	logger.Println("networkd stopped")
-}
-
-func run(ctx context.Context, logger *log.Logger) error {
+func run(ctx context.Context, r runtime.Runtime, logger *log.Logger) error {
 	var eg errgroup.Group
-
-	config, err := configloader.NewFromStdin()
-	if err != nil {
-		return err
-	}
 
 	logger.Println("starting initial network configuration")
 
-	nwd, err := networkd.New(logger, config)
+	nwd, err := networkd.New(logger, r.Config())
 	if err != nil {
 		return err
 	}
@@ -85,7 +56,7 @@ func run(ctx context.Context, logger *log.Logger) error {
 
 	server := factory.NewServer(
 		registrator,
-		factory.WithDefaultLog(),
+		factory.WithLog("", logger.Writer()),
 	)
 
 	listener, err := factory.NewListener(

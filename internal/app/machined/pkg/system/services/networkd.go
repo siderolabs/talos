@@ -6,32 +6,26 @@
 package services
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/containerd/containerd/oci"
 	"github.com/golang/protobuf/ptypes/empty"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/syndtr/gocapability/capability"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/internal/app/networkd"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -46,7 +40,7 @@ func (n *Networkd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (n *Networkd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	return image.Import(ctx, "/usr/images/networkd.tar", "talos/networkd")
+	return os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), 0o750)
 }
 
 // PostFunc implements the Service interface.
@@ -61,89 +55,15 @@ func (n *Networkd) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (n *Networkd) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd"}
+	return nil
 }
 
 func (n *Networkd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	image := "talos/networkd"
-
-	args := runner.Args{
-		ID: n.ID(r),
-		ProcessArgs: []string{
-			"/networkd",
-		},
-	}
-
-	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.NetworkSocketPath), 0o750); err != nil {
-		return nil, err
-	}
-
-	mounts := []specs.Mount{
-		{Type: "bind", Destination: "/etc/resolv.conf", Source: "/etc/resolv.conf", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: "/etc/hosts", Source: "/etc/hosts", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: filepath.Dir(constants.NetworkSocketPath), Source: filepath.Dir(constants.NetworkSocketPath), Options: []string{"rbind", "rw"}},
-	}
-
-	// etcd is used for VIP controller on control plane nodes
-	if r.Config().Machine().Type() != machine.TypeJoin {
-		// Ensure etcd PKI dir exists
-		if err := os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
-			return nil, err
-		}
-
-		// Fix up permissions, as after upgrade with preserve EtcdPKIPath might retain old 0o644 permissions
-		if err := os.Chmod(constants.EtcdPKIPath, 0o700); err != nil {
-			return nil, err
-		}
-
-		mounts = append(mounts,
-			specs.Mount{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "ro"}},
-		)
-	}
-
-	if r.State().Platform().Mode() == runtime.ModeContainer {
-		mounts = append(mounts,
-			specs.Mount{Type: "bind", Destination: "/etc/hostname", Source: "/etc/hostname", Options: []string{"rbind", "ro"}},
-		)
-	}
-
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
-
-	// This is really only here to support container runtime
-	if p, ok := os.LookupEnv("PLATFORM"); ok {
-		env = append(env, fmt.Sprintf("%s=%s", "PLATFORM", p))
-	}
-
-	b, err := r.Config().Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	stdin := bytes.NewReader(b)
-
-	return restart.New(containerd.NewRunner(
-		r.Config().Debug(),
-		&args,
-		runner.WithStdin(stdin),
+	return restart.New(goroutine.NewRunner(
+		r,
+		"networkd",
+		networkd.Main,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithContainerImage(image),
-		runner.WithEnv(env),
-		runner.WithOCISpecOpts(
-			containerd.WithMemoryLimit(int64(1000000*32)),
-			oci.WithCapabilities([]string{
-				strings.ToUpper("CAP_" + capability.CAP_NET_ADMIN.String()),
-				strings.ToUpper("CAP_" + capability.CAP_SYS_ADMIN.String()),
-				strings.ToUpper("CAP_" + capability.CAP_NET_RAW.String()),
-				strings.ToUpper("CAP_" + capability.CAP_NET_BIND_SERVICE.String()),
-			}),
-			oci.WithHostNamespace(specs.NetworkNamespace),
-			oci.WithMounts(mounts),
-		),
 	),
 		restart.WithType(restart.Forever),
 	), nil
