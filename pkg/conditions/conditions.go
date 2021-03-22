@@ -9,6 +9,9 @@ import (
 	"fmt"
 )
 
+// OK is returned by the String method of the passed Condition.
+const OK = "OK"
+
 // Condition is a object which Wait()s for some condition to become true.
 //
 // Condition can describe itself via String() method.

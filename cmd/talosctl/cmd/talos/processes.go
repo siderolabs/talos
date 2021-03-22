@@ -169,7 +169,6 @@ var cpu = func(p1, p2 *machineapi.ProcessInfo) bool {
 	return p1.CpuTime > p2.CpuTime
 }
 
-//nolint:gocyclo
 func processesOutput(ctx context.Context, c *client.Client) (output string, err error) {
 	var remotePeer peer.Peer
 
@@ -179,7 +178,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		// up display
 		// TODO: Update server side code to not throw an error when process
 		// no longer exists ( /proc/1234/comm no such file or directory )
-		return output, nil
+		return output, nil //nolint:nilerr
 	}
 
 	defaultNode := client.AddrFromPeer(&remotePeer)

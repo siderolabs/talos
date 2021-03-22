@@ -55,7 +55,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 // K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
@@ -229,7 +229,7 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 	return fmt.Errorf("some nodes are not schedulable: %v", notSchedulableNodes)
 }
 
-// K8sPodReadyAssertion checks whether all the pods are Ready.
+// K8sPodReadyAssertion checks whether all the pods matching label selector are Ready, and there is at least one.
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
@@ -244,7 +244,7 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 	}
 
 	if len(pods.Items) == 0 {
-		return fmt.Errorf("no pods found for namespace %q and label %q", namespace, labelSelector)
+		return fmt.Errorf("no pods found for namespace %q and label selector %q", namespace, labelSelector)
 	}
 
 	var notReadyPods []string
@@ -272,4 +272,38 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 	}
 
 	return fmt.Errorf("some pods are not ready: %v", notReadyPods)
+}
+
+// DaemonSetPresent returns true if there is at least one DaemonSet matching given label selector.
+func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, error) {
+	clientset, err := cluster.K8sClient(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	dss, err := clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return len(dss.Items) > 0, nil
+}
+
+// ReplicaSetPresent returns true if there is at least one ReplicaSet matching given label selector.
+func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, error) {
+	clientset, err := cluster.K8sClient(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	rss, err := clientset.AppsV1().ReplicaSets(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return len(rss.Items) > 0, nil
 }

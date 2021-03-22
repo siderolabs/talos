@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
@@ -19,8 +19,11 @@ import (
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// timeapi.Init interfaces.
+// healthapi.HealthServer and timeapi.TimeServiceServer interfaces.
 type Registrator struct {
+	healthapi.UnimplementedHealthServer
+	timeapi.UnimplementedTimeServiceServer
+
 	Timed *ntp.NTP
 }
 
@@ -32,6 +35,8 @@ func NewRegistrator(n *ntp.NTP) *Registrator {
 }
 
 // Register implements the factory.Registrator interface.
+//
+//nolint:interfacer
 func (r *Registrator) Register(s *grpc.Server) {
 	timeapi.RegisterTimeServiceServer(s, r)
 	healthapi.RegisterHealthServer(s, r)
@@ -67,29 +72,15 @@ func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (r
 }
 
 func genProtobufTimeResponse(local, remote time.Time, server string) (*timeapi.TimeResponse, error) {
-	resp := &timeapi.TimeResponse{}
-
-	localpbts, err := ptypes.TimestampProto(local)
-	if err != nil {
-		return resp, err
-	}
-
-	remotepbts, err := ptypes.TimestampProto(remote)
-	if err != nil {
-		return resp, err
-	}
-
-	resp = &timeapi.TimeResponse{
+	return &timeapi.TimeResponse{
 		Messages: []*timeapi.Time{
 			{
 				Server:     server,
-				Localtime:  localpbts,
-				Remotetime: remotepbts,
+				Localtime:  timestamppb.New(local),
+				Remotetime: timestamppb.New(remote),
 			},
 		},
-	}
-
-	return resp, nil
+	}, nil
 }
 
 // Check implements the Health api and provides visibilty into the state of timed.

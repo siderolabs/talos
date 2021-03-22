@@ -41,8 +41,9 @@ import (
 
 // ConvertOptions are options for convert tasks.
 type ConvertOptions struct {
-	ControlPlaneEndpoint string
-	ForceYes             bool
+	ControlPlaneEndpoint     string
+	ForceYes                 bool
+	OnlyRemoveInitializedKey bool
 
 	masterNodes []string
 }
@@ -55,7 +56,7 @@ type ConvertProvider interface {
 
 // ConvertToStaticPods the self-hosted Kubernetes control plane to Talos-managed static pods-based control plane.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options ConvertOptions) error {
 	var err error
 
@@ -71,6 +72,11 @@ func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options C
 
 	if len(options.masterNodes) == 0 {
 		return fmt.Errorf("no master nodes discovered")
+	}
+
+	// only used in manual conversion process
+	if options.OnlyRemoveInitializedKey {
+		return removeInitializedKey(ctx, cluster, options.masterNodes[0])
 	}
 
 	fmt.Printf("discovered master nodes %q\n", options.masterNodes)
@@ -95,7 +101,8 @@ func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options C
 		fmt.Printf("\ttalosctl -n <master node IP> get %s\n", k8s.StaticPodType)
 		fmt.Printf("\ttalosctl -n <master node IP> get %s\n", k8s.ManifestType)
 		fmt.Println()
-		fmt.Println("bootstrap manifests will only be applied for missing resources, existing resources will not be updated")
+		fmt.Println("in order to remove self-hosted control plane, pod-checkpointer component needs to be disabled")
+		fmt.Println("once pod-checkpointer is disabled, the cluster shouldn't be rebooted until the entire conversion process is complete")
 
 		if !options.ForceYes {
 			var yes bool

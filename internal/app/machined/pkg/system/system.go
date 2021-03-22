@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 )
 
+// singleton the system services API interface.
 type singleton struct {
 	runtime runtime.Runtime
 
@@ -42,7 +43,7 @@ var (
 )
 
 // Services returns the instance of the system services API.
-//nolint:golint
+//nolint:revive,golint
 func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {
 		instance = &singleton{

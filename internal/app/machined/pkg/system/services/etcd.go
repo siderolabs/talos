@@ -54,8 +54,6 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
-//
-//nolint:gocyclo
 func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
 		return err
@@ -206,11 +204,7 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, certAndKey.Crt, 0o500); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(constants.KubernetesEtcdPeerCert, certAndKey.Crt, 0o500)
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {

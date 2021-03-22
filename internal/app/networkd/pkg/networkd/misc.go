@@ -24,7 +24,7 @@ import (
 // we need to.
 //
 //nolint:gocyclo
-func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err error) {
+func filterInterfaces(logger *log.Logger, interfaces []net.Interface) (filtered []net.Interface, err error) {
 	var conn *rtnetlink.Conn
 
 	for _, iface := range interfaces {
@@ -52,15 +52,15 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 	for _, iface := range filtered {
 		link, err := conn.Link.Get(uint32(iface.Index))
 		if err != nil {
-			log.Printf("error getting link %q", iface.Name)
+			logger.Printf("error getting link %q", iface.Name)
 
 			continue
 		}
 
 		if link.Flags&unix.IFF_UP == unix.IFF_UP && !(link.Flags&unix.IFF_RUNNING == unix.IFF_RUNNING) {
-			log.Printf("no carrier for link %q", iface.Name)
+			logger.Printf("no carrier for link %q", iface.Name)
 		} else {
-			log.Printf("link %q has carrier signal", iface.Name)
+			logger.Printf("link %q has carrier signal", iface.Name)
 			filtered[n] = iface
 			n++
 		}
@@ -72,7 +72,7 @@ func filterInterfaces(interfaces []net.Interface) (filtered []net.Interface, err
 }
 
 // writeResolvConf generates a /etc/resolv.conf with the specified nameservers.
-func writeResolvConf(resolvers []string) (err error) {
+func writeResolvConf(logger *log.Logger, resolvers []string) (err error) {
 	var resolvconf strings.Builder
 
 	for idx, resolver := range resolvers {
@@ -82,7 +82,7 @@ func writeResolvConf(resolvers []string) (err error) {
 		}
 
 		if _, err = resolvconf.WriteString(fmt.Sprintf("nameserver %s\n", resolver)); err != nil {
-			log.Println("failed to add some resolver to resolvconf:", resolver)
+			logger.Println("failed to add some resolver to resolvconf:", resolver)
 
 			return err
 		}
@@ -96,7 +96,7 @@ func writeResolvConf(resolvers []string) (err error) {
 		}
 	}
 
-	log.Println("writing resolvconf")
+	logger.Println("writing resolvconf")
 
 	return ioutil.WriteFile("/etc/resolv.conf", []byte(resolvconf.String()), 0o644)
 }

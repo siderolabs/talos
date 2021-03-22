@@ -1,11 +1,14 @@
 module github.com/talos-systems/talos
 
-go 1.13
+go 1.16
 
 replace (
 	github.com/Azure/go-autorest v10.8.1+incompatible => github.com/Azure/go-autorest/autorest v0.9.1
 	github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
+	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
+	// which are then encoded as a valid YAML blocks with proper indentiation
+	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 )
 
 require (
@@ -29,7 +32,6 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
-	github.com/elazarl/goproxy/ext v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/emicklei/dot v0.15.0
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
@@ -40,12 +42,12 @@ require (
 	github.com/gdamore/tcell/v2 v2.2.0
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/golang/protobuf v1.5.1
+	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-getter v1.5.2
-	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/insomniacslk/dhcp v0.0.0-20210120172423-cc9239ac6294
 	github.com/jsimonetti/rtnetlink v0.0.0-20210226120601-1b79e63a70a0
 	github.com/mattn/go-isatty v0.0.12
@@ -74,7 +76,7 @@ require (
 	github.com/talos-systems/go-smbios v0.0.0-20201228201610-fb425d4727e6
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b
+	github.com/talos-systems/os-runtime v0.0.0-20210315190223-7b3d14457439
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20210302191918-8ffb55943c71
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.20.0
@@ -90,15 +92,15 @@ require (
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20200609130330-bd2cb7843e1b
 	google.golang.org/grpc v1.36.0
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	honnef.co/go/tools v0.1.2 // indirect
-	k8s.io/api v0.20.4
-	k8s.io/apimachinery v0.20.4
-	k8s.io/apiserver v0.20.4 // indirect
-	k8s.io/client-go v0.20.4
-	k8s.io/cri-api v0.20.4
-	k8s.io/kubectl v0.20.4
-	k8s.io/kubelet v0.20.4
+	k8s.io/api v0.20.5
+	k8s.io/apimachinery v0.20.5
+	k8s.io/apiserver v0.20.5 // indirect
+	k8s.io/client-go v0.20.5
+	k8s.io/cri-api v0.20.5
+	k8s.io/kubectl v0.20.5
+	k8s.io/kubelet v0.20.5
 )

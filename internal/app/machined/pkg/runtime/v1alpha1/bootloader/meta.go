@@ -100,8 +100,6 @@ func (m *Meta) Write() error {
 }
 
 // Revert reverts the default bootloader label to the previous installation.
-//
-//nolint:gocyclo
 func (m *Meta) Revert() (err error) {
 	label, ok := m.LegacyADV.ReadTag(adv.Upgrade)
 	if !ok {
@@ -111,11 +109,7 @@ func (m *Meta) Revert() (err error) {
 	if label == "" {
 		m.LegacyADV.DeleteTag(adv.Upgrade)
 
-		if err = m.Write(); err != nil {
-			return err
-		}
-
-		return nil
+		return m.Write()
 	}
 
 	g := &grub.Grub{}
@@ -126,9 +120,5 @@ func (m *Meta) Revert() (err error) {
 
 	m.LegacyADV.DeleteTag(adv.Upgrade)
 
-	if err = m.Write(); err != nil {
-		return err
-	}
-
-	return nil
+	return m.Write()
 }

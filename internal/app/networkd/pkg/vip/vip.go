@@ -25,7 +25,7 @@ const campaignRetryInterval = time.Second
 // A Controller provides a control interface for Virtual IP addressing.
 type Controller interface {
 	// Start activates the Virtual IP address controller.
-	Start(ctx context.Context, eg *errgroup.Group) error
+	Start(ctx context.Context, logger *log.Logger, eg *errgroup.Group) error
 }
 
 type vipController struct {
@@ -52,14 +52,14 @@ func New(ip, iface string) (Controller, error) {
 }
 
 // Start implements the Controller interface.
-func (c *vipController) Start(ctx context.Context, eg *errgroup.Group) error {
+func (c *vipController) Start(ctx context.Context, logger *log.Logger, eg *errgroup.Group) error {
 	netController, err := vip.NewConfig(c.ip.String(), c.iface.Name, false)
 	if err != nil {
 		return err
 	}
 
 	eg.Go(func() error {
-		c.maintain(ctx, netController)
+		c.maintain(ctx, logger, netController)
 
 		return nil
 	})
@@ -71,10 +71,10 @@ func (c *vipController) etcdElectionKey() string {
 	return fmt.Sprintf("%s:vip:election:%s", constants.EtcdRootTalosKey, c.ip.String())
 }
 
-func (c *vipController) maintain(ctx context.Context, netController vip.Network) {
+func (c *vipController) maintain(ctx context.Context, logger *log.Logger, netController vip.Network) {
 	for ctx.Err() == nil {
-		if err := c.campaign(ctx, netController); err != nil {
-			log.Printf("campaign failure: %s", err)
+		if err := c.campaign(ctx, logger, netController); err != nil {
+			logger.Printf("campaign failure: %s", err)
 
 			time.Sleep(campaignRetryInterval)
 
@@ -83,8 +83,8 @@ func (c *vipController) maintain(ctx context.Context, netController vip.Network)
 	}
 }
 
-//nolint:gocyclo
-func (c *vipController) campaign(ctx context.Context, netController vip.Network) error {
+//nolint:gocyclo,cyclop
+func (c *vipController) campaign(ctx context.Context, logger *log.Logger, netController vip.Network) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -114,7 +114,7 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 			return fmt.Errorf("failed getting current leader: %w", err)
 		}
 	} else if string(node.Kvs[0].Value) == hostname {
-		log.Printf("vip: resigning from previous election")
+		logger.Printf("vip: resigning from previous election")
 
 		// we are still leader from the previous election, attempt to resign to force new election
 		resumedElection := concurrency.ResumeElection(sess, c.etcdElectionKey(), string(node.Kvs[0].Key), node.Kvs[0].CreateRevision)
@@ -136,7 +136,7 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 			return fmt.Errorf("failed to conduct campaign: %w", err)
 		}
 	case <-sess.Done():
-		log.Printf("vip: session closed")
+		logger.Printf("vip: session closed")
 	}
 
 	defer func() {
@@ -152,10 +152,10 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 	}
 
 	defer func() {
-		log.Printf("vip: removing shared IP %q on interface %q", c.ip.String(), c.iface.Name)
+		logger.Printf("vip: removing shared IP %q on interface %q", c.ip.String(), c.iface.Name)
 
 		if err = netController.DeleteIP(); err != nil {
-			log.Printf("vip: error removing shared IP: %s", err)
+			logger.Printf("vip: error removing shared IP: %s", err)
 		}
 	}()
 
@@ -167,7 +167,7 @@ func (c *vipController) campaign(ctx context.Context, netController vip.Network)
 		}
 	}
 
-	log.Printf("vip: enabled shared IP %q on interface %q", c.ip.String(), c.iface.Name)
+	logger.Printf("vip: enabled shared IP %q on interface %q", c.ip.String(), c.iface.Name)
 
 	observe := election.Observe(ctx)
 
@@ -175,7 +175,7 @@ observeLoop:
 	for {
 		select {
 		case <-sess.Done():
-			log.Printf("vip: session closed")
+			logger.Printf("vip: session closed")
 
 			break observeLoop
 		case <-ctx.Done():
@@ -186,7 +186,7 @@ observeLoop:
 			}
 
 			if string(resp.Kvs[0].Value) != hostname {
-				log.Printf("vip: detected new leader %q", string(resp.Kvs[0].Value))
+				logger.Printf("vip: detected new leader %q", string(resp.Kvs[0].Value))
 
 				break observeLoop
 			}

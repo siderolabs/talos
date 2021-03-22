@@ -194,14 +194,14 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "10-kube-proxy", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	manifest := r.(*k8s.Manifest) //nolint:errcheck
+	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
 	suite.Assert().Len(manifest.Objects(), 3)
 
 	suite.Assert().Equal("DaemonSet", manifest.Objects()[0].GetKind())
 
 	ds := manifest.Objects()[0].Object
 	containerSpec := ds["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0]
-	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck
+	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("--bind-address=\"::\"", args[len(args)-1])
 }

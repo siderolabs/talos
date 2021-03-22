@@ -72,7 +72,6 @@ func WithErrorOnEmptyResponse(e error) Option {
 }
 
 // Download downloads a config.
-//nolint:gocyclo
 func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {

@@ -14,10 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
-	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -140,15 +138,16 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 
 	ephemeralTarget := EphemeralTarget(opts.Disk, NoFilesystem)
 
-	if opts.Force {
-		ephemeralTarget.Force = true
-	} else {
-		ephemeralTarget.Force = false
-		ephemeralTarget.Skip = true
-		stateTarget.Size = 0 // expand previous partition to cover whatever space is available
+	targets := []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget}
+
+	if !opts.Force {
+		for _, target := range targets {
+			target.Force = false
+			target.Skip = true
+		}
 	}
 
-	for _, target := range []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget} {
+	for _, target := range targets {
 		if target == nil {
 			continue
 		}
@@ -186,7 +185,7 @@ func (m *Manifest) checkMounts(device Device) error {
 			f, err = os.Open(path)
 			if err != nil {
 				// ignore error in case process got removed
-				return nil
+				return nil //nolint:nilerr
 			}
 
 			defer f.Close() //nolint:errcheck
@@ -213,7 +212,7 @@ func (m *Manifest) checkMounts(device Device) error {
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error) {
 	if err = m.checkMounts(device); err != nil {
 		return err
@@ -365,11 +364,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		}
 	}
 
-	if err = m.restoreContents(targets); err != nil {
-		return err
-	}
-
-	return nil
+	return m.restoreContents(targets)
 }
 
 //nolint:gocyclo
@@ -377,6 +372,10 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 	anyPreserveContents := false
 
 	for _, target := range targets {
+		if target.Skip {
+			continue
+		}
+
 		if target.PreserveContents {
 			anyPreserveContents = true
 
@@ -409,6 +408,10 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 	}
 
 	for _, target := range targets {
+		if target.Skip {
+			continue
+		}
+
 		if !target.PreserveContents {
 			continue
 		}
@@ -503,46 +506,4 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 	log.Printf("wiped %q with %q", device.Device, method)
 
 	return bd.Close()
-}
-
-// Partition creates a new partition on the specified device.
-//nolint:dupl,gocyclo
-func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
-	if t.Skip {
-		part := pt.Partitions().FindByName(t.Label)
-		if part != nil {
-			log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
-		}
-
-		return nil
-	}
-
-	log.Printf("partitioning %s - %s %q\n", t.Device, t.Label, humanize.Bytes(t.Size))
-
-	opts := []gpt.PartitionOption{
-		gpt.WithPartitionType(t.PartitionType),
-		gpt.WithPartitionName(t.Label),
-	}
-
-	if t.Size == 0 {
-		opts = append(opts, gpt.WithMaximumSize(true))
-	}
-
-	if t.LegacyBIOSBootable {
-		opts = append(opts, gpt.WithLegacyBIOSBootableAttribute(true))
-	}
-
-	part, err := pt.InsertAt(pos, t.Size, opts...)
-	if err != nil {
-		return err
-	}
-
-	t.PartitionName, err = util.PartPath(t.Device, int(part.Number))
-	if err != nil {
-		return err
-	}
-
-	log.Printf("created %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
-
-	return nil
 }

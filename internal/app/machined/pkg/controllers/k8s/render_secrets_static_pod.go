@@ -40,7 +40,7 @@ func (ctrl *RenderSecretsStaticPodController) ManagedResources() (resource.Names
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{

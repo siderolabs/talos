@@ -47,8 +47,6 @@ func NewReader(readCtx context.Context, source *os.File) *Reader {
 }
 
 // Read implements io.Reader interface.
-//
-//nolint:gocyclo
 func (r *Reader) Read(p []byte) (n int, err error) {
 	r.mu.Lock()
 	if r.closed {

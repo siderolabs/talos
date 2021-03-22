@@ -48,7 +48,7 @@ ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.32.2
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.38.0
 ARG GOFUMPT_VERSION
 RUN cd $(mktemp -d) \
     && go mod init tmp \
@@ -79,25 +79,25 @@ FROM build AS generate-build
 # Common needs to be at or near the top to satisfy the subsequent imports
 COPY ./api/vendor/ /api/vendor/
 COPY ./api/common/common.proto /api/common/common.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api common/common.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api common/common.proto
 COPY ./api/health/health.proto /api/health/health.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api health/health.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api health/health.proto
 COPY ./api/security/security.proto /api/security/security.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api security/security.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api security/security.proto
 COPY ./api/storage/storage.proto /api/storage/storage.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api storage/storage.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api storage/storage.proto
 COPY ./api/machine/machine.proto /api/machine/machine.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api machine/machine.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api machine/machine.proto
 COPY ./api/time/time.proto /api/time/time.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api time/time.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api time/time.proto
 COPY ./api/network/network.proto /api/network/network.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api network/network.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api network/network.proto
 COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api cluster/cluster.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api cluster/cluster.proto
 COPY ./api/resource/resource.proto /api/resource/resource.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api resource/resource.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api resource/resource.proto
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=plugins=grpc,paths=source_relative:/api inspect/inspect.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api inspect/inspect.proto
 # Gofumports generated files to adjust import order
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
@@ -126,6 +126,9 @@ COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/ma
 FROM build AS base
 COPY ./go.mod ./go.sum ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
+WORKDIR /src/pkg/machinery
+RUN go mod download
+WORKDIR /src
 RUN go mod download
 RUN go mod verify
 COPY ./cmd ./cmd
@@ -325,6 +328,15 @@ FROM scratch AS talosctl-linux
 COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
 COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
 COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
+
+FROM scratch as talosctl
+ARG TARGETARCH
+COPY --from=talosctl-linux /talosctl-linux-${TARGETARCH} /talosctl
+ARG TAG
+ENV VERSION ${TAG}
+LABEL "alpha.talos.dev/version"="${VERSION}"
+LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
+ENTRYPOINT ["/talosctl"]
 
 FROM base AS talosctl-darwin-build
 ARG SHA
@@ -593,7 +605,7 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:15.10.0-alpine AS lint-markdown
+FROM node:15.12.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
@@ -653,9 +665,9 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.9/Reference/
-COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.9/Reference/
-COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.9/Reference/
+COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.10/Reference/
+COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.10/Reference/
+COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.10/Reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

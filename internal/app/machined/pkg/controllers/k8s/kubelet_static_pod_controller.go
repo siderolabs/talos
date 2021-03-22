@@ -43,7 +43,7 @@ func (ctrl *KubeletStaticPodController) ManagedResources() (resource.Namespace, 
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	if err := r.UpdateDependencies([]controller.Dependency{
 		{
@@ -221,7 +221,7 @@ func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controll
 
 	renderedPod, err := yaml.Marshal(staticPod.Spec())
 	if err != nil {
-		return nil
+		return err
 	}
 
 	podPath := ctrl.podPath(staticPod)

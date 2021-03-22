@@ -78,9 +78,9 @@ func (a ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 			continue
 		}
 
-		len := int(a[i+1]) + i
+		length := int(a[i+1]) + i
 
-		val = a[i+2 : len+2]
+		val = a[i+2 : length+2]
 
 		ok = true
 

@@ -48,12 +48,14 @@ type Networkd struct {
 
 	sync.Mutex
 	ready bool
+
+	logger *log.Logger
 }
 
 // New takes the supplied configuration and creates an abstract representation
 // of all interfaces (as nic.NetworkInterface).
-//nolint:gocyclo
-func New(config config.Provider) (*Networkd, error) {
+//nolint:gocyclo,cyclop
+func New(logger *log.Logger, config config.Provider) (*Networkd, error) {
 	var (
 		hostname  string
 		option    *string
@@ -71,10 +73,10 @@ func New(config config.Provider) (*Networkd, error) {
 
 	// Gather settings for all config driven interfaces
 	if config != nil {
-		log.Println("parsing configuration file")
+		logger.Println("parsing configuration file")
 
 		for _, device := range config.Machine().Network().Devices() {
-			name, opts, err := buildOptions(device, config.Machine().Network().Hostname())
+			name, opts, err := buildOptions(logger, device, config.Machine().Network().Hostname())
 			if err != nil {
 				result = multierror.Append(result, err)
 
@@ -95,7 +97,7 @@ func New(config config.Provider) (*Networkd, error) {
 		}
 	}
 
-	log.Println("discovering local interfaces")
+	logger.Println("discovering local interfaces")
 
 	// Gather already present interfaces
 	localInterfaces, err := net.Interfaces()
@@ -107,7 +109,7 @@ func New(config config.Provider) (*Networkd, error) {
 
 	// Add locally discovered interfaces to our list of interfaces
 	// if they are not already present
-	filtered, err := filterInterfaces(localInterfaces)
+	filtered, err := filterInterfaces(logger, localInterfaces)
 	if err != nil {
 		result = multierror.Append(result, err)
 
@@ -177,7 +179,13 @@ func New(config config.Provider) (*Networkd, error) {
 		}
 	}
 
-	return &Networkd{Interfaces: interfaces, Config: config, hostname: hostname, resolvers: resolvers}, result.ErrorOrNil()
+	return &Networkd{
+		Interfaces: interfaces,
+		Config:     config,
+		hostname:   hostname,
+		resolvers:  resolvers,
+		logger:     logger,
+	}, result.ErrorOrNil()
 }
 
 // Configure handles the lifecycle for an interface. This includes creation,
@@ -191,14 +199,14 @@ func (n *Networkd) Configure(ctx context.Context) (err error) {
 	// interfaces exist prior to bonding
 	for _, bonded := range []bool{false, true} {
 		if bonded {
-			log.Println("configuring bonded interfaces")
+			n.logger.Println("configuring bonded interfaces")
 		} else {
-			log.Println("configuring non-bonded interfaces")
+			n.logger.Println("configuring non-bonded interfaces")
 		}
 
 		if err = n.configureLinks(ctx, bonded); err != nil {
 			// Treat errors as non-fatal
-			log.Println(err)
+			n.logger.Println(err)
 		}
 	}
 
@@ -232,7 +240,7 @@ func (n *Networkd) Configure(ctx context.Context) (err error) {
 		return err
 	}
 
-	if err = writeResolvConf(resolvers); err != nil {
+	if err = writeResolvConf(n.logger, resolvers); err != nil {
 		return err
 	}
 
@@ -246,7 +254,7 @@ func (n *Networkd) Configure(ctx context.Context) (err error) {
 // configured by DHCP.
 func (n *Networkd) Renew(ctx context.Context) {
 	for _, iface := range n.Interfaces {
-		iface.Renew(ctx)
+		iface.Renew(ctx, n.logger)
 	}
 }
 
@@ -260,7 +268,7 @@ func (n *Networkd) Reset() {
 // RunControllers spins up additional controllers in the errgroup.
 func (n *Networkd) RunControllers(ctx context.Context, eg *errgroup.Group) error {
 	for _, iface := range n.Interfaces {
-		if err := iface.RunControllers(ctx, eg); err != nil {
+		if err := iface.RunControllers(ctx, n.logger, eg); err != nil {
 			return err
 		}
 	}
@@ -302,11 +310,7 @@ func (n *Networkd) Hostname() (err error) {
 		return err
 	}
 
-	if err = unix.Setdomainname([]byte(domainname)); err != nil {
-		return err
-	}
-
-	return nil
+	return unix.Setdomainname([]byte(domainname))
 }
 
 //nolint:gocyclo
@@ -366,8 +370,8 @@ outer:
 	}
 
 	// Kernel
-	if kHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kHostname != nil {
-		hostname = *kHostname
+	if kernelHostname := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); kernelHostname != nil {
+		hostname = *kernelHostname
 	}
 
 	// Allow user supplied hostname to win
@@ -424,7 +428,7 @@ func (n *Networkd) configureLinks(ctx context.Context, bonded bool) error {
 
 		go func(netif *nic.NetworkInterface) {
 			if !netif.IsIgnored() {
-				log.Printf("setting up %s", netif.Name)
+				n.logger.Printf("setting up %s", netif.Name)
 			}
 
 			errCh <- func() error {
@@ -433,7 +437,7 @@ func (n *Networkd) configureLinks(ctx context.Context, bonded bool) error {
 					return fmt.Errorf("error creating nic %q: %w", netif.Name, err)
 				}
 
-				if err := netif.CreateSub(); err != nil {
+				if err := netif.CreateSub(n.logger); err != nil {
 					return fmt.Errorf("error creating sub interface nic %q: %w", netif.Name, err)
 				}
 
@@ -441,11 +445,11 @@ func (n *Networkd) configureLinks(ctx context.Context, bonded bool) error {
 					return fmt.Errorf("error configuring nic %q: %w", netif.Name, err)
 				}
 
-				if err := netif.Addressing(); err != nil {
+				if err := netif.Addressing(n.logger); err != nil {
 					return fmt.Errorf("error configuring addressing %q: %w", netif.Name, err)
 				}
 
-				if err := netif.AddressingSub(); err != nil {
+				if err := netif.AddressingSub(n.logger); err != nil {
 					return fmt.Errorf("error configuring addressing %q: %w", netif.Name, err)
 				}
 

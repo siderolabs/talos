@@ -133,7 +133,7 @@ func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
 			case "q", "<C-c>":
 				return nil
 			case "<Resize>":
-				payload := e.Payload.(ui.Resize) //nolint:errcheck
+				payload := e.Payload.(ui.Resize) //nolint:errcheck,forcetypeassert
 
 				u.Resize(payload.Width, payload.Height)
 				ui.Clear()

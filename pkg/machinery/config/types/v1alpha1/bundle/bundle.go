@@ -20,7 +20,7 @@ import (
 )
 
 // NewConfigBundle returns a new bundle.
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 	options := DefaultOptions()
 

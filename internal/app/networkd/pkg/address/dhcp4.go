@@ -45,9 +45,9 @@ func (d *DHCP4) Link() *net.Interface {
 }
 
 // Discover handles the DHCP client exchange stores the DHCP Ack.
-func (d *DHCP4) Discover(ctx context.Context, link *net.Interface) error {
+func (d *DHCP4) Discover(ctx context.Context, logger *log.Logger, link *net.Interface) error {
 	d.NetIf = link
-	err := d.discover(ctx)
+	err := d.discover(ctx, logger)
 
 	return err
 }
@@ -186,7 +186,7 @@ func (d *DHCP4) Hostname() (hostname string) {
 }
 
 // discover handles the actual DHCP conversation.
-func (d *DHCP4) discover(ctx context.Context) error {
+func (d *DHCP4) discover(ctx context.Context, logger *log.Logger) error {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
@@ -228,7 +228,7 @@ func (d *DHCP4) discover(ctx context.Context) error {
 
 	if err != nil {
 		// TODO: Make this a well defined error so we can make it not fatal
-		log.Printf("failed dhcp request for %q: %v", d.NetIf.Name, err)
+		logger.Printf("failed dhcp request for %q: %v", d.NetIf.Name, err)
 
 		// clear offer if request fails to start with discover sequence next time
 		d.Offer = nil
@@ -236,7 +236,7 @@ func (d *DHCP4) discover(ctx context.Context) error {
 		return err
 	}
 
-	log.Printf("DHCP ACK on %q: %s", d.NetIf.Name, collapseSummary(lease.ACK.Summary()))
+	logger.Printf("DHCP ACK on %q: %s", d.NetIf.Name, collapseSummary(lease.ACK.Summary()))
 
 	d.Ack = lease.ACK
 	d.Offer = lease.Offer

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
@@ -22,8 +22,7 @@ type Status struct {
 
 // AsProto returns protobuf-ready health state.
 func (status *Status) AsProto() *machineapi.ServiceHealth {
-	//nolint:errcheck
-	tspb, _ := ptypes.TimestampProto(status.LastChange)
+	tspb := timestamppb.New(status.LastChange)
 
 	return &machineapi.ServiceHealth{
 		Unknown:     status.Healthy == nil,

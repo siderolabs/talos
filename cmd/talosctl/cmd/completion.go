@@ -47,7 +47,7 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 # Load the talosctl completion code for zsh[1] into the current shell
 	source <(talosctl completion zsh)
 # Set the talosctl completion code for zsh[1] to autoload on startup
-talosctl completion zsh > "${fpath[1]}/_osctl"`,
+talosctl completion zsh > "${fpath[1]}/_talosctl"`,
 	ValidArgs: []string{"bash", "zsh"},
 	Args:      cobra.ExactValidArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,7 +60,11 @@ talosctl completion zsh > "${fpath[1]}/_osctl"`,
 		case "bash":
 			return rootCmd.GenBashCompletion(os.Stdout)
 		case "zsh":
-			return rootCmd.GenZshCompletion(os.Stdout)
+			err := rootCmd.GenZshCompletion(os.Stdout)
+			// cobra does not hook the completion, so let's do it manually
+			fmt.Printf("compdef _talosctl talosctl")
+
+			return err
 		default:
 			return fmt.Errorf("unsupported shell %q", args[0])
 		}

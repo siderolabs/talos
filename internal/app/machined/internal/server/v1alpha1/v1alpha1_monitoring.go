@@ -235,7 +235,7 @@ func (s *Server) NetworkDeviceStats(ctx context.Context, in *empty.Empty) (*mach
 
 	for _, line := range info {
 		resp.Devices[i] = translateNetDevLine(line)
-		i++
+		i++ //nolint:wastedassign
 	}
 
 	reply := &machine.NetworkDeviceStatsResponse{

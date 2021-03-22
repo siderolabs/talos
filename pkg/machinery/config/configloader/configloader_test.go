@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-//docgen: nodoc
+// docgen: nodoc
 type Suite struct {
 	suite.Suite
 }

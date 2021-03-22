@@ -86,8 +86,6 @@ type Installer struct {
 }
 
 // NewInstaller initializes and returns an Installer.
-//
-//nolint:gocyclo
 func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
@@ -162,7 +160,7 @@ func (i *Installer) probeBootPartition() error {
 // Install fetches the necessary data locations and copies or extracts
 // to the target locations.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	if i.options.Board != constants.BoardNone {
 		var b runtime.Board

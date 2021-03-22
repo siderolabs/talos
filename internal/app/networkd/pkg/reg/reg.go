@@ -24,23 +24,29 @@ import (
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// networkapi.NetworkServer interfaces.
+// healthapi.HealthServer and networkapi.NetworkServiceServer interfaces.
 type Registrator struct {
+	healthapi.UnimplementedHealthServer
+	networkapi.UnimplementedNetworkServiceServer
+
 	Networkd *networkd.Networkd
 	Conn     *rtnetlink.Conn
+
+	logger *log.Logger
 }
 
 // NewRegistrator builds new Registrator instance.
-func NewRegistrator(n *networkd.Networkd) *Registrator {
+func NewRegistrator(logger *log.Logger, n *networkd.Networkd) (*Registrator, error) {
 	nlConn, err := rtnetlink.Dial(nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &Registrator{
 		Networkd: n,
 		Conn:     nlConn,
-	}
+		logger:   logger,
+	}, nil
 }
 
 // Register implements the factory.Registrator interface.
@@ -61,10 +67,10 @@ func (r *Registrator) Routes(ctx context.Context, in *empty.Empty) (reply *netwo
 	for _, rMesg := range list {
 		ifaceData, err := r.Conn.Link.Get((rMesg.Attributes.OutIface))
 		if err != nil {
-			log.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
+			r.logger.Printf("failed to get interface details for interface index %d: %v", rMesg.Attributes.OutIface, err)
 			// TODO: Remove once we get this sorted on why there's a
 			// failure here
-			log.Printf("%+v", rMesg)
+			r.logger.Printf("%+v", rMesg)
 
 			continue
 		}

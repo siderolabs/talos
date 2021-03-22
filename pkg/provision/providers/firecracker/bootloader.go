@@ -56,8 +56,6 @@ func NewBootLoader(diskImage string) (*BootLoader, error) {
 }
 
 // ExtractAssets from disk image.
-//
-//nolint:gocyclo
 func (b *BootLoader) ExtractAssets() (assets BootAssets, err error) {
 	if err = b.findBootPartition(); err != nil {
 		return assets, err

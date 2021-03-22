@@ -108,11 +108,7 @@ func (n *NetworkInterface) configureWireguard(name string, config *wgtypes.Confi
 
 	defer c.Close() //nolint:errcheck
 
-	if err = c.ConfigureDevice(name, *config); err != nil {
-		return err
-	}
-
-	return nil
+	return c.ConfigureDevice(name, *config)
 }
 
 func (n *NetworkInterface) enslaveLink(bondIndex *uint32, links ...*net.Interface) error {

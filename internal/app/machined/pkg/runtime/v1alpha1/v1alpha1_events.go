@@ -84,16 +84,16 @@ type Events struct {
 // Argument cap is a maximum event stream capacity (available event history).
 // Argument gap is a safety gap to separate consumer from the publisher.
 // Maximum available event history is (cap-gap).
-func NewEvents(cap, gap int) *Events {
+func NewEvents(capacity, gap int) *Events {
 	e := &Events{
-		stream: make([]runtime.Event, cap),
-		cap:    cap,
+		stream: make([]runtime.Event, capacity),
+		cap:    capacity,
 		gap:    gap,
 	}
 
-	if gap >= cap {
+	if gap >= capacity {
 		// we should never reach this, but if we do, panic so that we know.
-		panic("NewEvents: gap >= cap")
+		panic("NewEvents: gap >= capacity")
 	}
 
 	e.c = sync.NewCond(&e.mu)

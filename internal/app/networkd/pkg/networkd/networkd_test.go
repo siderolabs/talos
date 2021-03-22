@@ -6,7 +6,9 @@
 package networkd
 
 import (
+	"log"
 	"net"
+	"os"
 	"testing"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -28,7 +30,7 @@ func TestNetworkdSuite(t *testing.T) {
 }
 
 func (suite *NetworkdSuite) TestNetworkd() {
-	nwd, err := New(sampleConfigFile())
+	nwd, err := New(log.New(os.Stderr, "", log.LstdFlags), sampleConfigFile())
 	suite.Require().NoError(err)
 
 	suite.Require().Contains(nwd.Interfaces, "eth0")
@@ -49,7 +51,7 @@ func (suite *NetworkdSuite) TestHostname() {
 		sampleConfig config.Provider
 	)
 
-	nwd, err = New(nil)
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), nil)
 	suite.Require().NoError(err)
 
 	// Default test
@@ -63,7 +65,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	// Static with hostname
 	sampleConfig = sampleConfigFile()
 
-	nwd, err = New(sampleConfig)
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), sampleConfig)
 	suite.Require().NoError(err)
 
 	hostname, _, addr, err = nwd.decideHostname()
@@ -74,7 +76,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	// Static for computed hostname ( talos-ip )
 	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = ""
 
-	nwd, err = New(sampleConfig)
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), sampleConfig)
 	suite.Require().NoError(err)
 
 	hostname, _, addr, err = nwd.decideHostname()
@@ -85,7 +87,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	// Static for hostname too long
 	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "somereallyreallyreallylongstringthathasmorethan63charactersbecauseweneedtotestit"
 
-	nwd, err = New(sampleConfig)
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), sampleConfig)
 	suite.Require().NoError(err)
 
 	//nolint:dogsled
@@ -95,7 +97,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	// Static for hostname vs domain name
 	sampleConfig.(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = "dadjokes.biz.dev.com.org.io"
 
-	nwd, err = New(sampleConfig)
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), sampleConfig)
 	suite.Require().NoError(err)
 
 	hostname, domainname, _, err = nwd.decideHostname()
@@ -106,7 +108,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	// DHCP addressing tests
 
 	// DHCP with OptionHostName
-	nwd, err = New(dhcpConfigFile())
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), dhcpConfigFile())
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{
@@ -127,7 +129,7 @@ func (suite *NetworkdSuite) TestHostname() {
 	suite.Assert().Equal(addr.String(), "192.168.0.11")
 
 	// DHCP without OptionHostName
-	nwd, err = New(dhcpConfigFile())
+	nwd, err = New(log.New(os.Stderr, "", log.LstdFlags), dhcpConfigFile())
 	suite.Require().NoError(err)
 
 	nwd.Interfaces["eth0"].AddressMethod = []address.Addressing{

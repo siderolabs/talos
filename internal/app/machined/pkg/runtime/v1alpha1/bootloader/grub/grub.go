@@ -202,9 +202,5 @@ func writeCfg(path string, grubcfg *Cfg) (err error) {
 
 	log.Printf("writing %s to disk", path)
 
-	if err = ioutil.WriteFile(path, wr.Bytes(), 0o600); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(path, wr.Bytes(), 0o600)
 }

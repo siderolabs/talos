@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -25,21 +24,11 @@ import (
 func init() {
 	// Explicitly disable memory profiling to save around 1.4MiB of memory.
 	runtime.MemProfileRate = 0
-
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
-
-	flag.Parse()
 }
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
+	logger := log.New(os.Stderr, "", log.Lshortfile|log.Ldate|log.Lmicroseconds|log.Ltime)
 
-	log.Println("networkd stopped")
-}
-
-func run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -55,16 +44,24 @@ func run() error {
 		}
 	}()
 
-	var eg errgroup.Group
+	if err := run(ctx, logger); err != nil {
+		logger.Fatal(err)
+	}
 
-	log.Println("starting initial network configuration")
+	logger.Println("networkd stopped")
+}
+
+func run(ctx context.Context, logger *log.Logger) error {
+	var eg errgroup.Group
 
 	config, err := configloader.NewFromStdin()
 	if err != nil {
 		return err
 	}
 
-	nwd, err := networkd.New(config)
+	logger.Println("starting initial network configuration")
+
+	nwd, err := networkd.New(logger, config)
 	if err != nil {
 		return err
 	}
@@ -73,16 +70,21 @@ func run() error {
 		return err
 	}
 
+	registrator, err := reg.NewRegistrator(logger, nwd)
+	if err != nil {
+		return err
+	}
+
 	if err = nwd.RunControllers(ctx, &eg); err != nil {
 		return err
 	}
 
-	log.Println("completed initial network configuration")
+	logger.Println("completed initial network configuration")
 
 	nwd.Renew(ctx)
 
 	server := factory.NewServer(
-		reg.NewRegistrator(nwd),
+		registrator,
 		factory.WithDefaultLog(),
 	)
 

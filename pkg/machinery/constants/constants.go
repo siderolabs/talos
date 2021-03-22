@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.10.19-talos"
+	DefaultKernelVersion = "5.10.23-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -46,6 +46,9 @@ const (
 	// BoardRock64 is the  name of the Pine64 Rock64.
 	BoardRock64 = "rock64"
 
+	// BoardRockpi4 is the name of the Radxa Rock pi 4.
+	BoardRockpi4 = "rockpi_4"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"
@@ -66,6 +69,8 @@ const (
 
 	// KernelCurrentRoot is the kernel parameter name for specifying the
 	// current root partition.
+	//
+	// Deprecated: Talos now expects to use an entire disk.
 	KernelCurrentRoot = "talos.root"
 
 	// NewRoot is the path where the switchroot target is mounted.
@@ -100,9 +105,6 @@ const (
 	// BootMountPoint is the label of the partition to use for mounting at
 	// the boot path.
 	BootMountPoint = "/boot"
-
-	// LegacyBootPartitionLabel is the label of the boot partition in older versions of Talos.
-	LegacyBootPartitionLabel = "ESP"
 
 	// EphemeralPartitionLabel is the label of the partition to use for
 	// mounting at the data path.
@@ -188,7 +190,7 @@ const (
 	SystemKubeletPKIDir = "/system/secrets/kubelet"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.20.4"
+	DefaultKubernetesVersion = "1.20.5"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
@@ -402,7 +404,7 @@ const (
 )
 
 // See https://linux.die.net/man/3/klogctl
-//nolint:stylecheck
+//nolint:stylecheck,revive
 const (
 	// SYSLOG_ACTION_SIZE_BUFFER is a named type argument to klogctl.
 	//nolint:golint

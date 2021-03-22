@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dustin/go-humanize"
+	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"golang.org/x/sys/unix"
@@ -26,7 +28,7 @@ import (
 
 // Target represents an installation partition.
 //
-//nolint:golint,maligned
+//nolint:maligned
 type Target struct {
 	*partition.FormatOptions
 	Device string
@@ -161,7 +163,7 @@ func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
 		if part.Name == t.Label {
 			var err error
 
-			t.PartitionName, err = util.PartPath(t.Device, int(part.Number))
+			t.PartitionName, err = part.Path()
 			if err != nil {
 				return part, err
 			}
@@ -173,9 +175,53 @@ func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
 	return nil, nil
 }
 
+// Partition creates a new partition on the specified device.
+func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
+	if t.Skip {
+		part := pt.Partitions().FindByName(t.Label)
+		if part != nil {
+			log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
+
+			t.PartitionName, err = part.Path()
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	log.Printf("partitioning %s - %s %q\n", t.Device, t.Label, humanize.Bytes(t.Size))
+
+	opts := []gpt.PartitionOption{
+		gpt.WithPartitionType(t.PartitionType),
+		gpt.WithPartitionName(t.Label),
+	}
+
+	if t.Size == 0 {
+		opts = append(opts, gpt.WithMaximumSize(true))
+	}
+
+	if t.LegacyBIOSBootable {
+		opts = append(opts, gpt.WithLegacyBIOSBootableAttribute(true))
+	}
+
+	part, err := pt.InsertAt(pos, t.Size, opts...)
+	if err != nil {
+		return err
+	}
+
+	t.PartitionName, err = part.Path()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("created %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
+
+	return nil
+}
+
 // Format creates a filesystem on the device/partition.
-//
-//nolint:gocyclo
 func (t *Target) Format() error {
 	if t.Skip {
 		return nil

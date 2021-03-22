@@ -19,8 +19,7 @@ import (
 )
 
 // MachineTypeController manages config.MachineType based on configuration.
-type MachineTypeController struct {
-}
+type MachineTypeController struct{}
 
 // Name implements controller.Controller interface.
 func (ctrl *MachineTypeController) Name() string {

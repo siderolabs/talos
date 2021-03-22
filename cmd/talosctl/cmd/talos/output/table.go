@@ -43,13 +43,13 @@ func (table *Table) WriteHeader(definition resource.Resource, withEvents bool) e
 		fields = append([]string{"*"}, fields...)
 	}
 
-	resourceDefinitionSpec := definition.(*resource.Any).Value().(map[string]interface{}) //nolint:errcheck
+	resourceDefinitionSpec := definition.(*resource.Any).Value().(map[string]interface{}) //nolint:errcheck,forcetypeassert
 
-	table.displayType = resourceDefinitionSpec["displayType"].(string) //nolint:errcheck
+	table.displayType = resourceDefinitionSpec["displayType"].(string) //nolint:errcheck,forcetypeassert
 
 	for _, col := range resourceDefinitionSpec["printColumns"].([]interface{}) {
-		column := col.(map[string]interface{}) //nolint:errcheck
-		name := column["name"].(string)        //nolint:errcheck
+		column := col.(map[string]interface{}) //nolint:errcheck,forcetypeassert
+		name := column["name"].(string)        //nolint:errcheck,forcetypeassert
 
 		fields = append(fields, strings.ToUpper(name))
 

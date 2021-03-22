@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 )
 
+//nolint:thelper
 func skipIfNoKmsg(t *testing.T) {
 	f, err := os.OpenFile("/dev/kmsg", os.O_RDONLY, 0)
 	if err != nil {
@@ -54,6 +55,7 @@ func TestReaderFollowTail(t *testing.T) {
 	testReaderFollow(t, false, kmsg.FromTail())
 }
 
+//nolint:thelper
 func testReaderFollow(t *testing.T, expectMessages bool, options ...kmsg.Option) {
 	skipIfNoKmsg(t)
 

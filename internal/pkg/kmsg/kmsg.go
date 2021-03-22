@@ -4,7 +4,6 @@
 
 // Package kmsg provides access to kernel log.
 //
-//nolint:dupl
 package kmsg
 
 import (

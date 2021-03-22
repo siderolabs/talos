@@ -414,7 +414,6 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	}
 }
 
-//nolint:gocyclo
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
