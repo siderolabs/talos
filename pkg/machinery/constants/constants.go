@@ -312,9 +312,6 @@ const (
 	// NetworkSocketPath is the path to file socket of network API.
 	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
-	// RouterdSocketPath is the path to file socket of router API.
-	RouterdSocketPath = SystemRunPath + "/routerd/routerd.sock"
-
 	// ArchVariable is replaced automatically by the target cluster arch.
 	ArchVariable = "${ARCH}"
 
@@ -401,6 +398,12 @@ const (
 
 	// AnnotationStaticPodConfigVersion is the annotation key for the static pod config version.
 	AnnotationStaticPodConfigVersion = "talos.dev/config-version"
+
+	// DefaultNTPServer is the NTP server to use if not configured explicitly.
+	//
+	// TODO: Once we get naming sorted we need to apply for a project specific address
+	// https://manage.ntppool.org/manage/vendor
+	DefaultNTPServer = "pool.ntp.org"
 )
 
 // See https://linux.die.net/man/3/klogctl

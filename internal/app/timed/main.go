@@ -16,15 +16,6 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-// https://access.redhat.com/solutions/39194
-// Using the above as reference for setting min/max.
-const (
-	// TODO: Once we get naming sorted we need to apply
-	// for a project specific address
-	// https://manage.ntppool.org/manage/vendor
-	DefaultServer = "pool.ntp.org"
-)
-
 // Main is the entrypoint into timed.
 //
 // New instantiates a new ntp instance against a given server
@@ -38,8 +29,6 @@ func Main() {
 		log.Fatalf("startup: %v", err)
 	}
 
-	server := DefaultServer
-
 	config, err := configloader.NewFromStdin()
 	if err != nil {
 		log.Fatal(err)
@@ -47,9 +36,11 @@ func Main() {
 
 	// Check if ntp servers are defined
 	// Support for only a single time server currently
-	if len(config.Machine().Time().Servers()) >= 1 {
-		server = config.Machine().Time().Servers()[0]
+	if len(config.Machine().Time().Servers()) == 0 {
+		log.Fatal("no time servers configured")
 	}
+
+	server := config.Machine().Time().Servers()[0]
 
 	n, err := ntp.NewNTPClient(
 		ntp.WithServer(server),

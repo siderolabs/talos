@@ -46,6 +46,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	networkserver "github.com/talos-systems/talos/internal/app/networkd/pkg/server"
 	storaged "github.com/talos-systems/talos/internal/app/storaged"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/internal/pkg/containers"
@@ -63,8 +64,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
+	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -110,6 +113,8 @@ func (s *Server) Register(obj *grpc.Server) {
 	resource.RegisterResourceServiceServer(obj, &ResourceServer{server: s})
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
+	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
+	network.RegisterNetworkServiceServer(obj, &networkserver.NetworkServer{})
 }
 
 // ApplyConfiguration implements machine.MachineService.

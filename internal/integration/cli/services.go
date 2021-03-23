@@ -26,7 +26,6 @@ func (suite *ServicesSuite) SuiteName() string {
 func (suite *ServicesSuite) TestList() {
 	suite.RunCLI([]string{"services", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 	)
 }
@@ -36,12 +35,6 @@ func (suite *ServicesSuite) TestStatus() {
 	suite.RunCLI([]string{"service", "apid", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),
-	)
-
-	suite.RunCLI([]string{"service", "routerd", "status", "--nodes", suite.RandomDiscoveredNode()},
-		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),
 	)
 }

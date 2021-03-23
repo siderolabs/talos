@@ -27,7 +27,7 @@ func (suite *StatsSuite) SuiteName() string {
 func (suite *StatsSuite) TestContainerd() {
 	suite.RunCLI([]string{"stats", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
-		base.StdoutShouldMatch(regexp.MustCompile(`routerd`)),
+		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 	)
 }
 

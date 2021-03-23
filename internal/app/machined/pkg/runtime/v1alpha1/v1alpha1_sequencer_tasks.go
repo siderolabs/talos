@@ -664,7 +664,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		svcs.Load(
 			&services.APID{},
-			&services.Routerd{},
 			&services.Networkd{},
 			&services.CRI{},
 			&services.Kubelet{},
