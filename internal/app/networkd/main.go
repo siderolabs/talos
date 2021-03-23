@@ -41,7 +41,7 @@ func run(ctx context.Context, r runtime.Runtime, logger *log.Logger) error {
 		return err
 	}
 
-	registrator, err := reg.NewRegistrator(logger, nwd)
+	registrator, err := reg.NewRegistrator(nwd)
 	if err != nil {
 		return err
 	}

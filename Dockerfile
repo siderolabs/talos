@@ -213,18 +213,6 @@ WORKDIR /src/internal/app/trustd
 RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /trustd
 RUN chmod +x /trustd
 
-# The routerd target builds the routerd binary.
-
-FROM base AS routerd-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-WORKDIR /src/internal/app/routerd
-RUN --mount=type=cache,target=/.cache/go-build go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Server -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /routerd
-RUN chmod +x /routerd
-
 # The talosctl targets build the talosctl binaries.
 
 FROM base AS talosctl-linux-amd64-build
@@ -353,9 +341,8 @@ RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
-RUN mkdir -pv /rootfs/opt/{apid,routerd,timed,trustd}
+RUN mkdir -pv /rootfs/opt/{apid,timed,trustd}
 RUN ln /rootfs/sbin/init /rootfs/opt/apid/apid
-RUN ln /rootfs/sbin/init /rootfs/opt/routerd/routerd
 RUN ln /rootfs/sbin/init /rootfs/opt/timed/timed
 RUN ln /rootfs/sbin/init /rootfs/opt/trustd/trustd
 

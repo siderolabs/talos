@@ -1196,6 +1196,10 @@ func (t *TimeConfig) Disabled() bool {
 
 // Servers implements the config.Provider interface.
 func (t *TimeConfig) Servers() []string {
+	if len(t.TimeServers) == 0 {
+		return []string{constants.DefaultNTPServer}
+	}
+
 	return t.TimeServers
 }
 

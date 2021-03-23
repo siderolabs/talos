@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package reg_test
+package runtime_test
 
 import (
 	"context"
@@ -16,11 +16,12 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
-	"github.com/talos-systems/talos/internal/app/timed/pkg/reg"
+	runtime "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type TimedSuite struct {
@@ -33,14 +34,27 @@ func TestTimedSuite(t *testing.T) {
 	suite.Run(t, new(TimedSuite))
 }
 
+type mockConfigProvider struct {
+	timeServer string
+}
+
+func (provider *mockConfigProvider) Config() config.Provider {
+	return &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineTime: &v1alpha1.TimeConfig{
+				TimeServers: []string{provider.timeServer},
+			},
+		},
+	}
+}
+
 func (suite *TimedSuite) TestTime() {
 	testServer := "time.cloudflare.com"
-	// Create ntp client
-	n, err := ntp.NewNTPClient(ntp.WithServer(testServer))
-	suite.Assert().NoError(err)
 
 	// Create gRPC server
-	api := reg.NewRegistrator(n)
+	api := &runtime.TimeServer{
+		ConfigProvider: &mockConfigProvider{timeServer: testServer},
+	}
 	server := factory.NewServer(api)
 	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)
@@ -58,24 +72,23 @@ func (suite *TimedSuite) TestTime() {
 		grpc.WithInsecure(),
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.Time(context.Background(), &empty.Empty{})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 
 func (suite *TimedSuite) TestTimeCheck() {
 	testServer := "time.cloudflare.com"
+
 	// Create ntp client with bogus server
 	// so we can check that we explicitly check the time of the
 	// specified server ( testserver )
-	n, err := ntp.NewNTPClient(ntp.WithServer("127.0.0.1"))
-	suite.Assert().NoError(err)
 
 	// Create gRPC server
-	api := reg.NewRegistrator(n)
+	api := &runtime.TimeServer{}
 	server := factory.NewServer(api)
 	listener, err := fakeTimedRPC()
 	suite.Assert().NoError(err)
@@ -93,11 +106,11 @@ func (suite *TimedSuite) TestTimeCheck() {
 		grpc.WithInsecure(),
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }
 

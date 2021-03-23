@@ -74,7 +74,7 @@ func Main() {
 	}
 
 	backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
-	localBackend := backend.NewLocal("routerd", constants.RouterdSocketPath)
+	localBackend := backend.NewLocal("machined", constants.MachineSocketPath)
 
 	router := director.NewRouter(backendFactory.Get, localBackend)
 

@@ -30,7 +30,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
-	"github.com/talos-systems/talos/internal/app/routerd"
 	"github.com/talos-systems/talos/internal/app/timed"
 	"github.com/talos-systems/talos/internal/app/trustd"
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -267,10 +266,6 @@ func main() {
 	switch os.Args[0] {
 	case "/apid":
 		apid.Main()
-
-		return
-	case "/routerd":
-		routerd.Main()
 
 		return
 	case "/timed":

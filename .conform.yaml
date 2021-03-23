@@ -29,7 +29,6 @@ policies:
           - timed
           - talosctl
           - trustd
-          - routerd
           - talosctl
           - kernel
           - security

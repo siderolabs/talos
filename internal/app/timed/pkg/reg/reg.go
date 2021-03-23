@@ -11,18 +11,15 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	healthapi "github.com/talos-systems/talos/pkg/machinery/api/health"
-	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
-// healthapi.HealthServer and timeapi.TimeServiceServer interfaces.
+// healthapi.HealthServer interfaces.
 type Registrator struct {
 	healthapi.UnimplementedHealthServer
-	timeapi.UnimplementedTimeServiceServer
 
 	Timed *ntp.NTP
 }
@@ -38,49 +35,7 @@ func NewRegistrator(n *ntp.NTP) *Registrator {
 //
 //nolint:interfacer
 func (r *Registrator) Register(s *grpc.Server) {
-	timeapi.RegisterTimeServiceServer(s, r)
 	healthapi.RegisterHealthServer(s, r)
-}
-
-// Time issues a query to the configured ntp server and displays the results.
-func (r *Registrator) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeResponse, err error) {
-	reply = &timeapi.TimeResponse{}
-
-	rt, err := r.Timed.Query(ctx)
-	if err != nil {
-		return reply, err
-	}
-
-	return genProtobufTimeResponse(r.Timed.GetTime(), rt.Time, r.Timed.Server)
-}
-
-// TimeCheck issues a query to the specified ntp server and displays the results.
-func (r *Registrator) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeResponse, err error) {
-	reply = &timeapi.TimeResponse{}
-
-	tc, err := ntp.NewNTPClient(ntp.WithServer(in.Server))
-	if err != nil {
-		return reply, err
-	}
-
-	rt, err := tc.Query(ctx)
-	if err != nil {
-		return reply, err
-	}
-
-	return genProtobufTimeResponse(tc.GetTime(), rt.Time, in.Server)
-}
-
-func genProtobufTimeResponse(local, remote time.Time, server string) (*timeapi.TimeResponse, error) {
-	return &timeapi.TimeResponse{
-		Messages: []*timeapi.Time{
-			{
-				Server:     server,
-				Localtime:  timestamppb.New(local),
-				Remotetime: timestamppb.New(remote),
-			},
-		},
-	}, nil
 }
 
 // Check implements the Health api and provides visibilty into the state of timed.
