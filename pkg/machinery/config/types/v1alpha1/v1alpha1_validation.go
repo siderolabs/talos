@@ -96,7 +96,7 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
-	if c.Machine().Type() == machine.TypeInit {
+	if c.Machine().Type() == machine.TypeInit || c.Machine().Type() == machine.TypeControlPlane {
 		switch c.Cluster().Network().CNI().Name() {
 		case constants.CustomCNI:
 			// custom CNI with URLs or an empty list of manifests which will get applied
@@ -137,7 +137,7 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterConfig.ClusterNetwork.DNSDomain))
 	}
 
-	for _, label := range []string{constants.EphemeralPartitionLabel} {
+	for _, label := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
 		encryptionConfig := c.MachineConfig.SystemDiskEncryption().Get(label)
 		if encryptionConfig != nil {
 			if len(encryptionConfig.Keys()) == 0 {
