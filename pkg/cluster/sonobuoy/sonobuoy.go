@@ -39,12 +39,13 @@ type Options struct {
 func DefaultOptions() *Options {
 	return &Options{
 		RunTests: []string{ // list of tests to cover basic kubernetes operations
-			"Pods should be submitted and removed",
-			"Services should serve a basic endpoint from pods",
-			"Services should be able to change the type from ExternalName to ClusterIP",
+			`\[Conformance\]`,
+			// "Pods should be submitted and removed",
+			// "Services should serve a basic endpoint from pods",
+			// "Services should be able to change the type from ExternalName to ClusterIP",
 		},
 
-		RunTimeout:    10 * time.Minute,
+		RunTimeout:    120 * time.Minute,
 		DeleteTimeout: 3 * time.Minute,
 
 		KubernetesVersion: constants.DefaultKubernetesVersion,
@@ -119,7 +120,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 
 	runConfig.E2EConfig = &client.E2EConfig{
 		Focus:    strings.Join(options.RunTests, "|"),
-		Parallel: "false",
+		Parallel: "true",
 	}
 	runConfig.DynamicPlugins = []string{"e2e"}
 	runConfig.KubeConformanceImage = fmt.Sprintf("%s:v%s", config.UpstreamKubeConformanceImageURL, options.KubernetesVersion)
