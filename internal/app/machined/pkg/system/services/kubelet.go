@@ -35,6 +35,7 @@ import (
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
@@ -126,16 +127,12 @@ func (k *Kubelet) PostFunc(r runtime.Runtime, state events.ServiceState) (err er
 
 // Condition implements the Service interface.
 func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
-	return nil
+	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
 }
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
-		return []string{"cri", "networkd"}
-	}
-
-	return []string{"cri", "networkd", "timed"}
+	return []string{"cri", "networkd"}
 }
 
 // Runner implements the Service interface.

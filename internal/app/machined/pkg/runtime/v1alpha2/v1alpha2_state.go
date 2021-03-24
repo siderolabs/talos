@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
@@ -71,7 +72,6 @@ func NewState() (*State, error) {
 	for _, r := range []resource.Resource{
 		&v1alpha1.BootstrapStatus{},
 		&v1alpha1.Service{},
-		&v1alpha1.TimeStatus{},
 		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},
@@ -83,6 +83,7 @@ func NewState() (*State, error) {
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},
+		&time.Status{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {
 			return nil, err

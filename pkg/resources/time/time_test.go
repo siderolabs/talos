@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package v1alpha1_test
+package time_test
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/os-runtime/pkg/state/impl/namespaced"
 	"github.com/talos-systems/os-runtime/pkg/state/registry"
 
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/resources/time"
 )
 
 func TestRegisterResource(t *testing.T) {
@@ -25,8 +25,7 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
-		&v1alpha1.BootstrapStatus{},
-		&v1alpha1.Service{},
+		&time.Status{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

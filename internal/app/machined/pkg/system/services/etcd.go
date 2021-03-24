@@ -38,6 +38,7 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
 // Etcd implements the Service interface. It serves as the concrete type with
@@ -108,16 +109,12 @@ func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error
 
 // Condition implements the Service interface.
 func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
-	return nil
+	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
 }
 
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
-		return []string{"cri", "networkd"}
-	}
-
-	return []string{"cri", "networkd", "timed"}
+	return []string{"cri", "networkd"}
 }
 
 // Runner implements the Service interface.

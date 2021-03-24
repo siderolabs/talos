@@ -8,11 +8,9 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -45,62 +43,6 @@ func (suite *EventsSuite) TearDownTest() {
 	if suite.ctxCancel != nil {
 		suite.ctxCancel()
 	}
-}
-
-// TestServiceEvents verifies that service restart generates events.
-func (suite *EventsSuite) TestServiceEvents() {
-	const service = "timed" // any restartable service should work
-
-	svcInfo, err := suite.Client.ServiceInfo(suite.nodeCtx, service)
-	suite.Require().NoError(err)
-
-	if len(svcInfo) == 0 { // service is not registered (e.g. docker)
-		suite.T().Skip(fmt.Sprintf("skipping test as service %q is not registered", service))
-	}
-
-	actionsSeen := make(map[machine.ServiceStateEvent_Action]struct{})
-
-	checkExpectedActions := func() error {
-		for _, action := range []machine.ServiceStateEvent_Action{
-			machine.ServiceStateEvent_STOPPING,
-			machine.ServiceStateEvent_FINISHED,
-			machine.ServiceStateEvent_WAITING,
-			machine.ServiceStateEvent_PREPARING,
-			machine.ServiceStateEvent_RUNNING,
-		} {
-			if _, ok := actionsSeen[action]; !ok {
-				return fmt.Errorf("expected action %s was not seen", action)
-			}
-		}
-
-		return nil
-	}
-
-	go func() {
-		suite.Assert().NoError(suite.Client.EventsWatch(suite.nodeCtx, func(ch <-chan client.Event) {
-			defer suite.ctxCancel()
-
-			for event := range ch {
-				if msg, ok := event.Payload.(*machine.ServiceStateEvent); ok && msg.GetService() == service {
-					actionsSeen[msg.GetAction()] = struct{}{}
-				}
-
-				if checkExpectedActions() == nil {
-					return
-				}
-			}
-		}))
-	}()
-
-	// wait for event watcher to start
-	time.Sleep(500 * time.Millisecond)
-
-	_, err = suite.Client.ServiceRestart(suite.nodeCtx, service)
-	suite.Assert().NoError(err)
-
-	<-suite.ctx.Done()
-
-	suite.Require().NoError(checkExpectedActions())
 }
 
 // TestEventsWatch verifies events watch API.

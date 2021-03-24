@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
 // Trustd implements the Service interface. It serves as the concrete type with
@@ -45,16 +46,12 @@ func (t *Trustd) PostFunc(r runtime.Runtime, state events.ServiceState) (err err
 
 // Condition implements the Service interface.
 func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
-	return nil
+	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
 }
 
 // DependsOn implements the Service interface.
 func (t *Trustd) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
-		return []string{"containerd", "networkd"}
-	}
-
-	return []string{"containerd", "networkd", "timed"}
+	return []string{"containerd", "networkd"}
 }
 
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
