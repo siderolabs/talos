@@ -60,15 +60,15 @@ These files can be downloaded from the Talos release:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz -L -o _out/vmlinuz
-curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs.xz -L -o _out/initramfs.xz
+curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz-<arch> -L -o _out/vmlinuz-<arch>
+curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
 ```
 
 For example version `v0.7.0`:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.7.0/vmlinuz -L -o _out/vmlinuz
-curl https://github.com/talos-systems/talos/releases/download/v0.7.0/initramfs.xz -L -o _out/initramfs.xz
+curl https://github.com/talos-systems/talos/releases/download/v0.7.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
+curl https://github.com/talos-systems/talos/releases/download/v0.7.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
 ```
 
 ## Create the Cluster
