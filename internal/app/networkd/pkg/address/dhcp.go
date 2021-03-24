@@ -211,10 +211,24 @@ func (d *DHCP) discover(ctx context.Context) error {
 	}
 
 	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...)}
+	clientOpts := []nclient4.ClientOpt{}
+
+	if d.Offer != nil {
+		// do not use broadcast, but send the packet to DHCP server directly
+		addr, err := net.ResolveUDPAddr("udp", d.Offer.ServerIPAddr.String()+":67")
+		if err != nil {
+			return err
+		}
+
+		// by default it's set to 0.0.0.0 which actually breaks lease renew
+		d.Offer.ClientIPAddr = d.Offer.YourIPAddr
+
+		clientOpts = append(clientOpts, nclient4.WithServerAddr(addr))
+	}
 
 	// TODO expose this ( nclient4.WithDebugLogger() ) with some
 	// debug logging option
-	cli, err := nclient4.New(d.NetIf.Name)
+	cli, err := nclient4.New(d.NetIf.Name, clientOpts...)
 	if err != nil {
 		return err
 	}
