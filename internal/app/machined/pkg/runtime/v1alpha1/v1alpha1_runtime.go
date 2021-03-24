@@ -97,8 +97,14 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 		return fmt.Errorf("new config is not v1alpha1")
 	}
 
-	// the only allowed config change to be applied immediately for now is cluster config
+	// the config changes allowed to be applied immediately are:
+	// * cluster config
+	// * .machine.time
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
+
+	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
+		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
+	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
 		diff := cmp.Diff(currentConfig, newConfig)

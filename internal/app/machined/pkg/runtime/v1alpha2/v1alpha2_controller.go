@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
@@ -51,8 +52,8 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			// V1Events
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
-		&v1alpha1.TimeStatusController{
-			V1Alpha1State: ctrl.v1alpha1Runtime.State(),
+		&time.SyncController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&config.MachineTypeController{},
 		&config.K8sControlPlaneController{},

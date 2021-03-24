@@ -307,9 +307,8 @@ RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
-RUN mkdir -pv /rootfs/opt/{apid,timed,trustd}
+RUN mkdir -pv /rootfs/opt/{apid,trustd}
 RUN ln /rootfs/sbin/init /rootfs/opt/apid/apid
-RUN ln /rootfs/sbin/init /rootfs/opt/timed/timed
 RUN ln /rootfs/sbin/init /rootfs/opt/trustd/trustd
 
 FROM rootfs-base AS rootfs-squashfs

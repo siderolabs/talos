@@ -66,7 +66,7 @@ func (r *BootstrapStatus) DeepCopy() resource.Resource {
 func (r *BootstrapStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             BootstrapStatusType,
-		Aliases:          []resource.Type{"bootstrapStatus"},
+		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{

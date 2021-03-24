@@ -47,7 +47,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
-	"github.com/talos-systems/talos/internal/app/timed/pkg/ntp"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -495,31 +494,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 	}, "saveConfig"
 }
 
-func singleTimeSync(ctx context.Context) (cancel context.CancelFunc) {
-	ctx, cancel = context.WithCancel(ctx)
-
-	go func() {
-		ntpClient, err := ntp.NewNTPClient()
-		if err != nil {
-			log.Printf("failed to build one-time ntp client")
-
-			return
-		}
-
-		if err = ntpClient.QueryAndSetTime(ctx); err != nil {
-			if !errors.Is(err, context.Canceled) {
-				log.Printf("failed to do one-time time sync: %s", err)
-			}
-		}
-	}()
-
-	return
-}
-
 func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
-	cancel := singleTimeSync(ctx)
-	defer cancel()
-
 	var b []byte
 
 	if b, err = r.State().Platform().Configuration(ctx); err != nil {
@@ -623,26 +598,6 @@ func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "startContainerd"
 }
 
-// StartTimedAtInstall represents the task to start timed at install time without dependency on networkd.
-func StartTimedAtInstall(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		svc := &services.Timed{
-			SkipNetworkd: true,
-		}
-
-		system.Services(r).LoadAndStart(svc)
-
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-
-		if err := system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
-			logger.Printf("skipped waiting for time sync to finish")
-		}
-
-		return nil
-	}, "startTimedAtInstall"
-}
-
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -668,12 +623,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			&services.CRI{},
 			&services.Kubelet{},
 		)
-
-		if r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Time().Disabled() {
-			svcs.Load(
-				&services.Timed{},
-			)
-		}
 
 		switch r.Config().Machine().Type() {
 		case machine.TypeInit:
@@ -1689,6 +1638,8 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 }
 
 // BootstrapEtcd represents the task for bootstrapping etcd.
+//
+//nolint:gocyclo
 func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		if err = system.Services(r).Stop(ctx, "etcd"); err != nil {
@@ -1705,27 +1656,41 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			}
 		}
 
-		// Since etcd has already attempted to start, we must delete the data. If
-		// we don't, then an initial cluster state of "new" will fail.
-		dir, err := os.Open(constants.EtcdDataPath)
-		if err != nil {
-			return err
-		}
+		if err = func() error {
+			// Since etcd has already attempted to start, we must delete the data. If
+			// we don't, then an initial cluster state of "new" will fail.
+			var dir *os.File
 
-		//nolint:errcheck
-		defer dir.Close()
+			dir, err = os.Open(constants.EtcdDataPath)
+			if err != nil {
+				if os.IsNotExist(err) {
+					return nil
+				}
 
-		files, err := dir.Readdir(0)
-		if err != nil {
-			return err
-		}
-
-		for _, file := range files {
-			fullPath := filepath.Join(constants.EtcdDataPath, file.Name())
-
-			if err = os.RemoveAll(fullPath); err != nil {
-				return fmt.Errorf("failed to remove %q: %w", file.Name(), err)
+				return err
 			}
+
+			//nolint:errcheck
+			defer dir.Close()
+
+			var files []os.FileInfo
+
+			files, err = dir.Readdir(0)
+			if err != nil {
+				return err
+			}
+
+			for _, file := range files {
+				fullPath := filepath.Join(constants.EtcdDataPath, file.Name())
+
+				if err = os.RemoveAll(fullPath); err != nil {
+					return fmt.Errorf("failed to remove %q: %w", file.Name(), err)
+				}
+			}
+
+			return nil
+		}(); err != nil {
+			return err
 		}
 
 		svc := &services.Etcd{Bootstrap: true}

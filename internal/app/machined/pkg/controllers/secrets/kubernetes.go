@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
+	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
@@ -63,8 +64,8 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.TimeStatusType,
-			ID:        pointer.ToString(v1alpha1.TimeStatusID),
+			Type:      timeresource.StatusType,
+			ID:        pointer.ToString(timeresource.StatusID),
 			Kind:      controller.DependencyWeak,
 		},
 	}); err != nil {
@@ -112,7 +113,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		// wait for time sync as certs depend on current time
-		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.TimeStatusType, v1alpha1.TimeStatusID, resource.VersionUndefined))
+		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, timeresource.StatusType, timeresource.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -121,7 +122,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			return err
 		}
 
-		if !timeSyncResource.(*v1alpha1.TimeStatus).Synced() {
+		if !timeSyncResource.(*timeresource.Status).Status().Synced {
 			continue
 		}
 

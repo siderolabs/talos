@@ -30,6 +30,7 @@ import (
 	"github.com/talos-systems/talos/pkg/copy"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/time"
 )
 
 // APID implements the Service interface. It serves as the concrete type with
@@ -67,20 +68,20 @@ func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error
 
 // Condition implements the Service interface.
 func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
-	if r.Config().Machine().Type() == machine.TypeJoin {
-		return conditions.WaitForFileToExist(constants.KubeletKubeconfig)
+	conds := []conditions.Condition{
+		time.NewSyncCondition(r.State().V1Alpha2().Resources()),
 	}
 
-	return nil
+	if r.Config().Machine().Type() == machine.TypeJoin {
+		conds = append(conds, conditions.WaitForFileToExist(constants.KubeletKubeconfig))
+	}
+
+	return conditions.WaitForAll(conds...)
 }
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(r runtime.Runtime) []string {
-	if r.State().Platform().Mode() == runtime.ModeContainer || r.Config().Machine().Time().Disabled() {
-		return []string{"containerd", "networkd"}
-	}
-
-	return []string{"containerd", "networkd", "timed"}
+	return []string{"containerd", "networkd"}
 }
 
 // Runner implements the Service interface.

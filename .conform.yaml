@@ -26,7 +26,6 @@ policies:
           - apid
           - machined
           - networkd
-          - timed
           - talosctl
           - trustd
           - talosctl
