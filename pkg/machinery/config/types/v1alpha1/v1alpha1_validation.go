@@ -98,10 +98,8 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 
 	if c.Machine().Type() == machine.TypeInit {
 		switch c.Cluster().Network().CNI().Name() {
-		case "custom":
-			if len(c.Cluster().Network().CNI().URLs()) == 0 {
-				result = multierror.Append(result, errors.New("at least one url should be specified if using \"custom\" option for CNI"))
-			}
+		case constants.CustomCNI:
+			// custom CNI with URLs or an empty list of manifests which will get applied
 		case constants.DefaultCNI:
 			// it's flannel bby
 		default:
