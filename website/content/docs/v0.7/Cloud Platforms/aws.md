@@ -175,20 +175,26 @@ aws ec2 run-instances \
     --instance-type t3.small \
     --user-data file://init.yaml \
     --subnet-id $SUBNET \
-    --security-group-ids $SECURITY_GROUP
+    --security-group-ids $SECURITY_GROUP \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-0}]"
 ```
 
 #### Create the Remaining Control Plane Nodes
 
 ```bash
-aws ec2 run-instances \
+CP_COUNT=1
+while [[ "$CP_COUNT" -lt 3 ]]; do
+  aws ec2 run-instances \
     --region $REGION \
     --image-id $AMI \
-    --count 2 \
+    --count 1 \
     --instance-type t3.small \
     --user-data file://controlplane.yaml \
     --subnet-id $SUBNET \
-    --security-group-ids $SECURITY_GROUP
+    --security-group-ids $SECURITY_GROUP \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-$CP_COUNT}]"
+  ((CP_COUNT++))
+done
 ```
 
 > Make a note of the resulting `PrivateIpAddress` from the init and controlplane nodes for later use.
@@ -204,6 +210,7 @@ aws ec2 run-instances \
     --user-data file://join.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-worker}]"
 ```
 
 ### Configure the Load Balancer
