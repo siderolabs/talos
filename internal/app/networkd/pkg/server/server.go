@@ -36,7 +36,7 @@ func (r *NetworkServer) Routes(ctx context.Context, in *empty.Empty) (reply *net
 		return nil, err
 	}
 
-	defer conn.Close() //nolint: errcheck
+	defer conn.Close() //nolint:errcheck
 
 	list, err := conn.Route.List()
 	if err != nil {
