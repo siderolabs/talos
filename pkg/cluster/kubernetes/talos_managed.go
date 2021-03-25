@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
@@ -34,13 +33,20 @@ type UpgradeProvider interface {
 //
 //nolint:gocyclo
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
-	switch {
-	case strings.HasPrefix(options.FromVersion, "1.19.") && strings.HasPrefix(options.ToVersion, "1.19."):
-	case strings.HasPrefix(options.FromVersion, "1.19.") && strings.HasPrefix(options.ToVersion, "1.20."):
+	switch path := options.Path(); path {
+	case "1.19->1.19":
+		// nothing
+
+	case "1.19->1.20":
 		options.extraUpdaters = append(options.extraUpdaters, addControlPlaneToleration())
-	case strings.HasPrefix(options.FromVersion, "1.20.") && strings.HasPrefix(options.ToVersion, "1.20."):
+
+	// nothing for all those
+	case "1.20->1.20":
+	case "1.20->1.21":
+	case "1.21->1.21":
+
 	default:
-		return fmt.Errorf("unsupported upgrade from %q to %q", options.FromVersion, options.ToVersion)
+		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
 	}
 
 	k8sClient, err := cluster.K8sHelper(ctx)

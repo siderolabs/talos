@@ -5,6 +5,9 @@
 package kubernetes
 
 import (
+	"fmt"
+
+	"github.com/coreos/go-semver/semver"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -29,6 +32,19 @@ type UpgradeOptions struct {
 	extraUpdaters                []daemonsetUpdater
 	podCheckpointerExtraUpdaters []daemonsetUpdater
 	masterNodes                  []string
+}
+
+// Path returns upgrade path in a form "FromMajor.FromMinor->ToMajor.ToMinor" (e.g. "1.20->1.21"),
+// or empty string, if one or both versions can't be parsed.
+func (options *UpgradeOptions) Path() string {
+	from, fromErr := semver.NewVersion(options.FromVersion)
+	to, toErr := semver.NewVersion(options.ToVersion)
+
+	if fromErr != nil || toErr != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%d.%d->%d.%d", from.Major, from.Minor, to.Major, to.Minor)
 }
 
 type daemonsetUpdater func(ds string, daemonset *appsv1.DaemonSet) error

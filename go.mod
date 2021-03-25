@@ -25,6 +25,7 @@ require (
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-iptables v0.5.0
+	github.com/coreos/go-semver v0.3.0
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.4+incompatible
 	github.com/docker/go-connections v0.4.0
