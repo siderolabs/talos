@@ -369,7 +369,7 @@ RUN unlink /etc/ssl
 COPY --from=rootfs / /
 ARG TESTPKGS
 ENV PLATFORM container
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v -covermode=atomic -coverprofile=coverage.txt -count 1 -p 4 ${TESTPKGS}
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
