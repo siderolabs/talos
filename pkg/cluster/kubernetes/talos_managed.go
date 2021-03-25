@@ -167,8 +167,8 @@ func upgradeConfigPatcher(options UpgradeOptions, service string, configResource
 			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
 		}
 
-		configData := configResource.(*resource.Any).Value().(map[string]interface{}) //nolint: errcheck,forcetypeassert
-		configImage := configData["image"].(string)                                   //nolint: errcheck,forcetypeassert
+		configData := configResource.(*resource.Any).Value().(map[string]interface{}) //nolint:errcheck,forcetypeassert
+		configImage := configData["image"].(string)                                   //nolint:errcheck,forcetypeassert
 
 		switch service {
 		case kubeAPIServer:
