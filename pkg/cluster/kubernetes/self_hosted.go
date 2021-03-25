@@ -24,15 +24,14 @@ import (
 )
 
 // UpgradeSelfHosted the Kubernetes control plane.
-//
-//nolint:gocyclo
 func UpgradeSelfHosted(ctx context.Context, cluster cluster.K8sProvider, options UpgradeOptions) error {
-	switch {
-	case strings.HasPrefix(options.FromVersion, "1.18.") && strings.HasPrefix(options.ToVersion, "1.19."):
+	switch path := options.Path(); path {
+	case "1.18->1.19":
+		fallthrough
+	case "1.19->1.19":
 		return hyperkubeUpgrade(ctx, cluster, options)
-	case strings.HasPrefix(options.FromVersion, "1.19.") && strings.HasPrefix(options.ToVersion, "1.19."):
-		return hyperkubeUpgrade(ctx, cluster, options)
-	case strings.HasPrefix(options.FromVersion, "1.19.") && strings.HasPrefix(options.ToVersion, "1.20."):
+
+	case "1.19->1.20":
 		options.extraUpdaters = append(options.extraUpdaters, addControlPlaneToleration())
 		options.podCheckpointerExtraUpdaters = append(options.podCheckpointerExtraUpdaters, addControlPlaneToleration())
 
@@ -48,10 +47,16 @@ func UpgradeSelfHosted(ctx context.Context, cluster cluster.K8sProvider, options
 		}
 
 		return hyperkubeUpgrade(ctx, cluster, options)
-	case strings.HasPrefix(options.FromVersion, "1.20.") && strings.HasPrefix(options.ToVersion, "1.20."):
+
+	case "1.20->1.20":
+		fallthrough
+	case "1.20->1.21":
+		fallthrough
+	case "1.21->1.21":
 		return hyperkubeUpgrade(ctx, cluster, options)
+
 	default:
-		return fmt.Errorf("unsupported upgrade from %q to %q", options.FromVersion, options.ToVersion)
+		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
 	}
 }
 
