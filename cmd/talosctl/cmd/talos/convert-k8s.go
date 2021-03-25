@@ -24,6 +24,10 @@ Talos node configuration to reflect changes made since the boostrap time. Once c
 tool releases static pods and deletes self-hosted DaemonSets.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(Nodes) > 0 {
+			convertOptions.Node = Nodes[0]
+		}
+
 		return WithClient(convertKubernetes)
 	},
 }

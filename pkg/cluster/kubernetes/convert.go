@@ -45,6 +45,8 @@ type ConvertOptions struct {
 	ForceYes                 bool
 	OnlyRemoveInitializedKey bool
 
+	Node string
+
 	masterNodes []string
 }
 
@@ -58,6 +60,11 @@ type ConvertProvider interface {
 //
 //nolint:gocyclo
 func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options ConvertOptions) error {
+	// only used in manual conversion process
+	if options.OnlyRemoveInitializedKey {
+		return removeInitializedKey(ctx, cluster, options.Node)
+	}
+
 	var err error
 
 	k8sClient, err := cluster.K8sHelper(ctx)
@@ -72,11 +79,6 @@ func ConvertToStaticPods(ctx context.Context, cluster ConvertProvider, options C
 
 	if len(options.masterNodes) == 0 {
 		return fmt.Errorf("no master nodes discovered")
-	}
-
-	// only used in manual conversion process
-	if options.OnlyRemoveInitializedKey {
-		return removeInitializedKey(ctx, cluster, options.masterNodes[0])
 	}
 
 	fmt.Printf("discovered master nodes %q\n", options.masterNodes)
