@@ -5,7 +5,7 @@ coverage:
   status:
     project:
       default:
-        target: 26%
+        target: 15%
         threshold: 0.5%
         base: auto
         if_ci_failed: success
