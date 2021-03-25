@@ -166,7 +166,7 @@ func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Printf("%s [rename/overwrite]: ", prompt)
+		fmt.Printf("%s [(r)ename/(o)verwrite]: ", prompt)
 
 		response, err := reader.ReadString('\n')
 		if err != nil {
