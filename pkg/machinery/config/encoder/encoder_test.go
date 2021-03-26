@@ -5,6 +5,7 @@
 package encoder_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -94,40 +95,25 @@ func init() {
 	mixinDoc.Fields = make([]encoder.Doc, 1)
 	mixinDoc.Fields[0].Comments[encoder.LineComment] = "was inlined"
 
-	machineDoc.Examples = []*encoder.Example{
-		{
-			Name: "uncomment me",
-			Value: &Machine{
-				State: 100,
-			},
-		},
-		{
-			Name: "second example",
-			Value: &Machine{
-				State: -1,
-			},
-		},
-	}
+	machineDoc.AddExample("uncomment me", &Machine{
+		State: 100,
+	})
+	machineDoc.AddExample("second example", &Machine{
+		State: -1,
+	})
+
 	machineDoc.Fields = make([]encoder.Doc, 2)
-	machineDoc.Fields[1].Examples = []*encoder.Example{
-		{
-			Name: "",
-			Value: &MachineConfig{
-				Version: "0.0.2",
-			},
-		},
-	}
+	machineDoc.Fields[1].AddExample("", &MachineConfig{
+		Version: "0.0.2",
+	})
 
 	machineConfigDoc.Fields = make([]encoder.Doc, 2)
 	machineConfigDoc.Fields[0].Comments[encoder.HeadComment] = "this is some version"
-	machineConfigDoc.Fields[1].Examples = []*encoder.Example{
-		{
-			Name: "",
-			Value: []string{
-				"reboot", "upgrade",
-			},
+	machineConfigDoc.Fields[1].AddExample("",
+		[]string{
+			"reboot", "upgrade",
 		},
-	}
+	)
 }
 
 func (c Config) Doc() *encoder.Doc {
@@ -332,6 +318,23 @@ mixed_in: a # was inlined
 `,
 			incompatible: true,
 		},
+		{
+			name: "populate map element's examples",
+			value: map[string][]*MachineConfig{
+				"first": {
+					{},
+				},
+			},
+			expectedYAML: `first:
+    - # this is some version
+      version: ""
+      
+      # capabilities:
+      #     - reboot
+      #     - upgrade
+`,
+			incompatible: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -359,6 +362,26 @@ mixed_in: a # was inlined
 			suite.Assert().EqualValues(expectedMap, actualMap)
 		}
 	}
+}
+
+func (suite *EncoderSuite) TestConcurrent() {
+	value := &Machine{}
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			encoder := encoder.NewEncoder(value)
+			_, err := encoder.Encode()
+			suite.Assert().NoError(err)
+		}()
+	}
+
+	wg.Wait()
 }
 
 func decodeToMap(data []byte) (map[interface{}]interface{}, error) {
