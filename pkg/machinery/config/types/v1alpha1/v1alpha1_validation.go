@@ -73,14 +73,14 @@ func (c *Config) Validate(mode config.RuntimeMode) error {
 	if mode.RequiresInstall() {
 		if c.MachineConfig.MachineInstall == nil {
 			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", mode))
-		}
+		} else {
+			if c.MachineConfig.MachineInstall.InstallDisk == "" {
+				result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
+			}
 
-		if c.MachineConfig.MachineInstall.InstallDisk == "" {
-			result = multierror.Append(result, fmt.Errorf("an install disk is required in %q mode", mode))
-		}
-
-		if _, err := os.Stat(c.MachineConfig.MachineInstall.InstallDisk); os.IsNotExist(err) {
-			result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
+			if _, err := os.Stat(c.MachineConfig.MachineInstall.InstallDisk); os.IsNotExist(err) {
+				result = multierror.Append(result, fmt.Errorf("specified install disk does not exist: %q", c.MachineConfig.MachineInstall.InstallDisk))
+			}
 		}
 	}
 
