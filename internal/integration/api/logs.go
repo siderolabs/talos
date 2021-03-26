@@ -190,11 +190,9 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		defer close(respCh)
 
 		for {
-			var msg *common.Data
-
-			msg, err = logsStream.Recv()
-			if err != nil {
-				errCh <- err
+			msg, e := logsStream.Recv()
+			if e != nil {
+				errCh <- e
 
 				return
 			}

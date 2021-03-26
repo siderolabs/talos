@@ -427,7 +427,7 @@ ENV PLATFORM container
 ENV CGO_ENABLED 1
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v -race -count 1 -p 4 ${TESTPKGS}
 
-# The integration-test target builds integration test binary.
+# The integration-test targets builds integration test binary.
 
 FROM base AS integration-test-linux-build
 ARG SHA
@@ -438,8 +438,9 @@ ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
+ENV CGO_ENABLED 1
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -race -c \
+    -ldflags "-linkmode=external -extldflags '-static' -s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -455,7 +456,7 @@ ARG USERNAME
 ARG REGISTRY
 ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go test -c \
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go test -v -c \
     -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
@@ -476,8 +477,9 @@ ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 ARG ARTIFACTS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
+ENV CGO_ENABLED 1
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -race -c \
+    -ldflags "-linkmode=external -extldflags '-static' -s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
     -tags integration,integration_provision \
     ./internal/integration
 
