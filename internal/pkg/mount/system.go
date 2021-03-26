@@ -7,6 +7,7 @@ package mount
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
@@ -20,7 +21,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-var mountpoints = map[string]*Point{}
+var (
+	mountpoints      = map[string]*Point{}
+	mountpointsMutex sync.RWMutex
+)
 
 // SystemMountPointsForDevice returns the mountpoints required to boot the system.
 // This function is called exclusively during installations ( both image
@@ -195,6 +199,9 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return err
 	}
 
+	mountpointsMutex.Lock()
+	defer mountpointsMutex.Unlock()
+
 	mountpoints[label] = mountpoint
 
 	return nil
@@ -202,14 +209,22 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 
 // SystemPartitionUnmount unmounts a system partition by the label.
 func SystemPartitionUnmount(r runtime.Runtime, label string) (err error) {
-	if mountpoint, ok := mountpoints[label]; ok {
-		err = mountpoint.Unmount()
-		if err != nil {
-			return err
-		}
+	mountpointsMutex.RLock()
+	mountpoint, ok := mountpoints[label]
+	mountpointsMutex.RUnlock()
 
-		delete(mountpoints, label)
+	if !ok {
+		return nil
 	}
+
+	err = mountpoint.Unmount()
+	if err != nil {
+		return err
+	}
+
+	mountpointsMutex.Lock()
+	delete(mountpoints, label)
+	mountpointsMutex.Unlock()
 
 	return nil
 }

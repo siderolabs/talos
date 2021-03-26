@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 
 	yaml "gopkg.in/yaml.v3"
 )
@@ -51,7 +52,7 @@ func (d *Doc) AddExample(name string, value interface{}) {
 
 	d.Examples = append(d.Examples, &Example{
 		Name:  name,
-		Value: value,
+		value: value,
 	})
 }
 
@@ -74,8 +75,43 @@ func (d *Doc) Describe(field string, short bool) string {
 
 // Example represents one example snippet for a type.
 type Example struct {
-	Name  string
-	Value interface{}
+	populate sync.Once
+	Name     string
+
+	valueMutex sync.RWMutex
+	value      interface{}
+}
+
+// Populate populates example value.
+func (e *Example) Populate(index int) {
+	e.populate.Do(func() {
+		if reflect.TypeOf(e.value).Kind() != reflect.Ptr {
+			return
+		}
+
+		v := reflect.ValueOf(e.value).Elem()
+
+		defaultValue := getExample(v, getDoc(e.value), index)
+
+		e.valueMutex.Lock()
+		defer e.valueMutex.Unlock()
+
+		if defaultValue != nil {
+			v.Set(defaultValue.Convert(v.Type()))
+		}
+
+		populateNestedExamples(v, index)
+	})
+}
+
+// GetValue returns example value.
+func (e *Example) GetValue() interface{} {
+	e.valueMutex.RLock()
+	defer func() {
+		e.valueMutex.RUnlock()
+	}()
+
+	return e.value
 }
 
 // Field gets field from the list of fields.
@@ -168,7 +204,7 @@ func renderExample(key string, doc *Doc) string {
 	examples := []string{}
 
 	for i, e := range doc.Examples {
-		v := reflect.ValueOf(e.Value)
+		v := reflect.ValueOf(e.GetValue())
 
 		if !isSet(v) {
 			continue
@@ -179,7 +215,8 @@ func renderExample(key string, doc *Doc) string {
 		}
 
 		defaultValue := v.Interface()
-		populateExamples(defaultValue, i)
+
+		e.Populate(i)
 
 		node, err := toYamlNode(defaultValue)
 		if err != nil {
@@ -229,9 +266,9 @@ func renderExample(key string, doc *Doc) string {
 	return strings.Join(examples, "")
 }
 
-func readExample(v reflect.Value, doc *Doc, index int) {
+func getExample(v reflect.Value, doc *Doc, index int) *reflect.Value {
 	if doc == nil || len(doc.Examples) == 0 {
-		return
+		return nil
 	}
 
 	numExamples := len(doc.Examples)
@@ -239,31 +276,23 @@ func readExample(v reflect.Value, doc *Doc, index int) {
 		index = numExamples - 1
 	}
 
-	defaultValue := reflect.ValueOf(doc.Examples[index].Value)
+	defaultValue := reflect.ValueOf(doc.Examples[index].GetValue())
 	if isSet(defaultValue) {
 		if v.Kind() != reflect.Ptr && defaultValue.Kind() == reflect.Ptr {
 			defaultValue = defaultValue.Elem()
 		}
-
-		v.Set(defaultValue.Convert(v.Type()))
 	}
+
+	return &defaultValue
 }
 
 //nolint:gocyclo
-func populateExamples(in interface{}, index int) {
-	doc := getDoc(in)
-
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return
-	}
-
-	v := reflect.ValueOf(in).Elem()
-
-	readExample(v, doc, index)
-
+func populateNestedExamples(v reflect.Value, index int) {
 	//nolint:exhaustive
 	switch v.Kind() {
 	case reflect.Struct:
+		doc := getDoc(v.Interface())
+
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Field(i)
 			if !field.CanInterface() {
@@ -271,19 +300,22 @@ func populateExamples(in interface{}, index int) {
 			}
 
 			if doc != nil && i < len(doc.Fields) {
-				readExample(field, doc.Field(i), index)
+				defaultValue := getExample(field, doc.Field(i), index)
+
+				if defaultValue != nil {
+					field.Set(defaultValue.Convert(field.Type()))
+				}
 			}
 
-			value := field.Interface()
-			populateExamples(value, index)
+			populateNestedExamples(field, index)
 		}
 	case reflect.Map:
 		for _, key := range v.MapKeys() {
-			populateExamples(v.MapIndex(key), index)
+			populateNestedExamples(v.MapIndex(key), index)
 		}
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			populateExamples(v.Index(i), index)
+			populateNestedExamples(v.Index(i), index)
 		}
 	}
 }
