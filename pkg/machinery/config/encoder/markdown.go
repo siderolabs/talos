@@ -21,7 +21,7 @@ var markdownTemplate = `
 Examples:
 
 {{ range $example := .Examples }}
-{{ yaml $example.Value $.Name }}
+{{ yaml $example.GetValue $.Name }}
 {{ end }}
 {{ end }}
 
@@ -43,7 +43,7 @@ Appears in:
 {{ if $struct.Examples -}}
 
 {{ range $example := $struct.Examples }}
-{{ yaml $example.Value "" }}
+{{ yaml $example.GetValue "" }}
 {{- end -}}
 {{ end }}
 
