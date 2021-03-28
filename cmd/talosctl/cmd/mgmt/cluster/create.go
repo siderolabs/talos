@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/pkg/images"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
@@ -436,7 +437,7 @@ func create(ctx context.Context) (err error) {
 			types = append([]machine.Type{machine.TypeInit}, types...)
 		}
 
-		if err = configBundle.Write(".", types...); err != nil {
+		if err = configBundle.Write(".", encoder.CommentsAll, types...); err != nil {
 			return err
 		}
 	}

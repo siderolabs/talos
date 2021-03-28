@@ -15,6 +15,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
 
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -27,8 +28,8 @@ type Provider interface {
 	Cluster() ClusterConfig
 	Validate(RuntimeMode, ...ValidationOption) error
 	ApplyDynamicConfig(context.Context, DynamicConfigProvider) error
-	String() (string, error)
-	Bytes() ([]byte, error)
+	String(encoderOptions ...encoder.Option) (string, error)
+	Bytes(encoderOptions ...encoder.Option) ([]byte, error)
 }
 
 // MachineConfig defines the requirements for a config that pertains to machine

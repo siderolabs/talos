@@ -56,8 +56,8 @@ func (c *Config) Cluster() config.ClusterConfig {
 }
 
 // String implements the config.Provider interface.
-func (c *Config) String() (string, error) {
-	b, err := c.Bytes()
+func (c *Config) String(options ...encoder.Option) (string, error) {
+	b, err := c.Bytes(options...)
 	if err != nil {
 		return "", err
 	}
@@ -66,8 +66,8 @@ func (c *Config) String() (string, error) {
 }
 
 // Bytes implements the config.Provider interface.
-func (c *Config) Bytes() ([]byte, error) {
-	return encoder.NewEncoder(c).Encode()
+func (c *Config) Bytes(options ...encoder.Option) ([]byte, error) {
+	return encoder.NewEncoder(c, options...).Encode()
 }
 
 // ApplyDynamicConfig implements the config.Provider interface.

@@ -16,6 +16,7 @@ import (
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -49,7 +50,7 @@ func (c *ConfigBundle) TalosConfig() *clientconfig.Config {
 }
 
 // Write config files to output directory.
-func (c *ConfigBundle) Write(outputDir string, types ...machine.Type) error {
+func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFlags, types ...machine.Type) error {
 	for _, t := range types {
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
@@ -61,17 +62,17 @@ func (c *ConfigBundle) Write(outputDir string, types ...machine.Type) error {
 
 		switch t { //nolint:exhaustive
 		case machine.TypeInit:
-			configString, err = c.Init().String()
+			configString, err = c.Init().String(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
 		case machine.TypeControlPlane:
-			configString, err = c.ControlPlane().String()
+			configString, err = c.ControlPlane().String(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
 		case machine.TypeJoin:
-			configString, err = c.Join().String()
+			configString, err = c.Join().String(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
