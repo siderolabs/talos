@@ -196,7 +196,7 @@ func addComments(node *yaml.Node, doc *Doc, comments ...int) {
 }
 
 //nolint:gocyclo
-func renderExample(key string, doc *Doc) string {
+func renderExample(key string, doc *Doc, flags CommentsFlags) string {
 	if doc == nil {
 		return ""
 	}
@@ -218,19 +218,19 @@ func renderExample(key string, doc *Doc) string {
 
 		e.Populate(i)
 
-		node, err := toYamlNode(defaultValue)
+		node, err := toYamlNode(defaultValue, flags)
 		if err != nil {
 			continue
 		}
 
 		node, err = toYamlNode(map[string]*yaml.Node{
 			key: node,
-		})
+		}, flags)
 		if err != nil {
 			continue
 		}
 
-		if i == 0 {
+		if i == 0 && flags.enabled(CommentsDocs) {
 			addComments(node, doc, HeadComment, LineComment)
 		}
 

@@ -31,7 +31,7 @@ type Config struct {
 }
 
 type FakeConfig struct {
-	Machine Machine
+	Machine Machine `yaml:"machine,omitempty"`
 }
 
 type Mixin struct {
@@ -86,6 +86,11 @@ func init() {
 	configDoc.Fields[1].Comments[encoder.LineComment] = "<<<"
 	configDoc.Fields[2].Comments[encoder.HeadComment] = "complex slice"
 	configDoc.Fields[3].Comments[encoder.FootComment] = "some text example for map"
+
+	configDoc.Fields[2].AddExample("slice example", []*Endpoint{{
+		Host: "127.0.0.1",
+		Port: 5554,
+	}})
 
 	endpointDoc.Comments[encoder.LineComment] = "endpoint settings"
 	endpointDoc.Fields = make([]encoder.Doc, 2)
@@ -151,7 +156,45 @@ func (suite *EncoderSuite) TestRun() {
 		value        interface{}
 		expectedYAML string
 		incompatible bool
+		options      []encoder.Option
 	}{
+		{
+			name:  "default struct with all enabled",
+			value: &Config{},
+			expectedYAML: `integer: 0
+# <<<
+slice: []
+map: {}
+# some text example for map
+# # complex slice
+
+# # slice example
+# complex_slice:
+#     - host: 127.0.0.1 # endpoint host
+#       port: 5554 # custom port
+`,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsAll),
+			},
+			incompatible: true,
+		},
+		{
+			name:  "default struct only with examples",
+			value: &Config{},
+			expectedYAML: `integer: 0
+slice: []
+map: {}
+
+# # slice example
+# complex_slice:
+#     - host: 127.0.0.1
+#       port: 5554
+`,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsExamples),
+			},
+			incompatible: true,
+		},
 		{
 			name:  "default struct",
 			value: &Config{},
@@ -163,6 +206,9 @@ complex_slice: []
 map: {}
 # some text example for map
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "struct with custom marshaller",
@@ -183,6 +229,9 @@ custommarshaller:
     # completely custom
     value: abcd
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "bytes flow",
@@ -199,6 +248,9 @@ map: {}
 
 bytes: [46, 46, 46]
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "map check",
@@ -218,6 +270,9 @@ map:
         host: "" # endpoint host
 # some text example for map
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "nil map element",
@@ -235,6 +290,9 @@ map:
     endpoint: null
 # some text example for map
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "nil map element",
@@ -256,6 +314,9 @@ map:
         host: "" # endpoint host
 # some text example for map
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name: "inline",
@@ -274,6 +335,9 @@ map: {}
 
 mixed_in: a # was inlined
 `,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
 		},
 		{
 			name:  "comment example if zero",
@@ -335,10 +399,61 @@ mixed_in: a # was inlined
 `,
 			incompatible: true,
 		},
+		{
+			name: "without comments",
+			value: &FakeConfig{
+				Machine{
+					State: 1000,
+				},
+			},
+			expectedYAML: `machine:
+    state: 1000
+    config: null
+`,
+			incompatible: true,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDisabled),
+			},
+		},
+		{
+			name:  "only with docs",
+			value: &FakeConfig{},
+			expectedYAML: `{}
+`,
+			incompatible: true,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsDocs),
+			},
+		},
+		{
+			name:  "only with examples",
+			value: &FakeConfig{},
+			expectedYAML: `# # uncomment me
+# machine:
+#     state: 100
+#     config:
+#         version: 0.0.2
+#         capabilities:
+#             - reboot
+#             - upgrade
+# # second example
+# machine:
+#     state: -1
+#     config:
+#         version: 0.0.2
+#         capabilities:
+#             - reboot
+#             - upgrade
+`,
+			incompatible: true,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsExamples),
+			},
+		},
 	}
 
 	for _, test := range tests {
-		encoder := encoder.NewEncoder(test.value)
+		encoder := encoder.NewEncoder(test.value, test.options...)
 		data, err := encoder.Encode()
 		suite.Assert().NoError(err)
 

@@ -14,37 +14,46 @@ import (
 
 // Encoder implements config encoder.
 type Encoder struct {
-	value interface{}
+	value   interface{}
+	options *Options
 }
 
 // NewEncoder initializes and returns an `Encoder`.
-func NewEncoder(value interface{}) *Encoder {
+func NewEncoder(value interface{}, opts ...Option) *Encoder {
 	return &Encoder{
-		value: value,
+		value:   value,
+		options: newOptions(opts...),
 	}
 }
 
 // Marshal converts value to YAML-serializable value (suitable for MarshalYAML).
 func (e *Encoder) Marshal() (*yaml.Node, error) {
-	node, err := toYamlNode(e.value)
+	node, err := toYamlNode(e.value, e.options.Comments)
 	if err != nil {
 		return nil, err
 	}
 
-	addComments(node, getDoc(e.value), HeadComment, LineComment)
+	if e.options.Comments.enabled(CommentsDocs) {
+		addComments(node, getDoc(e.value), HeadComment, LineComment)
+	}
 
 	return node, nil
 }
 
 // Encode converts value to yaml.
+//nolint:gocyclo
 func (e *Encoder) Encode() ([]byte, error) {
+	if e.options.Comments == CommentsDisabled {
+		return yaml.Marshal(e.value)
+	}
+
 	node, err := e.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
 	// special handling for case when we get an empty output
-	if node.Kind == yaml.MappingNode && len(node.Content) == 0 && node.FootComment != "" {
+	if node.Kind == yaml.MappingNode && len(node.Content) == 0 && node.FootComment != "" && e.options.Comments.enabled(CommentsExamples) {
 		res := ""
 
 		if node.HeadComment != "" {
@@ -85,7 +94,7 @@ func isSet(value reflect.Value) bool {
 }
 
 //nolint:gocyclo,cyclop
-func toYamlNode(in interface{}) (*yaml.Node, error) {
+func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 	node := &yaml.Node{}
 
 	// do not wrap yaml.Node into yaml.Node
@@ -183,8 +192,8 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 				fieldDoc = getDoc(value)
 			}
 
-			if !defined {
-				example := renderExample(fieldName, fieldDoc)
+			if !defined && flags.enabled(CommentsExamples) {
+				example := renderExample(fieldName, fieldDoc, flags)
 
 				if example != "" {
 					examples = append(examples, example)
@@ -199,7 +208,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 
 			if !skip {
 				if inline {
-					child, err := toYamlNode(value)
+					child, err := toYamlNode(value, flags)
 					if err != nil {
 						return nil, err
 					}
@@ -207,7 +216,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 					if child.Kind == yaml.MappingNode || child.Kind == yaml.SequenceNode {
 						appendNodes(node, child.Content...)
 					}
-				} else if err := addToMap(node, fieldDoc, fieldName, value, style); err != nil {
+				} else if err := addToMap(node, fieldDoc, fieldName, value, style, flags); err != nil {
 					return nil, err
 				}
 			}
@@ -235,7 +244,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 			element := v.MapIndex(k)
 			value := element.Interface()
 
-			if err := addToMap(node, nil, k.Interface(), value, 0); err != nil {
+			if err := addToMap(node, nil, k.Interface(), value, 0, flags); err != nil {
 				return nil, err
 			}
 		}
@@ -248,7 +257,7 @@ func toYamlNode(in interface{}) (*yaml.Node, error) {
 
 			var err error
 
-			nodes[i], err = toYamlNode(element.Interface())
+			nodes[i], err = toYamlNode(element.Interface(), flags)
 			if err != nil {
 				return nil, err
 			}
@@ -271,21 +280,23 @@ func appendNodes(dest *yaml.Node, nodes ...*yaml.Node) {
 	dest.Content = append(dest.Content, nodes...)
 }
 
-func addToMap(dest *yaml.Node, doc *Doc, fieldName, in interface{}, style yaml.Style) error {
-	key, err := toYamlNode(fieldName)
+func addToMap(dest *yaml.Node, doc *Doc, fieldName, in interface{}, style yaml.Style, flags CommentsFlags) error {
+	key, err := toYamlNode(fieldName, flags)
 	if err != nil {
 		return err
 	}
 
-	value, err := toYamlNode(in)
+	value, err := toYamlNode(in, flags)
 	if err != nil {
 		return err
 	}
 
 	value.Style = style
 
-	addComments(key, doc, HeadComment, FootComment)
-	addComments(value, doc, LineComment)
+	if flags.enabled(CommentsDocs) {
+		addComments(key, doc, HeadComment, FootComment)
+		addComments(value, doc, LineComment)
+	}
 
 	// override head comment with line comment for non-scalar nodes
 	if value.Kind != yaml.ScalarNode {

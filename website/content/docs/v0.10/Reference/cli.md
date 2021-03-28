@@ -998,6 +998,8 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
       --talos-version string        the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
       --version string              the desired machine config version to generate (default "v1alpha1")
+      --with-docs                   renders all machine configs adding the documentation for each field (default true)
+      --with-examples               renders all machine configs with the commented examples (default true)
 ```
 
 ### Options inherited from parent commands
