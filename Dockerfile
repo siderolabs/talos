@@ -357,10 +357,10 @@ WORKDIR /src/cmd/installer
 RUN --mount=type=cache,target=/.cache go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.13.2 AS unicode-pf2
+FROM alpine:3.13.3 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
-FROM alpine:3.13.2 AS installer
+FROM alpine:3.13.3 AS installer
 RUN apk add --no-cache --update \
     bash \
     ca-certificates \
