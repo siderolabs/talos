@@ -5,6 +5,7 @@
 package containerd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -283,8 +284,15 @@ func (c *containerdRunner) StdinReader() (io.Reader, error) {
 		return nil, err
 	}
 
+	// copy the input buffer as containerd API seems to be buggy:
+	//  * if the task fails to start, IO loop is not stopped properly, so after a restart there are two goroutines concurrently reading from stdin
+	contents, err := io.ReadAll(c.opts.Stdin)
+	if err != nil {
+		return nil, err
+	}
+
 	c.stdinCloser = &stdinCloser{
-		stdin:  c.opts.Stdin,
+		stdin:  bytes.NewReader(contents),
 		closer: make(chan struct{}),
 	}
 
