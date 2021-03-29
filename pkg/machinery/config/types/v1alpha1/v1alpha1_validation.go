@@ -64,6 +64,8 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 
 	if c.MachineConfig == nil {
 		result = multierror.Append(result, errors.New("machine instructions are required"))
+
+		return result.ErrorOrNil()
 	}
 
 	if err := c.ClusterConfig.Validate(); err != nil {
@@ -133,10 +135,6 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
-	if !valid.IsDNSName(c.ClusterConfig.ClusterNetwork.DNSDomain) {
-		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterConfig.ClusterNetwork.DNSDomain))
-	}
-
 	for _, label := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
 		encryptionConfig := c.MachineConfig.SystemDiskEncryption().Get(label)
 		if encryptionConfig != nil {
@@ -176,6 +174,10 @@ func (c *ClusterConfig) Validate() error {
 
 	if err := talosnet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
 		result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
+	}
+
+	if c.ClusterNetwork != nil && !valid.IsDNSName(c.ClusterNetwork.DNSDomain) {
+		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterNetwork.DNSDomain))
 	}
 
 	return result.ErrorOrNil()
