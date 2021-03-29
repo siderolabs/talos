@@ -104,7 +104,7 @@ func (c *ClusterConfig) Config(t machine.Type) (string, error) {
 // Etcd implements the config.ClusterConfig interface.
 func (c *ClusterConfig) Etcd() config.Etcd {
 	if c.EtcdConfig == nil {
-		c.EtcdConfig = &EtcdConfig{}
+		return &EtcdConfig{}
 	}
 
 	return c.EtcdConfig

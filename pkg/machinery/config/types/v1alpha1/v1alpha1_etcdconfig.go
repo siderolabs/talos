@@ -37,7 +37,7 @@ func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 // ExtraArgs implements the config.Etcd interface.
 func (e *EtcdConfig) ExtraArgs() map[string]string {
 	if e.EtcdExtraArgs == nil {
-		e.EtcdExtraArgs = make(map[string]string)
+		return make(map[string]string)
 	}
 
 	return e.EtcdExtraArgs

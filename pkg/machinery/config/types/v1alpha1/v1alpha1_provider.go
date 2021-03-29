@@ -237,7 +237,7 @@ func (m *MachineConfig) Server() string {
 // Sysctls implements the config.Provider interface.
 func (m *MachineConfig) Sysctls() map[string]string {
 	if m.MachineSysctls == nil {
-		m.MachineSysctls = make(map[string]string)
+		return make(map[string]string)
 	}
 
 	return m.MachineSysctls
@@ -285,12 +285,8 @@ func (k *KubeletConfig) Image() string {
 
 // ExtraArgs implements the config.Provider interface.
 func (k *KubeletConfig) ExtraArgs() map[string]string {
-	if k == nil {
-		k = &KubeletConfig{}
-	}
-
-	if k.KubeletExtraArgs == nil {
-		k.KubeletExtraArgs = make(map[string]string)
+	if k == nil || k.KubeletExtraArgs == nil {
+		return make(map[string]string)
 	}
 
 	return k.KubeletExtraArgs
@@ -432,8 +428,10 @@ func (n *NetworkConfig) Devices() []config.Device {
 	return interfaces
 }
 
-// GetDevice adds or returns existing Device by name.
-func (n *NetworkConfig) GetDevice(name string) *Device {
+// getDevice adds or returns existing Device by name.
+//
+// This method mutates configuration, but it's only used in config generation.
+func (n *NetworkConfig) getDevice(name string) *Device {
 	for _, dev := range n.NetworkInterfaces {
 		if dev.DeviceInterface == name {
 			return dev
