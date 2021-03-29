@@ -70,7 +70,8 @@ SHELL ["/toolchain/bin/bash", "-c"]
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV GO111MODULE on
 ENV GOPROXY https://proxy.golang.org
-ENV CGO_ENABLED 0
+ARG CGO_ENABLED
+ENV CGO_ENABLED ${CGO_ENABLED}
 ENV GOCACHE /.cache/go-build
 ENV GOMODCACHE /.cache/mod
 WORKDIR /src
@@ -149,13 +150,10 @@ WORKDIR /src
 # The init target builds the init binary.
 
 FROM base AS init-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
 WORKDIR /src/internal/app/init
-RUN --mount=type=cache,target=/.cache go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS}" -o /init
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
 RUN chmod +x /init
 
 FROM scratch AS init
@@ -164,16 +162,10 @@ COPY --from=init-build /init /init
 # The machined target builds the machined binary.
 
 FROM base AS machined-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
 WORKDIR /src/internal/app/machined
-RUN --mount=type=cache,target=/.cache go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /machined
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM scratch AS machined
@@ -182,48 +174,24 @@ COPY --from=machined-build /machined /machined
 # The talosctl targets build the talosctl binaries.
 
 FROM base AS talosctl-linux-amd64-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG ARTIFACTS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-amd64
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG ARTIFACTS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-arm64
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
 
 FROM base AS talosctl-linux-armv7-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG ARTIFACTS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7  go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-linux-armv7
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
 
 FROM scratch AS talosctl-linux
@@ -241,18 +209,10 @@ LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
 ENTRYPOINT ["/talosctl"]
 
 FROM base AS talosctl-darwin-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG ARTIFACTS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 WORKDIR /src/cmd/talosctl
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" -o /talosctl-darwin-amd64
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 
 FROM scratch AS talosctl-darwin
@@ -344,16 +304,10 @@ ENTRYPOINT ["/sbin/init"]
 # various environments.
 
 FROM base AS installer-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
 WORKDIR /src/cmd/installer
-RUN --mount=type=cache,target=/.cache go build -ldflags "-s -w -X ${VERSION_PKG}.Name=Talos -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" -o /installer
+RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
 FROM alpine:3.13.3 AS unicode-pf2
@@ -429,17 +383,10 @@ RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type
 # The integration-test targets builds integration test binary.
 
 FROM base AS integration-test-linux-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ENV CGO_ENABLED 1
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -race -c \
-    -ldflags "-linkmode=external -extldflags '-static' -s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+    -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -447,16 +394,10 @@ FROM scratch AS integration-test-linux
 COPY --from=integration-test-linux-build /src/integration.test /integration-test-linux-amd64
 
 FROM base AS integration-test-darwin-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go test -v -c \
-    -ldflags "-s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Registry=${REGISTRY}" \
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+    -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
 
@@ -466,19 +407,10 @@ COPY --from=integration-test-darwin-build /src/integration.test /integration-tes
 # The integration-test-provision target builds integration test binary with provisioning tests.
 
 FROM base AS integration-test-provision-linux-build
-ARG SHA
-ARG TAG
-ARG PKGS
-ARG EXTRAS
-ARG USERNAME
-ARG REGISTRY
-ARG VERSION_PKG="github.com/talos-systems/talos/pkg/version"
-ARG IMAGES_PKGS="github.com/talos-systems/talos/pkg/images"
-ARG MGMT_HELPERS_PKG="github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-ARG ARTIFACTS
-ENV CGO_ENABLED 1
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -race -c \
-    -ldflags "-linkmode=external -extldflags '-static' -s -w -X ${VERSION_PKG}.Name=Client -X ${VERSION_PKG}.SHA=${SHA} -X ${VERSION_PKG}.Tag=${TAG} -X ${VERSION_PKG}.PkgsVersion=${PKGS} -X ${VERSION_PKG}.ExtrasVersion=${EXTRAS} -X ${IMAGES_PKGS}.Username=${USERNAME} -X ${IMAGES_PKGS}.Registry=${REGISTRY} -X ${MGMT_HELPERS_PKG}.ArtifactsPath=${ARTIFACTS}" \
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+    -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_provision \
     ./internal/integration
 

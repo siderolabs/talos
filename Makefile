@@ -7,6 +7,7 @@ IMAGE_TAG ?= $(TAG)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
+NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.5.0-alpha.0-3-g41b8073
@@ -29,6 +30,30 @@ RELEASES ?= v0.8.5 v0.9.0
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 
+VERSION_PKG = github.com/talos-systems/talos/pkg/version
+IMAGES_PKGS = github.com/talos-systems/talos/pkg/images
+MGMT_HELPERS_PKG = github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers
+
+CGO_ENABLED ?= 0
+GO_BUILDFLAGS ?=
+GO_LDFLAGS ?= -s -w \
+	-X $(VERSION_PKG).Name=$(NAME) \
+	-X $(VERSION_PKG).SHA=$(SHA) \
+	-X $(VERSION_PKG).Tag=$(TAG) \
+	-X $(VERSION_PKG).PkgsVersion=$(PKGS) \
+	-X $(VERSION_PKG).ExtrasVersion=$(EXTRAS) \
+	-X $(IMAGES_PKGS).Username=$(USERNAME) \
+	-X $(IMAGES_PKGS).Registry=$(REGISTRY) \
+	-X $(MGMT_HELPERS_PKG).ArtifactsPath=$(ARTIFACTS)
+
+WITH_RACE ?=
+
+ifneq ($(strip $(WITH_RACE)),)
+CGO_ENABLED = 1
+GO_BUILDFLAGS += -race
+GO_LDFLAGS += -linkmode=external -extldflags '-static'
+endif
+
 , := ,
 space := $(subst ,, )
 BUILD := docker buildx build
@@ -43,13 +68,13 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
-COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
-COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
+COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
+COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
+COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
@@ -89,6 +114,11 @@ All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
 registry "$(IMAGE_REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
 The registry and username can be overriden by exporting REGISTRY, and USERNAME
 respectively.
+
+## Race Detector
+
+Building with `WITH_RACE=1` enables race detector in the Talos executables. Integration tests are always built with the race detector
+enabled.
 
 endef
 
@@ -160,7 +190,7 @@ talosctl-image: ## Builds the talosctl container image and outputs it to the art
 	@$(MAKE) registry-talosctl TARGET_ARGS="--allow security.insecure"
 
 talosctl-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64 PUSH=false
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64 PUSH=false NAME=Client
 
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
@@ -232,10 +262,10 @@ unit-tests-race: ## Performs unit tests with race detection enabled.
 	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
+	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
+	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
 $(ARTIFACTS)/sonobuoy:
 	@mkdir -p $(ARTIFACTS)
