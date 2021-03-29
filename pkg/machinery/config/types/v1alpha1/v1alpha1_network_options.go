@@ -34,7 +34,7 @@ func WithNetworkNameservers(nameservers ...string) NetworkConfigOption {
 // WithNetworkInterfaceIgnore marks interface as ignored.
 func WithNetworkInterfaceIgnore(iface string) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		cfg.GetDevice(iface).DeviceIgnore = true
+		cfg.getDevice(iface).DeviceIgnore = true
 
 		return nil
 	}
@@ -43,7 +43,7 @@ func WithNetworkInterfaceIgnore(iface string) NetworkConfigOption {
 // WithNetworkInterfaceDHCP enables DHCP for the interface.
 func WithNetworkInterfaceDHCP(iface string, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		cfg.GetDevice(iface).DeviceDHCP = true
+		cfg.getDevice(iface).DeviceDHCP = true
 
 		return nil
 	}
@@ -52,7 +52,7 @@ func WithNetworkInterfaceDHCP(iface string, enable bool) NetworkConfigOption {
 // WithNetworkInterfaceDHCPv4 enables DHCPv4 for the interface.
 func WithNetworkInterfaceDHCPv4(iface string, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		dev := cfg.GetDevice(iface)
+		dev := cfg.getDevice(iface)
 
 		if dev.DeviceDHCPOptions == nil {
 			dev.DeviceDHCPOptions = &DHCPOptions{}
@@ -67,7 +67,7 @@ func WithNetworkInterfaceDHCPv4(iface string, enable bool) NetworkConfigOption {
 // WithNetworkInterfaceDHCPv6 enables DHCPv6 for the interface.
 func WithNetworkInterfaceDHCPv6(iface string, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		dev := cfg.GetDevice(iface)
+		dev := cfg.getDevice(iface)
 
 		if dev.DeviceDHCPOptions == nil {
 			dev.DeviceDHCPOptions = &DHCPOptions{}
@@ -82,7 +82,7 @@ func WithNetworkInterfaceDHCPv6(iface string, enable bool) NetworkConfigOption {
 // WithNetworkInterfaceCIDR configures interface for static addressing.
 func WithNetworkInterfaceCIDR(iface, cidr string) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		cfg.GetDevice(iface).DeviceCIDR = cidr
+		cfg.getDevice(iface).DeviceCIDR = cidr
 
 		return nil
 	}
@@ -91,7 +91,7 @@ func WithNetworkInterfaceCIDR(iface, cidr string) NetworkConfigOption {
 // WithNetworkInterfaceMTU configures interface MTU.
 func WithNetworkInterfaceMTU(iface string, mtu int) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		cfg.GetDevice(iface).DeviceMTU = mtu
+		cfg.getDevice(iface).DeviceMTU = mtu
 
 		return nil
 	}
@@ -100,7 +100,7 @@ func WithNetworkInterfaceMTU(iface string, mtu int) NetworkConfigOption {
 // WithNetworkInterfaceWireguard configures interface for Wireguard.
 func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguardConfig) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		cfg.GetDevice(iface).DeviceWireguardConfig = wireguardConfig
+		cfg.getDevice(iface).DeviceWireguardConfig = wireguardConfig
 
 		return nil
 	}
@@ -113,7 +113,7 @@ func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 			return nil
 		}
 
-		cfg.GetDevice(iface).DeviceVIPConfig = &DeviceVIPConfig{
+		cfg.getDevice(iface).DeviceVIPConfig = &DeviceVIPConfig{
 			SharedIP: cidr,
 		}
 
