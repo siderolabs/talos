@@ -164,9 +164,11 @@ issues:
     - path: internal/app/machined/pkg/system/services
       linters:
         - dupl
-    - path: pkg/config/types/v1alpha1
+
+    # pkg/machinery module
+    - path: config/types/v1alpha1
       linters:
-        - lll
+        - dupl # some interfaces and implementation are nearly identical (e.g. APIServer, ControllerManager, and Scheduler)
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
