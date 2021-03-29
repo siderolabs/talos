@@ -280,7 +280,9 @@ type ClusterNetwork interface {
 	PodCIDR() string
 	ServiceCIDR() string
 	DNSDomain() string
+	// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
 	APIServerIPs() ([]net.IP, error)
+	// DNSServiceIPs returns DNS service IPs in the ServiceCIDR.
 	DNSServiceIPs() ([]net.IP, error)
 }
 
