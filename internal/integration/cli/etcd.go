@@ -7,6 +7,11 @@
 package cli
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"regexp"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -36,6 +41,22 @@ func (suite *EtcdSuite) TestForfeitLeadership() {
 
 	suite.RunCLI([]string{"etcd", "forfeit-leadership", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
 		base.StdoutEmpty(),
+	)
+}
+
+// TestSnapshot tests etcd snapshot (backup).
+func (suite *EtcdSuite) TestSnapshot() {
+	tempDir, err := ioutil.TempDir("", "talos")
+	suite.Require().NoError(err)
+
+	defer func() {
+		suite.Assert().NoError(os.RemoveAll(tempDir))
+	}()
+
+	dbPath := filepath.Join(tempDir, "snapshot.db")
+
+	suite.RunCLI([]string{"etcd", "snapshot", dbPath, "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+		base.StdoutShouldMatch(regexp.MustCompile(`etcd snapshot saved to .+\d+ bytes.+`)),
 	)
 }
 

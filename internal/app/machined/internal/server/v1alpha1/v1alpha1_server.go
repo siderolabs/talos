@@ -1785,6 +1785,39 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 	return reply, nil
 }
 
+// EtcdSnapshot implements the machine.MachineServer interface.
+func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.MachineService_EtcdSnapshotServer) error {
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	rd, err := client.Snapshot(srv.Context())
+	if err != nil {
+		return fmt.Errorf("failed reading etcd snapshot: %w", err)
+	}
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	chunker := stream.NewChunker(ctx, rd)
+	chunkCh := chunker.Read()
+
+	for data := range chunkCh {
+		err := srv.SendMsg(&common.Data{Bytes: data})
+		if err != nil {
+			cancel()
+
+			return err
+		}
+	}
+
+	return nil
+}
+
 // RemoveBootkubeInitializedKey implements machine.MachineService.
 //
 // Temporary API only used when converting from self-hosted to Talos-managed control plane.

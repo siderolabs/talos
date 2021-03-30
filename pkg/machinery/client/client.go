@@ -895,6 +895,16 @@ func (c *Client) EtcdMemberList(ctx context.Context, req *machineapi.EtcdMemberL
 	return resp, err
 }
 
+// EtcdSnapshot receives a snapshot of the etcd from the node.
+func (c *Client) EtcdSnapshot(ctx context.Context, req *machineapi.EtcdSnapshotRequest, callOptions ...grpc.CallOption) (io.ReadCloser, <-chan error, error) {
+	stream, err := c.MachineClient.EtcdSnapshot(ctx, req, callOptions...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return ReadStream(stream)
+}
+
 // MachineStream is a common interface for streams returned by streaming APIs.
 type MachineStream interface {
 	Recv() (*common.Data, error)

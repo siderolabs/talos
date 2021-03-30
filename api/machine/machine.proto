@@ -30,6 +30,13 @@ service MachineService {
       returns (EtcdLeaveClusterResponse);
   rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
       returns (EtcdForfeitLeadershipResponse);
+
+  // EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
+  // and streams it back to the client.
+  //
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdSnapshot(EtcdSnapshotRequest) returns (stream common.Data);
+
   rpc GenerateConfiguration(GenerateConfigurationRequest)
       returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
@@ -761,6 +768,8 @@ message EtcdMemberList {
   repeated string members = 2;
 }
 message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
+
+message EtcdSnapshotRequest {}
 
 // rpc generateConfiguration
 

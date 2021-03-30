@@ -83,6 +83,7 @@ func Main() {
 		"/machine.MachineService/Copy",
 		"/machine.MachineService/DiskUsage",
 		"/machine.MachineService/Dmesg",
+		"/machine.MachineService/EtcdSnapshot",
 		"/machine.MachineService/Events",
 		"/machine.MachineService/Kubeconfig",
 		"/machine.MachineService/List",

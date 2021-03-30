@@ -76,6 +76,7 @@ description: Talos gRPC API reference.
     - [EtcdRemoveMember](#machine.EtcdRemoveMember)
     - [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest)
     - [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse)
+    - [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest)
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FileInfo](#machine.FileInfo)
@@ -1227,6 +1228,16 @@ dmesg
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [EtcdRemoveMember](#machine.EtcdRemoveMember) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdSnapshotRequest"></a>
+
+### EtcdSnapshotRequest
+
 
 
 
@@ -2853,6 +2864,9 @@ The machine service definition.
 | EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) |  |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
+| EtcdSnapshot | [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest) | [.common.Data](#common.Data) stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client.
+
+This method is available only on control plane nodes (which run etcd). |
 | GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
 | Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
 | Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |

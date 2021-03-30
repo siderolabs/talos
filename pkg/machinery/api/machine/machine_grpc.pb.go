@@ -34,6 +34,11 @@ type MachineServiceClient interface {
 	EtcdRemoveMember(ctx context.Context, in *EtcdRemoveMemberRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberResponse, error)
 	EtcdLeaveCluster(ctx context.Context, in *EtcdLeaveClusterRequest, opts ...grpc.CallOption) (*EtcdLeaveClusterResponse, error)
 	EtcdForfeitLeadership(ctx context.Context, in *EtcdForfeitLeadershipRequest, opts ...grpc.CallOption) (*EtcdForfeitLeadershipResponse, error)
+	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
+	// and streams it back to the client.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error)
 	GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error)
 	Hostname(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HostnameResponse, error)
 	Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (MachineService_KubeconfigClient, error)
@@ -248,6 +253,38 @@ func (c *machineServiceClient) EtcdForfeitLeadership(ctx context.Context, in *Et
 	return out, nil
 }
 
+func (c *machineServiceClient) EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], "/machine.MachineService/EtcdSnapshot", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &machineServiceEtcdSnapshotClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MachineService_EtcdSnapshotClient interface {
+	Recv() (*common.Data, error)
+	grpc.ClientStream
+}
+
+type machineServiceEtcdSnapshotClient struct {
+	grpc.ClientStream
+}
+
+func (x *machineServiceEtcdSnapshotClient) Recv() (*common.Data, error) {
+	m := new(common.Data)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error) {
 	out := new(GenerateConfigurationResponse)
 	err := c.cc.Invoke(ctx, "/machine.MachineService/GenerateConfiguration", in, out, opts...)
@@ -267,7 +304,7 @@ func (c *machineServiceClient) Hostname(ctx context.Context, in *emptypb.Empty, 
 }
 
 func (c *machineServiceClient) Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (MachineService_KubeconfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], "/machine.MachineService/Kubeconfig", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], "/machine.MachineService/Kubeconfig", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +336,7 @@ func (x *machineServiceKubeconfigClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (MachineService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], "/machine.MachineService/List", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], "/machine.MachineService/List", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +368,7 @@ func (x *machineServiceListClient) Recv() (*FileInfo, error) {
 }
 
 func (c *machineServiceClient) DiskUsage(ctx context.Context, in *DiskUsageRequest, opts ...grpc.CallOption) (MachineService_DiskUsageClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], "/machine.MachineService/DiskUsage", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], "/machine.MachineService/DiskUsage", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +409,7 @@ func (c *machineServiceClient) LoadAvg(ctx context.Context, in *emptypb.Empty, o
 }
 
 func (c *machineServiceClient) Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (MachineService_LogsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], "/machine.MachineService/Logs", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], "/machine.MachineService/Logs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +477,7 @@ func (c *machineServiceClient) Processes(ctx context.Context, in *emptypb.Empty,
 }
 
 func (c *machineServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (MachineService_ReadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], "/machine.MachineService/Read", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[8], "/machine.MachineService/Read", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -622,6 +659,11 @@ type MachineServiceServer interface {
 	EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error)
 	EtcdLeaveCluster(context.Context, *EtcdLeaveClusterRequest) (*EtcdLeaveClusterResponse, error)
 	EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error)
+	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
+	// and streams it back to the client.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error
 	GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error)
 	Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error)
 	Kubeconfig(*emptypb.Empty, MachineService_KubeconfigServer) error
@@ -702,6 +744,10 @@ func (UnimplementedMachineServiceServer) EtcdLeaveCluster(context.Context, *Etcd
 
 func (UnimplementedMachineServiceServer) EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdForfeitLeadership not implemented")
+}
+
+func (UnimplementedMachineServiceServer) EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error {
+	return status.Errorf(codes.Unimplemented, "method EtcdSnapshot not implemented")
 }
 
 func (UnimplementedMachineServiceServer) GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error) {
@@ -1047,6 +1093,27 @@ func _MachineService_EtcdForfeitLeadership_Handler(srv interface{}, ctx context.
 		return srv.(MachineServiceServer).EtcdForfeitLeadership(ctx, req.(*EtcdForfeitLeadershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_EtcdSnapshot_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(EtcdSnapshotRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MachineServiceServer).EtcdSnapshot(m, &machineServiceEtcdSnapshotServer{stream})
+}
+
+type MachineService_EtcdSnapshotServer interface {
+	Send(*common.Data) error
+	grpc.ServerStream
+}
+
+type machineServiceEtcdSnapshotServer struct {
+	grpc.ServerStream
+}
+
+func (x *machineServiceEtcdSnapshotServer) Send(m *common.Data) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _MachineService_GenerateConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1696,6 +1763,11 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "Events",
 			Handler:       _MachineService_Events_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "EtcdSnapshot",
+			Handler:       _MachineService_EtcdSnapshot_Handler,
 			ServerStreams: true,
 		},
 		{
