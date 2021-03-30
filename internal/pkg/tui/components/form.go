@@ -138,7 +138,7 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 
 				formItem = table
 				table.SetRowSelectedFunc(func(row int) {
-					v.Set(reflect.ValueOf(table.GetValue(row, 0))) // always pick the first column
+					v.Set(reflect.ValueOf(table.GetValue(row-1, 0))) // always pick the second column
 				})
 			} else {
 				dropdown := tview.NewDropDown()
