@@ -125,6 +125,10 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 	for _, iface := range interfaces.Messages[0].Interfaces {
 		status := ""
 
+		if (net.Flags(iface.Flags)&net.FlagLoopback) != 0 || iface.Hardwareaddr == "" {
+			continue
+		}
+
 		if (net.Flags(iface.Flags) & net.FlagUp) != 0 {
 			status = " (UP)"
 		}
@@ -304,6 +308,10 @@ func configureAdapter(installer *Installer, opts *machineapi.GenerateConfigurati
 
 				adapterConfiguration.AddMenuButton("Apply", false).SetSelectedFunc(func() {
 					goBack()
+
+					if adapterSettings.Dhcp {
+						adapterSettings.Cidr = ""
+					}
 
 					if deviceIndex == -1 {
 						opts.MachineConfig.NetworkConfig.Interfaces = append(
