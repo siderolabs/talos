@@ -882,6 +882,33 @@ talosctl etcd remove-member <hostname> [flags]
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 
+## talosctl etcd snapshot
+
+Stream snapshot of the etcd node to the path.
+
+```
+talosctl etcd snapshot <path> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for snapshot
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
 ## talosctl etcd
 
 Manage etcd
@@ -908,6 +935,7 @@ Manage etcd
 * [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
 * [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
 * [talosctl etcd remove-member](#talosctl-etcd-remove-member)	 - Remove the node from etcd cluster
+* [talosctl etcd snapshot](#talosctl-etcd-snapshot)	 - Stream snapshot of the etcd node to the path.
 
 ## talosctl events
 

@@ -6,13 +6,17 @@ package talos
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -117,7 +121,74 @@ var etcdMemberListCmd = &cobra.Command{
 	},
 }
 
+var etcdSnapshotCmd = &cobra.Command{
+	Use:   "snapshot <path>",
+	Short: "Stream snapshot of the etcd node to the path.",
+	Long:  ``,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd snapshot"); err != nil {
+				return err
+			}
+
+			dbPath := args[0]
+			partPath := dbPath + ".part"
+
+			defer os.RemoveAll(partPath) //nolint:errcheck
+
+			dest, err := os.OpenFile(partPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+			if err != nil {
+				return fmt.Errorf("error creating temporary file: %w", err)
+			}
+
+			defer dest.Close() //nolint:errcheck
+
+			r, errCh, err := c.EtcdSnapshot(ctx, &machine.EtcdSnapshotRequest{})
+			if err != nil {
+				return fmt.Errorf("error reading file: %w", err)
+			}
+
+			defer r.Close() //nolint:errcheck
+
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for err := range errCh {
+					fmt.Fprintln(os.Stderr, err.Error())
+				}
+			}()
+
+			defer wg.Wait()
+
+			size, err := io.Copy(dest, r)
+			if err != nil {
+				return fmt.Errorf("error reading: %w", err)
+			}
+
+			if err = dest.Sync(); err != nil {
+				return fmt.Errorf("failed to fsync: %w", err)
+			}
+
+			// this check is from https://github.com/etcd-io/etcd/blob/client/v3.5.0-alpha.0/client/v3/snapshot/v3_snapshot.go#L46
+			if (size % 512) != sha256.Size {
+				return fmt.Errorf("sha256 checksum not found (size %d)", size)
+			}
+
+			if err = os.Rename(partPath, dbPath); err != nil {
+				return fmt.Errorf("error renaming to final location: %w", err)
+			}
+
+			fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
+
+			return nil
+		})
+	},
+}
+
 func init() {
-	etcdCmd.AddCommand(etcdLeaveCmd, etcdForfeitLeadershipCmd, etcdMemberListCmd, etcdMemberRemoveCmd)
+	etcdCmd.AddCommand(etcdLeaveCmd, etcdForfeitLeadershipCmd, etcdMemberListCmd, etcdMemberRemoveCmd, etcdSnapshotCmd)
 	addCommand(etcdCmd)
 }
