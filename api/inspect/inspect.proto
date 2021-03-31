@@ -26,9 +26,10 @@ message ControllerRuntimeDependency {
 message ControllerRuntimeDependenciesResponse { repeated ControllerRuntimeDependency messages = 1; }
 
 enum DependencyEdgeType {
-    MANAGES = 0;
-    STRONG = 1;
-    WEAK = 2;
+    OUTPUT_EXCLUSIVE = 0;
+    OUTPUT_SHARED = 3;
+    INPUT_STRONG = 1;
+    INPUT_WEAK = 2;
 }
 
 message ControllerDependencyEdge {

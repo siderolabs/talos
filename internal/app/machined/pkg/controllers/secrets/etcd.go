@@ -28,38 +28,44 @@ func (ctrl *EtcdController) Name() string {
 	return "secrets.EtcdController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *EtcdController) ManagedResources() (resource.Namespace, resource.Type) {
-	return secrets.NamespaceName, secrets.EtcdType
+// Inputs implements controller.Controller interface.
+func (ctrl *EtcdController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootEtcdID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("networkd"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      time.StatusType,
+			ID:        pointer.ToString(time.StatusID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *EtcdController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: secrets.EtcdType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootEtcdID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      time.StatusType,
-			ID:        pointer.ToString(time.StatusID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -110,7 +116,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
-		if err = r.Update(ctx, secrets.NewEtcd(), func(r resource.Resource) error {
+		if err = r.Modify(ctx, secrets.NewEtcd(), func(r resource.Resource) error {
 			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).Certs())
 		}); err != nil {
 			return err

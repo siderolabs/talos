@@ -36,49 +36,55 @@ func (ctrl *KubeletStaticPodController) Name() string {
 	return "k8s.KubeletStaticPodController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *KubeletStaticPodController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ControlPlaneNamespaceName, k8s.StaticPodStatusType
+// Inputs implements controller.Controller interface.
+func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.StaticPodType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("kubelet"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.KubernetesType,
+			ID:        pointer.ToString(secrets.KubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.BootstrapStatusType,
+			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *KubeletStaticPodController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.StaticPodStatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
 func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: k8s.ControlPlaneNamespaceName,
-			Type:      k8s.StaticPodType,
-			Kind:      controller.DependencyStrong,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("kubelet"),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.KubernetesType,
-			ID:        pointer.ToString(secrets.KubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.BootstrapStatusType,
-			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	var kubeletClient *kubelet.Client
 
 	refreshTicker := time.NewTicker(15 * time.Second) // refresh kubelet pods status every 15 seconds
@@ -339,7 +345,7 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 
 		podsSeen[statusID] = struct{}{}
 
-		if err = r.Update(ctx, k8s.NewStaticPodStatus(k8s.ControlPlaneNamespaceName, statusID), func(r resource.Resource) error {
+		if err = r.Modify(ctx, k8s.NewStaticPodStatus(k8s.ControlPlaneNamespaceName, statusID), func(r resource.Resource) error {
 			r.(*k8s.StaticPodStatus).SetStatus(&pod.Status)
 
 			return nil

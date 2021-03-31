@@ -31,32 +31,38 @@ func (ctrl *K8sControlPlaneController) Name() string {
 	return "config.K8sControlPlaneController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *K8sControlPlaneController) ManagedResources() (resource.Namespace, resource.Type) {
-	return config.NamespaceName, config.K8sControlPlaneType
+// Inputs implements controller.Controller interface.
+func (ctrl *K8sControlPlaneController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.ToString(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        pointer.ToString(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *K8sControlPlaneController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: config.K8sControlPlaneType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.ToString(config.V1Alpha1ID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -133,7 +139,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 		cloudProvider = "external"
 	}
 
-	return r.Update(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
+	return r.Modify(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
 			Image:                cfgProvider.Cluster().APIServer().Image(),
 			CloudProvider:        cloudProvider,
@@ -155,7 +161,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 		cloudProvider = "external"
 	}
 
-	return r.Update(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
+	return r.Modify(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
 			Image:         cfgProvider.Cluster().ControllerManager().Image(),
 			CloudProvider: cloudProvider,
@@ -170,7 +176,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 }
 
 func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
-	return r.Update(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
+	return r.Modify(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
 			Image:        cfgProvider.Cluster().Scheduler().Image(),
 			ExtraArgs:    cfgProvider.Cluster().Scheduler().ExtraArgs(),
@@ -204,7 +210,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 		}
 	}
 
-	return r.Update(ctx, config.NewK8sManifests(), func(r resource.Resource) error {
+	return r.Modify(ctx, config.NewK8sManifests(), func(r resource.Resource) error {
 		images := images.List(cfgProvider)
 
 		r.(*config.K8sControlPlane).SetManifests(config.K8sManifestsSpec{
@@ -234,7 +240,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 }
 
 func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
-	return r.Update(ctx, config.NewK8sExtraManifests(), func(r resource.Resource) error {
+	return r.Modify(ctx, config.NewK8sExtraManifests(), func(r resource.Resource) error {
 		spec := config.K8sExtraManifestsSpec{}
 
 		if cfgProvider.Cluster().Network().CNI().Name() == constants.CustomCNI {

@@ -234,7 +234,7 @@ func (suite *K8sControlPlaneSuite) TearDownTest() {
 
 	// trigger updates in resources to stop watch loops
 	suite.Assert().NoError(suite.state.Create(context.Background(), k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, "-")))
-	suite.Assert().NoError(suite.state.Destroy(context.Background(), config.NewK8sControlPlaneAPIServer().Metadata()))
+	suite.Assert().NoError(suite.state.Destroy(context.Background(), config.NewK8sControlPlaneAPIServer().Metadata(), state.WithDestroyOwner("config.K8sControlPlaneController")))
 }
 
 func TestK8sControlPlaneSuite(t *testing.T) {

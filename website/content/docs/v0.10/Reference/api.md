@@ -566,9 +566,10 @@ The ControllerRuntimeDependency message contains the graph of controller-resourc
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| MANAGES | 0 |  |
-| STRONG | 1 |  |
-| WEAK | 2 |  |
+| OUTPUT_EXCLUSIVE | 0 |  |
+| OUTPUT_SHARED | 3 |  |
+| INPUT_STRONG | 1 |  |
+| INPUT_WEAK | 2 |  |
 
 
  <!-- end enums -->
@@ -3190,6 +3191,7 @@ The ListResponse message contains the Resource returned.
 | type | [string](#string) |  |  |
 | id | [string](#string) |  |  |
 | version | [string](#string) |  |  |
+| owner | [string](#string) |  |  |
 | phase | [string](#string) |  |  |
 | finalizers | [string](#string) | repeated |  |
 

@@ -28,9 +28,19 @@ func (ctrl *ServiceController) Name() string {
 	return "v1alpha1.ServiceController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *ServiceController) ManagedResources() (resource.Namespace, resource.Type) {
-	return v1alpha1.NamespaceName, v1alpha1.ServiceType
+// Inputs implements controller.Controller interface.
+func (ctrl *ServiceController) Inputs() []controller.Input {
+	return nil
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *ServiceController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: v1alpha1.ServiceType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
@@ -64,7 +74,7 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 
 				switch msg.Action { //nolint:exhaustive
 				case machine.ServiceStateEvent_RUNNING:
-					if err := r.Update(ctx, service, func(r resource.Resource) error {
+					if err := r.Modify(ctx, service, func(r resource.Resource) error {
 						svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
 
 						svc.SetRunning(true)

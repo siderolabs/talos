@@ -31,24 +31,30 @@ func (ctrl *BootstrapStatusController) Name() string {
 	return "v1alpha1.BootstrapStatusController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *BootstrapStatusController) ManagedResources() (resource.Namespace, resource.Type) {
-	return v1alpha1.NamespaceName, v1alpha1.BootstrapStatusType
-}
-
-// Run implements controller.Controller interface.
-func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
+// Inputs implements controller.Controller interface.
+func (ctrl *BootstrapStatusController) Inputs() []controller.Input {
+	return []controller.Input{
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        pointer.ToString("etcd"),
-			Kind:      controller.DependencyWeak,
+			Kind:      controller.InputWeak,
 		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
 	}
+}
 
+// Outputs implements controller.Controller interface.
+func (ctrl *BootstrapStatusController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: v1alpha1.BootstrapStatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
+}
+
+// Run implements controller.Controller interface.
+func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -102,7 +108,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 	if resp.Count == 0 || string(resp.Kvs[0].Value) != "true" {
 		logger.Printf("bootkube initialized status not found")
 
-		return r.Update(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
+		return r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
 			r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = false
 
 			return nil
@@ -111,7 +117,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 
 	logger.Printf("found bootkube initialized status in etcd")
 
-	if err = r.Update(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
+	if err = r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
 		r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = true
 
 		return nil

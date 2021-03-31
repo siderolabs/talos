@@ -30,6 +30,7 @@ message Metadata {
     string type = 2;
     string id = 3;
     string version = 4;
+    string owner = 7;
     string phase = 5;
     repeated string finalizers = 6;
 }

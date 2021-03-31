@@ -383,7 +383,7 @@ As part of bootstrap process, Talos injects bootstrap manifests into Kubernetes 
 There are two kinds of manifests: system manifests built-in into Talos and extra manifests downloaded (custom CNI, extra manifests in the machine config):
 
 ```bash
-$ talosctl -n <IP> get manifests --namespace=controlplane
+$ talosctl -n <IP> get manifests
 NODE         NAMESPACE      TYPE       ID                               VERSION
 172.20.0.2   controlplane   Manifest   00-kubelet-bootstrapping-token   1
 172.20.0.2   controlplane   Manifest   01-csr-approver-role-binding     1
@@ -391,16 +391,11 @@ NODE         NAMESPACE      TYPE       ID                               VERSION
 172.20.0.2   controlplane   Manifest   01-csr-renewal-role-binding      1
 172.20.0.2   controlplane   Manifest   02-kube-system-sa-role-binding   1
 172.20.0.2   controlplane   Manifest   03-default-pod-security-policy   1
+172.20.0.2   controlplane   Manifest   05-https://docs.projectcalico.org/manifests/calico.yaml   1
 172.20.0.2   controlplane   Manifest   10-kube-proxy                    1
 172.20.0.2   controlplane   Manifest   11-core-dns                      1
 172.20.0.2   controlplane   Manifest   11-core-dns-svc                  1
 172.20.0.2   controlplane   Manifest   11-kube-config-in-cluster        1
-```
-
-```bash
-$ talosctl -n <IP> get manifests --namespace=extras
-NODE         NAMESPACE   TYPE       ID                                                        VERSION
-172.20.0.2   extras      Manifest   05-https://docs.projectcalico.org/manifests/calico.yaml   1
 ```
 
 Details of each manifests can be queried by adding `-o yaml`:

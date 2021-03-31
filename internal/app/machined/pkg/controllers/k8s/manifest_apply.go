@@ -43,42 +43,43 @@ func (ctrl *ManifestApplyController) Name() string {
 	return "k8s.ManifestApplyController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *ManifestApplyController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ControlPlaneNamespaceName, k8s.ManifestStatusType
+// Inputs implements controller.Controller interface.
+func (ctrl *ManifestApplyController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.KubernetesType,
+			ID:        pointer.ToString(secrets.KubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.ManifestType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.BootstrapStatusType,
+			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *ManifestApplyController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.ManifestStatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.KubernetesType,
-			ID:        pointer.ToString(secrets.KubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: k8s.ControlPlaneNamespaceName,
-			Type:      k8s.ManifestType,
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: k8s.ExtraNamespaceName,
-			Type:      k8s.ManifestType,
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.BootstrapStatusType,
-			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -116,13 +117,6 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		if err != nil {
 			return fmt.Errorf("error listing manifests: %w", err)
 		}
-
-		extraManifests, err := r.List(ctx, resource.NewMetadata(k8s.ExtraNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing extra manifests: %w", err)
-		}
-
-		manifests.Items = append(manifests.Items, extraManifests.Items...)
 
 		sort.Slice(manifests.Items, func(i, j int) bool {
 			return manifests.Items[i].Metadata().ID() < manifests.Items[j].Metadata().ID()
@@ -165,7 +159,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		if err = r.Update(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
+		if err = r.Modify(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
 			status := r.(*k8s.ManifestStatus).Status()
 
 			status.ManifestsApplied = make([]string, 0, len(manifests.Items))

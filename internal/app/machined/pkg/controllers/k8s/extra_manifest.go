@@ -33,32 +33,38 @@ func (ctrl *ExtraManifestController) Name() string {
 	return "k8s.ExtraManifestController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *ExtraManifestController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ExtraNamespaceName, k8s.ManifestType
+// Inputs implements controller.Controller interface.
+func (ctrl *ExtraManifestController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.K8sControlPlaneType,
+			ID:        pointer.ToString(config.K8sExtraManifestsID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("networkd"),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *ExtraManifestController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.ManifestType,
+			Kind: controller.OutputShared,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			ID:        pointer.ToString(config.K8sExtraManifestsID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -114,12 +120,16 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			return multiErr.ErrorOrNil()
 		}
 
-		allManifests, err := r.List(ctx, resource.NewMetadata(k8s.ExtraNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
+		allManifests, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing extra manifests: %w", err)
 		}
 
 		for _, manifest := range allManifests.Items {
+			if manifest.Metadata().Owner() != ctrl.Name() {
+				continue
+			}
+
 			if _, exists := presentManifests[manifest.Metadata().ID()]; !exists {
 				if err = r.Destroy(ctx, manifest.Metadata()); err != nil {
 					return fmt.Errorf("error cleaning up extra manifest: %w", err)
@@ -185,7 +195,7 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 		return
 	}
 
-	if err = r.Update(ctx, k8s.NewManifest(k8s.ExtraNamespaceName, id),
+	if err = r.Modify(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
 		func(r resource.Resource) error {
 			return r.(*k8s.Manifest).SetYAML(contents)
 		}); err != nil {
@@ -197,13 +207,18 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 	return id, nil
 }
 
+//nolint: dupl
 func (ctrl *ExtraManifestController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	manifests, err := r.List(ctx, resource.NewMetadata(k8s.ExtraNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
+	manifests, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {
 		return fmt.Errorf("error listing extra manifests: %w", err)
 	}
 
 	for _, manifest := range manifests.Items {
+		if manifest.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
 		if err = r.Destroy(ctx, manifest.Metadata()); err != nil {
 			return fmt.Errorf("error destroying extra manifest: %w", err)
 		}

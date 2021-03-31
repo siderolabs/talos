@@ -32,31 +32,37 @@ func (ctrl *ControlPlaneStaticPodController) Name() string {
 	return "k8s.ControlPlaneStaticPodController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *ControlPlaneStaticPodController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ControlPlaneNamespaceName, k8s.StaticPodType
+// Inputs implements controller.Controller interface.
+func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.K8sControlPlaneType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.SecretsStatusType,
+			ID:        pointer.ToString(k8s.StaticPodSecretsStaticPodID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *ControlPlaneStaticPodController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.StaticPodType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: k8s.ControlPlaneNamespaceName,
-			Type:      k8s.SecretsStatusType,
-			ID:        pointer.ToString(k8s.StaticPodSecretsStaticPodID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -214,7 +220,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		args = append(args, fmt.Sprintf("--%s=%s", k, v))
 	}
 
-	return r.Update(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver", nil), func(r resource.Resource) error {
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -308,7 +314,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	}
 
 	//nolint:dupl
-	return r.Update(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager", nil), func(r resource.Resource) error {
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -390,7 +396,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	}
 
 	//nolint:dupl
-	return r.Update(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler", nil), func(r resource.Resource) error {
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
