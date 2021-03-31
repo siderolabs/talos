@@ -97,9 +97,16 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.readConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	provider.Machine().Sysctls()[applyConfigTestSysctl] = applyConfigTestSysctlVal
+	cfg, ok := provider.(*v1alpha1.Config)
+	suite.Require().True(ok)
 
-	cfgDataOut, err := provider.Bytes()
+	if cfg.MachineConfig.MachineSysctls == nil {
+		cfg.MachineConfig.MachineSysctls = make(map[string]string)
+	}
+
+	cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal
+
+	cfgDataOut, err := cfg.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
@@ -144,9 +151,16 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 	provider, err := suite.readConfigFromNode(nodeCtx)
 	suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-	provider.Machine().Sysctls()[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+	cfg, ok := provider.(*v1alpha1.Config)
+	suite.Require().True(ok)
 
-	cfgDataOut, err := provider.Bytes()
+	if cfg.MachineConfig.MachineSysctls == nil {
+		cfg.MachineConfig.MachineSysctls = make(map[string]string)
+	}
+
+	cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+
+	cfgDataOut, err := cfg.Bytes()
 	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -167,10 +181,13 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 		applyConfigNoRebootTestSysctlVal,
 	)
 
-	// revert back
-	delete(provider.Machine().Sysctls(), applyConfigNoRebootTestSysctl)
+	cfg, ok = newProvider.(*v1alpha1.Config)
+	suite.Require().True(ok)
 
-	cfgDataOut, err = provider.Bytes()
+	// revert back
+	delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
+
+	cfgDataOut, err = cfg.Bytes()
 	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
