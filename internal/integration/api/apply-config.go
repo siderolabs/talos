@@ -346,7 +346,7 @@ func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (conf
 	return provider, nil
 }
 
-func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) error {
+func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) (err error) {
 	var wg sync.WaitGroup
 
 	var chanErr error
@@ -361,18 +361,17 @@ func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) 
 		}
 	}()
 
-	defer wg.Wait()
+	defer func() {
+		wg.Wait()
 
-	_, err := io.Copy(out, in)
-	if err != nil {
-		return err
-	}
+		if err == nil {
+			err = chanErr
+		}
+	}()
 
-	if chanErr != nil {
-		return chanErr
-	}
+	_, err = io.Copy(out, in)
 
-	return nil
+	return err
 }
 
 func init() {
