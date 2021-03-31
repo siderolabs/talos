@@ -74,7 +74,6 @@ $ talosctl get namespaces
 NODE         NAMESPACE   TYPE        ID             VERSION
 172.20.0.2   meta        Namespace   config         1
 172.20.0.2   meta        Namespace   controlplane   1
-172.20.0.2   meta        Namespace   extras         1
 172.20.0.2   meta        Namespace   meta           1
 172.20.0.2   meta        Namespace   runtime        1
 172.20.0.2   meta        Namespace   secrets        1
@@ -223,7 +222,7 @@ This outputs graph in `graphviz` format which can be rendered to PNG with comman
 talosctl inspect dependencies | dot -T png > deps.png
 ```
 
-![Controller Dependencies](/images/controller-dependencies.png)
+![Controller Dependencies](/images/controller-dependencies-v2.png)
 
 Graph can be enhanced by replacing resource types with actual resource instances:
 
@@ -231,4 +230,4 @@ Graph can be enhanced by replacing resource types with actual resource instances
 talosctl inspect dependencies --with-resources | dot -T png > deps.png
 ```
 
-![Controller Dependencies with Resources](/images/controller-dependencies-with-resources.png)
+![Controller Dependencies with Resources](/images/controller-dependencies-with-resources-v2.png)

@@ -28,32 +28,38 @@ func (ctrl *RootController) Name() string {
 	return "secrets.RootController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *RootController) ManagedResources() (resource.Namespace, resource.Type) {
-	return secrets.NamespaceName, secrets.RootType
+// Inputs implements controller.Controller interface.
+func (ctrl *RootController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.ToString(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        pointer.ToString(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *RootController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: secrets.RootType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.ToString(config.V1Alpha1ID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -95,13 +101,13 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
-		if err = r.Update(ctx, secrets.NewRoot(secrets.RootEtcdID), func(r resource.Resource) error {
+		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootEtcdID), func(r resource.Resource) error {
 			return ctrl.updateEtcdSecrets(cfgProvider, r.(*secrets.Root).EtcdSpec())
 		}); err != nil {
 			return err
 		}
 
-		if err = r.Update(ctx, secrets.NewRoot(secrets.RootKubernetesID), func(r resource.Resource) error {
+		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootKubernetesID), func(r resource.Resource) error {
 			return ctrl.updateK8sSecrets(cfgProvider, r.(*secrets.Root).KubernetesSpec())
 		}); err != nil {
 			return err

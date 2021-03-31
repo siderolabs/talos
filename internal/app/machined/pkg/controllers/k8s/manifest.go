@@ -30,32 +30,38 @@ func (ctrl *ManifestController) Name() string {
 	return "k8s.ManifestController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *ManifestController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ControlPlaneNamespaceName, k8s.ManifestType
+// Inputs implements controller.Controller interface.
+func (ctrl *ManifestController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.K8sControlPlaneType,
+			ID:        pointer.ToString(config.K8sManifestsID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *ManifestController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.ManifestType,
+			Kind: controller.OutputShared,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			ID:        pointer.ToString(config.K8sManifestsID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -101,7 +107,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		for _, renderedManifest := range renderedManifests {
 			renderedManifest := renderedManifest
 
-			if err = r.Update(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
+			if err = r.Modify(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
 				func(r resource.Resource) error {
 					return r.(*k8s.Manifest).SetYAML(renderedManifest.data)
 				}); err != nil {
@@ -118,6 +124,10 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		manifestsToDelete := map[string]struct{}{}
 
 		for _, manifest := range manifests.Items {
+			if manifest.Metadata().Owner() != ctrl.Name() {
+				continue
+			}
+
 			manifestsToDelete[manifest.Metadata().ID()] = struct{}{}
 		}
 
@@ -220,6 +230,7 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 	return manifests, nil
 }
 
+//nolint: dupl
 func (ctrl *ManifestController) teardownAll(ctx context.Context, r controller.Runtime) error {
 	manifests, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {
@@ -227,6 +238,10 @@ func (ctrl *ManifestController) teardownAll(ctx context.Context, r controller.Ru
 	}
 
 	for _, manifest := range manifests.Items {
+		if manifest.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
 		if err = r.Destroy(ctx, manifest.Metadata()); err != nil {
 			return fmt.Errorf("error destroying manifest: %w", err)
 		}

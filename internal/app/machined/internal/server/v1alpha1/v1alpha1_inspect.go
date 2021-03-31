@@ -34,12 +34,14 @@ func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *e
 		var edgeType inspectapi.DependencyEdgeType
 
 		switch graph.Edges[i].EdgeType {
-		case controller.EdgeManages:
-			edgeType = inspectapi.DependencyEdgeType_MANAGES
-		case controller.EdgeDependsStrong:
-			edgeType = inspectapi.DependencyEdgeType_STRONG
-		case controller.EdgeDependsWeak:
-			edgeType = inspectapi.DependencyEdgeType_WEAK
+		case controller.EdgeOutputExclusive:
+			edgeType = inspectapi.DependencyEdgeType_OUTPUT_EXCLUSIVE
+		case controller.EdgeOutputShared:
+			edgeType = inspectapi.DependencyEdgeType_OUTPUT_SHARED
+		case controller.EdgeInputStrong:
+			edgeType = inspectapi.DependencyEdgeType_INPUT_STRONG
+		case controller.EdgeInputWeak:
+			edgeType = inspectapi.DependencyEdgeType_INPUT_WEAK
 		}
 
 		edges = append(edges, &inspectapi.ControllerDependencyEdge{

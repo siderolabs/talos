@@ -33,37 +33,43 @@ func (ctrl *RenderSecretsStaticPodController) Name() string {
 	return "k8s.RenderSecretsStaticPodController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *RenderSecretsStaticPodController) ManagedResources() (resource.Namespace, resource.Type) {
-	return k8s.ControlPlaneNamespaceName, k8s.SecretsStatusType
+// Inputs implements controller.Controller interface.
+func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.KubernetesType,
+			ID:        pointer.ToString(secrets.KubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.EtcdType,
+			ID:        pointer.ToString(secrets.EtcdID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *RenderSecretsStaticPodController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: k8s.SecretsStatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
 func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.KubernetesType,
-			ID:        pointer.ToString(secrets.KubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.EtcdType,
-			ID:        pointer.ToString(secrets.EtcdID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -291,7 +297,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			}
 		}
 
-		if err = r.Update(ctx, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r resource.Resource) error {
+		if err = r.Modify(ctx, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r resource.Resource) error {
 			r.(*k8s.SecretsStatus).Status().Ready = true
 			r.(*k8s.SecretsStatus).Status().Version = secretsRes.Metadata().Version().String()
 

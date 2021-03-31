@@ -26,24 +26,30 @@ func (ctrl *MachineTypeController) Name() string {
 	return "config.MachineTypeController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *MachineTypeController) ManagedResources() (resource.Namespace, resource.Type) {
-	return config.NamespaceName, config.MachineTypeType
-}
-
-// Run implements controller.Controller interface.
-func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
+// Inputs implements controller.Controller interface.
+func (ctrl *MachineTypeController) Inputs() []controller.Input {
+	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        pointer.ToString(config.V1Alpha1ID),
-			Kind:      controller.DependencyWeak,
+			Kind:      controller.InputWeak,
 		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
 	}
+}
 
+// Outputs implements controller.Controller interface.
+func (ctrl *MachineTypeController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: config.MachineTypeType,
+			Kind: controller.OutputExclusive,
+		},
+	}
+}
+
+// Run implements controller.Controller interface.
+func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -62,7 +68,7 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 			machineType = cfg.(*config.MachineConfig).Config().Machine().Type()
 		}
 
-		if err = r.Update(ctx, config.NewMachineType(), func(r resource.Resource) error {
+		if err = r.Modify(ctx, config.NewMachineType(), func(r resource.Resource) error {
 			r.(*config.MachineType).SetMachineType(machineType)
 
 			return nil

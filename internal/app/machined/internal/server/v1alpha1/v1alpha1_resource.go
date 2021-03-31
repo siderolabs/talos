@@ -33,6 +33,7 @@ func marshalResource(r resource.Resource) (*resourceapi.Resource, error) {
 		Id:        r.Metadata().ID(),
 		Version:   r.Metadata().Version().String(),
 		Phase:     r.Metadata().Phase().String(),
+		Owner:     r.Metadata().Owner(),
 	}
 
 	for _, fin := range *r.Metadata().Finalizers() {

@@ -577,8 +577,8 @@ github.com/hashicorp/go-immutable-radix v1.0.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjh
 github.com/hashicorp/go-immutable-radix v1.2.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-immutable-radix v1.3.0 h1:8exGP7ego3OmkfksihtSouGMZ+hQrhxx+FVELeXpVPE=
 github.com/hashicorp/go-immutable-radix v1.3.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
-github.com/hashicorp/go-memdb v1.3.0 h1:xdXq34gBOMEloa9rlGStLxmfX/dyIK8htOv36dQUwHU=
-github.com/hashicorp/go-memdb v1.3.0/go.mod h1:Mluclgwib3R93Hk5fxEfiRhB+6Dar64wWh71LpNSe3g=
+github.com/hashicorp/go-memdb v1.3.2 h1:RBKHOsnSszpU6vxq80LzC2BaQjuuvoyaQbkLTf7V7g8=
+github.com/hashicorp/go-memdb v1.3.2/go.mod h1:Mluclgwib3R93Hk5fxEfiRhB+6Dar64wWh71LpNSe3g=
 github.com/hashicorp/go-msgpack v0.5.3/go.mod h1:ahLV/dePpqEmjfWmKiqvPkv/twdG7iPBM1vqhUKIvfM=
 github.com/hashicorp/go-msgpack v0.5.5/go.mod h1:ahLV/dePpqEmjfWmKiqvPkv/twdG7iPBM1vqhUKIvfM=
 github.com/hashicorp/go-msgpack v1.1.5/go.mod h1:gWVc3sv/wbDmR3rQsj1CAktEZzoz1YNK9NfGLXJ69/4=
@@ -1003,7 +1003,6 @@ github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24 h1:fN8vYvl
 github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
 github.com/talos-systems/go-retry v0.1.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
-github.com/talos-systems/go-retry v0.2.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133 h1:mHnKEViee9x2A6YbsUykwqh7L+tLpm5HTlos2QDlqts=
 github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-smbios v0.0.0-20201228201610-fb425d4727e6 h1:xyE29iB9cVeFZs7WS2RG57MikJt8q6hIQvQajMWiloM=
@@ -1012,9 +1011,8 @@ github.com/talos-systems/grpc-proxy v0.2.0 h1:DN75bLfaW4xfhq0r0mwFRnfGhSB+HPhK1L
 github.com/talos-systems/grpc-proxy v0.2.0/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4KDxFrDgfWs4C1mtC4=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa h1:XqOMTt0Q6mjsk8Dea5wUpgcdtf+AzesH11m4AozWSxw=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
-github.com/talos-systems/os-runtime v0.0.0-20210303124137-84c3c875eb2b/go.mod h1:Z+1phKVJ0IWH+Jd2DGufL8WKqxd3xt1xlcsxcU18ZL0=
-github.com/talos-systems/os-runtime v0.0.0-20210315190223-7b3d14457439 h1:3Q7eMWbwg1pndsvOo/VV8mgQKweDDvPczLZu7LAS9+o=
-github.com/talos-systems/os-runtime v0.0.0-20210315190223-7b3d14457439/go.mod h1:B2hrj55wAJ3RJxConurFKlFGhm7mkF3zWw5DBQw8LvA=
+github.com/talos-systems/os-runtime v0.0.0-20210401122348-86d9e090bdc4 h1:mVlqonAE7QgFWn1g9p2b+EBC4Lk57TexASvp7tHglRc=
+github.com/talos-systems/os-runtime v0.0.0-20210401122348-86d9e090bdc4/go.mod h1:358qvRxAR16NdF8fiitixPgECx4Pj32yXLHAWYWZc/g=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=

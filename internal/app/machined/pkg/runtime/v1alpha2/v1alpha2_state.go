@@ -60,10 +60,6 @@ func NewState() (*State, error) {
 		return nil, err
 	}
 
-	if err := s.namespaceRegistry.Register(ctx, k8s.ExtraNamespaceName, "Kubernetes extra configuration resources."); err != nil {
-		return nil, err
-	}
-
 	if err := s.namespaceRegistry.Register(ctx, secrets.NamespaceName, "Resources with secret material."); err != nil {
 		return nil, err
 	}

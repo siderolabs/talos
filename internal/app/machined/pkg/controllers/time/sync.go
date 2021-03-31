@@ -20,7 +20,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/time"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // SyncController manages v1alpha1.TimeSync based on configuration and NTP sync process.
@@ -34,9 +33,26 @@ func (ctrl *SyncController) Name() string {
 	return "time.SyncController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *SyncController) ManagedResources() (resource.Namespace, resource.Type) {
-	return v1alpha1.NamespaceName, time.StatusType
+// Inputs implements controller.Controller interface.
+func (ctrl *SyncController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.ToString(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *SyncController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: time.StatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // NTPSyncer interface is implemented by ntp.Syncer, interface for mocking.
@@ -58,17 +74,6 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		ctrl.NewNTPSyncer = func(logger *log.Logger, timeServers []string) NTPSyncer {
 			return ntp.NewSyncer(logger, timeServers)
 		}
-	}
-
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.ToString(config.V1Alpha1ID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
 	}
 
 	var (
@@ -163,7 +168,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSynced = true
 		}
 
-		if err = r.Update(ctx, time.NewStatus(), func(r resource.Resource) error {
+		if err = r.Modify(ctx, time.NewStatus(), func(r resource.Resource) error {
 			r.(*time.Status).SetStatus(time.StatusSpec{
 				Epoch:        epoch,
 				Synced:       timeSynced,

@@ -9,6 +9,3 @@ import "github.com/talos-systems/os-runtime/pkg/resource"
 
 // ControlPlaneNamespaceName contains resources supporting Kubernetes control plane.
 const ControlPlaneNamespaceName resource.Namespace = "controlplane"
-
-// ExtraNamespaceName contains extra resources related to Kubernnetes configuration.
-const ExtraNamespaceName resource.Namespace = "extras"

@@ -63,11 +63,11 @@ to render the graph:
 			graph := dot.NewGraph(dot.Directed)
 
 			resourceTypeID := func(edge *inspect.ControllerDependencyEdge) string {
-				return fmt.Sprintf("%s:%s", edge.GetResourceNamespace(), edge.GetResourceType())
+				return edge.GetResourceType()
 			}
 
 			resourceID := func(r resource.Resource) string {
-				return r.Metadata().ID()
+				return fmt.Sprintf("%s/%s/%s", r.Metadata().Namespace(), r.Metadata().Type(), r.Metadata().ID())
 			}
 
 			if inspectDependenciesCmdFlags.withResources {
@@ -127,12 +127,20 @@ to render the graph:
 								continue
 							}
 
+							if (edge.GetEdgeType() == inspect.DependencyEdgeType_OUTPUT_EXCLUSIVE ||
+								edge.GetEdgeType() == inspect.DependencyEdgeType_OUTPUT_SHARED) &&
+								edge.GetControllerName() != resource.Metadata().Owner() {
+								continue
+							}
+
 							switch edge.GetEdgeType() {
-							case inspect.DependencyEdgeType_MANAGES:
+							case inspect.DependencyEdgeType_OUTPUT_EXCLUSIVE:
 								graph.Edge(graph.Node(edge.ControllerName), graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource))).Solid()
-							case inspect.DependencyEdgeType_STRONG:
+							case inspect.DependencyEdgeType_OUTPUT_SHARED:
+								graph.Edge(graph.Node(edge.ControllerName), graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource))).Solid()
+							case inspect.DependencyEdgeType_INPUT_STRONG:
 								graph.Edge(graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource)), graph.Node(edge.ControllerName)).Solid()
-							case inspect.DependencyEdgeType_WEAK:
+							case inspect.DependencyEdgeType_INPUT_WEAK:
 								graph.Edge(graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource)), graph.Node(edge.ControllerName)).Dotted()
 							}
 						}
@@ -159,11 +167,13 @@ to render the graph:
 						}
 
 						switch edge.GetEdgeType() {
-						case inspect.DependencyEdgeType_MANAGES:
+						case inspect.DependencyEdgeType_OUTPUT_EXCLUSIVE:
 							graph.Edge(graph.Node(edge.ControllerName), graph.Node(resourceTypeID(edge))).Bold()
-						case inspect.DependencyEdgeType_STRONG:
+						case inspect.DependencyEdgeType_OUTPUT_SHARED:
+							graph.Edge(graph.Node(edge.ControllerName), graph.Node(resourceTypeID(edge))).Solid()
+						case inspect.DependencyEdgeType_INPUT_STRONG:
 							graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Solid()
-						case inspect.DependencyEdgeType_WEAK:
+						case inspect.DependencyEdgeType_INPUT_WEAK:
 							graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Dotted()
 						}
 					}

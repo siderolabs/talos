@@ -40,38 +40,44 @@ func (ctrl *KubernetesController) Name() string {
 	return "secrets.KubernetesController"
 }
 
-// ManagedResources implements controller.Controller interface.
-func (ctrl *KubernetesController) ManagedResources() (resource.Namespace, resource.Type) {
-	return secrets.NamespaceName, secrets.KubernetesType
+// Inputs implements controller.Controller interface.
+func (ctrl *KubernetesController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("networkd"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      timeresource.StatusType,
+			ID:        pointer.ToString(timeresource.StatusID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *KubernetesController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: secrets.KubernetesType,
+			Kind: controller.OutputExclusive,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
 func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	if err := r.UpdateDependencies([]controller.Dependency{
-		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
-			Kind:      controller.DependencyWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      timeresource.StatusType,
-			ID:        pointer.ToString(timeresource.StatusID),
-			Kind:      controller.DependencyWeak,
-		},
-	}); err != nil {
-		return fmt.Errorf("error setting up dependencies: %w", err)
-	}
-
 	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
 	defer refreshTicker.Stop()
 
@@ -126,7 +132,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			continue
 		}
 
-		if err = r.Update(ctx, secrets.NewKubernetes(), func(r resource.Resource) error {
+		if err = r.Modify(ctx, secrets.NewKubernetes(), func(r resource.Resource) error {
 			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).Certs())
 		}); err != nil {
 			return err
