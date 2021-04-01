@@ -38,7 +38,7 @@ There is an option to this command: `--preserve`, which can be used to explicitl
 In most cases, it is correct to just let Talos perform its default action.
 However, if you are running a single-node control-plane, you will want to make sure that `--preserve=true`.
 
-If Talos fails to run the upgrade, the `--staged` flag may be used to perform the upgrade after a reboot
+If Talos fails to run the upgrade, the `--stage` flag may be used to perform the upgrade after a reboot
 which is followed by another reboot to upgraded version.
 
 <!--
