@@ -288,6 +288,12 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"hostname-override": nodename,
 	}
 
+	// Disallow --cloud-provider flag in extraArgs only if external cloud provider is enabled via our config
+	// for an easier transition from previous versions where it could be configured via extraArgs + extraManifests.
+	if r.Config().Cluster().ExternalCloudProvider().Enabled() {
+		denyListArgs["cloud-provider"] = "external"
+	}
+
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
 	for k := range denyListArgs {

@@ -133,6 +133,15 @@ func (c *ClusterConfig) CoreDNS() config.CoreDNS {
 	return c.CoreDNSConfig
 }
 
+// ExternalCloudProvider implements the config.ClusterConfig interface.
+func (c *ClusterConfig) ExternalCloudProvider() config.ExternalCloudProvider {
+	if c.ExternalCloudProviderConfig == nil {
+		return &ExternalCloudProviderConfig{}
+	}
+
+	return c.ExternalCloudProviderConfig
+}
+
 // ExtraManifestURLs implements the config.ClusterConfig interface.
 func (c *ClusterConfig) ExtraManifestURLs() []string {
 	return c.ExtraManifests
@@ -145,6 +154,10 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 
 // AdminKubeconfig implements the config.ClusterConfig interface.
 func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
+	if c.AdminKubeconfigConfig == nil {
+		return &AdminKubeconfigConfig{}
+	}
+
 	return c.AdminKubeconfigConfig
 }
 

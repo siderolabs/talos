@@ -58,7 +58,7 @@ function setup {
   export VPC_ID=vpc-ff5c5687
   export SUBNET=subnet-c4e9b3a0
   export CLOUD_PROVIDER_VERSION=v1.20.0-alpha.0
-  
+
   ## Control plane vars
   export CP_COUNT=3
   export CP_INSTANCE_TYPE=t3.large
@@ -79,7 +79,6 @@ function setup {
   ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
     --from https://github.com/talos-systems/cluster-api-templates/blob/main/aws/standard/standard.yaml > ${TMP}/cluster.yaml
-  
 }
 
 setup

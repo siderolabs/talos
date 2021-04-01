@@ -180,7 +180,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"--requestheader-username-headers=X-Remote-User",
 		fmt.Sprintf("--proxy-client-cert-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt")),
 		fmt.Sprintf("--proxy-client-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key")),
-		fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider),
 		"--enable-bootstrap-token-auth=true",
 		"--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
 		fmt.Sprintf("--encryption-provider-config=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml")),
@@ -205,6 +204,10 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		fmt.Sprintf("--tls-cert-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")),
 		fmt.Sprintf("--tls-private-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")),
 		"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+	}
+
+	if cfg.CloudProvider != "" {
+		args = append(args, fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider))
 	}
 
 	for k, v := range cfg.ExtraArgs {
@@ -284,7 +287,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		"/go-runner",
 		"/usr/local/bin/kube-controller-manager",
 		"--allocate-node-cidrs=true",
-		fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider),
 		fmt.Sprintf("--cluster-cidr=%s", cfg.PodCIDR),
 		fmt.Sprintf("--service-cluster-ip-range=%s", cfg.ServiceCIDR),
 		fmt.Sprintf("--cluster-signing-cert-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
@@ -295,6 +297,10 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		fmt.Sprintf("--root-ca-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
 		fmt.Sprintf("--service-account-private-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")),
 		"--profiling=false",
+	}
+
+	if cfg.CloudProvider != "" {
+		args = append(args, fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider))
 	}
 
 	for k, v := range cfg.ExtraArgs {

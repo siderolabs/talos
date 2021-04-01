@@ -1127,6 +1127,34 @@ coreDNS:
 
 <div class="dd">
 
+<code>externalCloudProvider</code>  <i><a href="#externalcloudproviderconfig">ExternalCloudProviderConfig</a></i>
+
+</div>
+<div class="dt">
+
+External cloud provider configuration.
+
+
+
+Examples:
+
+
+``` yaml
+externalCloudProvider:
+    enabled: true # Enable external cloud provider.
+    # A list of urls that point to additional manifests for an external cloud provider.
+    manifests:
+        - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
+        - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>extraManifests</code>  <i>[]string</i>
 
 </div>
@@ -1158,7 +1186,7 @@ extraManifests:
 </div>
 <div class="dt">
 
-A map of key value pairs that will be added while fetching the ExtraManifests.
+A map of key value pairs that will be added while fetching the extraManifests.
 
 
 
@@ -2859,6 +2887,79 @@ Name of CNI to use.
 <div class="dt">
 
 URLs containing manifests to apply for the CNI.
+
+</div>
+
+<hr />
+
+
+
+
+
+## ExternalCloudProviderConfig
+ExternalCloudProviderConfig contains external cloud provider configuration.
+
+Appears in:
+
+
+- <code><a href="#clusterconfig">ClusterConfig</a>.externalCloudProvider</code>
+
+
+``` yaml
+enabled: true # Enable external cloud provider.
+# A list of urls that point to additional manifests for an external cloud provider.
+manifests:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
+```
+
+<hr />
+
+<div class="dd">
+
+<code>enabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enable external cloud provider.
+
+
+Valid values:
+
+
+  - <code>true</code>
+
+  - <code>yes</code>
+
+  - <code>false</code>
+
+  - <code>no</code>
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>manifests</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+A list of urls that point to additional manifests for an external cloud provider.
+These will get automatically deployed as part of the bootstrap.
+
+
+
+Examples:
+
+
+``` yaml
+manifests:
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
+    - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
+```
+
 
 </div>
 

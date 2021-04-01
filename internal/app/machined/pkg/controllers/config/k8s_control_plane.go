@@ -128,10 +128,15 @@ func convertVolumes(volumes []talosconfig.VolumeMount) []config.K8sExtraVolume {
 }
 
 func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	var cloudProvider string
+	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
+		cloudProvider = "external"
+	}
+
 	return r.Update(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
 			Image:                cfgProvider.Cluster().APIServer().Image(),
-			CloudProvider:        "", // TODO: add cloud provider to config one day
+			CloudProvider:        cloudProvider,
 			ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
 			EtcdServers:          []string{"https://127.0.0.1:2379"},
 			LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
@@ -145,10 +150,15 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 }
 
 func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, logger *log.Logger, cfgProvider talosconfig.Provider) error {
+	var cloudProvider string
+	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
+		cloudProvider = "external"
+	}
+
 	return r.Update(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
 			Image:         cfgProvider.Cluster().ControllerManager().Image(),
-			CloudProvider: "", // TODO: add cloud provider to config one day
+			CloudProvider: cloudProvider,
 			PodCIDR:       cfgProvider.Cluster().Network().PodCIDR(),
 			ServiceCIDR:   cfgProvider.Cluster().Network().ServiceCIDR(),
 			ExtraArgs:     cfgProvider.Cluster().ControllerManager().ExtraArgs(),
@@ -234,6 +244,13 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 					Priority: "05", // push CNI to the top
 				})
 			}
+		}
+
+		for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
+			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				URL:      url,
+				Priority: "30", // after default manifests
+			})
 		}
 
 		for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
