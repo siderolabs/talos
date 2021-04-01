@@ -279,9 +279,9 @@ func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []run
 			if !runtime.IsRebootError(err) {
 				log.Printf("%s sequence: failed", seq.String())
 			}
+		} else {
+			log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
 		}
-
-		log.Printf("%s sequence: done: %s", seq.String(), time.Since(start))
 	}()
 
 	for number, phase = range phases {
@@ -302,13 +302,13 @@ func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []run
 			return fmt.Errorf("error running phase %d in %s sequence: %w", number, seq.String(), err)
 		}
 
+		log.Printf("phase %s (%s): done, %s", phase.Name, progress, time.Since(start))
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-
-		log.Printf("phase %s (%s): done, %s", phase.Name, progress, time.Since(start))
 	}
 
 	return nil
@@ -369,11 +369,11 @@ func (c *Controller) runTask(ctx context.Context, progress string, f runtime.Tas
 	defer func() {
 		if err != nil {
 			if !runtime.IsRebootError(err) {
-				log.Printf("task %s (%s): failed", taskName, progress)
+				log.Printf("task %s (%s): failed: %s", taskName, progress, err)
 			}
+		} else {
+			log.Printf("task %s (%s): done, %s", taskName, progress, time.Since(start))
 		}
-
-		log.Printf("task %s (%s): done, %s", taskName, progress, time.Since(start))
 	}()
 
 	defer c.Runtime().Events().Publish(&machine.TaskEvent{
