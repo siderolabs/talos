@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/talos-systems/talos/pkg/cluster"
+	k8s "github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -130,7 +131,7 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 	return retry.Constant(5*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
 		daemonset, err = clientset.AppsV1().DaemonSets(namespace).Get(ctx, ds, metav1.GetOptions{})
 		if err != nil {
-			if retryableError(err) {
+			if k8s.IsRetryableError(err) {
 				return retry.ExpectedError(err)
 			}
 

@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -226,7 +227,7 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node,
 		LabelSelector: fmt.Sprintf("k8s-app = %s", service),
 	})
 	if err != nil {
-		if retryableError(err) {
+		if kubernetes.IsRetryableError(err) {
 			return retry.ExpectedError(err)
 		}
 
