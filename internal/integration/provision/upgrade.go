@@ -71,7 +71,7 @@ type upgradeSpec struct {
 
 const (
 	previousRelease = "v0.8.5"
-	stableRelease   = "v0.9.0" // or soon-to-be-stable
+	stableRelease   = "v0.9.1" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
 	previousK8sVersion = "1.20.1"      // constants.DefaultKubernetesVersion in the previousRelease
