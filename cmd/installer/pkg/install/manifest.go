@@ -39,6 +39,8 @@ type Device struct {
 
 	ResetPartitionTable bool
 	Zero                bool
+
+	SkipOverlayMountsCheck bool
 }
 
 // NewManifest initializes and returns a Manifest.
@@ -95,6 +97,8 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 
 		ResetPartitionTable: opts.Force,
 		Zero:                opts.Zero,
+
+		SkipOverlayMountsCheck: sequence == runtime.SequenceNoop,
 	}
 
 	// Initialize any slices we need. Note that a boot partition is not
@@ -170,6 +174,8 @@ func (m *Manifest) Execute() (err error) {
 }
 
 // checkMounts verifies that no active mounts in any mount namespace exist for the device.
+//
+//nolint:gocyclo
 func (m *Manifest) checkMounts(device Device) error {
 	matches, err := filepath.Glob("/proc/*/mountinfo")
 	if err != nil {
@@ -196,6 +202,22 @@ func (m *Manifest) checkMounts(device Device) error {
 
 				if len(fields) < 2 {
 					continue
+				}
+
+				if !device.SkipOverlayMountsCheck && fields[len(fields)-2] == "overlay" {
+					// parsing options (last column) in the overlay mount line which looks like:
+					// 163 70 0:52 /apid / ro,relatime - overlay overlay rw,lowerdir=/opt,upperdir=/var/system/overlays/opt-diff,workdir=/var/system/overlays/opt-workdir
+
+					options := strings.Split(fields[len(fields)-1], ",")
+
+					for _, option := range options {
+						parts := strings.SplitN(option, "=", 2)
+						if len(parts) == 2 {
+							if strings.HasPrefix(parts[1], "/var/") {
+								return fmt.Errorf("found overlay mount in %q: %s", path, scanner.Text())
+							}
+						}
+					}
 				}
 
 				if fields[len(fields)-2] == device.Device {
