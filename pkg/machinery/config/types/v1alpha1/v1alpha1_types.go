@@ -330,7 +330,15 @@ var (
 		CoreDNSImage: (&CoreDNS{}).Image(),
 	}
 
-	clusterAdminKubeconfigExample = AdminKubeconfigConfig{
+	clusterExternalCloudProviderConfigExample = &ExternalCloudProviderConfig{
+		ExternalEnabled: true,
+		ExternalManifests: []string{
+			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+		},
+	}
+
+	clusterAdminKubeconfigExample = &AdminKubeconfigConfig{
 		AdminKubeconfigCertLifetime: time.Hour,
 	}
 
@@ -684,6 +692,11 @@ type ClusterConfig struct {
 	//     - value: clusterCoreDNSExample
 	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
 	//   description: |
+	//     External cloud provider configuration.
+	//   examples:
+	//     - value: clusterExternalCloudProviderConfigExample
+	ExternalCloudProviderConfig *ExternalCloudProviderConfig `yaml:"externalCloudProvider,omitempty"`
+	//   description: |
 	//     A list of urls that point to additional manifests.
 	//     These will get automatically deployed as part of the bootstrap.
 	//   examples:
@@ -694,7 +707,7 @@ type ClusterConfig struct {
 	//        }
 	ExtraManifests []string `yaml:"extraManifests,omitempty"`
 	//   description: |
-	//     A map of key value pairs that will be added while fetching the ExtraManifests.
+	//     A map of key value pairs that will be added while fetching the extraManifests.
 	//   examples:
 	//     - value: >
 	//         map[string]string{
@@ -707,7 +720,7 @@ type ClusterConfig struct {
 	//     Certificate lifetime can be configured.
 	//   examples:
 	//     - value: clusterAdminKubeconfigExample
-	AdminKubeconfigConfig AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
+	AdminKubeconfigConfig *AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 	//   description: |
 	//     Allows running workload on master nodes.
 	//   values:
@@ -1188,6 +1201,28 @@ type CNIConfig struct {
 	//   description: |
 	//     URLs containing manifests to apply for the CNI.
 	CNIUrls []string `yaml:"urls,omitempty"`
+}
+
+// ExternalCloudProviderConfig contains external cloud provider configuration.
+type ExternalCloudProviderConfig struct {
+	//   description: |
+	//     Enable external cloud provider.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	ExternalEnabled bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     A list of urls that point to additional manifests for an external cloud provider.
+	//     These will get automatically deployed as part of the bootstrap.
+	//   examples:
+	//     - value: >
+	//        []string{
+	//         "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+	//         "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+	//        }
+	ExternalManifests []string `yaml:"manifests,omitempty"`
 }
 
 // AdminKubeconfigConfig contains admin kubeconfig settings.

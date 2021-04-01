@@ -87,7 +87,7 @@ WORKDIR /src
 RUN --mount=type=cache,target=/.cache go mod download
 RUN --mount=type=cache,target=/.cache go mod verify
 
-# The generate target generates code from protobuf service definitions.
+# The generate target generates code from protobuf service definitions and machinery config.
 
 FROM build AS generate-build
 # Common needs to be at or near the top to satisfy the subsequent imports

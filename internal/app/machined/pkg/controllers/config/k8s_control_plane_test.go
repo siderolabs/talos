@@ -87,24 +87,11 @@ func (suite *K8sControlPlaneSuite) assertK8sControlPlanes(manifests []string) er
 	return nil
 }
 
-func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
+// setupMachine creates a machine with given configuration, waits for it to become ready,
+// and returns API server's spec.
+func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) config.K8sControlPlaneAPIServerSpec {
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
-
-	u, err := url.Parse("https://foo:6443")
-	suite.Require().NoError(err)
-
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
-				},
-			},
-		},
-	})
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -122,12 +109,41 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 			)
 		},
 	))
+
+	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneAPIServer().Metadata())
+	suite.Require().NoError(err)
+
+	cp, ok := r.(*config.K8sControlPlane)
+	suite.Require().True(ok, "got %T", r)
+
+	return cp.APIServer()
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+		},
+	})
+
+	apiServerCfg := suite.setupMachine(cfg)
+	suite.Assert().Empty(apiServerCfg.CloudProvider)
+
+	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneControllerManager().Metadata())
+	suite.Require().NoError(err)
+	suite.Assert().Empty(r.(*config.K8sControlPlane).ControllerManager().CloudProvider)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeControlPlane)
-
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
@@ -151,28 +167,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 		},
 	})
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
-
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertK8sControlPlanes(
-				[]string{
-					config.K8sExtraManifestsID,
-					config.K8sControlPlaneAPIServerID,
-					config.K8sControlPlaneControllerManagerID,
-					config.K8sControlPlaneSchedulerID,
-					config.K8sManifestsID,
-				},
-			)
-		},
-	))
-
-	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneAPIServer().Metadata())
-	suite.Require().NoError(err)
-
-	apiServerCfg := r.(*config.K8sControlPlane).APIServer()
-
+	apiServerCfg := suite.setupMachine(cfg)
 	suite.Assert().Equal([]config.K8sExtraVolume{
 		{
 			Name:      "var-foo",
@@ -181,6 +176,53 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 			ReadOnly:  false,
 		},
 	}, apiServerCfg.ExtraVolumes)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+			ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
+				ExternalEnabled: true,
+				ExternalManifests: []string{
+					"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+					"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+				},
+			},
+		},
+	})
+
+	apiServerCfg := suite.setupMachine(cfg)
+	suite.Assert().Equal("external", apiServerCfg.CloudProvider)
+
+	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneControllerManager().Metadata())
+	suite.Require().NoError(err)
+	suite.Assert().Equal("external", r.(*config.K8sControlPlane).ControllerManager().CloudProvider)
+
+	r, err = suite.state.Get(suite.ctx, config.NewK8sExtraManifests().Metadata())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(config.K8sExtraManifestsSpec{
+		ExtraManifests: []config.ExtraManifest{
+			{
+				URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+				Priority: "30",
+			},
+			{
+				URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+				Priority: "30",
+			},
+		},
+	}, r.(*config.K8sControlPlane).ExtraManifests())
 }
 
 func (suite *K8sControlPlaneSuite) TearDownTest() {

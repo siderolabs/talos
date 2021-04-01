@@ -927,7 +927,7 @@ func (c *CoreDNS) Image() string {
 }
 
 // CertLifetime implements the config.Provider interface.
-func (a AdminKubeconfigConfig) CertLifetime() time.Duration {
+func (a *AdminKubeconfigConfig) CertLifetime() time.Duration {
 	if a.AdminKubeconfigCertLifetime == 0 {
 		return constants.KubernetesAdminCertDefaultLifetime
 	}

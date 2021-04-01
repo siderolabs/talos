@@ -180,6 +180,28 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterNetwork.DNSDomain))
 	}
 
+	if ecp := c.ExternalCloudProviderConfig; ecp != nil {
+		result = multierror.Append(result, ecp.Validate())
+	}
+
+	return result.ErrorOrNil()
+}
+
+// Validate validates external cloud provider configuration.
+func (ecp *ExternalCloudProviderConfig) Validate() error {
+	if !ecp.ExternalEnabled && (len(ecp.ExternalManifests) != 0) {
+		return fmt.Errorf("external cloud provider is disabled, but manifests are provided")
+	}
+
+	var result *multierror.Error
+
+	for _, url := range ecp.ExternalManifests {
+		if err := talosnet.ValidateEndpointURI(url); err != nil {
+			err = fmt.Errorf("invalid external cloud provider manifest url %q: %w", url, err)
+			result = multierror.Append(result, err)
+		}
+	}
+
 	return result.ErrorOrNil()
 }
 

@@ -27,7 +27,7 @@ find ${PREFIX} -type f -name \*.static -print0 | xargs -0 rm -rf || true
 find ${PREFIX}/{lib,usr/lib} -type f \( -name \*.so* -a ! -name \*dbg \) -exec strip --strip-unneeded {} ';' || true
 find ${PREFIX}/{bin,sbin,usr/bin,usr/sbin} -type f -exec strip --strip-all {} ';' || true
 
-# Remove header files, man files, and any other non-rutime dependencies.
+# Remove header files, man files, and any other non-runtime dependencies.
 rm -rf ${PREFIX}/{lib,usr/lib}/pkgconfig/ \
        ${PREFIX}/{include,usr/include}/* \
        ${PREFIX}/{share,usr/share}/* \

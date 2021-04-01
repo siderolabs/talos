@@ -157,7 +157,7 @@ hack-test-%: ## Runs the specied script in ./hack/test with well known environme
 # Generators
 
 .PHONY: generate
-generate: ## Generates source code from protobuf definitions.
+generate: ## Generates code from protobuf service definitions and machinery config.
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
 .PHONY: docs

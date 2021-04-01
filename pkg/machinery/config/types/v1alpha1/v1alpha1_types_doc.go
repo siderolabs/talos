@@ -11,50 +11,51 @@ import (
 )
 
 var (
-	ConfigDoc                     encoder.Doc
-	MachineConfigDoc              encoder.Doc
-	ClusterConfigDoc              encoder.Doc
-	KubeletConfigDoc              encoder.Doc
-	NetworkConfigDoc              encoder.Doc
-	InstallConfigDoc              encoder.Doc
-	InstallDiskSizeMatcherDoc     encoder.Doc
-	InstallDiskSelectorDoc        encoder.Doc
-	TimeConfigDoc                 encoder.Doc
-	RegistriesConfigDoc           encoder.Doc
-	PodCheckpointerDoc            encoder.Doc
-	CoreDNSDoc                    encoder.Doc
-	EndpointDoc                   encoder.Doc
-	ControlPlaneConfigDoc         encoder.Doc
-	APIServerConfigDoc            encoder.Doc
-	ControllerManagerConfigDoc    encoder.Doc
-	ProxyConfigDoc                encoder.Doc
-	SchedulerConfigDoc            encoder.Doc
-	EtcdConfigDoc                 encoder.Doc
-	ClusterNetworkConfigDoc       encoder.Doc
-	CNIConfigDoc                  encoder.Doc
-	AdminKubeconfigConfigDoc      encoder.Doc
-	MachineDiskDoc                encoder.Doc
-	DiskPartitionDoc              encoder.Doc
-	EncryptionConfigDoc           encoder.Doc
-	EncryptionKeyDoc              encoder.Doc
-	EncryptionKeyStaticDoc        encoder.Doc
-	EncryptionKeyNodeIDDoc        encoder.Doc
-	MachineFileDoc                encoder.Doc
-	ExtraHostDoc                  encoder.Doc
-	DeviceDoc                     encoder.Doc
-	DHCPOptionsDoc                encoder.Doc
-	DeviceWireguardConfigDoc      encoder.Doc
-	DeviceWireguardPeerDoc        encoder.Doc
-	DeviceVIPConfigDoc            encoder.Doc
-	BondDoc                       encoder.Doc
-	VlanDoc                       encoder.Doc
-	RouteDoc                      encoder.Doc
-	RegistryMirrorConfigDoc       encoder.Doc
-	RegistryConfigDoc             encoder.Doc
-	RegistryAuthConfigDoc         encoder.Doc
-	RegistryTLSConfigDoc          encoder.Doc
-	SystemDiskEncryptionConfigDoc encoder.Doc
-	VolumeMountConfigDoc          encoder.Doc
+	ConfigDoc                      encoder.Doc
+	MachineConfigDoc               encoder.Doc
+	ClusterConfigDoc               encoder.Doc
+	KubeletConfigDoc               encoder.Doc
+	NetworkConfigDoc               encoder.Doc
+	InstallConfigDoc               encoder.Doc
+	InstallDiskSizeMatcherDoc      encoder.Doc
+	InstallDiskSelectorDoc         encoder.Doc
+	TimeConfigDoc                  encoder.Doc
+	RegistriesConfigDoc            encoder.Doc
+	PodCheckpointerDoc             encoder.Doc
+	CoreDNSDoc                     encoder.Doc
+	EndpointDoc                    encoder.Doc
+	ControlPlaneConfigDoc          encoder.Doc
+	APIServerConfigDoc             encoder.Doc
+	ControllerManagerConfigDoc     encoder.Doc
+	ProxyConfigDoc                 encoder.Doc
+	SchedulerConfigDoc             encoder.Doc
+	EtcdConfigDoc                  encoder.Doc
+	ClusterNetworkConfigDoc        encoder.Doc
+	CNIConfigDoc                   encoder.Doc
+	ExternalCloudProviderConfigDoc encoder.Doc
+	AdminKubeconfigConfigDoc       encoder.Doc
+	MachineDiskDoc                 encoder.Doc
+	DiskPartitionDoc               encoder.Doc
+	EncryptionConfigDoc            encoder.Doc
+	EncryptionKeyDoc               encoder.Doc
+	EncryptionKeyStaticDoc         encoder.Doc
+	EncryptionKeyNodeIDDoc         encoder.Doc
+	MachineFileDoc                 encoder.Doc
+	ExtraHostDoc                   encoder.Doc
+	DeviceDoc                      encoder.Doc
+	DHCPOptionsDoc                 encoder.Doc
+	DeviceWireguardConfigDoc       encoder.Doc
+	DeviceWireguardPeerDoc         encoder.Doc
+	DeviceVIPConfigDoc             encoder.Doc
+	BondDoc                        encoder.Doc
+	VlanDoc                        encoder.Doc
+	RouteDoc                       encoder.Doc
+	RegistryMirrorConfigDoc        encoder.Doc
+	RegistryConfigDoc              encoder.Doc
+	RegistryAuthConfigDoc          encoder.Doc
+	RegistryTLSConfigDoc           encoder.Doc
+	SystemDiskEncryptionConfigDoc  encoder.Doc
+	VolumeMountConfigDoc           encoder.Doc
 )
 
 func init() {
@@ -241,7 +242,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 19)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 20)
 	ClusterConfigDoc.Fields[0].Name = "controlPlane"
 	ClusterConfigDoc.Fields[0].Type = "ControlPlaneConfig"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -345,39 +346,46 @@ func init() {
 	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "Core DNS specific configuration options."
 
 	ClusterConfigDoc.Fields[14].AddExample("", clusterCoreDNSExample)
-	ClusterConfigDoc.Fields[15].Name = "extraManifests"
-	ClusterConfigDoc.Fields[15].Type = "[]string"
+	ClusterConfigDoc.Fields[15].Name = "externalCloudProvider"
+	ClusterConfigDoc.Fields[15].Type = "ExternalCloudProviderConfig"
 	ClusterConfigDoc.Fields[15].Note = ""
-	ClusterConfigDoc.Fields[15].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
-	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+	ClusterConfigDoc.Fields[15].Description = "External cloud provider configuration."
+	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "External cloud provider configuration."
 
-	ClusterConfigDoc.Fields[15].AddExample("", []string{
+	ClusterConfigDoc.Fields[15].AddExample("", clusterExternalCloudProviderConfigExample)
+	ClusterConfigDoc.Fields[16].Name = "extraManifests"
+	ClusterConfigDoc.Fields[16].Type = "[]string"
+	ClusterConfigDoc.Fields[16].Note = ""
+	ClusterConfigDoc.Fields[16].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+
+	ClusterConfigDoc.Fields[16].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
 		"https://www.example.com/manifest2.yaml",
 	})
-	ClusterConfigDoc.Fields[16].Name = "extraManifestHeaders"
-	ClusterConfigDoc.Fields[16].Type = "map[string]string"
-	ClusterConfigDoc.Fields[16].Note = ""
-	ClusterConfigDoc.Fields[16].Description = "A map of key value pairs that will be added while fetching the ExtraManifests."
-	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the ExtraManifests."
+	ClusterConfigDoc.Fields[17].Name = "extraManifestHeaders"
+	ClusterConfigDoc.Fields[17].Type = "map[string]string"
+	ClusterConfigDoc.Fields[17].Note = ""
+	ClusterConfigDoc.Fields[17].Description = "A map of key value pairs that will be added while fetching the extraManifests."
+	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the extraManifests."
 
-	ClusterConfigDoc.Fields[16].AddExample("", map[string]string{
+	ClusterConfigDoc.Fields[17].AddExample("", map[string]string{
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	ClusterConfigDoc.Fields[17].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[17].Type = "AdminKubeconfigConfig"
-	ClusterConfigDoc.Fields[17].Note = ""
-	ClusterConfigDoc.Fields[17].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
-
-	ClusterConfigDoc.Fields[17].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[18].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[18].Type = "bool"
+	ClusterConfigDoc.Fields[18].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[18].Type = "AdminKubeconfigConfig"
 	ClusterConfigDoc.Fields[18].Note = ""
-	ClusterConfigDoc.Fields[18].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[18].Values = []string{
+	ClusterConfigDoc.Fields[18].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+
+	ClusterConfigDoc.Fields[18].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[19].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[19].Type = "bool"
+	ClusterConfigDoc.Fields[19].Note = ""
+	ClusterConfigDoc.Fields[19].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[19].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -972,6 +980,40 @@ func init() {
 	CNIConfigDoc.Fields[1].Note = ""
 	CNIConfigDoc.Fields[1].Description = "URLs containing manifests to apply for the CNI."
 	CNIConfigDoc.Fields[1].Comments[encoder.LineComment] = "URLs containing manifests to apply for the CNI."
+
+	ExternalCloudProviderConfigDoc.Type = "ExternalCloudProviderConfig"
+	ExternalCloudProviderConfigDoc.Comments[encoder.LineComment] = "ExternalCloudProviderConfig contains external cloud provider configuration."
+	ExternalCloudProviderConfigDoc.Description = "ExternalCloudProviderConfig contains external cloud provider configuration."
+
+	ExternalCloudProviderConfigDoc.AddExample("", clusterExternalCloudProviderConfigExample)
+	ExternalCloudProviderConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "externalCloudProvider",
+		},
+	}
+	ExternalCloudProviderConfigDoc.Fields = make([]encoder.Doc, 2)
+	ExternalCloudProviderConfigDoc.Fields[0].Name = "enabled"
+	ExternalCloudProviderConfigDoc.Fields[0].Type = "bool"
+	ExternalCloudProviderConfigDoc.Fields[0].Note = ""
+	ExternalCloudProviderConfigDoc.Fields[0].Description = "Enable external cloud provider."
+	ExternalCloudProviderConfigDoc.Fields[0].Comments[encoder.LineComment] = "Enable external cloud provider."
+	ExternalCloudProviderConfigDoc.Fields[0].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
+	ExternalCloudProviderConfigDoc.Fields[1].Name = "manifests"
+	ExternalCloudProviderConfigDoc.Fields[1].Type = "[]string"
+	ExternalCloudProviderConfigDoc.Fields[1].Note = ""
+	ExternalCloudProviderConfigDoc.Fields[1].Description = "A list of urls that point to additional manifests for an external cloud provider.\nThese will get automatically deployed as part of the bootstrap."
+	ExternalCloudProviderConfigDoc.Fields[1].Comments[encoder.LineComment] = "A list of urls that point to additional manifests for an external cloud provider."
+
+	ExternalCloudProviderConfigDoc.Fields[1].AddExample("", []string{
+		"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+		"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+	})
 
 	AdminKubeconfigConfigDoc.Type = "AdminKubeconfigConfig"
 	AdminKubeconfigConfigDoc.Comments[encoder.LineComment] = "AdminKubeconfigConfig contains admin kubeconfig settings."
@@ -1859,6 +1901,10 @@ func (_ CNIConfig) Doc() *encoder.Doc {
 	return &CNIConfigDoc
 }
 
+func (_ ExternalCloudProviderConfig) Doc() *encoder.Doc {
+	return &ExternalCloudProviderConfigDoc
+}
+
 func (_ AdminKubeconfigConfig) Doc() *encoder.Doc {
 	return &AdminKubeconfigConfigDoc
 }
@@ -1978,6 +2024,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&EtcdConfigDoc,
 			&ClusterNetworkConfigDoc,
 			&CNIConfigDoc,
+			&ExternalCloudProviderConfigDoc,
 			&AdminKubeconfigConfigDoc,
 			&MachineDiskDoc,
 			&DiskPartitionDoc,

@@ -45,7 +45,7 @@ func (suite *AdminSuite) TestGenerate() {
 						URL: u,
 					},
 				},
-				AdminKubeconfigConfig: v1alpha1.AdminKubeconfigConfig{
+				AdminKubeconfigConfig: &v1alpha1.AdminKubeconfigConfig{
 					AdminKubeconfigCertLifetime: time.Hour,
 				},
 			}

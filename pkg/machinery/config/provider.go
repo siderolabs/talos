@@ -268,6 +268,8 @@ type ClusterConfig interface {
 	Network() ClusterNetwork
 	LocalAPIServerPort() int
 	CoreDNS() CoreDNS
+	// ExternalCloudProvider returns external cloud provider settings.
+	ExternalCloudProvider() ExternalCloudProvider
 	ExtraManifestURLs() []string
 	ExtraManifestHeaderMap() map[string]string
 	AdminKubeconfig() AdminKubeconfig
@@ -351,6 +353,14 @@ type Token interface {
 // coredns options.
 type CoreDNS interface {
 	Image() string
+}
+
+// ExternalCloudProvider defines settings for external cloud provider.
+type ExternalCloudProvider interface {
+	// Enabled returns true if external cloud provider is enabled.
+	Enabled() bool
+	// ManifestURLs returns external cloud provider manifest URLs if it is enabled.
+	ManifestURLs() []string
 }
 
 // AdminKubeconfig defines settings for admin kubeconfig.
