@@ -808,8 +808,9 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 			}
 
 			m.Devices[disk.Device()] = installer.Device{
-				Device:              disk.Device(),
-				ResetPartitionTable: true,
+				Device:                 disk.Device(),
+				ResetPartitionTable:    true,
+				SkipOverlayMountsCheck: true,
 			}
 
 			for _, part := range disk.Partitions() {

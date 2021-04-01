@@ -233,6 +233,11 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 	})
 	suite.Require().NoError(err)
 
+	// in the tests overlay mounts should be ignored
+	dev := manifest.Devices[suite.loopbackDevice.Name()]
+	dev.SkipOverlayMountsCheck = true
+	manifest.Devices[suite.loopbackDevice.Name()] = dev
+
 	suite.Assert().NoError(manifest.Execute())
 
 	suite.verifyBlockdevice(manifest, "", "A", false, false)
@@ -249,6 +254,11 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	})
 	suite.Require().NoError(err)
 
+	// in the tests overlay mounts should be ignored
+	dev := manifest.Devices[suite.loopbackDevice.Name()]
+	dev.SkipOverlayMountsCheck = true
+	manifest.Devices[suite.loopbackDevice.Name()] = dev
+
 	suite.Assert().NoError(manifest.Execute())
 
 	suite.verifyBlockdevice(manifest, "", "A", false, false)
@@ -263,6 +273,11 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
+
+	// in the tests overlay mounts should be ignored
+	dev = manifest.Devices[suite.loopbackDevice.Name()]
+	dev.SkipOverlayMountsCheck = true
+	manifest.Devices[suite.loopbackDevice.Name()] = dev
 
 	suite.Assert().NoError(manifest.Execute())
 
@@ -280,6 +295,11 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	})
 	suite.Require().NoError(err)
 
+	// in the tests overlay mounts should be ignored
+	dev := manifest.Devices[suite.loopbackDevice.Name()]
+	dev.SkipOverlayMountsCheck = true
+	manifest.Devices[suite.loopbackDevice.Name()] = dev
+
 	suite.Assert().NoError(manifest.Execute())
 
 	suite.verifyBlockdevice(manifest, "", "A", false, false)
@@ -293,6 +313,11 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 		Board:      constants.BoardNone,
 	})
 	suite.Require().NoError(err)
+
+	// in the tests overlay mounts should be ignored
+	dev = manifest.Devices[suite.loopbackDevice.Name()]
+	dev.SkipOverlayMountsCheck = true
+	manifest.Devices[suite.loopbackDevice.Name()] = dev
 
 	suite.Assert().NoError(manifest.Execute())
 
