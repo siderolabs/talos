@@ -7,6 +7,7 @@ package kubernetes
 
 import (
 	"errors"
+	"io"
 	"net"
 	"syscall"
 
@@ -15,6 +16,10 @@ import (
 
 func retryableError(err error) bool {
 	if apierrors.IsTimeout(err) || apierrors.IsServerTimeout(err) || apierrors.IsInternalError(err) {
+		return true
+	}
+
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 		return true
 	}
 
