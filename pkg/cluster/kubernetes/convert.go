@@ -467,7 +467,7 @@ func waitForStaticPods(ctx context.Context, cluster ConvertProvider, options *Co
 			LabelSelector: fmt.Sprintf("k8s-app = %s", k8sApp),
 		})
 		if err != nil {
-			if retryableError(err) {
+			if kubernetes.IsRetryableError(err) {
 				return retry.ExpectedError(err)
 			}
 
@@ -547,7 +547,7 @@ func disablePodCheckpointer(ctx context.Context, cluster ConvertProvider) error 
 
 		checkpoints, err = getActiveCheckpoints(ctx, k8sClient)
 		if err != nil {
-			if retryableError(err) {
+			if kubernetes.IsRetryableError(err) {
 				return retry.ExpectedError(err)
 			}
 
@@ -610,7 +610,7 @@ func deleteDaemonset(ctx context.Context, cluster ConvertProvider, k8sApp string
 	if err = retry.Constant(time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		err = k8sClient.AppsV1().DaemonSets(namespace).Delete(ctx, k8sApp, v1.DeleteOptions{})
 		if err != nil {
-			if retryableError(err) {
+			if kubernetes.IsRetryableError(err) {
 				return retry.ExpectedError(err)
 			}
 
@@ -631,7 +631,7 @@ func deleteDaemonset(ctx context.Context, cluster ConvertProvider, k8sApp string
 			LabelSelector: fmt.Sprintf("k8s-app = %s", k8sApp),
 		})
 		if err != nil {
-			if retryableError(err) {
+			if kubernetes.IsRetryableError(err) {
 				return retry.ExpectedError(err)
 			}
 

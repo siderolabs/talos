@@ -299,6 +299,10 @@ func (h *Client) Cordon(ctx context.Context, name string) error {
 	err := retry.Exponential(30*time.Second, retry.WithUnits(250*time.Millisecond), retry.WithJitter(50*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
 		node, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
+			if IsRetryableError(err) {
+				return retry.ExpectedError(err)
+			}
+
 			return retry.UnexpectedError(err)
 		}
 
@@ -332,6 +336,10 @@ func (h *Client) Uncordon(ctx context.Context, name string, force bool) error {
 
 		node, err := h.CoreV1().Nodes().Get(attemptCtx, name, metav1.GetOptions{})
 		if err != nil {
+			if IsRetryableError(err) {
+				return retry.ExpectedError(err)
+			}
+
 			return retry.UnexpectedError(err)
 		}
 
@@ -447,6 +455,10 @@ func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
 		case apierrors.IsNotFound(err):
 			return nil
 		case err != nil:
+			if IsRetryableError(err) {
+				return retry.ExpectedError(err)
+			}
+
 			return retry.UnexpectedError(fmt.Errorf("failed to get pod %s/%s: %w", p.GetNamespace(), p.GetName(), err))
 		}
 
