@@ -52,7 +52,7 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		o.syncKubeletPKI()
 	}
 
-	return nil
+	return prepareRootfs(o.ID(r))
 }
 
 // PostFunc implements the Service interface.
@@ -155,7 +155,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithOCISpecOpts(
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
-			oci.WithRootFSPath("/opt/apid"),
+			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, o.ID(r))),
 			oci.WithRootFSReadonly(),
 		),
 	),
