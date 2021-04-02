@@ -306,9 +306,6 @@ const (
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 
-	// TimeSocketPath is the path to file socket of time API.
-	TimeSocketPath = SystemRunPath + "/timed/timed.sock"
-
 	// NetworkSocketPath is the path to file socket of network API.
 	NetworkSocketPath = SystemRunPath + "/networkd/networkd.sock"
 
@@ -354,6 +351,9 @@ const (
 
 	// SystemEtcPath is the path to the system etc directory.
 	SystemEtcPath = SystemPath + "/etc"
+
+	// SystemLibexecPath is the path to the system libexec directory.
+	SystemLibexecPath = SystemPath + "/libexec"
 
 	// DefaultCNI is the default CNI.
 	DefaultCNI = "flannel"

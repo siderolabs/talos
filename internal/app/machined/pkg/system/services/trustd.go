@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"path/filepath"
 
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -36,7 +37,7 @@ func (t *Trustd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	return nil
+	return prepareRootfs(t.ID(r))
 }
 
 // PostFunc implements the Service interface.
@@ -89,7 +90,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			containerd.WithMemoryLimit(int64(1000000*512)),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
-			oci.WithRootFSPath("/opt/trustd"),
+			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, t.ID(r))),
 			oci.WithRootFSReadonly(),
 		),
 	),
