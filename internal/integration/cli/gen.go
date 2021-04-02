@@ -7,11 +7,13 @@
 package cli
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"regexp"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 // GenSuite verifies dmesg command.
@@ -130,6 +132,26 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
+}
+
+// TestGenConfigPatch verify that gen config --config-patch works.
+func (suite *GenSuite) TestGenConfigPatch() {
+	patch, err := json.Marshal([]map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/cluster/clusterName",
+			"value": "bar",
+		},
+	})
+
+	suite.Assert().NoError(err)
+
+	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--config-patch", string(patch)})
+
+	cfg, err := configloader.NewFromFile("controlplane.yaml")
+
+	suite.Assert().NoError(err)
+	suite.Assert().Equal("bar", cfg.Cluster().Name())
 }
 
 func init() {

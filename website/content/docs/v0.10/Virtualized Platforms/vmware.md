@@ -40,6 +40,7 @@ created talosconfig
 ```
 
 At this point, you can modify the generated configs to your liking.
+Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
 
 #### Validate the Configuration Files
 

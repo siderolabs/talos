@@ -119,6 +119,8 @@ LB_PUBLIC_IP=$(gcloud compute forwarding-rules describe talos-fwd-rule \
 talosctl gen config talos-k8s-gcp-tutorial https://${LB_PUBLIC_IP}:443
 ```
 
+Additionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
+
 ### Compute Creation
 
 We are now ready to create our GCP nodes.

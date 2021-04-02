@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	talosnet "github.com/talos-systems/net"
 	"gopkg.in/yaml.v3"
@@ -35,6 +36,7 @@ var genConfigCmdFlags struct {
 	installDisk       string
 	installImage      string
 	outputDir         string
+	configPatch       string
 	registryMirrors   []string
 	persistConfig     bool
 	withExamples      bool
@@ -143,7 +145,7 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 	}
 
-	configBundle, err := bundle.NewConfigBundle(
+	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
 				ClusterName: args[0],
@@ -158,7 +160,20 @@ func genV1Alpha1Config(args []string) error {
 				),
 			},
 		),
-	)
+	}
+
+	if genConfigCmdFlags.configPatch != "" {
+		var jsonPatch jsonpatch.Patch
+
+		jsonPatch, err = jsonpatch.DecodePatch([]byte(genConfigCmdFlags.configPatch))
+		if err != nil {
+			return fmt.Errorf("error parsing config JSON patch: %w", err)
+		}
+
+		configBundleOpts = append(configBundleOpts, bundle.WithJSONPatch(jsonPatch))
+	}
+
+	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to generate config bundle: %w", err)
 	}
@@ -205,6 +220,7 @@ func init() {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.outputDir, "output-dir", "o", "", "destination to output generated files")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatch, "config-patch", "", "patch generated machineconfigs")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
