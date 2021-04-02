@@ -94,6 +94,8 @@ LB_PUBLIC_IP=$(openstack loadbalancer show talos-control-plane -f json | jq -r .
 talosctl gen config talos-k8s-openstack-tutorial https://${LB_PUBLIC_IP}:6443
 ```
 
+Additionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
+
 ### Compute Creation
 
 We are now ready to create our Openstack nodes.

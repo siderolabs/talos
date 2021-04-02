@@ -1016,6 +1016,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 
 ```
       --additional-sans strings     additional Subject-Alt-Names for the APIServer certificate
+      --config-patch string         patch generated machineconfigs
       --dns-domain string           the dns domain to use for cluster (default "cluster.local")
   -h, --help                        help for config
       --install-disk string         the disk to install to (default "/dev/sda")

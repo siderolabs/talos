@@ -37,6 +37,7 @@ created talosconfig
 > If you think this should be added to the docs, please [create a issue](https://github.com/talos-systems/talos/issues).
 
 At this point, you can modify the generated configs to your liking.
+Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
 
 #### Validate the Configuration Files
 
