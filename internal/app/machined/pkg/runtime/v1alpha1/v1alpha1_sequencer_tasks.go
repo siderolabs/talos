@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/go-cmd/pkg/cmd"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
@@ -1191,6 +1192,8 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 
 		//nolint:errcheck
 		defer client.Close()
+
+		ctx = clientv3.WithRequireLeader(ctx)
 
 		if err = client.LeaveCluster(ctx); err != nil {
 			return fmt.Errorf("failed to leave cluster: %w", err)

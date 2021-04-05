@@ -213,6 +213,8 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	//nolint:errcheck
 	defer client.Close()
 
+	ctx = clientv3.WithRequireLeader(ctx)
+
 	list, err := client.MemberList(ctx)
 	if err != nil {
 		return nil, 0, err
