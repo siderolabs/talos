@@ -76,6 +76,17 @@ ENV GOCACHE /.cache/go-build
 ENV GOMODCACHE /.cache/mod
 WORKDIR /src
 
+# The build-go target creates a container to build Go code with Go modules downloaded and verified.
+
+FROM build AS build-go
+COPY ./go.mod ./go.sum ./
+COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache go mod download
+WORKDIR /src
+RUN --mount=type=cache,target=/.cache go mod download
+RUN --mount=type=cache,target=/.cache go mod verify
+
 # The generate target generates code from protobuf service definitions.
 
 FROM build AS generate-build
@@ -105,6 +116,7 @@ RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_o
 RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 # run docgen for machinery config
+FROM build-go AS go-generate
 COPY ./pkg/machinery /pkg/machinery
 WORKDIR /pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate /pkg/machinery/config/types/v1alpha1/
@@ -121,19 +133,12 @@ COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
-COPY --from=generate-build /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
+COPY --from=go-generate /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
 
-FROM build AS base
-COPY ./go.mod ./go.sum ./
-COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
-WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go mod download
-WORKDIR /src
-RUN --mount=type=cache,target=/.cache go mod download
-RUN --mount=type=cache,target=/.cache go mod verify
+FROM build-go AS base
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
