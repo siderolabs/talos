@@ -1691,6 +1691,8 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	//nolint:errcheck
 	defer client.Close()
 
+	ctx = clientv3.WithRequireLeader(ctx)
+
 	resp, err := client.MemberList(ctx)
 	if err != nil {
 		return nil, err
@@ -1723,6 +1725,8 @@ func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMem
 	//nolint:errcheck
 	defer client.Close()
 
+	ctx = clientv3.WithRequireLeader(ctx)
+
 	if err = client.RemoveMember(ctx, in.Member); err != nil {
 		return nil, fmt.Errorf("failed to remove member: %w", err)
 	}
@@ -1746,6 +1750,8 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 	//nolint:errcheck
 	defer client.Close()
 
+	ctx = clientv3.WithRequireLeader(ctx)
+
 	if err = client.LeaveCluster(ctx); err != nil {
 		return nil, fmt.Errorf("failed to leave cluster: %w", err)
 	}
@@ -1768,6 +1774,8 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 
 	//nolint:errcheck
 	defer client.Close()
+
+	ctx = clientv3.WithRequireLeader(ctx)
 
 	leader, err := client.ForfeitLeadership(ctx)
 	if err != nil {
