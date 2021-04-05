@@ -41,7 +41,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.2.0
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/golang/protobuf v1.5.1
+	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
@@ -65,7 +65,6 @@ require (
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // can't be bumped, requires new runc
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210322192639-776b37d31de0
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0

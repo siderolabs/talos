@@ -307,10 +307,10 @@ WORKDIR /src/cmd/installer
 RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.13.3 AS unicode-pf2
+FROM alpine:3.13.4 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
-FROM alpine:3.13.3 AS installer
+FROM alpine:3.13.4 AS installer
 RUN apk add --no-cache --update \
     bash \
     ca-certificates \
@@ -438,7 +438,7 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:15.12.0-alpine AS lint-markdown
+FROM node:15.13.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
