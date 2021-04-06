@@ -28,8 +28,8 @@ xz -d metal-libretech_all_h3_cc_h5-arm64.img.xz
 
 ## Writing the Image
 
-The path to your SD card can be found using `fdisk` on Linux or `diskutil` on Mac OS.
-In this example we will assume `/dev/mmcblk0`.
+The path to your SD card can be found using `fdisk` on Linux or `diskutil` on macOS.
+In this example, we will assume `/dev/mmcblk0`.
 
 Now `dd` the image to your SD card:
 
