@@ -73,6 +73,8 @@ description: Talos gRPC API reference.
     - [EtcdMemberList](#machine.EtcdMemberList)
     - [EtcdMemberListRequest](#machine.EtcdMemberListRequest)
     - [EtcdMemberListResponse](#machine.EtcdMemberListResponse)
+    - [EtcdRecover](#machine.EtcdRecover)
+    - [EtcdRecoverResponse](#machine.EtcdRecoverResponse)
     - [EtcdRemoveMember](#machine.EtcdRemoveMember)
     - [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest)
     - [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse)
@@ -669,6 +671,11 @@ The bootstrap message containing the bootstrap status.
 rpc bootstrap
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| recover_etcd | [bool](#bool) |  |  |
+
+
 
 
 
@@ -1184,6 +1191,36 @@ dmesg
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [EtcdMemberList](#machine.EtcdMemberList) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdRecover"></a>
+
+### EtcdRecover
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdRecoverResponse"></a>
+
+### EtcdRecoverResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdRecover](#machine.EtcdRecover) | repeated |  |
 
 
 
@@ -2865,6 +2902,9 @@ The machine service definition.
 | EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) |  |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
+| EtcdRecover | [.common.Data](#common.Data) stream | [EtcdRecoverResponse](#machine.EtcdRecoverResponse) | EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot to the node.
+
+Snapshot can be later used to recover the cluster via Bootstrap method. |
 | EtcdSnapshot | [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest) | [.common.Data](#common.Data) stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client.
 
 This method is available only on control plane nodes (which run etcd). |

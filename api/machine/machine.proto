@@ -16,7 +16,16 @@ import "common/common.proto";
 service MachineService {
   rpc ApplyConfiguration(ApplyConfigurationRequest)
       returns (ApplyConfigurationResponse);
+
+  // Bootstrap method makes control plane node enter etcd bootstrap mode.
+  //
+  // Node aborts etcd join sequence and creates single-node etcd cluster.
+  //
+  // If recover_etcd argument is specified, etcd is recovered from a snapshot
+  // uploaded with EtcdRecover.
+
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
   rpc CPUInfo(google.protobuf.Empty) returns (CPUInfoResponse);
@@ -30,6 +39,12 @@ service MachineService {
       returns (EtcdLeaveClusterResponse);
   rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
       returns (EtcdForfeitLeadershipResponse);
+
+  // EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
+  // to the node.
+  //
+  // Snapshot can be later used to recover the cluster via Bootstrap method.
+  rpc EtcdRecover(stream common.Data) returns (EtcdRecoverResponse);
 
   // EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
   // and streams it back to the client.
@@ -88,7 +103,9 @@ message Reboot { common.Metadata metadata = 1; }
 message RebootResponse { repeated Reboot messages = 1; }
 
 // rpc bootstrap
-message BootstrapRequest {}
+message BootstrapRequest {
+  bool recover_etcd = 1;
+}
 
 // The bootstrap message containing the bootstrap status.
 message Bootstrap { common.Metadata metadata = 1; }
@@ -770,6 +787,11 @@ message EtcdMemberList {
 message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
 
 message EtcdSnapshotRequest {}
+
+message EtcdRecover {
+  common.Metadata metadata = 1;
+}
+message EtcdRecoverResponse { repeated EtcdRecover messages = 1; }
 
 // rpc generateConfiguration
 

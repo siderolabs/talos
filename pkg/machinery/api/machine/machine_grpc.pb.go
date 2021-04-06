@@ -34,6 +34,11 @@ type MachineServiceClient interface {
 	EtcdRemoveMember(ctx context.Context, in *EtcdRemoveMemberRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberResponse, error)
 	EtcdLeaveCluster(ctx context.Context, in *EtcdLeaveClusterRequest, opts ...grpc.CallOption) (*EtcdLeaveClusterResponse, error)
 	EtcdForfeitLeadership(ctx context.Context, in *EtcdForfeitLeadershipRequest, opts ...grpc.CallOption) (*EtcdForfeitLeadershipResponse, error)
+	// EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
+	// to the node.
+	//
+	// Snapshot can be later used to recover the cluster via Bootstrap method.
+	EtcdRecover(ctx context.Context, opts ...grpc.CallOption) (MachineService_EtcdRecoverClient, error)
 	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
 	// and streams it back to the client.
 	//
@@ -253,8 +258,42 @@ func (c *machineServiceClient) EtcdForfeitLeadership(ctx context.Context, in *Et
 	return out, nil
 }
 
+func (c *machineServiceClient) EtcdRecover(ctx context.Context, opts ...grpc.CallOption) (MachineService_EtcdRecoverClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], "/machine.MachineService/EtcdRecover", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &machineServiceEtcdRecoverClient{stream}
+	return x, nil
+}
+
+type MachineService_EtcdRecoverClient interface {
+	Send(*common.Data) error
+	CloseAndRecv() (*EtcdRecoverResponse, error)
+	grpc.ClientStream
+}
+
+type machineServiceEtcdRecoverClient struct {
+	grpc.ClientStream
+}
+
+func (x *machineServiceEtcdRecoverClient) Send(m *common.Data) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *machineServiceEtcdRecoverClient) CloseAndRecv() (*EtcdRecoverResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(EtcdRecoverResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *machineServiceClient) EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], "/machine.MachineService/EtcdSnapshot", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], "/machine.MachineService/EtcdSnapshot", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +343,7 @@ func (c *machineServiceClient) Hostname(ctx context.Context, in *emptypb.Empty, 
 }
 
 func (c *machineServiceClient) Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (MachineService_KubeconfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], "/machine.MachineService/Kubeconfig", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], "/machine.MachineService/Kubeconfig", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +375,7 @@ func (x *machineServiceKubeconfigClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (MachineService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], "/machine.MachineService/List", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], "/machine.MachineService/List", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +407,7 @@ func (x *machineServiceListClient) Recv() (*FileInfo, error) {
 }
 
 func (c *machineServiceClient) DiskUsage(ctx context.Context, in *DiskUsageRequest, opts ...grpc.CallOption) (MachineService_DiskUsageClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], "/machine.MachineService/DiskUsage", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], "/machine.MachineService/DiskUsage", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +448,7 @@ func (c *machineServiceClient) LoadAvg(ctx context.Context, in *emptypb.Empty, o
 }
 
 func (c *machineServiceClient) Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (MachineService_LogsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], "/machine.MachineService/Logs", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[8], "/machine.MachineService/Logs", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +516,7 @@ func (c *machineServiceClient) Processes(ctx context.Context, in *emptypb.Empty,
 }
 
 func (c *machineServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (MachineService_ReadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[8], "/machine.MachineService/Read", opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[9], "/machine.MachineService/Read", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -659,6 +698,11 @@ type MachineServiceServer interface {
 	EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error)
 	EtcdLeaveCluster(context.Context, *EtcdLeaveClusterRequest) (*EtcdLeaveClusterResponse, error)
 	EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error)
+	// EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
+	// to the node.
+	//
+	// Snapshot can be later used to recover the cluster via Bootstrap method.
+	EtcdRecover(MachineService_EtcdRecoverServer) error
 	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
 	// and streams it back to the client.
 	//
@@ -744,6 +788,10 @@ func (UnimplementedMachineServiceServer) EtcdLeaveCluster(context.Context, *Etcd
 
 func (UnimplementedMachineServiceServer) EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdForfeitLeadership not implemented")
+}
+
+func (UnimplementedMachineServiceServer) EtcdRecover(MachineService_EtcdRecoverServer) error {
+	return status.Errorf(codes.Unimplemented, "method EtcdRecover not implemented")
 }
 
 func (UnimplementedMachineServiceServer) EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error {
@@ -1093,6 +1141,32 @@ func _MachineService_EtcdForfeitLeadership_Handler(srv interface{}, ctx context.
 		return srv.(MachineServiceServer).EtcdForfeitLeadership(ctx, req.(*EtcdForfeitLeadershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_EtcdRecover_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MachineServiceServer).EtcdRecover(&machineServiceEtcdRecoverServer{stream})
+}
+
+type MachineService_EtcdRecoverServer interface {
+	SendAndClose(*EtcdRecoverResponse) error
+	Recv() (*common.Data, error)
+	grpc.ServerStream
+}
+
+type machineServiceEtcdRecoverServer struct {
+	grpc.ServerStream
+}
+
+func (x *machineServiceEtcdRecoverServer) SendAndClose(m *EtcdRecoverResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *machineServiceEtcdRecoverServer) Recv() (*common.Data, error) {
+	m := new(common.Data)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func _MachineService_EtcdSnapshot_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -1764,6 +1838,11 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Events",
 			Handler:       _MachineService_Events_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "EtcdRecover",
+			Handler:       _MachineService_EtcdRecover_Handler,
+			ClientStreams: true,
 		},
 		{
 			StreamName:    "EtcdSnapshot",

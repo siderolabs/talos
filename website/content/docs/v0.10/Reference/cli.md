@@ -40,7 +40,18 @@ talosctl apply-config [flags]
 
 ## talosctl bootstrap
 
-Bootstrap the cluster
+Bootstrap the etcd cluster on the specified node.
+
+### Synopsis
+
+When Talos cluster is created etcd service on control plane nodes enter the join loop waiting
+to join etcd peers from other control plane nodes. One node should be picked as the boostrap node.
+When boostrap command is issued, the node aborts join process and bootstraps etcd cluster as a single node cluster.
+Other control plane nodes will join etcd cluster once Kubernetes is boostrapped on the bootstrap node.
+
+This command should not be used when "init" type node are used.
+
+Talos etcd cluster can be recovered from a known snapshot with '--recover-from=' flag.
 
 ```
 talosctl bootstrap [flags]
@@ -49,7 +60,8 @@ talosctl bootstrap [flags]
 ### Options
 
 ```
-  -h, --help   help for bootstrap
+  -h, --help                  help for bootstrap
+      --recover-from string   recover etcd cluster from the snapshot
 ```
 
 ### Options inherited from parent commands
@@ -2068,7 +2080,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 ### SEE ALSO
 
 * [talosctl apply-config](#talosctl-apply-config)	 - Apply a new configuration to a node
-* [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the cluster
+* [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration

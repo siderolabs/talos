@@ -255,6 +255,9 @@ const (
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
 
+	// EtcdRecoverySnapshotPath is the path where etcd snapshot is uploaded for recovery.
+	EtcdRecoverySnapshotPath = "/var/lib/etcd.snapshot"
+
 	// ConfigPath is the path to the downloaded config.
 	ConfigPath = StateMountPoint + "/config.yaml"
 
