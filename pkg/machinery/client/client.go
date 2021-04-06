@@ -521,8 +521,8 @@ func (c *Client) Rollback(ctx context.Context) (err error) {
 }
 
 // Bootstrap implements the proto.MachineServiceClient interface.
-func (c *Client) Bootstrap(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Bootstrap(ctx, &machineapi.BootstrapRequest{})
+func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest) (err error) {
+	resp, err := c.MachineClient.Bootstrap(ctx, req)
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)
@@ -903,6 +903,41 @@ func (c *Client) EtcdSnapshot(ctx context.Context, req *machineapi.EtcdSnapshotR
 	}
 
 	return ReadStream(stream)
+}
+
+// EtcdRecover uploads etcd snapshot created with EtcdSnapshot to the node.
+func (c *Client) EtcdRecover(ctx context.Context, snapshot io.Reader, callOptions ...grpc.CallOption) (*machineapi.EtcdRecoverResponse, error) {
+	cli, err := c.MachineClient.EtcdRecover(ctx, callOptions...)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := make([]byte, 4096)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
+		n, err := snapshot.Read(buf)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
+			return nil, fmt.Errorf("error reading snapshot: %w", err)
+		}
+
+		if err = cli.Send(&common.Data{
+			Bytes: buf[:n],
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return cli.CloseAndRecv()
 }
 
 // MachineStream is a common interface for streams returned by streaming APIs.

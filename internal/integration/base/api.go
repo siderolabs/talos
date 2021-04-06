@@ -8,6 +8,8 @@ package base
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -286,6 +288,38 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 
 		return nil
 	}))
+}
+
+// HashKubeletCert returns hash of the kubelet certificate file.
+//
+// This function can be used to verify that the node ephemeral partition got wiped.
+func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (string, error) {
+	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer reqCtxCancel()
+
+	reqCtx = client.WithNodes(reqCtx, node)
+
+	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
+	if err != nil {
+		return "", err
+	}
+
+	defer reader.Close() //nolint:errcheck
+
+	hash := sha256.New()
+
+	_, err = io.Copy(hash, reader)
+	if err != nil {
+		return "", err
+	}
+
+	for err = range errCh {
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
 }
 
 // TearDownSuite closes Talos API client.

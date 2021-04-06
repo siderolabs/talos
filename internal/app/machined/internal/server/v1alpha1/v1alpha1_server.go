@@ -1826,6 +1826,58 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 	return nil
 }
 
+// EtcdRecover implements the machine.MachineServer interface.
+func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error {
+	snapshot, err := os.OpenFile(constants.EtcdRecoverySnapshotPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
+	if err != nil {
+		return fmt.Errorf("error creating etcd recovery snapshot: %w", err)
+	}
+
+	defer snapshot.Close() //nolint: errcheck
+
+	successfulUpload := false
+
+	defer func() {
+		if !successfulUpload {
+			os.Remove(snapshot.Name()) //nolint: errcheck
+		}
+	}()
+
+	for {
+		var msg *common.Data
+
+		msg, err = srv.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return err
+		}
+
+		_, err = snapshot.Write(msg.Bytes)
+		if err != nil {
+			return fmt.Errorf("error writing snapshot: %w", err)
+		}
+	}
+
+	if err = snapshot.Sync(); err != nil {
+		return fmt.Errorf("error fsyncing snapshot: %w", err)
+	}
+
+	if err = snapshot.Close(); err != nil {
+		return fmt.Errorf("error closing snapshot: %w", err)
+	}
+
+	successfulUpload = true
+
+	return srv.SendAndClose(&machine.EtcdRecoverResponse{
+		Messages: []*machine.EtcdRecover{
+			{},
+		},
+	})
+}
+
 // RemoveBootkubeInitializedKey implements machine.MachineService.
 //
 // Temporary API only used when converting from self-hosted to Talos-managed control plane.

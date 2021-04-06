@@ -1171,7 +1171,12 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		var kubeHelper *kubernetes.Client
 
-		if kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
+		if err = retry.Constant(5*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx,
+			func(ctx context.Context) error {
+				kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig()
+
+				return retry.ExpectedError(err)
+			}); err != nil {
 			return err
 		}
 
@@ -1646,6 +1651,11 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 //nolint:gocyclo
 func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		req, ok := data.(*machineapi.BootstrapRequest)
+		if !ok {
+			return fmt.Errorf("failed to typecast boostrap request")
+		}
+
 		if err = system.Services(r).Stop(ctx, "etcd"); err != nil {
 			return fmt.Errorf("failed to stop etcd: %w", err)
 		}
@@ -1697,7 +1707,10 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			return err
 		}
 
-		svc := &services.Etcd{Bootstrap: true}
+		svc := &services.Etcd{
+			Bootstrap:           true,
+			RecoverFromSnapshot: req.RecoverEtcd,
+		}
 
 		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
 			return err

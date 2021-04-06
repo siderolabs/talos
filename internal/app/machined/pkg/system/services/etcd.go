@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	goruntime "runtime"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/etcdctl/v3/snapshot"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -44,7 +46,8 @@ import (
 // Etcd implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Etcd struct {
-	Bootstrap bool
+	Bootstrap           bool
+	RecoverFromSnapshot bool
 
 	args []string
 }
@@ -428,6 +431,12 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		}
 	}
 
+	if e.RecoverFromSnapshot {
+		if err = e.recoverFromSnapshot(hostname, primaryAddr); err != nil {
+			return err
+		}
+	}
+
 	ok, err := IsDirEmpty(constants.EtcdDataPath)
 	if err != nil {
 		return err
@@ -469,6 +478,38 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 	}
 
 	e.args = denyListArgs.Merge(extraArgs).Args()
+
+	return nil
+}
+
+// recoverFromSnapshot recovers etcd data directory from the snapshot uploaded previously.
+func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
+	manager := snapshot.NewV3(nil)
+
+	status, err := manager.Status(constants.EtcdRecoverySnapshotPath)
+	if err != nil {
+		return fmt.Errorf("error verifying snapshot: %w", err)
+	}
+
+	log.Printf("recovering etcd from snapshot: hash %08x, revision %d, total keys %d, total size %d\n",
+		status.Hash, status.Revision, status.TotalKey, status.TotalSize)
+
+	if err = manager.Restore(snapshot.RestoreConfig{
+		SnapshotPath: constants.EtcdRecoverySnapshotPath,
+
+		Name:          hostname,
+		OutputDataDir: constants.EtcdDataPath,
+
+		PeerURLs: []string{"https://" + net.FormatAddress(primaryAddr) + ":2380"},
+
+		InitialCluster: fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr)),
+	}); err != nil {
+		return fmt.Errorf("error recovering from the snapshot: %w", err)
+	}
+
+	if err = os.Remove(constants.EtcdRecoverySnapshotPath); err != nil {
+		return fmt.Errorf("error deleting snapshot: %w", err)
+	}
 
 	return nil
 }

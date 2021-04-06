@@ -15,6 +15,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"go.etcd.io/etcd/etcdctl/v3/snapshot"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
@@ -182,6 +183,16 @@ var etcdSnapshotCmd = &cobra.Command{
 			}
 
 			fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
+
+			manager := snapshot.NewV3(nil)
+
+			status, err := manager.Status(dbPath)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("snapshot info: hash %08x, revision %d, total keys %d, total size %d\n",
+				status.Hash, status.Revision, status.TotalKey, status.TotalSize)
 
 			return nil
 		})

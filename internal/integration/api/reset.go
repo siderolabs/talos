@@ -8,16 +8,12 @@ package api
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"io"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -50,35 +46,6 @@ func (suite *ResetSuite) TearDownTest() {
 	if suite.ctxCancel != nil {
 		suite.ctxCancel()
 	}
-}
-
-func (suite *ResetSuite) hashKubeletCert(ctx context.Context, node string) (string, error) {
-	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
-	defer reqCtxCancel()
-
-	reqCtx = client.WithNodes(reqCtx, node)
-
-	reader, errCh, err := suite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
-	if err != nil {
-		return "", err
-	}
-
-	defer reader.Close() //nolint:errcheck
-
-	hash := sha256.New()
-
-	_, err = io.Copy(hash, reader)
-	if err != nil {
-		return "", err
-	}
-
-	for err = range errCh {
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
 }
 
 // TestResetNodeByNode Resets cluster node by node, waiting for health between Resets.
@@ -117,7 +84,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.T().Log("Resetting node", node)
 
-		preReset, err := suite.hashKubeletCert(suite.ctx, node)
+		preReset, err := suite.HashKubeletCert(suite.ctx, node)
 		suite.Require().NoError(err)
 
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
@@ -127,7 +94,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 
 		suite.ClearConnectionRefused(suite.ctx, node)
 
-		postReset, err := suite.hashKubeletCert(suite.ctx, node)
+		postReset, err := suite.HashKubeletCert(suite.ctx, node)
 		suite.Require().NoError(err)
 
 		suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
@@ -150,7 +117,7 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 
 	suite.T().Log("Resetting node !graceful", node)
 
-	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
@@ -160,7 +127,7 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	postReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
@@ -182,7 +149,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 
 	suite.T().Log("Resetting node with spec=[EPHEMERAL]", node)
 
-	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
@@ -201,7 +168,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	postReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
@@ -225,7 +192,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 
 	suite.T().Log("Resetting node with spec=[STATE]", node)
 
-	preReset, err := suite.hashKubeletCert(suite.ctx, node)
+	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
@@ -244,7 +211,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	postReset, err := suite.hashKubeletCert(suite.ctx, node)
+	postReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
