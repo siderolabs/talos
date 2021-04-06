@@ -55,3 +55,39 @@ Retrieve the admin `kubeconfig` by running:
 ```bash
 talosctl kubeconfig
 ```
+
+## Boot Talos from an SSD Drive
+
+> Note: this is only tested on Rock PI 4c
+
+Rock PI 4 has an M2 slot which supports NVMe disks.
+It is possible to run Talos without any SD cards right from that SSD disk.
+
+The pre-installed SPI loader won't be able to chain Talos u-boot on the SSD drive because it's too outdated.
+The official docs on booting from the SSD also propose using an outdated SPI to flash u-boot.
+
+Instead, it is necessary to update u-boot to a more recent version for this process to work.
+The Armbian u-boot build for Rock PI 4c has been proved to work: [https://users.armbian.com/piter75/](https://users.armbian.com/piter75/).
+
+### Steps
+
+- Flash any OS to the SD card (can be Armbian for example).
+- Download Armbian u-boot and update SPI flash:
+
+```bash
+curl -LO https://users.armbian.com/piter75/rkspi_loader-v20.11.2-trunk-v2.img
+sudo dd if=rkspi_loader-v20.11.2-trunk-v2.img of=/dev/mtdblock0 bs=4K
+```
+
+- Optionally, you can also write Talos image to the SSD drive right from your Rock PI board:
+
+```bash
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.img.xz
+xz -d metal-rockpi_4-arm64.img.xz
+sudo dd if=metal-rockpi_4-arm64.img.xz of=/dev/nvme0n1
+```
+
+- remove SD card and reboot.
+
+After these steps, Talos will boot from the SSD and enter maintenance mode.
+The rest of the flow is the same as running Talos from the SD card.
