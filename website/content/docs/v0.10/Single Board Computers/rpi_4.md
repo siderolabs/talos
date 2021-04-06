@@ -26,9 +26,11 @@ chmod +x /usr/local/bin/talosctl
 
 At least version `v2020.09.03-138a1` of the bootloader (`rpi-eeprom`) is required.
 To update the bootloader we will need an SD card.
-Insert the SD card into your computer and run the following:
-The path to your SD card can be found using `fdisk` on Linux or `diskutil` on Mac OS.
-In this example we will assume `/dev/mmcblk0`.
+Insert the SD card into your computer and use [Raspberry Pi Imager](https://www.raspberrypi.org/software/)
+to install the bootloader on it (select Operating System > Misc utility images > Bootloader > SD Card Boot).
+Alternatively, you can use the console on Linux or macOS.
+The path to your SD card can be found using `fdisk` on Linux or `diskutil` on macOS.
+In this example, we will assume `/dev/mmcblk0`.
 
 ```bash
 curl -LO https://github.com/raspberrypi/rpi-eeprom/releases/download/v2020.09.03-138a1/rpi-boot-eeprom-recovery-2020-09-03-vl805-000138a1.zip
@@ -40,7 +42,8 @@ sudo bsdtar rpi-boot-eeprom-recovery-2020-09-03-vl805-000138a1.zip -C /mnt
 Remove the SD card from your local machine and insert it into the Raspberry Pi.
 Power the Raspberry Pi on, and wait at least 10 seconds.
 If successful, the green LED light will blink rapidly (forever), otherwise an error pattern will be displayed.
-If an HDMI display is attached then the screen will display green for success or red if a failure occurs.
+If an HDMI display is attached to the port closest to the power/USB-C port,
+the screen will display green for success or red if a failure occurs.
 Power off the Raspberry Pi and remove the SD card from it.
 
 > Note: Updating the bootloader only needs to be done once.
@@ -72,6 +75,9 @@ talosctl apply-config --insecure --interactive --nodes <node IP or DNS name>
 ```
 
 Once the interactive installation is applied, the cluster will form and you can then use `kubectl`.
+
+> Note: if you have an HDMI display attached and it shows only a rainbow splash,
+> please use the other HDMI port, the one closest to the power/USB-C port.
 
 ## Retrieve the `kubeconfig`
 
