@@ -6,7 +6,7 @@ source ./hack/test/e2e.sh
 
 export CABPT_VERSION="0.2.0-alpha.10"
 export CACPPT_VERSION="0.1.0-alpha.11"
-export CAPA_VERSION="0.5.4"
+export CAPA_VERSION="0.6.4"
 export CAPG_VERSION="0.3.0"
 
 # We need to override this here since e2e.sh will set it to ${TMP}/capi/kubeconfig.
