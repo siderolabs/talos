@@ -45,6 +45,10 @@ var configEndpointCmd = &cobra.Command{
 			return err
 		}
 
+		for i := range args {
+			args[i] = strings.TrimSpace(args[i])
+		}
+
 		c.Contexts[c.Context].Endpoints = args
 		if err := c.Save(Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
@@ -65,6 +69,10 @@ var configNodeCmd = &cobra.Command{
 		c, err := openConfigAndContext("")
 		if err != nil {
 			return err
+		}
+
+		for i := range args {
+			args[i] = strings.TrimSpace(args[i])
 		}
 
 		c.Contexts[c.Context].Nodes = args
