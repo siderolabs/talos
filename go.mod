@@ -66,7 +66,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
-	github.com/talos-systems/go-blockdevice v0.2.1-0.20210401182259-bec914ffdda4
+	github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-loadbalancer v0.1.0
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
