@@ -198,7 +198,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
 	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
-images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, Digital Ocean, GCP, Metal, Openstack, and VMware).
+images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, DigitalOcean, GCP, Metal, Openstack, and VMware).
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, and rockpi_4 (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
