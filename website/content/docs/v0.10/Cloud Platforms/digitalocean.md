@@ -1,17 +1,17 @@
 ---
-title: "Digital Ocean"
-description: "Creating a cluster via the CLI on Digital Ocean."
+title: "DigitalOcean"
+description: "Creating a cluster via the CLI on DigitalOcean."
 ---
 
 ## Creating a Cluster via the CLI
 
 In this guide we will create an HA Kubernetes cluster with 1 worker node.
-We assume an existing [Space](https://www.digitalocean.com/docs/spaces/), and some familiarity with Digital Ocean.
-If you need more information on Digital Ocean specifics, please see the [official Digital Ocean documentation](https://www.digitalocean.com/docs/).
+We assume an existing [Space](https://www.digitalocean.com/docs/spaces/), and some familiarity with DigitalOcean.
+If you need more information on DigitalOcean specifics, please see the [official DigitalOcean documentation](https://www.digitalocean.com/docs/).
 
 ### Create the Image
 
-First, download the Digital Ocean image from a Talos release. Extract the archive to get the `disk.raw` file, compress it using
+First, download the DigitalOcean image from a Talos release. Extract the archive to get the `disk.raw` file, compress it using
 `gzip` to `disk.raw.gz`.
 
 Using an upload method of your choice (`doctl` does not have Spaces support), upload the image to a space.
@@ -92,7 +92,7 @@ doctl compute droplet create \
     talos-control-plane-1
 ```
 
-> Note: Although SSH is not used by Talos, Digital Ocean still requires that an SSH key be associated with the droplet.
+> Note: Although SSH is not used by Talos, DigitalOcean still requires that an SSH key be associated with the droplet.
 > Create a dummy key that can be used to satisfy this requirement.
 
 #### Create the Remaining Control Plane Nodes
