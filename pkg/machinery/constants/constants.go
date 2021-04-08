@@ -265,6 +265,9 @@ const (
 	// VMwareGuestInfoFallbackKey is the fallback guestinfo key used to provide a config file.
 	VMwareGuestInfoFallbackKey = "userdata"
 
+	// VMwareGuestInfoOvfEnvKey is the guestinfo key used to provide the OVF environment.
+	VMwareGuestInfoOvfEnvKey = "ovfenv"
+
 	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
 	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"
 
