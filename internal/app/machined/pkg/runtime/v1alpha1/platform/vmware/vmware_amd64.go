@@ -9,12 +9,14 @@ package vmware
 import (
 	"context"
 	"encoding/base64"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
@@ -31,7 +33,66 @@ func (v *VMware) Name() string {
 	return "vmware"
 }
 
+// Read and de-base64 a property from `extraConfig`. This is commonly referred to as `guestinfo`.
+func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
+	val, err := extraConfig.String(key, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get extraConfig %s: %w", key, err)
+	}
+
+	if val == "" { // not present
+		log.Printf("Empty (thus absent) %s", key)
+
+		return nil, nil
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(val)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode extraConfig %s: %w", key, err)
+	}
+
+	return decoded, nil
+}
+
+// Read and de-base64 a property from the OVF env. This is different way to pass data to your VM.
+// This is how data gets passed when using vCloud Director.
+func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
+	ovfXML, err := extraConfig.String(constants.VMwareGuestInfoOvfEnvKey, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read extraConfig var '%s': %w", key, err)
+	}
+
+	if ovfXML == "" { // value empty (probably because not present)
+		return nil, nil
+	}
+
+	var ovfEnv ovf.Env
+
+	err = xml.Unmarshal([]byte(ovfXML), &ovfEnv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshall XML from OVF env: %w", err)
+	}
+
+	log.Printf("searching for property '%s' in OVF", key)
+
+	for _, property := range ovfEnv.Property.Properties { // iterate to check if our key is present
+		if property.Key == key {
+			log.Printf("it is there, decoding")
+
+			decoded, err := base64.StdEncoding.DecodeString(property.Value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode OVF property %s: %w", property.Key, err)
+			}
+
+			return decoded, nil
+		}
+	}
+
+	return nil, nil
+}
+
 // Configuration implements the platform.Platform interface.
+//nolint:gocyclo
 func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
@@ -39,43 +100,68 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	}
 
 	if *option == constants.ConfigGuestInfo {
-		log.Printf("fetching machine config from: guestinfo key %q", constants.VMwareGuestInfoConfigKey)
+		log.Printf("fetching machine config from VMWare extraConfig or OVF env")
 
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error checking if we are virtual: %w", err)
 		}
 
 		if !ok {
 			return nil, errors.New("not a virtual world")
 		}
 
-		config := rpcvmx.NewConfig()
+		extraConfig := rpcvmx.NewConfig()
 
-		val, err := config.String(constants.VMwareGuestInfoConfigKey, "")
+		// try to fetch `talos.config` from OVF
+		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoConfigKey)
+
+		config, err := readConfigFromOvf(extraConfig, constants.VMwareGuestInfoConfigKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+			return nil, err
 		}
 
-		if val == "" {
-			val, err = config.String(constants.VMwareGuestInfoFallbackKey, "")
-			if err != nil {
-				return nil, fmt.Errorf("failed to get guestinfo.%s: %w", constants.VMwareGuestInfoFallbackKey, err)
-			}
+		if config != nil {
+			return config, nil
 		}
 
-		if val == "" {
-			log.Printf("config is required, no value found for guestinfo: %q, %q", constants.VMwareGuestInfoConfigKey, constants.VMwareGuestInfoFallbackKey)
+		// try to fetch `userdata` from OVF
+		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoFallbackKey)
 
-			return nil, platformerrors.ErrNoConfigSource
-		}
-
-		b, err := base64.StdEncoding.DecodeString(val)
+		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoFallbackKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode guestinfo.%s: %w", constants.VMwareGuestInfoConfigKey, err)
+			return nil, err
 		}
 
-		return b, nil
+		if config != nil {
+			return config, nil
+		}
+
+		// try to fetch `talos.config` from plain extraConfig (ie, the old behavior)
+		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoConfigKey)
+
+		config, err = readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoConfigKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if config != nil {
+			return config, nil
+		}
+
+		// try to fetch `userdata` from plain extraConfig (ie, the old behavior)
+		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoFallbackKey)
+
+		config, err = readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoFallbackKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if config != nil {
+			return config, nil
+		}
+
+		return nil, platformerrors.ErrNoConfigSource
 	}
 
 	return nil, nil
