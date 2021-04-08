@@ -51,7 +51,7 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
     <OperatingSystemSection ovf:id="101" vmw:osType="otherLinux64Guest">
       <Info>The kind of installed guest operating system</Info>
     </OperatingSystemSection>
-    <VirtualHardwareSection>
+    <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
       <Info>Virtual hardware requirements</Info>
       <System>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
