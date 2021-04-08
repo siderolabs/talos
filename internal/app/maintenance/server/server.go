@@ -61,13 +61,16 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	if err = cfgProvider.Validate(s.runtime.State().Platform().Mode()); err != nil {
+	warnings, err := cfgProvider.Validate(s.runtime.State().Platform().Mode())
+	if err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
 	reply = &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{
-			{},
+			{
+				Warnings: warnings,
+			},
 		},
 	}
 

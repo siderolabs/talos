@@ -539,7 +539,12 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 		return nil, fmt.Errorf("failed to create config provider: %w", err)
 	}
 
-	if err = provider.Validate(r.State().Platform().Mode()); err != nil {
+	warnings, err := provider.Validate(r.State().Platform().Mode())
+	for _, w := range warnings {
+		logger.Printf("WARNING:\n%s", w)
+	}
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w", err)
 	}
 
@@ -554,7 +559,12 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 // ValidateConfig validates the config.
 func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return r.Config().Validate(r.State().Platform().Mode())
+		warnings, err := r.Config().Validate(r.State().Platform().Mode())
+		for _, w := range warnings {
+			logger.Printf("WARNING:\n%s", w)
+		}
+
+		return err
 	}, "validateConfig"
 }
 

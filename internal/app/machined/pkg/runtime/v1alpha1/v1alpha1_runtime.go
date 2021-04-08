@@ -49,7 +49,7 @@ func (r *Runtime) ValidateConfig(b []byte) (config.Provider, error) {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	if err := cfg.Validate(r.State().Platform().Mode()); err != nil {
+	if _, err := cfg.Validate(r.State().Platform().Mode()); err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w", err)
 	}
 

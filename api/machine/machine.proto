@@ -94,7 +94,11 @@ message ApplyConfigurationRequest {
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.
-message ApplyConfiguration { common.Metadata metadata = 1; }
+message ApplyConfiguration {
+  common.Metadata metadata = 1;
+  // Configuration validation warnings.
+  repeated string warnings = 2;
+}
 message ApplyConfigurationResponse { repeated ApplyConfiguration messages = 1; }
 
 // rpc reboot

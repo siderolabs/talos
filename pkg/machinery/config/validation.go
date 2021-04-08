@@ -8,6 +8,8 @@ package config
 type ValidationOptions struct {
 	// Local should disable part of the validation flow which won't work on the host machine.
 	Local bool
+	// Strict mode returns warnings as errors.
+	Strict bool
 }
 
 // ValidationOption represents an additional validation parameter for the config Validate method.
@@ -23,9 +25,16 @@ func NewValidationOptions(options ...ValidationOption) *ValidationOptions {
 	return opts
 }
 
-// WithLocal enable local flag.
+// WithLocal enables local flag.
 func WithLocal() ValidationOption {
 	return func(opts *ValidationOptions) {
 		opts.Local = true
+	}
+}
+
+// WithStrict enables strict flag.
+func WithStrict() ValidationOption {
+	return func(opts *ValidationOptions) {
+		opts.Strict = true
 	}
 }

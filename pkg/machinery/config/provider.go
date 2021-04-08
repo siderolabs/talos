@@ -26,7 +26,8 @@ type Provider interface {
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
-	Validate(RuntimeMode, ...ValidationOption) error
+	// Validate checks configuration and returns warnings and fatal errors (as multierror).
+	Validate(RuntimeMode, ...ValidationOption) ([]string, error)
 	ApplyDynamicConfig(context.Context, DynamicConfigProvider) error
 	String(encoderOptions ...encoder.Option) (string, error)
 	Bytes(encoderOptions ...encoder.Option) ([]byte, error)
