@@ -610,6 +610,7 @@ ApplyConfigurationResponse describes the response to a configuration request.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+| warnings | [string](#string) | repeated | Configuration validation warnings. |
 
 
 

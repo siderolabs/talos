@@ -19,6 +19,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -130,7 +131,7 @@ or 'notepad' for Windows.`,
 						break
 					}
 
-					_, err = c.ApplyConfiguration(parentCtx, &machine.ApplyConfigurationRequest{
+					resp, err := c.ApplyConfiguration(parentCtx, &machine.ApplyConfigurationRequest{
 						Data:      edited,
 						Immediate: editCmdFlags.immediate,
 						OnReboot:  editCmdFlags.onReboot,
@@ -139,6 +140,11 @@ or 'notepad' for Windows.`,
 						lastError = err.Error()
 
 						continue
+					}
+					for _, m := range resp.GetMessages() {
+						for _, w := range m.GetWarnings() {
+							cli.Warning("%s", w)
+						}
 					}
 
 					break

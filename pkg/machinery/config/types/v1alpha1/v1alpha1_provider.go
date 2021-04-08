@@ -218,6 +218,7 @@ func (m *MachineConfig) Files() ([]config.File, error) {
 }
 
 // Type implements the config.Provider interface.
+// TODO use machine.ParseType? https://github.com/talos-systems/talos/issues/3413
 func (m *MachineConfig) Type() machine.Type {
 	switch m.MachineType {
 	case "init":

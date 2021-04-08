@@ -18,6 +18,7 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
@@ -85,7 +86,7 @@ var patchCmd = &cobra.Command{
 					return err
 				}
 
-				_, err = c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
+				resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 					Data:      patched,
 					Immediate: patchCmdFlags.immediate,
 					OnReboot:  patchCmdFlags.onReboot,
@@ -101,6 +102,12 @@ var patchCmd = &cobra.Command{
 				}
 
 				fmt.Printf("patched %s at the node %s\n", args[0], msg.Metadata.GetHostname())
+
+				for _, m := range resp.GetMessages() {
+					for _, w := range m.GetWarnings() {
+						cli.Warning("%s", w)
+					}
+				}
 
 				return err
 			}

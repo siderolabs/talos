@@ -55,17 +55,20 @@ var (
 // NetworkDeviceCheck defines the function type for checks.
 type NetworkDeviceCheck func(*Device) error
 
-// Validate implements the Configurator interface.
+// Validate implements the config.Provider interface.
 //nolint:gocyclo,cyclop
-func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationOption) error {
-	var result *multierror.Error
+func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationOption) ([]string, error) {
+	var (
+		warnings []string
+		result   *multierror.Error
+	)
 
 	opts := config.NewValidationOptions(options...)
 
 	if c.MachineConfig == nil {
 		result = multierror.Append(result, errors.New("machine instructions are required"))
 
-		return result.ErrorOrNil()
+		return nil, result.ErrorOrNil()
 	}
 
 	if err := c.ClusterConfig.Validate(); err != nil {
@@ -96,6 +99,12 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 				}
 			}
 		}
+	}
+
+	// TODO rework machine type validation https://github.com/talos-systems/talos/issues/3413
+
+	if c.MachineConfig.MachineType == "" {
+		warnings = append(warnings, `machine type is empty`)
 	}
 
 	if c.Machine().Type() == machine.TypeInit || c.Machine().Type() == machine.TypeControlPlane {
@@ -157,7 +166,15 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
-	return result.ErrorOrNil()
+	if opts.Strict {
+		for _, w := range warnings {
+			result = multierror.Append(result, fmt.Errorf("warning: %s", w))
+		}
+
+		warnings = nil
+	}
+
+	return warnings, result.ErrorOrNil()
 }
 
 // Validate validates the config.

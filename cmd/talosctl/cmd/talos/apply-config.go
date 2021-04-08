@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
+	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -148,11 +149,17 @@ var applyConfigCmd = &cobra.Command{
 				return install.Run(conn)
 			}
 
-			if _, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+			resp, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data:      cfgBytes,
 				OnReboot:  applyConfigCmdFlags.onReboot,
 				Immediate: applyConfigCmdFlags.immediate,
-			}); err != nil {
+			})
+			for _, m := range resp.GetMessages() {
+				for _, w := range m.GetWarnings() {
+					cli.Warning("%s", w)
+				}
+			}
+			if err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
 			}
 

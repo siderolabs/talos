@@ -2019,6 +2019,7 @@ talosctl validate [flags]
   -c, --config string   the path of the config file
   -h, --help            help for validate
   -m, --mode string     the mode to validate the config for (valid values are metal, cloud, and container)
+      --strict          treat validation warnings as errors
 ```
 
 ### Options inherited from parent commands

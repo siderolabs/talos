@@ -18,6 +18,7 @@ import (
 var (
 	validateConfigArg string
 	validateModeArg   string
+	validateStrictArg bool
 )
 
 // validateCmd reads in a userData file and attempts to parse it.
@@ -36,7 +37,17 @@ var validateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if err := cfg.Validate(mode, config.WithLocal()); err != nil {
+
+		opts := []config.ValidationOption{config.WithLocal()}
+		if validateStrictArg {
+			opts = append(opts, config.WithStrict())
+		}
+
+		warnings, err := cfg.Validate(mode, opts...)
+		for _, w := range warnings {
+			cli.Warning("%s", w)
+		}
+		if err != nil {
 			return err
 		}
 
@@ -56,5 +67,6 @@ func init() {
 		fmt.Sprintf("the mode to validate the config for (valid values are %s, %s, and %s)", runtime.ModeMetal.String(), runtime.ModeCloud.String(), runtime.ModeContainer.String()),
 	)
 	cli.Should(validateCmd.MarkFlagRequired("mode"))
+	validateCmd.Flags().BoolVarP(&validateStrictArg, "strict", "", false, "treat validation warnings as errors")
 	addCommand(validateCmd)
 }

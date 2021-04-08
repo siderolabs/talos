@@ -35,10 +35,12 @@ func TestValidate(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, test := range []struct {
-		name            string
-		config          *v1alpha1.Config
-		requiresInstall bool
-		expectedError   string
+		name             string
+		config           *v1alpha1.Config
+		requiresInstall  bool
+		strict           bool
+		expectedWarnings []string
+		expectedError    string
 	}{
 		{
 			name: "NoMachine",
@@ -48,10 +50,45 @@ func TestValidate(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* machine instructions are required\n\n",
 		},
 		{
-			name: "NoMachineInstall",
+			name: "NoMachineType",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedWarnings: []string{
+				`machine type is empty`,
+			},
+		},
+		{
+			name: "NoMachineTypeStrict",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			strict:        true,
+			expectedError: "1 error occurred:\n\t* warning: machine type is empty\n\n",
+		},
+		{
+			name: "NoMachineInstall",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -65,7 +102,9 @@ func TestValidate(t *testing.T) {
 			name: "NoMachineInstallRequired",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -82,6 +121,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
 					MachineInstall: &v1alpha1.InstallConfig{
 						InstallDisk: "/dev/vda",
 					},
@@ -101,7 +141,9 @@ func TestValidate(t *testing.T) {
 			name: "ExternalCloudProviderEnabled",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -122,7 +164,9 @@ func TestValidate(t *testing.T) {
 			name: "ExternalCloudProviderEnabledNoManifests",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -139,7 +183,9 @@ func TestValidate(t *testing.T) {
 			name: "ExternalCloudProviderDisabled",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -154,7 +200,9 @@ func TestValidate(t *testing.T) {
 			name: "ExternalCloudProviderExtraManifests",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -175,7 +223,9 @@ func TestValidate(t *testing.T) {
 			name: "ExternalCloudProviderInvalidManifests",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -198,12 +248,19 @@ func TestValidate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := test.config.Validate(runtimeMode{test.requiresInstall}, config.WithLocal())
+			opts := []config.ValidationOption{config.WithLocal()}
+			if test.strict {
+				opts = append(opts, config.WithStrict())
+			}
+
+			warnings, errrors := test.config.Validate(runtimeMode{test.requiresInstall}, opts...)
+
+			assert.Equal(t, test.expectedWarnings, warnings)
 
 			if test.expectedError == "" {
-				assert.NoError(t, err)
+				assert.NoError(t, errrors)
 			} else {
-				assert.EqualError(t, err, test.expectedError)
+				assert.EqualError(t, errrors, test.expectedError)
 			}
 		})
 	}
