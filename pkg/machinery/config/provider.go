@@ -273,6 +273,7 @@ type ClusterConfig interface {
 	ExternalCloudProvider() ExternalCloudProvider
 	ExtraManifestURLs() []string
 	ExtraManifestHeaderMap() map[string]string
+	InlineManifests() []InlineManifest
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnMasters() bool
 }
@@ -402,4 +403,10 @@ type VolumeMount interface {
 	HostPath() string
 	MountPath() string
 	ReadOnly() bool
+}
+
+// InlineManifest describes inline manifest for the cluster boostrap.
+type InlineManifest interface {
+	Name() string
+	Contents() string
 }

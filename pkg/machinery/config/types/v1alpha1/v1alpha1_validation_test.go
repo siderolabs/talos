@@ -243,6 +243,37 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* invalid external cloud provider manifest url \"/manifest.yaml\": hostname must not be blank\n\n",
 		},
+		{
+			name: "InlineManifests",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
+						{
+							InlineManifestName: "",
+						},
+						{
+							InlineManifestName: "foo",
+						},
+						{
+							InlineManifestName: "bar",
+						},
+						{
+							InlineManifestName: "foo",
+						},
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* inline manifest name can't be empty\n\t* inline manifest name \"foo\" is duplicate\n\n",
+		},
 	} {
 		test := test
 

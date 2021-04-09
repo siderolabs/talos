@@ -42,7 +42,7 @@ preface = """\
 * Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
 """
 
-    [notes.machineconfig]
+    [notes.machineconfig-1]
         title = "Install Disk Selector"
         description = """\
 Install section of the machine config now has `diskSelector` field that allows querying install disk using the list of qualifiers:
@@ -57,6 +57,12 @@ Install section of the machine config now has `diskSelector` field that allows q
 ```
 
 `talosctl disks -n <node> -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
+"""
+
+    [notes.machineconfig-2]
+        title = "Inline Kubernetes Manifests"
+        description = """\
+* boostrap manifests can now be submitted in the configuration body using the `cluster.inlineManifests` field.
 """
 
 [make_deps]

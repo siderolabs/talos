@@ -100,9 +100,11 @@ type K8sManifestsSpec struct {
 
 // ExtraManifest defines a single extra manifest to download.
 type ExtraManifest struct {
-	URL          string            `yaml:"url"`
-	Priority     string            `yaml:"priority"`
-	ExtraHeaders map[string]string `yaml:"extraHeaders"`
+	Name           string            `yaml:"name"`
+	URL            string            `yaml:"url"`
+	Priority       string            `yaml:"priority"`
+	ExtraHeaders   map[string]string `yaml:"extraHeaders"`
+	InlineManifest string            `yaml:"inlineManifest"`
 }
 
 // K8sExtraManifestsSpec is a configuration for extra manifests.

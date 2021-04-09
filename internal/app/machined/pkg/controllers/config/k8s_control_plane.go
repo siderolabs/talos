@@ -245,6 +245,7 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 
 		for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
 			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				Name:     url,
 				URL:      url,
 				Priority: "05", // push CNI to the top
 			})
@@ -252,6 +253,7 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 
 		for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
 			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				Name:     url,
 				URL:      url,
 				Priority: "30", // after default manifests
 			})
@@ -259,9 +261,18 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 
 		for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
 			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				Name:         url,
 				URL:          url,
 				Priority:     "99", // make sure extra manifests come last, when PSP is already created
 				ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
+			})
+		}
+
+		for _, manifest := range cfgProvider.Cluster().InlineManifests() {
+			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				Name:           manifest.Name(),
+				Priority:       "99", // make sure extra manifests come last, when PSP is already created
+				InlineManifest: manifest.Contents(),
 			})
 		}
 
