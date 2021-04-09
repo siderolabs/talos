@@ -19,14 +19,16 @@ func IsRetryableError(err error) bool {
 		return true
 	}
 
-	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, syscall.ECONNREFUSED) {
 		return true
 	}
 
-	netErr := &net.OpError{}
+	var netErr net.Error
 
 	if errors.As(err, &netErr) {
-		return netErr.Temporary() || netErr.Timeout() || errors.Is(netErr.Err, syscall.ECONNREFUSED)
+		if netErr.Temporary() || netErr.Timeout() {
+			return true
+		}
 	}
 
 	return false
