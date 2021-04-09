@@ -5,6 +5,8 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -12,6 +14,7 @@ import (
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -49,9 +52,18 @@ func runInstallCmd() (err error) {
 		return err
 	}
 
-	if err = install.Install(p, seq, options); err != nil {
-		return err
+	config, err := configloader.NewFromStdin()
+	if err != nil {
+		if errors.Is(err, configloader.ErrNoConfig) {
+			log.Printf("machine configuration missing, skipping validation")
+		} else {
+			return fmt.Errorf("error loading machine configuration: %w", err)
+		}
+	} else {
+		if err = config.Validate(p.Mode()); err != nil {
+			return fmt.Errorf("machine configuration is invalid: %w", err)
+		}
 	}
 
-	return nil
+	return install.Install(p, seq, options)
 }
