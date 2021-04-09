@@ -70,7 +70,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 			ClusterNetwork: &machineapi.ClusterNetworkConfig{
 				DnsDomain: "cluster.test",
 				CniConfig: &machineapi.CNIConfig{
-					Name: "custom",
+					Name: constants.CustomCNI,
 					Urls: []string{
 						"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
 					},

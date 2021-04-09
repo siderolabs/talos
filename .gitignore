@@ -1,6 +1,9 @@
+.env
+.envrc
 bin
 _out
 .vscode
+*.code-workspace
 init.yaml
 controlplane.yaml
 join.yaml

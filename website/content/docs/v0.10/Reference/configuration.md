@@ -2748,11 +2748,11 @@ serviceSubnets:
 <div class="dt">
 
 The CNI used.
-Composed of "name" and "url".
-The "name" key only supports options of "flannel" or "custom".
-URLs is only used if name is equal to "custom".
-URLs should point to the set of YAML files to be deployed.
-An empty struct or any other name will default to Flannel CNI.
+Composed of "name" and "urls".
+The "name" key supports the following options: "flannel", "custom", and "none".
+"flannel" uses Talos-managed Flannel CNI, and that's the default option.
+"custom" uses custom manifests that should be provided in "urls".
+"none" indicates that Talos will not manage any CNI installation.
 
 
 
@@ -2875,6 +2875,15 @@ urls:
 
 Name of CNI to use.
 
+
+Valid values:
+
+
+  - <code>flannel</code>
+
+  - <code>custom</code>
+
+  - <code>none</code>
 </div>
 
 <hr />
@@ -2887,6 +2896,7 @@ Name of CNI to use.
 <div class="dt">
 
 URLs containing manifests to apply for the CNI.
+Should be present for "custom", must be empty for "flannel" and "none".
 
 </div>
 

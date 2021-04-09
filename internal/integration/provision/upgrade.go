@@ -332,7 +332,7 @@ func (suite *UpgradeSuite) setupCluster() {
 
 	if DefaultSettings.CustomCNIURL != "" {
 		genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-			CNIName: "custom",
+			CNIName: constants.CustomCNI,
 			CNIUrls: []string{DefaultSettings.CustomCNIURL},
 		}))
 	}

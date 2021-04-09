@@ -194,7 +194,7 @@ func (c *ClusterConfig) CNI() config.CNI {
 
 	case c.ClusterNetwork.CNI == nil:
 		return &CNIConfig{
-			CNIName: constants.DefaultCNI,
+			CNIName: constants.FlannelCNI,
 		}
 	}
 
