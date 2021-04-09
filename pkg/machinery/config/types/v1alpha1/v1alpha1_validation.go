@@ -108,14 +108,9 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 	}
 
 	if c.Machine().Type() == machine.TypeInit || c.Machine().Type() == machine.TypeControlPlane {
-		switch c.Cluster().Network().CNI().Name() {
-		case constants.CustomCNI:
-			// custom CNI with URLs or an empty list of manifests which will get applied
-		case constants.DefaultCNI:
-			// it's flannel bby
-		default:
-			result = multierror.Append(result, errors.New("cni name should be one of [custom,flannel]"))
-		}
+		warn, err := ValidateCNI(c.Cluster().Network().CNI())
+		warnings = append(warnings, warn...)
+		result = multierror.Append(result, err)
 	}
 
 	if c.Machine().Type() == machine.TypeJoin {
@@ -202,6 +197,42 @@ func (c *ClusterConfig) Validate() error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+// ValidateCNI validates CNI config.
+func ValidateCNI(cni config.CNI) ([]string, error) {
+	var (
+		warnings []string
+		result   *multierror.Error
+	)
+
+	switch cni.Name() {
+	case constants.FlannelCNI:
+		fallthrough
+	case constants.NoneCNI:
+		if len(cni.URLs()) != 0 {
+			err := fmt.Errorf(`"urls" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
+	case constants.CustomCNI:
+		if len(cni.URLs()) == 0 {
+			warn := fmt.Sprintf(`"urls" field should not be empty for %q CNI`, cni.Name())
+			warnings = append(warnings, warn)
+		}
+
+		for _, u := range cni.URLs() {
+			if err := talosnet.ValidateEndpointURI(u); err != nil {
+				result = multierror.Append(result, err)
+			}
+		}
+
+	default:
+		err := fmt.Errorf("cni name should be one of [%q, %q, %q]", constants.FlannelCNI, constants.CustomCNI, constants.NoneCNI)
+		result = multierror.Append(result, err)
+	}
+
+	return warnings, result.ErrorOrNil()
 }
 
 // Validate validates external cloud provider configuration.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 type runtimeMode struct {
@@ -254,6 +255,103 @@ func TestValidate(t *testing.T) {
 			}
 
 			warnings, errrors := test.config.Validate(runtimeMode{test.requiresInstall}, opts...)
+
+			assert.Equal(t, test.expectedWarnings, warnings)
+
+			if test.expectedError == "" {
+				assert.NoError(t, errrors)
+			} else {
+				assert.EqualError(t, errrors, test.expectedError)
+			}
+		})
+	}
+}
+
+func TestValidateCNI(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name             string
+		config           *v1alpha1.CNIConfig
+		expectedWarnings []string
+		expectedError    string
+	}{
+		{
+			name:          "Nil",
+			expectedError: "", // Flannel is used by default
+		},
+		{
+			name:          "Empty",
+			config:        &v1alpha1.CNIConfig{},
+			expectedError: "1 error occurred:\n\t* cni name should be one of [\"flannel\", \"custom\", \"none\"]\n\n",
+		},
+		{
+			name: "FlannelNoManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+			},
+		},
+		{
+			name: "FlannelManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"flannel\" CNI\n\n",
+		},
+		{
+			name: "CustomNoManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+			},
+			expectedWarnings: []string{
+				"\"urls\" field should not be empty for \"custom\" CNI",
+			},
+		},
+		{
+			name: "CustomManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+			},
+		},
+		{
+			name: "NoneNoManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+			},
+		},
+		{
+			name: "NoneManifests",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"none\" CNI\n\n",
+		},
+	} {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			var cc v1alpha1.ClusterConfig
+			if test.config != nil {
+				cc.ClusterNetwork = &v1alpha1.ClusterNetworkConfig{
+					CNI: test.config,
+				}
+			}
+
+			cni := cc.CNI()
+			require.NotNil(t, cni, "CNI() method should return default value for empty config")
+
+			warnings, errrors := v1alpha1.ValidateCNI(cni)
 
 			assert.Equal(t, test.expectedWarnings, warnings)
 

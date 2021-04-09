@@ -403,16 +403,6 @@ func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-// Name implements the config.Provider interface.
-func (c *CNIConfig) Name() string {
-	return c.CNIName
-}
-
-// URLs implements the config.Provider interface.
-func (c *CNIConfig) URLs() []string {
-	return c.CNIUrls
-}
-
 // Hostname implements the config.Provider interface.
 func (n *NetworkConfig) Hostname() string {
 	return n.NetworkHostname

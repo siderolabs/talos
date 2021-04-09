@@ -358,11 +358,14 @@ const (
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
 
-	// DefaultCNI is the default CNI.
-	DefaultCNI = "flannel"
+	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
+	FlannelCNI = "flannel"
 
-	// CustomCNI is the string to use custom CNI.
+	// CustomCNI is the string to use custom CNI managed by Tanos with extra manifests.
 	CustomCNI = "custom"
+
+	// NoneCNI is the string to indicate that CNI will not be managed by Talos.
+	NoneCNI = "none"
 
 	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
 	DefaultIPv4PodNet = "10.244.0.0/16"

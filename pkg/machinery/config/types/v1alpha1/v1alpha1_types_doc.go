@@ -932,7 +932,7 @@ func init() {
 	ClusterNetworkConfigDoc.Fields[0].Name = "cni"
 	ClusterNetworkConfigDoc.Fields[0].Type = "CNIConfig"
 	ClusterNetworkConfigDoc.Fields[0].Note = ""
-	ClusterNetworkConfigDoc.Fields[0].Description = "The CNI used.\nComposed of \"name\" and \"url\".\nThe \"name\" key only supports options of \"flannel\" or \"custom\".\nURLs is only used if name is equal to \"custom\".\nURLs should point to the set of YAML files to be deployed.\nAn empty struct or any other name will default to Flannel CNI."
+	ClusterNetworkConfigDoc.Fields[0].Description = "The CNI used.\nComposed of \"name\" and \"urls\".\nThe \"name\" key supports the following options: \"flannel\", \"custom\", and \"none\".\n\"flannel\" uses Talos-managed Flannel CNI, and that's the default option.\n\"custom\" uses custom manifests that should be provided in \"urls\".\n\"none\" indicates that Talos will not manage any CNI installation."
 	ClusterNetworkConfigDoc.Fields[0].Comments[encoder.LineComment] = "The CNI used."
 
 	ClusterNetworkConfigDoc.Fields[0].AddExample("", clusterCustomCNIExample)
@@ -975,10 +975,15 @@ func init() {
 	CNIConfigDoc.Fields[0].Note = ""
 	CNIConfigDoc.Fields[0].Description = "Name of CNI to use."
 	CNIConfigDoc.Fields[0].Comments[encoder.LineComment] = "Name of CNI to use."
+	CNIConfigDoc.Fields[0].Values = []string{
+		"flannel",
+		"custom",
+		"none",
+	}
 	CNIConfigDoc.Fields[1].Name = "urls"
 	CNIConfigDoc.Fields[1].Type = "[]string"
 	CNIConfigDoc.Fields[1].Note = ""
-	CNIConfigDoc.Fields[1].Description = "URLs containing manifests to apply for the CNI."
+	CNIConfigDoc.Fields[1].Description = "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\"."
 	CNIConfigDoc.Fields[1].Comments[encoder.LineComment] = "URLs containing manifests to apply for the CNI."
 
 	ExternalCloudProviderConfigDoc.Type = "ExternalCloudProviderConfig"

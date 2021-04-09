@@ -291,7 +291,7 @@ func create(ctx context.Context) (err error) {
 
 		if customCNIUrl != "" {
 			genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-				CNIName: "custom",
+				CNIName: constants.CustomCNI,
 				CNIUrls: []string{customCNIUrl},
 			}))
 		}

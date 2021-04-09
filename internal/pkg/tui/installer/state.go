@@ -24,13 +24,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-// cniPresets defines custom CNI presets.
-var cniPresets = map[string]*machineapi.CNIConfig{
-	"cilium": {
-		Name: "custom",
-		Urls: []string{
-			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
-		},
+const ciliumCustomCNI = "cilium"
+
+var customCNIPresets = map[string][]string{
+	ciliumCustomCNI: {
+		"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
 	},
 }
 
@@ -52,6 +50,7 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 			ControlPlane: &machineapi.ControlPlaneConfig{},
 			ClusterNetwork: &machineapi.ClusterNetworkConfig{
 				DnsDomain: "cluster.local",
+				CniConfig: nil, // set at GenConfig
 			},
 		},
 	}
@@ -96,9 +95,9 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 	}
 
 	state := &State{
-		cni:  constants.DefaultCNI,
-		conn: conn,
 		opts: opts,
+		conn: conn,
+		cni:  constants.FlannelCNI,
 	}
 
 	networkConfigItems := []*components.Item{
@@ -153,8 +152,9 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 				v1alpha1.ClusterNetworkConfigDoc.Describe("cni", true),
 				&state.cni,
 				components.NewTableHeaders("CNI", "description"),
-				constants.DefaultCNI, "CNI used by Talos by default",
-				"cilium", "Cillium 1.8 installed through quick-install.yaml",
+				constants.FlannelCNI, "CNI used by Talos by default",
+				ciliumCustomCNI, "Cillium 1.8 installed through quick-install.yaml",
+				constants.NoneCNI, "CNI will not be installed",
 			))
 	}
 
@@ -221,10 +221,16 @@ type State struct {
 
 // GenConfig returns current config encoded in yaml.
 func (s *State) GenConfig() (*machineapi.GenerateConfigurationResponse, error) {
-	// configure custom cni from the preset
-	if customCNI, ok := cniPresets[s.cni]; ok {
-		s.opts.ClusterConfig.ClusterNetwork.CniConfig = customCNI
+	cniConfig := &machineapi.CNIConfig{
+		Name: s.cni,
 	}
+
+	if urls, ok := customCNIPresets[s.cni]; ok {
+		cniConfig.Name = constants.CustomCNI
+		cniConfig.Urls = urls
+	}
+
+	s.opts.ClusterConfig.ClusterNetwork.CniConfig = cniConfig
 
 	s.opts.OverrideTime = timestamppb.New(time.Now().UTC())
 

@@ -230,7 +230,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			DNSServiceIP:   dnsServiceIP,
 			DNSServiceIPv6: dnsServiceIPv6,
 
-			FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() != constants.CustomCNI,
+			FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
 			FlannelImage:    images.Flannel,
 			FlannelCNIImage: images.FlannelCNI,
 		})
@@ -243,13 +243,11 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 	return r.Modify(ctx, config.NewK8sExtraManifests(), func(r resource.Resource) error {
 		spec := config.K8sExtraManifestsSpec{}
 
-		if cfgProvider.Cluster().Network().CNI().Name() == constants.CustomCNI {
-			for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
-				spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
-					URL:      url,
-					Priority: "05", // push CNI to the top
-				})
-			}
+		for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
+			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+				URL:      url,
+				Priority: "05", // push CNI to the top
+			})
 		}
 
 		for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {

@@ -32,6 +32,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 func init() {
@@ -263,7 +264,7 @@ var (
 
 	clusterNetworkExample = &ClusterNetworkConfig{
 		CNI: &CNIConfig{
-			CNIName: "flannel",
+			CNIName: constants.FlannelCNI,
 		},
 		DNSDomain:     "cluster.local",
 		PodSubnet:     []string{"10.244.0.0/16"},
@@ -422,7 +423,7 @@ var (
 	}
 
 	clusterCustomCNIExample = &CNIConfig{
-		CNIName: "custom",
+		CNIName: constants.CustomCNI,
 		CNIUrls: []string{
 			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
 		},
@@ -1164,11 +1165,11 @@ type EtcdConfig struct {
 type ClusterNetworkConfig struct {
 	//   description: |
 	//     The CNI used.
-	//     Composed of "name" and "url".
-	//     The "name" key only supports options of "flannel" or "custom".
-	//     URLs is only used if name is equal to "custom".
-	//     URLs should point to the set of YAML files to be deployed.
-	//     An empty struct or any other name will default to Flannel CNI.
+	//     Composed of "name" and "urls".
+	//     The "name" key supports the following options: "flannel", "custom", and "none".
+	//     "flannel" uses Talos-managed Flannel CNI, and that's the default option.
+	//     "custom" uses custom manifests that should be provided in "urls".
+	//     "none" indicates that Talos will not manage any CNI installation.
 	//   examples:
 	//     - value: clusterCustomCNIExample
 	CNI *CNIConfig `yaml:"cni,omitempty"`
@@ -1197,9 +1198,14 @@ type ClusterNetworkConfig struct {
 type CNIConfig struct {
 	//   description: |
 	//     Name of CNI to use.
-	CNIName string `yaml:"name"`
+	//   values:
+	//     - flannel
+	//     - custom
+	//     - none
+	CNIName string `yaml:"name,omitempty"`
 	//   description: |
 	//     URLs containing manifests to apply for the CNI.
+	//     Should be present for "custom", must be empty for "flannel" and "none".
 	CNIUrls []string `yaml:"urls,omitempty"`
 }
 
