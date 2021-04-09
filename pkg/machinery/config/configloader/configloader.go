@@ -7,6 +7,7 @@ package configloader
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +17,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
+
+// ErrNoConfig is returned when no configuration was found in the input.
+var ErrNoConfig = errors.New("config not found")
 
 // newConfig initializes and returns a Configurator.
 func newConfig(source []byte) (config config.Provider, err error) {
@@ -34,7 +38,7 @@ func newConfig(source []byte) (config config.Provider, err error) {
 		}
 	}
 
-	return nil, fmt.Errorf("config not found")
+	return nil, ErrNoConfig
 }
 
 // NewFromFile will take a filepath and attempt to parse a config file from it.
@@ -58,7 +62,7 @@ func NewFromStdin() (config.Provider, error) {
 
 	config, err := NewFromBytes(buf.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed load config from stdin: %v", err)
+		return nil, fmt.Errorf("failed load config from stdin: %w", err)
 	}
 
 	return config, nil

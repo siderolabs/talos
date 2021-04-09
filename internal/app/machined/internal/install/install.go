@@ -5,6 +5,7 @@
 package install
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -21,6 +22,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -31,7 +33,7 @@ import (
 // RunInstallerContainer performs an installation via the installer container.
 //
 //nolint:gocyclo
-func RunInstallerContainer(disk, platform, ref string, reg config.Registries, opts ...Option) error {
+func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg config.Registries, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
@@ -40,7 +42,10 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 		}
 	}
 
-	ctx := namespaces.WithNamespace(context.Background(), constants.SystemContainerdNamespace)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
 	if err != nil {
@@ -134,12 +139,19 @@ func RunInstallerContainer(disk, platform, ref string, reg config.Registries, op
 
 	w := &kmsg.Writer{KmsgWriter: f}
 
-	creator := cio.NewCreator(cio.WithStreams(nil, w, w))
+	configR := &containerdrunner.StdinCloser{
+		Stdin:  bytes.NewReader(configBytes),
+		Closer: make(chan struct{}),
+	}
+
+	creator := cio.NewCreator(cio.WithStreams(configR, w, w))
 
 	t, err := container.NewTask(ctx, creator)
 	if err != nil {
 		return err
 	}
+
+	go configR.WaitAndClose(ctx, t)
 
 	defer t.Delete(ctx) //nolint:errcheck
 
