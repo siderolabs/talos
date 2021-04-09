@@ -34,7 +34,7 @@ type containerdRunner struct {
 	client      *containerd.Client
 	ctx         context.Context
 	container   containerd.Container
-	stdinCloser *stdinCloser
+	stdinCloser *StdinCloser
 }
 
 // NewRunner creates runner.Runner that runs a container in containerd.
@@ -156,15 +156,7 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	if r != nil {
 		// See https://github.com/containerd/containerd/issues/4489.
-		go func() {
-			select {
-			case <-c.ctx.Done():
-				return
-			case <-c.stdinCloser.closer:
-				//nolint:errcheck
-				task.CloseIO(c.ctx, containerd.WithStdinCloser)
-			}
-		}()
+		go c.stdinCloser.WaitAndClose(c.ctx, task)
 	}
 
 	defer task.Delete(c.ctx) //nolint:errcheck
@@ -291,24 +283,10 @@ func (c *containerdRunner) StdinReader() (io.Reader, error) {
 		return nil, err
 	}
 
-	c.stdinCloser = &stdinCloser{
-		stdin:  bytes.NewReader(contents),
-		closer: make(chan struct{}),
+	c.stdinCloser = &StdinCloser{
+		Stdin:  bytes.NewReader(contents),
+		Closer: make(chan struct{}),
 	}
 
 	return c.stdinCloser, nil
-}
-
-type stdinCloser struct {
-	stdin  io.Reader
-	closer chan struct{}
-}
-
-func (s *stdinCloser) Read(p []byte) (int, error) {
-	n, err := s.stdin.Read(p)
-	if err == io.EOF {
-		close(s.closer)
-	}
-
-	return n, err
 }
