@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/url"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -214,12 +215,57 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 	suite.Assert().Equal(config.K8sExtraManifestsSpec{
 		ExtraManifests: []config.ExtraManifest{
 			{
+				Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
 				URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
 				Priority: "30",
 			},
 			{
+				Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
 				URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
 				Priority: "30",
+			},
+		},
+	}, r.(*config.K8sControlPlane).ExtraManifests())
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+			ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
+				{
+					InlineManifestName: "namespace-ci",
+					InlineManifestContents: strings.TrimSpace(`
+apiVersion: v1
+kind: Namespace
+metadata:
+	name: ci
+`),
+				},
+			},
+		},
+	})
+
+	suite.setupMachine(cfg)
+
+	r, err := suite.state.Get(suite.ctx, config.NewK8sExtraManifests().Metadata())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(config.K8sExtraManifestsSpec{
+		ExtraManifests: []config.ExtraManifest{
+			{
+				Name:           "namespace-ci",
+				Priority:       "99",
+				InlineManifest: "apiVersion: v1\nkind: Namespace\nmetadata:\n\tname: ci",
 			},
 		},
 	}, r.(*config.K8sControlPlane).ExtraManifests())

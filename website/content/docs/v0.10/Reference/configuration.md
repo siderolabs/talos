@@ -1206,6 +1206,36 @@ extraManifestHeaders:
 
 <div class="dd">
 
+<code>inlineManifests</code>  <i>ClusterInlineManifests</i>
+
+</div>
+<div class="dt">
+
+A list of inline Kubernetes manifests.
+These will get automatically deployed as part of the bootstrap.
+
+
+
+Examples:
+
+
+``` yaml
+inlineManifests:
+    - name: namespace-ci # Name of the manifest.
+      contents: |- # Manifest contents as a string.
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+        	name: ci
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>adminKubeconfig</code>  <i><a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a></i>
 
 </div>
@@ -4985,6 +5015,65 @@ Examples:
 
 ``` yaml
 readonly: true
+```
+
+
+</div>
+
+<hr />
+
+
+
+
+
+## ClusterInlineManifest
+ClusterInlineManifest struct describes inline bootstrap manifests for the user.
+
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>name</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Name of the manifest.
+Name should be unique.
+
+
+
+Examples:
+
+
+``` yaml
+name: csi
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>contents</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Manifest contents as a string.
+
+
+
+Examples:
+
+
+``` yaml
+contents: /etc/kubernetes/auth
 ```
 
 

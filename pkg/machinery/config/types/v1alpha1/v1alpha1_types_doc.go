@@ -56,6 +56,7 @@ var (
 	RegistryTLSConfigDoc           encoder.Doc
 	SystemDiskEncryptionConfigDoc  encoder.Doc
 	VolumeMountConfigDoc           encoder.Doc
+	ClusterInlineManifestDoc       encoder.Doc
 )
 
 func init() {
@@ -242,7 +243,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 20)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 21)
 	ClusterConfigDoc.Fields[0].Name = "controlPlane"
 	ClusterConfigDoc.Fields[0].Type = "ControlPlaneConfig"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -373,19 +374,26 @@ func init() {
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	ClusterConfigDoc.Fields[18].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[18].Type = "AdminKubeconfigConfig"
+	ClusterConfigDoc.Fields[18].Name = "inlineManifests"
+	ClusterConfigDoc.Fields[18].Type = "ClusterInlineManifests"
 	ClusterConfigDoc.Fields[18].Note = ""
-	ClusterConfigDoc.Fields[18].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+	ClusterConfigDoc.Fields[18].Description = "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
 
-	ClusterConfigDoc.Fields[18].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[19].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[19].Type = "bool"
+	ClusterConfigDoc.Fields[18].AddExample("", clusterInlineManifestsExample)
+	ClusterConfigDoc.Fields[19].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[19].Type = "AdminKubeconfigConfig"
 	ClusterConfigDoc.Fields[19].Note = ""
-	ClusterConfigDoc.Fields[19].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[19].Values = []string{
+	ClusterConfigDoc.Fields[19].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+
+	ClusterConfigDoc.Fields[19].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[20].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[20].Type = "bool"
+	ClusterConfigDoc.Fields[20].Note = ""
+	ClusterConfigDoc.Fields[20].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[20].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[20].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -1820,6 +1828,25 @@ func init() {
 	VolumeMountConfigDoc.Fields[2].Comments[encoder.LineComment] = "Mount the volume read only."
 
 	VolumeMountConfigDoc.Fields[2].AddExample("", true)
+
+	ClusterInlineManifestDoc.Type = "ClusterInlineManifest"
+	ClusterInlineManifestDoc.Comments[encoder.LineComment] = "ClusterInlineManifest struct describes inline bootstrap manifests for the user."
+	ClusterInlineManifestDoc.Description = "ClusterInlineManifest struct describes inline bootstrap manifests for the user."
+	ClusterInlineManifestDoc.Fields = make([]encoder.Doc, 2)
+	ClusterInlineManifestDoc.Fields[0].Name = "name"
+	ClusterInlineManifestDoc.Fields[0].Type = "string"
+	ClusterInlineManifestDoc.Fields[0].Note = ""
+	ClusterInlineManifestDoc.Fields[0].Description = "Name of the manifest.\nName should be unique."
+	ClusterInlineManifestDoc.Fields[0].Comments[encoder.LineComment] = "Name of the manifest."
+
+	ClusterInlineManifestDoc.Fields[0].AddExample("", "csi")
+	ClusterInlineManifestDoc.Fields[1].Name = "contents"
+	ClusterInlineManifestDoc.Fields[1].Type = "string"
+	ClusterInlineManifestDoc.Fields[1].Note = ""
+	ClusterInlineManifestDoc.Fields[1].Description = "Manifest contents as a string."
+	ClusterInlineManifestDoc.Fields[1].Comments[encoder.LineComment] = "Manifest contents as a string."
+
+	ClusterInlineManifestDoc.Fields[1].AddExample("", "/etc/kubernetes/auth")
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -2002,6 +2029,10 @@ func (_ VolumeMountConfig) Doc() *encoder.Doc {
 	return &VolumeMountConfigDoc
 }
 
+func (_ ClusterInlineManifest) Doc() *encoder.Doc {
+	return &ClusterInlineManifestDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -2053,6 +2084,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryTLSConfigDoc,
 			&SystemDiskEncryptionConfigDoc,
 			&VolumeMountConfigDoc,
+			&ClusterInlineManifestDoc,
 		},
 	}
 }

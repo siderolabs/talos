@@ -108,7 +108,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 		for _, manifest := range config.ExtraManifests {
 			var id resource.ID
 
-			id, err = ctrl.download(ctx, r, logger, manifest)
+			id, err = ctrl.process(ctx, r, logger, manifest)
 			if err != nil {
 				multiErr = multierror.Append(multiErr, err)
 			}
@@ -139,9 +139,18 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.Runtime, logger *log.Logger, manifest config.ExtraManifest) (id resource.ID, err error) {
-	id = fmt.Sprintf("%s-%s", manifest.Priority, manifest.URL)
+func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.Runtime, logger *log.Logger, manifest config.ExtraManifest) (id resource.ID, err error) {
+	id = fmt.Sprintf("%s-%s", manifest.Priority, manifest.Name)
 
+	// inline manifests don't require download
+	if manifest.InlineManifest != "" {
+		return id, ctrl.processInline(ctx, r, manifest, id)
+	}
+
+	return id, ctrl.processURL(ctx, r, logger, manifest, id)
+}
+
+func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *log.Logger, manifest config.ExtraManifest, id resource.ID) (err error) {
 	var tmpDir string
 
 	tmpDir, err = ioutil.TempDir("", "talos")
@@ -204,7 +213,22 @@ func (ctrl *ExtraManifestController) download(ctx context.Context, r controller.
 		return
 	}
 
-	return id, nil
+	return nil
+}
+
+func (ctrl *ExtraManifestController) processInline(ctx context.Context, r controller.Runtime, manifest config.ExtraManifest, id resource.ID) error {
+	err := r.Modify(
+		ctx,
+		k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
+		func(r resource.Resource) error {
+			return r.(*k8s.Manifest).SetYAML([]byte(manifest.InlineManifest))
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error updating manifests: %w", err)
+	}
+
+	return nil
 }
 
 //nolint: dupl

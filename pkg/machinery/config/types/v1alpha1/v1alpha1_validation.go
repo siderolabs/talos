@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/hashicorp/go-multierror"
@@ -196,6 +197,8 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, ecp.Validate())
 	}
 
+	result = multierror.Append(result, c.ClusterInlineManifests.Validate())
+
 	return result.ErrorOrNil()
 }
 
@@ -248,6 +251,27 @@ func (ecp *ExternalCloudProviderConfig) Validate() error {
 			err = fmt.Errorf("invalid external cloud provider manifest url %q: %w", url, err)
 			result = multierror.Append(result, err)
 		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// Validate the inline manifests.
+func (manifests ClusterInlineManifests) Validate() error {
+	var result *multierror.Error
+
+	manifestNames := map[string]struct{}{}
+
+	for _, manifest := range manifests {
+		if strings.TrimSpace(manifest.InlineManifestName) == "" {
+			result = multierror.Append(result, fmt.Errorf("inline manifest name can't be empty"))
+		}
+
+		if _, ok := manifestNames[manifest.InlineManifestName]; ok {
+			result = multierror.Append(result, fmt.Errorf("inline manifest name %q is duplicate", manifest.InlineManifestName))
+		}
+
+		manifestNames[manifest.InlineManifestName] = struct{}{}
 	}
 
 	return result.ErrorOrNil()

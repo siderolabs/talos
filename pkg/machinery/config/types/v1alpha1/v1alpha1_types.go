@@ -22,6 +22,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
@@ -428,6 +429,18 @@ var (
 			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
 		},
 	}
+
+	clusterInlineManifestsExample = ClusterInlineManifests{
+		{
+			InlineManifestName: "namespace-ci",
+			InlineManifestContents: strings.TrimSpace(`
+apiVersion: v1
+kind: Namespace
+metadata:
+	name: ci
+`),
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -716,6 +729,12 @@ type ClusterConfig struct {
 	//           "X-ExtraInfo": "info",
 	//         }
 	ExtraManifestHeaders map[string]string `yaml:"extraManifestHeaders,omitempty"`
+	//   description: |
+	//     A list of inline Kubernetes manifests.
+	//     These will get automatically deployed as part of the bootstrap.
+	//   examples:
+	//     - value: clusterInlineManifestsExample
+	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
 	//     Certificate lifetime can be configured.
@@ -1723,4 +1742,22 @@ type VolumeMountConfig struct {
 	//   examples:
 	//     - value: true
 	VolumeReadOnly bool `yaml:"readonly,omitempty"`
+}
+
+// ClusterInlineManifests is a list of ClusterInlineManifest.
+type ClusterInlineManifests []ClusterInlineManifest
+
+// ClusterInlineManifest struct describes inline bootstrap manifests for the user.
+type ClusterInlineManifest struct {
+	//   description: |
+	//     Name of the manifest.
+	//     Name should be unique.
+	//   examples:
+	//     - value: '"csi"'
+	InlineManifestName string `yaml:"name"`
+	//   description: |
+	//     Manifest contents as a string.
+	//   examples:
+	//     - value: '"/etc/kubernetes/auth"'
+	InlineManifestContents string `yaml:"contents"`
 }
