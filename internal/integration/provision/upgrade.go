@@ -54,12 +54,10 @@ type upgradeSpec struct {
 	SourceInstallerImage string
 	SourceVersion        string
 	SourceK8sVersion     string
-	SourceSelfHosted     bool
 
 	TargetInstallerImage string
 	TargetVersion        string
 	TargetK8sVersion     string
-	TargetSelfHosted     bool
 
 	MasterNodes int
 	WorkerNodes int
@@ -70,13 +68,13 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v0.8.5"
-	stableRelease   = "v0.9.1" // or soon-to-be-stable
+	previousRelease = "v0.9.1"
+	stableRelease   = "v0.10.0-alpha.2" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.20.1" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.20.5" // constants.DefaultKubernetesVersion in the stableRelease
-	currentK8sVersion  = "1.21.0" // next k8s version being tested
+	previousK8sVersion = "1.20.2"      // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.21.0-rc.0" // constants.DefaultKubernetesVersion in the stableRelease
+	currentK8sVersion  = "1.21.0"      // next k8s version being tested
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
@@ -91,12 +89,10 @@ func upgradePreviousToStable() upgradeSpec {
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", previousRelease),
 		SourceVersion:        previousRelease,
 		SourceK8sVersion:     previousK8sVersion,
-		SourceSelfHosted:     true,
 
 		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
-		TargetSelfHosted:     false,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -564,27 +560,6 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.waitForClusterHealth()
 }
 
-func (suite *UpgradeSuite) convertSelfHosted(fromSelfHosted, toSelfHosted bool) {
-	if fromSelfHosted == toSelfHosted {
-		suite.T().Logf("skipping control plane conversion, as self hosted is %v -> %v", fromSelfHosted, toSelfHosted)
-
-		return
-	}
-
-	if toSelfHosted {
-		suite.Require().FailNow("conversion to self-hosted is not supported")
-	}
-
-	suite.T().Logf("converting Kubernetes to static pods")
-
-	options := kubernetes.ConvertOptions{
-		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
-		ForceYes:             true,
-	}
-
-	suite.Require().NoError(kubernetes.ConvertToStaticPods(suite.ctx, suite.clusterAccess, options))
-}
-
 func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 	if fromVersion == toVersion {
 		suite.T().Logf("skipping Kubernetes upgrade, as versions are equal %q -> %q", fromVersion, toVersion)
@@ -601,11 +576,7 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
 	}
 
-	if suite.spec.TargetSelfHosted {
-		suite.Require().NoError(kubernetes.UpgradeSelfHosted(suite.ctx, suite.clusterAccess, options))
-	} else {
-		suite.Require().NoError(kubernetes.UpgradeTalosManaged(suite.ctx, suite.clusterAccess, options))
-	}
+	suite.Require().NoError(kubernetes.UpgradeTalosManaged(suite.ctx, suite.clusterAccess, options))
 }
 
 func (suite *UpgradeSuite) untaint(name string) {
@@ -665,9 +636,6 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// verify final cluster version
 	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
-
-	// convert to static pods if required
-	suite.convertSelfHosted(suite.spec.SourceSelfHosted, suite.spec.TargetSelfHosted)
 
 	// upgrade Kubernetes if required
 	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion)
