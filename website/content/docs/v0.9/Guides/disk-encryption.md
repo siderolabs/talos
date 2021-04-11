@@ -153,7 +153,7 @@ talosctl apply-config -f config.yaml -n <node ip> --on-reboot
 Wipe the partition you're going to encrypt:
 
 ```bash
-talosctl reset --system-labels-to-wipe EPHEMERAL -n <none> --reboot=true
+talosctl reset --system-labels-to-wipe EPHEMERAL -n <node ip> --reboot=true
 ```
 
 That's it!
