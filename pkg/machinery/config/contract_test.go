@@ -23,21 +23,24 @@ func TestContractGreater(t *testing.T) {
 }
 
 func TestContractParseVersion(t *testing.T) {
-	contract, err := config.ParseContractFromVersion("v0.8")
-	assert.NoError(t, err)
-	assert.Equal(t, config.TalosVersion0_8, contract)
+	t.Parallel()
 
-	contract, err = config.ParseContractFromVersion("v0.8.1")
-	assert.NoError(t, err)
-	assert.Equal(t, config.TalosVersion0_8, contract)
+	for v, expected := range map[string]*config.VersionContract{
+		"v0.8":           config.TalosVersion0_8,
+		"v0.8.":          config.TalosVersion0_8,
+		"v0.8.1":         config.TalosVersion0_8,
+		"v0.88":          {0, 88},
+		"v0.8.3-alpha.4": config.TalosVersion0_8,
+	} {
+		v, expected := v, expected
+		t.Run(v, func(t *testing.T) {
+			t.Parallel()
 
-	contract, err = config.ParseContractFromVersion("v0.88")
-	assert.NoError(t, err)
-	assert.NotEqual(t, config.TalosVersion0_8, contract)
-
-	contract, err = config.ParseContractFromVersion("v0.8.3-alpha.4")
-	assert.NoError(t, err)
-	assert.Equal(t, config.TalosVersion0_8, contract)
+			actual, err := config.ParseContractFromVersion(v)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, actual)
+		})
+	}
 }
 
 func TestContractCurrent(t *testing.T) {
