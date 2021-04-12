@@ -739,8 +739,7 @@ type MachineServiceServer interface {
 }
 
 // UnimplementedMachineServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedMachineServiceServer struct {
-}
+type UnimplementedMachineServiceServer struct{}
 
 func (UnimplementedMachineServiceServer) ApplyConfiguration(context.Context, *ApplyConfigurationRequest) (*ApplyConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ApplyConfiguration not implemented")

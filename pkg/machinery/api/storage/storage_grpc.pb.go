@@ -49,8 +49,7 @@ type StorageServiceServer interface {
 }
 
 // UnimplementedStorageServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedStorageServiceServer struct {
-}
+type UnimplementedStorageServiceServer struct{}
 
 func (UnimplementedStorageServiceServer) Disks(context.Context, *emptypb.Empty) (*DisksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Disks not implemented")

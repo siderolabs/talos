@@ -116,8 +116,7 @@ type ResourceServiceServer interface {
 }
 
 // UnimplementedResourceServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedResourceServiceServer struct {
-}
+type UnimplementedResourceServiceServer struct{}
 
 func (UnimplementedResourceServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")

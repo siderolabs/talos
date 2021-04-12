@@ -14,7 +14,8 @@ TOOLS ?= ghcr.io/talos-systems/tools:v0.5.0-alpha.0-4-g1f26def
 PKGS ?= v0.5.0-alpha.0-7-g98964cb
 EXTRAS ?= v0.3.0-alpha.0-2-gcf3934a
 GO_VERSION ?= 1.16
-GOFUMPT_VERSION ?= abc0db2c416aca0f60ea33c23c76665f6e7ba0b6
+GOFUMPT_VERSION ?= v0.1.0
+STRINGER_VERSION ?= v0.1.0
 IMPORTVET ?= autonomy/importvet:f6b07d9
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -68,6 +69,7 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
+COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
@@ -240,7 +242,7 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 
 .PHONY: fmt
 fmt: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; cd /tmp && go mod init tmp && go get mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && cd - && gofumports -w -local github.com/talos-systems/talos ."
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && gofumports -w -local github.com/talos-systems/talos ."
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
 	@$(MAKE) target-lint-$* PLATFORM=linux/amd64

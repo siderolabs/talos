@@ -60,8 +60,7 @@ type TimeServiceServer interface {
 }
 
 // UnimplementedTimeServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedTimeServiceServer struct {
-}
+type UnimplementedTimeServiceServer struct{}
 
 func (UnimplementedTimeServiceServer) Time(context.Context, *emptypb.Empty) (*TimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Time not implemented")
