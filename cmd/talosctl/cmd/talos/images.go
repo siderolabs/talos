@@ -30,7 +30,6 @@ var imagesCmd = &cobra.Command{
 				SchedulerConfig:         &v1alpha1.SchedulerConfig{},
 				CoreDNSConfig:           &v1alpha1.CoreDNS{},
 				ProxyConfig:             &v1alpha1.ProxyConfig{},
-				PodCheckpointerConfig:   &v1alpha1.PodCheckpointer{},
 			},
 		})
 

@@ -1079,30 +1079,6 @@ etcd:
 
 <div class="dd">
 
-<code>podCheckpointer</code>  <i><a href="#podcheckpointer">PodCheckpointer</a></i>
-
-</div>
-<div class="dt">
-
-Pod Checkpointer specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
-podCheckpointer:
-    image: '...' # The `image` field is an override to the default pod-checkpointer image.
-```
-
-
-</div>
-
-<hr />
-
-<div class="dd">
-
 <code>coreDNS</code>  <i><a href="#coredns">CoreDNS</a></i>
 
 </div>
@@ -2175,15 +2151,8 @@ config:
 ## PodCheckpointer
 PodCheckpointer represents the pod-checkpointer config values.
 
-Appears in:
 
 
-- <code><a href="#clusterconfig">ClusterConfig</a>.podCheckpointer</code>
-
-
-``` yaml
-image: '...' # The `image` field is an override to the default pod-checkpointer image.
-```
 
 <hr />
 

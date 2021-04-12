@@ -75,21 +75,35 @@ func (e *Encoder) Encode() ([]byte, error) {
 	return yaml.Marshal(node)
 }
 
-func isSet(value reflect.Value) bool {
+func isEmpty(value reflect.Value) bool {
 	if !value.IsValid() {
-		return false
+		return true
 	}
 
 	//nolint:exhaustive
 	switch value.Kind() {
 	case reflect.Ptr:
-		return !value.IsNil()
+		return value.IsNil()
 	case reflect.Map:
-		return len(value.MapKeys()) != 0
+		return len(value.MapKeys()) == 0
 	case reflect.Slice:
-		return value.Len() > 0
+		return value.Len() == 0
 	default:
-		return !value.IsZero()
+		return value.IsZero()
+	}
+}
+
+func isNil(value reflect.Value) bool {
+	if !value.IsValid() {
+		return true
+	}
+
+	//nolint:exhaustive
+	switch value.Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
 	}
 }
 
@@ -142,6 +156,12 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			tag := t.Field(i).Tag.Get("yaml")
 			parts := strings.Split(tag, ",")
 			fieldName := parts[0]
+			parts = parts[1:]
+
+			tag = t.Field(i).Tag.Get("talos")
+			if tag != "" {
+				parts = append(parts, strings.Split(tag, ",")...)
+			}
 
 			if fieldName == "" {
 				fieldName = strings.ToLower(t.Field(i).Name)
@@ -152,21 +172,21 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			}
 
 			var (
-				defined = isSet(v.Field(i))
+				empty = isEmpty(v.Field(i))
+				null  = isNil(v.Field(i))
 
 				skip   bool
 				inline bool
 				flow   bool
 			)
 
-			for i, part := range parts {
-				// always skip the first argument
-				if i == 0 {
-					continue
+			for _, part := range parts {
+				if part == "omitempty" && empty {
+					skip = true
 				}
 
-				if part == "omitempty" && !defined {
-					skip = true
+				if part == "omitonlyifnil" && !null {
+					skip = false
 				}
 
 				if part == "inline" {
@@ -192,13 +212,28 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 				fieldDoc = getDoc(value)
 			}
 
-			if !defined && flags.enabled(CommentsExamples) {
-				example := renderExample(fieldName, fieldDoc, flags)
+			// inlineExample is rendered after the value
+			var inlineExample string
 
-				if example != "" {
-					examples = append(examples, example)
-					skip = true
+			if empty && flags.enabled(CommentsExamples) && fieldDoc != nil {
+				if skip {
+					// render example to be appended to the end of the rendered struct
+					example := renderExample(fieldName, fieldDoc, flags)
+
+					if example != "" {
+						examples = append(examples, example)
+					}
+				} else {
+					// render example to be appended to the empty field
+					fieldDocCopy := *fieldDoc
+					fieldDocCopy.Comments = [3]string{}
+
+					inlineExample = renderExample("", &fieldDocCopy, flags)
 				}
+			}
+
+			if skip {
+				continue
 			}
 
 			var style yaml.Style
@@ -206,19 +241,27 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 				style |= yaml.FlowStyle
 			}
 
-			if !skip {
-				if inline {
-					child, err := toYamlNode(value, flags)
-					if err != nil {
-						return nil, err
-					}
-
-					if child.Kind == yaml.MappingNode || child.Kind == yaml.SequenceNode {
-						appendNodes(node, child.Content...)
-					}
-				} else if err := addToMap(node, fieldDoc, fieldName, value, style, flags); err != nil {
+			if inline {
+				child, err := toYamlNode(value, flags)
+				if err != nil {
 					return nil, err
 				}
+
+				if child.Kind == yaml.MappingNode || child.Kind == yaml.SequenceNode {
+					appendNodes(node, child.Content...)
+				}
+			} else if err := addToMap(node, fieldDoc, fieldName, value, style, flags); err != nil {
+				return nil, err
+			}
+
+			if inlineExample != "" {
+				nodeToAttach := node.Content[len(node.Content)-1]
+
+				if nodeToAttach.FootComment != "" {
+					nodeToAttach.FootComment += "\n"
+				}
+
+				nodeToAttach.FootComment += inlineExample
 			}
 		}
 
