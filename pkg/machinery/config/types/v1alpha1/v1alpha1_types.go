@@ -324,10 +324,6 @@ var (
 
 	clusterEtcdImageExample = (&EtcdConfig{}).Image()
 
-	clusterPodCheckpointerExample = &PodCheckpointer{
-		PodCheckpointerImage: "...",
-	}
-
 	clusterCoreDNSExample = &CoreDNS{
 		CoreDNSImage: (&CoreDNS{}).Image(),
 	}
@@ -696,11 +692,6 @@ type ClusterConfig struct {
 	//     - value: clusterEtcdExample
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
 	//   description: |
-	//     Pod Checkpointer specific configuration options.
-	//   examples:
-	//     - value: clusterPodCheckpointerExample
-	PodCheckpointerConfig *PodCheckpointer `yaml:"podCheckpointer,omitempty"`
-	//   description: |
 	//     Core DNS specific configuration options.
 	//   examples:
 	//     - value: clusterCoreDNSExample
@@ -719,7 +710,7 @@ type ClusterConfig struct {
 	//         "https://www.example.com/manifest1.yaml",
 	//         "https://www.example.com/manifest2.yaml",
 	//        }
-	ExtraManifests []string `yaml:"extraManifests,omitempty"`
+	ExtraManifests []string `yaml:"extraManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     A map of key value pairs that will be added while fetching the extraManifests.
 	//   examples:
@@ -734,7 +725,7 @@ type ClusterConfig struct {
 	//     These will get automatically deployed as part of the bootstrap.
 	//   examples:
 	//     - value: clusterInlineManifestsExample
-	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty"`
+	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
 	//     Certificate lifetime can be configured.

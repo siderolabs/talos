@@ -206,7 +206,7 @@ func renderExample(key string, doc *Doc, flags CommentsFlags) string {
 	for i, e := range doc.Examples {
 		v := reflect.ValueOf(e.GetValue())
 
-		if !isSet(v) {
+		if isEmpty(v) {
 			continue
 		}
 
@@ -223,11 +223,13 @@ func renderExample(key string, doc *Doc, flags CommentsFlags) string {
 			continue
 		}
 
-		node, err = toYamlNode(map[string]*yaml.Node{
-			key: node,
-		}, flags)
-		if err != nil {
-			continue
+		if key != "" {
+			node, err = toYamlNode(map[string]*yaml.Node{
+				key: node,
+			}, flags)
+			if err != nil {
+				continue
+			}
 		}
 
 		if i == 0 && flags.enabled(CommentsDocs) {
@@ -253,14 +255,15 @@ func renderExample(key string, doc *Doc, flags CommentsFlags) string {
 			continue
 		}
 
-		var example string
+		if key == "" {
+			// re-indent
+			data = regexp.MustCompile(`(?m)^(.)`).ReplaceAll(data, []byte("  $1"))
+		} else {
+			// don't collapse comment
+			data = regexp.MustCompile(`(?m)^#`).ReplaceAll(data, []byte("# #"))
+		}
 
-		// don't collapse comment
-		re := regexp.MustCompile(`(?m)^#`)
-		data = re.ReplaceAll(data, []byte("# #"))
-
-		example += string(data)
-		examples = append(examples, example)
+		examples = append(examples, string(data))
 	}
 
 	return strings.Join(examples, "")
@@ -277,7 +280,7 @@ func getExample(v reflect.Value, doc *Doc, index int) *reflect.Value {
 	}
 
 	defaultValue := reflect.ValueOf(doc.Examples[index].GetValue())
-	if isSet(defaultValue) {
+	if !isEmpty(defaultValue) {
 		if v.Kind() != reflect.Ptr && defaultValue.Kind() == reflect.Ptr {
 			defaultValue = defaultValue.Elem()
 		}

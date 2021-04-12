@@ -243,7 +243,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 21)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 20)
 	ClusterConfigDoc.Fields[0].Name = "controlPlane"
 	ClusterConfigDoc.Fields[0].Type = "ControlPlaneConfig"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -333,67 +333,60 @@ func init() {
 	ClusterConfigDoc.Fields[12].Comments[encoder.LineComment] = "Etcd specific configuration options."
 
 	ClusterConfigDoc.Fields[12].AddExample("", clusterEtcdExample)
-	ClusterConfigDoc.Fields[13].Name = "podCheckpointer"
-	ClusterConfigDoc.Fields[13].Type = "PodCheckpointer"
+	ClusterConfigDoc.Fields[13].Name = "coreDNS"
+	ClusterConfigDoc.Fields[13].Type = "CoreDNS"
 	ClusterConfigDoc.Fields[13].Note = ""
-	ClusterConfigDoc.Fields[13].Description = "Pod Checkpointer specific configuration options."
-	ClusterConfigDoc.Fields[13].Comments[encoder.LineComment] = "Pod Checkpointer specific configuration options."
+	ClusterConfigDoc.Fields[13].Description = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[13].Comments[encoder.LineComment] = "Core DNS specific configuration options."
 
-	ClusterConfigDoc.Fields[13].AddExample("", clusterPodCheckpointerExample)
-	ClusterConfigDoc.Fields[14].Name = "coreDNS"
-	ClusterConfigDoc.Fields[14].Type = "CoreDNS"
+	ClusterConfigDoc.Fields[13].AddExample("", clusterCoreDNSExample)
+	ClusterConfigDoc.Fields[14].Name = "externalCloudProvider"
+	ClusterConfigDoc.Fields[14].Type = "ExternalCloudProviderConfig"
 	ClusterConfigDoc.Fields[14].Note = ""
-	ClusterConfigDoc.Fields[14].Description = "Core DNS specific configuration options."
-	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[14].Description = "External cloud provider configuration."
+	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "External cloud provider configuration."
 
-	ClusterConfigDoc.Fields[14].AddExample("", clusterCoreDNSExample)
-	ClusterConfigDoc.Fields[15].Name = "externalCloudProvider"
-	ClusterConfigDoc.Fields[15].Type = "ExternalCloudProviderConfig"
+	ClusterConfigDoc.Fields[14].AddExample("", clusterExternalCloudProviderConfigExample)
+	ClusterConfigDoc.Fields[15].Name = "extraManifests"
+	ClusterConfigDoc.Fields[15].Type = "[]string"
 	ClusterConfigDoc.Fields[15].Note = ""
-	ClusterConfigDoc.Fields[15].Description = "External cloud provider configuration."
-	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "External cloud provider configuration."
+	ClusterConfigDoc.Fields[15].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
 
-	ClusterConfigDoc.Fields[15].AddExample("", clusterExternalCloudProviderConfigExample)
-	ClusterConfigDoc.Fields[16].Name = "extraManifests"
-	ClusterConfigDoc.Fields[16].Type = "[]string"
-	ClusterConfigDoc.Fields[16].Note = ""
-	ClusterConfigDoc.Fields[16].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
-	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
-
-	ClusterConfigDoc.Fields[16].AddExample("", []string{
+	ClusterConfigDoc.Fields[15].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
 		"https://www.example.com/manifest2.yaml",
 	})
-	ClusterConfigDoc.Fields[17].Name = "extraManifestHeaders"
-	ClusterConfigDoc.Fields[17].Type = "map[string]string"
-	ClusterConfigDoc.Fields[17].Note = ""
-	ClusterConfigDoc.Fields[17].Description = "A map of key value pairs that will be added while fetching the extraManifests."
-	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the extraManifests."
+	ClusterConfigDoc.Fields[16].Name = "extraManifestHeaders"
+	ClusterConfigDoc.Fields[16].Type = "map[string]string"
+	ClusterConfigDoc.Fields[16].Note = ""
+	ClusterConfigDoc.Fields[16].Description = "A map of key value pairs that will be added while fetching the extraManifests."
+	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the extraManifests."
 
-	ClusterConfigDoc.Fields[17].AddExample("", map[string]string{
+	ClusterConfigDoc.Fields[16].AddExample("", map[string]string{
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	ClusterConfigDoc.Fields[18].Name = "inlineManifests"
-	ClusterConfigDoc.Fields[18].Type = "ClusterInlineManifests"
+	ClusterConfigDoc.Fields[17].Name = "inlineManifests"
+	ClusterConfigDoc.Fields[17].Type = "ClusterInlineManifests"
+	ClusterConfigDoc.Fields[17].Note = ""
+	ClusterConfigDoc.Fields[17].Description = "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
+
+	ClusterConfigDoc.Fields[17].AddExample("", clusterInlineManifestsExample)
+	ClusterConfigDoc.Fields[18].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[18].Type = "AdminKubeconfigConfig"
 	ClusterConfigDoc.Fields[18].Note = ""
-	ClusterConfigDoc.Fields[18].Description = "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
-	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
+	ClusterConfigDoc.Fields[18].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
 
-	ClusterConfigDoc.Fields[18].AddExample("", clusterInlineManifestsExample)
-	ClusterConfigDoc.Fields[19].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[19].Type = "AdminKubeconfigConfig"
+	ClusterConfigDoc.Fields[18].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[19].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[19].Type = "bool"
 	ClusterConfigDoc.Fields[19].Note = ""
-	ClusterConfigDoc.Fields[19].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
-
-	ClusterConfigDoc.Fields[19].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[20].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[20].Type = "bool"
-	ClusterConfigDoc.Fields[20].Note = ""
-	ClusterConfigDoc.Fields[20].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[20].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[20].Values = []string{
+	ClusterConfigDoc.Fields[19].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[19].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -686,14 +679,6 @@ func init() {
 	PodCheckpointerDoc.Type = "PodCheckpointer"
 	PodCheckpointerDoc.Comments[encoder.LineComment] = "PodCheckpointer represents the pod-checkpointer config values."
 	PodCheckpointerDoc.Description = "PodCheckpointer represents the pod-checkpointer config values."
-
-	PodCheckpointerDoc.AddExample("", clusterPodCheckpointerExample)
-	PodCheckpointerDoc.AppearsIn = []encoder.Appearance{
-		{
-			TypeName:  "ClusterConfig",
-			FieldName: "podCheckpointer",
-		},
-	}
 	PodCheckpointerDoc.Fields = make([]encoder.Doc, 1)
 	PodCheckpointerDoc.Fields[0].Name = "image"
 	PodCheckpointerDoc.Fields[0].Type = "string"

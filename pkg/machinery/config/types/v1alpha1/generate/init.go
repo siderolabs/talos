@@ -90,6 +90,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterServiceAccount:         in.Certs.K8sServiceAccount,
 		BootstrapToken:                in.Secrets.BootstrapToken,
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
+		ExtraManifests:                []string{},
 		ClusterInlineManifests:        v1alpha1.ClusterInlineManifests{},
 	}
 

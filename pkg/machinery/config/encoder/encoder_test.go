@@ -27,6 +27,8 @@ type Config struct {
 	CustomMarshaller *WithCustomMarshaller `yaml:",omitempty"`
 	Bytes            []byte                `yaml:"bytes,flow,omitempty"`
 
+	NilSlice Manifests `yaml:"nilslice,omitempty" talos:"omitonlyifnil"`
+
 	unexported int
 }
 
@@ -45,12 +47,18 @@ type Endpoint struct {
 
 type Machine struct {
 	State  int
-	Config *MachineConfig
+	Config *MachineConfig `yaml:",omitempty"`
 }
 
 type MachineConfig struct {
 	Version      string
 	Capabilities []string
+}
+
+type Manifests []Manifest
+
+type Manifest struct {
+	Name string `yaml:"name"`
 }
 
 type WithCustomMarshaller struct {
@@ -82,7 +90,7 @@ var (
 
 func init() {
 	configDoc.Comments[encoder.LineComment] = "test configuration"
-	configDoc.Fields = make([]encoder.Doc, 8)
+	configDoc.Fields = make([]encoder.Doc, 11)
 	configDoc.Fields[1].Comments[encoder.LineComment] = "<<<"
 	configDoc.Fields[2].Comments[encoder.HeadComment] = "complex slice"
 	configDoc.Fields[3].Comments[encoder.FootComment] = "some text example for map"
@@ -90,6 +98,11 @@ func init() {
 	configDoc.Fields[2].AddExample("slice example", []*Endpoint{{
 		Host: "127.0.0.1",
 		Port: 5554,
+	}})
+
+	configDoc.Fields[9].Comments[encoder.LineComment] = "A nilslice field is really cool."
+	configDoc.Fields[9].AddExample("nilslice example", Manifests{{
+		Name: "foo",
 	}})
 
 	endpointDoc.Comments[encoder.LineComment] = "endpoint settings"
@@ -164,14 +177,19 @@ func (suite *EncoderSuite) TestRun() {
 			expectedYAML: `integer: 0
 # <<<
 slice: []
+# complex slice
+complex_slice: []
+#   # slice example
+#   - host: 127.0.0.1 # endpoint host
+#     port: 5554 # custom port
+
 map: {}
 # some text example for map
-# # complex slice
+# # A nilslice field is really cool.
 
-# # slice example
-# complex_slice:
-#     - host: 127.0.0.1 # endpoint host
-#       port: 5554 # custom port
+# # nilslice example
+# nilslice:
+#     - name: foo
 `,
 			options: []encoder.Option{
 				encoder.WithComments(encoder.CommentsAll),
@@ -183,12 +201,16 @@ map: {}
 			value: &Config{},
 			expectedYAML: `integer: 0
 slice: []
+complex_slice: []
+#   # slice example
+#   - host: 127.0.0.1
+#     port: 5554
+
 map: {}
 
-# # slice example
-# complex_slice:
-#     - host: 127.0.0.1
-#       port: 5554
+# # nilslice example
+# nilslice:
+#     - name: foo
 `,
 			options: []encoder.Option{
 				encoder.WithComments(encoder.CommentsExamples),
@@ -392,10 +414,9 @@ mixed_in: a # was inlined
 			expectedYAML: `first:
     - # this is some version
       version: ""
-      
-      # capabilities:
-      #     - reboot
-      #     - upgrade
+      capabilities: []
+      #   - reboot
+      #   - upgrade
 `,
 			incompatible: true,
 		},
@@ -408,7 +429,6 @@ mixed_in: a # was inlined
 			},
 			expectedYAML: `machine:
     state: 1000
-    config: null
 `,
 			incompatible: true,
 			options: []encoder.Option{
@@ -448,6 +468,33 @@ mixed_in: a # was inlined
 			incompatible: true,
 			options: []encoder.Option{
 				encoder.WithComments(encoder.CommentsExamples),
+			},
+		},
+		{
+			name: "with onlyifnotnil tag",
+			value: &Config{
+				NilSlice: Manifests{},
+			},
+			expectedYAML: `integer: 0
+# <<<
+slice: []
+# complex slice
+complex_slice: []
+#   # slice example
+#   - host: 127.0.0.1 # endpoint host
+#     port: 5554 # custom port
+
+map: {}
+# some text example for map
+
+# A nilslice field is really cool.
+nilslice: []
+#   # nilslice example
+#   - name: foo
+`,
+			incompatible: true,
+			options: []encoder.Option{
+				encoder.WithComments(encoder.CommentsAll),
 			},
 		},
 	}
