@@ -50,10 +50,11 @@ RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin v1.38.0
 ARG GOFUMPT_VERSION
-RUN cd $(mktemp -d) \
-    && go mod init tmp \
-    && go get mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
+RUN go install mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
+ARG STRINGER_VERSION
+RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
+    && mv /go/bin/stringer /toolchain/go/bin/stringer
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
 RUN cd /go/src/github.com/talos-systems/docgen \
@@ -119,7 +120,7 @@ RUN gofumports -w -local github.com/talos-systems/talos /api/
 FROM build-go AS go-generate
 COPY ./pkg/machinery /pkg/machinery
 WORKDIR /pkg/machinery
-RUN --mount=type=cache,target=/.cache go generate /pkg/machinery/config/types/v1alpha1/
+RUN --mount=type=cache,target=/.cache go generate /pkg/machinery/config/types/v1alpha1/...
 WORKDIR /
 
 FROM scratch AS generate
@@ -133,7 +134,7 @@ COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
-COPY --from=go-generate /pkg/machinery/config/types/v1alpha1/*_doc.go /pkg/machinery/config/types/v1alpha1/
+COPY --from=go-generate /pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
 
 # The base target provides a container that can be used to build all Talos
 # assets.

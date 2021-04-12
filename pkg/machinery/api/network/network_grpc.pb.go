@@ -60,8 +60,7 @@ type NetworkServiceServer interface {
 }
 
 // UnimplementedNetworkServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedNetworkServiceServer struct {
-}
+type UnimplementedNetworkServiceServer struct{}
 
 func (UnimplementedNetworkServiceServer) Routes(context.Context, *emptypb.Empty) (*RoutesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Routes not implemented")

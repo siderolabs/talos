@@ -71,8 +71,7 @@ type ClusterServiceServer interface {
 }
 
 // UnimplementedClusterServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedClusterServiceServer struct {
-}
+type UnimplementedClusterServiceServer struct{}
 
 func (UnimplementedClusterServiceServer) HealthCheck(*HealthCheckRequest, ClusterService_HealthCheckServer) error {
 	return status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")

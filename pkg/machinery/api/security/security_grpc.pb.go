@@ -70,8 +70,7 @@ type SecurityServiceServer interface {
 }
 
 // UnimplementedSecurityServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedSecurityServiceServer struct {
-}
+type UnimplementedSecurityServiceServer struct{}
 
 func (UnimplementedSecurityServiceServer) Certificate(context.Context, *CertificateRequest) (*CertificateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Certificate not implemented")

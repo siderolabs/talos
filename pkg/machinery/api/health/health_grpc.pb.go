@@ -94,8 +94,7 @@ type HealthServer interface {
 }
 
 // UnimplementedHealthServer must be embedded to have forward compatible implementations.
-type UnimplementedHealthServer struct {
-}
+type UnimplementedHealthServer struct{}
 
 func (UnimplementedHealthServer) Check(context.Context, *emptypb.Empty) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
