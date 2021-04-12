@@ -10,9 +10,9 @@ import (
 	"log"
 
 	"github.com/AlekSi/pointer"
-	"github.com/talos-systems/os-runtime/pkg/controller"
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/resources/secrets"

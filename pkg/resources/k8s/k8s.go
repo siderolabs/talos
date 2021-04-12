@@ -5,7 +5,7 @@
 // Package k8s provides resources which interface with Kubernetes.
 package k8s
 
-import "github.com/talos-systems/os-runtime/pkg/resource"
+import "github.com/cosi-project/runtime/pkg/resource"
 
 // ControlPlaneNamespaceName contains resources supporting Kubernetes control plane.
 const ControlPlaneNamespaceName resource.Namespace = "controlplane"

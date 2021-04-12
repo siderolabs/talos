@@ -11,9 +11,9 @@ import (
 	"sort"
 
 	"github.com/AlekSi/pointer"
-	"github.com/talos-systems/os-runtime/pkg/controller"
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"

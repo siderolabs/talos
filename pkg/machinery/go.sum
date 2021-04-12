@@ -15,6 +15,8 @@ github.com/containerd/go-cni v1.0.1 h1:VXr2EkOPD0v1gu7CKfof6XzEIDzsE/dI9yj/W7PSW
 github.com/containerd/go-cni v1.0.1/go.mod h1:+vUpYxKvAF72G9i1WoDOiPGRtQpqsNW/ZHtSlv++smU=
 github.com/containernetworking/cni v0.8.0 h1:BT9lpgGoH4jw3lFC7Odz2prU5ruiYKcgAjMCbgybcKI=
 github.com/containernetworking/cni v0.8.0/go.mod h1:LGwApLUm2FpoOfxTDEeq8T9ipbpZ61X79hmU3w8FmsY=
+github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab h1:u8p7SXdsdYV89RnXtPExlvIKDrXLeGhAUo66LmOtYV4=
+github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab/go.mod h1:ebaL1B5YO0vy0YuhHS59QrRfZEYPNB9U3bzdLrlUfzo=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -113,8 +115,6 @@ github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1
 github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa h1:XqOMTt0Q6mjsk8Dea5wUpgcdtf+AzesH11m4AozWSxw=
 github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa/go.mod h1:VreSAyRmxMtqussAHSKMKkJQa1YwBTSVfkmE4Jydam4=
-github.com/talos-systems/os-runtime v0.0.0-20210401122348-86d9e090bdc4 h1:mVlqonAE7QgFWn1g9p2b+EBC4Lk57TexASvp7tHglRc=
-github.com/talos-systems/os-runtime v0.0.0-20210401122348-86d9e090bdc4/go.mod h1:358qvRxAR16NdF8fiitixPgECx4Pj32yXLHAWYWZc/g=
 github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b h1:8pnPjZJU0SYanlmHnhMTeR8OR148K9yStwBz1GsjBsQ=
 github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

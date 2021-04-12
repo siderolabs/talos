@@ -7,9 +7,9 @@ package secrets
 import (
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/talos-systems/crypto/x509"
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/meta"
 )
 
 // EtcdType is type of Etcd resource.

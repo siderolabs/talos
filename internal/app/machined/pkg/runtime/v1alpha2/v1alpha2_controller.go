@@ -8,8 +8,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/talos-systems/os-runtime/pkg/controller"
-	osruntime "github.com/talos-systems/os-runtime/pkg/controller/runtime"
+	"github.com/cosi-project/runtime/pkg/controller"
+	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"

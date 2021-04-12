@@ -5,7 +5,7 @@
 // Package config provides resources which hold Talos node configuration.
 package config
 
-import "github.com/talos-systems/os-runtime/pkg/resource"
+import "github.com/cosi-project/runtime/pkg/resource"
 
 // NamespaceName contains configuration resources.
 const NamespaceName resource.Namespace = "config"
