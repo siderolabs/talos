@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/controller/runtime"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"github.com/talos-systems/os-runtime/pkg/controller/runtime"
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
-	"github.com/talos-systems/os-runtime/pkg/state/impl/inmem"
-	"github.com/talos-systems/os-runtime/pkg/state/impl/namespaced"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/resources/config"
