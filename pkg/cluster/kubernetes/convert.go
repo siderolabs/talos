@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/AlekSi/pointer"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
-	"github.com/talos-systems/os-runtime/pkg/resource"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"

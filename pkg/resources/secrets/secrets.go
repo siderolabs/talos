@@ -5,7 +5,7 @@
 // Package secrets provides resources which store secrets.
 package secrets
 
-import "github.com/talos-systems/os-runtime/pkg/resource"
+import "github.com/cosi-project/runtime/pkg/resource"
 
 // NamespaceName contains resources containing secret material.
 const NamespaceName resource.Namespace = "secrets"

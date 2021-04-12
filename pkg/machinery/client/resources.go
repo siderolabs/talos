@@ -7,8 +7,8 @@ package client
 import (
 	"context"
 
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"

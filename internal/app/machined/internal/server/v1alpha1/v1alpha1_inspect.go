@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/talos-systems/os-runtime/pkg/controller"
 
 	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
 )

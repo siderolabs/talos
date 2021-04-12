@@ -5,9 +5,9 @@
 package runtime
 
 import (
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
-	"github.com/talos-systems/os-runtime/pkg/state"
-	"github.com/talos-systems/os-runtime/pkg/state/registry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/pkg/machinery/config"

@@ -5,7 +5,7 @@
 // Package v1alpha1 provides resources which implement "glue" code from v1alpha1 Talos init system.
 package v1alpha1
 
-import "github.com/talos-systems/os-runtime/pkg/resource"
+import "github.com/cosi-project/runtime/pkg/resource"
 
 // NamespaceName contains resources linking v1alpha2 components with v1alpha1 Talos runtime.
 const NamespaceName resource.Namespace = "runtime"

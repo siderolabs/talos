@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/AlekSi/pointer"
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	talosnet "github.com/talos-systems/net"
-	"github.com/talos-systems/os-runtime/pkg/controller"
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
 
 	"github.com/talos-systems/talos/pkg/images"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"

@@ -7,8 +7,8 @@ package k8s
 import (
 	"fmt"
 
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
 
 // ManifestStatusType is type of ManifestStatus resource.

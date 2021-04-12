@@ -8,7 +8,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/talos-systems/os-runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/controller"
 )
 
 // TaskSetupFunc defines the function that a task will execute for a specific runtime

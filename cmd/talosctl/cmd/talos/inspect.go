@@ -10,9 +10,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/emicklei/dot"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/os-runtime/pkg/resource"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

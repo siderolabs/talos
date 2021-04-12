@@ -7,8 +7,8 @@ package time
 import (
 	"context"
 
-	"github.com/talos-systems/os-runtime/pkg/resource"
-	"github.com/talos-systems/os-runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )

@@ -11,6 +11,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/containerd/containerd v1.4.4
 	github.com/containerd/go-cni v1.0.1
+	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -23,7 +24,6 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20210202170911-39584f1b6e54
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	github.com/talos-systems/os-runtime v0.0.0-20210401122348-86d9e090bdc4
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/genproto v0.0.0-20210302174412-5ede27ff9881
