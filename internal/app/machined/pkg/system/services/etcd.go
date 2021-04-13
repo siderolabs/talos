@@ -46,8 +46,9 @@ import (
 // Etcd implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Etcd struct {
-	Bootstrap           bool
-	RecoverFromSnapshot bool
+	Bootstrap            bool
+	RecoverFromSnapshot  bool
+	RecoverSkipHashCheck bool
 
 	args []string
 }
@@ -503,6 +504,8 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 		PeerURLs: []string{"https://" + net.FormatAddress(primaryAddr) + ":2380"},
 
 		InitialCluster: fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr)),
+
+		SkipHashCheck: e.RecoverSkipHashCheck,
 	}); err != nil {
 		return fmt.Errorf("error recovering from the snapshot: %w", err)
 	}

@@ -106,9 +106,16 @@ message ApplyConfigurationResponse { repeated ApplyConfiguration messages = 1; }
 message Reboot { common.Metadata metadata = 1; }
 message RebootResponse { repeated Reboot messages = 1; }
 
-// rpc bootstrap
+// rpc Bootstrap
 message BootstrapRequest {
+  // Enable etcd recovery from the snapshot.
+  //
+  // Snapshot should be uploaded before this call via EtcdRecover RPC.
   bool recover_etcd = 1;
+  // Skip hash check on the snapshot (etcd).
+  //
+  // Enable this when recovering from data directory copy to skip integrity check.
+  bool recover_skip_hash_check = 2;
 }
 
 // The bootstrap message containing the bootstrap status.
