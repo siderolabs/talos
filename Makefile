@@ -358,7 +358,7 @@ release-artifacts:
 
 .PHONY: conformance
 conformance: ## Performs policy checks against the commit and source code.
-	docker run --rm -it -v $(PWD):/src -w /src docker.io/autonomy/conform:v0.1.0-alpha.19
+	docker run --rm -it -v $(PWD):/src -w /src docker.io/autonomy/conform:v0.1.0-alpha.20
 
 .PHONY: release-notes
 release-notes:
