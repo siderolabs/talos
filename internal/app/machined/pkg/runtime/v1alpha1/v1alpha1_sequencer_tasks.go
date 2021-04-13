@@ -1731,8 +1731,9 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 		}
 
 		svc := &services.Etcd{
-			Bootstrap:           true,
-			RecoverFromSnapshot: req.RecoverEtcd,
+			Bootstrap:            true,
+			RecoverFromSnapshot:  req.RecoverEtcd,
+			RecoverSkipHashCheck: req.RecoverSkipHashCheck,
 		}
 
 		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {

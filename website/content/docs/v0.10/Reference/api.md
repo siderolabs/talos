@@ -669,12 +669,17 @@ The bootstrap message containing the bootstrap status.
 <a name="machine.BootstrapRequest"></a>
 
 ### BootstrapRequest
-rpc bootstrap
+rpc Bootstrap
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| recover_etcd | [bool](#bool) |  |  |
+| recover_etcd | [bool](#bool) |  | Enable etcd recovery from the snapshot.
+
+Snapshot should be uploaded before this call via EtcdRecover RPC. |
+| recover_skip_hash_check | [bool](#bool) |  | Skip hash check on the snapshot (etcd).
+
+Enable this when recovering from data directory copy to skip integrity check. |
 
 
 
