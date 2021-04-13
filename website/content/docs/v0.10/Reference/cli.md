@@ -60,8 +60,9 @@ talosctl bootstrap [flags]
 ### Options
 
 ```
-  -h, --help                  help for bootstrap
-      --recover-from string   recover etcd cluster from the snapshot
+  -h, --help                      help for bootstrap
+      --recover-from string       recover etcd cluster from the snapshot
+      --recover-skip-hash-check   skip integrity check when recovering etcd (use when recovering from data directory copy)
 ```
 
 ### Options inherited from parent commands

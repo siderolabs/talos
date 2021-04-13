@@ -17,7 +17,8 @@ import (
 )
 
 var bootstrapCmdFlags struct {
-	recoverFrom string
+	recoverFrom          string
+	recoverSkipHashCheck bool
 }
 
 // bootstrapCmd represents the bootstrap command.
@@ -60,7 +61,8 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 			}
 
 			if err := c.Bootstrap(ctx, &machineapi.BootstrapRequest{
-				RecoverEtcd: bootstrapCmdFlags.recoverFrom != "",
+				RecoverEtcd:          bootstrapCmdFlags.recoverFrom != "",
+				RecoverSkipHashCheck: bootstrapCmdFlags.recoverSkipHashCheck,
 			}); err != nil {
 				return fmt.Errorf("error executing bootstrap: %s", err)
 			}
@@ -72,5 +74,6 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 
 func init() {
 	bootstrapCmd.Flags().StringVar(&bootstrapCmdFlags.recoverFrom, "recover-from", "", "recover etcd cluster from the snapshot")
+	bootstrapCmd.Flags().BoolVar(&bootstrapCmdFlags.recoverSkipHashCheck, "recover-skip-hash-check", false, "skip integrity check when recovering etcd (use when recovering from data directory copy)")
 	addCommand(bootstrapCmd)
 }
