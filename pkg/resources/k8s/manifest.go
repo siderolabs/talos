@@ -93,6 +93,7 @@ func (r *Manifest) ResourceDefinition() meta.ResourceDefinitionSpec {
 
 // SetYAML parses manifest from YAML.
 func (r *Manifest) SetYAML(yamlBytes []byte) error {
+	r.spec.Items = nil
 	reader := yaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(yamlBytes)))
 
 	for {
