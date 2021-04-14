@@ -169,6 +169,10 @@ function run_talos_integration_test_docker {
   "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" ${TEST_RUN} ${TEST_SHORT}
 }
 
+function run_kubernetes_conformance_test {
+  "${TALOSCTL}" conformance kubernetes --mode="${1}"
+}
+
 function run_kubernetes_integration_test {
   timeout=$(($(date +%s) + ${TIMEOUT}))
   until ${SONOBUOY} run \
