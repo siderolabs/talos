@@ -221,7 +221,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 
 	list, err := client.MemberList(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("error getting etcd member list: %w", err)
 	}
 
 	for _, member := range list.Members {
@@ -232,30 +232,28 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 
 	add, err := client.MemberAdd(ctx, addrs)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("error adding member: %w", err)
 	}
 
 	list, err = client.MemberList(ctx)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("error getting second etcd member list: %w", err)
 	}
 
 	return list, add.Member.ID, nil
 }
 
 func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, err error) {
-	err = retry.Constant(10*time.Minute, retry.WithUnits(3*time.Second), retry.WithJitter(time.Second)).Retry(func() error {
+	err = retry.Constant(10*time.Minute,
+		retry.WithUnits(3*time.Second),
+		retry.WithJitter(time.Second),
+		retry.WithErrorLogging(true),
+	).RetryWithContext(ctx, func(ctx context.Context) error {
 		var (
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
 			id        uint64
 		)
-
-		select {
-		case <-ctx.Done():
-			return retry.UnexpectedError(ctx.Err())
-		default:
-		}
 
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer attemptCtxCancel()
