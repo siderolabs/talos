@@ -67,9 +67,10 @@ function create_cluster {
     --provisioner "${PROVISIONER}" \
     --name "${CLUSTER_NAME}" \
     --masters=3 \
+    --workers="${QEMU_WORKERS:-1}" \
     --mtu 1450 \
     --memory 2048 \
-    --cpus 2.0 \
+    --cpus "${QEMU_CPUS:-2}" \
     --cidr 172.20.1.0/24 \
     --user-disk /var/lib/extra:100MB \
     --user-disk /var/lib/p1:100MB:/var/lib/p2:100MB \
@@ -91,7 +92,17 @@ function destroy_cluster() {
 }
 
 create_cluster
-get_kubeconfig
-run_talos_integration_test
-run_kubernetes_integration_test
+
+case "${TEST_MODE:-default}" in
+  fast-conformance)
+    run_kubernetes_conformance_test fast
+    ;;
+  *)
+    get_kubeconfig
+    run_talos_integration_test
+    run_kubernetes_integration_test
+    ;;
+esac
+
+
 destroy_cluster

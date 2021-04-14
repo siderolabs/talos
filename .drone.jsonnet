@@ -468,9 +468,12 @@ local e2e_pipelines = [
 
 // Conformance pipeline.
 
-local conformance_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
-local conformance_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
-local conformance_gcp = Step("e2e-gcp", depends_on=[e2e_capi], environment=creds_env_vars+{SONOBUOY_MODE: "certified-conformance"});
+local conformance_k8s_qemu = Step("conformance-k8s-qemu", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
+        "QEMU_WORKERS": "2", // conformance test requires >=2 workers
+        "QEMU_CPUS": "4", // conformance test in parallel runs with number of CPUs
+        "TEST_MODE": "fast-conformance",
+        "IMAGE_REGISTRY": local_registry,
+});
 
 local conformance_trigger(names) = {
   trigger: {
@@ -481,8 +484,11 @@ local conformance_trigger(names) = {
 };
 
 local conformance_pipelines = [
-  Pipeline('conformance-aws', default_pipeline_steps + [capi_docker, e2e_capi, conformance_aws]) + conformance_trigger(['conformance-aws']),
-  Pipeline('conformance-gcp', default_pipeline_steps + [capi_docker, e2e_capi, conformance_gcp]) + conformance_trigger(['conformance-gcp']),
+  // regular pipelines, triggered on promote events
+  Pipeline('conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu]) + conformance_trigger(['conformance-qemu']),
+
+  // cron pipelines, triggered on schedule events
+  Pipeline('cron-conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu]) + cron_trigger(['nightly']),
 ];
 
 // Cloud images pipeline.
