@@ -46,7 +46,7 @@ func NewClient(endpoints []string) (client *Client, err error) {
 
 	tlsConfig, err := tlsInfo.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building etcd client TLS config: %w", err)
 	}
 
 	c, err := clientv3.New(clientv3.Config{
@@ -56,7 +56,7 @@ func NewClient(endpoints []string) (client *Client, err error) {
 		TLS:         tlsConfig,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building etcd client: %w", err)
 	}
 
 	return &Client{Client: c}, nil
@@ -72,13 +72,13 @@ func NewLocalClient() (client *Client, err error) {
 func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	h, err := kubernetes.NewTemporaryClientFromPKI(creds, endpoint)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building kubernetes client from PKI: %w", err)
 	}
 
 	var endpoints []string
 
 	if endpoints, err = h.MasterIPs(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting kubernetes endpoints: %w", err)
 	}
 
 	// Etcd expects host:port format.
