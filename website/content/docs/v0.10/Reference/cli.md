@@ -509,6 +509,58 @@ Manage the client configuration
 * [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another Talos config into the default config
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
 
+## talosctl conformance kubernetes
+
+Run Kubernetes conformance tests
+
+```
+talosctl conformance kubernetes [flags]
+```
+
+### Options
+
+```
+  -h, --help          help for kubernetes
+      --mode string   conformance test mode: [fast, certified] (default "fast")
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
+
+## talosctl conformance
+
+Run conformance tests
+
+### Options
+
+```
+  -h, --help   help for conformance
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl conformance kubernetes](#talosctl-conformance-kubernetes)	 - Run Kubernetes conformance tests
+
 ## talosctl containers
 
 List containers
@@ -2086,6 +2138,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl convert-k8s](#talosctl-convert-k8s)	 - Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
