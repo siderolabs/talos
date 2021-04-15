@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -88,7 +89,7 @@ var etcdMemberListCmd = &cobra.Command{
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			node := ""
-			pattern := "%s\t"
+			pattern := "%s\t%s\t%s\t%s\n"
 
 			for i, message := range response.Messages {
 				if message.Metadata != nil && message.Metadata.Hostname != "" {
@@ -99,22 +100,28 @@ var etcdMemberListCmd = &cobra.Command{
 					continue
 				}
 
-				if i == 0 {
-					if node != "" {
-						fmt.Fprintln(w, "NODE\tMEMBERS")
-						pattern = "%s\t%s\n"
-					} else {
-						fmt.Fprintln(w, "MEMBERS")
+				for _, member := range message.Members {
+					if i == 0 {
+						if node != "" {
+							fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS")
+							pattern = "%s\t" + pattern
+						} else {
+							fmt.Fprintln(w, "ID\tHOSTNAME\tPEER URLS\tCLIENT URLS")
+						}
 					}
+
+					args := []interface{}{
+						strconv.FormatUint(member.Id, 16),
+						member.Hostname,
+						strings.Join(member.PeerUrls, ","),
+						strings.Join(member.ClientUrls, ","),
+					}
+					if node != "" {
+						args = append([]interface{}{node}, args...)
+					}
+
+					fmt.Fprintf(w, pattern, args...)
 				}
-
-				args := []interface{}{strings.Join(message.Members, ",")}
-				if node != "" {
-					args = append([]interface{}{node}, args...)
-				}
-
-				fmt.Fprintf(w, pattern, args...)
-
 			}
 
 			return w.Flush()

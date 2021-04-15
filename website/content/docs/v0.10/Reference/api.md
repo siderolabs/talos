@@ -70,9 +70,10 @@ description: Talos gRPC API reference.
     - [EtcdLeaveCluster](#machine.EtcdLeaveCluster)
     - [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest)
     - [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse)
-    - [EtcdMemberList](#machine.EtcdMemberList)
+    - [EtcdMember](#machine.EtcdMember)
     - [EtcdMemberListRequest](#machine.EtcdMemberListRequest)
     - [EtcdMemberListResponse](#machine.EtcdMemberListResponse)
+    - [EtcdMembers](#machine.EtcdMembers)
     - [EtcdRecover](#machine.EtcdRecover)
     - [EtcdRecoverResponse](#machine.EtcdRecoverResponse)
     - [EtcdRemoveMember](#machine.EtcdRemoveMember)
@@ -1157,16 +1158,18 @@ dmesg
 
 
 
-<a name="machine.EtcdMemberList"></a>
+<a name="machine.EtcdMember"></a>
 
-### EtcdMemberList
-
+### EtcdMember
+EtcdMember describes a single etcd member.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| members | [string](#string) | repeated |  |
+| id | [uint64](#uint64) |  | member ID. |
+| hostname | [string](#string) |  | human-readable name of the member. |
+| peer_urls | [string](#string) | repeated | the list of URLs the member exposes to clients for communication. |
+| client_urls | [string](#string) | repeated | the list of URLs the member exposes to the cluster for communication. |
 
 
 
@@ -1196,7 +1199,24 @@ dmesg
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| messages | [EtcdMemberList](#machine.EtcdMemberList) | repeated |  |
+| messages | [EtcdMembers](#machine.EtcdMembers) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdMembers"></a>
+
+### EtcdMembers
+EtcdMembers contains the list of members registered on the host.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| legacy_members | [string](#string) | repeated | list of member hostnames. |
+| members | [EtcdMember](#machine.EtcdMember) | repeated | the list of etcd members registered on the node. |
 
 
 

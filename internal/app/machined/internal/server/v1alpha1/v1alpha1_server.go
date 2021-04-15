@@ -1698,16 +1698,27 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 		return nil, err
 	}
 
-	members := make([]string, 0, len(resp.Members))
+	members := make([]*machine.EtcdMember, 0, len(resp.Members))
+	legacyMembers := make([]string, 0, len(resp.Members))
 
 	for _, member := range resp.Members {
-		members = append(members, member.GetName())
+		members = append(members,
+			&machine.EtcdMember{
+				Id:         member.GetID(),
+				Hostname:   member.GetName(),
+				PeerUrls:   member.GetPeerURLs(),
+				ClientUrls: member.GetClientURLs(),
+			},
+		)
+
+		legacyMembers = append(legacyMembers, member.GetName())
 	}
 
 	reply = &machine.EtcdMemberListResponse{
-		Messages: []*machine.EtcdMemberList{
+		Messages: []*machine.EtcdMembers{
 			{
-				Members: members,
+				LegacyMembers: legacyMembers,
+				Members:       members,
 			},
 		},
 	}
