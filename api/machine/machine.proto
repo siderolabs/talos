@@ -791,11 +791,28 @@ message EtcdForfeitLeadershipResponse {
 message EtcdMemberListRequest {
   bool query_local = 1;
 }
-message EtcdMemberList {
-  common.Metadata metadata = 1;
-  repeated string members = 2;
+
+// EtcdMember describes a single etcd member.
+message EtcdMember {
+  // member ID.
+  uint64 id = 2;
+  // human-readable name of the member.
+  string hostname = 3;
+  // the list of URLs the member exposes to clients for communication.
+  repeated string peer_urls = 4;
+  // the list of URLs the member exposes to the cluster for communication.
+  repeated string client_urls = 5;
 }
-message EtcdMemberListResponse { repeated EtcdMemberList messages = 1; }
+
+// EtcdMembers contains the list of members registered on the host.
+message EtcdMembers {
+  common.Metadata metadata = 1;
+  // list of member hostnames.
+  repeated string legacy_members = 2;
+  // the list of etcd members registered on the node.
+  repeated EtcdMember members = 3;
+}
+message EtcdMemberListResponse { repeated EtcdMembers messages = 1; }
 
 message EtcdSnapshotRequest {}
 
