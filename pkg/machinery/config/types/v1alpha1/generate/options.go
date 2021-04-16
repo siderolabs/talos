@@ -79,6 +79,27 @@ func WithRegistryMirror(host string, endpoints ...string) GenOption {
 	}
 }
 
+// WithRegistryCACert specifies the certificate of the certificate authority which signed certificate of the registry.
+func WithRegistryCACert(host, cacert string) GenOption {
+	return func(o *GenOptions) error {
+		if o.RegistryConfig == nil {
+			o.RegistryConfig = make(map[string]*v1alpha1.RegistryConfig)
+		}
+
+		if _, ok := o.RegistryConfig[host]; !ok {
+			o.RegistryConfig[host] = &v1alpha1.RegistryConfig{}
+		}
+
+		if o.RegistryConfig[host].RegistryTLS == nil {
+			o.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{}
+		}
+
+		o.RegistryConfig[host].RegistryTLS.TLSCA = v1alpha1.Base64Bytes(cacert)
+
+		return nil
+	}
+}
+
 // WithRegistryInsecureSkipVerify marks registry host to skip TLS verification.
 func WithRegistryInsecureSkipVerify(host string) GenOption {
 	return func(o *GenOptions) error {
