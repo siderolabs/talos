@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardLibretechAllH3CCH5)
+	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardLibretechAllH3CCH5)
 	off int64 = 1024 * 8
 	dtb       = "/dtb/allwinner/sun50i-h5-libretech-all-h3-cc.dtb"
 )
@@ -71,7 +71,7 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install" + dtb
+	src := "/usr/install/arm64" + dtb
 	dst := "/boot/EFI" + dtb
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)

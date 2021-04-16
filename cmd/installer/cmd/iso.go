@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/spf13/cobra"
 
@@ -58,8 +57,8 @@ func runISOCmd() error {
 	}
 
 	files := map[string]string{
-		"/usr/install/vmlinuz":      "/mnt/boot/vmlinuz",
-		"/usr/install/initramfs.xz": "/mnt/boot/initramfs.xz",
+		fmt.Sprintf("/usr/install/%s/vmlinuz", options.Arch):      "/mnt/boot/vmlinuz",
+		fmt.Sprintf("/usr/install/%s/initramfs.xz", options.Arch): "/mnt/boot/initramfs.xz",
 	}
 
 	for src, dest := range files {
@@ -103,7 +102,7 @@ func runISOCmd() error {
 
 	log.Println("creating ISO")
 
-	out := fmt.Sprintf("/tmp/talos-%s.iso", runtime.GOARCH)
+	out := fmt.Sprintf("/tmp/talos-%s.iso", options.Arch)
 
 	if err := pkg.CreateISO(out, "/mnt"); err != nil {
 		return err

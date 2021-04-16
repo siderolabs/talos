@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	stdruntime "runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -97,7 +96,7 @@ func runImageCmd() (err error) {
 		return err
 	}
 
-	if err := finalize(p, img); err != nil {
+	if err := finalize(p, img, options.Arch); err != nil {
 		return err
 	}
 
@@ -111,7 +110,7 @@ func runImageCmd() (err error) {
 }
 
 //nolint:gocyclo
-func finalize(platform runtime.Platform, img string) (err error) {
+func finalize(platform runtime.Platform, img, arch string) (err error) {
 	dir := filepath.Dir(img)
 
 	file := filepath.Base(img)
@@ -119,7 +118,7 @@ func finalize(platform runtime.Platform, img string) (err error) {
 
 	switch platform.Name() {
 	case "aws":
-		if err = tar(fmt.Sprintf("aws-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+		if err = tar(fmt.Sprintf("aws-%s.tar.gz", arch), file, dir); err != nil {
 			return err
 		}
 	case "azure":
@@ -129,28 +128,28 @@ func finalize(platform runtime.Platform, img string) (err error) {
 			return err
 		}
 
-		if err = tar(fmt.Sprintf("azure-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+		if err = tar(fmt.Sprintf("azure-%s.tar.gz", arch), file, dir); err != nil {
 			return err
 		}
 	case "digital-ocean":
-		if err = tar(fmt.Sprintf("digital-ocean-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+		if err = tar(fmt.Sprintf("digital-ocean-%s.tar.gz", arch), file, dir); err != nil {
 			return err
 		}
 	case "gcp":
-		if err = tar(fmt.Sprintf("gcp-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+		if err = tar(fmt.Sprintf("gcp-%s.tar.gz", arch), file, dir); err != nil {
 			return err
 		}
 	case "openstack":
-		if err = tar(fmt.Sprintf("openstack-%s.tar.gz", stdruntime.GOARCH), file, dir); err != nil {
+		if err = tar(fmt.Sprintf("openstack-%s.tar.gz", arch), file, dir); err != nil {
 			return err
 		}
 	case "vmware":
-		if err = ova.CreateOVAFromRAW(name, img, outputArg); err != nil {
+		if err = ova.CreateOVAFromRAW(name, img, outputArg, arch); err != nil {
 			return err
 		}
 	case "metal":
 		if options.Board != constants.BoardNone {
-			name := fmt.Sprintf("metal-%s-%s.img", options.Board, stdruntime.GOARCH)
+			name := fmt.Sprintf("metal-%s-%s.img", options.Board, arch)
 
 			file = filepath.Join(outputArg, name)
 
@@ -168,7 +167,7 @@ func finalize(platform runtime.Platform, img string) (err error) {
 			break
 		}
 
-		name := fmt.Sprintf("metal-%s.tar.gz", stdruntime.GOARCH)
+		name := fmt.Sprintf("metal-%s.tar.gz", arch)
 
 		if err = tar(name, file, dir); err != nil {
 			return err

@@ -103,7 +103,7 @@ local volumes = {
 // This provides the docker service.
 local docker = {
   name: 'docker',
-  image: 'docker:19.03-dind',
+  image: 'docker:20.10-dind',
   entrypoint: ['dockerd'],
   privileged: true,
   command: [
@@ -194,15 +194,13 @@ local check_dirty = Step("check-dirty", depends_on=[generate]);
 local build = Step("build", target="talosctl-linux talosctl-darwin kernel initramfs installer talos", depends_on=[check_dirty], environment={"IMAGE_REGISTRY": local_registry, "PUSH": true});
 local lint = Step("lint", depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
-local iso_amd64 = Step("iso-amd64", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry});
-local iso_arm64 = Step("iso-arm64", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local images_amd64 = Step("images-amd64", target="images", depends_on=[iso_amd64], environment={"IMAGE_REGISTRY": local_registry});
-local images_arm64 = Step("images-arm64", target="images", depends_on=[iso_arm64], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
-local sbcs_arm64 = Step("sbcs-arm64", target="sbcs", depends_on=[images_amd64, images_arm64], environment={"IMAGE_REGISTRY": local_registry, "DOCKER_HOST": "tcp://docker-arm64.ci.svc:2376"});
+local iso = Step("iso", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry});
+local images = Step("images", target="images", depends_on=[iso], environment={"IMAGE_REGISTRY": local_registry});
+local sbcs = Step("sbcs", target="sbcs", depends_on=[images], environment={"IMAGE_REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depends_on=[build, lint]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
 local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"IMAGE_REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
-local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso_amd64, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"IMAGE_REGISTRY": local_registry});
+local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"IMAGE_REGISTRY": local_registry});
 
 local coverage = {
   name: 'coverage',
@@ -279,7 +277,7 @@ local save_artifacts = {
     's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
-  depends_on: [build.name, images_amd64.name, images_arm64.name, iso_amd64.name, iso_arm64.name, sbcs_arm64.name, talosctl_cni_bundle.name],
+  depends_on: [build.name, images.name, iso.name, sbcs.name, talosctl_cni_bundle.name],
 };
 
 local load_artifacts = {
@@ -304,11 +302,9 @@ local default_steps = [
   build,
   lint,
   talosctl_cni_bundle,
-  iso_amd64,
-  iso_arm64,
-  images_amd64,
-  images_arm64,
-  sbcs_arm64,
+  iso,
+  images,
+  sbcs,
   unit_tests,
   save_artifacts,
   coverage,
@@ -565,7 +561,7 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [build.name, boot.name, talosctl_cni_bundle.name, images_amd64.name, images_arm64.name, sbcs_arm64.name, iso_amd64.name, iso_arm64.name, push.name, release_notes.name]
+  depends_on: [build.name, boot.name, talosctl_cni_bundle.name, images.name, sbcs.name, iso.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [

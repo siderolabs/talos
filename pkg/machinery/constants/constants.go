@@ -325,7 +325,7 @@ const (
 	KernelAssetWithArch = "vmlinuz-" + ArchVariable
 
 	// KernelAssetPath is the path to the kernel on disk.
-	KernelAssetPath = "/usr/install/" + KernelAsset
+	KernelAssetPath = "/usr/install/%s/" + KernelAsset
 
 	// InitramfsAsset defines a well known name for our initramfs filename.
 	InitramfsAsset = "initramfs.xz"
@@ -334,7 +334,7 @@ const (
 	InitramfsAssetWithArch = "initramfs-" + ArchVariable + ".xz"
 
 	// InitramfsAssetPath is the path to the initramfs on disk.
-	InitramfsAssetPath = "/usr/install/" + InitramfsAsset
+	InitramfsAssetPath = "/usr/install/%s/" + InitramfsAsset
 
 	// RootfsAsset defines a well known name for our rootfs filename.
 	RootfsAsset = "rootfs.sqsh"

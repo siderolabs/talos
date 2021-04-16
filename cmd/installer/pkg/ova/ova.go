@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -132,7 +131,7 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
 
 // CreateOVAFromRAW creates an OVA from a RAW disk.
 //nolint:gocyclo
-func CreateOVAFromRAW(name, src, out string) (err error) {
+func CreateOVAFromRAW(name, src, out, arch string) (err error) {
 	dir, err := ioutil.TempDir("/tmp", "talos")
 	if err != nil {
 		return err
@@ -187,7 +186,7 @@ func CreateOVAFromRAW(name, src, out string) (err error) {
 		return err
 	}
 
-	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, fmt.Sprintf("vmware-%s.ova", runtime.GOARCH)), "-C", dir, name+".ovf", name+".mf", name+".vmdk"); err != nil {
+	if _, err = cmd.Run("tar", "-cvf", filepath.Join(out, fmt.Sprintf("vmware-%s.ova", arch)), "-C", dir, name+".ovf", name+".mf", name+".vmdk"); err != nil {
 		return err
 	}
 
