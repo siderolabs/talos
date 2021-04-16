@@ -225,6 +225,7 @@ function build_registry_mirrors {
       REGISTRY_MIRROR_FLAGS="${REGISTRY_MIRROR_FLAGS} --registry-mirror ${registry}=http://${addr}:5000"
     done
   else
-    REGISTRY_MIRROR_FLAGS=
+    # use the value from the environment, if present
+    REGISTRY_MIRROR_FLAGS=${REGISTRY_MIRROR_FLAGS:-}
   fi
 }
