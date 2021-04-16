@@ -71,11 +71,11 @@ type upgradeSpec struct {
 
 const (
 	previousRelease = "v0.8.4"
-	stableRelease   = "v0.9.0-alpha.5"
+	stableRelease   = "v0.9.1"
 
 	previousK8sVersion = "1.20.1"
-	stableK8sVersion   = "1.20.4"
-	currentK8sVersion  = "1.20.5"
+	stableK8sVersion   = "1.20.5"
+	currentK8sVersion  = "1.20.6"
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
