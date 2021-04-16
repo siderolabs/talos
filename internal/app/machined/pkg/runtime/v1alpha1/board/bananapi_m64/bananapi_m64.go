@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardBananaPiM64)
+	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardBananaPiM64)
 	off int64 = 1024 * 8
 	dtb       = "/dtb/allwinner/sun50i-a64-bananapi-m64.dtb"
 )
@@ -74,7 +74,7 @@ func (b *BananaPiM64) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install" + dtb
+	src := "/usr/install/arm64" + dtb
 	dst := "/boot/EFI" + dtb
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)

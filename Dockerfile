@@ -11,29 +11,74 @@ ARG EXTRAS
 
 FROM ghcr.io/talos-systems/fhs:${PKGS} AS pkg-fhs
 FROM ghcr.io/talos-systems/ca-certificates:${PKGS} AS pkg-ca-certificates
-FROM ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup
-FROM ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd
-FROM ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools
-FROM ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev
+
+FROM --platform=amd64 ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev-arm64
+
 FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub
-FROM ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables
-FROM ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c
-FROM ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt
-FROM ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl
-FROM ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
-FROM ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
-FROM ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2
-FROM ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio
-FROM ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl
-FROM ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi
-FROM ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns
-FROM ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc
-FROM ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs
-FROM ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux
-FROM ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod
+FROM --platform=amd64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod-arm64
+
 FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
-FROM ghcr.io/talos-systems/u-boot:${PKGS} AS pkg-u-boot
-FROM ghcr.io/talos-systems/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware
+FROM --platform=amd64 ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel-arm64
+
+FROM --platform=arm64 ghcr.io/talos-systems/u-boot:${PKGS} AS pkg-u-boot-arm64
+FROM --platform=arm64 ghcr.io/talos-systems/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware-arm64
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -43,7 +88,7 @@ FROM ghcr.io/talos-systems/talosctl-cni-bundle-install:${EXTRAS} AS extras-talos
 
 FROM $IMPORTVET as importvet
 
-FROM $TOOLS AS tools
+FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
@@ -65,8 +110,7 @@ COPY --from=importvet /importvet /toolchain/go/bin/importvet
 # The build target creates a container that will be used to build Talos source
 # code.
 
-FROM scratch AS build
-COPY --from=tools / /
+FROM --platform=${BUILDPLATFORM} tools AS build
 SHELL ["/toolchain/bin/bash", "-c"]
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV GO111MODULE on
@@ -123,7 +167,7 @@ WORKDIR /pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate /pkg/machinery/config/types/v1alpha1/...
 WORKDIR /
 
-FROM scratch AS generate
+FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
 COPY --from=generate-build /api/health/*.pb.go /pkg/machinery/api/health/
 COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
@@ -155,24 +199,42 @@ WORKDIR /src
 
 # The init target builds the init binary.
 
-FROM base AS init-build
+FROM base AS init-build-amd64
 WORKDIR /src/internal/app/init
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
 RUN chmod +x /init
+
+FROM base AS init-build-arm64
+WORKDIR /src/internal/app/init
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
+RUN chmod +x /init
+
+FROM init-build-${TARGETARCH} AS init-build
 
 FROM scratch AS init
 COPY --from=init-build /init /init
 
 # The machined target builds the machined binary.
 
-FROM base AS machined-build
+FROM base AS machined-build-amd64
 WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
 RUN chmod +x /machined
+
+FROM base AS machined-build-arm64
+WORKDIR /src/internal/app/machined
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+RUN chmod +x /machined
+
+FROM machined-build-${TARGETARCH} AS machined-build
 
 FROM scratch AS machined
 COPY --from=machined-build /machined /machined
@@ -240,33 +302,33 @@ COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz-${TARGETARCH}
 
 # The rootfs target provides the Talos rootfs.
 
-FROM build AS rootfs-base
+FROM build AS rootfs-base-amd64
 COPY --from=pkg-fhs / /rootfs
 COPY --from=pkg-ca-certificates / /rootfs
-COPY --from=pkg-cryptsetup / /rootfs
-COPY --from=pkg-containerd / /rootfs
-COPY --from=pkg-dosfstools / /rootfs
-COPY --from=pkg-eudev / /rootfs
-COPY --from=pkg-iptables / /rootfs
-COPY --from=pkg-libjson-c / /rootfs
-COPY --from=pkg-libpopt / /rootfs
-COPY --from=pkg-libressl / /rootfs
-COPY --from=pkg-libseccomp / /rootfs
-COPY --from=pkg-linux-firmware /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=pkg-linux-firmware /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=pkg-lvm2 / /rootfs
-COPY --from=pkg-libaio / /rootfs
-COPY --from=pkg-musl / /rootfs
-COPY --from=pkg-open-iscsi / /rootfs
-COPY --from=pkg-open-isns / /rootfs
-COPY --from=pkg-runc / /rootfs
-COPY --from=pkg-xfsprogs / /rootfs
-COPY --from=pkg-util-linux /lib/libblkid.* /rootfs/lib/
-COPY --from=pkg-util-linux /lib/libuuid.* /rootfs/lib/
-COPY --from=pkg-util-linux /lib/libmount.* /rootfs/lib/
-COPY --from=pkg-kmod /usr/lib/libkmod.* /rootfs/lib/
-COPY --from=pkg-kernel /lib/modules /rootfs/lib/modules
-COPY --from=machined /machined /rootfs/sbin/init
+COPY --from=pkg-cryptsetup-amd64 / /rootfs
+COPY --from=pkg-containerd-amd64 / /rootfs
+COPY --from=pkg-dosfstools-amd64 / /rootfs
+COPY --from=pkg-eudev-amd64 / /rootfs
+COPY --from=pkg-iptables-amd64 / /rootfs
+COPY --from=pkg-libjson-c-amd64 / /rootfs
+COPY --from=pkg-libpopt-amd64 / /rootfs
+COPY --from=pkg-libressl-amd64 / /rootfs
+COPY --from=pkg-libseccomp-amd64 / /rootfs
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-lvm2-amd64 / /rootfs
+COPY --from=pkg-libaio-amd64 / /rootfs
+COPY --from=pkg-musl-amd64 / /rootfs
+COPY --from=pkg-open-iscsi-amd64 / /rootfs
+COPY --from=pkg-open-isns-amd64 / /rootfs
+COPY --from=pkg-runc-amd64 / /rootfs
+COPY --from=pkg-xfsprogs-amd64 / /rootfs
+COPY --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
+COPY --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
+COPY --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
+COPY --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --from=pkg-kernel-amd64 /lib/modules /rootfs/lib/modules
+COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -282,22 +344,80 @@ RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
 
-FROM rootfs-base AS rootfs-squashfs
+FROM build AS rootfs-base-arm64
+COPY --from=pkg-fhs / /rootfs
+COPY --from=pkg-ca-certificates / /rootfs
+COPY --from=pkg-cryptsetup-arm64 / /rootfs
+COPY --from=pkg-containerd-arm64 / /rootfs
+COPY --from=pkg-dosfstools-arm64 / /rootfs
+COPY --from=pkg-eudev-arm64 / /rootfs
+COPY --from=pkg-iptables-arm64 / /rootfs
+COPY --from=pkg-libjson-c-arm64 / /rootfs
+COPY --from=pkg-libpopt-arm64 / /rootfs
+COPY --from=pkg-libressl-arm64 / /rootfs
+COPY --from=pkg-libseccomp-arm64 / /rootfs
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-lvm2-arm64 / /rootfs
+COPY --from=pkg-libaio-arm64 / /rootfs
+COPY --from=pkg-musl-arm64 / /rootfs
+COPY --from=pkg-open-iscsi-arm64 / /rootfs
+COPY --from=pkg-open-isns-arm64 / /rootfs
+COPY --from=pkg-runc-arm64 / /rootfs
+COPY --from=pkg-xfsprogs-arm64 / /rootfs
+COPY --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
+COPY --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
+COPY --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
+COPY --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --from=pkg-kernel-arm64 /lib/modules /rootfs/lib/modules
+COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
+# NB: We run the cleanup step before creating extra directories, files, and
+# symlinks to avoid accidentally cleaning them up.
+COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
+RUN cleanup.sh /rootfs
+COPY hack/containerd.toml /rootfs/etc/cri/containerd.toml
+RUN touch /rootfs/etc/resolv.conf
+RUN touch /rootfs/etc/hosts
+RUN touch /rootfs/etc/os-release
+RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system}
+RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni,usr/libexec/kubernetes}
+RUN ln -s /etc/ssl /rootfs/etc/pki
+RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
+RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
+RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
+
+FROM rootfs-base-${TARGETARCH} AS rootfs-base
+
+FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
-FROM scratch AS squashfs
-COPY --from=rootfs-squashfs /rootfs.sqsh /
+FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
+
+FROM scratch AS squashfs-arm64
+COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /
+
+FROM scratch AS squashfs-amd64
+COPY --from=rootfs-squashfs-amd64 /rootfs.sqsh /
 
 FROM scratch AS rootfs
 COPY --from=rootfs-base /rootfs /
 
 # The initramfs target provides the Talos initramfs image.
 
-FROM build AS initramfs-archive
+FROM build AS initramfs-archive-arm64
 WORKDIR /initramfs
-COPY --from=squashfs /rootfs.sqsh .
-COPY --from=init /init .
+COPY --from=squashfs-arm64 /rootfs.sqsh .
+COPY --from=init-build-arm64 /init .
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+
+FROM build AS initramfs-archive-amd64
+WORKDIR /initramfs
+COPY --from=squashfs-amd64 /rootfs.sqsh .
+COPY --from=init-build-amd64 /init .
+RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+
+FROM initramfs-archive-${TARGETARCH} AS initramfs-archive
 
 FROM scratch AS initramfs
 ARG TARGETARCH
@@ -318,11 +438,26 @@ FROM base AS installer-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 WORKDIR /src/cmd/installer
-RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
+ARG TARGETARCH
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
 FROM alpine:3.13.5 AS unicode-pf2
 RUN apk add --no-cache --update grub
+
+FROM scratch AS install-artifacts
+COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
+COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
+COPY --from=pkg-grub / /
+COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
+COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
+COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
+COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
+COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
+COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
+COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
+COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
+COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 
 FROM alpine:3.13.5 AS installer
 RUN apk add --no-cache --update \
@@ -335,14 +470,8 @@ RUN apk add --no-cache --update \
     xfsprogs \
     xorriso \
     xz
-COPY --from=pkg-grub / /
-COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 ARG TARGETARCH
-COPY --from=kernel /vmlinuz-${TARGETARCH} /usr/install/vmlinuz
-COPY --from=pkg-kernel /dtb /usr/install/dtb
-COPY --from=initramfs /initramfs-${TARGETARCH}.xz /usr/install/initramfs.xz
-COPY --from=pkg-u-boot / /usr/install/u-boot
-COPY --from=pkg-raspberrypi-firmware / /usr/install/raspberrypi-firmware
+COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
 ARG TAG
@@ -356,7 +485,7 @@ ONBUILD RUN apk add --no-cache --update \
     xz
 ONBUILD WORKDIR /initramfs
 ONBUILD ARG RM
-ONBUILD RUN xz -d /usr/install/initramfs.xz \
+ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
     && cpio -idvm < /usr/install/initramfs \
     && unsquashfs -f -d /rootfs rootfs.sqsh \
     && for f in ${RM}; do rm -rfv /rootfs$f; done \
@@ -365,7 +494,7 @@ ONBUILD RUN xz -d /usr/install/initramfs.xz \
 ONBUILD COPY --from=customization / /rootfs
 ONBUILD RUN find /rootfs \
     && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
-    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/initramfs.xz \
+    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/${TARGETARCH}/initramfs.xz \
     && rm -rf /rootfs \
     && rm -rf /initramfs
 ONBUILD WORKDIR /
@@ -440,7 +569,7 @@ RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
 RUN find . -name '*.pb.go' | xargs rm
-RUN FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
+RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on protobuf files.
 

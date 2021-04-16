@@ -76,6 +76,10 @@ func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
 
 func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error {
 	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled) {
+		if len(flashImage.SourcePaths) == 0 {
+			continue
+		}
+
 		found := false
 
 		for _, path := range flashImage.SourcePaths {

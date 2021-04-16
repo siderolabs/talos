@@ -118,11 +118,11 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 			PreserveContents: bootPartitionFound,
 			Assets: []*Asset{
 				{
-					Source:      constants.KernelAssetPath,
+					Source:      fmt.Sprintf(constants.KernelAssetPath, opts.Arch),
 					Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
 				},
 				{
-					Source:      constants.InitramfsAssetPath,
+					Source:      fmt.Sprintf(constants.InitramfsAssetPath, opts.Arch),
 					Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
 				},
 			},

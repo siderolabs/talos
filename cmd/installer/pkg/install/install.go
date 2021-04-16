@@ -29,6 +29,7 @@ type Options struct {
 	ConfigSource    string
 	Disk            string
 	Platform        string
+	Arch            string
 	Board           string
 	ExtraKernelArgs []string
 	Bootloader      bool
@@ -92,6 +93,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		options: opts,
 		bootloader: &grub.Grub{
 			BootDisk: opts.Disk,
+			Arch:     opts.Arch,
 		},
 	}
 

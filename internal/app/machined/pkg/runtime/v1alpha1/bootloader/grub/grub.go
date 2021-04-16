@@ -60,9 +60,15 @@ menuentry "{{ $label.Root }}" {
 {{ end }}
 `
 
+const (
+	amd64 = "amd64"
+	arm64 = "arm64"
+)
+
 // Grub represents the grub bootloader.
 type Grub struct {
 	BootDisk string
+	Arch     string
 }
 
 // Labels implements the Bootloader interface.
@@ -135,12 +141,18 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 
 	loopDevice := strings.HasPrefix(blk, "/dev/loop")
 
-	// default: run for GRUB default platform
-	platforms := []string{""}
+	var platforms []string
 
-	if goruntime.GOARCH == "amd64" && loopDevice {
-		// building cloud image for amd64, install both BIOS & UEFI GRUB
+	switch g.Arch {
+	case amd64:
 		platforms = []string{"x86_64-efi", "i386-pc"}
+	case arm64:
+		platforms = []string{"arm64-efi"}
+	}
+
+	if goruntime.GOARCH == amd64 && g.Arch == amd64 && !loopDevice {
+		// let grub choose the platform automatically if not building an image
+		platforms = []string{""}
 	}
 
 	for _, platform := range platforms {

@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-rockchip.bin", constants.BoardRock64)
+	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-rockchip.bin", constants.BoardRock64)
 	off int64 = 512 * 64
 	dtb       = "/dtb/rockchip/rk3328-rock64.dtb"
 )
@@ -71,7 +71,7 @@ func (r *Rock64) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install" + dtb
+	src := "/usr/install/arm64" + dtb
 	dst := "/boot/EFI" + dtb
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)

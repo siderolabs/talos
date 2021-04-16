@@ -198,20 +198,26 @@ talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform $* --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS) ; \
+	done
 
 images: image-aws image-azure image-digital-ocean image-gcp image-metal image-openstack image-vmware ## Builds all known images (AWS, Azure, DigitalOcean, GCP, Metal, Openstack, and VMware).
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, and rockpi_4 (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform metal --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
 sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, and Libre Computer Board ALL-H3-CC).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
-	@docker run --rm -i $(REGISTRY_AND_USERNAME)/installer:$(TAG) iso --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		docker run --rm -i $(REGISTRY_AND_USERNAME)/installer:$(TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
+	done
 
 .PHONY: boot
 boot: ## Creates a compressed tarball that includes vmlinuz-{amd64,arm64} and initramfs-{amd64,arm64}.xz. Note that these files must already be present in the artifacts directory.
