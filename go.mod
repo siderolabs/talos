@@ -27,7 +27,7 @@ require (
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
+	github.com/cosi-project/runtime v0.0.0-20210521140557-8a4533ce68e2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -85,6 +85,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.3
 	go.etcd.io/etcd/client/v3 v3.5.0-beta.3
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0-beta.3
+	go.uber.org/zap v1.16.1-0.20210329175301-c23abee72d19
 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6

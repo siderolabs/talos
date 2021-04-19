@@ -7,12 +7,12 @@ package secrets
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
@@ -65,7 +65,7 @@ func (ctrl *EtcdController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

@@ -7,7 +7,6 @@ package network
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"sort"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
+	"go.uber.org/zap"
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
@@ -60,7 +60,7 @@ func (ctrl *AddressConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint: gocyclo, cyclop
-func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// apply defaults for the loopback interface once
 	defaultTouchedIDs, err := ctrl.apply(ctx, r, ctrl.loopbackDefaults())
 	if err != nil {
@@ -203,7 +203,7 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 }
 
 //nolint: gocyclo
-func (ctrl *AddressConfigController) parseCmdline(logger *log.Logger) (address network.AddressSpecSpec) {
+func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address network.AddressSpecSpec) {
 	if ctrl.Cmdline == nil {
 		return
 	}
@@ -227,7 +227,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *log.Logger) (address n
 
 	address.Address.IP, err = netaddr.ParseIP(fields[0])
 	if err != nil {
-		logger.Printf("ignoring cmdline address parse failure: %s", err)
+		logger.Info("ignoring cmdline address parse failure", zap.Error(err))
 
 		return
 	}
@@ -235,7 +235,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *log.Logger) (address n
 	if len(fields) >= 4 {
 		netmask, err := netaddr.ParseIP(fields[3])
 		if err != nil {
-			logger.Printf("ignoring cmdline netmask parse failure: %s", err)
+			logger.Info("ignoring cmdline netmask parse failure", zap.Error(err))
 
 			return
 		}
@@ -280,7 +280,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *log.Logger) (address n
 	return address
 }
 
-func (ctrl *AddressConfigController) parseMachineConfiguration(logger *log.Logger, cfgProvider talosconfig.Provider) (addresses []network.AddressSpecSpec) {
+func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (addresses []network.AddressSpecSpec) {
 	for _, device := range cfgProvider.Machine().Network().Devices() {
 		if device.Ignore() {
 			continue
@@ -289,7 +289,7 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *log.Logge
 		if device.CIDR() != "" {
 			ipPrefix, err := netaddr.ParseIPPrefix(device.CIDR())
 			if err != nil {
-				logger.Printf("skipping address %q on interface %q: %s", device.CIDR(), device.Interface(), err)
+				logger.Info(fmt.Sprintf("skipping address %q on interface %q", device.CIDR(), device.Interface()), zap.Error(err))
 
 				continue
 			}
@@ -315,7 +315,7 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *log.Logge
 			if vlan.CIDR() != "" {
 				ipPrefix, err := netaddr.ParseIPPrefix(vlan.CIDR())
 				if err != nil {
-					logger.Printf("skipping address %q on interface %q vlan %d: %s", device.CIDR(), device.Interface(), vlan.ID(), err)
+					logger.Info(fmt.Sprintf("skipping address %q on interface %q vlan %d", device.CIDR(), device.Interface(), vlan.ID()), zap.Error(err))
 
 					continue
 				}

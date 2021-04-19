@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
@@ -84,7 +84,7 @@ func (ctrl *KubeletStaticPodController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var kubeletClient *kubelet.Client
 
 	refreshTicker := time.NewTicker(15 * time.Second) // refresh kubelet pods status every 15 seconds
@@ -170,7 +170,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		}
 
 		if bootstrapStatus.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
-			logger.Print("skipped as running self-hosted control plane")
+			logger.Info("skipped as running self-hosted control plane")
 
 			if err = ctrl.cleanupPods(logger, nil); err != nil {
 				return fmt.Errorf("error cleaning up static pods: %w", err)
@@ -218,7 +218,7 @@ func (ctrl *KubeletStaticPodController) podFilename(staticPod resource.Resource)
 	return fmt.Sprintf("%s%s.yaml", constants.TalosManifestPrefix, staticPod.Metadata().ID())
 }
 
-func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controller.Runtime, logger *log.Logger, staticPod resource.Resource) error {
+func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controller.Runtime, logger *zap.Logger, staticPod resource.Resource) error {
 	staticPodStatus := k8s.NewStaticPodStatus(staticPod.Metadata().Namespace(), staticPod.Metadata().ID())
 
 	if err := r.AddFinalizer(ctx, staticPod.Metadata(), staticPodStatus.String()); err != nil {
@@ -243,12 +243,12 @@ func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controll
 		return nil
 	}
 
-	logger.Printf("writing static pod %q", podPath)
+	logger.Sugar().Infof("writing static pod %q", podPath)
 
 	return ioutil.WriteFile(podPath, renderedPod, 0o600)
 }
 
-func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPod resource.Resource) error {
+func (ctrl *KubeletStaticPodController) teardownPod(logger *zap.Logger, staticPod resource.Resource) error {
 	podPath := ctrl.podPath(staticPod)
 
 	_, err := os.Stat(podPath)
@@ -260,7 +260,7 @@ func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPo
 		return fmt.Errorf("error checking static pod status: %w", err)
 	}
 
-	logger.Printf("removing static pod %q", podPath)
+	logger.Sugar().Infof("removing static pod %q", podPath)
 
 	if err = os.Remove(podPath); err != nil {
 		return fmt.Errorf("error removing static pod %q: %w", podPath, err)
@@ -269,7 +269,7 @@ func (ctrl *KubeletStaticPodController) teardownPod(logger *log.Logger, staticPo
 	return nil
 }
 
-func (ctrl *KubeletStaticPodController) cleanupPods(logger *log.Logger, staticPods []resource.Resource) error {
+func (ctrl *KubeletStaticPodController) cleanupPods(logger *zap.Logger, staticPods []resource.Resource) error {
 	manifestDir, err := os.Open(constants.ManifestsDirectory)
 	if err != nil {
 		return fmt.Errorf("error opening manifests directory: %w", err)
@@ -300,7 +300,7 @@ func (ctrl *KubeletStaticPodController) cleanupPods(logger *log.Logger, staticPo
 
 		podPath := filepath.Join(constants.ManifestsDirectory, manifest)
 
-		logger.Printf("cleaning up static pod %q", podPath)
+		logger.Sugar().Infof("cleaning up static pod %q", podPath)
 
 		if err = os.Remove(podPath); err != nil {
 			return fmt.Errorf("error cleaning up static pod: %w", err)

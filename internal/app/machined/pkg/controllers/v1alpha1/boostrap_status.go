@@ -7,13 +7,13 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -54,7 +54,7 @@ func (ctrl *BootstrapStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -82,7 +82,7 @@ func (ctrl *BootstrapStatusController) Run(ctx context.Context, r controller.Run
 	}
 }
 
-func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	etcdClient, err := etcd.NewLocalClient()
 	if err != nil {
 		return fmt.Errorf("error creating etcd client: %w", err)
@@ -106,7 +106,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 	}
 
 	if resp.Count == 0 || string(resp.Kvs[0].Value) != "true" {
-		logger.Printf("bootkube initialized status not found")
+		logger.Info("bootkube initialized status not found")
 
 		return r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
 			r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = false
@@ -115,7 +115,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 		})
 	}
 
-	logger.Printf("found bootkube initialized status in etcd")
+	logger.Info("found bootkube initialized status in etcd")
 
 	if err = r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
 		r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = true

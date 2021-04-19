@@ -7,13 +7,13 @@ package time
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/ntp"
@@ -64,14 +64,14 @@ type NTPSyncer interface {
 }
 
 // NewNTPSyncerFunc function allows to replace ntp.Syncer with the mock.
-type NewNTPSyncerFunc func(*log.Logger, []string) NTPSyncer
+type NewNTPSyncerFunc func(*zap.Logger, []string) NTPSyncer
 
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.NewNTPSyncer == nil {
-		ctrl.NewNTPSyncer = func(logger *log.Logger, timeServers []string) NTPSyncer {
+		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string) NTPSyncer {
 			return ntp.NewSyncer(logger, timeServers)
 		}
 	}

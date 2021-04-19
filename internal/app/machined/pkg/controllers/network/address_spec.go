@@ -7,12 +7,12 @@ package network
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
+	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
@@ -47,7 +47,7 @@ func (ctrl *AddressSpecController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint: gocyclo
-func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	watchCh := make(chan struct{})
 
 	// watch link changes as some address might need to be re-applied if the link appears
@@ -144,7 +144,7 @@ func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix ne
 }
 
 //nolint:gocyclo
-func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller.Runtime, logger *log.Logger, conn *rtnetlink.Conn,
+func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
 	links []rtnetlink.LinkMessage, addrs []rtnetlink.AddressMessage, address *network.AddressSpec) error {
 	linkIndex := resolveLinkName(links, address.Status().LinkName)
 
@@ -165,7 +165,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				return fmt.Errorf("error removing address: %w", err)
 			}
 
-			logger.Printf("removed address %s from %q", address.Status().Address, address.Status().LinkName)
+			logger.Sugar().Infof("removed address %s from %q", address.Status().Address, address.Status().LinkName)
 		}
 
 		// now remove finalizer as address was deleted
@@ -190,7 +190,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				return fmt.Errorf("error removing address: %w", err)
 			}
 
-			logger.Printf("removed address %s from %q", address.Status().Address, address.Status().LinkName)
+			logger.Sugar().Infof("removed address %s from %q", address.Status().Address, address.Status().LinkName)
 		}
 
 		// add address
@@ -210,7 +210,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 			return fmt.Errorf("error adding address: %w", err)
 		}
 
-		logger.Printf("assigned address %s to %q", address.Status().Address, address.Status().LinkName)
+		logger.Sugar().Infof("assigned address %s to %q", address.Status().Address, address.Status().LinkName)
 	}
 
 	return nil

@@ -6,12 +6,13 @@ package v1alpha1
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -46,7 +47,7 @@ func (ctrl *ServiceController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -82,11 +83,11 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 
 						return nil
 					}); err != nil {
-						logger.Printf("failed creating service resource %s: %s", service, err)
+						logger.Info(fmt.Sprintf("failed creating service resource %s", service), zap.Error(err))
 					}
 				default:
 					if err := r.Destroy(ctx, service.Metadata()); err != nil && !state.IsNotFoundError(err) {
-						logger.Printf("failed destroying service resource %s: %s", service, err)
+						logger.Info(fmt.Sprintf("failed destroying service resource %s", service), zap.Error(err))
 					}
 				}
 			}

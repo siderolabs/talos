@@ -7,10 +7,10 @@ package network
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
@@ -55,7 +55,7 @@ func (ctrl *AddressMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint: gocyclo
-func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

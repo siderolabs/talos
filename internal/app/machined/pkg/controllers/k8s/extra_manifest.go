@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -64,7 +64,7 @@ func (ctrl *ExtraManifestController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -139,7 +139,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.Runtime, logger *log.Logger, manifest config.ExtraManifest) (id resource.ID, err error) {
+func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest config.ExtraManifest) (id resource.ID, err error) {
 	id = fmt.Sprintf("%s-%s", manifest.Priority, manifest.Name)
 
 	// inline manifests don't require download
@@ -150,7 +150,7 @@ func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.R
 	return id, ctrl.processURL(ctx, r, logger, manifest, id)
 }
 
-func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *log.Logger, manifest config.ExtraManifest, id resource.ID) (err error) {
+func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest config.ExtraManifest, id resource.ID) (err error) {
 	var tmpDir string
 
 	tmpDir, err = ioutil.TempDir("", "talos")
@@ -195,7 +195,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 		return
 	}
 
-	logger.Printf("downloaded manifest %q", manifest.URL)
+	logger.Sugar().Infof("downloaded manifest %q", manifest.URL)
 
 	var contents []byte
 
