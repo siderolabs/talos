@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
@@ -13,7 +14,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 )
@@ -44,8 +44,11 @@ func pushResult(image CloudImage) {
 }
 
 func main() {
-	for region := range endpoints.AwsPartition().Regions() {
-		DefaultOptions.AWSRegions = append(DefaultOptions.AWSRegions, region)
+	var err error
+
+	DefaultOptions.AWSRegions, err = GetAWSDefaultRegions()
+	if err != nil {
+		log.Printf("failed to get a list of enabled AWS regions: %s, ignored", err)
 	}
 
 	pflag.StringSliceVar(&DefaultOptions.Architectures, "architectures", DefaultOptions.Architectures, "list of architectures to process")
@@ -63,18 +66,19 @@ func main() {
 
 	rand.Seed(int64(binary.LittleEndian.Uint64(seed)))
 
-	var g errgroup.Group
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var g *errgroup.Group
+
+	g, ctx = errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		aws := AWSUploader{
 			Options: DefaultOptions,
 		}
 
-		if err := aws.Upload(); err != nil {
-			return err
-		}
-
-		return nil
+		return aws.Upload(ctx)
 	})
 
 	if err := g.Wait(); err != nil {
