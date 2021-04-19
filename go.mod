@@ -19,7 +19,7 @@ require (
 	github.com/containerd/containerd v1.4.4
 	github.com/containerd/continuity v0.0.0-20200928162600-f2cc35102c2a // indirect
 	github.com/containerd/cri v1.19.0
-	github.com/containerd/go-cni v1.0.1
+	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/ttrpc v1.0.2 // indirect
 	github.com/containerd/typeurl v1.0.1
 	github.com/containernetworking/cni v0.8.1

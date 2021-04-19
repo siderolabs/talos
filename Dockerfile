@@ -313,10 +313,10 @@ WORKDIR /src/cmd/installer
 RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.13.4 AS unicode-pf2
+FROM alpine:3.13.5 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
-FROM alpine:3.13.4 AS installer
+FROM alpine:3.13.5 AS installer
 RUN apk add --no-cache --update \
     bash \
     ca-certificates \
