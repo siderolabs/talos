@@ -206,13 +206,13 @@ local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[b
 
 local coverage = {
   name: 'coverage',
-  image: 'alpine:3.10',
+  image: 'autonomy/build-container:latest',
+  pull: 'always',
   environment: {
     CODECOV_TOKEN: { from_secret: 'codecov_token' },
   },
   commands: [
-    'apk --no-cache add bash curl git',
-    'bash -c "bash <(curl -s https://codecov.io/bash) -f _out/coverage.txt -X fix"'
+    '/usr/local/bin/codecov -f _out/coverage.txt -X fix'
   ],
   when: {
     event: ['pull_request'],
