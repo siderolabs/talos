@@ -5,10 +5,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,11 +21,36 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// GetAWSDefaultRegions returns a list of regions which are enabled for this account.
+func GetAWSDefaultRegions() ([]string, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed creating AWS session: %w", err)
+	}
+
+	result, err := ec2.New(sess).DescribeRegions(&ec2.DescribeRegionsInput{})
+	if err != nil {
+		return nil, fmt.Errorf("failed getting list of regions: %w", err)
+	}
+
+	regions := []string{}
+
+	for _, r := range result.Regions {
+		if r.OptInStatus != nil {
+			if *r.OptInStatus == "opt-in-not-required" || *r.OptInStatus == "opted-in" {
+				regions = append(regions, *r.RegionName)
+			}
+		}
+	}
+
+	return regions, nil
+}
+
 // AWSUploader registers AMI in the AWS.
 type AWSUploader struct {
 	Options Options
-
-	mu sync.Mutex
 
 	sess    *session.Session
 	ec2svcs map[string]*ec2.EC2
@@ -37,7 +62,7 @@ var awsArchitectures = map[string]string{
 }
 
 // Upload image and register with AWS.
-func (au *AWSUploader) Upload() error {
+func (au *AWSUploader) Upload(ctx context.Context) error {
 	var err error
 
 	au.sess, err = session.NewSession(&aws.Config{
@@ -53,23 +78,21 @@ func (au *AWSUploader) Upload() error {
 		au.ec2svcs[region] = ec2.New(au.sess, aws.NewConfig().WithRegion(region))
 	}
 
-	if err = au.RegisterAMIs(); err != nil {
-		return err
-	}
-
-	return nil
+	return au.RegisterAMIs(ctx)
 }
 
 // RegisterAMIs in every region.
-func (au *AWSUploader) RegisterAMIs() error {
-	var g errgroup.Group
+func (au *AWSUploader) RegisterAMIs(ctx context.Context) error {
+	var g *errgroup.Group
+
+	g, ctx = errgroup.WithContext(ctx)
 
 	for region, svc := range au.ec2svcs {
 		region := region
 		svc := svc
 
 		g.Go(func() error {
-			err := au.registerAMI(region, svc)
+			err := au.registerAMI(ctx, region, svc)
 			if err != nil {
 				return fmt.Errorf("error registering AMI in %s: %w", region, err)
 			}
@@ -81,18 +104,18 @@ func (au *AWSUploader) RegisterAMIs() error {
 	return g.Wait()
 }
 
-func (au *AWSUploader) registerAMI(region string, svc *ec2.EC2) error {
+func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.EC2) error {
 	s3Svc := s3.New(au.sess, aws.NewConfig().WithRegion(region))
 	bucketName := fmt.Sprintf("talos-image-upload-%s", uuid.New())
 
-	_, err := s3Svc.CreateBucket(&s3.CreateBucketInput{
+	_, err := s3Svc.CreateBucketWithContext(ctx, &s3.CreateBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
 		return fmt.Errorf("failed creating S3 bucket: %w", err)
 	}
 
-	err = s3Svc.WaitUntilBucketExists(&s3.HeadBucketInput{
+	err = s3Svc.WaitUntilBucketExistsWithContext(ctx, &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
@@ -126,7 +149,7 @@ func (au *AWSUploader) registerAMI(region string, svc *ec2.EC2) error {
 		arch := arch
 
 		g.Go(func() error {
-			err = au.registerAMIArch(region, svc, arch, bucketName, uploader)
+			err = au.registerAMIArch(ctx, region, svc, arch, bucketName, uploader)
 			if err != nil {
 				return fmt.Errorf("error registering AMI for %s: %w", arch, err)
 			}
@@ -138,7 +161,7 @@ func (au *AWSUploader) registerAMI(region string, svc *ec2.EC2) error {
 	return g.Wait()
 }
 
-func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucketName string, uploader *s3manager.Uploader) error {
+func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.EC2, arch, bucketName string, uploader *s3manager.Uploader) error {
 	err := retry.Constant(5*time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
 		source, err := os.Open(au.Options.AWSImage(arch))
 		if err != nil {
@@ -152,7 +175,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 			return err
 		}
 
-		_, err = uploader.Upload(&s3manager.UploadInput{
+		_, err = uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(fmt.Sprintf("disk-%s.raw", arch)),
 			Body:   image,
@@ -166,7 +189,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 
 	log.Printf("aws: import into %s/%s, image uploaded to S3", region, arch)
 
-	resp, err := svc.ImportSnapshot(&ec2.ImportSnapshotInput{
+	resp, err := svc.ImportSnapshotWithContext(ctx, &ec2.ImportSnapshotInput{
 		Description: aws.String(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
 		DiskContainer: &ec2.SnapshotDiskContainer{
 			Format: aws.String("raw"),
@@ -191,7 +214,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 	err = retry.Constant(30*time.Minute, retry.WithUnits(30*time.Second)).Retry(func() error {
 		var status *ec2.DescribeImportSnapshotTasksOutput
 
-		status, err = svc.DescribeImportSnapshotTasks(&ec2.DescribeImportSnapshotTasksInput{
+		status, err = svc.DescribeImportSnapshotTasksWithContext(ctx, &ec2.DescribeImportSnapshotTasksInput{
 			ImportTaskIds: aws.StringSlice([]string{taskID}),
 		})
 		if err != nil {
@@ -226,7 +249,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 
 	imageName := fmt.Sprintf("talos-%s-%s-%s", au.Options.Tag, region, arch)
 
-	imageResp, err := svc.DescribeImages(&ec2.DescribeImagesInput{
+	imageResp, err := svc.DescribeImagesWithContext(ctx, &ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
@@ -239,7 +262,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 	}
 
 	for _, image := range imageResp.Images {
-		_, err = svc.DeregisterImage(&ec2.DeregisterImageInput{
+		_, err = svc.DeregisterImageWithContext(ctx, &ec2.DeregisterImageInput{
 			ImageId: image.ImageId,
 		})
 		if err != nil {
@@ -249,7 +272,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 		log.Printf("aws: import into %s/%s, deregistered image ID %q", region, arch, *image.ImageId)
 	}
 
-	registerResp, err := svc.RegisterImage(&ec2.RegisterImageInput{
+	registerResp, err := svc.RegisterImageWithContext(ctx, &ec2.RegisterImageInput{
 		Name: aws.String(imageName),
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
@@ -277,7 +300,7 @@ func (au *AWSUploader) registerAMIArch(region string, svc *ec2.EC2, arch, bucket
 
 	log.Printf("aws: import into %s/%s, registered image ID %q", region, arch, imageID)
 
-	_, err = svc.ModifyImageAttribute(&ec2.ModifyImageAttributeInput{
+	_, err = svc.ModifyImageAttributeWithContext(ctx, &ec2.ModifyImageAttributeInput{
 		ImageId: aws.String(imageID),
 		LaunchPermission: &ec2.LaunchPermissionModifications{
 			Add: []*ec2.LaunchPermission{
