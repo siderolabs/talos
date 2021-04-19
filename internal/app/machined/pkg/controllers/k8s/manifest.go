@@ -9,13 +9,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"text/template"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -61,7 +61,7 @@ func (ctrl *ManifestController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

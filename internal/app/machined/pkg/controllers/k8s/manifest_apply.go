@@ -7,7 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 
 	"github.com/AlekSi/pointer"
@@ -15,6 +14,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
@@ -79,7 +81,7 @@ func (ctrl *ManifestApplyController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -108,7 +110,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		}
 
 		if bootstrapStatus.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
-			logger.Print("skipped as running self-hosted control plane")
+			logger.Info("skipped as running self-hosted control plane")
 
 			continue
 		}
@@ -136,7 +138,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error loading kubeconfig: %w", err)
 			}
 
-			kubeconfig.WarningHandler = rest.NewWarningWriter(logger.Writer(), rest.WarningWriterOptions{
+			kubeconfig.WarningHandler = rest.NewWarningWriter(logging.NewWriter(logger, zapcore.WarnLevel), rest.WarningWriterOptions{
 				Deduplicate: true,
 			})
 
@@ -175,7 +177,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *log.Logger, f func() error) error {
+func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *zap.Logger, f func() error) error {
 	etcdClient, err := etcd.NewLocalClient()
 	if err != nil {
 		return fmt.Errorf("error creating etcd client: %w", err)
@@ -192,13 +194,13 @@ func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *log.L
 
 	mutex := concurrency.NewMutex(session, constants.EtcdTalosManifestApplyMutex)
 
-	logger.Printf("waiting for mutex")
+	logger.Debug("waiting for mutex")
 
 	if err := mutex.Lock(ctx); err != nil {
 		return fmt.Errorf("error acquiring mutex: %w", err)
 	}
 
-	logger.Printf("mutex acquired")
+	logger.Debug("mutex acquired")
 
 	defer mutex.Unlock(ctx) //nolint:errcheck
 
@@ -206,7 +208,7 @@ func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *log.L
 }
 
 //nolint:gocyclo
-func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *log.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
+func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
 	// flatten list of objects to be applied
 	objects := make([]*unstructured.Unstructured, 0, len(manifests.Items))
 
@@ -287,7 +289,7 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *log.Logg
 				return fmt.Errorf("error creating %s: %w", objName, err)
 			}
 		} else {
-			logger.Printf("created %s", objName)
+			logger.Sugar().Infof("created %s", objName)
 		}
 	}
 

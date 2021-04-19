@@ -6,11 +6,11 @@ package v1alpha2
 
 import (
 	"context"
-	"log"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/talos-systems/go-procfs/procfs"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/logging"
 )
 
 // Controller implements runtime.V1alpha2Controller.
@@ -39,7 +40,10 @@ func NewController(v1alpha1Runtime runtime.Runtime, loggingManager runtime.Loggi
 		return nil, err
 	}
 
-	logger := log.New(logWriter, "", log.LstdFlags|log.Lmsgprefix)
+	logger := logging.ZapLogger(
+		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
+		logging.NewLogDestination(logging.StdWriter, zapcore.InfoLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
+	).With(logging.Component("controller-runtime"))
 
 	ctrl.controllerRuntime, err = osruntime.NewRuntime(v1alpha1Runtime.State().V1Alpha2().Resources(), logger)
 

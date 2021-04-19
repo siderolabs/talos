@@ -23,6 +23,7 @@ import (
 	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
@@ -46,9 +47,7 @@ func (suite *AddressMergeSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressMergeController{}))

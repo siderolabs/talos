@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"math/bits"
 	"math/rand"
 	"net"
@@ -20,13 +19,14 @@ import (
 
 	"github.com/beevik/ntp"
 	"github.com/u-root/u-root/pkg/rtc"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/timex"
 )
 
 // Syncer performs time sync via NTP on schedule.
 type Syncer struct {
-	logger *log.Logger
+	logger *zap.Logger
 
 	timeServersMu  sync.Mutex
 	timeServers    []string
@@ -47,7 +47,7 @@ type Syncer struct {
 }
 
 // NewSyncer creates new Syncer with default configuration.
-func NewSyncer(logger *log.Logger, timeServers []string) *Syncer {
+func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
 	syncer := &Syncer{
 		logger: logger,
 
@@ -133,7 +133,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 
 		RTCClock, err = rtc.OpenRTC()
 		if err != nil {
-			syncer.logger.Printf("failure opening RTC, ignored: %s", err)
+			syncer.logger.Error("failure opening RTC, ignored", zap.Error(err))
 		}
 	})
 
@@ -164,7 +164,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 					syncer.timeSyncNotified = true
 				}
 			} else {
-				syncer.logger.Printf("error adjusting time: %s", err)
+				syncer.logger.Error("error adjusting time", zap.Error(err))
 			}
 		}
 
@@ -185,7 +185,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *n
 	if lastSyncServer != "" {
 		resp, err = syncer.queryServer(lastSyncServer)
 		if err != nil {
-			syncer.logger.Printf("ntp query error with server %q: %v", lastSyncServer, err)
+			syncer.logger.Error(fmt.Sprintf("ntp query error with server %q", lastSyncServer), zap.Error(err))
 
 			failedServer = lastSyncServer
 			lastSyncServer = ""
@@ -217,7 +217,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *n
 
 			resp, err = syncer.queryServer(server)
 			if err != nil {
-				syncer.logger.Printf("ntp query error with server %q: %v", server, err)
+				syncer.logger.Error(fmt.Sprintf("ntp query error with server %q", server), zap.Error(err))
 				err = nil
 			} else {
 				syncer.setLastSyncServer(server)
@@ -237,7 +237,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	for _, server := range syncer.getTimeServers() {
 		ips, err := net.LookupIP(server)
 		if err != nil {
-			syncer.logger.Printf("failed looking up %q: %s, ignored", server, err)
+			syncer.logger.Warn(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
 		}
 
 		for _, ip := range ips {
@@ -326,7 +326,7 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		fmt.Println(&buf, ", error was %s", err)
 	}
 
-	syncer.logger.Println(buf.String())
+	syncer.logger.Info(buf.String())
 
 	if err == nil {
 		if offset < -EpochLimit || offset > EpochLimit {
@@ -340,9 +340,9 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		if jump {
 			if RTCClock != nil {
 				if rtcErr := RTCClock.Set(time.Now().Add(offset)); rtcErr != nil {
-					syncer.logger.Printf("error syncing RTC: %s", rtcErr)
+					syncer.logger.Error("error syncing RTC", zap.Error(rtcErr))
 				} else {
-					syncer.logger.Printf("synchronized RTC with system clock")
+					syncer.logger.Info("synchronized RTC with system clock")
 				}
 			}
 		}

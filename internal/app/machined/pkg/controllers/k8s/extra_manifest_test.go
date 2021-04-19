@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -47,9 +48,7 @@ func (suite *ExtraManifestSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ExtraManifestController{}))

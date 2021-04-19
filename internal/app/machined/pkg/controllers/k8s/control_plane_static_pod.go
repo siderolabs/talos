@@ -7,7 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ func (ctrl *ControlPlaneStaticPodController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,7 +87,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).Status().Version
 
 		for _, pod := range []struct {
-			f  func(context.Context, controller.Runtime, *log.Logger, *config.K8sControlPlane, string) error
+			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string) error
 			id resource.ID
 		}{
 			{
@@ -167,7 +167,7 @@ func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
 	return result
 }
 
-func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *log.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.APIServer()
 
 	args := []string{
@@ -293,7 +293,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *log.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.ControllerManager()
 
 	args := []string{
@@ -394,7 +394,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *log.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.Scheduler()
 
 	args := []string{

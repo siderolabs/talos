@@ -8,13 +8,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/ethtool"
+	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
@@ -46,7 +46,7 @@ func (ctrl *LinkStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
 	// other connections are used to send requests and receive responses, as we can't mix the notifications and request/responses

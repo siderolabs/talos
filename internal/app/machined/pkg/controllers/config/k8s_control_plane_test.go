@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 
 	configctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -49,9 +50,7 @@ func (suite *K8sControlPlaneSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&configctrl.K8sControlPlaneController{}))

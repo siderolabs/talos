@@ -20,9 +20,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"go.uber.org/zap"
 
 	timectrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -52,7 +54,7 @@ func (suite *SyncSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
+	logger := logging.Wrap(log.Writer())
 
 	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
 	suite.Require().NoError(err)
@@ -326,7 +328,7 @@ func (suite *SyncSuite) TearDownTest() {
 	suite.Assert().NoError(err)
 }
 
-func (suite *SyncSuite) newMockSyncer(logger *log.Logger, servers []string) timectrl.NTPSyncer {
+func (suite *SyncSuite) newMockSyncer(logger *zap.Logger, servers []string) timectrl.NTPSyncer {
 	suite.syncerMu.Lock()
 	defer suite.syncerMu.Unlock()
 
@@ -380,7 +382,7 @@ func (mock *mockSyncer) SetTimeServers(servers []string) {
 	mock.timeServers = append([]string(nil), servers...)
 }
 
-func newMockSyncer(_ *log.Logger, servers []string) *mockSyncer {
+func newMockSyncer(_ *zap.Logger, servers []string) *mockSyncer {
 	return &mockSyncer{
 		timeServers: append([]string(nil), servers...),
 		syncedCh:    make(chan struct{}, 1),
