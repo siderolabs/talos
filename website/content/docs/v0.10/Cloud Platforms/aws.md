@@ -99,7 +99,6 @@ aws ec2 authorize-security-group-ingress \
     --group-name talos-aws-tutorial-sg \
     --protocol all \
     --port 0 \
-    --group-id $SECURITY_GROUP \
     --source-group $SECURITY_GROUP
 ```
 
@@ -111,15 +110,14 @@ aws ec2 authorize-security-group-ingress \
     --group-name talos-aws-tutorial-sg \
     --protocol tcp \
     --port 6443 \
-    --cidr 0.0.0.0/0 \
-    --group-id $SECURITY_GROUP
+    --cidr 0.0.0.0/0
+
 aws ec2 authorize-security-group-ingress \
     --region $REGION \
     --group-name talos-aws-tutorial-sg \
     --protocol tcp \
     --port 50000-50001 \
-    --cidr 0.0.0.0/0 \
-    --group-id $SECURITY_GROUP
+    --cidr 0.0.0.0/0
 ```
 
 ### Create a Load Balancer
@@ -148,7 +146,10 @@ created join.yaml
 created talosconfig
 ```
 
+Take note that the generated configs are too long for AWS userdata field if the `--with-examples` and `--with-docs` flags are not passed.
+
 At this point, you can modify the generated configs to your liking.
+
 Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
 
 #### Validate the Configuration Files
@@ -178,6 +179,7 @@ aws ec2 run-instances \
     --user-data file://init.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP \
+    --associate-public-ip-address \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-0}]"
 ```
 
@@ -194,6 +196,7 @@ while [[ "$CP_COUNT" -lt 3 ]]; do
     --user-data file://controlplane.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP \
+    --associate-public-ip-address \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-$CP_COUNT}]"
   ((CP_COUNT++))
 done
@@ -223,6 +226,7 @@ aws elbv2 create-target-group \
     --name talos-aws-tutorial-tg \
     --protocol TCP \
     --port 6443 \
+    --target-type ip \
     --vpc-id $VPC
 ```
 
