@@ -73,6 +73,12 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to unmarshall XML from OVF env: %w", err)
 	}
 
+	if ovfEnv.Property == nil || ovfEnv.Property.Properties == nil { // no data in OVF env
+		log.Printf("empty OVF env")
+
+		return nil, nil
+	}
+
 	log.Printf("searching for property '%s' in OVF", key)
 
 	for _, property := range ovfEnv.Property.Properties { // iterate to check if our key is present
