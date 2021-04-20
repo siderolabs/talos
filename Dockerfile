@@ -214,15 +214,23 @@ LABEL "alpha.talos.dev/version"="${VERSION}"
 LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
 ENTRYPOINT ["/talosctl"]
 
-FROM base AS talosctl-darwin-build
+FROM base AS talosctl-darwin-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 
+FROM base AS talosctl-darwin-arm64-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
+RUN chmod +x /talosctl-darwin-arm64
+
 FROM scratch AS talosctl-darwin
-COPY --from=talosctl-darwin-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
+COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
+COPY --from=talosctl-darwin-arm64-build /talosctl-darwin-arm64 /talosctl-darwin-arm64
 
 # The kernel target is the linux kernel.
 

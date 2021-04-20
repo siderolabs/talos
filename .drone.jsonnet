@@ -551,6 +551,7 @@ local release = {
       '_out/talosctl-cni-bundle-amd64.tar.gz',
       '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',
+      '_out/talosctl-darwin-arm64',
       '_out/talosctl-linux-amd64',
       '_out/talosctl-linux-arm64',
       '_out/talosctl-linux-armv7',
