@@ -43,6 +43,9 @@ const (
 	// BoardBananaPiM64 is the  name of the Banana Pi M64.
 	BoardBananaPiM64 = "bananapi_m64"
 
+	// BoardPine64 is the  name of the Pine64 Rock64.
+	BoardPine64 = "pine64"
+
 	// BoardRock64 is the  name of the Pine64 Rock64.
 	BoardRock64 = "rock64"
 
