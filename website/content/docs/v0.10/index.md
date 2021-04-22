@@ -16,6 +16,8 @@ title: Welcome
 If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
 We hold a weekly meeting that all audiences are welcome to attend.
 
+### Feedback
+
 We would appreciate your feedback so that we can make Talos even better!
 To do so, you can take our [survey](https://docs.google.com/forms/d/1TUna5YTYGCKot68Y9YN_CLobY6z9JzLVCq1G7DoyNjA/edit).
 
@@ -31,4 +33,4 @@ You can subscribe to this meeting by joining the community forum above.
 If you are using Talos in a production setting, and need consulting services to get started or to integrate Talos into your existing environment, we can help.
 Talos Systems, Inc. offers support contracts with SLA (Service Level Agreement)-bound terms for mission-critical environments.
 
-[Learn More](https://www.talos-systems.com/pricing/)
+[Learn More](https://www.talos-systems.com/support/)

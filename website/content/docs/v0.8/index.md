@@ -28,4 +28,4 @@ You can subscribe to this meeting by joining the community forum above.
 If you are using Talos in a production setting, and need consulting services to get started or to integrate Talos into your existing environment, we can help.
 Talos Systems, Inc. offers support contracts with SLA (Service Level Agreement)-bound terms for mission-critical environments.
 
-[Learn More](https://www.talos-systems.com/pricing/)
+[Learn More](https://www.talos-systems.com/support/)

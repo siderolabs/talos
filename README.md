@@ -38,9 +38,12 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
 We hold a weekly meeting that all audiences are welcome to attend.
 
+We would appreciate your feedback so that we can make Talos even better!
+To do so, you can take our [survey](https://docs.google.com/forms/d/1TUna5YTYGCKot68Y9YN_CLobY6z9JzLVCq1G7DoyNjA/edit).
+
 ### Office Hours
 
-- When: Mondays at 17:00 UTC.
+- When: Mondays at 16:30 UTC.
 - Where: [Google Meet](https://meet.google.com/day-pxhv-zky).
 
 You can subscribe to this meeting by joining the community forum above.
