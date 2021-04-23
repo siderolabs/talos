@@ -8,6 +8,9 @@ title: Welcome
 
 - GitHub: [repo](https://github.com/talos-systems/talos)
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
+- Matrix: Join our Matrix channels:
+  - Community: [#talos:matrix.org](https://matrix.to/#/#talos:matrix.org)
+  - Support: [#talos-support:matrix.org](https://matrix.to/#/#talos-support:matrix.org)
 - Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
 - Forum: [community](https://groups.google.com/a/talos-systems.com/forum/#!forum/community)
 - Twitter: [@talossystems](https://twitter.com/talossystems)
