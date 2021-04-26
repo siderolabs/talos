@@ -211,10 +211,6 @@ description: Talos gRPC API reference.
 - [security/security.proto](#security/security.proto)
     - [CertificateRequest](#securityapi.CertificateRequest)
     - [CertificateResponse](#securityapi.CertificateResponse)
-    - [ReadFileRequest](#securityapi.ReadFileRequest)
-    - [ReadFileResponse](#securityapi.ReadFileResponse)
-    - [WriteFileRequest](#securityapi.WriteFileRequest)
-    - [WriteFileResponse](#securityapi.WriteFileResponse)
   
     - [SecurityService](#securityapi.SecurityService)
   
@@ -3386,63 +3382,6 @@ The response message containing the requested logs.
 
 
 
-
-<a name="securityapi.ReadFileRequest"></a>
-
-### ReadFileRequest
-The request message for reading a file on disk.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="securityapi.ReadFileResponse"></a>
-
-### ReadFileResponse
-The response message for reading a file on disk.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| data | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="securityapi.WriteFileRequest"></a>
-
-### WriteFileRequest
-The request message containing the process name.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  |  |
-| data | [bytes](#bytes) |  |  |
-| perm | [int32](#int32) |  |  |
-
-
-
-
-
-
-<a name="securityapi.WriteFileResponse"></a>
-
-### WriteFileResponse
-The response message containing the requested logs.
-
-
-
-
-
  <!-- end messages -->
 
  <!-- end enums -->
@@ -3458,8 +3397,6 @@ The security service definition.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Certificate | [CertificateRequest](#securityapi.CertificateRequest) | [CertificateResponse](#securityapi.CertificateResponse) |  |
-| ReadFile | [ReadFileRequest](#securityapi.ReadFileRequest) | [ReadFileResponse](#securityapi.ReadFileResponse) |  |
-| WriteFile | [WriteFileRequest](#securityapi.WriteFileRequest) | [WriteFileResponse](#securityapi.WriteFileResponse) |  |
 
  <!-- end services -->
 
