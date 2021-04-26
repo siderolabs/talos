@@ -28,19 +28,21 @@ import (
 )
 
 var genConfigCmdFlags struct {
-	additionalSANs    []string
-	configVersion     string
-	dnsDomain         string
-	kubernetesVersion string
-	talosVersion      string
-	installDisk       string
-	installImage      string
-	outputDir         string
-	configPatch       string
-	registryMirrors   []string
-	persistConfig     bool
-	withExamples      bool
-	withDocs          bool
+	additionalSANs          []string
+	configVersion           string
+	dnsDomain               string
+	kubernetesVersion       string
+	talosVersion            string
+	installDisk             string
+	installImage            string
+	outputDir               string
+	configPatch             string
+	configPatchControlPlane string
+	configPatchJoin         string
+	registryMirrors         []string
+	persistConfig           bool
+	withExamples            bool
+	withDocs                bool
 }
 
 // genConfigCmd represents the gen config command.
@@ -162,15 +164,33 @@ func genV1Alpha1Config(args []string) error {
 		),
 	}
 
-	if genConfigCmdFlags.configPatch != "" {
+	addConfigPatch := func(configPatch string, configOpt func(jsonpatch.Patch) bundle.Option) error {
+		if configPatch == "" {
+			return nil
+		}
+
 		var jsonPatch jsonpatch.Patch
 
-		jsonPatch, err = jsonpatch.DecodePatch([]byte(genConfigCmdFlags.configPatch))
+		jsonPatch, err = jsonpatch.DecodePatch([]byte(configPatch))
 		if err != nil {
 			return fmt.Errorf("error parsing config JSON patch: %w", err)
 		}
 
-		configBundleOpts = append(configBundleOpts, bundle.WithJSONPatch(jsonPatch))
+		configBundleOpts = append(configBundleOpts, configOpt(jsonPatch))
+
+		return nil
+	}
+
+	if err = addConfigPatch(genConfigCmdFlags.configPatch, bundle.WithJSONPatch); err != nil {
+		return err
+	}
+
+	if err = addConfigPatch(genConfigCmdFlags.configPatchControlPlane, bundle.WithJSONPatchControlPlane); err != nil {
+		return err
+	}
+
+	if err = addConfigPatch(genConfigCmdFlags.configPatchJoin, bundle.WithJSONPatchJoin); err != nil {
+		return err
 	}
 
 	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
@@ -220,7 +240,9 @@ func init() {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.outputDir, "output-dir", "o", "", "destination to output generated files")
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatch, "config-patch", "", "patch generated machineconfigs")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchJoin, "config-patch-join", "", "patch generated machineconfigs (applied to 'join' type)")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
