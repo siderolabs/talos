@@ -8,7 +8,7 @@ match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 # previous release
 previous = "v0.9.0"
 
-pre_release = true
+pre_release = false
 
 preface = """\
 """
@@ -23,7 +23,7 @@ preface = """\
 """
 
     [notes.timesync]
-        title = "Time Syncrhonization"
+        title = "Time Synchronization"
         description = """\
 * `timed` service was replaced with a time sync controller, no machine configuration changes.
 * Talos now prefers last successful time server (by IP address) on each sync attempt (improves sync accuracy).
