@@ -10,8 +10,6 @@ option java_package = "com.security.api";
 // The security service definition.
 service SecurityService {
   rpc Certificate(CertificateRequest) returns (CertificateResponse);
-  rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);
-  rpc WriteFile(WriteFileRequest) returns (WriteFileResponse);
 }
 
 // The request message containing the process name.
@@ -24,23 +22,3 @@ message CertificateResponse {
   bytes ca = 1;
   bytes crt = 2;
 }
-
-// The request message for reading a file on disk.
-message ReadFileRequest {
-  string path = 1;
-}
-
-// The response message for reading a file on disk.
-message ReadFileResponse {
-  bytes data = 1;
-}
-
-// The request message containing the process name.
-message WriteFileRequest {
-  string path = 1;
-  bytes data = 2;
-  int32 perm = 3;
-}
-
-// The response message containing the requested logs.
-message WriteFileResponse {}
