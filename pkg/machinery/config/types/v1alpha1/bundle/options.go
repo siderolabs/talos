@@ -26,7 +26,10 @@ type Options struct {
 	ExistingConfigs string // path to existing config files
 	Verbose         bool   // wheither to write any logs during generate
 	InputOptions    *InputOptions
-	JSONPatch       jsonpatch.Patch
+
+	JSONPatch             jsonpatch.Patch
+	JSONPatchControlPlane jsonpatch.Patch
+	JSONPatchJoin         jsonpatch.Patch
 }
 
 // DefaultOptions returns default options.
@@ -67,6 +70,24 @@ func WithVerbose(verbose bool) Option {
 func WithJSONPatch(patch jsonpatch.Patch) Option {
 	return func(o *Options) error {
 		o.JSONPatch = append(o.JSONPatch, patch...)
+
+		return nil
+	}
+}
+
+// WithJSONPatchControlPlane allows patching init and controlplane config in a bundle with a patch.
+func WithJSONPatchControlPlane(patch jsonpatch.Patch) Option {
+	return func(o *Options) error {
+		o.JSONPatchControlPlane = append(o.JSONPatchControlPlane, patch...)
+
+		return nil
+	}
+}
+
+// WithJSONPatchJoin allows patching join (worker) config in a bundle with a patch.
+func WithJSONPatchJoin(patch jsonpatch.Patch) Option {
+	return func(o *Options) error {
+		o.JSONPatchJoin = append(o.JSONPatchJoin, patch...)
 
 		return nil
 	}
