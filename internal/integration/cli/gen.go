@@ -134,7 +134,7 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
 }
 
-// TestGenConfigPatch verify that gen config --config-patch works.
+// TestGenConfigPatch verifies that gen config --config-patch works.
 func (suite *GenSuite) TestGenConfigPatch() {
 	patch, err := json.Marshal([]map[string]interface{}{
 		{
@@ -146,12 +146,53 @@ func (suite *GenSuite) TestGenConfigPatch() {
 
 	suite.Assert().NoError(err)
 
-	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--config-patch", string(patch)})
+	for _, tt := range []struct {
+		flag         string
+		shouldAffect map[string]bool
+	}{
+		{
+			flag: "config-patch",
+			shouldAffect: map[string]bool{
+				"init.yaml":         true,
+				"controlplane.yaml": true,
+				"join.yaml":         true,
+			},
+		},
+		{
+			flag: "config-patch-control-plane",
+			shouldAffect: map[string]bool{
+				"init.yaml":         true,
+				"controlplane.yaml": true,
+			},
+		},
+		{
+			flag: "config-patch-join",
+			shouldAffect: map[string]bool{
+				"join.yaml": true,
+			},
+		},
+	} {
+		tt := tt
 
-	cfg, err := configloader.NewFromFile("controlplane.yaml")
+		suite.Run(tt.flag, func() {
+			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)})
 
-	suite.Assert().NoError(err)
-	suite.Assert().Equal("bar", cfg.Cluster().Name())
+			for _, configName := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
+				cfg, err := configloader.NewFromFile(configName)
+
+				suite.Assert().NoError(err)
+
+				switch {
+				case tt.shouldAffect[configName]:
+					suite.Assert().Equal("bar", cfg.Cluster().Name(), "checking %q", configName)
+				case configName == "join.yaml":
+					suite.Assert().Equal("", cfg.Cluster().Name(), "checking %q", configName)
+				default:
+					suite.Assert().Equal("foo", cfg.Cluster().Name(), "checking %q", configName)
+				}
+			}
+		})
+	}
 }
 
 func init() {

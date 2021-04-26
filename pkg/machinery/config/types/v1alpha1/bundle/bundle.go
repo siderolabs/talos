@@ -60,8 +60,8 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			}
 		}
 
-		if err := bundle.ApplyJSONPatch(options.JSONPatch); err != nil {
-			return nil, fmt.Errorf("error patching configs: %w", err)
+		if err := applyJSONPatches(bundle, options); err != nil {
+			return nil, err
 		}
 
 		// Pull existing talosconfig
@@ -124,8 +124,8 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		}
 	}
 
-	if err = bundle.ApplyJSONPatch(options.JSONPatch); err != nil {
-		return nil, fmt.Errorf("error patching configs: %w", err)
+	if err = applyJSONPatches(bundle, options); err != nil {
+		return nil, err
 	}
 
 	bundle.TalosCfg, err = generate.Talosconfig(input, options.InputOptions.GenOptions...)
@@ -134,4 +134,20 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 	}
 
 	return bundle, nil
+}
+
+func applyJSONPatches(bundle *v1alpha1.ConfigBundle, options Options) error {
+	if err := bundle.ApplyJSONPatch(options.JSONPatch, true, true); err != nil {
+		return fmt.Errorf("error patching configs: %w", err)
+	}
+
+	if err := bundle.ApplyJSONPatch(options.JSONPatchControlPlane, true, false); err != nil {
+		return fmt.Errorf("error patching control plane configs: %w", err)
+	}
+
+	if err := bundle.ApplyJSONPatch(options.JSONPatchJoin, false, true); err != nil {
+		return fmt.Errorf("error patching worker config: %w", err)
+	}
+
+	return nil
 }

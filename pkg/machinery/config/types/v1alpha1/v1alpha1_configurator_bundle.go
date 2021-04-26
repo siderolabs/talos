@@ -89,7 +89,7 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 }
 
 // ApplyJSONPatch patches every config type with a patch.
-func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch) error {
+func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, patchJoin bool) error {
 	if len(patch) == 0 {
 		return nil
 	}
@@ -117,19 +117,23 @@ func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch) error {
 
 	var err error
 
-	c.InitCfg, err = apply(c.InitCfg)
-	if err != nil {
-		return err
+	if patchControlPlane {
+		c.InitCfg, err = apply(c.InitCfg)
+		if err != nil {
+			return err
+		}
+
+		c.ControlPlaneCfg, err = apply(c.ControlPlaneCfg)
+		if err != nil {
+			return err
+		}
 	}
 
-	c.ControlPlaneCfg, err = apply(c.ControlPlaneCfg)
-	if err != nil {
-		return err
-	}
-
-	c.JoinCfg, err = apply(c.JoinCfg)
-	if err != nil {
-		return err
+	if patchJoin {
+		c.JoinCfg, err = apply(c.JoinCfg)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
