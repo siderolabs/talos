@@ -95,7 +95,9 @@ talosctl cluster create [flags]
       --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.10.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                    CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                     CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
-      --config-patch string                     patch generated machineconfigs
+      --config-patch string                     patch generated machineconfigs (applied to all node types)
+      --config-patch-control-plane string       patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-join string                patch generated machineconfigs (applied to 'join' type)
       --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
@@ -1080,20 +1082,22 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 ### Options
 
 ```
-      --additional-sans strings     additional Subject-Alt-Names for the APIServer certificate
-      --config-patch string         patch generated machineconfigs
-      --dns-domain string           the dns domain to use for cluster (default "cluster.local")
-  -h, --help                        help for config
-      --install-disk string         the disk to install to (default "/dev/sda")
-      --install-image string        the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string   desired kubernetes version to run
-  -o, --output-dir string           destination to output generated files
-  -p, --persist                     the desired persist value for configs (default true)
-      --registry-mirror strings     list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --talos-version string        the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
-      --version string              the desired machine config version to generate (default "v1alpha1")
-      --with-docs                   renders all machine configs adding the documentation for each field (default true)
-      --with-examples               renders all machine configs with the commented examples (default true)
+      --additional-sans strings             additional Subject-Alt-Names for the APIServer certificate
+      --config-patch string                 patch generated machineconfigs (applied to all node types)
+      --config-patch-control-plane string   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-join string            patch generated machineconfigs (applied to 'join' type)
+      --dns-domain string                   the dns domain to use for cluster (default "cluster.local")
+  -h, --help                                help for config
+      --install-disk string                 the disk to install to (default "/dev/sda")
+      --install-image string                the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
+      --kubernetes-version string           desired kubernetes version to run
+  -o, --output-dir string                   destination to output generated files
+  -p, --persist                             the desired persist value for configs (default true)
+      --registry-mirror strings             list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --talos-version string                the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
+      --version string                      the desired machine config version to generate (default "v1alpha1")
+      --with-docs                           renders all machine configs adding the documentation for each field (default true)
+      --with-examples                       renders all machine configs with the commented examples (default true)
 ```
 
 ### Options inherited from parent commands
