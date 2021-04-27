@@ -25,14 +25,14 @@ require (
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/ttrpc v1.0.2 // indirect
-	github.com/containerd/typeurl v1.0.1
+	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.9.1
-	github.com/coreos/go-iptables v0.5.0
+	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.4+incompatible
+	github.com/docker/docker v20.10.6+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
@@ -43,14 +43,14 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.2.0
+	github.com/gdamore/tcell/v2 v2.2.1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/hashicorp/go-getter v1.5.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/hashicorp/go-getter v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/insomniacslk/dhcp v0.0.0-20210120172423-cc9239ac6294
 	github.com/jsimonetti/rtnetlink v0.0.0-20210226120601-1b79e63a70a0
@@ -62,10 +62,10 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc92 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/plunder-app/kube-vip v0.3.2
+	github.com/plunder-app/kube-vip v0.3.3
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210217110421-8a8f78a6dd01
-	github.com/rs/xid v1.2.1
+	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.3
@@ -81,8 +81,8 @@ require (
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-20210302191918-8ffb55943c71
 	github.com/u-root/u-root v7.0.0+incompatible
-	github.com/vmware-tanzu/sonobuoy v0.20.0
-	github.com/vmware/govmomi v0.24.0
+	github.com/vmware-tanzu/sonobuoy v0.50.0
+	github.com/vmware/govmomi v0.25.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
