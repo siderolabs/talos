@@ -25,7 +25,7 @@ require (
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/ttrpc v1.0.2 // indirect
-	github.com/containerd/typeurl v1.0.1
+	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-iptables v0.5.0
