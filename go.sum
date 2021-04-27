@@ -1066,8 +1066,8 @@ github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc/go.mod h1:ZjcWmF
 github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17pCcGlemwknint6hfoeCVQrEMVwxRLRjXpq+BU=
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae h1:4hwBBUfQCFe3Cym0ZtKyq7L16eZUtYKs+BaHDN6mAns=
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
-github.com/vmware-tanzu/sonobuoy v0.20.0 h1:LIfAWbS9G66PFsCDjaaO2J0kQj9+ED1i/kKYLaK0uNc=
-github.com/vmware-tanzu/sonobuoy v0.20.0/go.mod h1:4CnFknIEj/FI9+l1HmbblgwpTR2shupF5ZA1fLoEFVE=
+github.com/vmware-tanzu/sonobuoy v0.50.0 h1:tDCyzzFTe4YyEpXZhoQQH8OfHS/pWTfDGZ1NArAdO30=
+github.com/vmware-tanzu/sonobuoy v0.50.0/go.mod h1:4CnFknIEj/FI9+l1HmbblgwpTR2shupF5ZA1fLoEFVE=
 github.com/vmware/govmomi v0.24.0 h1:G7YFF6unMTG3OY25Dh278fsomVTKs46m2ENlEFSbmbs=
 github.com/vmware/govmomi v0.24.0/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
