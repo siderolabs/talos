@@ -28,7 +28,7 @@ require (
 	github.com/containerd/typeurl v1.0.1
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.9.1
-	github.com/coreos/go-iptables v0.5.0
+	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
 	github.com/docker/distribution v2.7.1+incompatible
