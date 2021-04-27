@@ -65,7 +65,7 @@ require (
 	github.com/plunder-app/kube-vip v0.3.2
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210217110421-8a8f78a6dd01
-	github.com/rs/xid v1.2.1
+	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.3
