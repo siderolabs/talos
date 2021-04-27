@@ -62,7 +62,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc92 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200728170252-4d89ac9fbff6
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/plunder-app/kube-vip v0.3.2
+	github.com/plunder-app/kube-vip v0.3.3
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210217110421-8a8f78a6dd01
 	github.com/rs/xid v1.2.1
