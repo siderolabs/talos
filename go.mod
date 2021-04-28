@@ -5,9 +5,6 @@ go 1.16
 replace (
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
 
-	// Until https://github.com/WireGuard/wgctrl-go/pull/103 is merged.
-	golang.zx2c4.com/wireguard/wgctrl => github.com/AlekSi/wgctrl-go v0.0.0-20210427074850-22ec87cc478a
-
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
@@ -93,7 +90,7 @@ require (
 	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210427074850-22ec87cc478a
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210427135350-f9ad6d392236
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
