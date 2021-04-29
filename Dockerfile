@@ -119,6 +119,7 @@ ARG CGO_ENABLED
 ENV CGO_ENABLED ${CGO_ENABLED}
 ENV GOCACHE /.cache/go-build
 ENV GOMODCACHE /.cache/mod
+ENV SOURCE_DATE_EPOCH=0
 WORKDIR /src
 
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
@@ -389,9 +390,13 @@ RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
 FROM scratch AS squashfs-arm64
@@ -409,13 +414,27 @@ FROM build AS initramfs-archive-arm64
 WORKDIR /initramfs
 COPY --from=squashfs-arm64 /rootfs.sqsh .
 COPY --from=init-build-arm64 /init .
-RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+RUN find . -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
+RUN set -o pipefail \
+    && find . 2>/dev/null \
+    | LC_ALL=c sort \
+    | cpio --reproducible -H newc -o \
+    | xz -v -C crc32 -0 -e -T 0 -z \
+    > /initramfs.xz
 
 FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
 COPY --from=squashfs-amd64 /rootfs.sqsh .
 COPY --from=init-build-amd64 /init .
-RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+RUN find . -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
+RUN set -o pipefail \
+    && find . 2>/dev/null \
+    | LC_ALL=c sort \
+    | cpio --reproducible -H newc -o \
+    | xz -v -C crc32 -0 -e -T 0 -z \
+    > /initramfs.xz
 
 FROM initramfs-archive-${TARGETARCH} AS initramfs-archive
 
