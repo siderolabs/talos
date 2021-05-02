@@ -32,15 +32,15 @@ To enable disk encryption you should modify the machine configuration with the f
 ```yaml
 machine:
   ...
-  systemDisksEncryption:
+  systemDiskEncryption:
     ephemeral:
       keys:
-        - nodeID:
-          keySlot: 0
+        - nodeID: {}
+          slot: 0
     state:
       keys:
-        - nodeID:
-          keySlot: 0
+        - nodeID: {}
+          slot: 0
 ```
 
 ### Encryption Keys
@@ -52,21 +52,21 @@ LUKS2 supports up to 32 encryption keys and it is possible to specify all of the
 Talos always tries to sync the keys list defined in the machine config with the actual keys defined for the LUKS2 partition.
 So if you update the keys list you should have at least one key that is not changed to be used for keys management.
 
-When you define a key you should specify the key kind and the `keySlot`:
+When you define a key you should specify the key kind and the `slot`:
 
 ```yaml
 machine:
   ...
   state:
     keys:
-      - nodeID: # key kind
-        keySlot: 1
+      - nodeID: {} # key kind
+        slot: 1
 
   ephemeral:
     keys:
       - static:
           passphrase: supersecret
-        keySlot: 0
+        slot: 0
 ```
 
 Take a note that key order does not play any role on which key slot is used.
