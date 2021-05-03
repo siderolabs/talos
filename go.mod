@@ -70,7 +70,7 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20210427105118-4f80b976b640
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
-	github.com/talos-systems/go-loadbalancer v0.1.0
+	github.com/talos-systems/go-loadbalancer v0.1.1
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
 	github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133
 	github.com/talos-systems/go-smbios v0.0.0-20201228201610-fb425d4727e6
