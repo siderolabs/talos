@@ -14,10 +14,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/talos-systems/go-kmsg"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/kmsg"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
