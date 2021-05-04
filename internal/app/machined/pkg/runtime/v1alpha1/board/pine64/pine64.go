@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardPine64)
+	bin       = fmt.Sprintf("usr/install/arm64/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardPine64)
 	off int64 = 1024 * 8
 	dtb       = "/dtb/allwinner/sun50i-a64-pine64-plus.dtb"
 )
@@ -33,7 +33,7 @@ type Pine64 struct{}
 
 // Name implements the runtime.Board.
 func (b *Pine64) Name() string {
-	return constants.BoardBananaPiM64
+	return constants.BoardPine64
 }
 
 // Install implements the runtime.Board.
@@ -72,7 +72,7 @@ func (b Pine64) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install" + dtb
+	src := "/usr/install/arm64" + dtb
 	dst := "/boot/EFI" + dtb
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)
