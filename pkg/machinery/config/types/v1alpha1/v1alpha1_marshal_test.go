@@ -5,10 +5,13 @@
 package v1alpha1_test
 
 import (
+	"fmt"
 	"testing"
 
+	humanize "github.com/dustin/go-humanize"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -34,4 +37,113 @@ func TestBase64Bytes(t *testing.T) {
 	require.NoError(t, yaml.Unmarshal(out, &decoded))
 
 	assert.Equal(t, input.CA, decoded.CA)
+}
+
+func TestDiskSizeMatcherUnmarshal(t *testing.T) {
+	obj := struct {
+		M *v1alpha1.InstallDiskSizeMatcher `yaml:"m"`
+	}{
+		M: &v1alpha1.InstallDiskSizeMatcher{},
+	}
+
+	for _, test := range []struct {
+		condition string
+		size      string
+		match     bool
+		err       bool
+	}{
+		{
+			condition: "<= 256GB",
+			size:      "200GB",
+			match:     true,
+		},
+		{
+			condition: ">= 256GB",
+			size:      "200GB",
+			match:     false,
+		},
+		{
+			condition: "<256GB",
+			size:      "256GB",
+			match:     false,
+		},
+		{
+			condition: ">256GB",
+			size:      "256GB",
+			match:     false,
+		},
+		{
+			condition: ">256GB",
+			size:      "257GB",
+			match:     true,
+		},
+		{
+			condition: "==256GB",
+			size:      "256GB",
+			match:     true,
+		},
+		{
+			condition: "==256GB",
+			size:      "257GB",
+			match:     false,
+		},
+		{
+			condition: "==   256GB",
+			size:      "256GB",
+			match:     true,
+		},
+		{
+			condition: "256GB",
+			size:      "256GB",
+			match:     true,
+		},
+		{
+			condition: "   256GB",
+			size:      "256GB",
+			match:     true,
+		},
+		{
+			condition: "9a256GB",
+			err:       true,
+		},
+		{
+			condition: "--256GB",
+			err:       true,
+		},
+		{
+			condition: "<<256GB",
+			err:       true,
+		},
+		{
+			condition: ">1",
+			size:      "1GB",
+			match:     true,
+		},
+		{
+			condition: "< 1",
+			size:      "1GB",
+			match:     false,
+		},
+	} {
+		var (
+			size uint64
+			err  error
+		)
+
+		if test.size != "" {
+			size, err = humanize.ParseBytes(test.size)
+			require.NoError(t, err)
+		}
+
+		err = yaml.Unmarshal([]byte(fmt.Sprintf("m: '%s'\n", test.condition)), &obj)
+		if test.err {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+
+		if test.size != "" {
+			require.Equal(t, obj.M.Matcher(&disk.Disk{Size: size}), test.match, test.size)
+		}
+	}
 }
