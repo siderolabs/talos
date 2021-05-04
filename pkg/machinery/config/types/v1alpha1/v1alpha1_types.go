@@ -846,7 +846,7 @@ type InstallConfig struct {
 // InstallDiskSizeMatcher disk size condition parser.
 type InstallDiskSizeMatcher struct {
 	// docgen:nodoc
-	matcher disk.Matcher
+	Matcher disk.Matcher
 	// docgen:nodoc
 	condition string
 }
@@ -856,54 +856,56 @@ func (m *InstallDiskSizeMatcher) MarshalYAML() (interface{}, error) {
 	return m.condition, nil
 }
 
-// UnmarshalYAML is a custom unmarshaller for `Endpoint`.
+// UnmarshalYAML is a custom unmarshaller for `InstallDiskSizeMatcher`.
 func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&m.condition); err != nil {
 		return err
 	}
 
-	re := regexp.MustCompile(`(>=|<=|>|<|==)?\b*(.+)$`)
+	m.condition = strings.TrimSpace(m.condition)
+
+	re := regexp.MustCompile(`(>=|<=|>|<|==)?\b*(.*)$`)
 
 	parts := re.FindStringSubmatch(m.condition)
-	if len(parts) == 0 {
+	if len(parts) < 2 {
 		return fmt.Errorf("failed to parse the condition: expected [>=|<=|>|<|==]<size>[units], got %s", m.condition)
 	}
 
 	var compare func(*disk.Disk, uint64) bool
 
-	if len(parts) > 1 {
-		switch parts[0] {
-		case ">=":
-			compare = func(d *disk.Disk, size uint64) bool {
-				return d.Size >= size
-			}
-		case "<=":
-			compare = func(d *disk.Disk, size uint64) bool {
-				return d.Size <= size
-			}
-		case ">":
-			compare = func(d *disk.Disk, size uint64) bool {
-				return d.Size > size
-			}
-		case "<":
-			compare = func(d *disk.Disk, size uint64) bool {
-				return d.Size < size
-			}
-		case "==":
-			compare = func(d *disk.Disk, size uint64) bool {
-				return d.Size == size
-			}
-		default:
-			return fmt.Errorf("unknown binary operator %s", parts[0])
+	switch parts[1] {
+	case ">=":
+		compare = func(d *disk.Disk, size uint64) bool {
+			return d.Size >= size
 		}
+	case "<=":
+		compare = func(d *disk.Disk, size uint64) bool {
+			return d.Size <= size
+		}
+	case ">":
+		compare = func(d *disk.Disk, size uint64) bool {
+			return d.Size > size
+		}
+	case "<":
+		compare = func(d *disk.Disk, size uint64) bool {
+			return d.Size < size
+		}
+	case "":
+		fallthrough
+	case "==":
+		compare = func(d *disk.Disk, size uint64) bool {
+			return d.Size == size
+		}
+	default:
+		return fmt.Errorf("unknown binary operator %s", parts[1])
 	}
 
-	size, err := humanize.ParseBytes(parts[1])
+	size, err := humanize.ParseBytes(strings.TrimSpace(parts[2]))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse disk size %s: %s", parts[2], err)
 	}
 
-	m.matcher = func(d *disk.Disk) bool {
+	m.Matcher = func(d *disk.Disk) bool {
 		return compare(d, size)
 	}
 
