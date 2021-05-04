@@ -858,7 +858,7 @@ func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 
 		matchers := []disk.Matcher{}
 		if selector.Size != nil {
-			matchers = append(matchers, selector.Size.matcher)
+			matchers = append(matchers, selector.Size.Matcher)
 		}
 
 		if selector.UUID != "" {
