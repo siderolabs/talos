@@ -8,6 +8,10 @@ replace (
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
+
+	// See https://github.com/talos-systems/go-loadbalancer/pull/4
+	// `go get github.com/smira/tcpproxy@combined-fixes`, then copy pseudo-version there
+	inet.af/tcpproxy => github.com/smira/tcpproxy v0.0.0-20201015133617-de5f7797b95b
 )
 
 require (
@@ -71,7 +75,7 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-kmsg v0.1.0
-	github.com/talos-systems/go-loadbalancer v0.1.0
+	github.com/talos-systems/go-loadbalancer v0.1.1
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
 	github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133
 	github.com/talos-systems/go-smbios v0.0.0-20201228201610-fb425d4727e6
