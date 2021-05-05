@@ -56,6 +56,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20210120172423-cc9239ac6294
 	github.com/jsimonetti/rtnetlink v0.0.0-20210226120601-1b79e63a70a0
 	github.com/mattn/go-isatty v0.0.12
+	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.0
 	github.com/morikuni/aec v1.0.0 // indirect

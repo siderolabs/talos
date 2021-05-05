@@ -16,6 +16,7 @@ import (
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -64,6 +65,10 @@ func NewState() (*State, error) {
 		return nil, err
 	}
 
+	if err := s.namespaceRegistry.Register(ctx, network.NamespaceName, "Networking resources."); err != nil {
+		return nil, err
+	}
+
 	// register Talos resources
 	for _, r := range []resource.Resource{
 		&v1alpha1.BootstrapStatus{},
@@ -76,6 +81,7 @@ func NewState() (*State, error) {
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
+		&network.LinkStatus{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},

@@ -163,10 +163,10 @@ RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 # run docgen for machinery config
 FROM build-go AS go-generate
-COPY ./pkg/machinery /pkg/machinery
-WORKDIR /pkg/machinery
-RUN --mount=type=cache,target=/.cache go generate /pkg/machinery/config/types/v1alpha1/...
-WORKDIR /
+COPY ./pkg/machinery ./pkg/machinery
+COPY ./pkg/resources/network ./pkg/resources/network
+RUN --mount=type=cache,target=/.cache go generate ./pkg/machinery/config/types/v1alpha1/...
+RUN --mount=type=cache,target=/.cache go generate ./pkg/resources/network/...
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
@@ -179,7 +179,8 @@ COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
-COPY --from=go-generate /pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
+COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
+COPY --from=go-generate /src/pkg/resources/network/ /pkg/resources/network/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -190,6 +191,7 @@ COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
 COPY --from=generate /pkg/machinery/config ./pkg/machinery/config
+COPY --from=generate /pkg/resources/network ./pkg/resources/network
 RUN --mount=type=cache,target=/.cache go list -mod=readonly all >/dev/null
 RUN --mount=type=cache,target=/.cache ! go mod tidy -v 2>&1 | grep .
 WORKDIR /src/pkg/machinery
