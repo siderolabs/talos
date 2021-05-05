@@ -217,7 +217,7 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 				return route, fmt.Errorf("error parsing route network: %w", err)
 			}
 
-			if route.Destination.Bits == 0 && (route.Destination.IP.Compare(zero4) == 0 || route.Destination.IP.Compare(zero16) == 0) {
+			if route.Destination.Bits() == 0 && (route.Destination.IP().Compare(zero4) == 0 || route.Destination.IP().Compare(zero16) == 0) {
 				// clear destination to be zero value to support "0.0.0.0/0" routes
 				route.Destination = netaddr.IPPrefix{}
 			}
@@ -245,9 +245,9 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 		route.ConfigLayer = network.ConfigMachineConfiguration
 
 		switch {
-		case route.Destination.IP.IsLinkLocalUnicast() || route.Destination.IP.IsLinkLocalMulticast():
+		case route.Destination.IP().IsLinkLocalUnicast() || route.Destination.IP().IsLinkLocalMulticast():
 			route.Scope = nethelpers.ScopeLink
-		case route.Destination.IP.IsLoopback():
+		case route.Destination.IP().IsLoopback():
 			route.Scope = nethelpers.ScopeHost
 		default:
 			route.Scope = nethelpers.ScopeGlobal
@@ -255,7 +255,7 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 
 		route.Type = nethelpers.TypeUnicast
 
-		if route.Destination.IP.IsMulticast() {
+		if route.Destination.IP().IsMulticast() {
 			route.Type = nethelpers.TypeMulticast
 		}
 

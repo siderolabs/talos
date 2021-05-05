@@ -14,6 +14,8 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -138,10 +140,15 @@ type VIPConfig interface {
 
 // WireguardConfig contains settings for configuring Wireguard network interface.
 type WireguardConfig interface {
-	PrivateKey() string
+	PrivateKey() (wgtypes.Key, error)
 	ListenPort() int
 	FirewallMark() int
 	Peers() []WireguardPeer
+	PodNetworkingEnabled() bool
+	AutomaticNodes() bool
+	AutomaticNodesPrefix() (netaddr.IPPrefix, error)
+	NATDiscoveryService() string
+	ClusterID() string
 }
 
 // WireguardPeer a WireGuard device peer configuration.

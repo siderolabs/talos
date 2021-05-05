@@ -46,7 +46,7 @@ func run(ctx context.Context, r runtime.Runtime, logger *log.Logger) error {
 		return err
 	}
 
-	if err = nwd.RunControllers(ctx, &eg); err != nil {
+	if err = nwd.RunControllers(ctx, r, &eg); err != nil {
 		return err
 	}
 

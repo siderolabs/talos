@@ -102,7 +102,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				continue
 			}
 
-			ip := addr.TypedSpec().Address.IP
+			ip := addr.TypedSpec().Address.IP()
 
 			if ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() {
 				continue
