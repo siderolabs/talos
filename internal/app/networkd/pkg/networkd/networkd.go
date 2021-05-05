@@ -266,9 +266,9 @@ func (n *Networkd) Reset() {
 }
 
 // RunControllers spins up additional controllers in the errgroup.
-func (n *Networkd) RunControllers(ctx context.Context, eg *errgroup.Group) error {
+func (n *Networkd) RunControllers(ctx context.Context, r runtime.Runtime, eg *errgroup.Group) error {
 	for _, iface := range n.Interfaces {
-		if err := iface.RunControllers(ctx, n.logger, eg); err != nil {
+		if err := iface.RunControllers(ctx, r, n.logger, eg); err != nil {
 			return err
 		}
 	}

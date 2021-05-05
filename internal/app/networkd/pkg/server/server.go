@@ -14,7 +14,9 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
@@ -113,6 +115,62 @@ func (r *NetworkServer) Interfaces(ctx context.Context, in *empty.Empty) (reply 
 	return &networkapi.InterfacesResponse{
 		Messages: []*networkapi.Interfaces{
 			resp,
+		},
+	}, nil
+}
+
+// WireguardDevices returns the status of each Wireguard device and its associated Peers.
+func (r *NetworkServer) WireguardDevices(ctx context.Context, in *empty.Empty) (reply *networkapi.WireguardDevicesResponse, err error) {
+	wc, err := wgctrl.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Wireguard client: %w", err)
+	}
+
+	defer wc.Close() //nolint: errcheck
+
+	list, err := wc.Devices()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get list of Wireguard devices: %w", err)
+	}
+
+	var deviceList []*networkapi.WireguardDevice //nolint: prealloc
+
+	for _, d := range list {
+		var peerList []*networkapi.WireguardPeer
+
+		for _, p := range d.Peers {
+			peerList = append(peerList, &networkapi.WireguardPeer{
+				PublicKey:                          p.PublicKey.String(),
+				Endpoint:                           p.Endpoint.String(),
+				PersistentKeepaliveIntervalSeconds: uint64(p.PersistentKeepaliveInterval.Seconds()),
+				LastHandshake:                      timestamppb.New(p.LastHandshakeTime),
+				ReceiveBytes:                       uint64(p.ReceiveBytes),
+				TransmitBytes:                      uint64(p.TransmitBytes),
+				ProtocolVersion:                    int32(p.ProtocolVersion),
+				AllowedIps: func() (out []string) {
+					for _, ip := range p.AllowedIPs {
+						out = append(out, ip.String())
+					}
+
+					return out
+				}(),
+			})
+		}
+
+		deviceList = append(deviceList, &networkapi.WireguardDevice{
+			Name:       d.Name,
+			PublicKey:  d.PublicKey.String(),
+			ListenPort: uint32(d.ListenPort),
+			Fwmark:     uint32(d.FirewallMark),
+			Peers:      peerList,
+		})
+	}
+
+	return &networkapi.WireguardDevicesResponse{
+		Messages: []*networkapi.WireguardDevices{
+			{
+				Devices: deviceList,
+			},
 		},
 	}, nil
 }

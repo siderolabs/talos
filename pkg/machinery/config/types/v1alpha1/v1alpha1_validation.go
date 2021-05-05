@@ -17,6 +17,7 @@ import (
 	valid "github.com/asaskevich/govalidator"
 	"github.com/hashicorp/go-multierror"
 	talosnet "github.com/talos-systems/net"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -427,29 +428,22 @@ func checkBond(b *Bond) error {
 	return result.ErrorOrNil()
 }
 
+//nolint: gocyclo
 func checkWireguard(b *DeviceWireguardConfig) error {
 	var result *multierror.Error
 
-	// avoid pulling in wgctrl code to keep machinery dependencies slim
-	checkKey := func(key string) error {
-		raw, err := base64.StdEncoding.DecodeString(key)
-		if err != nil {
-			return err
-		}
-
-		if len(raw) != 32 {
-			return fmt.Errorf("wrong key %q length: %d", key, len(raw))
-		}
-
-		return nil
+	if b.WireguardPrivateKey == "" && !b.WireguardEnableAutomaticNodes {
+		result = multierror.Append(result, fmt.Errorf("private key must not be empty unless automatic nodes is enabled"))
 	}
 
-	if err := checkKey(b.WireguardPrivateKey); err != nil {
-		result = multierror.Append(result, fmt.Errorf("private key is invalid: %w", err))
+	if b.WireguardPrivateKey != "" {
+		if err := checkWireguardKey(b.WireguardPrivateKey); err != nil {
+			result = multierror.Append(result, fmt.Errorf("private key is invalid: %w", err))
+		}
 	}
 
 	for _, peer := range b.WireguardPeers {
-		if err := checkKey(peer.WireguardPublicKey); err != nil {
+		if err := checkWireguardKey(peer.WireguardPublicKey); err != nil {
 			result = multierror.Append(result, fmt.Errorf("public key invalid: %w", err))
 		}
 
@@ -466,7 +460,35 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 		}
 	}
 
+	if b.WireguardListenPort < 0 ||
+		b.WireguardListenPort > 65535 {
+		result = multierror.Append(result, fmt.Errorf("invalid Wireguard listen port: %d", b.WireguardListenPort))
+	}
+
+	if b.WireguardAutomaticNodesPrefix != "" {
+		prefix, err := netaddr.ParseIPPrefix(b.WireguardAutomaticNodesPrefix)
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("invalid Wireguard Automatic Nodes prefix %q: %w", b.WireguardAutomaticNodesPrefix, err))
+		} else if prefix.Bits() < uint8(64) {
+			result = multierror.Append(result, fmt.Errorf("invalide Wireguard Automatic Nodes prefix length %q: must be at least 64 bits", prefix.Bits()))
+		}
+	}
+
 	return result.ErrorOrNil()
+}
+
+// checkWireguardKey is implemented to avoid pulling in wgctrl code to keep machinery dependencies slim.
+func checkWireguardKey(key string) error {
+	raw, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		return err
+	}
+
+	if len(raw) != 32 {
+		return fmt.Errorf("wrong key %q length: %d", key, len(raw))
+	}
+
+	return nil
 }
 
 // CheckDeviceAddressing ensures that an appropriate addressing method.

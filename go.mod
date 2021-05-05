@@ -17,6 +17,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.3.1
+	github.com/CyCoreSystems/netdiscover v1.2.6
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.2
@@ -44,21 +45,25 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
+	github.com/google/nftables v0.0.0-20210514154851-a285acebcad3
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/insomniacslk/dhcp v0.0.0-20210528123148-fb4eaaa00ad2
 	github.com/jsimonetti/rtnetlink v0.0.0-20210531051304-b34cb89a106b
+	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
+	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/plunder-app/kube-vip v0.3.5
+	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210531104647-807e706f86d1
 	github.com/rs/xid v1.3.0
@@ -78,7 +83,9 @@ require (
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/wglan-manager v0.0.0-20210527223853-576288fc7559
 	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
@@ -86,7 +93,9 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0
 	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.0
+	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.17.0
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
@@ -97,7 +106,7 @@ require (
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	inet.af/netaddr v0.0.0-20210430201628-1d252cf8125e
+	inet.af/netaddr v0.0.0-20210603230628-bf05d8b52dda
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1 // indirect

@@ -181,10 +181,10 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpec {
 	return []network.AddressSpecSpec{
 		{
-			Address: netaddr.IPPrefix{
-				IP:   netaddr.IPv4(127, 0, 0, 1),
-				Bits: 8,
-			},
+			Address: netaddr.IPPrefixFrom(
+				netaddr.IPv4(127, 0, 0, 1),
+				8,
+			),
 			Family:      nethelpers.FamilyInet4,
 			Scope:       nethelpers.ScopeHost,
 			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
@@ -192,10 +192,10 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 			ConfigLayer: network.ConfigDefault,
 		},
 		{
-			Address: netaddr.IPPrefix{
-				IP:   netaddr.IPFrom16([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}),
-				Bits: 128,
-			},
+			Address: netaddr.IPPrefixFrom(
+				netaddr.IPFrom16([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}),
+				128,
+			),
 			Family:      nethelpers.FamilyInet6,
 			Scope:       nethelpers.ScopeHost,
 			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
@@ -222,7 +222,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 	}
 
 	address.Address = settings.Address
-	if address.Address.IP.Is6() {
+	if address.Address.IP().Is6() {
 		address.Family = nethelpers.FamilyInet6
 	} else {
 		address.Family = nethelpers.FamilyInet4
@@ -258,7 +258,7 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logge
 				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 			}
 
-			if address.Address.IP.Is6() {
+			if address.Address.IP().Is6() {
 				address.Family = nethelpers.FamilyInet6
 			} else {
 				address.Family = nethelpers.FamilyInet4
@@ -284,7 +284,7 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logge
 					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 				}
 
-				if address.Address.IP.Is6() {
+				if address.Address.IP().Is6() {
 					address.Family = nethelpers.FamilyInet6
 				} else {
 					address.Family = nethelpers.FamilyInet4

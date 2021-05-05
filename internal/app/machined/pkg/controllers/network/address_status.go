@@ -108,10 +108,7 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			// * local address is supplied in IFA_LOCAL attribute.
 
 			ipAddr, _ := netaddr.FromStdIPRaw(addr.Attributes.Address)
-			ipPrefix := netaddr.IPPrefix{
-				IP:   ipAddr,
-				Bits: addr.PrefixLength,
-			}
+			ipPrefix := netaddr.IPPrefixFrom(ipAddr, addr.PrefixLength)
 			id := network.AddressID(linkLookup[addr.Index], ipPrefix)
 
 			if err = r.Modify(ctx, network.NewAddressStatus(network.NamespaceName, id), func(r resource.Resource) error {

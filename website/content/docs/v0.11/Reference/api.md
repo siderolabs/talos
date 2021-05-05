@@ -186,6 +186,10 @@ description: Talos gRPC API reference.
     - [Route](#network.Route)
     - [Routes](#network.Routes)
     - [RoutesResponse](#network.RoutesResponse)
+    - [WireguardDevice](#network.WireguardDevice)
+    - [WireguardDevices](#network.WireguardDevices)
+    - [WireguardDevicesResponse](#network.WireguardDevicesResponse)
+    - [WireguardPeer](#network.WireguardPeer)
   
     - [AddressFamily](#network.AddressFamily)
     - [InterfaceFlags](#network.InterfaceFlags)
@@ -3074,6 +3078,78 @@ The messages message containing the routes.
 
 
 
+
+<a name="network.WireguardDevice"></a>
+
+### WireguardDevice
+WireguardDevice roughly represents wgtypes.Device
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| public_key | [string](#string) |  |  |
+| listen_port | [uint32](#uint32) |  |  |
+| fwmark | [uint32](#uint32) |  |  |
+| peers | [WireguardPeer](#network.WireguardPeer) | repeated |  |
+
+
+
+
+
+
+<a name="network.WireguardDevices"></a>
+
+### WireguardDevices
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| devices | [WireguardDevice](#network.WireguardDevice) | repeated |  |
+
+
+
+
+
+
+<a name="network.WireguardDevicesResponse"></a>
+
+### WireguardDevicesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [WireguardDevices](#network.WireguardDevices) | repeated |  |
+
+
+
+
+
+
+<a name="network.WireguardPeer"></a>
+
+### WireguardPeer
+WireguardPeer represents wgtypes.Peer
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| public_key | [string](#string) |  |  |
+| endpoint | [string](#string) |  | string preshared_key = 3; // NB: treat as secret data |
+| persistent_keepalive_interval_seconds | [uint64](#uint64) |  |  |
+| last_handshake | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| receive_bytes | [uint64](#uint64) |  |  |
+| transmit_bytes | [uint64](#uint64) |  |  |
+| allowed_ips | [string](#string) | repeated |  |
+| protocol_version | [int32](#int32) |  |  |
+
+
+
+
+
  <!-- end messages -->
 
 
@@ -3147,6 +3223,7 @@ The network service definition.
 | ----------- | ------------ | ------------- | ------------|
 | Routes | [.google.protobuf.Empty](#google.protobuf.Empty) | [RoutesResponse](#network.RoutesResponse) |  |
 | Interfaces | [.google.protobuf.Empty](#google.protobuf.Empty) | [InterfacesResponse](#network.InterfacesResponse) |  |
+| WireguardDevices | [.google.protobuf.Empty](#google.protobuf.Empty) | [WireguardDevicesResponse](#network.WireguardDevicesResponse) |  |
 
  <!-- end services -->
 

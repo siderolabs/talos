@@ -27,8 +27,10 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/address"
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/vip"
+	"github.com/talos-systems/talos/internal/app/networkd/pkg/wglan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -58,11 +60,13 @@ type NetworkInterface struct {
 	Vlans           []*Vlan
 	VirtualIP       net.IP
 	WireguardConfig *wgtypes.Config
+	WgLanConfig     *wglan.Config
 
 	rtConn   *rtnetlink.Conn
 	rtnlConn *rtnl.Conn
 
 	vipController vip.Controller
+	wgController  wglan.Controller
 }
 
 // New returns a NetworkInterface with all of the given setter options applied.
@@ -253,7 +257,7 @@ func (n *NetworkInterface) Configure(ctx context.Context) (err error) {
 }
 
 // RunControllers is used to run additional controllers per interface.
-func (n *NetworkInterface) RunControllers(ctx context.Context, logger *log.Logger, eg *errgroup.Group) (err error) {
+func (n *NetworkInterface) RunControllers(ctx context.Context, r runtime.Runtime, logger *log.Logger, eg *errgroup.Group) (err error) {
 	if n.VirtualIP != nil {
 		if n.vipController, err = vip.New(n.VirtualIP.String(), n.Link.Name); err != nil {
 			return fmt.Errorf("failed to create the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
@@ -261,6 +265,22 @@ func (n *NetworkInterface) RunControllers(ctx context.Context, logger *log.Logge
 
 		if err = n.vipController.Start(ctx, logger, eg); err != nil {
 			return fmt.Errorf("failed to start the VirtualIP controller for %q on %q: %w", n.VirtualIP, n.Link.Name, err)
+		}
+	}
+
+	if n.WgLanConfig != nil {
+		// Make sure we have a ClusterID
+		if n.WgLanConfig.ClusterID == "" {
+			n.WgLanConfig.ClusterID = r.Config().Cluster().Token().ID()
+		}
+
+		n.wgController, err = wglan.New(n.Name, n.WgLanConfig, n.WireguardConfig)
+		if err != nil {
+			return fmt.Errorf("failed to construct the wireguard controller on %q: %w", n.Name, err)
+		}
+
+		if err = n.wgController.Start(ctx, r, logger, eg); err != nil {
+			return fmt.Errorf("failed to start the wireguard controller on %q: %w", n.Name, err)
 		}
 	}
 

@@ -87,11 +87,11 @@ func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error
 			continue
 		}
 
-		if linkAddress.PrefixLength != addr.Bits {
+		if linkAddress.PrefixLength != addr.Bits() {
 			continue
 		}
 
-		if !linkAddress.Attributes.Address.Equal(addr.IP.IPAddr().IP) {
+		if !linkAddress.Attributes.Address.Equal(addr.IP().IPAddr().IP) {
 			continue
 		}
 
@@ -116,7 +116,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 	suite.Require().NoError(err)
 
 	for _, linkAddress := range linkAddresses {
-		if linkAddress.Index == uint32(iface.Index) && linkAddress.PrefixLength == addr.Bits && linkAddress.Attributes.Address.Equal(addr.IP.IPAddr().IP) {
+		if linkAddress.Index == uint32(iface.Index) && linkAddress.PrefixLength == addr.Bits() && linkAddress.Attributes.Address.Equal(addr.IP().IPAddr().IP) {
 			return retry.ExpectedError(fmt.Errorf("address %s is assigned to %q", addr, linkName))
 		}
 	}

@@ -104,6 +104,7 @@ var (
 	encryptStatePartition     bool
 	encryptEphemeralPartition bool
 	useVIP                    bool
+	enableWgLAN               bool
 	configPatch               string
 	configPatchControlPlane   string
 	configPatchJoin           string
@@ -368,6 +369,14 @@ func create(ctx context.Context) (err error) {
 			genOptions = append(genOptions,
 				generate.WithNetworkOptions(
 					v1alpha1.WithNetworkInterfaceVirtualIP(provisioner.GetFirstInterface(), vip.String()),
+				),
+			)
+		}
+
+		if enableWgLAN {
+			genOptions = append(genOptions,
+				generate.WithNetworkOptions(
+					v1alpha1.WithNetworkInterfaceWgLAN(),
 				),
 			)
 		}
@@ -806,6 +815,7 @@ func init() {
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, "encrypt-ephemeral", false, "enable ephemeral partition encryption")
 	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
+	createCmd.Flags().BoolVar(&enableWgLAN, "with-wglan", false, "**ALPHA** enable WgLAN system")
 	createCmd.Flags().StringVar(&configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
 	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	createCmd.Flags().StringVar(&configPatchJoin, "config-patch-join", "", "patch generated machineconfigs (applied to 'join' type)")

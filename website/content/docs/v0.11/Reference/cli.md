@@ -139,6 +139,7 @@ talosctl cluster create [flags]
       --with-debug                              enable debug in Talos config to send service logs to the console
       --with-init-node                          create the cluster with an init node
       --with-uefi                               enable UEFI on x86_64 architecture (always enabled for arm64)
+      --with-wglan                              **ALPHA** enable WgLAN system
       --workers int                             the number of workers to create (default 1)
 ```
 
@@ -2122,6 +2123,93 @@ talosctl version [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl wireguard devices
+
+list wireguard devices and peers
+
+### Synopsis
+
+Returns the status and connections of all Wireguard devices and the peers thereof.
+
+```
+talosctl wireguard devices [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for devices
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl wireguard](#talosctl-wireguard)	 - wireguard operations
+
+## talosctl wireguard peers
+
+list the peers of a wireguard device
+
+### Synopsis
+
+Returns the details of the peers of a wireguard device
+
+```
+talosctl wireguard peers [wg-device] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for peers
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl wireguard](#talosctl-wireguard)	 - wireguard operations
+
+## talosctl wireguard
+
+wireguard operations
+
+### Options
+
+```
+  -h, --help   help for wireguard
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl wireguard devices](#talosctl-wireguard-devices)	 - list wireguard devices and peers
+* [talosctl wireguard peers](#talosctl-wireguard-peers)	 - list the peers of a wireguard device
+
 ## talosctl
 
 A CLI for out-of-band management of Kubernetes nodes created by Talos
@@ -2183,4 +2271,5 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config
 * [talosctl version](#talosctl-version)	 - Prints the version
+* [talosctl wireguard](#talosctl-wireguard)	 - wireguard operations
 
