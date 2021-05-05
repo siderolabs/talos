@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	v1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -261,6 +262,12 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								ReadOnly:  true,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceCPU:    apiresource.MustParse("200m"),
+								v1.ResourceMemory: apiresource.MustParse("512Mi"),
+							},
+						},
 					},
 				},
 				HostNetwork: true,
@@ -348,12 +355,19 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						LivenessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
-									Path: "/healthz",
-									Port: intstr.FromInt(10252),
+									Path:   "/healthz",
+									Port:   intstr.FromInt(10257),
+									Scheme: v1.URISchemeHTTPS,
 								},
 							},
 							InitialDelaySeconds: 15,
 							TimeoutSeconds:      15,
+						},
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceCPU:    apiresource.MustParse("50m"),
+								v1.ResourceMemory: apiresource.MustParse("256Mi"),
+							},
 						},
 					},
 				},
@@ -430,12 +444,19 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						LivenessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
-									Path: "/healthz",
-									Port: intstr.FromInt(10251),
+									Path:   "/healthz",
+									Port:   intstr.FromInt(10259),
+									Scheme: v1.URISchemeHTTPS,
 								},
 							},
 							InitialDelaySeconds: 15,
 							TimeoutSeconds:      15,
+						},
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceCPU:    apiresource.MustParse("10m"),
+								v1.ResourceMemory: apiresource.MustParse("64Mi"),
+							},
 						},
 					},
 				},
