@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,6 +22,8 @@ import (
 	"github.com/containerd/containerd/oci"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/go-retry/retry"
+	"inet.af/netaddr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -294,6 +297,31 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		denyListArgs["cloud-provider"] = "external"
 	}
 
+	// If WireguardLAN is enabled, override `node-id` to force it to use the Wireguard interface.
+	var wgIP string
+
+	if err = retry.Constant(3*time.Minute,
+		retry.WithUnits(3*time.Second),
+		retry.WithJitter(time.Second),
+		retry.WithErrorLogging(true),
+	).Retry(func() error {
+		wgIP, err = wireguardAddress(r)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to determine wireguard address: %w", err)
+	}
+
+	// TODO: enable this after IPv6 pod and service CIDRs are in place
+	wgIP = ""
+	// TODO
+	if wgIP != "" {
+		denyListArgs["node-ip"] = wgIP
+	}
+
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
 	for k := range denyListArgs {
@@ -337,4 +365,31 @@ func writeKubeletConfig(r runtime.Runtime) error {
 	}
 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+func wireguardAddress(r runtime.Runtime) (ret string, err error) {
+	// TODO: use COSI for reading Wireguard resource
+	for _, d := range r.Config().Machine().Network().Devices() {
+		if d.WireguardConfig() != nil && d.WireguardConfig().AutomaticNodes() {
+			iface, err := net.InterfaceByName(d.Interface())
+			if err != nil {
+				return ret, fmt.Errorf("failed to get Wireguard interface %q: %w", d.Interface(), err)
+			}
+
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return ret, fmt.Errorf("failed to get Wireguard interface %q addresses: %w", d.Interface(), err)
+			}
+
+			for _, a := range addrs {
+				if ip, err := netaddr.ParseIPPrefix(a.String()); err == nil {
+					return ip.IP().String(), nil
+				}
+			}
+
+			return ret, fmt.Errorf("wireguard interface %q address not yet available", d.Interface())
+		}
+	}
+
+	return ret, nil
 }

@@ -101,20 +101,18 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			route := route
 
 			dstAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Dst)
-			dstPrefix := netaddr.IPPrefix{
-				IP:   dstAddr,
-				Bits: route.DstLength,
-			}
+			dstPrefix := netaddr.IPPrefixFrom(dstAddr, route.DstLength)
 			gatewayAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Gateway)
 			id := network.RouteID(dstPrefix, gatewayAddr)
 
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
 				status := r.(*network.RouteStatus).TypedSpec()
 
+				srcIP, _ := netaddr.FromStdIPRaw(route.Attributes.Src)
+
 				status.Family = nethelpers.Family(route.Family)
 				status.Destination = dstPrefix
-				status.Source.IP, _ = netaddr.FromStdIPRaw(route.Attributes.Src)
-				status.Source.Bits = route.SrcLength
+				status.Source = netaddr.IPPrefixFrom(srcIP, route.SrcLength)
 				status.Gateway = gatewayAddr
 				status.OutLinkIndex = route.Attributes.OutIface
 				status.OutLinkName = linkLookup[route.Attributes.OutIface]

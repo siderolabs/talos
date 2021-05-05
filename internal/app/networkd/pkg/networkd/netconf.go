@@ -58,11 +58,14 @@ func buildOptions(logger *log.Logger, device config.Device, hostname string) (na
 		}
 	default:
 		// Allow master interface without any addressing if VLANs exist
-		if len(device.Vlans()) > 0 {
+		switch {
+		case len(device.Vlans()) > 0:
 			logger.Printf("no addressing for master device %s", device.Interface())
 
 			opts = append(opts, nic.WithNoAddressing())
-		} else {
+		case device.WireguardConfig() != nil && device.WireguardConfig().AutomaticNodes():
+			// Allow Wireguard interfaces to have no explicit IP addressing if Automatic Nodes is enabled.
+		default:
 			// No CIDR and DHCP==false results in a static without an IP.
 			// This handles cases like slaac addressing.
 			s := &address.Static{RouteList: device.Routes(), Mtu: device.MTU()}
@@ -89,6 +92,10 @@ func buildOptions(logger *log.Logger, device config.Device, hostname string) (na
 
 	if device.WireguardConfig() != nil {
 		opts = append(opts, nic.WithWireguardConfig(device.WireguardConfig()))
+
+		if device.WireguardConfig().AutomaticNodes() {
+			opts = append(opts, nic.WithWireguardLanConfig(device.WireguardConfig()))
+		}
 	}
 
 	if device.VIPConfig() != nil {
