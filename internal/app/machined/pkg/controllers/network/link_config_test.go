@@ -217,10 +217,11 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 					{
 						DeviceInterface: "wireguard0",
 						DeviceWireguardConfig: &v1alpha1.DeviceWireguardConfig{
-							WireguardPrivateKey: "ABC",
+							WireguardPrivateKey: "GGGVHfw2u74/Urnse4G/DYnRdjy8LtMRe12eSv7MqmA=",
+							WireguardListenPort: 51820,
 							WireguardPeers: []*v1alpha1.DeviceWireguardPeer{
 								{
-									WireguardPublicKey: "DEF",
+									WireguardPublicKey: "Sj6vyf/+dN4ApjDw095tj7ABnvcPvf/zlS/9WM1VInQ=",
 									WireguardEndpoint:  "10.0.0.1:3000",
 									WireguardAllowedIPs: []string{
 										"10.2.3.0/24",
@@ -299,10 +300,11 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 					suite.Assert().Equal(nethelpers.LinkNone, r.TypedSpec().Type)
 					suite.Assert().Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
 					suite.Assert().Equal(network.WireguardSpec{
-						PrivateKey: "ABC",
+						PrivateKey: "GGGVHfw2u74/Urnse4G/DYnRdjy8LtMRe12eSv7MqmA=",
+						ListenPort: 51820,
 						Peers: []network.WireguardPeer{
 							{
-								PublicKey: "DEF",
+								PublicKey: "Sj6vyf/+dN4ApjDw095tj7ABnvcPvf/zlS/9WM1VInQ=",
 								Endpoint:  "10.0.0.1:3000",
 								AllowedIPs: []netaddr.IPPrefix{
 									netaddr.MustParseIPPrefix("10.2.3.0/24"),

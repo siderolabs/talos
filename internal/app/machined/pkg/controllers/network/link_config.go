@@ -464,11 +464,16 @@ func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {
 }
 
 func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfig) error {
+	privKey, err := config.PrivateKey()
+	if err != nil {
+		return fmt.Errorf("failed to read wireguard private key: %w", err)
+	}
+
 	link.Logical = true
 	link.Kind = network.LinkKindWireguard
 	link.Type = nethelpers.LinkNone
 	link.Wireguard = network.WireguardSpec{
-		PrivateKey:   config.PrivateKey(),
+		PrivateKey:   privKey,
 		ListenPort:   config.ListenPort(),
 		FirewallMark: config.FirewallMark(),
 	}

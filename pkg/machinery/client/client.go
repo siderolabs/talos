@@ -599,6 +599,21 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 	return
 }
 
+// WireguardDevices provides a multi-target error wrapper for the WireguardDevices API.
+func (c *Client) WireguardDevices(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.WireguardDevicesResponse, err error) {
+	resp, err = c.NetworkClient.WireguardDevices(
+		ctx,
+		&empty.Empty{},
+		callOptions...,
+	)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*networkapi.WireguardDevicesResponse) //nolint:errcheck
+
+	return
+}
+
 // Processes implements the proto.MachineServiceClient interface.
 func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ProcessesResponse, err error) {
 	resp, err = c.MachineClient.Processes(

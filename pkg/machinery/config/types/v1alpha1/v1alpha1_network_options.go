@@ -106,6 +106,21 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 	}
 }
 
+// WithNetworkInterfaceWgLAN configures a WgLAN interface.
+func WithNetworkInterfaceWgLAN() NetworkConfigOption {
+	return func(_ machine.Type, cfg *NetworkConfig) error {
+		cfg.NetworkInterfaces = append(cfg.NetworkInterfaces, &Device{
+			DeviceInterface: "wglan0",
+			DeviceWireguardConfig: &DeviceWireguardConfig{
+				WireguardEnableAutomaticNodes: true,
+				WireguardEnablePodNetworking:  true,
+			},
+		})
+
+		return nil
+	}
+}
+
 // WithNetworkInterfaceVirtualIP configures interface for Virtual IP.
 func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 	return func(machineType machine.Type, cfg *NetworkConfig) error {
