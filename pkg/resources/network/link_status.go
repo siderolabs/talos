@@ -1,0 +1,115 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package network
+
+import (
+	"fmt"
+
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
+
+	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
+)
+
+// LinkStatusType is type of SecretsStatus resource.
+const LinkStatusType = resource.Type("LinkStatuses.net.talos.dev")
+
+// LinkStatus resource holds physical network link status.
+type LinkStatus struct {
+	md   resource.Metadata
+	spec LinkStatusSpec
+}
+
+// LinkStatusSpec describes status of rendered secrets.
+type LinkStatusSpec struct {
+	// Fields coming from rtnetlink API.
+	Index            uint32                      `yaml:"index"`
+	Type             nethelpers.LinkType         `yaml:"type"`
+	LinkIndex        uint32                      `yaml:"linkIndex"`
+	Flags            nethelpers.LinkFlags        `yaml:"flags"`
+	HardwareAddr     nethelpers.HardwareAddr     `yaml:"hardwareAddr"`
+	BroadcastAddr    nethelpers.HardwareAddr     `yaml:"broadcastAddr"`
+	MTU              uint32                      `yaml:"mtu"`
+	QueueDisc        string                      `yaml:"queueDisc"`
+	MasterIndex      uint32                      `yaml:"masterIndex,omitempty"`
+	OperationalState nethelpers.OperationalState `yaml:"operationalState"`
+	Kind             string                      `yaml:"kind"`
+	SlaveKind        string                      `yaml:"slaveKind"`
+	// Fields coming from ethtool API.
+	LinkState     bool              `yaml:"linkState"`
+	SpeedMegabits int               `yaml:"speedMbit,omitempty"`
+	Port          nethelpers.Port   `yaml:"port"`
+	Duplex        nethelpers.Duplex `yaml:"duplex"`
+}
+
+// NewLinkStatus initializes a SecretsStatus resource.
+func NewLinkStatus(namespace resource.Namespace, id resource.ID) *LinkStatus {
+	r := &LinkStatus{
+		md:   resource.NewMetadata(namespace, LinkStatusType, id, resource.VersionUndefined),
+		spec: LinkStatusSpec{},
+	}
+
+	r.md.BumpVersion()
+
+	return r
+}
+
+// Metadata implements resource.Resource.
+func (r *LinkStatus) Metadata() *resource.Metadata {
+	return &r.md
+}
+
+// Spec implements resource.Resource.
+func (r *LinkStatus) Spec() interface{} {
+	return r.spec
+}
+
+func (r *LinkStatus) String() string {
+	return fmt.Sprintf("k8s.SecretStatus(%q)", r.md.ID())
+}
+
+// DeepCopy implements resource.Resource.
+func (r *LinkStatus) DeepCopy() resource.Resource {
+	return &LinkStatus{
+		md:   r.md,
+		spec: r.spec,
+	}
+}
+
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (r *LinkStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
+		Type:             LinkStatusType,
+		Aliases:          []resource.Type{"link", "links"},
+		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Type",
+				JSONPath: `{.type}`,
+			},
+			{
+				Name:     "Kind",
+				JSONPath: `{.kind}`,
+			},
+			{
+				Name:     "Hw Addr",
+				JSONPath: `{.hardwareAddr}`,
+			},
+			{
+				Name:     "Oper State",
+				JSONPath: `{.operationalState}`,
+			},
+			{
+				Name:     "Link State",
+				JSONPath: `{.linkState}`,
+			},
+		},
+	}
+}
+
+// Status sets pod status.
+func (r *LinkStatus) Status() *LinkStatusSpec {
+	return &r.spec
+}
