@@ -185,21 +185,21 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 			log.Printf("%s container %s/%s:%s", action, pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
 			// TODO(andrewrynhard): Can we set the timeout dynamically?
-			if err = client.StopContainer(ctx, container.Id, 30); err != nil {
-				if grpcstatus.Code(err) == codes.NotFound {
+			if criErr := client.StopContainer(ctx, container.Id, 30); criErr != nil {
+				if grpcstatus.Code(criErr) == codes.NotFound {
 					return nil
 				}
 
-				return err
+				return criErr
 			}
 
 			if stopAction == StopAndRemove {
-				if err = client.RemoveContainer(ctx, container.Id); err != nil {
-					if grpcstatus.Code(err) == codes.NotFound {
+				if criErr := client.RemoveContainer(ctx, container.Id); criErr != nil {
+					if grpcstatus.Code(criErr) == codes.NotFound {
 						return nil
 					}
 
-					return err
+					return criErr
 				}
 			}
 
