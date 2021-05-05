@@ -6,8 +6,10 @@ package v1alpha1
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	stdx509 "crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
@@ -18,6 +20,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
@@ -627,12 +630,37 @@ func (d *DHCPOptions) IPv6() bool {
 }
 
 // PrivateKey implements the MachineNetwork interface.
-func (wc *DeviceWireguardConfig) PrivateKey() string {
-	return wc.WireguardPrivateKey
+func (wc *DeviceWireguardConfig) PrivateKey() (string, error) {
+	if wc.WireguardPrivateKey != "" {
+		return wc.WireguardPrivateKey, nil
+	}
+
+	const WireguardKeyLen = 32
+
+	// NB:  procedure stolen from wgctrl-go to avoid importing entire package:
+	// https://github.com/WireGuard/wgctrl-go/blob/92e472f520a5/wgtypes/types.go#L89.
+	privateKey := make([]byte, WireguardKeyLen)
+	if _, err := rand.Read(privateKey); err != nil {
+		return "", fmt.Errorf("failed to read random bytes to generate private key: %v", err)
+	}
+
+	// Modify random bytes using algorithm described at:
+	// https://cr.yp.to/ecdh.html.
+	privateKey[0] &= 248
+	privateKey[31] &= 127
+	privateKey[31] |= 64
+
+	wc.WireguardPrivateKey = base64.StdEncoding.EncodeToString(privateKey)
+
+	return wc.WireguardPrivateKey, nil
 }
 
 // ListenPort implements the MachineNetwork interface.
 func (wc *DeviceWireguardConfig) ListenPort() int {
+	if wc.WireguardListenPort == 0 {
+		wc.WireguardListenPort = 51820
+	}
+
 	return wc.WireguardListenPort
 }
 
@@ -650,6 +678,41 @@ func (wc *DeviceWireguardConfig) Peers() []config.WireguardPeer {
 	}
 
 	return peers
+}
+
+// PodNetworkingEnabled implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) PodNetworkingEnabled() bool {
+	return wc.WireguardEnablePodNetworking
+}
+
+// AutomaticNodes implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) AutomaticNodes() bool {
+	return wc.WireguardEnableAutomaticNodes
+}
+
+// AutomaticNodesPrefix implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) AutomaticNodesPrefix() (netaddr.IPPrefix, error) {
+	prefix := constants.WireguardDefaultNodesPrefix
+
+	if wc.WireguardAutomaticNodesPrefix != "" {
+		prefix = wc.WireguardAutomaticNodesPrefix
+	}
+
+	return netaddr.ParseIPPrefix(prefix)
+}
+
+// NATDiscoveryService implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) NATDiscoveryService() string {
+	if wc.WireguardNATDiscoveryService != "" {
+		return wc.WireguardNATDiscoveryService
+	}
+
+	return constants.WireguardDefaultNATDiscoveryService
+}
+
+// ClusterID implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) ClusterID() string {
+	return wc.WireguardClusterID
 }
 
 // PublicKey implements the MachineNetwork interface.

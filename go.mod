@@ -18,6 +18,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.4.1
+	github.com/CyCoreSystems/netdiscover v1.2.6
 	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
@@ -46,6 +47,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/nftables v0.0.0-20210514154851-a285acebcad3
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.6
@@ -53,6 +55,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e
 	github.com/jsimonetti/rtnetlink v0.0.0-20210614053835-9c52e516c709
+	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
@@ -63,6 +66,7 @@ require (
 	github.com/packethost/packngo v0.19.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.2
+	github.com/prometheus/client_golang v1.11.0
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
@@ -81,7 +85,9 @@ require (
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
+	github.com/talos-systems/wglan-manager v0.0.0-20210527223853-576288fc7559
 	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/vmware-tanzu/sonobuoy v0.53.0
 	github.com/vmware/govmomi v0.26.0
@@ -91,6 +97,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.18.1
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff
 	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

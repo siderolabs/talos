@@ -110,6 +110,8 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
 				status := r.(*network.RouteStatus).TypedSpec()
 
+				srcIP, _ := netaddr.FromStdIPRaw(route.Attributes.Src)
+
 				status.Family = nethelpers.Family(route.Family)
 				status.Destination = dstPrefix
 				status.Source = srcPrefix
