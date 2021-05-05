@@ -100,7 +100,7 @@ func (suite *RouteStatusSuite) TestRoutes() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{"127.0.0.0/8/"}, func(r *network.RouteStatus) error {
-				suite.Assert().True(r.TypedSpec().Source.IP.IsLoopback())
+				suite.Assert().True(r.TypedSpec().Source.IP().IsLoopback())
 				suite.Assert().Equal("lo", r.TypedSpec().OutLinkName)
 				suite.Assert().Equal(nethelpers.TableLocal, r.TypedSpec().Table)
 				suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)

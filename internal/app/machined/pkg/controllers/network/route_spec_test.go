@@ -82,11 +82,11 @@ func (suite *RouteSpecSuite) assertRoute(destination netaddr.IPPrefix, gateway n
 			continue
 		}
 
-		if route.DstLength != destination.Bits {
+		if route.DstLength != destination.Bits() {
 			continue
 		}
 
-		if !destination.IP.IPAddr().IP.Equal(route.Attributes.Dst) {
+		if !destination.IP().IPAddr().IP.Equal(route.Attributes.Dst) {
 			continue
 		}
 
@@ -117,7 +117,7 @@ func (suite *RouteSpecSuite) assertNoRoute(destination netaddr.IPPrefix, gateway
 	suite.Require().NoError(err)
 
 	for _, route := range routes {
-		if gateway.IPAddr().IP.Equal(route.Attributes.Gateway) && destination.Bits == route.DstLength && destination.IP.IPAddr().IP.Equal(route.Attributes.Dst) {
+		if gateway.IPAddr().IP.Equal(route.Attributes.Gateway) && destination.Bits() == route.DstLength && destination.IP().IPAddr().IP.Equal(route.Attributes.Dst) {
 			return retry.ExpectedError(fmt.Errorf("route to %s via %s is present", destination, gateway))
 		}
 	}

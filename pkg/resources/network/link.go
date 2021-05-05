@@ -282,11 +282,11 @@ func (peer *WireguardPeer) Equal(other *WireguardPeer) bool {
 	}
 
 	for i := range peer.AllowedIPs {
-		if peer.AllowedIPs[i].IP.Compare(other.AllowedIPs[i].IP) != 0 {
+		if peer.AllowedIPs[i].IP().Compare(other.AllowedIPs[i].IP()) != 0 {
 			return false
 		}
 
-		if peer.AllowedIPs[i].Bits != other.AllowedIPs[i].Bits {
+		if peer.AllowedIPs[i].Bits() != other.AllowedIPs[i].Bits() {
 			return false
 		}
 	}
@@ -341,11 +341,11 @@ func (spec *WireguardSpec) Sort() {
 			left := spec.Peers[k].AllowedIPs[i]
 			right := spec.Peers[k].AllowedIPs[j]
 
-			switch left.IP.Compare(right.IP) {
+			switch left.IP().Compare(right.IP()) {
 			case -1:
 				return true
 			case 0:
-				return left.Bits < right.Bits
+				return left.Bits() < right.Bits()
 			default:
 				return false
 			}

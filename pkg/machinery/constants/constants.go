@@ -421,6 +421,47 @@ const (
 	// DefaultSecondaryResolver is the default secondary DNS server.
 	DefaultSecondaryResolver = "8.8.8.8"
 
+	// WireguardDefaultPort is the default listen port for Wireguard interfaces.
+	WireguardDefaultPort = 51820
+
+	// WireguardDefaultRoutingTable is the default routing table for Wireguard LAN targets.
+	// This is only used for Wireguard LAN (WireguardAutoNodes), and it specifies the routing table which will be used for Wireguard-available destinations.
+	WireguardDefaultRoutingTable = 180
+
+	// WireguardDefaultFirewallMark is the default firewall mark to use for Wireguard encrypted egress packets.
+	// This default will not be applied unless it is required (for example, using WgLAN (WireguardAutoNodes)).
+	// The next consecutive mark will be used by WgLAN to mark packets which should be forced into the Wireguard interface.
+	// Normal Wireguard configurations will NOT use this firewall mark.
+	WireguardDefaultFirewallMark = 0x51820
+
+	// WireguardDefaultForceFirewallMark is the default firewall mark to use for packets destined to IPs serviced by Wireguard LAN.
+	// It is used to signal that matching packets should be forced into the Wireguard interface.
+	WireguardDefaultForceFirewallMark = 0x51821
+
+	// WireguardDefaultNodesPrefix is the default prefix to use for Wireguard Automatic Node addition.
+	WireguardDefaultNodesPrefix = "0200:1001::/64"
+
+	// WireguardDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
+	WireguardDefaultPeerKeepalive = 25 * time.Second
+
+	// WireguardDefaultNATDiscoveryService is the default service URL for the NAT discovery service used by the Wireguard LAN feature.
+	WireguardDefaultNATDiscoveryService = "https://discover.talos.cycore.io"
+
+	// WireguardIPAnnotation is the node annotation to be used for indicating the Wireguard IP of the node.
+	WireguardIPAnnotation = "networking.talos.dev/wireguard-ip"
+
+	// WireguardPublicKeyAnnotation is the node annotation to be used for indicating the Wireguard Public Key of the node.
+	WireguardPublicKeyAnnotation = "networking.talos.dev/wireguard-public-key"
+
+	// WireguardAssignedPrefixesAnnotation is the node annotation use to list the (comma-separated) set of IP prefixes for which the annotated node should be responsible.
+	WireguardAssignedPrefixesAnnotation = "networking.talos.dev/assigned-prefixes"
+
+	// WireguardKnownEndpointsAnnotation is the node annotation used to list the (comma-separated) known-good Wireguard endpoints for the node, as seen by other peers.
+	WireguardKnownEndpointsAnnotation = "networking.talos.dev/wireguard-endpoints"
+
+	// NetworkSelfIPsAnnotation is the node annotation used to list the (comma-separated) IP addresses of the host, as discovered by Talos tooling.
+	NetworkSelfIPsAnnotation = "networking.talos.dev/self-ips"
+
 	// RoleAdmin defines Talos role for admins.
 	// It matches Organization value of Talos client certificate.
 	RoleAdmin = "os:admin"

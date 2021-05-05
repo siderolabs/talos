@@ -17,6 +17,8 @@ import (
 	valid "github.com/asaskevich/govalidator"
 	"github.com/hashicorp/go-multierror"
 	talosnet "github.com/talos-systems/net"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -521,6 +523,37 @@ func CheckDeviceRoutes(d *Device) error {
 
 		if ip := net.ParseIP(route.Gateway()); ip == nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway(), ErrInvalidAddress))
+		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// CheckDeviceWireguard checks the Wireguard configuration of a device.
+func CheckDeviceWireguard(d *Device) error {
+	var result *multierror.Error
+
+	if d == nil || d.DeviceWireguardConfig == nil {
+		return result.ErrorOrNil()
+	}
+
+	if d.DeviceWireguardConfig.WireguardPrivateKey != "" {
+		if _, err := wgtypes.ParseKey(d.DeviceWireguardConfig.WireguardPrivateKey); err != nil {
+			result = multierror.Append(result, fmt.Errorf("invalid Wireguard private key: %w", err))
+		}
+	}
+
+	if d.DeviceWireguardConfig.WireguardListenPort < 0 ||
+		d.DeviceWireguardConfig.WireguardListenPort > 65535 {
+		result = multierror.Append(result, fmt.Errorf("invalid Wireguard listen port: %d", d.DeviceWireguardConfig.WireguardListenPort))
+	}
+
+	if d.DeviceWireguardConfig.WireguardAutomaticNodesPrefix != "" {
+		prefix, err := netaddr.ParseIPPrefix(d.DeviceWireguardConfig.WireguardAutomaticNodesPrefix)
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("invalid Wireguard Automatic Nodes prefix %q: %w", d.DeviceWireguardConfig.WireguardAutomaticNodesPrefix, err))
+		} else if prefix.Bits() < uint8(64) {
+			result = multierror.Append(result, fmt.Errorf("invalide Wireguard Automatic Nodes prefix length %q: must be at least 64 bits", prefix.Bits()))
 		}
 	}
 
