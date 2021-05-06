@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/bits"
 	"math/rand"
 	"net"
 	"reflect"
@@ -42,7 +43,6 @@ type Syncer struct {
 	// these functions are overridden in tests for mocking support
 	CurrentTime CurrentTimeFunc
 	NTPQuery    QueryFunc
-	SetTime     SetTimeFunc
 	AdjustTime  AdjustTimeFunc
 }
 
@@ -62,7 +62,6 @@ func NewSyncer(logger *log.Logger, timeServers []string) *Syncer {
 
 		CurrentTime: time.Now,
 		NTPQuery:    ntp.Query,
-		SetTime:     syscall.Settimeofday,
 		AdjustTime:  timex.Adjtimex,
 	}
 
@@ -144,8 +143,18 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			return
 		}
 
+		// Set some variance with how frequently we poll ntp servers.
+		// This is based on rand(MaxPoll) + MinPoll so we wait at least
+		// MinPoll.
+		nextPollInterval := time.Duration(rand.Intn(int(syncer.MaxPoll.Seconds())))*time.Second + syncer.MinPoll
+
+		if resp == nil {
+			// if no response was ever received, consider doing short sleep to retry sooner as it's not Kiss-o-Death response
+			nextPollInterval = syncer.MinPoll / 2
+		}
+
 		if resp != nil && resp.Validate() == nil {
-			err = syncer.adjustTime(resp.ClockOffset, lastSyncServer)
+			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, nextPollInterval)
 
 			if err == nil {
 				if !syncer.timeSyncNotified {
@@ -159,22 +168,12 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			}
 		}
 
-		// Set some variance with how frequently we poll ntp servers.
-		// This is based on rand(MaxPoll) + MinPoll so we wait at least
-		// MinPoll.
-		sleepInterval := time.Duration(rand.Intn(int(syncer.MaxPoll.Seconds())))*time.Second + syncer.MinPoll
-
-		if resp == nil {
-			// if no response was ever received, consider doing short sleep to retry sooner as it's not Kiss-o-Death response
-			sleepInterval = syncer.MinPoll / 2
-		}
-
 		select {
 		case <-ctx.Done():
 			return
 		case <-syncer.restartSyncCh:
 			// time servers got changed, restart the loop immediately
-		case <-time.After(sleepInterval):
+		case <-time.After(nextPollInterval):
 		}
 	}
 }
@@ -268,52 +267,55 @@ func (syncer *Syncer) queryServer(server string) (*ntp.Response, error) {
 	return resp, err
 }
 
-func (syncer *Syncer) setTime(adjustedTime time.Time, server string) error {
-	syncer.logger.Printf("setting time to %s via %s", adjustedTime, server)
-
-	timeval := syscall.NsecToTimeval(adjustedTime.UnixNano())
-
-	if err := syncer.SetTime(&timeval); err != nil {
-		return err
-	}
-
-	if RTCClock != nil {
-		if err := RTCClock.Set(adjustedTime); err != nil {
-			syncer.logger.Printf("error syncing RTC: %s", err)
-		} else {
-			syncer.logger.Printf("synchronized RTC with system clock")
-		}
-	}
-
-	return nil
-}
-
 // adjustTime adds an offset to the current time.
-func (syncer *Syncer) adjustTime(offset time.Duration, server string) error {
+//
+//nolint:gocyclo
+func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndicator, server string, nextPollInterval time.Duration) error {
+	var (
+		buf  bytes.Buffer
+		req  syscall.Timex
+		jump bool
+	)
+
 	if offset < -AdjustTimeLimit || offset > AdjustTimeLimit {
-		if err := syncer.setTime(syncer.CurrentTime().Add(offset), server); err != nil {
-			return err
+		jump = true
+
+		fmt.Fprintf(&buf, "adjusting time (jump) by %s via %s", offset, server)
+
+		req = syscall.Timex{
+			Modes: timex.ADJ_SETOFFSET | timex.ADJ_NANO | timex.ADJ_STATUS,
+			Time: syscall.Timeval{
+				Sec:  int64(offset / time.Second),
+				Usec: int64(offset / time.Nanosecond % time.Second),
+			},
 		}
 
-		if offset < -EpochLimit || offset > EpochLimit {
-			// notify about epoch change
-			select {
-			case syncer.epochChangeCh <- struct{}{}:
-			default:
-			}
+		// kernel wants tv_usec to be positive
+		if req.Time.Usec < 0 {
+			req.Time.Sec--
+			req.Time.Usec += int64(time.Second / time.Nanosecond)
 		}
+	} else {
+		fmt.Fprintf(&buf, "adjusting time (slew) by %s via %s", offset, server)
 
-		return nil
+		pollSeconds := uint64(nextPollInterval / time.Second)
+		log2iPollSeconds := 64 - bits.LeadingZeros64(pollSeconds)
+
+		req = syscall.Timex{
+			Modes:    timex.ADJ_OFFSET | timex.ADJ_NANO | timex.ADJ_STATUS | timex.ADJ_TIMECONST | timex.ADJ_MAXERROR | timex.ADJ_ESTERROR,
+			Offset:   int64(offset / time.Nanosecond),
+			Status:   timex.STA_PLL,
+			Maxerror: 0,
+			Esterror: 0,
+			Constant: int64(log2iPollSeconds) - 4,
+		}
 	}
 
-	var buf bytes.Buffer
-
-	fmt.Fprintf(&buf, "adjusting time by %s via %s", offset, server)
-
-	req := syscall.Timex{
-		Modes:  timex.ADJ_OFFSET | timex.ADJ_NANO | timex.ADJ_STATUS,
-		Offset: int64(offset / time.Nanosecond),
-		Status: timex.STA_PLL,
+	switch leapSecond { //nolint:exhaustive
+	case ntp.LeapAddSecond:
+		req.Status |= timex.STA_INS
+	case ntp.LeapDelSecond:
+		req.Status |= timex.STA_DEL
 	}
 
 	state, err := syncer.AdjustTime(&req)
@@ -325,6 +327,26 @@ func (syncer *Syncer) adjustTime(offset time.Duration, server string) error {
 	}
 
 	syncer.logger.Println(buf.String())
+
+	if err == nil {
+		if offset < -EpochLimit || offset > EpochLimit {
+			// notify about epoch change
+			select {
+			case syncer.epochChangeCh <- struct{}{}:
+			default:
+			}
+		}
+
+		if jump {
+			if RTCClock != nil {
+				if rtcErr := RTCClock.Set(time.Now().Add(offset)); rtcErr != nil {
+					syncer.logger.Printf("error syncing RTC: %s", rtcErr)
+				} else {
+					syncer.logger.Printf("synchronized RTC with system clock")
+				}
+			}
+		}
+	}
 
 	return err
 }

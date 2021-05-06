@@ -47,15 +47,6 @@ func (suite *NTPSuite) SetupTest() {
 	suite.failingServer = 0
 }
 
-func (suite *NTPSuite) setSystemClock(timeval *syscall.Timeval) error {
-	suite.clockLock.Lock()
-	defer suite.clockLock.Unlock()
-
-	suite.systemClock = time.Unix(timeval.Sec, timeval.Usec)
-
-	return nil
-}
-
 func (suite *NTPSuite) getSystemClock() time.Time {
 	suite.clockLock.Lock()
 	defer suite.clockLock.Unlock()
@@ -67,7 +58,13 @@ func (suite *NTPSuite) adjustSystemClock(val *syscall.Timex) (status timex.State
 	suite.clockLock.Lock()
 	defer suite.clockLock.Unlock()
 
-	suite.clockAdjustments = append(suite.clockAdjustments, time.Duration(val.Offset)*time.Nanosecond)
+	if val.Modes&timex.ADJ_OFFSET == timex.ADJ_OFFSET {
+		suite.T().Logf("adjustment by %s", time.Duration(val.Offset)*time.Nanosecond)
+		suite.clockAdjustments = append(suite.clockAdjustments, time.Duration(val.Offset)*time.Nanosecond)
+	} else {
+		suite.T().Logf("set clock by %s", time.Duration(val.Time.Sec)*time.Second+time.Duration(val.Time.Usec)*time.Nanosecond)
+		suite.systemClock = suite.systemClock.Add(time.Duration(val.Time.Sec)*time.Second + time.Duration(val.Time.Usec)*time.Nanosecond)
+	}
 
 	return
 }
@@ -140,7 +137,6 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 func (suite *NTPSuite) TestSync() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{constants.DefaultNTPServer})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 
@@ -171,7 +167,6 @@ func (suite *NTPSuite) TestSync() {
 func (suite *NTPSuite) TestSyncContinuous() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{"127.0.0.3"})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 	syncer.NTPQuery = suite.fakeQuery
@@ -218,7 +213,6 @@ func (suite *NTPSuite) TestSyncContinuous() {
 func (suite *NTPSuite) TestSyncChangeTimeservers() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{"127.0.0.1"})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 
@@ -257,7 +251,6 @@ func (suite *NTPSuite) TestSyncChangeTimeservers() {
 func (suite *NTPSuite) TestSyncIterateTimeservers() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{"127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4"})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 	syncer.NTPQuery = suite.fakeQuery
@@ -309,7 +302,6 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 func (suite *NTPSuite) TestSyncEpochChange() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{"127.0.0.5"})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 	syncer.NTPQuery = suite.fakeQuery
@@ -349,7 +341,6 @@ func (suite *NTPSuite) TestSyncEpochChange() {
 func (suite *NTPSuite) TestSyncSwitchTimeservers() {
 	syncer := ntp.NewSyncer(log.New(log.Writer(), "ntp ", log.LstdFlags), []string{"127.0.0.6", "127.0.0.4"})
 
-	syncer.SetTime = suite.setSystemClock
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
 	syncer.NTPQuery = suite.fakeQuery
