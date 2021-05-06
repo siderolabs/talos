@@ -106,8 +106,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/talos-systems/crypto v0.2.1-0.20210427105118-4f80b976b640 h1:dDChkGwqk1jcRO0k63VTgGzt1UrY20UiDS3yNcCLW0k=
 github.com/talos-systems/crypto v0.2.1-0.20210427105118-4f80b976b640/go.mod h1:OXCK52Q0dzm88YRG4VdTBdidkPUtqrCxCyW7bUs4DAw=
-github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f h1:EiqXNUf6AGffC+usbMJ/kmAxJVKv5V5S5/zXQ15krvc=
-github.com/talos-systems/go-blockdevice v0.2.1-0.20210407132431-1d830a25f64f/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
+github.com/talos-systems/go-blockdevice v0.2.1-0.20210506211452-b77400e0a726 h1:VgOeqHQsKIHeSISiE4LVapZM1Lv3HVGWECiCrMixkwg=
+github.com/talos-systems/go-blockdevice v0.2.1-0.20210506211452-b77400e0a726/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-retry v0.2.1-0.20210119124456-b9dc1a990133/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
