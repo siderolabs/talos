@@ -589,7 +589,7 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
-RUN find . -name '*.pb.go' | xargs rm
+RUN find . -name '*.pb.go' -o -name '*_string.go' | xargs rm
 RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on protobuf files.

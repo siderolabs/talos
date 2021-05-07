@@ -64,6 +64,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&network.AddressStatusController{},
 		&network.LinkStatusController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},

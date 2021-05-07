@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
-// LinkStatusType is type of SecretsStatus resource.
+// LinkStatusType is type of LinkStatus resource.
 const LinkStatusType = resource.Type("LinkStatuses.net.talos.dev")
 
 // LinkStatus resource holds physical network link status.
@@ -67,7 +67,7 @@ func (r *LinkStatus) Spec() interface{} {
 }
 
 func (r *LinkStatus) String() string {
-	return fmt.Sprintf("k8s.SecretStatus(%q)", r.md.ID())
+	return fmt.Sprintf("network.LinkStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
