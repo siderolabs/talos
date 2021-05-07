@@ -312,10 +312,6 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
-			"leave",
-			LeaveEtcd,
-		).AppendWhen(
 			in.GetGraceful(),
 			"cleanup",
 			RemoveAllPods,
@@ -325,6 +321,10 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"cleanup",
 			StopAllPods,
 			StopNetworkd,
+		).AppendWhen(
+			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
+			"leave",
+			LeaveEtcd,
 		).AppendList(
 			stopAllPhaselist(r),
 		).AppendWhen(
