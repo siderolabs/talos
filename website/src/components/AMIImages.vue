@@ -1,34 +1,37 @@
 <template>
   <div class="content" v-if="hasAny($page.markdownPage.version)">
     <h2>Official AMI Images</h2>
-    <table>
-      <thead>
-        <th>Region</th>
-        <th>Version</th>
-        <th>Instance Type</th>
-        <th>Architecture</th>
-        <th>AMI</th>
-      </thead>
-      <tbody>
-        <template v-for="image in filtered($page.markdownPage.version)">
-          <tr :key="image">
-            <td>
-              {{ image.region }}
-            </td>
-            <td>
-              {{ image.version }}
-            </td>
-            <td>hvm</td>
-            <td>
-              <code>{{ image.arch }}</code>
-            </td>
-            <td>
-              <a :href="amiLaunchURL(image)" target="_blank">{{ image.id }}</a>
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
+    <details>
+      <summary>List of AMI images for each AWS region:</summary>
+      <table>
+        <thead>
+          <th>Region</th>
+          <th>Version</th>
+          <th>Instance Type</th>
+          <th>Architecture</th>
+          <th>AMI</th>
+        </thead>
+        <tbody>
+          <template v-for="image in filtered($page.markdownPage.version)">
+            <tr :key="image">
+              <td>
+                {{ image.region }}
+              </td>
+              <td>
+                {{ image.version }}
+              </td>
+              <td>hvm</td>
+              <td>
+                <code>{{ image.arch }}</code>
+              </td>
+              <td>
+                <a :href="amiLaunchURL(image)" target="_blank">{{ image.id }}</a>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </details>
   </div>
 </template>
 
