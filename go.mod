@@ -102,6 +102,7 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	honnef.co/go/tools v0.1.2 // indirect
+	inet.af/netaddr v0.0.0-20210430201628-1d252cf8125e
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/apiserver v0.21.0 // indirect

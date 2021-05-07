@@ -81,6 +81,7 @@ func NewState() (*State, error) {
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
+		&network.AddressStatus{},
 		&network.LinkStatus{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},

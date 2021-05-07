@@ -6,8 +6,16 @@
 package network
 
 import (
+	"fmt"
+
 	"github.com/cosi-project/runtime/pkg/resource"
+	"inet.af/netaddr"
 )
 
 // NamespaceName contains resources related to networking.
 const NamespaceName resource.Namespace = "network"
+
+// AddressID builds ID (primary key) for the address.
+func AddressID(linkName string, addr netaddr.IPPrefix) string {
+	return fmt.Sprintf("%s/%s", linkName, addr)
+}
