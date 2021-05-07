@@ -484,7 +484,7 @@ local conformance_pipelines = [
   Pipeline('conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu]) + conformance_trigger(['conformance-qemu']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu]) + cron_trigger(['nightly']),
+  Pipeline('cron-conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu], [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 
 // Cloud images pipeline.
