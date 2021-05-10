@@ -293,8 +293,8 @@ github.com/elazarl/goproxy v0.0.0-20190911111923-ecfe977594f1/go.mod h1:Ro8st/El
 github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e h1:/cwV7t2xezilMljIftb7WlFtzGANRCnoOhPjtl2ifcs=
 github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
 github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
-github.com/emicklei/dot v0.15.0 h1:XDBW0Xco1QNyRb33cqLe10cT04yMWL1XpCZfa98Q6Og=
-github.com/emicklei/dot v0.15.0/go.mod h1:DeV7GvQtIw4h2u73RKBkkFdvVAz0D9fzeJrgPW6gy/s=
+github.com/emicklei/dot v0.16.0 h1:7PseyizTgeQ/aSF1eo4LcEfWlQSlzamFZpzY/nMB9EY=
+github.com/emicklei/dot v0.16.0/go.mod h1:DeV7GvQtIw4h2u73RKBkkFdvVAz0D9fzeJrgPW6gy/s=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful v2.9.5+incompatible/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful v2.15.0+incompatible h1:8KpYO/Xl/ZudZs5RNOEhWMBY4hmzlZhhRd9cu+jrZP4=
