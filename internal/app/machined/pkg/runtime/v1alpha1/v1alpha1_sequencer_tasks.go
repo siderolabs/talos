@@ -1235,7 +1235,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 			return err
 		}
 
-		client, err := cri.NewClient("unix://"+constants.ContainerdAddress, 10*time.Second)
+		client, err := cri.NewClient("unix://"+constants.CRIContainerdAddress, 10*time.Second)
 		if err != nil {
 			return err
 		}

@@ -7,7 +7,6 @@ package constants
 import (
 	"time"
 
-	"github.com/containerd/containerd/defaults"
 	cni "github.com/containerd/go-cni"
 	"github.com/talos-systems/crypto/x509"
 )
@@ -295,13 +294,16 @@ const (
 	TrustdPort = 50001
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.4.4"
+	DefaultContainerdVersion = "1.5.0"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
 
 	// SystemContainerdAddress is the path to the system containerd socket.
 	SystemContainerdAddress = SystemRunPath + "/containerd/containerd.sock"
+
+	// CRIContainerdAddress is the path to the CRI containerd socket address.
+	CRIContainerdAddress = "/run/containerd/containerd.sock"
 
 	// CRIContainerdConfig is the path to the config for the containerd instance that provides the CRI.
 	CRIContainerdConfig = "/etc/cri/containerd.toml"
@@ -428,9 +430,4 @@ const (
 	// SYSLOG_ACTION_READ_ALL is a named type argument to klogctl.
 	//nolint:golint
 	SYSLOG_ACTION_READ_ALL = 3
-)
-
-// Containerd.
-const (
-	ContainerdAddress = defaults.DefaultAddress
 )

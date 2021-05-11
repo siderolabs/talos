@@ -60,7 +60,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{
 			"/bin/containerd",
 			"--address",
-			constants.ContainerdAddress,
+			constants.CRIContainerdAddress,
 			"--config",
 			constants.CRIContainerdConfig,
 		},
@@ -84,7 +84,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface.
 func (c *CRI) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
-		client, err := containerd.New(constants.ContainerdAddress)
+		client, err := containerd.New(constants.CRIContainerdAddress)
 		if err != nil {
 			return err
 		}

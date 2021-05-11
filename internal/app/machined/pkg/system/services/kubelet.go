@@ -102,7 +102,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	client, err := containerdapi.New(constants.ContainerdAddress)
+	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
 		"container-runtime":          "remote",
-		"container-runtime-endpoint": "unix://" + constants.ContainerdAddress,
+		"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
 		"config":                     "/etc/kubernetes/kubelet.yaml",
 		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
 
