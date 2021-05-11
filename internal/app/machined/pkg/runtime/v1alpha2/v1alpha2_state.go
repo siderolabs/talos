@@ -49,24 +49,20 @@ func NewState() (*State, error) {
 	}
 
 	// register Talos namespaces
-	if err := s.namespaceRegistry.Register(ctx, v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."); err != nil {
-		return nil, err
-	}
-
-	if err := s.namespaceRegistry.Register(ctx, config.NamespaceName, "Talos node configuration."); err != nil {
-		return nil, err
-	}
-
-	if err := s.namespaceRegistry.Register(ctx, k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."); err != nil {
-		return nil, err
-	}
-
-	if err := s.namespaceRegistry.Register(ctx, secrets.NamespaceName, "Resources with secret material."); err != nil {
-		return nil, err
-	}
-
-	if err := s.namespaceRegistry.Register(ctx, network.NamespaceName, "Networking resources."); err != nil {
-		return nil, err
+	for _, ns := range []struct {
+		name        string
+		description string
+	}{
+		{v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."},
+		{config.NamespaceName, "Talos node configuration."},
+		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
+		{secrets.NamespaceName, "Resources with secret material."},
+		{network.NamespaceName, "Networking resources."},
+		{network.ConfigNamespaceName, "Networking configuration resources."},
+	} {
+		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
+			return nil, err
+		}
 	}
 
 	// register Talos resources
@@ -82,6 +78,7 @@ func NewState() (*State, error) {
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
 		&network.AddressStatus{},
+		&network.AddressSpec{},
 		&network.LinkStatus{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},

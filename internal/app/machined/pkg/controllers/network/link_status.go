@@ -10,16 +10,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/ethtool"
-	"github.com/mdlayher/genetlink"
-	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
@@ -48,92 +46,25 @@ func (ctrl *LinkStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
 func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
 	// other connections are used to send requests and receive responses, as we can't mix the notifications and request/responses
-	watchRtnetlink, err := rtnetlink.Dial(&netlink.Config{
-		Groups: unix.RTMGRP_LINK,
-	})
-	if err != nil {
-		return fmt.Errorf("error dialing watch socket: %w", err)
-	}
-
-	watchEthool, err := genetlink.Dial(nil)
-	if err != nil {
-		return fmt.Errorf("error dialing ethtool watch socket: %w", err)
-	}
-
-	ethFamily, err := watchEthool.GetFamily(unix.ETHTOOL_GENL_NAME)
-	if err != nil {
-		return fmt.Errorf("error getting family information for ethtool: %w", err)
-	}
-
-	var monitorID uint32
-
-	for _, g := range ethFamily.Groups {
-		if g.Name == unix.ETHTOOL_MCGRP_MONITOR_NAME {
-			monitorID = g.ID
-
-			break
-		}
-	}
-
-	if monitorID == 0 {
-		return fmt.Errorf("could not find monitor multicast group ID for ethtool")
-	}
-
-	if err = watchEthool.JoinGroup(monitorID); err != nil {
-		return fmt.Errorf("error joing multicast group for ethtool: %w", err)
-	}
-
 	watchCh := make(chan struct{})
 
-	var wg sync.WaitGroup
+	rtnetlinkWatcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK)
+	if err != nil {
+		return err
+	}
 
-	wg.Add(2)
+	defer rtnetlinkWatcher.Done()
 
-	go func() {
-		defer wg.Done()
+	ethtoolWatcher, err := watch.NewEthtool(ctx, watchCh)
+	if err != nil {
+		return err
+	}
 
-		for {
-			_, _, watchErr := watchRtnetlink.Receive()
-			if watchErr != nil {
-				return
-			}
-
-			select {
-			case watchCh <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		for {
-			_, _, watchErr := watchEthool.Receive()
-			if watchErr != nil {
-				return
-			}
-
-			select {
-			case watchCh <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	defer wg.Wait()
-
-	// close the watch connections first to abort the goroutines above on early exit
-	defer watchRtnetlink.Close() //nolint:errcheck
-	defer watchEthool.Close()    //nolint:errcheck
+	defer ethtoolWatcher.Done()
 
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
