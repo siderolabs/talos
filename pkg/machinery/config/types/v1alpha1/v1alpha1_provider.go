@@ -885,6 +885,10 @@ func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 			matchers = append(matchers, disk.WithModalias(selector.Modalias))
 		}
 
+		if disk.Type(selector.Type) != disk.TypeUnknown {
+			matchers = append(matchers, disk.WithType(disk.Type(selector.Type)))
+		}
+
 		return matchers
 	}
 
