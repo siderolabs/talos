@@ -1182,7 +1182,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 
 		return cri.NewInspector(ctx)
 	case common.ContainerDriver_CONTAINERD:
-		addr := constants.ContainerdAddress
+		addr := constants.CRIContainerdAddress
 		if namespace == constants.SystemContainerdNamespace {
 			addr = constants.SystemContainerdAddress
 		}

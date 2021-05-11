@@ -68,7 +68,7 @@ func DefaultOptions() *Options {
 		Env:                     []string{},
 		Namespace:               constants.SystemContainerdNamespace,
 		GracefulShutdownTimeout: 10 * time.Second,
-		ContainerdAddress:       constants.ContainerdAddress,
+		ContainerdAddress:       constants.CRIContainerdAddress,
 		Stdin:                   nil,
 	}
 }

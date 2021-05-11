@@ -49,7 +49,7 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 	var err error
 
 	opt := inspectorOptions{
-		containerdAddress: constants.ContainerdAddress,
+		containerdAddress: constants.CRIContainerdAddress,
 	}
 
 	for _, o := range options {

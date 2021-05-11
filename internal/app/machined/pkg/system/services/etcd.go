@@ -73,7 +73,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
-	client, err := containerdapi.New(constants.ContainerdAddress)
+	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
 		return err
 	}

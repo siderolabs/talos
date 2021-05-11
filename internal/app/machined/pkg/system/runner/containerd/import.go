@@ -49,7 +49,7 @@ func NewImporter(namespace string, options ...ImporterOption) *Importer {
 	importer := &Importer{
 		namespace: namespace,
 		options: importerOptions{
-			containerdAddress: constants.ContainerdAddress,
+			containerdAddress: constants.CRIContainerdAddress,
 		},
 	}
 
