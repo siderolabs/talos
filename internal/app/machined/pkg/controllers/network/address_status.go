@@ -8,15 +8,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
-	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
@@ -48,40 +47,14 @@ func (ctrl *AddressStatusController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
-	watchConn, err := rtnetlink.Dial(&netlink.Config{
-		Groups: unix.RTMGRP_LINK | unix.RTMGRP_IPV4_IFADDR | unix.RTMGRP_IPV6_IFADDR,
-	})
-	if err != nil {
-		return fmt.Errorf("error dialing watch socket: %w", err)
-	}
-
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-
 	watchCh := make(chan struct{})
 
-	go func() {
-		defer wg.Done()
+	watcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK|unix.RTMGRP_IPV4_IFADDR|unix.RTMGRP_IPV6_IFADDR)
+	if err != nil {
+		return err
+	}
 
-		for {
-			_, _, watchErr := watchConn.Receive()
-			if watchErr != nil {
-				return
-			}
-
-			select {
-			case watchCh <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	defer wg.Wait()
-
-	// close the watchConn first to abort the goroutine above on early exit
-	defer watchConn.Close() //nolint:errcheck
+	defer watcher.Done()
 
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {

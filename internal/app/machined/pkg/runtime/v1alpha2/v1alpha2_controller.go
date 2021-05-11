@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
+	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -64,6 +65,11 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&network.AddressConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.AddressMergeController{},
+		&network.AddressSpecController{},
 		&network.AddressStatusController{},
 		&network.LinkStatusController{},
 		&secrets.EtcdController{},

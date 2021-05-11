@@ -26,6 +26,7 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, resource := range []resource.Resource{
 		&network.AddressStatus{},
+		&network.AddressSpec{},
 		&network.LinkStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
