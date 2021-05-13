@@ -48,11 +48,16 @@ GO_LDFLAGS ?= -s -w \
 	-X $(MGMT_HELPERS_PKG).ArtifactsPath=$(ARTIFACTS)
 
 WITH_RACE ?=
+WITH_DEBUG ?=
 
 ifneq ($(strip $(WITH_RACE)),)
 CGO_ENABLED = 1
 GO_BUILDFLAGS += -race
 GO_LDFLAGS += -linkmode=external -extldflags '-static'
+endif
+
+ifeq ($(WITH_DEBUG), true)
+GO_BUILDFLAGS += -tags sidero.debug
 endif
 
 , := ,
