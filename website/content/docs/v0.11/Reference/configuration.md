@@ -294,7 +294,7 @@ Examples:
 
 ``` yaml
 kubelet:
-    image: ghcr.io/talos-systems/kubelet:v1.21.0 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/talos-systems/kubelet:v1.21.1 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -948,7 +948,7 @@ Examples:
 
 ``` yaml
 apiServer:
-    image: k8s.gcr.io/kube-apiserver:v1.21.0 # The container image used in the API server manifest.
+    image: k8s.gcr.io/kube-apiserver:v1.21.1 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -980,7 +980,7 @@ Examples:
 
 ``` yaml
 controllerManager:
-    image: k8s.gcr.io/kube-controller-manager:v1.21.0 # The container image used in the controller manager manifest.
+    image: k8s.gcr.io/kube-controller-manager:v1.21.1 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -1007,7 +1007,7 @@ Examples:
 
 ``` yaml
 proxy:
-    image: k8s.gcr.io/kube-proxy:v1.21.0 # The container image used in the kube-proxy manifest.
+    image: k8s.gcr.io/kube-proxy:v1.21.1 # The container image used in the kube-proxy manifest.
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
@@ -1035,7 +1035,7 @@ Examples:
 
 ``` yaml
 scheduler:
-    image: k8s.gcr.io/kube-scheduler:v1.21.0 # The container image used in the scheduler manifest.
+    image: k8s.gcr.io/kube-scheduler:v1.21.1 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
         feature-gates: AllBeta=true
@@ -1273,7 +1273,7 @@ Appears in:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.21.0 # The `image` field is an optional reference to an alternative kubelet image.
+image: ghcr.io/talos-systems/kubelet:v1.21.1 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -1305,7 +1305,7 @@ Examples:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.21.0
+image: ghcr.io/talos-systems/kubelet:v1.21.1
 ```
 
 
@@ -2296,7 +2296,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-apiserver:v1.21.0 # The container image used in the API server manifest.
+image: k8s.gcr.io/kube-apiserver:v1.21.1 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -2324,7 +2324,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-apiserver:v1.21.0
+image: k8s.gcr.io/kube-apiserver:v1.21.1
 ```
 
 
@@ -2385,7 +2385,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-controller-manager:v1.21.0 # The container image used in the controller manager manifest.
+image: k8s.gcr.io/kube-controller-manager:v1.21.1 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -2408,7 +2408,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-controller-manager:v1.21.0
+image: k8s.gcr.io/kube-controller-manager:v1.21.1
 ```
 
 
@@ -2456,7 +2456,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-proxy:v1.21.0 # The container image used in the kube-proxy manifest.
+image: k8s.gcr.io/kube-proxy:v1.21.1 # The container image used in the kube-proxy manifest.
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
@@ -2503,7 +2503,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-proxy:v1.21.0
+image: k8s.gcr.io/kube-proxy:v1.21.1
 ```
 
 
@@ -2552,7 +2552,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-scheduler:v1.21.0 # The container image used in the scheduler manifest.
+image: k8s.gcr.io/kube-scheduler:v1.21.1 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
     feature-gates: AllBeta=true
@@ -2575,7 +2575,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-scheduler:v1.21.0
+image: k8s.gcr.io/kube-scheduler:v1.21.1
 ```
 
 
