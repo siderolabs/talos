@@ -47,16 +47,16 @@ GO_LDFLAGS ?= -s -w \
 	-X $(IMAGES_PKGS).Registry=$(REGISTRY) \
 	-X $(MGMT_HELPERS_PKG).ArtifactsPath=$(ARTIFACTS)
 
-WITH_RACE ?=
-WITH_DEBUG ?=
+WITH_RACE ?= false
+WITH_DEBUG ?= false
 
-ifneq ($(strip $(WITH_RACE)),)
+ifeq ($(shell hack/parsebool.sh $(WITH_RACE); echo $$?), 1)
 CGO_ENABLED = 1
 GO_BUILDFLAGS += -race
 GO_LDFLAGS += -linkmode=external -extldflags '-static'
 endif
 
-ifeq ($(WITH_DEBUG), true)
+ifeq ($(shell hack/parsebool.sh $(WITH_DEBUG); echo $$?), 1)
 GO_BUILDFLAGS += -tags sidero.debug
 endif
 
