@@ -5,11 +5,13 @@
 package trustd
 
 import (
+	"context"
 	"flag"
 	"log"
 	stdlibnet "net"
 
 	"github.com/talos-systems/crypto/tls"
+	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -23,6 +25,10 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
+const (
+	debugAddr = ":9983"
+)
+
 // Main is the entrypoint into trustd.
 //
 //nolint:gocyclo
@@ -30,6 +36,15 @@ func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	flag.Parse()
+
+	go func() {
+		debugLogFunc := func(msg string) {
+			log.Print(msg)
+		}
+		if lErr := debug.ListenAndServe(context.TODO(), debugAddr, debugLogFunc); lErr != nil {
+			log.Fatalf("failed to start debug server: %s", lErr)
+		}
+	}()
 
 	var err error
 

@@ -14,12 +14,12 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	goruntime "runtime"
 	"syscall"
 	"time"
 
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
+	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
@@ -38,10 +38,11 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-func init() {
-	// Explicitly disable memory profiling to save around 1.4MiB of memory.
-	goruntime.MemProfileRate = 0
+const (
+	debugAddr = ":9982"
+)
 
+func init() {
 	// Explicitly set the default http client transport to work around proxy.Do
 	// once. This is the http.DefaultTransport with the Proxy func overridden so
 	// that the environment variables with be reread/initialized each time the
@@ -199,6 +200,15 @@ func run() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	go func() {
+		debugLogFunc := func(msg string) {
+			log.Print(msg)
+		}
+		if lErr := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); lErr != nil {
+			log.Fatalf("failed to start debug server: %s", lErr)
+		}
+	}()
 
 	// Schedule service shutdown on any return.
 	defer system.Services(c.Runtime()).Shutdown(ctx)

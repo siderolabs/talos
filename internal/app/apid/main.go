@@ -5,11 +5,13 @@
 package apid
 
 import (
+	"context"
 	"flag"
 	"log"
 	"regexp"
 	"strings"
 
+	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -25,6 +27,10 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
+const (
+	debugAddr = ":9981"
+)
+
 var (
 	endpoints       *string
 	useK8sEndpoints *bool
@@ -38,6 +44,15 @@ func Main() {
 	useK8sEndpoints = flag.Bool("use-kubernetes-endpoints", false, "use Kubernetes master node endpoints as control plane endpoints")
 
 	flag.Parse()
+
+	go func() {
+		debugLogFunc := func(msg string) {
+			log.Print(msg)
+		}
+		if lErr := debug.ListenAndServe(context.TODO(), debugAddr, debugLogFunc); lErr != nil {
+			log.Fatalf("failed to start debug server: %s", lErr)
+		}
+	}()
 
 	if err := startup.RandSeed(); err != nil {
 		log.Fatalf("failed to seed RNG: %v", err)

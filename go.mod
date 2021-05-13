@@ -68,6 +68,7 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20210427105118-4f80b976b640
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210510233948-1292574643e0
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
+	github.com/talos-systems/go-debug v0.2.0
 	github.com/talos-systems/go-kmsg v0.1.0
 	github.com/talos-systems/go-loadbalancer v0.1.1
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
@@ -84,7 +85,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/etcdctl/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/pkg/v3 v3.5.0-alpha.0
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
