@@ -371,14 +371,14 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 	case runtime.ModeContainer:
 		return nil
 	default:
-		phases = phases.AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
-			"leave",
-			LeaveEtcd,
-		).Append(
+		phases = phases.Append(
 			"cleanup",
 			StopAllPods,
 			StopNetworkd,
+		).AppendWhen(
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			"leave",
+			LeaveEtcd,
 		).AppendList(
 			stopAllPhaselist(r),
 		).Append(
@@ -402,10 +402,6 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
-			"leave",
-			LeaveEtcd,
-		).AppendWhen(
 			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
@@ -415,6 +411,10 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"cleanup",
 			StopAllPods,
 			StopNetworkd,
+		).AppendWhen(
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			"leave",
+			LeaveEtcd,
 		).Append(
 			"stopServices",
 			StopServicesForUpgrade,
