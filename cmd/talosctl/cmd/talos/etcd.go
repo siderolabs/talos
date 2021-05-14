@@ -100,8 +100,8 @@ var etcdMemberListCmd = &cobra.Command{
 					continue
 				}
 
-				for _, member := range message.Members {
-					if i == 0 {
+				for j, member := range message.Members {
+					if i == 0 && j == 0 {
 						if node != "" {
 							fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS")
 							pattern = "%s\t" + pattern
