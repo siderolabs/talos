@@ -25,6 +25,14 @@ func AddressID(linkName string, addr netaddr.IPPrefix) string {
 	return fmt.Sprintf("%s/%s", linkName, addr)
 }
 
+// RouteID builds ID (primary key) for the route.
+func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
+	dst, _ := destination.MarshalText() //nolint:errcheck
+	gw, _ := gateway.MarshalText()      //nolint:errcheck
+
+	return fmt.Sprintf("%s/%s", string(dst), string(gw))
+}
+
 // LayeredID builds configuration for the entity at some layer.
 func LayeredID(layer ConfigLayer, id string) string {
 	return fmt.Sprintf("%s/%s", layer, id)

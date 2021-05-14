@@ -7,9 +7,6 @@ package network
 import (
 	"context"
 	"fmt"
-	"net"
-	"sort"
-	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -59,7 +56,7 @@ func (ctrl *AddressConfigController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo, cyclop
+//nolint:gocyclo,cyclop
 func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// apply defaults for the loopback interface once
 	defaultTouchedIDs, err := ctrl.apply(ctx, r, ctrl.loopbackDefaults())
@@ -141,6 +138,11 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 		}
 
 		for _, res := range list.Items {
+			if res.Metadata().Owner() != ctrl.Name() {
+				// skip specs created by other controllers
+				continue
+			}
+
 			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
 				if err = r.Destroy(ctx, res.Metadata()); err != nil {
 					return fmt.Errorf("error cleaning up addresses: %w", err)
@@ -150,6 +152,7 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
+//nolint:dupl
 func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Runtime, addresses []network.AddressSpecSpec) ([]resource.ID, error) {
 	ids := make([]string, 0, len(addresses))
 
@@ -202,52 +205,23 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 	}
 }
 
-//nolint: gocyclo
 func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address network.AddressSpecSpec) {
 	if ctrl.Cmdline == nil {
 		return
 	}
 
-	cmdline := ctrl.Cmdline.Get("ip").First()
-	if cmdline == nil {
-		return
-	}
-
-	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
-	// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
-	fields := strings.Split(*cmdline, ":")
-
-	// If dhcp is specified, we'll handle it as a normal discovered
-	// interface
-	if len(fields) == 1 && fields[0] == "dhcp" {
-		return
-	}
-
-	var err error
-
-	address.Address.IP, err = netaddr.ParseIP(fields[0])
+	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
 	if err != nil {
-		logger.Info("ignoring cmdline address parse failure", zap.Error(err))
+		logger.Info("ignoring cmdline parse failure", zap.Error(err))
 
 		return
 	}
 
-	if len(fields) >= 4 {
-		netmask, err := netaddr.ParseIP(fields[3])
-		if err != nil {
-			logger.Info("ignoring cmdline netmask parse failure", zap.Error(err))
-
-			return
-		}
-
-		ones, _ := net.IPMask(netmask.IPAddr().IP).Size()
-
-		address.Address.Bits = uint8(ones)
-	} else {
-		// default is to have complete address masked
-		address.Address.Bits = address.Address.IP.BitLen()
+	if settings.Address.IsZero() {
+		return
 	}
 
+	address.Address = settings.Address
 	if address.Address.IP.Is6() {
 		address.Family = nethelpers.FamilyInet6
 	} else {
@@ -256,26 +230,8 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 
 	address.Scope = nethelpers.ScopeGlobal
 	address.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
-
 	address.Layer = network.ConfigCmdline
-
-	if len(fields) >= 6 {
-		address.LinkName = fields[5]
-	} else {
-		ifaces, _ := net.Interfaces() //nolint: errcheck // ignoring error here as ifaces will be empty
-
-		sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
-
-		for _, iface := range ifaces {
-			if iface.Flags&net.FlagLoopback != 0 {
-				continue
-			}
-
-			address.LinkName = iface.Name
-
-			break
-		}
-	}
+	address.LinkName = settings.LinkName
 
 	return address
 }

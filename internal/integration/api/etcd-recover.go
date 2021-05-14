@@ -56,7 +56,7 @@ func (suite *EtcdRecoverSuite) TearDownTest() {
 
 // TestSnapshotRecover snapshot etcd, wipes control plane nodes and recovers etcd from a snapshot.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot")

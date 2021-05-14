@@ -80,6 +80,8 @@ func NewState() (*State, error) {
 		&network.AddressStatus{},
 		&network.AddressSpec{},
 		&network.LinkStatus{},
+		&network.RouteStatus{},
+		&network.RouteSpec{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},

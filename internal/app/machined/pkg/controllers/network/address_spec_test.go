@@ -77,7 +77,7 @@ func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
 
-	defer conn.Close() //nolint: errcheck
+	defer conn.Close() //nolint:errcheck
 
 	linkAddresses, err := conn.Address.List()
 	suite.Require().NoError(err)
@@ -110,7 +110,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
 
-	defer conn.Close() //nolint: errcheck
+	defer conn.Close() //nolint:errcheck
 
 	linkAddresses, err := conn.Address.List()
 	suite.Require().NoError(err)
@@ -200,7 +200,7 @@ func (suite *AddressSpecSuite) TestDummy() {
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
 
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint: errcheck
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {

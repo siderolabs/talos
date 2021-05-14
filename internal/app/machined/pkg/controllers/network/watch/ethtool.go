@@ -14,15 +14,18 @@ import (
 )
 
 type ethtoolWatcher struct {
-	wg   sync.WaitGroup
-	conn *genetlink.Conn
+	wg     sync.WaitGroup
+	conn   *genetlink.Conn
+	cancel context.CancelFunc
 }
 
 // NewEthtool starts ethtool watch.
 //
-//nolint: gocyclo
+//nolint:gocyclo
 func NewEthtool(ctx context.Context, watchCh chan<- struct{}) (Watcher, error) {
 	watcher := &ethtoolWatcher{}
+
+	ctx, watcher.cancel = context.WithCancel(ctx)
 
 	var err error
 
@@ -77,7 +80,8 @@ func NewEthtool(ctx context.Context, watchCh chan<- struct{}) (Watcher, error) {
 }
 
 func (watcher *ethtoolWatcher) Done() {
-	watcher.conn.Close() //nolint: errcheck
+	watcher.cancel()
+	watcher.conn.Close() //nolint:errcheck
 
 	watcher.wg.Wait()
 }

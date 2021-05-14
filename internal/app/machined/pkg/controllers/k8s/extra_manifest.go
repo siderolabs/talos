@@ -231,7 +231,7 @@ func (ctrl *ExtraManifestController) processInline(ctx context.Context, r contro
 	return nil
 }
 
-//nolint: dupl
+//nolint:dupl
 func (ctrl *ExtraManifestController) teardownAll(ctx context.Context, r controller.Runtime) error {
 	manifests, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {

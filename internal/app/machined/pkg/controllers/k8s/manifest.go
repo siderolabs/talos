@@ -230,7 +230,7 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 	return manifests, nil
 }
 
-//nolint: dupl
+//nolint:dupl
 func (ctrl *ManifestController) teardownAll(ctx context.Context, r controller.Runtime) error {
 	manifests, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {

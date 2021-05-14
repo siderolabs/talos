@@ -28,6 +28,8 @@ func TestRegisterResource(t *testing.T) {
 		&network.AddressStatus{},
 		&network.AddressSpec{},
 		&network.LinkStatus{},
+		&network.RouteStatus{},
+		&network.RouteSpec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

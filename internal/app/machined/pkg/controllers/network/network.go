@@ -4,3 +4,6 @@
 
 // Package network provides controllers which manage network resources.
 package network
+
+// DefaultRouteMetric is the default route metric if no metric was specified explicitly.
+const DefaultRouteMetric = 1024

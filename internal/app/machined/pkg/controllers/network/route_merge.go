@@ -16,20 +16,20 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
-// AddressMergeController merges network.AddressSpec in network.ConfigNamespace and produces final network.AddressSpec in network.Namespace.
-type AddressMergeController struct{}
+// RouteMergeController merges network.RouteSpec in network.ConfigNamespace and produces final network.RouteSpec in network.Namespace.
+type RouteMergeController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *AddressMergeController) Name() string {
-	return "network.AddressMergeController"
+func (ctrl *RouteMergeController) Name() string {
+	return "network.RouteMergeController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *AddressMergeController) Inputs() []controller.Input {
+func (ctrl *RouteMergeController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: network.ConfigNamespaceName,
-			Type:      network.AddressSpecType,
+			Type:      network.RouteSpecType,
 			Kind:      controller.InputWeak,
 		},
 		// TODO: temporary hack to make controller watch its outputs to facilitate proper teardown sequence
@@ -37,17 +37,17 @@ func (ctrl *AddressMergeController) Inputs() []controller.Input {
 		//       on outputs
 		{
 			Namespace: network.NamespaceName,
-			Type:      network.AddressSpecType,
+			Type:      network.RouteSpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *AddressMergeController) Outputs() []controller.Output {
+func (ctrl *RouteMergeController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: network.AddressSpecType,
+			Type: network.RouteSpecType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -56,7 +56,7 @@ func (ctrl *AddressMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -65,34 +65,34 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 		if err != nil {
-			return fmt.Errorf("error listing source network addresses: %w", err)
+			return fmt.Errorf("error listing source network routes: %w", err)
 		}
 
-		// address is allowed as long as it's not duplicate, for duplicate higher layer takes precedence
-		addresses := map[string]*network.AddressSpec{}
+		// route is allowed as long as it's not duplicate, for duplicate higher layer takes precedence
+		routes := map[string]*network.RouteSpec{}
 
 		for _, res := range list.Items {
-			address := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
-			id := network.AddressID(address.Status().LinkName, address.Status().Address)
+			route := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
+			id := network.RouteID(route.Status().Destination, route.Status().Gateway)
 
-			existing, ok := addresses[id]
-			if ok && existing.Status().Layer > address.Status().Layer {
-				// skip this address, as existing one is higher layer
+			existing, ok := routes[id]
+			if ok && existing.Status().Layer > route.Status().Layer {
+				// skip this route, as existing one is higher layer
 				continue
 			}
 
-			addresses[id] = address
+			routes[id] = route
 		}
 
-		for id, address := range addresses {
-			address := address
+		for id, route := range routes {
+			route := route
 
-			if err = r.Modify(ctx, network.NewAddressSpec(network.NamespaceName, id), func(res resource.Resource) error {
-				addr := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
+			if err = r.Modify(ctx, network.NewRouteSpec(network.NamespaceName, id), func(res resource.Resource) error {
+				rt := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
 
-				*addr.Status() = *address.Status()
+				*rt.Status() = *route.Status()
 
 				return nil
 			}); err != nil {
@@ -100,14 +100,14 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 			}
 		}
 
-		// list addresses for cleanup
-		list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+		// list routes for cleanup
+		list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
 		for _, res := range list.Items {
-			if _, ok := addresses[res.Metadata().ID()]; !ok {
+			if _, ok := routes[res.Metadata().ID()]; !ok {
 				var okToDestroy bool
 
 				okToDestroy, err = r.Teardown(ctx, res.Metadata())
