@@ -52,7 +52,7 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 					return fmt.Errorf("error opening snapshot file: %w", err)
 				}
 
-				defer snapshot.Close() //nolint: errcheck
+				defer snapshot.Close() //nolint:errcheck
 
 				_, err = c.EtcdRecover(ctx, snapshot)
 				if err != nil {

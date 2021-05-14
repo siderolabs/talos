@@ -46,7 +46,7 @@ func (ctrl *AddressSpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint: gocyclo
+//nolint:gocyclo,dupl
 func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	watchCh := make(chan struct{})
 

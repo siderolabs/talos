@@ -1844,13 +1844,13 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 		return fmt.Errorf("error creating etcd recovery snapshot: %w", err)
 	}
 
-	defer snapshot.Close() //nolint: errcheck
+	defer snapshot.Close() //nolint:errcheck
 
 	successfulUpload := false
 
 	defer func() {
 		if !successfulUpload {
-			os.Remove(snapshot.Name()) //nolint: errcheck
+			os.Remove(snapshot.Name()) //nolint:errcheck
 		}
 	}()
 

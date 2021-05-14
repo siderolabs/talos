@@ -260,7 +260,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 				return err
 			}
 
-			matched, _ := filepath.Match("tmp/sonobuoy/*_sonobuoy_*.tar.gz", header.Name) //nolint: errcheck
+			matched, _ := filepath.Match("tmp/sonobuoy/*_sonobuoy_*.tar.gz", header.Name) //nolint:errcheck
 
 			if !matched {
 				continue
@@ -273,7 +273,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 				return err
 			}
 
-			defer gzipR.Close() //nolint: errcheck
+			defer gzipR.Close() //nolint:errcheck
 
 			innnerTarR := tar.NewReader(gzipR)
 

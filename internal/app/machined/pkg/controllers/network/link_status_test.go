@@ -148,7 +148,7 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
 
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint: errcheck
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {

@@ -76,6 +76,12 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
 		&network.LinkStatusController{},
+		&network.RouteConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.RouteMergeController{},
+		&network.RouteStatusController{},
+		&network.RouteSpecController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},
 		&secrets.RootController{},

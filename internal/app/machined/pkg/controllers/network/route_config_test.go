@@ -9,9 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/url"
-	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -33,7 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
-type AddressConfigSuite struct {
+type RouteConfigSuite struct {
 	suite.Suite
 
 	state state.State
@@ -45,7 +43,7 @@ type AddressConfigSuite struct {
 	ctxCancel context.CancelFunc
 }
 
-func (suite *AddressConfigSuite) SetupTest() {
+func (suite *RouteConfigSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
 
 	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
@@ -56,7 +54,7 @@ func (suite *AddressConfigSuite) SetupTest() {
 	suite.Require().NoError(err)
 }
 
-func (suite *AddressConfigSuite) startRuntime() {
+func (suite *RouteConfigSuite) startRuntime() {
 	suite.wg.Add(1)
 
 	go func() {
@@ -66,14 +64,14 @@ func (suite *AddressConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec) error) error {
+func (suite *RouteConfigSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec) error) error {
 	missingIDs := make(map[string]struct{}, len(requiredIDs))
 
 	for _, id := range requiredIDs {
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 	if err != nil {
 		return retry.UnexpectedError(err)
 	}
@@ -86,7 +84,7 @@ func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check fun
 
 		delete(missingIDs, res.Metadata().ID())
 
-		if err = check(res.(*network.AddressSpec)); err != nil {
+		if err = check(res.(*network.RouteSpec)); err != nil {
 			return retry.ExpectedError(err)
 		}
 	}
@@ -98,27 +96,8 @@ func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check fun
 	return nil
 }
 
-func (suite *AddressConfigSuite) TestLoopback() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{}))
-
-	suite.startRuntime()
-
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				"default/lo/127.0.0.1/8",
-				"default/lo/::1/128",
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("lo", r.Status().LinkName)
-				suite.Assert().Equal(nethelpers.ScopeHost, r.Status().Scope)
-
-				return nil
-			})
-		}))
-}
-
-func (suite *AddressConfigSuite) TestCmdline() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{
+func (suite *RouteConfigSuite) TestCmdline() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteConfigController{
 		Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
 	}))
 
@@ -126,56 +105,21 @@ func (suite *AddressConfigSuite) TestCmdline() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			return suite.assertAddresses([]string{
-				"cmdline/eth1/172.20.0.2/24",
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("eth1", r.Status().LinkName)
-
-				return nil
-			})
-		}))
-}
-
-func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{
-		Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1"),
-	}))
-
-	suite.startRuntime()
-
-	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
-
-	sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
-
-	ifaceName := ""
-
-	for _, iface := range ifaces {
-		if iface.Flags&net.FlagLoopback != 0 {
-			continue
-		}
-
-		ifaceName = iface.Name
-
-		break
-	}
-
-	suite.Assert().NotEmpty(ifaceName)
-
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal(ifaceName, r.Status().LinkName)
+			return suite.assertRoutes([]string{
+				"cmdline//172.20.0.1",
+			}, func(r *network.RouteSpec) error {
+				suite.Assert().Equal("eth1", r.Status().OutLinkName)
 				suite.Assert().Equal(network.ConfigCmdline, r.Status().Layer)
+				suite.Assert().Equal(nethelpers.FamilyInet4, r.Status().Family)
+				suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.Status().Priority)
 
 				return nil
 			})
 		}))
 }
 
-func (suite *AddressConfigSuite) TestMachineConfiguration() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{}))
+func (suite *RouteConfigSuite) TestMachineConfiguration() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteConfigController{}))
 
 	suite.startRuntime()
 
@@ -190,15 +134,34 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 					{
 						DeviceInterface: "eth3",
 						DeviceCIDR:      "192.168.0.24/28",
+						DeviceRoutes: []*v1alpha1.Route{
+							{
+								RouteNetwork: "192.168.0.0/18",
+								RouteGateway: "192.168.0.25",
+								RouteMetric:  25,
+							},
+						},
 					},
 					{
 						DeviceIgnore:    true,
 						DeviceInterface: "eth4",
 						DeviceCIDR:      "192.168.0.24/28",
+						DeviceRoutes: []*v1alpha1.Route{
+							{
+								RouteNetwork: "192.168.0.0/18",
+								RouteGateway: "192.168.0.26",
+								RouteMetric:  25,
+							},
+						},
 					},
 					{
 						DeviceInterface: "eth2",
 						DeviceCIDR:      "2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
+						DeviceRoutes: []*v1alpha1.Route{
+							{
+								RouteGateway: "2001:470:6d:30e:8ed2:b60c:9d2f:803b",
+							},
+						},
 					},
 					{
 						DeviceInterface: "eth0",
@@ -206,6 +169,12 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 							{
 								VlanID:   24,
 								VlanCIDR: "10.0.0.1/8",
+								VlanRoutes: []*v1alpha1.Route{
+									{
+										RouteNetwork: "10.0.3.0/24",
+										RouteGateway: "10.0.3.1",
+									},
+								},
 							},
 						},
 					},
@@ -225,16 +194,33 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			return suite.assertAddresses([]string{
-				"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
-				"configuration/eth3/192.168.0.24/28",
-				"configuration/eth0.24/10.0.0.1/8",
-			}, func(r *network.AddressSpec) error {
+			return suite.assertRoutes([]string{
+				"configuration//2001:470:6d:30e:8ed2:b60c:9d2f:803b",
+				"configuration/10.0.3.0/24/10.0.3.1",
+				"configuration/192.168.0.0/18/192.168.0.25",
+			}, func(r *network.RouteSpec) error {
+				switch r.Metadata().ID() {
+				case "configuration//2001:470:6d:30e:8ed2:b60c:9d2f:803b":
+					suite.Assert().Equal("eth2", r.Status().OutLinkName)
+					suite.Assert().Equal(nethelpers.FamilyInet6, r.Status().Family)
+					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.Status().Priority)
+				case "configuration/10.0.3.0/24/10.0.3.1":
+					suite.Assert().Equal("eth0.24", r.Status().OutLinkName)
+					suite.Assert().Equal(nethelpers.FamilyInet4, r.Status().Family)
+					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.Status().Priority)
+				case "configuration/192.168.0.0/18/192.168.0.25":
+					suite.Assert().Equal("eth3", r.Status().OutLinkName)
+					suite.Assert().Equal(nethelpers.FamilyInet4, r.Status().Family)
+					suite.Assert().EqualValues(25, r.Status().Priority)
+				}
+
+				suite.Assert().Equal(network.ConfigMachineConfiguration, r.Status().Layer)
+
 				return nil
 			})
 		}))
 }
 
-func TestAddressConfigSuite(t *testing.T) {
-	suite.Run(t, new(AddressConfigSuite))
+func TestRouteConfigSuite(t *testing.T) {
+	suite.Run(t, new(RouteConfigSuite))
 }
