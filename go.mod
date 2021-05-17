@@ -19,7 +19,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.0
+	github.com/containerd/containerd v1.5.1
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
