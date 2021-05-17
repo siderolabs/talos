@@ -37,7 +37,7 @@ MGMT_HELPERS_PKG = github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
-GO_LDFLAGS ?= -s -w \
+GO_LDFLAGS ?= \
 	-X $(VERSION_PKG).Name=$(NAME) \
 	-X $(VERSION_PKG).SHA=$(SHA) \
 	-X $(VERSION_PKG).Tag=$(TAG) \
@@ -58,6 +58,8 @@ endif
 
 ifeq ($(shell hack/parsebool.sh $(WITH_DEBUG); echo $$?), 1)
 GO_BUILDFLAGS += -tags sidero.debug
+else
+GO_LDFLAGS += -s -w
 endif
 
 , := ,
