@@ -44,6 +44,7 @@ type LaunchConfig struct {
 	KernelArgs        string
 	MachineType       string
 	MonitorPath       string
+	DefaultBootOrder  string
 	EnableKVM         bool
 	BootloaderEnabled bool
 	NodeUUID          uuid.UUID
@@ -220,7 +221,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 //
 //nolint:gocyclo
 func launchVM(config *LaunchConfig) error {
-	bootOrder := "cn"
+	bootOrder := config.DefaultBootOrder
 
 	if config.controller.ForcePXEBoot() {
 		bootOrder = "nc"
