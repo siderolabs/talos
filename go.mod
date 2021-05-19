@@ -19,7 +19,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.0
+	github.com/containerd/containerd v1.5.1
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
@@ -36,11 +36,11 @@ require (
 	github.com/emicklei/dot v0.16.0
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/fatih/color v1.10.0
+	github.com/fatih/color v1.11.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.2.1
+	github.com/gdamore/tcell/v2 v2.3.1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
@@ -57,7 +57,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/plunder-app/kube-vip v0.3.3
+	github.com/plunder-app/kube-vip v0.3.4
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210217110421-8a8f78a6dd01
 	github.com/rs/xid v1.3.0
@@ -88,10 +88,10 @@ require (
 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
-	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
+	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210427135350-f9ad6d392236
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.37.1
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

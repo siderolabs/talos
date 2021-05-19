@@ -143,6 +143,10 @@ type NodeRequest struct {
 	Ports []string
 	// SkipInjectingConfig disables reading configuration from http server
 	SkipInjectingConfig bool
+	// DefaultBootOrder overrides default boot order "cn" (disk, then network boot).
+	//
+	// BootOrder can be forced to be "nc" (PXE boot) via the API in QEMU provisioner.
+	DefaultBootOrder string
 
 	// PXE-booted VMs
 	PXEBooted        bool

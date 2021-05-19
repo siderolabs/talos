@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD041 MD034 -->
+<!-- markdownlint-disable MD041 -->
 
 <p align="center">
   <h1 align="center">Talos</h1>

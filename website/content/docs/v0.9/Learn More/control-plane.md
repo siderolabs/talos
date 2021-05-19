@@ -9,7 +9,8 @@ This guide provides details on how Talos runs and bootstraps the Kubernetes cont
 
 Talos cluster bootstrap flow:
 
-1. The `etcd` service is started on control plane nodes. Instances of `etcd` on control plane nodes build the `etcd` cluster.
+1. The `etcd` service is started on control plane nodes.
+   Instances of `etcd` on control plane nodes build the `etcd` cluster.
 2. The `kubelet` service is started.
 3. Control plane components are started as static pods via the `kubelet`, and the `kube-apiserver` component connects to the local (running on the same node) `etcd` instance.
 4. The `kubelet` issues client certificate using the bootstrap token using the control plane endpoint (via `kube-apiserver` and `kube-controller-manager`).

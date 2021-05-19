@@ -100,6 +100,11 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		return provision.NodeInfo{}, fmt.Errorf("error finding listen address for the API: %w", err)
 	}
 
+	defaultBootOrder := "cn"
+	if nodeReq.DefaultBootOrder != "" {
+		defaultBootOrder = nodeReq.DefaultBootOrder
+	}
+
 	launchConfig := LaunchConfig{
 		QemuExecutable:    arch.QemuExecutable(),
 		DiskPaths:         diskPaths,
@@ -110,6 +115,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		PFlashImages:      pflashImages,
 		MonitorPath:       state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
 		EnableKVM:         opts.TargetArch == runtime.GOARCH,
+		DefaultBootOrder:  defaultBootOrder,
 		BootloaderEnabled: opts.BootloaderEnabled,
 		NodeUUID:          nodeUUID,
 		Config:            nodeConfig,

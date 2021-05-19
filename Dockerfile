@@ -606,6 +606,7 @@ FROM node:16.1.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
+RUN npm i -g textlint-filter-rule-comments@1.2.2
 RUN npm i -g textlint-rule-one-sentence-per-line@1.0.2
 WORKDIR /src
 COPY . .
@@ -615,7 +616,8 @@ RUN markdownlint \
     --ignore '**/CODE_OF_CONDUCT.md' \
     --ignore '**/node_modules/**' \
     --ignore '**/hack/chglog/**' \
-    --ignore 'website/content/docs/*/Reference/*' .
+    --ignore 'website/content/docs/*/Reference/*' \
+    .
 RUN find . \
     -name '*.md' \
     -not -path './LICENCE.md' \
@@ -624,7 +626,8 @@ RUN find . \
     -not -path '*/node_modules/*' \
     -not -path './hack/chglog/**' \
     -not -path './website/content/docs/*/Reference/*' \
-    | xargs textlint --rule one-sentence-per-line --stdin-filename
+    -print0 \
+    | xargs -0 textlint
 
 # The docs target generates documentation.
 
