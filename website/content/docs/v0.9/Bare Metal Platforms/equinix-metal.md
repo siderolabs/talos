@@ -27,9 +27,13 @@ The following is a list of kernel parameters required by Talos:
 
 ### User Data
 
+<!-- textlint-disable one-sentence-per-line -->
+
 To configure a Talos you can use the metadata service provide by Equinix Metal.
 It is required to add a shebang to the top of the configuration file.
 The shebang is arbitrary in the case of Talos, and the convention we use is `#!talos`.
+
+<!-- textlint-disable one-sentence-per-line -->
 
 ## Creating a Cluster via the Equinix Metal CLI
 

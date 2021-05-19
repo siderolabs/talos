@@ -10,8 +10,8 @@ If you need more information on DigitalOcean specifics, please see the [official
 
 ### Create the Image
 
-First, download the DigitalOcean image from a Talos release. Extract the archive to get the `disk.raw` file, compress it using
-`gzip` to `disk.raw.gz`.
+First, download the DigitalOcean image from a Talos release.
+Extract the archive to get the `disk.raw` file, compress it using `gzip` to `disk.raw.gz`.
 
 Using an upload method of your choice (`doctl` does not have Spaces support), upload the image to a space.
 Now, create an image using the URL of the uploaded image:

@@ -9,6 +9,7 @@
 !website
 !.golangci.yml
 !.markdownlint.json
+!.textlintrc.json
 !go.mod
 !go.sum
 !prototool.yaml
