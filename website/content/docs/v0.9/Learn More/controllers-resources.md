@@ -5,46 +5,42 @@ weight: 9
 
 <!-- markdownlint-disable MD038 -->
 
-Talos implements concepts of *resources* and *controllers* to facilitate internal operations of the
-operating system. Talos resources and controllers are very similar to Kubernetes resources and controllers,
-but there are some differences. The content of this document is not required to operate Talos, but it is
-useful for troubleshooting.
+Talos implements concepts of *resources* and *controllers* to facilitate internal operations of the operating system.
+Talos resources and controllers are very similar to Kubernetes resources and controllers, but there are some differences.
+The content of this document is not required to operate Talos, but it is useful for troubleshooting.
 
-Starting with Talos 0.9, most of the Kubernetes control plane boostrapping and operations is implemented
-via controllers and resources which allows Talos to be reactive to configuration changes, environment
-changes (e.g. time sync).
+Starting with Talos 0.9, most of the Kubernetes control plane boostrapping and operations is implemented via controllers and resources which allows Talos to be reactive to configuration changes, environment changes (e.g. time sync).
 
 ## Resources
 
-A resource captures a piece of system state. Each resource belongs to a "Type" which defines resource contents.
+A resource captures a piece of system state.
+Each resource belongs to a "Type" which defines resource contents.
 Resource state can be split in two parts:
 
 * metadata: fixed set of fields describing resource - namespace, type, ID, etc.
 * spec: contents of the resource (depends on resource type).
 
-Resource is uniquely identified by (`namespace`, `type`, `id`). Namespaces provide a way to avoid conflicts on
-duplicate resource IDs.
+Resource is uniquely identified by (`namespace`, `type`, `id`).
+Namespaces provide a way to avoid conflicts on duplicate resource IDs.
 
-At the moment of this writing, all resources are local to the node and stored in memory. So on every reboot
-resource state is rebuilt from scratch (the only exception is `MachineConfig` resource which reflects current
-machine config).
+At the moment of this writing, all resources are local to the node and stored in memory.
+So on every reboot resource state is rebuilt from scratch (the only exception is `MachineConfig` resource which reflects current machine config).
 
 ## Controllers
 
-Controllers run as independent lightweight threads in Talos. The goal of the controller is to reconcile
-the state based on inputs and eventually update outputs.
+Controllers run as independent lightweight threads in Talos.
+The goal of the controller is to reconcile the state based on inputs and eventually update outputs.
 
-A controller can have any number of resource types (and namespaces) as inputs. In other words, it watches
-specified resources for changes and reconciles when these changes occur. A controller might also have additional
-inputs: running reconcile on schedule, watching `etcd` keys, etc.
+A controller can have any number of resource types (and namespaces) as inputs.
+In other words, it watches specified resources for changes and reconciles when these changes occur.
+A controller might also have additional inputs: running reconcile on schedule, watching `etcd` keys, etc.
 
-A controller has a single output: a set of resources of fixed type in a fixed namespace. Only one controller
-can manage resource type in the namespace, so conflicts are avoided.
+A controller has a single output: a set of resources of fixed type in a fixed namespace.
+Only one controller can manage resource type in the namespace, so conflicts are avoided.
 
 ## Querying Resources
 
-Talos CLI tool `talosctl` provides read-only access to the resource API which includes getting specific resource,
-listing resources and watching for changes.
+Talos CLI tool `talosctl` provides read-only access to the resource API which includes getting specific resource, listing resources and watching for changes.
 
 Talos stores resources describing resource types and namespaces in `meta` namespace:
 
@@ -119,15 +115,15 @@ NODE         NAMESPACE   TYPE        ID             VERSION
 Command `talosctl get` supports following output modes:
 
 * `table` (default) prints resource list as a table
-* `yaml` prints pretty formatted resources with details, including full metadata spec. This format carries most
-  details from the backend resource (e.g. comments in `MachineConfig` resource)
+* `yaml` prints pretty formatted resources with details, including full metadata spec.
+  This format carries most details from the backend resource (e.g. comments in `MachineConfig` resource)
 * `json` prints same information as `yaml`, some additional details (e.g. comments) might be lost.
   This format is useful for automated processing with tools like `jq`.
 
 ### Watching Changes
 
-If flag `--watch` is appended to the `talosctl get` command, the command switches to watch mode. If list of resources
-was requested, `talosctl` prints initial contents of the list and then appends resource information
+If flag `--watch` is appended to the `talosctl get` command, the command switches to watch mode.
+If list of resources was requested, `talosctl` prints initial contents of the list and then appends resource information
 for every change:
 
 ```bash

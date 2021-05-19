@@ -16,13 +16,16 @@ It's a big change from how operating systems have been managed in the past, but 
 
 ## Why no shell or SSH?
 
-Since Talos is fully API-driven, all maintenance and debugging operations should be possible via the OS API. We would like for Talos users to start thinking about what a "machine" is in the context of a Kubernetes cluster.
+Since Talos is fully API-driven, all maintenance and debugging operations should be possible via the OS API.
+We would like for Talos users to start thinking about what a "machine" is in the context of a Kubernetes cluster.
 That is, that a Kubernetes _cluster_ can be thought of as one massive machine, and the _nodes_ are merely additional, undifferentiated resources.
 We don't want humans to focus on the _nodes_, but rather on the _machine_ that is the Kubernetes cluster.
-Should an issue arise at the node level, `talosctl` should provide the necessary tooling to assist in the identification, debugging, and remedation of the issue. However, the API is based on the Principle of Least Privilege, and exposes only a limited set of methods.
+Should an issue arise at the node level, `talosctl` should provide the necessary tooling to assist in the identification, debugging, and remedation of the issue.
+However, the API is based on the Principle of Least Privilege, and exposes only a limited set of methods.
 We envision Talos being a great place for the application of [control theory](https://en.wikipedia.org/wiki/Control_theory) in order to provide a self-healing platform.
 
 ## Why the name "Talos"?
 
 Talos was an automaton created by the Greek God of the forge to protect the island of Crete.
-He would patrol the coast and enforce laws throughout the land. We felt it was a fitting name for a security focused operating system designed to run Kubernetes.
+He would patrol the coast and enforce laws throughout the land.
+We felt it was a fitting name for a security focused operating system designed to run Kubernetes.
