@@ -24,7 +24,7 @@ The follow are requirements for creating the set of caching proxies:
 
 ## Launch the Caching Docker Registry Proxies
 
-Talos pulls from `docker.io`, `k8s.gcr.io`, `gcr.io`, `ghcr.io` and `quay.io` by default.
+Talos pulls from `docker.io`, `k8s.gcr.io`, `quay.io`, `gcr.io`, and `ghcr.io` by default.
 If your configuration is different, you might need to modify the commands below:
 
 ```bash
