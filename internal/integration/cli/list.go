@@ -7,9 +7,16 @@
 package cli
 
 import (
+	"fmt"
+	"os"
 	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // ListSuite verifies dmesg command.
@@ -29,6 +36,82 @@ func (suite *ListSuite) TestSuccess() {
 
 	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/"},
 		base.StdoutShouldNotMatch(regexp.MustCompile(`os-release`)))
+}
+
+// TestDepth tests various combinations of --recurse and --depth flags.
+func (suite *ListSuite) TestDepth() {
+	suite.T().Parallel()
+
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+
+	// checks that enough separators are encountered in the output
+	runAndCheck := func(t *testing.T, expectedSeparators int, flags ...string) {
+		args := append([]string{"list", "--nodes", node, "/system"}, flags...)
+		stdout := suite.RunCLI(args)
+
+		lines := strings.Split(strings.TrimSpace(stdout), "\n")
+		assert.Greater(t, len(lines), 2)
+		assert.Equal(t, []string{"NODE", "NAME"}, strings.Fields(lines[0]))
+		assert.Equal(t, []string{"."}, strings.Fields(lines[1])[1:])
+
+		var maxActualSeparators int
+
+		for _, line := range lines[2:] {
+			actualSeparators := strings.Count(strings.Fields(line)[1], string(os.PathSeparator))
+
+			msg := fmt.Sprintf(
+				"too many separators (actualSeparators = %d, expectedSeparators = %d)\nflags: %s\nlines:\n%s",
+				actualSeparators, expectedSeparators, strings.Join(flags, " "), strings.Join(lines, "\n"),
+			)
+			if !assert.LessOrEqual(t, actualSeparators, expectedSeparators, msg) {
+				return
+			}
+
+			if maxActualSeparators < actualSeparators {
+				maxActualSeparators = actualSeparators
+			}
+		}
+
+		msg := fmt.Sprintf(
+			"not enough separators (maxActualSeparators = %d, expectedSeparators = %d)\nflags: %s\nlines:\n%s",
+			maxActualSeparators, expectedSeparators, strings.Join(flags, " "), strings.Join(lines, "\n"),
+		)
+		assert.Equal(t, maxActualSeparators, expectedSeparators, msg)
+	}
+
+	for _, test := range []struct {
+		separators int
+		flags      []string
+	}{
+		{separators: 0},
+
+		{separators: 0, flags: []string{"--recurse=false"}},
+		{separators: 5, flags: []string{"--recurse=true"}},
+
+		{separators: 0, flags: []string{"--depth=-1"}},
+		{separators: 0, flags: []string{"--depth=0"}},
+		{separators: 0, flags: []string{"--depth=1"}},
+		{separators: 0, flags: []string{"--depth=2"}},
+		{separators: 0, flags: []string{"--depth=3"}},
+
+		{separators: 0, flags: []string{"--recurse=false", "--depth=-1"}},
+		{separators: 0, flags: []string{"--recurse=false", "--depth=0"}},
+		{separators: 0, flags: []string{"--recurse=false", "--depth=1"}},
+		{separators: 0, flags: []string{"--recurse=false", "--depth=2"}},
+		{separators: 0, flags: []string{"--recurse=false", "--depth=3"}},
+
+		{separators: 5, flags: []string{"--recurse=true", "--depth=-1"}},
+		{separators: 5, flags: []string{"--recurse=true", "--depth=0"}},
+		{separators: 0, flags: []string{"--recurse=true", "--depth=1"}},
+		{separators: 1, flags: []string{"--recurse=true", "--depth=2"}},
+		{separators: 2, flags: []string{"--recurse=true", "--depth=3"}},
+	} {
+		test := test
+		suite.Run(strings.Join(test.flags, ","), func() {
+			suite.T().Parallel()
+			runAndCheck(suite.T(), test.separators, test.flags...)
+		})
+	}
 }
 
 func init() {

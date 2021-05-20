@@ -44,13 +44,6 @@ func ShouldFail() RunOption {
 	}
 }
 
-// ShouldSucceed tells Run command should succeed (that is default).
-func ShouldSucceed() RunOption {
-	return func(opts *runOptions) {
-		opts.shouldFail = true
-	}
-}
-
 // StderrNotEmpty tells run that stderr of the command should not be empty.
 func StderrNotEmpty() RunOption {
 	return func(opts *runOptions) {
@@ -107,10 +100,10 @@ func StderrMatchFunc(f MatchFunc) RunOption {
 	}
 }
 
-// RunAndWait launches the command and waits for completion.
+// runAndWait launches the command and waits for completion.
 //
-// RunAndWait doesn't do any assertions on result.
-func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+// runAndWait doesn't do any assertions on result.
+func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	var stdout, stderr bytes.Buffer
 
 	cmd.Stdin = nil
@@ -142,17 +135,26 @@ func RunAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 	return &stdout, &stderr, err
 }
 
-// Run executes command and asserts on its exit status/output.
+// Run executes command, asserts on its exit status/output, and returns stdout.
 //
-//nolint:gocyclo
-func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
+//nolint:gocyclo,nakedret
+func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string) {
 	var opts runOptions
 
 	for _, o := range options {
 		o(&opts)
 	}
 
-	stdout, stderr, err := RunAndWait(suite, cmd)
+	stdoutBuf, stderrBuf, err := runAndWait(suite, cmd)
+
+	if stdoutBuf != nil {
+		stdout = stdoutBuf.String()
+	}
+
+	var stderr string
+	if stderrBuf != nil {
+		stderr = stderrBuf.String()
+	}
 
 	if err == nil {
 		if opts.shouldFail {
@@ -169,39 +171,41 @@ func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) {
 		}
 	}
 
-	if opts.stderrNotEmpty {
-		suite.Assert().NotEmpty(stderr.String(), "stderr should be not empty")
+	if opts.stdoutEmpty {
+		suite.Assert().Empty(stdout, "stdout should be empty")
 	} else {
-		suite.Assert().Empty(stderr.String(), "stderr should be empty")
+		suite.Assert().NotEmpty(stdout, "stdout should be not empty")
 	}
 
-	if opts.stdoutEmpty {
-		suite.Assert().Empty(stdout.String(), "stdout should be empty")
+	if opts.stderrNotEmpty {
+		suite.Assert().NotEmpty(stderr, "stderr should be not empty")
 	} else {
-		suite.Assert().NotEmpty(stdout.String(), "stdout should be not empty")
+		suite.Assert().Empty(stderr, "stderr should be empty")
 	}
 
 	for _, rx := range opts.stdoutRegexps {
-		suite.Assert().Regexp(rx, stdout.String())
+		suite.Assert().Regexp(rx, stdout)
 	}
 
 	for _, rx := range opts.stderrRegexps {
-		suite.Assert().Regexp(rx, stderr.String())
+		suite.Assert().Regexp(rx, stderr)
 	}
 
 	for _, rx := range opts.stdoutNegativeRegexps {
-		suite.Assert().NotRegexp(rx, stdout.String())
+		suite.Assert().NotRegexp(rx, stdout)
 	}
 
 	for _, rx := range opts.stderrNegativeRegexps {
-		suite.Assert().NotRegexp(rx, stderr.String())
+		suite.Assert().NotRegexp(rx, stderr)
 	}
 
 	for _, f := range opts.stdoutMatchers {
-		suite.Assert().NoError(f(stdout.String()), "stdout match: %q", stdout.String())
+		suite.Assert().NoError(f(stdout), "stdout match: %q", stdout)
 	}
 
 	for _, f := range opts.stderrMatchers {
-		suite.Assert().NoError(f(stderr.String()), "stderr match: %q", stderr.String())
+		suite.Assert().NoError(f(stderr), "stderr match: %q", stderr)
 	}
+
+	return
 }

@@ -284,7 +284,7 @@ func launchVM(config *LaunchConfig) error {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "starting qemu with args:\n%s\n", strings.Join(args, " "))
+	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.QemuExecutable, strings.Join(args, " "))
 	cmd := exec.Command(
 		config.QemuExecutable,
 		args...,

@@ -103,14 +103,14 @@ func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 }
 
 // RunCLI runs talosctl binary with the options provided.
-func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) {
-	Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
+func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout string) {
+	return Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
 }
 
 // RunAndWaitForMatch retries command until output matches.
 func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
-		stdout, _, err := RunAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))
+		stdout, _, err := runAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))
 		if err != nil {
 			return retry.UnexpectedError(err)
 		}

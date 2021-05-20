@@ -218,7 +218,7 @@ function build_registry_mirrors {
   if [[ "${CI:-false}" == "true" ]]; then
     REGISTRY_MIRROR_FLAGS=
 
-    for registry in docker.io ghcr.io k8s.gcr.io quay.io gcr.io registry.dev.talos-systems.io; do
+    for registry in docker.io k8s.gcr.io quay.io gcr.io ghcr.io registry.dev.talos-systems.io; do
       local service="registry-${registry//./-}.ci.svc"
       local addr=`python3 -c "import socket; print(socket.gethostbyname('${service}'))"`
 

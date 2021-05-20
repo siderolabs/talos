@@ -6,6 +6,7 @@ package archiver_test
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -67,20 +68,52 @@ func (suite *WalkerSuite) TestIterationFilter() {
 }
 
 func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
-	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(1))
-	suite.Require().NoError(err)
+	for _, test := range []struct {
+		maxDepth int
+		result   []string
+	}{
+		{
+			maxDepth: -1,
+			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
+		},
+		{
+			// confusing case
+			maxDepth: 0,
+			result:   []string{".", "dev", "etc", "lib", "usr"},
+		},
+		{
+			maxDepth: 1,
+			result:   []string{".", "dev", "etc", "lib", "usr"},
+		},
+		{
+			maxDepth: 2,
+			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin"},
+		},
+		{
+			maxDepth: 3,
+			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
+		},
+		{
+			maxDepth: 4,
+			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
+		},
+	} {
+		test := test
+		suite.Run(fmt.Sprint(test.maxDepth), func() {
+			suite.T().Parallel()
 
-	relPaths := []string(nil)
+			ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(test.maxDepth))
+			suite.Require().NoError(err)
 
-	for fi := range ch {
-		suite.Require().NoError(fi.Error)
-		relPaths = append(relPaths, fi.RelPath)
+			var result []string
+			for fi := range ch {
+				suite.Require().NoError(fi.Error)
+				result = append(result, fi.RelPath)
+			}
+
+			suite.Equal(test.result, result)
+		})
 	}
-
-	suite.Assert().Equal([]string{
-		".", "dev", "etc", "lib", "usr",
-	},
-		relPaths)
 }
 
 func (suite *WalkerSuite) TestIterationFile() {
