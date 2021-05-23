@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -86,7 +87,7 @@ var genConfigCmd = &cobra.Command{
 
 		switch genConfigCmdFlags.configVersion {
 		case "v1alpha1":
-			return genV1Alpha1Config(args)
+			return writeV1Alpha1Config(args)
 		}
 
 		return nil
@@ -109,8 +110,67 @@ func fixControlPlaneEndpoint(u *url.URL) *url.URL {
 	return u
 }
 
+// GenV1Alpha1Config generates the Talos config bundle
+//
+// GenV1Alpha1Config is useful for integration with external tooling options.
+func GenV1Alpha1Config(genOptions []generate.GenOption,
+	clusterName string,
+	endpoint string,
+	kubernetesVersion string,
+	configPatch string,
+	configPatchControlPlane string,
+	configPatchJoin string) (*v1alpha1.ConfigBundle, error) {
+	configBundleOpts := []bundle.Option{
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
+				ClusterName: clusterName,
+				Endpoint:    endpoint,
+				KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
+				GenOptions:  genOptions,
+			},
+		),
+	}
+
+	addConfigPatch := func(configPatch string, configOpt func(jsonpatch.Patch) bundle.Option) error {
+		if configPatch == "" {
+			return nil
+		}
+
+		jsonPatch, err := jsonpatch.DecodePatch([]byte(configPatch))
+		if err != nil {
+			return fmt.Errorf("error parsing config JSON patch: %w", err)
+		}
+
+		configBundleOpts = append(configBundleOpts, configOpt(jsonPatch))
+
+		return nil
+	}
+
+	if err := addConfigPatch(configPatch, bundle.WithJSONPatch); err != nil {
+		return nil, err
+	}
+
+	if err := addConfigPatch(configPatchControlPlane, bundle.WithJSONPatchControlPlane); err != nil {
+		return nil, err
+	}
+
+	if err := addConfigPatch(configPatchJoin, bundle.WithJSONPatchJoin); err != nil {
+		return nil, err
+	}
+
+	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate config bundle: %w", err)
+	}
+
+	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
+	configBundle.TalosConfig().Contexts[clusterName].Endpoints = []string{"127.0.0.1"}
+
+	return configBundle, nil
+}
+
 //nolint:gocyclo
-func genV1Alpha1Config(args []string) error {
+func writeV1Alpha1Config(args []string) error {
 	// If output dir isn't specified, set to the current working dir
 	var err error
 	if genConfigCmdFlags.outputDir == "" {
@@ -147,56 +207,13 @@ func genV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 	}
 
-	configBundleOpts := []bundle.Option{
-		bundle.WithInputOptions(
-			&bundle.InputOptions{
-				ClusterName: args[0],
-				Endpoint:    args[1],
-				KubeVersion: strings.TrimPrefix(genConfigCmdFlags.kubernetesVersion, "v"),
-				GenOptions: append(genOptions,
-					generate.WithInstallDisk(genConfigCmdFlags.installDisk),
-					generate.WithInstallImage(genConfigCmdFlags.installImage),
-					generate.WithAdditionalSubjectAltNames(genConfigCmdFlags.additionalSANs),
-					generate.WithDNSDomain(genConfigCmdFlags.dnsDomain),
-					generate.WithPersist(genConfigCmdFlags.persistConfig),
-				),
-			},
-		),
-	}
-
-	addConfigPatch := func(configPatch string, configOpt func(jsonpatch.Patch) bundle.Option) error {
-		if configPatch == "" {
-			return nil
-		}
-
-		var jsonPatch jsonpatch.Patch
-
-		jsonPatch, err = jsonpatch.DecodePatch([]byte(configPatch))
-		if err != nil {
-			return fmt.Errorf("error parsing config JSON patch: %w", err)
-		}
-
-		configBundleOpts = append(configBundleOpts, configOpt(jsonPatch))
-
-		return nil
-	}
-
-	if err = addConfigPatch(genConfigCmdFlags.configPatch, bundle.WithJSONPatch); err != nil {
-		return err
-	}
-
-	if err = addConfigPatch(genConfigCmdFlags.configPatchControlPlane, bundle.WithJSONPatchControlPlane); err != nil {
-		return err
-	}
-
-	if err = addConfigPatch(genConfigCmdFlags.configPatchJoin, bundle.WithJSONPatchJoin); err != nil {
-		return err
-	}
-
-	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
-	if err != nil {
-		return fmt.Errorf("failed to generate config bundle: %w", err)
-	}
+	genOptions = append(genOptions,
+		generate.WithInstallDisk(genConfigCmdFlags.installDisk),
+		generate.WithInstallImage(genConfigCmdFlags.installImage),
+		generate.WithAdditionalSubjectAltNames(genConfigCmdFlags.additionalSANs),
+		generate.WithDNSDomain(genConfigCmdFlags.dnsDomain),
+		generate.WithPersist(genConfigCmdFlags.persistConfig),
+	)
 
 	commentsFlags := encoder.CommentsDisabled
 	if genConfigCmdFlags.withDocs {
@@ -207,12 +224,21 @@ func genV1Alpha1Config(args []string) error {
 		commentsFlags |= encoder.CommentsExamples
 	}
 
-	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+	configBundle, err := GenV1Alpha1Config(
+		genOptions,
+		args[0],
+		args[1],
+		genConfigCmdFlags.kubernetesVersion,
+		genConfigCmdFlags.configPatch,
+		genConfigCmdFlags.configPatchControlPlane,
+		genConfigCmdFlags.configPatchJoin)
+	if err != nil {
 		return err
 	}
 
-	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
-	configBundle.TalosConfig().Contexts[args[0]].Endpoints = []string{"127.0.0.1"}
+	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+		return err
+	}
 
 	data, err := yaml.Marshal(configBundle.TalosConfig())
 	if err != nil {
