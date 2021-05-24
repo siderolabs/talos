@@ -5,7 +5,6 @@
 package watch
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -14,18 +13,13 @@ import (
 )
 
 type ethtoolWatcher struct {
-	wg     sync.WaitGroup
-	conn   *genetlink.Conn
-	cancel context.CancelFunc
+	wg   sync.WaitGroup
+	conn *genetlink.Conn
 }
 
 // NewEthtool starts ethtool watch.
-//
-//nolint:gocyclo
-func NewEthtool(ctx context.Context, watchCh chan<- struct{}) (Watcher, error) {
+func NewEthtool(trigger Trigger) (Watcher, error) {
 	watcher := &ethtoolWatcher{}
-
-	ctx, watcher.cancel = context.WithCancel(ctx)
 
 	var err error
 
@@ -68,11 +62,7 @@ func NewEthtool(ctx context.Context, watchCh chan<- struct{}) (Watcher, error) {
 				return
 			}
 
-			select {
-			case watchCh <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
+			trigger.QueueReconcile()
 		}
 	}()
 
@@ -80,7 +70,6 @@ func NewEthtool(ctx context.Context, watchCh chan<- struct{}) (Watcher, error) {
 }
 
 func (watcher *ethtoolWatcher) Done() {
-	watcher.cancel()
 	watcher.conn.Close() //nolint:errcheck
 
 	watcher.wg.Wait()

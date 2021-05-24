@@ -261,7 +261,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		resp, id, err = addMember(attemptCtx, r, peerAddrs, name)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				return retry.UnexpectedError(err)
+				return err
 			}
 
 			// TODO(andrewrynhard): We should check the error type here and

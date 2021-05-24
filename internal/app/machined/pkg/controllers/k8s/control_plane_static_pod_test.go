@@ -70,7 +70,7 @@ func (suite *ControlPlaneStaticPodSuite) startRuntime() {
 func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests []string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	ids := make([]string, 0, len(resources.Items))

@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // LinkStatusType is type of LinkStatus resource.
@@ -42,6 +42,10 @@ type LinkStatusSpec struct {
 	SpeedMegabits int               `yaml:"speedMbit,omitempty"`
 	Port          nethelpers.Port   `yaml:"port"`
 	Duplex        nethelpers.Duplex `yaml:"duplex"`
+	// Following fields are only populated with respective Kind.
+	VLAN       VLANSpec       `yaml:"vlan,omitempty"`
+	BondMaster BondMasterSpec `yaml:"bondMaster,omitempty"`
+	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
 }
 
 // NewLinkStatus initializes a SecretsStatus resource.

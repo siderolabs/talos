@@ -1323,7 +1323,7 @@ func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.Tas
 					return retry.ExpectedError(fmt.Errorf("ephemeral partition in use: %q", partname))
 				}
 
-				return retry.UnexpectedError(fmt.Errorf("failed to verify ephemeral partition not in use: %w", err))
+				return fmt.Errorf("failed to verify ephemeral partition not in use: %w", err)
 			}
 
 			return nil

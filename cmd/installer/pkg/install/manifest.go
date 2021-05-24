@@ -379,7 +379,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 					return retry.ExpectedError(e)
 				}
 
-				return retry.UnexpectedError(e)
+				return e
 			}
 
 			return nil

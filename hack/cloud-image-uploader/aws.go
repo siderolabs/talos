@@ -218,7 +218,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 			ImportTaskIds: aws.StringSlice([]string{taskID}),
 		})
 		if err != nil {
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		for _, task := range status.ImportSnapshotTasks {

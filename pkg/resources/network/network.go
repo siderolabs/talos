@@ -25,6 +25,11 @@ func AddressID(linkName string, addr netaddr.IPPrefix) string {
 	return fmt.Sprintf("%s/%s", linkName, addr)
 }
 
+// LinkID builds ID (primary key) for the link (interface).
+func LinkID(linkName string) string {
+	return linkName
+}
+
 // RouteID builds ID (primary key) for the route.
 func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
 	dst, _ := destination.MarshalText() //nolint:errcheck
@@ -37,3 +42,10 @@ func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
 func LayeredID(layer ConfigLayer, id string) string {
 	return fmt.Sprintf("%s/%s", layer, id)
 }
+
+// Link kinds.
+const (
+	LinkKindVLAN      = "vlan"
+	LinkKindBond      = "bond"
+	LinkKindWireguard = "wireguard"
+)

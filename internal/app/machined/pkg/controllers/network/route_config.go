@@ -17,9 +17,9 @@ import (
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 // RouteConfigController manages network.RouteSpec based on machine configuration, kernel cmdline.
@@ -148,7 +148,7 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 
 	for _, route := range routes {
 		route := route
-		id := network.LayeredID(route.Layer, network.RouteID(route.Destination, route.Gateway))
+		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Destination, route.Gateway))
 
 		if err := r.Modify(
 			ctx,
@@ -198,7 +198,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 	route.Protocol = nethelpers.ProtocolBoot
 	route.Type = nethelpers.TypeUnicast
 	route.OutLinkName = settings.LinkName
-	route.Layer = network.ConfigCmdline
+	route.ConfigLayer = network.ConfigCmdline
 
 	return route
 }
@@ -242,7 +242,7 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 		route.Table = nethelpers.TableMain
 		route.Protocol = nethelpers.ProtocolStatic
 		route.OutLinkName = linkName
-		route.Layer = network.ConfigMachineConfiguration
+		route.ConfigLayer = network.ConfigMachineConfiguration
 
 		switch {
 		case route.Destination.IP.IsLinkLocalUnicast() || route.Destination.IP.IsLinkLocalMulticast():

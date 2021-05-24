@@ -112,7 +112,7 @@ func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp
 	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
 		stdout, _, err := runAndWait(&cliSuite.Suite, cliSuite.buildCLICmd(args))
 		if err != nil {
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if !regex.MatchString(stdout.String()) {

@@ -270,7 +270,7 @@ func (h *Client) WaitUntilReady(ctx context.Context, name string) error {
 					return retry.ExpectedError(err)
 				}
 
-				return retry.UnexpectedError(err)
+				return err
 			}
 
 			for _, cond := range node.Status.Conditions {
@@ -303,7 +303,7 @@ func (h *Client) Cordon(ctx context.Context, name string) error {
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if node.Spec.Unschedulable {
@@ -340,7 +340,7 @@ func (h *Client) Uncordon(ctx context.Context, name string, force bool) error {
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if !force && node.Annotations[constants.AnnotationCordonedKey] != constants.AnnotationCordonedValue {
@@ -459,7 +459,7 @@ func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(fmt.Errorf("failed to get pod %s/%s: %w", p.GetNamespace(), p.GetName(), err))
+			return fmt.Errorf("failed to get pod %s/%s: %w", p.GetNamespace(), p.GetName(), err)
 		}
 
 		if pod.GetUID() != p.GetUID() {

@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=AddressFlag -linecomment
+//go:generate stringer -type=AddressFlag -linecomment -output addressflag_string_linux.go
 
 import (
 	"strings"

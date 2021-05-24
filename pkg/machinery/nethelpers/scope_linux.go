@@ -6,7 +6,7 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=Scope -linecomment
+//go:generate stringer -type=Scope -linecomment -output scope_string_linux.go
 
 // Scope is an address scope.
 type Scope uint8

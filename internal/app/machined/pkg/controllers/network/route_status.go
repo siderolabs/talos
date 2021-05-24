@@ -16,8 +16,8 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 // RouteStatusController manages secrets.Etcd based on configuration.
@@ -47,9 +47,7 @@ func (ctrl *RouteStatusController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	watchCh := make(chan struct{})
-
-	watcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_IPV4_MROUTE|unix.RTMGRP_IPV4_ROUTE|unix.RTMGRP_IPV6_MROUTE|unix.RTMGRP_IPV6_ROUTE)
+	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_IPV4_MROUTE|unix.RTMGRP_IPV4_ROUTE|unix.RTMGRP_IPV6_MROUTE|unix.RTMGRP_IPV6_ROUTE)
 	if err != nil {
 		return err
 	}
@@ -68,7 +66,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-watchCh:
 		}
 
 		// build links lookup table

@@ -24,8 +24,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type AddressMergeSuite struct {
@@ -74,7 +74,7 @@ func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -100,7 +100,7 @@ func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func
 func (suite *AddressMergeSuite) assertNoAddress(id string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -115,38 +115,38 @@ func (suite *AddressMergeSuite) assertNoAddress(id string) error {
 func (suite *AddressMergeSuite) TestMerge() {
 	loopback := network.NewAddressSpec(network.ConfigNamespaceName, "default/lo/127.0.0.1/8")
 	*loopback.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("127.0.0.1/8"),
-		LinkName: "lo",
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeHost,
-		Layer:    network.ConfigDefault,
+		Address:     netaddr.MustParseIPPrefix("127.0.0.1/8"),
+		LinkName:    "lo",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeHost,
+		ConfigLayer: network.ConfigDefault,
 	}
 
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")
 	*dhcp.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("10.0.0.1/8"),
-		LinkName: "eth0",
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeGlobal,
-		Layer:    network.ConfigDHCP,
+		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigDHCP,
 	}
 
 	static := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.35/32")
 	*static.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("10.0.0.35/32"),
-		LinkName: "eth0",
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeGlobal,
-		Layer:    network.ConfigMachineConfiguration,
+		Address:     netaddr.MustParseIPPrefix("10.0.0.35/32"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	override := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.1/8")
 	*override.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("10.0.0.1/8"),
-		LinkName: "eth0",
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeHost,
-		Layer:    network.ConfigMachineConfiguration,
+		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeHost,
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	for _, res := range []resource.Resource{loopback, dhcp, static, override} {

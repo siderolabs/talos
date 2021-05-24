@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // RouteStatusType is type of RouteStatus resource.

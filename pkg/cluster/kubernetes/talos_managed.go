@@ -220,7 +220,7 @@ func upgradeConfigPatcher(options UpgradeOptions, service string, configResource
 func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node, configVersion string) error {
 	k8sClient, err := cluster.K8sHelper(ctx)
 	if err != nil {
-		return retry.UnexpectedError(fmt.Errorf("error building kubernetes client: %w", err))
+		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
 
 	pods, err := k8sClient.CoreV1().Pods(namespace).List(ctx, v1.ListOptions{
@@ -231,7 +231,7 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node,
 			return retry.ExpectedError(err)
 		}
 
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	podFound := false

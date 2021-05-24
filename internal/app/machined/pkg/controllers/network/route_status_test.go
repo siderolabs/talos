@@ -23,8 +23,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type RouteStatusSuite struct {
@@ -73,7 +73,7 @@ func (suite *RouteStatusSuite) assertRoutes(requiredIDs []string, check func(*ne
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {

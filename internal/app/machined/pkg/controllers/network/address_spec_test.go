@@ -27,8 +27,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type AddressSpecSuite struct {
@@ -127,12 +127,12 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 func (suite *AddressSpecSuite) TestLoopback() {
 	loopback := network.NewAddressSpec(network.NamespaceName, "lo/127.0.0.1/8")
 	*loopback.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("127.11.0.1/32"),
-		LinkName: "lo",
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeHost,
-		Layer:    network.ConfigDefault,
-		Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
+		Address:     netaddr.MustParseIPPrefix("127.11.0.1/32"),
+		LinkName:    "lo",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeHost,
+		ConfigLayer: network.ConfigDefault,
+		Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 	}
 
 	for _, res := range []resource.Resource{loopback} {
@@ -172,12 +172,12 @@ func (suite *AddressSpecSuite) TestDummy() {
 
 	dummy := network.NewAddressSpec(network.NamespaceName, "dummy/10.0.0.1/8")
 	*dummy.Status() = network.AddressSpecSpec{
-		Address:  netaddr.MustParseIPPrefix("10.0.0.1/8"),
-		LinkName: dummyInterface,
-		Family:   nethelpers.FamilyInet4,
-		Scope:    nethelpers.ScopeGlobal,
-		Layer:    network.ConfigDefault,
-		Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
+		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		LinkName:    dummyInterface,
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigDefault,
+		Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 	}
 
 	// it's fine to create the address before the interface is actually created

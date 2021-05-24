@@ -135,7 +135,7 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(fmt.Errorf("error fetching daemonset: %w", err))
+			return fmt.Errorf("error fetching daemonset: %w", err)
 		}
 
 		if daemonset.Status.UpdatedNumberScheduled != daemonset.Status.DesiredNumberScheduled {

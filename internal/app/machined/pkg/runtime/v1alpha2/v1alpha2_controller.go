@@ -75,7 +75,10 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
+		&network.LinkConfigController{},
+		&network.LinkMergeController{},
 		&network.LinkStatusController{},
+		&network.LinkSpecController{},
 		&network.RouteConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

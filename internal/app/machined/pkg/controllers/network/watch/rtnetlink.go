@@ -5,7 +5,6 @@
 package watch
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -14,16 +13,13 @@ import (
 )
 
 type rtnetlinkWatcher struct {
-	wg     sync.WaitGroup
-	cancel context.CancelFunc
-	conn   *rtnetlink.Conn
+	wg   sync.WaitGroup
+	conn *rtnetlink.Conn
 }
 
 // NewRtNetlink starts rtnetlink watch over specified groups.
-func NewRtNetlink(ctx context.Context, watchCh chan<- struct{}, groups uint32) (Watcher, error) {
+func NewRtNetlink(trigger Trigger, groups uint32) (Watcher, error) {
 	watcher := &rtnetlinkWatcher{}
-
-	ctx, watcher.cancel = context.WithCancel(ctx)
 
 	var err error
 
@@ -45,11 +41,7 @@ func NewRtNetlink(ctx context.Context, watchCh chan<- struct{}, groups uint32) (
 				return
 			}
 
-			select {
-			case watchCh <- struct{}{}:
-			case <-ctx.Done():
-				return
-			}
+			trigger.QueueReconcile()
 		}
 	}()
 
@@ -57,7 +49,6 @@ func NewRtNetlink(ctx context.Context, watchCh chan<- struct{}, groups uint32) (
 }
 
 func (watcher *rtnetlinkWatcher) Done() {
-	watcher.cancel()
 	watcher.conn.Close() //nolint:errcheck
 
 	watcher.wg.Wait()

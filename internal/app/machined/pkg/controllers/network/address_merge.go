@@ -78,7 +78,7 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 			id := network.AddressID(address.Status().LinkName, address.Status().Address)
 
 			existing, ok := addresses[id]
-			if ok && existing.Status().Layer > address.Status().Layer {
+			if ok && existing.Status().ConfigLayer > address.Status().ConfigLayer {
 				// skip this address, as existing one is higher layer
 				continue
 			}

@@ -72,7 +72,7 @@ func (suite *AddressStatusSuite) assertAddresses(requiredIDs []string, check fun
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {

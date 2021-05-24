@@ -73,7 +73,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		return nil

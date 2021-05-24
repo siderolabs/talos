@@ -4100,6 +4100,7 @@ The interfaces that make up the bond.
 
 A bond option.
 Please see the official kernel documentation.
+Not supported at the moment.
 
 </div>
 
@@ -4156,6 +4157,7 @@ Please see the official kernel documentation.
 
 A bond option.
 Please see the official kernel documentation.
+Not supported at the moment.
 
 </div>
 

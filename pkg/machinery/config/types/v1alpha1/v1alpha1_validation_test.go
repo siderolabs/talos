@@ -274,6 +274,104 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "2 errors occurred:\n\t* inline manifest name can't be empty\n\t* inline manifest name \"foo\" is duplicate\n\n",
 		},
+		{
+			name: "BondDefaultConfig",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bond0",
+								DeviceBond:      &v1alpha1.Bond{},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "BondWrongMode",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondMode:            "roundrobin",
+									BondUpDelay:         100,
+									BondPacketsPerSlave: 8,
+									BondADActorSysPrio:  48,
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "3 errors occurred:\n\t* invalid bond type roundrobin\n\t* bond.upDelay can't be set if miiMon is zero\n\t* bond.adActorSysPrio is only available in 802.3ad mode\n\n",
+		},
+		{
+			name: "Wireguard",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "wireguard0",
+								DeviceWireguardConfig: &v1alpha1.DeviceWireguardConfig{
+									WireguardPrivateKey: "ONtS+jU1Q+ZHLgs7DbYvnF5Iyj+koxBtvknDigFsdG8=",
+									WireguardPeers: []*v1alpha1.DeviceWireguardPeer{
+										{},
+										{
+											WireguardPublicKey: "4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1A=",
+											WireguardAllowedIPs: []string{
+												"10.2.0.5/31",
+												"2.4.5.3/32",
+											},
+										},
+										{
+											WireguardPublicKey: "4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==",
+											WireguardAllowedIPs: []string{
+												"10.2.0",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "3 errors occurred:\n\t* public key invalid: wrong key \"\" length: 0\n\t* public key invalid: wrong key \"4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==\" length: 31\n" +
+				"\t* peer allowed IP \"10.2.0\" is invalid: invalid CIDR address: 10.2.0\n\n",
+		},
 	} {
 		test := test
 

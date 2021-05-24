@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=LinkFlag -linecomment
+//go:generate stringer -type=LinkFlag -linecomment -output linkflag_string_linux.go
 
 import (
 	"strings"

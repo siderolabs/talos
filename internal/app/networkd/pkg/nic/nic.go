@@ -275,7 +275,7 @@ func (n *NetworkInterface) waitForLinkToBeUp(linkDev *net.Interface) error {
 		var err error
 		link, err = n.rtConn.Link.Get(uint32(linkDev.Index))
 		if err != nil {
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if link.Flags&unix.IFF_UP != unix.IFF_UP {

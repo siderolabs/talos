@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // RouteSpecType is type of RouteSpec resource.
@@ -35,7 +35,7 @@ type RouteSpecSpec struct {
 	Type        nethelpers.RouteType     `yaml:"type"`
 	Flags       nethelpers.RouteFlags    `yaml:"flags"`
 	Protocol    nethelpers.RouteProtocol `yaml:"protocol"`
-	Layer       ConfigLayer              `yaml:"layer"`
+	ConfigLayer ConfigLayer              `yaml:"layer"`
 }
 
 // NewRouteSpec initializes a SecretsStatus resource.

@@ -162,7 +162,7 @@ func waitIPv6LinkReady(logger *log.Logger, iface *net.Interface) error {
 	return retry.Constant(30*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		ready, err := isIPv6LinkReady(logger, iface, conn)
 		if err != nil {
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if !ready {

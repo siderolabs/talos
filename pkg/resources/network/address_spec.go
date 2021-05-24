@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // AddressSpecType is type of AddressSpec resource.
@@ -25,12 +25,12 @@ type AddressSpec struct {
 
 // AddressSpecSpec describes status of rendered secrets.
 type AddressSpecSpec struct {
-	Address  netaddr.IPPrefix        `yaml:"address"`
-	LinkName string                  `yaml:"linkName"`
-	Family   nethelpers.Family       `yaml:"family"`
-	Scope    nethelpers.Scope        `yaml:"scope"`
-	Flags    nethelpers.AddressFlags `yaml:"flags"`
-	Layer    ConfigLayer             `yaml:"layer"`
+	Address     netaddr.IPPrefix        `yaml:"address"`
+	LinkName    string                  `yaml:"linkName"`
+	Family      nethelpers.Family       `yaml:"family"`
+	Scope       nethelpers.Scope        `yaml:"scope"`
+	Flags       nethelpers.AddressFlags `yaml:"flags"`
+	ConfigLayer ConfigLayer             `yaml:"layer"`
 }
 
 // NewAddressSpec initializes a SecretsStatus resource.
