@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"go.etcd.io/etcd/etcdctl/v3/snapshot"
+	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"

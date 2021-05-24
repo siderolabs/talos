@@ -23,7 +23,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/etcdctl/v3/snapshot"
+	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"

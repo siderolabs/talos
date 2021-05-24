@@ -85,12 +85,10 @@ func (r *roundRobinResolver) start() error {
 		return parsedServiceConfig.Err
 	}
 
-	r.cc.UpdateState(resolver.State{
+	return r.cc.UpdateState(resolver.State{
 		Addresses:     addrs,
 		ServiceConfig: parsedServiceConfig,
 	})
-
-	return nil
 }
 
 // ResolveNow implements resolver.Resolver.
