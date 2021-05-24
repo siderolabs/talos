@@ -16,8 +16,8 @@ import (
 	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/pkg/v3/transport"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
