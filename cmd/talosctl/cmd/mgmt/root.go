@@ -4,11 +4,21 @@
 
 package mgmt
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
+)
 
 // Commands is a list of commands published by the package.
 var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)
+}
+
+func init() {
+	addCommand(cluster.Cmd)
+	addCommand(gen.Cmd)
 }
