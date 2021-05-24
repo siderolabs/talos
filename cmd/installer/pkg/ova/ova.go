@@ -47,6 +47,14 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
   <VirtualSystem ovf:id="vm">
     <Info>A virtual machine</Info>
     <Name>talos</Name>
+    <ProductSection ovf:required="false">
+      <Info>Talos Virtual Appliance</Info>
+      <Property ovf:userConfigurable="true" ovf:type="string"
+                ovf:key="talos.config" ovf:value="">
+        <Label>Talos config data</Label>
+        <Description>Inline Talos config</Description>
+      </Property>
+    </ProductSection>
     <OperatingSystemSection ovf:id="101" vmw:osType="other3xLinux64Guest">
       <Info>The kind of installed guest operating system</Info>
     </OperatingSystemSection>
