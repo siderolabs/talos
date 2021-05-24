@@ -38,10 +38,12 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/fatih/color v1.11.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
+	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.3.1
 	github.com/gizak/termui/v3 v3.1.0
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
@@ -81,10 +83,8 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.25.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/etcdctl/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/pkg/v3 v3.5.0-alpha.0
+	go.etcd.io/etcd/api/v3 v3.5.0-beta.3
+	go.etcd.io/etcd/client/v3 v3.5.0-beta.3
 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
@@ -95,7 +95,6 @@ require (
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	honnef.co/go/tools v0.1.2 // indirect
 	inet.af/netaddr v0.0.0-20210430201628-1d252cf8125e
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
