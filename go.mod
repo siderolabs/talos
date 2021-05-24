@@ -81,7 +81,7 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.25.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
+	go.etcd.io/etcd/api/v3 v3.5.0-beta.3
 	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/etcdctl/v3 v3.5.0-alpha.0
 	go.etcd.io/etcd/pkg/v3 v3.5.0-alpha.0
