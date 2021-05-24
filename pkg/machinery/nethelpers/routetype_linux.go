@@ -6,7 +6,7 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=RouteType -linecomment
+//go:generate stringer -type=RouteType -linecomment -output routetype_string_linux.go
 
 // RouteType is a route type.
 type RouteType uint8

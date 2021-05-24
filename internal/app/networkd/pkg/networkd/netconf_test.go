@@ -119,7 +119,7 @@ func sampleConfig() []config.Device {
 				BondMIIMon:          200,
 				BondUpDelay:         100,
 				BondDownDelay:       100,
-				BondUseCarrier:      false,
+				BondUseCarrier:      nil,
 				BondARPInterval:     230,
 				BondARPValidate:     "all",
 				BondARPAllTargets:   "all",

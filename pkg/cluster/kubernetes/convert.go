@@ -364,7 +364,7 @@ func waitResourcesReady(ctx context.Context, cluster ConvertProvider, options *C
 	if err := retry.Constant(3*time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		listClient, err := c.Resources.List(ctx, k8s.ControlPlaneNamespaceName, k8s.StaticPodType)
 		if err != nil {
-			return retry.UnexpectedError(fmt.Errorf("error listing static pod resources: %w", err))
+			return fmt.Errorf("error listing static pod resources: %w", err)
 		}
 
 		count := 0
@@ -375,7 +375,7 @@ func waitResourcesReady(ctx context.Context, cluster ConvertProvider, options *C
 				break
 			}
 			if err != nil {
-				return retry.UnexpectedError(fmt.Errorf("error list listing static pods resources: %w", err))
+				return fmt.Errorf("error list listing static pods resources: %w", err)
 			}
 
 			if resp.Resource != nil {
@@ -397,7 +397,7 @@ func waitResourcesReady(ctx context.Context, cluster ConvertProvider, options *C
 	if err := retry.Constant(3*time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		listClient, err := c.Resources.List(ctx, k8s.ControlPlaneNamespaceName, k8s.ManifestType)
 		if err != nil {
-			return retry.UnexpectedError(fmt.Errorf("error listing static pod resources: %w", err))
+			return fmt.Errorf("error listing static pod resources: %w", err)
 		}
 
 		nodes := make(map[string]struct{})
@@ -412,7 +412,7 @@ func waitResourcesReady(ctx context.Context, cluster ConvertProvider, options *C
 				break
 			}
 			if err != nil {
-				return retry.UnexpectedError(fmt.Errorf("error list listing static pods resources: %w", err))
+				return fmt.Errorf("error list listing static pods resources: %w", err)
 			}
 
 			if resp.Resource != nil {
@@ -471,7 +471,7 @@ func waitForStaticPods(ctx context.Context, cluster ConvertProvider, options *Co
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		count := 0
@@ -551,7 +551,7 @@ func disablePodCheckpointer(ctx context.Context, cluster ConvertProvider) error 
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		if len(checkpoints) > 0 {
@@ -618,7 +618,7 @@ func deleteDaemonset(ctx context.Context, cluster ConvertProvider, k8sApp string
 				return nil
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		return nil
@@ -635,7 +635,7 @@ func deleteDaemonset(ctx context.Context, cluster ConvertProvider, k8sApp string
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		count := 0

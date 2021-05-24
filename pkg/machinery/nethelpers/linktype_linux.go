@@ -6,10 +6,10 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=LinkType -linecomment
+//go:generate stringer -type=LinkType -linecomment -output linktype_string_linux.go
 
 // LinkType is a link type.
-type LinkType uint32
+type LinkType uint16
 
 // MarshalYAML implements yaml.Marshaler.
 func (typ LinkType) MarshalYAML() (interface{}, error) {

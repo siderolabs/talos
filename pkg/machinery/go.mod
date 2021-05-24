@@ -17,6 +17,8 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/jsimonetti/rtnetlink v0.0.0-20210531051304-b34cb89a106b
+	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
@@ -25,7 +27,7 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	golang.org/x/sys v0.0.0-20210324051608-47abb6519492 // indirect
+	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0

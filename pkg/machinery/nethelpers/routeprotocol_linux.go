@@ -6,7 +6,7 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=RouteProtocol -linecomment
+//go:generate stringer -type=RouteProtocol -linecomment -output routeprotocol_string_linux.go
 
 // RouteProtocol is a routing protocol.
 type RouteProtocol uint8

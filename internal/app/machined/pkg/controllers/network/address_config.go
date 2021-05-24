@@ -17,9 +17,9 @@ import (
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 // AddressConfigController manages network.AddressSpec based on machine configuration, kernel cmdline and some built-in defaults.
@@ -158,7 +158,7 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 
 	for _, address := range addresses {
 		address := address
-		id := network.LayeredID(address.Layer, network.AddressID(address.LinkName, address.Address))
+		id := network.LayeredID(address.ConfigLayer, network.AddressID(address.LinkName, address.Address))
 
 		if err := r.Modify(
 			ctx,
@@ -185,22 +185,22 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 				IP:   netaddr.IPv4(127, 0, 0, 1),
 				Bits: 8,
 			},
-			Family:   nethelpers.FamilyInet4,
-			Scope:    nethelpers.ScopeHost,
-			Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
-			LinkName: "lo",
-			Layer:    network.ConfigDefault,
+			Family:      nethelpers.FamilyInet4,
+			Scope:       nethelpers.ScopeHost,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			LinkName:    "lo",
+			ConfigLayer: network.ConfigDefault,
 		},
 		{
 			Address: netaddr.IPPrefix{
 				IP:   netaddr.IPFrom16([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}),
 				Bits: 128,
 			},
-			Family:   nethelpers.FamilyInet6,
-			Scope:    nethelpers.ScopeHost,
-			Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
-			LinkName: "lo",
-			Layer:    network.ConfigDefault,
+			Family:      nethelpers.FamilyInet6,
+			Scope:       nethelpers.ScopeHost,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			LinkName:    "lo",
+			ConfigLayer: network.ConfigDefault,
 		},
 	}
 }
@@ -230,7 +230,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 
 	address.Scope = nethelpers.ScopeGlobal
 	address.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
-	address.Layer = network.ConfigCmdline
+	address.ConfigLayer = network.ConfigCmdline
 	address.LinkName = settings.LinkName
 
 	return address
@@ -251,11 +251,11 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logge
 			}
 
 			address := network.AddressSpecSpec{
-				Address:  ipPrefix,
-				Scope:    nethelpers.ScopeGlobal,
-				LinkName: device.Interface(),
-				Layer:    network.ConfigMachineConfiguration,
-				Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				Address:     ipPrefix,
+				Scope:       nethelpers.ScopeGlobal,
+				LinkName:    device.Interface(),
+				ConfigLayer: network.ConfigMachineConfiguration,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 			}
 
 			if address.Address.IP.Is6() {
@@ -277,11 +277,11 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logge
 				}
 
 				address := network.AddressSpecSpec{
-					Address:  ipPrefix,
-					Scope:    nethelpers.ScopeGlobal,
-					LinkName: fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
-					Layer:    network.ConfigMachineConfiguration,
-					Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Address:     ipPrefix,
+					Scope:       nethelpers.ScopeGlobal,
+					LinkName:    fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
+					ConfigLayer: network.ConfigMachineConfiguration,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 				}
 
 				if address.Address.IP.Is6() {

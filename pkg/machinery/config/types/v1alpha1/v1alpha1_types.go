@@ -1530,6 +1530,7 @@ type Bond struct {
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
+	//     Not supported at the moment.
 	BondARPIPTarget []string `yaml:"arpIPTarget,omitempty"`
 	//   description: |
 	//     A bond option.
@@ -1546,6 +1547,7 @@ type Bond struct {
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
+	//     Not supported at the moment.
 	BondADActorSystem string `yaml:"adActorSystem,omitempty"`
 	//   description: |
 	//     A bond option.
@@ -1618,7 +1620,7 @@ type Bond struct {
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
-	BondUseCarrier bool `yaml:"useCarrier,omitempty"`
+	BondUseCarrier *bool `yaml:"useCarrier,omitempty"`
 	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.

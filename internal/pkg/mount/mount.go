@@ -147,9 +147,9 @@ func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 					return nil
 				}
 
-				return retry.UnexpectedError(err)
+				return err
 			default:
-				return retry.UnexpectedError(err)
+				return err
 			}
 		}
 

@@ -26,9 +26,9 @@ import (
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type RouteConfigSuite struct {
@@ -73,7 +73,7 @@ func (suite *RouteConfigSuite) assertRoutes(requiredIDs []string, check func(*ne
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -109,7 +109,7 @@ func (suite *RouteConfigSuite) TestCmdline() {
 				"cmdline//172.20.0.1",
 			}, func(r *network.RouteSpec) error {
 				suite.Assert().Equal("eth1", r.Status().OutLinkName)
-				suite.Assert().Equal(network.ConfigCmdline, r.Status().Layer)
+				suite.Assert().Equal(network.ConfigCmdline, r.Status().ConfigLayer)
 				suite.Assert().Equal(nethelpers.FamilyInet4, r.Status().Family)
 				suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.Status().Priority)
 
@@ -214,7 +214,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 					suite.Assert().EqualValues(25, r.Status().Priority)
 				}
 
-				suite.Assert().Equal(network.ConfigMachineConfiguration, r.Status().Layer)
+				suite.Assert().Equal(network.ConfigMachineConfiguration, r.Status().ConfigLayer)
 
 				return nil
 			})

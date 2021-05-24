@@ -6,7 +6,7 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=Family -linecomment
+//go:generate stringer -type=Family -linecomment -output family_string_linux.go
 
 // Family is a network family.
 type Family uint8

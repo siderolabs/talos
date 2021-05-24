@@ -75,7 +75,7 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
 			if errdefs.IsNotFound(err) || errdefs.IsCanceled(err) {
-				return retry.UnexpectedError(err)
+				return err
 			}
 
 			return retry.ExpectedError(err)
@@ -104,7 +104,7 @@ func Import(ctx context.Context, imagePath, indexName string) error {
 		}))
 
 		if err != nil && os.IsNotExist(err) {
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		return retry.ExpectedError(err)

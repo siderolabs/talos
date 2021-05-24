@@ -25,8 +25,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type RouteSpecSuite struct {
@@ -136,7 +136,7 @@ func (suite *RouteSpecSuite) TestLoopback() {
 		Table:       nethelpers.TableMain,
 		Protocol:    nethelpers.ProtocolStatic,
 		Type:        nethelpers.TypeUnicast,
-		Layer:       network.ConfigMachineConfiguration,
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	for _, res := range []resource.Resource{loopback} {
@@ -183,7 +183,7 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 		Protocol:    nethelpers.ProtocolStatic,
 		Type:        nethelpers.TypeUnicast,
 		Priority:    1048576,
-		Layer:       network.ConfigMachineConfiguration,
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	for _, res := range []resource.Resource{def} {

@@ -1,0 +1,559 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+//nolint:dupl
+package network_test
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"math/rand"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/cosi-project/runtime/pkg/controller/runtime"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-retry/retry"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"inet.af/netaddr"
+
+	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/resources/network"
+)
+
+type LinkSpecSuite struct {
+	suite.Suite
+
+	state state.State
+
+	runtime *runtime.Runtime
+	wg      sync.WaitGroup
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+}
+
+func (suite *LinkSpecSuite) SetupTest() {
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
+
+	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
+
+	var err error
+
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkSpecController{}))
+
+	// register status controller to assert on the created links
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkStatusController{}))
+
+	suite.startRuntime()
+}
+
+func (suite *LinkSpecSuite) startRuntime() {
+	suite.wg.Add(1)
+
+	go func() {
+		defer suite.wg.Done()
+
+		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
+	}()
+}
+
+func (suite *LinkSpecSuite) assertInterfaces(requiredIDs []string, check func(*network.LinkStatus) error) error {
+	missingIDs := make(map[string]struct{}, len(requiredIDs))
+
+	for _, id := range requiredIDs {
+		missingIDs[id] = struct{}{}
+	}
+
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	if err != nil {
+		return err
+	}
+
+	for _, res := range resources.Items {
+		_, required := missingIDs[res.Metadata().ID()]
+		if !required {
+			continue
+		}
+
+		delete(missingIDs, res.Metadata().ID())
+
+		if err = check(res.(*network.LinkStatus)); err != nil {
+			return retry.ExpectedError(err)
+		}
+	}
+
+	if len(missingIDs) > 0 {
+		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+	}
+
+	return nil
+}
+
+func (suite *LinkSpecSuite) assertNoInterface(id string) error {
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	if err != nil {
+		return err
+	}
+
+	for _, res := range resources.Items {
+		if res.Metadata().ID() == id {
+			return retry.ExpectedError(fmt.Errorf("interface %q is still there", id))
+		}
+	}
+
+	return nil
+}
+
+func (suite *LinkSpecSuite) uniqueDummyInterface() string {
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
+}
+
+func (suite *LinkSpecSuite) TestLoopback() {
+	loopback := network.NewLinkSpec(network.NamespaceName, "lo")
+	*loopback.Status() = network.LinkSpecSpec{
+		Name:        "lo",
+		Up:          true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{loopback} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{"lo"}, func(r *network.LinkStatus) error {
+				return nil
+			})
+		}))
+}
+
+func (suite *LinkSpecSuite) TestDummy() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.Status() = network.LinkSpecSpec{
+		Name:        dummyInterface,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		MTU:         1400,
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{dummy} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{dummyInterface}, func(r *network.LinkStatus) error {
+				suite.Assert().Equal("dummy", r.Status().Kind)
+
+				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+					return retry.ExpectedErrorf("link is not up")
+				}
+
+				if r.Status().MTU != 1400 {
+					return retry.ExpectedErrorf("unexpected MTU %d", r.Status().MTU)
+				}
+
+				return nil
+			})
+		}))
+
+	// teardown the link
+	for {
+		ready, err := suite.state.Teardown(suite.ctx, dummy.Metadata())
+		suite.Require().NoError(err)
+
+		if ready {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoInterface(dummyInterface)
+		}))
+}
+
+//nolint:gocyclo
+func (suite *LinkSpecSuite) TestVLAN() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.Status() = network.LinkSpecSpec{
+		Name:        dummyInterface,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	vlanName1 := fmt.Sprintf("%s.%d", dummyInterface, 2)
+	vlan1 := network.NewLinkSpec(network.NamespaceName, vlanName1)
+	*vlan1.Status() = network.LinkSpecSpec{
+		Name:        vlanName1,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVLAN,
+		Up:          true,
+		Logical:     true,
+		ParentName:  dummyInterface,
+		ConfigLayer: network.ConfigDefault,
+		VLAN: network.VLANSpec{
+			VID:      2,
+			Protocol: nethelpers.VLANProtocol8021Q,
+		},
+	}
+
+	vlanName2 := fmt.Sprintf("%s.%d", dummyInterface, 4)
+	vlan2 := network.NewLinkSpec(network.NamespaceName, vlanName2)
+	*vlan2.Status() = network.LinkSpecSpec{
+		Name:        vlanName2,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVLAN,
+		Up:          true,
+		Logical:     true,
+		ParentName:  dummyInterface,
+		ConfigLayer: network.ConfigDefault,
+		VLAN: network.VLANSpec{
+			VID:      4,
+			Protocol: nethelpers.VLANProtocol8021Q,
+		},
+	}
+
+	for _, res := range []resource.Resource{dummy, vlan1, vlan2} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus) error {
+				switch r.Metadata().ID() {
+				case dummyInterface:
+					suite.Assert().Equal("dummy", r.Status().Kind)
+				case vlanName1, vlanName2:
+					suite.Assert().Equal(network.LinkKindVLAN, r.Status().Kind)
+					suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.Status().VLAN.Protocol)
+
+					if r.Metadata().ID() == vlanName1 {
+						suite.Assert().EqualValues(2, r.Status().VLAN.VID)
+					} else {
+						suite.Assert().EqualValues(4, r.Status().VLAN.VID)
+					}
+				}
+
+				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+					return retry.ExpectedErrorf("link is not up")
+				}
+
+				return nil
+			})
+		}))
+
+	// attempt to change VLAN ID
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, vlan1.Metadata(), func(r resource.Resource) error {
+		r.(*network.LinkSpec).Status().VLAN.VID = 42
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{vlanName1}, func(r *network.LinkStatus) error {
+				if r.Status().VLAN.VID != 42 {
+					return retry.ExpectedErrorf("vlan ID is not 42: %d", r.Status().VLAN.VID)
+				}
+
+				return nil
+			})
+		}))
+
+	// teardown the links
+	for _, r := range []resource.Resource{vlan1, vlan2, dummy} {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoInterface(dummyInterface)
+		}))
+}
+
+//nolint:gocyclo
+func (suite *LinkSpecSuite) TestBond() {
+	bondName := suite.uniqueDummyInterface()
+	bond := network.NewLinkSpec(network.NamespaceName, bondName)
+	*bond.Status() = network.LinkSpecSpec{
+		Name:    bondName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindBond,
+		Up:      true,
+		Logical: true,
+		BondMaster: network.BondMasterSpec{
+			Mode:            nethelpers.BondModeActiveBackup,
+			ARPAllTargets:   nethelpers.ARPAllTargetsAll,
+			PrimaryReselect: nethelpers.PrimaryReselectBetter,
+			FailOverMac:     nethelpers.FailOverMACFollow,
+			ADSelect:        nethelpers.ADSelectBandwidth,
+			MIIMon:          100,
+			DownDelay:       100,
+			ResendIGMP:      2,
+			UseCarrier:      true,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+	bond.Status().BondMaster.FillDefaults()
+
+	dummy0Name := suite.uniqueDummyInterface()
+	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
+	*dummy0.Status() = network.LinkSpecSpec{
+		Name:        dummy0Name,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		Up:          false,
+		Logical:     true,
+		MasterName:  bondName,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dummy1Name := suite.uniqueDummyInterface()
+	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
+	*dummy1.Status() = network.LinkSpecSpec{
+		Name:        dummy1Name,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		Up:          false,
+		Logical:     true,
+		MasterName:  bondName,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{dummy0, dummy1, bond} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{dummy0Name, dummy1Name, bondName}, func(r *network.LinkStatus) error {
+				switch r.Metadata().ID() {
+				case bondName:
+					suite.Assert().Equal(network.LinkKindBond, r.Status().Kind)
+
+					if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+						return retry.ExpectedErrorf("link is not up: %s", r.Status().OperationalState)
+					}
+				case dummy0Name, dummy1Name:
+					suite.Assert().Equal("dummy", r.Status().Kind)
+
+					if r.Status().OperationalState != nethelpers.OperStateDown {
+						return retry.ExpectedErrorf("link is not down: %s", r.Status().OperationalState)
+					}
+
+					if r.Status().MasterIndex == 0 {
+						return retry.ExpectedErrorf("masterIndex should be non-zero")
+					}
+				}
+
+				return nil
+			})
+		}))
+
+	// attempt to change bond type
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, bond.Metadata(), func(r resource.Resource) error {
+		r.(*network.LinkSpec).Status().BondMaster.Mode = nethelpers.BondModeRoundrobin
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{bondName}, func(r *network.LinkStatus) error {
+				if r.Status().BondMaster.Mode != nethelpers.BondModeRoundrobin {
+					return retry.ExpectedErrorf("bond mode is not %s: %s", nethelpers.BondModeRoundrobin, r.Status().BondMaster.Mode)
+				}
+
+				return nil
+			})
+		}))
+
+	// unslave one of the interfaces
+	_, err = suite.state.UpdateWithConflicts(suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
+		r.(*network.LinkSpec).Status().MasterName = ""
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{dummy0Name}, func(r *network.LinkStatus) error {
+				if r.Status().MasterIndex != 0 {
+					return retry.ExpectedErrorf("iface not unslaved yet")
+				}
+
+				return nil
+			})
+		}))
+
+	// teardown the links
+	for _, r := range []resource.Resource{dummy0, dummy1, bond} {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoInterface(bondName)
+		}))
+}
+
+func (suite *LinkSpecSuite) TestWireguard() {
+	priv, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	pub1, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	pub2, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	wgInterface := suite.uniqueDummyInterface()
+
+	wg := network.NewLinkSpec(network.NamespaceName, wgInterface)
+	*wg.Status() = network.LinkSpecSpec{
+		Name:    wgInterface,
+		Type:    nethelpers.LinkNone,
+		Kind:    "wireguard",
+		Up:      true,
+		Logical: true,
+		Wireguard: network.WireguardSpec{
+			PrivateKey:   priv.String(),
+			ListenPort:   30000,
+			FirewallMark: 1,
+			Peers: []network.WireguardPeer{
+				{
+					PublicKey: pub1.PublicKey().String(),
+					Endpoint:  "10.2.0.3:20000",
+					AllowedIPs: []netaddr.IPPrefix{
+						netaddr.MustParseIPPrefix("172.24.0.0/16"),
+					},
+				},
+				{
+					PublicKey: pub2.PublicKey().String(),
+					AllowedIPs: []netaddr.IPPrefix{
+						netaddr.MustParseIPPrefix("172.25.0.0/24"),
+					},
+				},
+			},
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{wg} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
+				suite.Assert().Equal("wireguard", r.Status().Kind)
+
+				if r.Status().Wireguard.PrivateKey != priv.String() {
+					return retry.ExpectedErrorf("private key not set")
+				}
+
+				if len(r.Status().Wireguard.Peers) != 2 {
+					return retry.ExpectedErrorf("peers are not set up")
+				}
+
+				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+					return retry.ExpectedErrorf("link is not up")
+				}
+
+				return nil
+			})
+		}))
+
+	// attempt to change wireguard private key
+	priv2, err := wgtypes.GeneratePrivateKey()
+	suite.Require().NoError(err)
+
+	_, err = suite.state.UpdateWithConflicts(suite.ctx, wg.Metadata(), func(r resource.Resource) error {
+		r.(*network.LinkSpec).Status().Wireguard.PrivateKey = priv2.String()
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
+				if r.Status().Wireguard.PrivateKey != priv2.String() {
+					return retry.ExpectedErrorf("private key was not updated")
+				}
+
+				return nil
+			})
+		}))
+
+	// teardown the links
+	for _, r := range []resource.Resource{wg} {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoInterface(wgInterface)
+		}))
+}
+
+func TestLinkSpecSuite(t *testing.T) {
+	suite.Run(t, new(LinkSpecSuite))
+}

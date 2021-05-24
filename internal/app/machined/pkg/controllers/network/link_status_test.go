@@ -26,8 +26,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type LinkStatusSuite struct {
@@ -76,7 +76,7 @@ func (suite *LinkStatusSuite) assertInterfaces(requiredIDs []string, check func(
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -102,7 +102,7 @@ func (suite *LinkStatusSuite) assertInterfaces(requiredIDs []string, check func(
 func (suite *LinkStatusSuite) assertNoInterface(id string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {

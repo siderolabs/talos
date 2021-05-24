@@ -9,3 +9,8 @@ package watch
 type Watcher interface {
 	Done()
 }
+
+// Trigger is used by watcher to trigger reconcile loops.
+type Trigger interface {
+	QueueReconcile()
+}

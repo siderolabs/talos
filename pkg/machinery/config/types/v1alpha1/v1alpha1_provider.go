@@ -769,7 +769,11 @@ func (b *Bond) AllSlavesActive() uint8 {
 
 // UseCarrier implements the MachineNetwork interface.
 func (b *Bond) UseCarrier() bool {
-	return b.BondUseCarrier
+	if b.BondUseCarrier == nil {
+		return true
+	}
+
+	return *b.BondUseCarrier
 }
 
 // ADActorSysPrio implements the MachineNetwork interface.

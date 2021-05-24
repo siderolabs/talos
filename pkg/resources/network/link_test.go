@@ -1,0 +1,320 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package network_test
+
+import (
+	"net"
+	"testing"
+	"time"
+
+	"github.com/AlekSi/pointer"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/resources/network"
+)
+
+func TestVLANSpec(t *testing.T) {
+	spec := network.VLANSpec{
+		VID:      25,
+		Protocol: nethelpers.VLANProtocol8021AD,
+	}
+
+	b, err := spec.Encode()
+	require.NoError(t, err)
+
+	var decodedSpec network.VLANSpec
+
+	require.NoError(t, decodedSpec.Decode(b))
+
+	require.Equal(t, spec, decodedSpec)
+}
+
+func TestBondMasterSpec(t *testing.T) {
+	spec := network.BondMasterSpec{
+		Mode:      nethelpers.BondModeActiveBackup,
+		MIIMon:    100,
+		UpDelay:   200,
+		DownDelay: 300,
+	}
+
+	b, err := spec.Encode()
+	require.NoError(t, err)
+
+	var decodedSpec network.BondMasterSpec
+
+	require.NoError(t, decodedSpec.Decode(b))
+
+	require.Equal(t, spec, decodedSpec)
+}
+
+func TestWireguardPeer(t *testing.T) {
+	key1, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	key2, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	peer1 := network.WireguardPeer{
+		PublicKey:                   key1.PublicKey().String(),
+		Endpoint:                    "127.0.0.1:1000",
+		PersistentKeepaliveInterval: 10 * time.Second,
+		AllowedIPs: []netaddr.IPPrefix{
+			netaddr.MustParseIPPrefix("10.2.0.0/16"),
+			netaddr.MustParseIPPrefix("10.2.0.0/24"),
+		},
+	}
+
+	peer2 := network.WireguardPeer{
+		PublicKey: key2.PublicKey().String(),
+		Endpoint:  "127.0.0.1:2000",
+		AllowedIPs: []netaddr.IPPrefix{
+			netaddr.MustParseIPPrefix("10.2.0.0/15"),
+			netaddr.MustParseIPPrefix("10.3.0.0/28"),
+		},
+	}
+
+	peer1_1 := network.WireguardPeer{
+		PublicKey:                   key1.PublicKey().String(),
+		Endpoint:                    "127.0.0.1:1000",
+		PersistentKeepaliveInterval: 10 * time.Second,
+		AllowedIPs: []netaddr.IPPrefix{
+			netaddr.MustParseIPPrefix("10.2.0.0/15"),
+			netaddr.MustParseIPPrefix("10.3.0.0/28"),
+		},
+	}
+
+	assert.True(t, peer1.Equal(&peer1))
+	assert.False(t, peer1.Equal(&peer2))
+	assert.False(t, peer1.Equal(&peer1_1))
+}
+
+func TestWireguardSpecZero(t *testing.T) {
+	zeroSpec := network.WireguardSpec{}
+
+	assert.True(t, zeroSpec.IsZero())
+}
+
+func TestWireguardSpecDecode(t *testing.T) {
+	priv, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub1, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub2, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	var spec network.WireguardSpec
+
+	spec.Decode(&wgtypes.Device{
+		PrivateKey:   priv,
+		ListenPort:   30000,
+		FirewallMark: 1,
+		Peers: []wgtypes.Peer{
+			{
+				PublicKey: pub1.PublicKey(),
+				Endpoint: &net.UDPAddr{
+					IP:   net.ParseIP("10.2.0.3"),
+					Port: 20000,
+				},
+				AllowedIPs: []net.IPNet{
+					{
+						IP:   net.ParseIP("172.24.0.0"),
+						Mask: net.IPv4Mask(255, 255, 0, 0),
+					},
+				},
+			},
+			{
+				PublicKey: pub2.PublicKey(),
+				AllowedIPs: []net.IPNet{
+					{
+						IP:   net.ParseIP("172.25.0.0"),
+						Mask: net.IPv4Mask(255, 255, 255, 0),
+					},
+				},
+			},
+		},
+	})
+
+	expected := network.WireguardSpec{
+		PrivateKey:   priv.String(),
+		ListenPort:   30000,
+		FirewallMark: 1,
+		Peers: []network.WireguardPeer{
+			{
+				PublicKey: pub1.PublicKey().String(),
+				Endpoint:  "10.2.0.3:20000",
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.24.0.0/16"),
+				},
+			},
+			{
+				PublicKey: pub2.PublicKey().String(),
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.25.0.0/24"),
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, spec)
+	assert.True(t, expected.Equal(&spec))
+
+	var zeroSpec network.WireguardSpec
+
+	assert.False(t, zeroSpec.Equal(&spec))
+}
+
+func TestWireguardSpecEncode(t *testing.T) {
+	priv, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub1, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub2, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	// make sure pub1 < pub2
+	if pub1.PublicKey().String() > pub2.PublicKey().String() {
+		pub1, pub2 = pub2, pub1
+	}
+
+	specV1 := network.WireguardSpec{
+		PrivateKey:   priv.String(),
+		ListenPort:   30000,
+		FirewallMark: 1,
+		Peers: []network.WireguardPeer{
+			{
+				PublicKey: pub1.PublicKey().String(),
+				Endpoint:  "10.2.0.3:20000",
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.24.0.0/16"),
+				},
+			},
+			{
+				PublicKey: pub2.PublicKey().String(),
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.25.0.0/24"),
+				},
+			},
+		},
+	}
+
+	specV1.Sort()
+
+	var zero network.WireguardSpec
+
+	zero.Decode(&wgtypes.Device{})
+	zero.Sort()
+
+	// from zero (empty) config to config with two peers
+	delta, err := specV1.Encode(&zero)
+	require.NoError(t, err)
+
+	assert.Equal(t, &wgtypes.Config{
+		PrivateKey:   &priv,
+		ListenPort:   pointer.ToInt(30000),
+		FirewallMark: pointer.ToInt(1),
+		Peers: []wgtypes.PeerConfig{
+			{
+				PublicKey: pub1.PublicKey(),
+				Endpoint: &net.UDPAddr{
+					IP:   net.ParseIP("10.2.0.3"),
+					Port: 20000,
+				},
+				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				AllowedIPs: []net.IPNet{
+					{
+						IP:   net.ParseIP("172.24.0.0").To4(),
+						Mask: net.IPv4Mask(255, 255, 0, 0),
+					},
+				},
+			},
+			{
+				PublicKey:                   pub2.PublicKey(),
+				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				AllowedIPs: []net.IPNet{
+					{
+						IP:   net.ParseIP("172.25.0.0").To4(),
+						Mask: net.IPv4Mask(255, 255, 255, 0),
+					},
+				},
+			},
+		},
+	}, delta)
+
+	// noop
+	delta, err = specV1.Encode(&specV1)
+	require.NoError(t, err)
+
+	assert.Equal(t, &wgtypes.Config{}, delta)
+
+	// delete peer2
+	specV2 := network.WireguardSpec{
+		PrivateKey:   priv.String(),
+		ListenPort:   30000,
+		FirewallMark: 1,
+		Peers: []network.WireguardPeer{
+			{
+				PublicKey: pub1.PublicKey().String(),
+				Endpoint:  "10.2.0.3:20000",
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.24.0.0/16"),
+				},
+			},
+		},
+	}
+
+	delta, err = specV2.Encode(&specV1)
+	require.NoError(t, err)
+
+	assert.Equal(t, &wgtypes.Config{
+		Peers: []wgtypes.PeerConfig{
+			{
+				PublicKey: pub2.PublicKey(),
+				Remove:    true,
+			},
+		},
+	}, delta)
+
+	// update peer1, firewallMark
+	specV3 := network.WireguardSpec{
+		PrivateKey:   priv.String(),
+		ListenPort:   30000,
+		FirewallMark: 2,
+		Peers: []network.WireguardPeer{
+			{
+				PublicKey: pub1.PublicKey().String(),
+				AllowedIPs: []netaddr.IPPrefix{
+					netaddr.MustParseIPPrefix("172.24.0.0/16"),
+				},
+			},
+		},
+	}
+
+	delta, err = specV3.Encode(&specV2)
+	require.NoError(t, err)
+
+	assert.Equal(t, &wgtypes.Config{
+		FirewallMark: pointer.ToInt(2),
+		Peers: []wgtypes.PeerConfig{
+			{
+				PublicKey:                   pub1.PublicKey(),
+				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				AllowedIPs: []net.IPNet{
+					{
+						IP:   net.ParseIP("172.24.0.0").To4(),
+						Mask: net.IPv4Mask(255, 255, 0, 0),
+					},
+				},
+			},
+		},
+	}, delta)
+}

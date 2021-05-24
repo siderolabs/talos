@@ -28,9 +28,9 @@ import (
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type AddressConfigSuite struct {
@@ -75,7 +75,7 @@ func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check fun
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -167,7 +167,7 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 				fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
 			}, func(r *network.AddressSpec) error {
 				suite.Assert().Equal(ifaceName, r.Status().LinkName)
-				suite.Assert().Equal(network.ConfigCmdline, r.Status().Layer)
+				suite.Assert().Equal(network.ConfigCmdline, r.Status().ConfigLayer)
 
 				return nil
 			})

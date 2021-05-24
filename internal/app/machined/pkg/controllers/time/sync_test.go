@@ -77,7 +77,7 @@ func (suite *SyncSuite) assertTimeStatus(spec timeresource.StatusSpec) error {
 			return retry.ExpectedError(err)
 		}
 
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	status := r.(*timeresource.Status) //nolint:errcheck,forcetypeassert

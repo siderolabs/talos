@@ -78,7 +78,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 			id := network.RouteID(route.Status().Destination, route.Status().Gateway)
 
 			existing, ok := routes[id]
-			if ok && existing.Status().Layer > route.Status().Layer {
+			if ok && existing.Status().ConfigLayer > route.Status().ConfigLayer {
 				// skip this route, as existing one is higher layer
 				continue
 			}

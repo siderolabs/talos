@@ -47,10 +47,8 @@ func (ctrl *RouteSpecController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,dupl
 func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	watchCh := make(chan struct{})
-
 	// watch link changes as some routes might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK)
+	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
 	if err != nil {
 		return err
 	}
@@ -69,7 +67,6 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-watchCh:
 		}
 
 		// list source network configuration resources
@@ -103,9 +100,9 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 
 		// loop over route and make reconcile decision
 		for _, res := range list.Items {
-			address := res.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+			route := res.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
 
-			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, address); err != nil {
+			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
 				return err
 			}
 		}

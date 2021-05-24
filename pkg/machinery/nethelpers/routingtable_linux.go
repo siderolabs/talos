@@ -6,7 +6,7 @@ package nethelpers
 
 import "golang.org/x/sys/unix"
 
-//go:generate stringer -type=RoutingTable -linecomment
+//go:generate stringer -type=RoutingTable -linecomment -output routingtable_string_linux.go
 
 // RoutingTable is a routing table ID.
 type RoutingTable uint32

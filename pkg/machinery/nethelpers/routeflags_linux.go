@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=RouteFlag -linecomment
+//go:generate stringer -type=RouteFlag -linecomment -output routeflag_string_linux.go
 
 import (
 	"strings"

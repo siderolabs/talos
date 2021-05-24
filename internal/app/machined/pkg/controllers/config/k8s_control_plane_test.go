@@ -71,7 +71,7 @@ func (suite *K8sControlPlaneSuite) startRuntime() {
 func (suite *K8sControlPlaneSuite) assertK8sControlPlanes(manifests []string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	ids := make([]string, 0, len(resources.Items))

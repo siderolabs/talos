@@ -283,7 +283,7 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		return nil

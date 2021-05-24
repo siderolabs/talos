@@ -523,7 +523,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 				return retry.ExpectedError(err)
 			}
 
-			return retry.UnexpectedError(err)
+			return err
 		}
 
 		return nil

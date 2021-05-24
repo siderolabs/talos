@@ -181,7 +181,7 @@ COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
-COPY --from=go-generate /src/pkg/resources/network/ /pkg/resources/network/
+COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -190,9 +190,7 @@ FROM build-go AS base
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY --from=generate /pkg/machinery/api ./pkg/machinery/api
-COPY --from=generate /pkg/machinery/config ./pkg/machinery/config
-COPY --from=generate /pkg/resources/network ./pkg/resources/network
+COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 RUN --mount=type=cache,target=/.cache go list -mod=readonly all >/dev/null
 RUN --mount=type=cache,target=/.cache ! go mod tidy -v 2>&1 | grep .
 WORKDIR /src/pkg/machinery
@@ -600,7 +598,7 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
-RUN find . -name '*.pb.go' -o -name '*_string.go' | xargs rm
+RUN find . -name '*.pb.go' -o -name '*_string_*.go' | xargs rm
 RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on protobuf files.

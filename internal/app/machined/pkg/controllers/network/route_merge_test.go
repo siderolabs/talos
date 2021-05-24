@@ -24,8 +24,8 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 type RouteMergeSuite struct {
@@ -74,7 +74,7 @@ func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*net
 
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -100,7 +100,7 @@ func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*net
 func (suite *RouteMergeSuite) assertNoRoute(id string) error {
 	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
 	if err != nil {
-		return retry.UnexpectedError(err)
+		return err
 	}
 
 	for _, res := range resources.Items {
@@ -121,7 +121,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
 		Priority:    1024,
-		Layer:       network.ConfigCmdline,
+		ConfigLayer: network.ConfigCmdline,
 	}
 
 	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp//10.5.0.3")
@@ -132,7 +132,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
 		Priority:    50,
-		Layer:       network.ConfigDHCP,
+		ConfigLayer: network.ConfigDHCP,
 	}
 
 	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/10.0.0.35/32/10.0.0.34")
@@ -144,7 +144,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
 		Priority:    1024,
-		Layer:       network.ConfigMachineConfiguration,
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	for _, res := range []resource.Resource{cmdline, dhcp, static} {

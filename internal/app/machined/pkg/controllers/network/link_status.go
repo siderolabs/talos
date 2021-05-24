@@ -16,10 +16,12 @@ import (
 	"github.com/mdlayher/ethtool"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/network/nethelpers"
 )
 
 // LinkStatusController manages secrets.Etcd based on configuration.
@@ -32,7 +34,13 @@ func (ctrl *LinkStatusController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *LinkStatusController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkRefreshType,
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -50,16 +58,14 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
 	// other connections are used to send requests and receive responses, as we can't mix the notifications and request/responses
-	watchCh := make(chan struct{})
-
-	rtnetlinkWatcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK)
+	rtnetlinkWatcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
 	if err != nil {
 		return err
 	}
 
 	defer rtnetlinkWatcher.Done()
 
-	ethtoolWatcher, err := watch.NewEthtool(ctx, watchCh)
+	ethtoolWatcher, err := watch.NewEthtool(r)
 	if err != nil {
 		return err
 	}
@@ -80,15 +86,21 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 
 	defer ethClient.Close() //nolint:errcheck
 
+	wgClient, err := wgctrl.New()
+	if err != nil {
+		return fmt.Errorf("error creating wireguard client: %w", err)
+	}
+
+	defer wgClient.Close() //nolint:errcheck
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-watchCh:
 		}
 
-		if err = ctrl.reconcile(ctx, r, conn, ethClient); err != nil {
+		if err = ctrl.reconcile(ctx, r, logger, conn, ethClient, wgClient); err != nil {
 			return err
 		}
 	}
@@ -97,7 +109,7 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 // reconcile function runs for every reconciliation loop querying the netlink state and updating resources.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Runtime, conn *rtnetlink.Conn, ethClient *ethtool.Client) error {
+func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn, ethClient *ethtool.Client, wgClient *wgctrl.Client) error {
 	// list the existing LinkStatus resources and mark them all to be deleted, as the actual link is discovered via netlink, resource ID is removed from the list
 	list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 	if err != nil {
@@ -196,6 +208,26 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 			} else {
 				status.SpeedMegabits = 0
 				status.Duplex = nethelpers.Duplex(ethtool.Unknown)
+			}
+
+			switch status.Kind {
+			case network.LinkKindVLAN:
+				if err = status.VLAN.Decode(link.Attributes.Info.Data); err != nil {
+					logger.Warn("failure decoding VLAN attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
+			case network.LinkKindBond:
+				if err = status.BondMaster.Decode(link.Attributes.Info.Data); err != nil {
+					logger.Warn("failure decoding bond attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
+			case network.LinkKindWireguard:
+				var wgDev *wgtypes.Device
+
+				wgDev, err = wgClient.Device(link.Attributes.Name)
+				if err != nil {
+					logger.Warn("failure getting wireguard attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				} else {
+					status.Wireguard.Decode(wgDev)
+				}
 			}
 
 			return nil

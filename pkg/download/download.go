@@ -101,7 +101,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 	err = retry.Exponential(180*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second), retry.WithErrorLogging(true)).Retry(func() error {
 		select {
 		case <-ctx.Done():
-			return retry.UnexpectedError(context.Canceled)
+			return context.Canceled
 		default:
 		}
 

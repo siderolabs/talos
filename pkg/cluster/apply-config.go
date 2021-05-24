@@ -33,12 +33,12 @@ func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.Nod
 				InsecureSkipVerify: true,
 			}), client.WithEndpoints(n.IPs[0].String()))
 			if err != nil {
-				return retry.UnexpectedError(err)
+				return err
 			}
 
 			cfgBytes, err := n.Config.Bytes()
 			if err != nil {
-				return retry.UnexpectedError(err)
+				return err
 			}
 
 			_, err = c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{

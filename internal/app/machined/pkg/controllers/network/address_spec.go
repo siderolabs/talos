@@ -48,10 +48,8 @@ func (ctrl *AddressSpecController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,dupl
 func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	watchCh := make(chan struct{})
-
 	// watch link changes as some address might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK)
+	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
 	if err != nil {
 		return err
 	}
@@ -70,7 +68,6 @@ func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-watchCh:
 		}
 
 		// list source network configuration resources
