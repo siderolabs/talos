@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -47,9 +48,7 @@ func (suite *ControlPlaneStaticPodSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))

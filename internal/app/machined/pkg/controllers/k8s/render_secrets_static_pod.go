@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	stdlibtemplate "text/template"
@@ -19,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/crypto/x509"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -69,7 +69,7 @@ func (ctrl *RenderSecretsStaticPodController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

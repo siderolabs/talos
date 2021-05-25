@@ -7,11 +7,11 @@ package network
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
+	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
@@ -46,7 +46,7 @@ func (ctrl *AddressStatusController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	watchCh := make(chan struct{})
 
 	watcher, err := watch.NewRtNetlink(ctx, watchCh, unix.RTMGRP_LINK|unix.RTMGRP_IPV4_IFADDR|unix.RTMGRP_IPV6_IFADDR)

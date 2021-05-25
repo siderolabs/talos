@@ -27,7 +27,7 @@ require (
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
+	github.com/cosi-project/runtime v0.0.0-20210521140557-8a4533ce68e2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -40,7 +40,7 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.3.1
+	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
@@ -81,27 +81,27 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.25.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/etcdctl/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/pkg/v3 v3.5.0-alpha.0
+	go.etcd.io/etcd/api/v3 v3.5.0-beta.3
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.3
+	go.etcd.io/etcd/client/v3 v3.5.0-beta.3
+	go.etcd.io/etcd/etcdutl/v3 v3.5.0-beta.3
+	go.uber.org/zap v1.16.1-0.20210329175301-c23abee72d19
 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210427135350-f9ad6d392236
-	google.golang.org/grpc v1.37.1
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	honnef.co/go/tools v0.1.2 // indirect
 	inet.af/netaddr v0.0.0-20210430201628-1d252cf8125e
-	k8s.io/api v0.21.0
-	k8s.io/apimachinery v0.21.0
-	k8s.io/apiserver v0.21.0 // indirect
-	k8s.io/client-go v0.21.0
-	k8s.io/cri-api v0.21.0
-	k8s.io/kubectl v0.21.0
-	k8s.io/kubelet v0.21.0
+	k8s.io/api v0.21.1
+	k8s.io/apimachinery v0.21.1
+	k8s.io/apiserver v0.21.1 // indirect
+	k8s.io/client-go v0.21.1
+	k8s.io/cri-api v0.21.1
+	k8s.io/kubectl v0.21.1
+	k8s.io/kubelet v0.21.1
 )

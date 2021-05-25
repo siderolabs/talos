@@ -5,10 +5,12 @@
 package generate_test
 
 import (
+	"crypto/x509"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	genv1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -73,6 +75,16 @@ func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
-	_, err := genv1alpha1.Talosconfig(suite.input)
+	cfg, err := genv1alpha1.Talosconfig(suite.input)
 	suite.Require().NoError(err)
+
+	creds, err := client.CredentialsFromConfigContext(cfg.Contexts[cfg.Context])
+	suite.Require().NoError(err)
+	suite.Require().Nil(creds.Crt.Leaf)
+	suite.Require().Len(creds.Crt.Certificate, 1)
+
+	cert, err := x509.ParseCertificate(creds.Crt.Certificate[0])
+	suite.Require().NoError(err)
+
+	suite.Equal([]string{constants.RoleAdmin}, cert.Subject.Organization)
 }

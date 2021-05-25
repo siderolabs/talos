@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/crypto/x509"
+	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -77,7 +77,7 @@ func (ctrl *KubernetesController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *log.Logger) error {
+func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
 	defer refreshTicker.Stop()
 

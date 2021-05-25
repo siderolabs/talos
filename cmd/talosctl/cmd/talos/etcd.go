@@ -16,7 +16,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	"go.etcd.io/etcd/etcdctl/v3/snapshot"
+	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"

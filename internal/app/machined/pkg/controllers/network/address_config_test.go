@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -51,9 +52,7 @@ func (suite *AddressConfigSuite) SetupTest() {
 
 	var err error
 
-	logger := log.New(log.Writer(), "controller-runtime: ", log.Flags())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 }
 

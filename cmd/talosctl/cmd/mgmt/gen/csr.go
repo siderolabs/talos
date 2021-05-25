@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (
@@ -55,6 +56,7 @@ var csrCmd = &cobra.Command{
 		}
 
 		ips := []net.IP{parsed}
+		opts = append(opts, x509.Organization(constants.RoleAdmin))
 		opts = append(opts, x509.IPAddresses(ips))
 		opts = append(opts, x509.NotAfter(time.Now().Add(time.Duration(crtHours)*time.Hour))) // BUG
 
