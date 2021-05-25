@@ -381,11 +381,12 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
-// NewAdminCertificateAndKey generates the admin Talos certifiate and key.
+// NewAdminCertificateAndKey generates the admin Talos certificate and key.
 func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	ips := []net.IP{net.ParseIP(loopback)}
 
 	opts := []x509.Option{
+		x509.Organization(constants.RoleAdmin),
 		x509.IPAddresses(ips),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
