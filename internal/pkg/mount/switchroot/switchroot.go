@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/talos-systems/go-debug"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -60,7 +61,15 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	// convention.
 	log.Println("executing /sbin/init")
 
-	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, []string{}); err != nil {
+	envv := []string{}
+
+	if debug.RaceEnabled {
+		envv = append(envv, "GORACE=halt_on_error=1")
+
+		log.Printf("race detection enabled with halt_on_error=1")
+	}
+
+	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {
 		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}
 
