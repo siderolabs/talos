@@ -14,6 +14,7 @@ import (
 
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/go-debug"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -70,6 +71,10 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	env := []string{}
 	for key, val := range r.Config().Machine().Env() {
 		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	}
+
+	if debug.RaceEnabled {
+		env = append(env, "GORACE=halt_on_error=1")
 	}
 
 	b, err := r.Config().Bytes()
