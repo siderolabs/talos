@@ -163,10 +163,10 @@ RUN gofumports -w -local github.com/talos-systems/talos /api/
 
 # run docgen for machinery config
 FROM build-go AS go-generate
-COPY ./pkg/machinery ./pkg/machinery
-COPY ./pkg/resources/network ./pkg/resources/network
-RUN --mount=type=cache,target=/.cache go generate ./pkg/machinery/config/types/v1alpha1/...
-RUN --mount=type=cache,target=/.cache go generate ./pkg/resources/network/...
+COPY ./pkg ./pkg
+RUN --mount=type=cache,target=/.cache go generate ./pkg/...
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache go generate ./...
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
