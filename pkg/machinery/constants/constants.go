@@ -419,7 +419,8 @@ const (
 	// https://manage.ntppool.org/manage/vendor
 	DefaultNTPServer = "pool.ntp.org"
 
-	// RoleAdmin defines Talos role for admins. It matches Organization value of Talos client certificate.
+	// RoleAdmin defines Talos role for admins.
+	// It matches Organization value of Talos client certificate.
 	RoleAdmin = "os:admin"
 )
 

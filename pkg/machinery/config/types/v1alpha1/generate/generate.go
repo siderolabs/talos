@@ -534,7 +534,7 @@ func genToken(lenFirst, lenSecond int) (string, error) {
 	return tokenTemp[0] + "." + tokenTemp[1], nil
 }
 
-// emptyIf returns empty string if the 2nd argument is empty string, otherwise returns the first argumewnt.
+// emptyIf returns empty string if the 2nd argument is empty string, otherwise returns the first argument.
 func emptyIf(str, check string) string {
 	if check == "" {
 		return ""

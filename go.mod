@@ -65,7 +65,7 @@ require (
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.2.1-0.20210427105118-4f80b976b640
+	github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210510233948-1292574643e0
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-debug v0.2.1-0.20210525175311-3d0a6e1bf5e3
@@ -76,7 +76,7 @@ require (
 	github.com/talos-systems/go-smbios v0.0.0-20210422124317-d3a32bea731a
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	github.com/talos-systems/talos/pkg/machinery v0.0.0-20210302191918-8ffb55943c71
+	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.25.0
