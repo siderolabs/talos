@@ -841,6 +841,10 @@ type InstallConfig struct {
 	//     - false
 	//     - no
 	InstallWipe bool `yaml:"wipe"`
+	//   description: |
+	//     Indicates if MBR partition should be marked as bootable (active).
+	//     Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.
+	InstallLegacyBIOSSupport bool `yaml:"legacyBIOSSupport,omitempty"`
 }
 
 // InstallDiskSizeMatcher disk size condition parser.

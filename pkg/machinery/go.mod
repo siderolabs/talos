@@ -23,7 +23,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086
-	github.com/talos-systems/go-blockdevice v0.2.1-0.20210510233948-1292574643e0
+	github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
 	golang.org/x/sys v0.0.0-20210324051608-47abb6519492 // indirect

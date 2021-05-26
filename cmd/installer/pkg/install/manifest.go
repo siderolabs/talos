@@ -28,9 +28,10 @@ import (
 // Manifest represents the instructions for preparing all block devices
 // for an installation.
 type Manifest struct {
-	PartitionOptions *runtime.PartitionOptions
-	Devices          map[string]Device
-	Targets          map[string][]*Target
+	PartitionOptions  *runtime.PartitionOptions
+	Devices           map[string]Device
+	Targets           map[string][]*Target
+	LegacyBIOSSupport bool
 }
 
 // Device represents device options.
@@ -52,8 +53,9 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	}
 
 	manifest = &Manifest{
-		Devices: map[string]Device{},
-		Targets: map[string][]*Target{},
+		Devices:           map[string]Device{},
+		Targets:           map[string][]*Target{},
+		LegacyBIOSSupport: opts.LegacyBIOSSupport,
 	}
 
 	if opts.Board != constants.BoardNone {
@@ -271,7 +273,9 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 		log.Printf("creating new partition table on %s", device.Device)
 
-		gptOpts := []gpt.Option{}
+		gptOpts := []gpt.Option{
+			gpt.WithMarkMBRBootable(m.LegacyBIOSSupport),
+		}
 
 		if m.PartitionOptions != nil {
 			gptOpts = append(gptOpts, gpt.WithPartitionEntriesStartLBA(m.PartitionOptions.PartitionsOffset))

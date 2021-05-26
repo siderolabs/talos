@@ -905,6 +905,11 @@ func (i *InstallConfig) Zero() bool {
 	return i.InstallWipe
 }
 
+// LegacyBIOSSupport implements the config.Provider interface.
+func (i *InstallConfig) LegacyBIOSSupport() bool {
+	return i.InstallLegacyBIOSSupport
+}
+
 // WithBootloader implements the config.Provider interface.
 func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader

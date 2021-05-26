@@ -490,7 +490,7 @@ func init() {
 			FieldName: "install",
 		},
 	}
-	InstallConfigDoc.Fields = make([]encoder.Doc, 6)
+	InstallConfigDoc.Fields = make([]encoder.Doc, 7)
 	InstallConfigDoc.Fields[0].Name = "disk"
 	InstallConfigDoc.Fields[0].Type = "string"
 	InstallConfigDoc.Fields[0].Note = ""
@@ -543,6 +543,11 @@ func init() {
 		"false",
 		"no",
 	}
+	InstallConfigDoc.Fields[6].Name = "legacyBIOSSupport"
+	InstallConfigDoc.Fields[6].Type = "bool"
+	InstallConfigDoc.Fields[6].Note = ""
+	InstallConfigDoc.Fields[6].Description = "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme."
+	InstallConfigDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if MBR partition should be marked as bootable (active)."
 
 	InstallDiskSizeMatcherDoc.Type = "InstallDiskSizeMatcher"
 	InstallDiskSizeMatcherDoc.Comments[encoder.LineComment] = "InstallDiskSizeMatcher disk size condition parser."
