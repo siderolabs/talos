@@ -26,16 +26,17 @@ import (
 
 // Options represents the set of options available for an install.
 type Options struct {
-	ConfigSource    string
-	Disk            string
-	Platform        string
-	Arch            string
-	Board           string
-	ExtraKernelArgs []string
-	Bootloader      bool
-	Upgrade         bool
-	Force           bool
-	Zero            bool
+	ConfigSource      string
+	Disk              string
+	Platform          string
+	Arch              string
+	Board             string
+	ExtraKernelArgs   []string
+	Bootloader        bool
+	Upgrade           bool
+	Force             bool
+	Zero              bool
+	LegacyBIOSSupport bool
 }
 
 // Install installs Talos.

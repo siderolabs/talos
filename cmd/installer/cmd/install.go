@@ -74,6 +74,10 @@ func runInstallCmd() (err error) {
 				log.Printf("  %s", warning)
 			}
 		}
+
+		if config.Machine().Install().LegacyBIOSSupport() {
+			options.LegacyBIOSSupport = true
+		}
 	}
 
 	return install.Install(p, seq, options)

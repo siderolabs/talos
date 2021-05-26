@@ -81,6 +81,7 @@ type Install interface {
 	Disk() (string, error)
 	ExtraKernelArgs() []string
 	Zero() bool
+	LegacyBIOSSupport() bool
 	WithBootloader() bool
 }
 

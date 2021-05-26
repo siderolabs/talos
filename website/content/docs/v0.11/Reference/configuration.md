@@ -1805,6 +1805,20 @@ Valid values:
 
 <hr />
 
+<div class="dd">
+
+<code>legacyBIOSSupport</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Indicates if MBR partition should be marked as bootable (active).
+Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.
+
+</div>
+
+<hr />
+
 
 
 
