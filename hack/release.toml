@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.9.0"
+previous = "v0.10.0"
 
 pre_release = true
 
@@ -15,54 +15,18 @@ preface = """\
 
 [notes]
 
-    [notes.disaster-recovery]
-        title = "Disaster Recovery"
+    [notes.multi-arch-installer]
+        title = "Multi-arch Installer"
         description = """\
-* support for creating etcd snapshots (backups) with `talosctl etcd snapshot` command.
-* etcd cluster can be recovered from a snapshot using `talosctl boostrap --recover-from=` command.
+Talos installer image (for any arch) now contains artifacts for both `amd64` and `arm64` architecture.
+This means that e.g. images for arm64 SBCs can be generated on amd64 host.
 """
 
-    [notes.timesync]
-        title = "Time Syncrhonization"
+    [notes.components]
+        title = "Component Updates"
         description = """\
-* `timed` service was replaced with a time sync controller, no machine configuration changes.
-* Talos now prefers last successful time server (by IP address) on each sync attempt (improves sync accuracy).
-"""
-
-    [notes.sbcs]
-        title = "SBCs"
-        description = """\
-* u-boot version was updated to fix the boot and USB issues on Raspberry Pi 4 8GiB version.
-* added support for Rock Pi 4.
-"""
-
-    [notes.optimize]
-        title = "Optmizations"
-        description = """\
-* Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
-"""
-
-    [notes.machineconfig-1]
-        title = "Install Disk Selector"
-        description = """\
-Install section of the machine config now has `diskSelector` field that allows querying install disk using the list of qualifiers:
-
-```yaml
-...
-  install:
-    diskSelector:
-      size: >= 500GB
-      model: WDC*
-...
-```
-
-`talosctl disks -n <node> -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
-"""
-
-    [notes.machineconfig-2]
-        title = "Inline Kubernetes Manifests"
-        description = """\
-* boostrap manifests can now be submitted in the configuration body using the `cluster.inlineManifests` field.
+* containerd was updated to 1.5.2
+* Linux kernel was updated to 5.10.29
 """
 
 [make_deps]

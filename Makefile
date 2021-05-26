@@ -50,13 +50,13 @@ GO_LDFLAGS ?= \
 WITH_RACE ?= false
 WITH_DEBUG ?= false
 
-ifeq ($(shell hack/parsebool.sh $(WITH_RACE); echo $$?), 1)
+ifneq (, $(filter $(WITH_RACE), t true TRUE y yes 1))
 CGO_ENABLED = 1
 GO_BUILDFLAGS += -race
 GO_LDFLAGS += -linkmode=external -extldflags '-static'
 endif
 
-ifeq ($(shell hack/parsebool.sh $(WITH_DEBUG); echo $$?), 1)
+ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
 GO_BUILDFLAGS += -tags sidero.debug
 else
 GO_LDFLAGS += -s -w
