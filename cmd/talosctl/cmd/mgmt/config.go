@@ -17,6 +17,7 @@ import (
 	talosnet "github.com/talos-systems/net"
 	"gopkg.in/yaml.v3"
 
+	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -46,7 +47,7 @@ var genConfigCmdFlags struct {
 	withDocs                bool
 }
 
-// genConfigCmd represents the gen config command.
+// genConfigCmd represents the `gen config` command.
 var genConfigCmd = &cobra.Command{
 	Use:   "config <cluster name> <cluster endpoint>",
 	Short: "Generates a set of configuration files for Talos cluster",
@@ -257,7 +258,6 @@ func writeV1Alpha1Config(args []string) error {
 }
 
 func init() {
-	genCmd.AddCommand(genConfigCmd)
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
@@ -273,4 +273,6 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
+
+	gen.Cmd.AddCommand(genConfigCmd)
 }

@@ -2,12 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package mgmt
+package gen
 
 import (
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/spf13/cobra"
 )
 
-func init() {
-	addCommand(cluster.Cmd)
+// Cmd represents the `gen` command.
+var Cmd = &cobra.Command{
+	Use:   "gen",
+	Short: "Generate CAs, certificates, and private keys",
+	Long:  ``,
 }
