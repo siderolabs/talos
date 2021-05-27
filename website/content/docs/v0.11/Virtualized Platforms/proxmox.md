@@ -103,11 +103,39 @@ You can also repeat this for additional nodes desired.
 
 Once the VMs have been created and updated, start the VM that will be the first control plane node.
 This VM will boot the ISO image specified earlier and enter "maintenance mode".
+
+### With DHCP server
+
 Once the machine has entered maintenance mode, there will be a console log that details the IP address that the node received.
 Take note of this IP address, which will be referred to as `$CONTROL_PLANE_IP` for the rest of this guide.
 If you wish to export this IP as a bash variable, simply issue a command like `export CONTROL_PLANE_IP=1.2.3.4`.
 
 <img src="/images/proxmox-guide/maintenance-mode.png" width="500px">
+
+### Without DHCP server
+
+To apply the machine configurations in maintenance mode, VM has to have IP on the network.
+So you can set it on boot time manualy.
+
+<img src="/images/proxmox-guide/maintenance-mode-grub-menu.png" width="600px">
+
+Press `e` on the boot time.
+And set the IP parameters for the VM.
+[Format is](https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt):
+
+```bash
+ip=<client-ip>:<srv-ip>:<gw-ip>:<netmask>:<host>:<device>:<autoconf>
+```
+
+For example $CONTROL_PLANE_IP will be 192.168.0.100 and gateway 192.168.0.1
+
+```bash
+linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal ip=192.168.0.100::192.168.0.1:255.255.255.0::eth0:off
+```
+
+<img src="/images/proxmox-guide/maintenance-mode-grub-menu-ip.png" width="630px">
+
+Then press Ctrl-x or F10
 
 ## Generate Machine Configurations
 
