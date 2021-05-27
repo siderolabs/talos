@@ -915,6 +915,11 @@ func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader
 }
 
+// Enabled implements the config.Provider interface.
+func (c *CoreDNS) Enabled() bool {
+	return !c.CoreDNSDisabled
+}
+
 // Image implements the config.Provider interface.
 func (c *CoreDNS) Image() string {
 	coreDNSImage := fmt.Sprintf("%s:%s", constants.CoreDNSImage, constants.DefaultCoreDNSVersion)

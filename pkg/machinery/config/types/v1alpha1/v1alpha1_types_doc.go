@@ -702,12 +702,17 @@ func init() {
 			FieldName: "coreDNS",
 		},
 	}
-	CoreDNSDoc.Fields = make([]encoder.Doc, 1)
-	CoreDNSDoc.Fields[0].Name = "image"
-	CoreDNSDoc.Fields[0].Type = "string"
+	CoreDNSDoc.Fields = make([]encoder.Doc, 2)
+	CoreDNSDoc.Fields[0].Name = "disabled"
+	CoreDNSDoc.Fields[0].Type = "bool"
 	CoreDNSDoc.Fields[0].Note = ""
-	CoreDNSDoc.Fields[0].Description = "The `image` field is an override to the default coredns image."
-	CoreDNSDoc.Fields[0].Comments[encoder.LineComment] = "The `image` field is an override to the default coredns image."
+	CoreDNSDoc.Fields[0].Description = "Disable coredns deployment on cluster bootstrap."
+	CoreDNSDoc.Fields[0].Comments[encoder.LineComment] = "Disable coredns deployment on cluster bootstrap."
+	CoreDNSDoc.Fields[1].Name = "image"
+	CoreDNSDoc.Fields[1].Type = "string"
+	CoreDNSDoc.Fields[1].Note = ""
+	CoreDNSDoc.Fields[1].Description = "The `image` field is an override to the default coredns image."
+	CoreDNSDoc.Fields[1].Comments[encoder.LineComment] = "The `image` field is an override to the default coredns image."
 
 	EndpointDoc.Type = "Endpoint"
 	EndpointDoc.Comments[encoder.LineComment] = "Endpoint represents the endpoint URL parsed out of the machine config."
