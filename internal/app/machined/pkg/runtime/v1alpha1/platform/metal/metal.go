@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -48,26 +49,27 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 
 	u, err := url.Parse(*option)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
 	}
 
 	values := u.Query()
 
 	if len(values) > 0 {
-		for key := range values {
+		for key, qValues := range values {
 			switch key {
 			case "uuid":
-				s, err := smbios.New()
-				if err != nil {
-					return nil, err
+				if len(qValues) != 1 {
+					uid, err := getSystemUUID()
+					if err != nil {
+						return nil, err
+					}
+
+					values.Set("uuid", uid.String())
+
+					break
 				}
 
-				uuid, err := s.SystemInformation().UUID()
-				if err != nil {
-					return nil, err
-				}
-
-				values.Set("uuid", uuid.String())
+				values.Set("uuid", qValues[0])
 			default:
 				log.Printf("unsupported query parameter: %q", key)
 			}
@@ -84,6 +86,15 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	default:
 		return download.Download(ctx, *option)
 	}
+}
+
+func getSystemUUID() (uuid.UUID, error) {
+	s, err := smbios.New()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return s.SystemInformation().UUID()
 }
 
 // Hostname implements the platform.Platform interface.
