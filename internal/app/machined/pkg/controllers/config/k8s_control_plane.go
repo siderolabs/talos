@@ -225,7 +225,8 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			ProxyMode:      cfgProvider.Cluster().Proxy().Mode(),
 			ProxyExtraArgs: cfgProvider.Cluster().Proxy().ExtraArgs(),
 
-			CoreDNSImage: cfgProvider.Cluster().CoreDNS().Image(),
+			CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
+			CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
 
 			DNSServiceIP:   dnsServiceIP,
 			DNSServiceIPv6: dnsServiceIPv6,

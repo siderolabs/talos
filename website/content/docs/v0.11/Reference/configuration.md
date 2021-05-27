@@ -2204,6 +2204,19 @@ image: docker.io/coredns/coredns:1.8.0 # The `image` field is an override to the
 
 <div class="dd">
 
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable coredns deployment on cluster bootstrap.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
 <code>image</code>  <i>string</i>
 
 </div>

@@ -355,6 +355,7 @@ type Token interface {
 // CoreDNS defines the requirements for a config that pertains to CoreDNS
 // coredns options.
 type CoreDNS interface {
+	Enabled() bool
 	Image() string
 }
 

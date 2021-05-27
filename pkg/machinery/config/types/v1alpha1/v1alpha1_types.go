@@ -1022,6 +1022,9 @@ type PodCheckpointer struct {
 // CoreDNS represents the CoreDNS config values.
 type CoreDNS struct {
 	//   description: |
+	//     Disable coredns deployment on cluster bootstrap.
+	CoreDNSDisabled bool `yaml:"disabled,omitempty"`
+	//   description: |
 	//     The `image` field is an override to the default coredns image.
 	CoreDNSImage string `yaml:"image,omitempty"`
 }

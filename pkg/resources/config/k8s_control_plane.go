@@ -88,7 +88,8 @@ type K8sManifestsSpec struct {
 	ProxyMode      string            `yaml:"proxyMode"`
 	ProxyExtraArgs map[string]string `yaml:"proxyExtraArgs"`
 
-	CoreDNSImage string `yaml:"coreDNSImage"`
+	CoreDNSEnabled bool   `yaml:"coreDNSEnabled"`
+	CoreDNSImage   string `yaml:"coreDNSImage"`
 
 	DNSServiceIP   string `yaml:"dnsServiceIP"`
 	DNSServiceIPv6 string `yaml:"dnsServiceIPv6"`

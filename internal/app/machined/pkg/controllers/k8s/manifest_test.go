@@ -96,7 +96,8 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 	ProxyEnabled: true,
 	ProxyImage:   "foo/bar",
 
-	CoreDNSImage: "foo/bar",
+	CoreDNSEnabled: true,
+	CoreDNSImage:   "foo/bar",
 
 	DNSServiceIP: "192.168.0.1",
 

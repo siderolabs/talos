@@ -29,6 +29,12 @@ Added an option to the `machine.install` section of the machine config that can 
 for the machines that have legacy BIOS which does not support GPT partitioning scheme.
 """
 
+    [notes.coredns]
+        title = "CoreDNS"
+        description = """\
+Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the cluster bootstrap.
+"""
+
     [notes.components]
         title = "Component Updates"
         description = """\
