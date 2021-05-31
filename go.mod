@@ -43,7 +43,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.3
