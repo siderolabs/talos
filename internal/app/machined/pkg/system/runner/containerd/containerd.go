@@ -15,6 +15,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 
@@ -82,6 +83,10 @@ func (c *containerdRunner) Open(ctx context.Context) error {
 		if err = oldcontainer.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
 			return fmt.Errorf("error deleting old container instance: %w", err)
 		}
+	}
+
+	if err = c.client.SnapshotService("").Remove(c.ctx, c.args.ID); err != nil && !errdefs.IsNotFound(err) {
+		return fmt.Errorf("error cleaning up stale snapshot: %w", err)
 	}
 
 	// Create the container.
