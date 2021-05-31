@@ -1214,7 +1214,6 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086 h1:SAyrAftTtxzEUqr9alFt1iezS5vuwCm7/yE8ydR0h+A=
 github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
-github.com/talos-systems/go-blockdevice v0.2.1-0.20210510233948-1292574643e0/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a h1:NLuIVKi5tBnRMgxk185AVGmMUzlRcggb2Abrw9uUq3E=
 github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0 h1:DI+BjK+fcrLBc70Fi50dZocQcaHosqsuWHrGHKp2NzE=
@@ -1308,8 +1307,9 @@ go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489 h1:1JFLBqwIgdyHN1Zt
 go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489/go.mod h1:yVHk9ub3CSBatqGNg7GRmsnfLWtoW60w4eDYfh7vHDg=
 go.etcd.io/etcd/api/v3 v3.5.0-beta.3 h1:FdNjTxZpH98oWWTtOjhz0EU7sILw9giVIW+M3dzZFOg=
 go.etcd.io/etcd/api/v3 v3.5.0-beta.3/go.mod h1:yF0YUmBghT48aC0/eTFrhULo+uKQAr5spQQ6sRhPauE=
-go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.3 h1:fh2cSzLD4OeGVy164WtilS9hAQYmQ2BC6Fh/akRR1b0=
 go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.3/go.mod h1:a+pbz+UrcOpvve1Qxf6tGovi15PjgtRhi0QTO2Nlc4U=
+go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4 h1:IVvCfkch8truS86wSy67AbnXCYq8nYpM8NPTW14Ttp0=
+go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4/go.mod h1:a+pbz+UrcOpvve1Qxf6tGovi15PjgtRhi0QTO2Nlc4U=
 go.etcd.io/etcd/client/v2 v2.305.0-beta.3 h1:tYAN7hKzGE6dDjdgZqRCwXLMwaSliWJ/CZmxhYz73Yc=
 go.etcd.io/etcd/client/v2 v2.305.0-beta.3/go.mod h1:sWZG9/Oa2nspIl/4MBllUgm25QoQYNiuek6xCXTdEj8=
 go.etcd.io/etcd/client/v3 v3.5.0-beta.3 h1:r88iXU/blpfMu7FMSvhEZJPT/5IROselyNnlR2XCYA8=
