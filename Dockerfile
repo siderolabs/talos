@@ -6,6 +6,7 @@ ARG TOOLS
 ARG IMPORTVET
 ARG PKGS
 ARG EXTRAS
+ARG INSTALLER_ARCH
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
@@ -466,19 +467,29 @@ RUN chmod +x /installer
 FROM alpine:3.13.5 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
-FROM scratch AS install-artifacts
+FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
-COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
-COPY --from=pkg-grub / /
-COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
-COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
 COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
-COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
+
+FROM scratch AS install-artifacts-arm64
+COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
+COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
+COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
 COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
 COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
+
+FROM scratch AS install-artifacts-all
+COPY --from=install-artifacts-amd64 / /
+COPY --from=install-artifacts-arm64 / /
+
+FROM install-artifacts-${TARGETARCH} AS install-artifacts-targetarch
+
+FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
+COPY --from=pkg-grub / /
+COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
 FROM alpine:3.13.5 AS installer
 RUN apk add --no-cache --update \
