@@ -43,17 +43,17 @@ require (
 	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/insomniacslk/dhcp v0.0.0-20210120172423-cc9239ac6294
-	github.com/jsimonetti/rtnetlink v0.0.0-20210226120601-1b79e63a70a0
+	github.com/jsimonetti/rtnetlink v0.0.0-20210525051524-4cc836578190
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
-	github.com/mdlayher/netlink v1.4.0
+	github.com/mdlayher/netlink v1.4.1
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pin/tftp v2.1.0+incompatible
@@ -86,9 +86,9 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0-beta.3
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0-beta.3
 	go.uber.org/zap v1.16.1-0.20210329175301-c23abee72d19
-	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
+	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210427135350-f9ad6d392236
