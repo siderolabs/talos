@@ -30,6 +30,7 @@ TESTPKGS ?= github.com/talos-systems/talos/...
 RELEASES ?= v0.9.3 v0.10.1
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
+INSTALLER_ARCH ?= all
 
 VERSION_PKG = github.com/talos-systems/talos/pkg/version
 IMAGES_PKGS = github.com/talos-systems/talos/pkg/images
@@ -54,6 +55,7 @@ ifneq (, $(filter $(WITH_RACE), t true TRUE y yes 1))
 CGO_ENABLED = 1
 GO_BUILDFLAGS += -race
 GO_LDFLAGS += -linkmode=external -extldflags '-static'
+INSTALLER_ARCH = targetarch
 endif
 
 ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
@@ -81,6 +83,7 @@ COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
