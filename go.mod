@@ -36,7 +36,7 @@ require (
 	github.com/emicklei/dot v0.16.0
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/fatih/color v1.11.0
+	github.com/fatih/color v1.12.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
