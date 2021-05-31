@@ -8,10 +8,10 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb3
 
 require (
 	github.com/AlekSi/pointer v1.1.0
-	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/containerd/go-cni v1.0.2
 	github.com/containernetworking/cni v0.8.1 // indirect
-	github.com/cosi-project/runtime v0.0.0-20210409233936-10d6103c19ab
+	github.com/cosi-project/runtime v0.0.0-20210527125634-a6c549481613
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -25,10 +25,8 @@ require (
 	github.com/talos-systems/crypto v0.2.1-0.20210526123943-7776057f5086
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
 	golang.org/x/sys v0.0.0-20210324051608-47abb6519492 // indirect
-	golang.org/x/text v0.3.5 // indirect
-	google.golang.org/genproto v0.0.0-20210302174412-5ede27ff9881
+	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
