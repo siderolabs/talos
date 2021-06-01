@@ -42,6 +42,8 @@ func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *e
 			edgeType = inspectapi.DependencyEdgeType_INPUT_STRONG
 		case controller.EdgeInputWeak:
 			edgeType = inspectapi.DependencyEdgeType_INPUT_WEAK
+		case controller.EdgeInputDestroyReady:
+			edgeType = inspectapi.DependencyEdgeType_INPUT_DESTROY_READY
 		}
 
 		edges = append(edges, &inspectapi.ControllerDependencyEdge{

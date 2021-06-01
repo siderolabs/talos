@@ -32,13 +32,10 @@ func (ctrl *AddressMergeController) Inputs() []controller.Input {
 			Type:      network.AddressSpecType,
 			Kind:      controller.InputWeak,
 		},
-		// TODO: temporary hack to make controller watch its outputs to facilitate proper teardown sequence
-		//       should be fixed in the runtime library to automatically support notifications on finalizer change
-		//       on outputs
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.AddressSpecType,
-			Kind:      controller.InputWeak,
+			Kind:      controller.InputDestroyReady,
 		},
 	}
 }
