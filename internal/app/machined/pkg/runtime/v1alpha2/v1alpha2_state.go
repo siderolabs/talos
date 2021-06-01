@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/resources/perf"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -59,6 +60,7 @@ func NewState() (*State, error) {
 		{secrets.NamespaceName, "Resources with secret material."},
 		{network.NamespaceName, "Networking resources."},
 		{network.ConfigNamespaceName, "Networking configuration resources."},
+		{perf.NamespaceName, "Stats resources."},
 	} {
 		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
 			return nil, err
@@ -85,6 +87,8 @@ func NewState() (*State, error) {
 		&network.NodeAddress{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
+		&perf.CPU{},
+		&perf.Memory{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},

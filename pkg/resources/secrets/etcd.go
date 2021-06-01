@@ -15,7 +15,7 @@ import (
 // EtcdType is type of Etcd resource.
 const EtcdType = resource.Type("EtcdSecrets.secrets.talos.dev")
 
-// EtcdID is a resource ID of singletone instance.
+// EtcdID is a resource ID of singleton instance.
 const EtcdID = resource.ID("etcd")
 
 // Etcd contains etcd generated secrets.
