@@ -569,6 +569,7 @@ The ControllerRuntimeDependency message contains the graph of controller-resourc
 | OUTPUT_SHARED | 3 |  |
 | INPUT_STRONG | 1 |  |
 | INPUT_WEAK | 2 |  |
+| INPUT_DESTROY_READY | 4 |  |
 
 
  <!-- end enums -->

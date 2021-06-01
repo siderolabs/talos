@@ -142,6 +142,8 @@ to render the graph:
 								graph.Edge(graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource)), graph.Node(edge.ControllerName)).Solid()
 							case inspect.DependencyEdgeType_INPUT_WEAK:
 								graph.Edge(graph.Subgraph(resourceTypeID(edge)).Node(resourceID(resource)), graph.Node(edge.ControllerName)).Dotted()
+							case inspect.DependencyEdgeType_INPUT_DESTROY_READY:
+								// don't show the DestroyReady inputs to reduce the visual clutter
 							}
 						}
 					}
@@ -175,6 +177,8 @@ to render the graph:
 							graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Solid()
 						case inspect.DependencyEdgeType_INPUT_WEAK:
 							graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Dotted()
+						case inspect.DependencyEdgeType_INPUT_DESTROY_READY:
+							// don't show the DestroyReady inputs to reduce the visual clutter
 						}
 					}
 				}
