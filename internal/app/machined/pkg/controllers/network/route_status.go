@@ -109,7 +109,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			id := network.RouteID(dstPrefix, gatewayAddr)
 
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
-				status := r.(*network.RouteStatus).Status()
+				status := r.(*network.RouteStatus).TypedSpec()
 
 				status.Family = nethelpers.Family(route.Family)
 				status.Destination = dstPrefix

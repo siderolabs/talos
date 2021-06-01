@@ -114,7 +114,7 @@ func (suite *RouteMergeSuite) assertNoRoute(id string) error {
 
 func (suite *RouteMergeSuite) TestMerge() {
 	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline//10.5.0.3")
-	*cmdline.Status() = network.RouteSpecSpec{
+	*cmdline.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
 		OutLinkName: "eth0",
 		Family:      nethelpers.FamilyInet4,
@@ -125,7 +125,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 	}
 
 	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp//10.5.0.3")
-	*dhcp.Status() = network.RouteSpecSpec{
+	*dhcp.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
 		OutLinkName: "eth0",
 		Family:      nethelpers.FamilyInet4,
@@ -136,7 +136,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 	}
 
 	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/10.0.0.35/32/10.0.0.34")
-	*static.Status() = network.RouteSpecSpec{
+	*static.TypedSpec() = network.RouteSpecSpec{
 		Destination: netaddr.MustParseIPPrefix("10.0.0.35/32"),
 		Gateway:     netaddr.MustParseIP("10.0.0.34"),
 		OutLinkName: "eth0",
@@ -159,9 +159,9 @@ func (suite *RouteMergeSuite) TestMerge() {
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
 				case "/10.5.0.3":
-					suite.Assert().Equal(*dhcp.Status(), *r.Status())
+					suite.Assert().Equal(*dhcp.TypedSpec(), *r.TypedSpec())
 				case "10.0.0.35/32/10.0.0.34":
-					suite.Assert().Equal(*static.Status(), *r.Status())
+					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
 				return nil
@@ -178,12 +178,12 @@ func (suite *RouteMergeSuite) TestMerge() {
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
 				case "/10.5.0.3":
-					if *cmdline.Status() != *r.Status() {
+					if *cmdline.TypedSpec() != *r.TypedSpec() {
 						// using retry here, as it might not be reconciled immediately
 						return retry.ExpectedError(fmt.Errorf("not equal yet"))
 					}
 				case "10.0.0.35/32/10.0.0.34":
-					suite.Assert().Equal(*static.Status(), *r.Status())
+					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
 				return nil

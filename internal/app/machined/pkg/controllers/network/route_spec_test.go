@@ -127,7 +127,7 @@ func (suite *RouteSpecSuite) assertNoRoute(destination netaddr.IPPrefix, gateway
 
 func (suite *RouteSpecSuite) TestLoopback() {
 	loopback := network.NewRouteSpec(network.NamespaceName, "loopback")
-	*loopback.Status() = network.RouteSpecSpec{
+	*loopback.TypedSpec() = network.RouteSpecSpec{
 		Family:      nethelpers.FamilyInet4,
 		Destination: netaddr.MustParseIPPrefix("127.0.11.0/24"),
 		Gateway:     netaddr.MustParseIP("127.0.11.1"),
@@ -173,7 +173,7 @@ func (suite *RouteSpecSuite) TestLoopback() {
 func (suite *RouteSpecSuite) TestDefaultRoute() {
 	// adding default route with high metric to avoid messing up with the actual default route
 	def := network.NewRouteSpec(network.NamespaceName, "default")
-	*def.Status() = network.RouteSpecSpec{
+	*def.TypedSpec() = network.RouteSpecSpec{
 		Family:      nethelpers.FamilyInet4,
 		Destination: netaddr.IPPrefix{},
 		Gateway:     netaddr.MustParseIP("127.0.11.2"),
@@ -204,7 +204,7 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	_, err := suite.state.UpdateWithConflicts(suite.ctx, def.Metadata(), func(r resource.Resource) error {
 		defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
 
-		defR.Status().Priority = 1048577
+		defR.TypedSpec().Priority = 1048577
 
 		return nil
 	})

@@ -154,7 +154,7 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 			ctx,
 			network.NewRouteSpec(network.ConfigNamespaceName, id),
 			func(r resource.Resource) error {
-				*r.(*network.RouteSpec).Status() = route
+				*r.(*network.RouteSpec).TypedSpec() = route
 
 				return nil
 			},

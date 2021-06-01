@@ -84,7 +84,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			return err
 		}
 
-		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).Status().Version
+		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).TypedSpec().Version
 
 		for _, pod := range []struct {
 			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string) error

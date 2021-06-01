@@ -109,7 +109,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		if bootstrapStatus.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
+		if bootstrapStatus.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane {
 			logger.Info("skipped as running self-hosted control plane")
 
 			continue
@@ -162,7 +162,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		}
 
 		if err = r.Modify(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
-			status := r.(*k8s.ManifestStatus).Status()
+			status := r.(*k8s.ManifestStatus).TypedSpec()
 
 			status.ManifestsApplied = make([]string, 0, len(manifests.Items))
 

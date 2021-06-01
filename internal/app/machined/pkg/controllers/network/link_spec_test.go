@@ -123,7 +123,7 @@ func (suite *LinkSpecSuite) uniqueDummyInterface() string {
 
 func (suite *LinkSpecSuite) TestLoopback() {
 	loopback := network.NewLinkSpec(network.NamespaceName, "lo")
-	*loopback.Status() = network.LinkSpecSpec{
+	*loopback.TypedSpec() = network.LinkSpecSpec{
 		Name:        "lo",
 		Up:          true,
 		ConfigLayer: network.ConfigDefault,
@@ -145,7 +145,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 	dummyInterface := suite.uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
-	*dummy.Status() = network.LinkSpecSpec{
+	*dummy.TypedSpec() = network.LinkSpecSpec{
 		Name:        dummyInterface,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
@@ -162,14 +162,14 @@ func (suite *LinkSpecSuite) TestDummy() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{dummyInterface}, func(r *network.LinkStatus) error {
-				suite.Assert().Equal("dummy", r.Status().Kind)
+				suite.Assert().Equal("dummy", r.TypedSpec().Kind)
 
-				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+				if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
 					return retry.ExpectedErrorf("link is not up")
 				}
 
-				if r.Status().MTU != 1400 {
-					return retry.ExpectedErrorf("unexpected MTU %d", r.Status().MTU)
+				if r.TypedSpec().MTU != 1400 {
+					return retry.ExpectedErrorf("unexpected MTU %d", r.TypedSpec().MTU)
 				}
 
 				return nil
@@ -199,7 +199,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 	dummyInterface := suite.uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
-	*dummy.Status() = network.LinkSpecSpec{
+	*dummy.TypedSpec() = network.LinkSpecSpec{
 		Name:        dummyInterface,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
@@ -210,7 +210,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 
 	vlanName1 := fmt.Sprintf("%s.%d", dummyInterface, 2)
 	vlan1 := network.NewLinkSpec(network.NamespaceName, vlanName1)
-	*vlan1.Status() = network.LinkSpecSpec{
+	*vlan1.TypedSpec() = network.LinkSpecSpec{
 		Name:        vlanName1,
 		Type:        nethelpers.LinkEther,
 		Kind:        network.LinkKindVLAN,
@@ -226,7 +226,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 
 	vlanName2 := fmt.Sprintf("%s.%d", dummyInterface, 4)
 	vlan2 := network.NewLinkSpec(network.NamespaceName, vlanName2)
-	*vlan2.Status() = network.LinkSpecSpec{
+	*vlan2.TypedSpec() = network.LinkSpecSpec{
 		Name:        vlanName2,
 		Type:        nethelpers.LinkEther,
 		Kind:        network.LinkKindVLAN,
@@ -249,19 +249,19 @@ func (suite *LinkSpecSuite) TestVLAN() {
 			return suite.assertInterfaces([]string{dummyInterface, vlanName1, vlanName2}, func(r *network.LinkStatus) error {
 				switch r.Metadata().ID() {
 				case dummyInterface:
-					suite.Assert().Equal("dummy", r.Status().Kind)
+					suite.Assert().Equal("dummy", r.TypedSpec().Kind)
 				case vlanName1, vlanName2:
-					suite.Assert().Equal(network.LinkKindVLAN, r.Status().Kind)
-					suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.Status().VLAN.Protocol)
+					suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+					suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
 
 					if r.Metadata().ID() == vlanName1 {
-						suite.Assert().EqualValues(2, r.Status().VLAN.VID)
+						suite.Assert().EqualValues(2, r.TypedSpec().VLAN.VID)
 					} else {
-						suite.Assert().EqualValues(4, r.Status().VLAN.VID)
+						suite.Assert().EqualValues(4, r.TypedSpec().VLAN.VID)
 					}
 				}
 
-				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+				if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
 					return retry.ExpectedErrorf("link is not up")
 				}
 
@@ -271,7 +271,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 
 	// attempt to change VLAN ID
 	_, err := suite.state.UpdateWithConflicts(suite.ctx, vlan1.Metadata(), func(r resource.Resource) error {
-		r.(*network.LinkSpec).Status().VLAN.VID = 42
+		r.(*network.LinkSpec).TypedSpec().VLAN.VID = 42
 
 		return nil
 	})
@@ -280,8 +280,8 @@ func (suite *LinkSpecSuite) TestVLAN() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{vlanName1}, func(r *network.LinkStatus) error {
-				if r.Status().VLAN.VID != 42 {
-					return retry.ExpectedErrorf("vlan ID is not 42: %d", r.Status().VLAN.VID)
+				if r.TypedSpec().VLAN.VID != 42 {
+					return retry.ExpectedErrorf("vlan ID is not 42: %d", r.TypedSpec().VLAN.VID)
 				}
 
 				return nil
@@ -312,7 +312,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 func (suite *LinkSpecSuite) TestBond() {
 	bondName := suite.uniqueDummyInterface()
 	bond := network.NewLinkSpec(network.NamespaceName, bondName)
-	*bond.Status() = network.LinkSpecSpec{
+	*bond.TypedSpec() = network.LinkSpecSpec{
 		Name:    bondName,
 		Type:    nethelpers.LinkEther,
 		Kind:    network.LinkKindBond,
@@ -331,11 +331,11 @@ func (suite *LinkSpecSuite) TestBond() {
 		},
 		ConfigLayer: network.ConfigDefault,
 	}
-	bond.Status().BondMaster.FillDefaults()
+	bond.TypedSpec().BondMaster.FillDefaults()
 
 	dummy0Name := suite.uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
-	*dummy0.Status() = network.LinkSpecSpec{
+	*dummy0.TypedSpec() = network.LinkSpecSpec{
 		Name:        dummy0Name,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
@@ -347,7 +347,7 @@ func (suite *LinkSpecSuite) TestBond() {
 
 	dummy1Name := suite.uniqueDummyInterface()
 	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
-	*dummy1.Status() = network.LinkSpecSpec{
+	*dummy1.TypedSpec() = network.LinkSpecSpec{
 		Name:        dummy1Name,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
@@ -366,19 +366,19 @@ func (suite *LinkSpecSuite) TestBond() {
 			return suite.assertInterfaces([]string{dummy0Name, dummy1Name, bondName}, func(r *network.LinkStatus) error {
 				switch r.Metadata().ID() {
 				case bondName:
-					suite.Assert().Equal(network.LinkKindBond, r.Status().Kind)
+					suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
 
-					if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
-						return retry.ExpectedErrorf("link is not up: %s", r.Status().OperationalState)
+					if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
+						return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
 					}
 				case dummy0Name, dummy1Name:
-					suite.Assert().Equal("dummy", r.Status().Kind)
+					suite.Assert().Equal("dummy", r.TypedSpec().Kind)
 
-					if r.Status().OperationalState != nethelpers.OperStateDown {
-						return retry.ExpectedErrorf("link is not down: %s", r.Status().OperationalState)
+					if r.TypedSpec().OperationalState != nethelpers.OperStateDown {
+						return retry.ExpectedErrorf("link is not down: %s", r.TypedSpec().OperationalState)
 					}
 
-					if r.Status().MasterIndex == 0 {
+					if r.TypedSpec().MasterIndex == 0 {
 						return retry.ExpectedErrorf("masterIndex should be non-zero")
 					}
 				}
@@ -389,7 +389,7 @@ func (suite *LinkSpecSuite) TestBond() {
 
 	// attempt to change bond type
 	_, err := suite.state.UpdateWithConflicts(suite.ctx, bond.Metadata(), func(r resource.Resource) error {
-		r.(*network.LinkSpec).Status().BondMaster.Mode = nethelpers.BondModeRoundrobin
+		r.(*network.LinkSpec).TypedSpec().BondMaster.Mode = nethelpers.BondModeRoundrobin
 
 		return nil
 	})
@@ -398,8 +398,8 @@ func (suite *LinkSpecSuite) TestBond() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{bondName}, func(r *network.LinkStatus) error {
-				if r.Status().BondMaster.Mode != nethelpers.BondModeRoundrobin {
-					return retry.ExpectedErrorf("bond mode is not %s: %s", nethelpers.BondModeRoundrobin, r.Status().BondMaster.Mode)
+				if r.TypedSpec().BondMaster.Mode != nethelpers.BondModeRoundrobin {
+					return retry.ExpectedErrorf("bond mode is not %s: %s", nethelpers.BondModeRoundrobin, r.TypedSpec().BondMaster.Mode)
 				}
 
 				return nil
@@ -408,7 +408,7 @@ func (suite *LinkSpecSuite) TestBond() {
 
 	// unslave one of the interfaces
 	_, err = suite.state.UpdateWithConflicts(suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
-		r.(*network.LinkSpec).Status().MasterName = ""
+		r.(*network.LinkSpec).TypedSpec().MasterName = ""
 
 		return nil
 	})
@@ -417,7 +417,7 @@ func (suite *LinkSpecSuite) TestBond() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{dummy0Name}, func(r *network.LinkStatus) error {
-				if r.Status().MasterIndex != 0 {
+				if r.TypedSpec().MasterIndex != 0 {
 					return retry.ExpectedErrorf("iface not unslaved yet")
 				}
 
@@ -458,7 +458,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	wgInterface := suite.uniqueDummyInterface()
 
 	wg := network.NewLinkSpec(network.NamespaceName, wgInterface)
-	*wg.Status() = network.LinkSpecSpec{
+	*wg.TypedSpec() = network.LinkSpecSpec{
 		Name:    wgInterface,
 		Type:    nethelpers.LinkNone,
 		Kind:    "wireguard",
@@ -494,17 +494,17 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
-				suite.Assert().Equal("wireguard", r.Status().Kind)
+				suite.Assert().Equal("wireguard", r.TypedSpec().Kind)
 
-				if r.Status().Wireguard.PrivateKey != priv.String() {
+				if r.TypedSpec().Wireguard.PrivateKey != priv.String() {
 					return retry.ExpectedErrorf("private key not set")
 				}
 
-				if len(r.Status().Wireguard.Peers) != 2 {
+				if len(r.TypedSpec().Wireguard.Peers) != 2 {
 					return retry.ExpectedErrorf("peers are not set up")
 				}
 
-				if r.Status().OperationalState != nethelpers.OperStateUnknown && r.Status().OperationalState != nethelpers.OperStateUp {
+				if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
 					return retry.ExpectedErrorf("link is not up")
 				}
 
@@ -517,7 +517,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	suite.Require().NoError(err)
 
 	_, err = suite.state.UpdateWithConflicts(suite.ctx, wg.Metadata(), func(r resource.Resource) error {
-		r.(*network.LinkSpec).Status().Wireguard.PrivateKey = priv2.String()
+		r.(*network.LinkSpec).TypedSpec().Wireguard.PrivateKey = priv2.String()
 
 		return nil
 	})
@@ -526,7 +526,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
-				if r.Status().Wireguard.PrivateKey != priv2.String() {
+				if r.TypedSpec().Wireguard.PrivateKey != priv2.String() {
 					return retry.ExpectedErrorf("private key was not updated")
 				}
 

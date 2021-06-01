@@ -76,12 +76,12 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 			left := list.Items[i].(*network.LinkSpec)  //nolint:errcheck,forcetypeassert
 			right := list.Items[j].(*network.LinkSpec) //nolint:errcheck,forcetypeassert
 
-			if left.Status().Name < right.Status().Name {
+			if left.TypedSpec().Name < right.TypedSpec().Name {
 				return false
 			}
 
-			if left.Status().Name == right.Status().Name {
-				return left.Status().ConfigLayer < right.Status().ConfigLayer
+			if left.TypedSpec().Name == right.TypedSpec().Name {
+				return left.TypedSpec().ConfigLayer < right.TypedSpec().ConfigLayer
 			}
 
 			return true
@@ -92,12 +92,12 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 
 		for _, res := range list.Items {
 			link := res.(*network.LinkSpec) //nolint:errcheck,forcetypeassert
-			id := network.LinkID(link.Status().Name)
+			id := network.LinkID(link.TypedSpec().Name)
 
 			existing, ok := links[id]
 			if !ok {
-				links[id] = link.Status()
-			} else if err = existing.Merge(link.Status()); err != nil {
+				links[id] = link.TypedSpec()
+			} else if err = existing.Merge(link.TypedSpec()); err != nil {
 				logger.Warn("error merging links", zap.Error(err))
 			}
 		}
@@ -108,7 +108,7 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 			if err = r.Modify(ctx, network.NewLinkSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				l := res.(*network.LinkSpec) //nolint:errcheck,forcetypeassert
 
-				*l.Status() = *link
+				*l.TypedSpec() = *link
 
 				return nil
 			}); err != nil {

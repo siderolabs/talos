@@ -62,8 +62,8 @@ func (r *ManifestStatus) DeepCopy() resource.Resource {
 	}
 }
 
-// Status returns ManifestStatusSpec.
-func (r *ManifestStatus) Status() *ManifestStatusSpec {
+// TypedSpec returns ManifestStatusSpec.
+func (r *ManifestStatus) TypedSpec() *ManifestStatusSpec {
 	return &r.spec
 }
 

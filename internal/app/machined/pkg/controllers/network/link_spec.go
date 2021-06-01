@@ -160,17 +160,17 @@ func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage
 //nolint:gocyclo,cyclop
 func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn, wgClient *wgctrl.Client,
 	links *[]rtnetlink.LinkMessage, link *network.LinkSpec) error {
-	logger = logger.With(zap.String("link", link.Status().Name))
+	logger = logger.With(zap.String("link", link.TypedSpec().Name))
 
 	switch link.Metadata().Phase() {
 	case resource.PhaseTearingDown:
 		// TODO: should we bring link down if it's physical and the spec was torn down?
-		if link.Status().Logical {
-			existing := findLink(*links, link.Status().Name)
+		if link.TypedSpec().Logical {
+			existing := findLink(*links, link.TypedSpec().Name)
 
 			if existing != nil {
 				if err := conn.Link.Delete(existing.Index); err != nil {
-					return fmt.Errorf("error deleting link %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
 				}
 
 				logger.Info("deleted link")
@@ -190,38 +190,38 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error removing finalizer: %w", err)
 		}
 	case resource.PhaseRunning:
-		existing := findLink(*links, link.Status().Name)
+		existing := findLink(*links, link.TypedSpec().Name)
 
 		// check if type/kind matches for the existing logical link
-		if existing != nil && link.Status().Logical {
+		if existing != nil && link.TypedSpec().Logical {
 			replace := false
 
 			// if type/kind doesn't match, recreate the link to change it
-			if existing.Type != uint16(link.Status().Type) || existing.Attributes.Info.Kind != link.Status().Kind {
+			if existing.Type != uint16(link.TypedSpec().Type) || existing.Attributes.Info.Kind != link.TypedSpec().Kind {
 				logger.Info("replacing logical link",
 					zap.String("old_kind", existing.Attributes.Info.Kind),
-					zap.String("new_kind", link.Status().Kind),
+					zap.String("new_kind", link.TypedSpec().Kind),
 					zap.Stringer("old_type", nethelpers.LinkType(existing.Type)),
-					zap.Stringer("new_type", link.Status().Type),
+					zap.Stringer("new_type", link.TypedSpec().Type),
 				)
 
 				replace = true
 			}
 
 			// sync VLAN spec, as it can't be modified on the fly
-			if !replace && link.Status().Kind == network.LinkKindVLAN {
+			if !replace && link.TypedSpec().Kind == network.LinkKindVLAN {
 				var existingVLAN network.VLANSpec
 
 				if err := existingVLAN.Decode(existing.Attributes.Info.Data); err != nil {
-					return fmt.Errorf("error decoding VLAN properties on %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error decoding VLAN properties on %q: %w", link.TypedSpec().Name, err)
 				}
 
-				if existingVLAN != link.Status().VLAN {
+				if existingVLAN != link.TypedSpec().VLAN {
 					logger.Info("replacing VLAN link",
 						zap.Uint16("old_id", existingVLAN.VID),
-						zap.Uint16("new_id", link.Status().VLAN.VID),
+						zap.Uint16("new_id", link.TypedSpec().VLAN.VID),
 						zap.Stringer("old_protocol", existingVLAN.Protocol),
-						zap.Stringer("new_protocol", link.Status().VLAN.Protocol),
+						zap.Stringer("new_protocol", link.TypedSpec().VLAN.Protocol),
 					)
 
 					replace = true
@@ -230,7 +230,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			if replace {
 				if err := conn.Link.Delete(existing.Index); err != nil {
-					return fmt.Errorf("error deleting link %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
 				}
 
 				// not refreshing links, as the link is set to be re-created
@@ -240,7 +240,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		}
 
 		if existing == nil {
-			if !link.Status().Logical {
+			if !link.TypedSpec().Logical {
 				// physical interface doesn't exist yet, nothing to be done
 				return nil
 			}
@@ -253,8 +253,8 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			)
 
 			// VLAN settings should be set on interface creation (parent + VLAN settings)
-			if link.Status().ParentName != "" {
-				parent := findLink(*links, link.Status().ParentName)
+			if link.TypedSpec().ParentName != "" {
+				parent := findLink(*links, link.TypedSpec().ParentName)
 				if parent == nil {
 					// parent doesn't exist yet, skip it
 					return nil
@@ -263,28 +263,28 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				parentIndex = parent.Index
 			}
 
-			if link.Status().Kind == network.LinkKindVLAN {
-				data, err = link.Status().VLAN.Encode()
+			if link.TypedSpec().Kind == network.LinkKindVLAN {
+				data, err = link.TypedSpec().VLAN.Encode()
 				if err != nil {
-					return fmt.Errorf("error encoding VLAN attributes for link %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error encoding VLAN attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
 			}
 
 			if err = conn.Link.New(&rtnetlink.LinkMessage{
-				Type: uint16(link.Status().Type),
+				Type: uint16(link.TypedSpec().Type),
 				Attributes: &rtnetlink.LinkAttributes{
-					Name: link.Status().Name,
+					Name: link.TypedSpec().Name,
 					Type: parentIndex,
 					Info: &rtnetlink.LinkInfo{
-						Kind: link.Status().Kind,
+						Kind: link.TypedSpec().Kind,
 						Data: data,
 					},
 				},
 			}); err != nil {
-				return fmt.Errorf("error creating logical link %q: %w", link.Status().Name, err)
+				return fmt.Errorf("error creating logical link %q: %w", link.TypedSpec().Name, err)
 			}
 
-			logger.Info("created new link", zap.String("kind", link.Status().Kind))
+			logger.Info("created new link", zap.String("kind", link.TypedSpec().Kind))
 
 			// refresh links as the link list got changed
 			*links, err = conn.Link.List()
@@ -292,29 +292,29 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error listing links: %w", err)
 			}
 
-			existing = findLink(*links, link.Status().Name)
+			existing = findLink(*links, link.TypedSpec().Name)
 			if existing == nil {
-				return fmt.Errorf("created link %q not found in the link list", link.Status().Name)
+				return fmt.Errorf("created link %q not found in the link list", link.TypedSpec().Name)
 			}
 		}
 
 		// sync bond settings
-		if link.Status().Kind == network.LinkKindBond {
+		if link.TypedSpec().Kind == network.LinkKindBond {
 			var existingBond network.BondMasterSpec
 
 			if err := existingBond.Decode(existing.Attributes.Info.Data); err != nil {
-				return fmt.Errorf("error parsing bond attributes for %q: %w", link.Status().Name, err)
+				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			if existingBond != link.Status().BondMaster {
+			if existingBond != link.TypedSpec().BondMaster {
 				logger.Debug("updating bond settings",
 					zap.String("old", fmt.Sprintf("%+v", existingBond)),
-					zap.String("new", fmt.Sprintf("%+v", link.Status().BondMaster)),
+					zap.String("new", fmt.Sprintf("%+v", link.TypedSpec().BondMaster)),
 				)
 
-				data, err := link.Status().BondMaster.Encode()
+				data, err := link.TypedSpec().BondMaster.Encode()
 				if err != nil {
-					return fmt.Errorf("error encoding bond attributes for %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error encoding bond attributes for %q: %w", link.TypedSpec().Name, err)
 				}
 
 				// bring bond down
@@ -325,7 +325,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Flags:  0,
 					Change: unix.IFF_UP,
 				}); err != nil {
-					return fmt.Errorf("error changing flags for %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error changing flags for %q: %w", link.TypedSpec().Name, err)
 				}
 
 				// unslave all slaves
@@ -339,7 +339,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 								Master: pointer.ToUint32(0),
 							},
 						}); err != nil {
-							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.Status().MasterName, err)
+							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().MasterName, err)
 						}
 
 						(*links)[i].Attributes.Master = nil
@@ -358,7 +358,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 						},
 					},
 				}); err != nil {
-					return fmt.Errorf("error updating bond settings for %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error updating bond settings for %q: %w", link.TypedSpec().Name, err)
 				}
 
 				logger.Info("updated bond settings")
@@ -366,10 +366,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		}
 
 		// sync wireguard settings
-		if link.Status().Kind == network.LinkKindWireguard {
-			wgDev, err := wgClient.Device(link.Status().Name)
+		if link.TypedSpec().Kind == network.LinkKindWireguard {
+			wgDev, err := wgClient.Device(link.TypedSpec().Name)
 			if err != nil {
-				return fmt.Errorf("error getting wireguard settings for %q: %w", link.Status().Name, err)
+				return fmt.Errorf("error getting wireguard settings for %q: %w", link.TypedSpec().Name, err)
 			}
 
 			var existingSpec network.WireguardSpec
@@ -377,16 +377,16 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			existingSpec.Decode(wgDev)
 			existingSpec.Sort()
 
-			link.Status().Wireguard.Sort()
+			link.TypedSpec().Wireguard.Sort()
 
-			if !existingSpec.Equal(&link.Status().Wireguard) {
-				config, err := link.Status().Wireguard.Encode(&existingSpec)
+			if !existingSpec.Equal(&link.TypedSpec().Wireguard) {
+				config, err := link.TypedSpec().Wireguard.Encode(&existingSpec)
 				if err != nil {
-					return fmt.Errorf("error creating wireguard config patch for %q: %w", link.Status().Name, err)
+					return fmt.Errorf("error creating wireguard config patch for %q: %w", link.TypedSpec().Name, err)
 				}
 
-				if err = wgClient.ConfigureDevice(link.Status().Name, *config); err != nil {
-					return fmt.Errorf("error configuring wireguard device %q: %w", link.Status().Name, err)
+				if err = wgClient.ConfigureDevice(link.TypedSpec().Name, *config); err != nil {
+					return fmt.Errorf("error configuring wireguard device %q: %w", link.TypedSpec().Name, err)
 				}
 
 				logger.Info("reconfigured wireguard link")
@@ -404,10 +404,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 		// sync UP flag
 		existingUp := existing.Attributes.OperationalState == rtnetlink.OperStateUnknown || existing.Attributes.OperationalState == rtnetlink.OperStateUp
-		if existingUp != link.Status().Up {
+		if existingUp != link.TypedSpec().Up {
 			flags := uint32(0)
 
-			if link.Status().Up {
+			if link.TypedSpec().Up {
 				flags = unix.IFF_UP
 			}
 
@@ -418,35 +418,35 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				Flags:  flags,
 				Change: unix.IFF_UP,
 			}); err != nil {
-				return fmt.Errorf("error changing flags for %q: %w", link.Status().Name, err)
+				return fmt.Errorf("error changing flags for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			logger.Debug("brought link up/down", zap.Bool("up", link.Status().Up))
+			logger.Debug("brought link up/down", zap.Bool("up", link.TypedSpec().Up))
 		}
 
 		// sync MTU if it's set in the spec
-		if link.Status().MTU != 0 && existing.Attributes.MTU != link.Status().MTU {
+		if link.TypedSpec().MTU != 0 && existing.Attributes.MTU != link.TypedSpec().MTU {
 			if err := conn.Link.Set(&rtnetlink.LinkMessage{
 				Family: existing.Family,
 				Type:   existing.Type,
 				Index:  existing.Index,
 				Attributes: &rtnetlink.LinkAttributes{
-					MTU: link.Status().MTU,
+					MTU: link.TypedSpec().MTU,
 				},
 			}); err != nil {
-				return fmt.Errorf("error setting MTU for %q: %w", link.Status().Name, err)
+				return fmt.Errorf("error setting MTU for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			existing.Attributes.MTU = link.Status().MTU
+			existing.Attributes.MTU = link.TypedSpec().MTU
 
-			logger.Info("changed MTU for the link", zap.Uint32("mtu", link.Status().MTU))
+			logger.Info("changed MTU for the link", zap.Uint32("mtu", link.TypedSpec().MTU))
 		}
 
 		// sync master index (for links which are bond slaves)
 		var masterIndex uint32
 
-		if link.Status().MasterName != "" {
-			if master := findLink(*links, link.Status().MasterName); master != nil {
+		if link.TypedSpec().MasterName != "" {
+			if master := findLink(*links, link.TypedSpec().MasterName); master != nil {
 				masterIndex = master.Index
 			}
 		}
@@ -460,12 +460,12 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Master: pointer.ToUint32(masterIndex),
 				},
 			}); err != nil {
-				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.Status().Name, link.Status().MasterName, err)
+				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.TypedSpec().Name, link.TypedSpec().MasterName, err)
 			}
 
 			existing.Attributes.Master = pointer.ToUint32(masterIndex)
 
-			logger.Info("enslaved/unslaved link", zap.String("parent", link.Status().MasterName))
+			logger.Info("enslaved/unslaved link", zap.String("parent", link.TypedSpec().MasterName))
 		}
 	}
 

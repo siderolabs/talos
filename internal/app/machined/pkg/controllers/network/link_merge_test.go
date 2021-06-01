@@ -112,14 +112,14 @@ func (suite *LinkMergeSuite) assertNoLinks(id string) error {
 
 func (suite *LinkMergeSuite) TestMerge() {
 	loopback := network.NewLinkSpec(network.ConfigNamespaceName, "default/lo")
-	*loopback.Status() = network.LinkSpecSpec{
+	*loopback.TypedSpec() = network.LinkSpecSpec{
 		Name:        "lo",
 		Up:          true,
 		ConfigLayer: network.ConfigDefault,
 	}
 
 	dhcp := network.NewLinkSpec(network.ConfigNamespaceName, "dhcp/eth0")
-	*dhcp.Status() = network.LinkSpecSpec{
+	*dhcp.TypedSpec() = network.LinkSpecSpec{
 		Name:        "eth0",
 		Up:          true,
 		MTU:         1450,
@@ -127,7 +127,7 @@ func (suite *LinkMergeSuite) TestMerge() {
 	}
 
 	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/eth0")
-	*static.Status() = network.LinkSpecSpec{
+	*static.TypedSpec() = network.LinkSpecSpec{
 		Name:        "eth0",
 		Up:          true,
 		MTU:         1500,
@@ -146,9 +146,9 @@ func (suite *LinkMergeSuite) TestMerge() {
 			}, func(r *network.LinkSpec) error {
 				switch r.Metadata().ID() {
 				case "lo":
-					suite.Assert().Equal(*loopback.Status(), *r.Status())
+					suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
 				case "eth0":
-					suite.Assert().EqualValues(1500, r.Status().MTU) // static should override dhcp
+					suite.Assert().EqualValues(1500, r.TypedSpec().MTU) // static should override dhcp
 				}
 
 				return nil
@@ -165,11 +165,11 @@ func (suite *LinkMergeSuite) TestMerge() {
 			}, func(r *network.LinkSpec) error {
 				switch r.Metadata().ID() {
 				case "lo":
-					suite.Assert().Equal(*loopback.Status(), *r.Status())
+					suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
 				case "eth0":
 					// reconcile happens eventually, so give it some time
-					if r.Status().MTU != 1450 {
-						return retry.ExpectedErrorf("MTU %d != 1450", r.Status().MTU)
+					if r.TypedSpec().MTU != 1450 {
+						return retry.ExpectedErrorf("MTU %d != 1450", r.TypedSpec().MTU)
 					}
 				}
 

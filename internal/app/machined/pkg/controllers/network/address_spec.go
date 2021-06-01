@@ -143,7 +143,7 @@ func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix ne
 //nolint:gocyclo
 func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
 	links []rtnetlink.LinkMessage, addrs []rtnetlink.AddressMessage, address *network.AddressSpec) error {
-	linkIndex := resolveLinkName(links, address.Status().LinkName)
+	linkIndex := resolveLinkName(links, address.TypedSpec().LinkName)
 
 	switch address.Metadata().Phase() {
 	case resource.PhaseTearingDown:
@@ -156,13 +156,13 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 			return nil
 		}
 
-		if existing := findAddress(addrs, linkIndex, address.Status().Address); existing != nil {
+		if existing := findAddress(addrs, linkIndex, address.TypedSpec().Address); existing != nil {
 			// delete address
 			if err := conn.Address.Delete(existing); err != nil {
 				return fmt.Errorf("error removing address: %w", err)
 			}
 
-			logger.Sugar().Infof("removed address %s from %q", address.Status().Address, address.Status().LinkName)
+			logger.Sugar().Infof("removed address %s from %q", address.TypedSpec().Address, address.TypedSpec().LinkName)
 		}
 
 		// now remove finalizer as address was deleted
@@ -175,10 +175,10 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 			return nil
 		}
 
-		if existing := findAddress(addrs, linkIndex, address.Status().Address); existing != nil {
+		if existing := findAddress(addrs, linkIndex, address.TypedSpec().Address); existing != nil {
 			// check if existing matches the spec: if it does, skip update
-			if existing.Scope == uint8(address.Status().Scope) && existing.Flags == uint8(address.Status().Flags) &&
-				existing.Attributes.Flags == uint32(address.Status().Flags) {
+			if existing.Scope == uint8(address.TypedSpec().Scope) && existing.Flags == uint8(address.TypedSpec().Flags) &&
+				existing.Attributes.Flags == uint32(address.TypedSpec().Flags) {
 				return nil
 			}
 
@@ -187,27 +187,27 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				return fmt.Errorf("error removing address: %w", err)
 			}
 
-			logger.Sugar().Infof("removed address %s from %q", address.Status().Address, address.Status().LinkName)
+			logger.Sugar().Infof("removed address %s from %q", address.TypedSpec().Address, address.TypedSpec().LinkName)
 		}
 
 		// add address
 		if err := conn.Address.New(&rtnetlink.AddressMessage{
-			Family:       uint8(address.Status().Family),
-			PrefixLength: address.Status().Address.Bits,
-			Flags:        uint8(address.Status().Flags),
-			Scope:        uint8(address.Status().Scope),
+			Family:       uint8(address.TypedSpec().Family),
+			PrefixLength: address.TypedSpec().Address.Bits,
+			Flags:        uint8(address.TypedSpec().Flags),
+			Scope:        uint8(address.TypedSpec().Scope),
 			Index:        linkIndex,
 			Attributes: rtnetlink.AddressAttributes{
-				Address:   address.Status().Address.IP.IPAddr().IP,
-				Local:     address.Status().Address.IP.IPAddr().IP,
-				Broadcast: broadcastAddr(address.Status().Address),
-				Flags:     uint32(address.Status().Flags),
+				Address:   address.TypedSpec().Address.IP.IPAddr().IP,
+				Local:     address.TypedSpec().Address.IP.IPAddr().IP,
+				Broadcast: broadcastAddr(address.TypedSpec().Address),
+				Flags:     uint32(address.TypedSpec().Flags),
 			},
 		}); err != nil {
 			return fmt.Errorf("error adding address: %w", err)
 		}
 
-		logger.Sugar().Infof("assigned address %s to %q", address.Status().Address, address.Status().LinkName)
+		logger.Sugar().Infof("assigned address %s to %q", address.TypedSpec().Address, address.TypedSpec().LinkName)
 	}
 
 	return nil

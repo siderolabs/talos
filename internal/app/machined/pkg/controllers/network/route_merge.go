@@ -75,10 +75,10 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 
 		for _, res := range list.Items {
 			route := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
-			id := network.RouteID(route.Status().Destination, route.Status().Gateway)
+			id := network.RouteID(route.TypedSpec().Destination, route.TypedSpec().Gateway)
 
 			existing, ok := routes[id]
-			if ok && existing.Status().ConfigLayer > route.Status().ConfigLayer {
+			if ok && existing.TypedSpec().ConfigLayer > route.TypedSpec().ConfigLayer {
 				// skip this route, as existing one is higher layer
 				continue
 			}
@@ -92,7 +92,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 			if err = r.Modify(ctx, network.NewRouteSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				rt := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
 
-				*rt.Status() = *route.Status()
+				*rt.TypedSpec() = *route.TypedSpec()
 
 				return nil
 			}); err != nil {

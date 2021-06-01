@@ -169,7 +169,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		if bootstrapStatus.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
+		if bootstrapStatus.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane {
 			logger.Info("skipped as running self-hosted control plane")
 
 			if err = ctrl.cleanupPods(logger, nil); err != nil {

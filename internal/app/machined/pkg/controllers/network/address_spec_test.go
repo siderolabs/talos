@@ -126,7 +126,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 
 func (suite *AddressSpecSuite) TestLoopback() {
 	loopback := network.NewAddressSpec(network.NamespaceName, "lo/127.0.0.1/8")
-	*loopback.Status() = network.AddressSpecSpec{
+	*loopback.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("127.11.0.1/32"),
 		LinkName:    "lo",
 		Family:      nethelpers.FamilyInet4,
@@ -171,7 +171,7 @@ func (suite *AddressSpecSuite) TestDummy() {
 	defer conn.Close() //nolint:errcheck
 
 	dummy := network.NewAddressSpec(network.NamespaceName, "dummy/10.0.0.1/8")
-	*dummy.Status() = network.AddressSpecSpec{
+	*dummy.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
 		LinkName:    dummyInterface,
 		Family:      nethelpers.FamilyInet4,
