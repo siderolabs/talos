@@ -30,6 +30,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},
+		&network.NodeAddress{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
 	} {
