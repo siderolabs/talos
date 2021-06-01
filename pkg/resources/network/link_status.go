@@ -117,3 +117,8 @@ func (r *LinkStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 func (r *LinkStatus) TypedSpec() *LinkStatusSpec {
 	return &r.spec
 }
+
+// Physical checks if the link is physical ethernet.
+func (r *LinkStatus) Physical() bool {
+	return r.TypedSpec().Type == nethelpers.LinkEther && r.TypedSpec().Kind == ""
+}

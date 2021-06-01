@@ -77,7 +77,16 @@ func (r *AddressStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             AddressStatusType,
 		Aliases:          []resource.Type{"address", "addresses"},
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Address",
+				JSONPath: `{.address}`,
+			},
+			{
+				Name:     "Link",
+				JSONPath: `{.linkName}`,
+			},
+		},
 	}
 }
 

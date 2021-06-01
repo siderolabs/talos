@@ -82,6 +82,7 @@ func NewState() (*State, error) {
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},
+		&network.NodeAddress{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
 		&secrets.Etcd{},
