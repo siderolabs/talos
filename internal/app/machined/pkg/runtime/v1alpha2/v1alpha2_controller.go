@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
@@ -88,6 +89,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.RouteMergeController{},
 		&network.RouteStatusController{},
 		&network.RouteSpecController{},
+		&perf.StatsController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},
 		&secrets.RootController{},
