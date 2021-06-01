@@ -1774,7 +1774,7 @@ func CheckControlPlaneStatus(seq runtime.Sequence, data interface{}) (runtime.Ta
 			return nil
 		}
 
-		if res.(*resourcev1alpha1.BootstrapStatus).Status().SelfHostedControlPlane {
+		if res.(*resourcev1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane {
 			log.Printf("WARNING: Talos is running self-hosted control plane, convert to static pods using `talosctl convert-k8s`.")
 		}
 

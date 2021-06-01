@@ -82,7 +82,7 @@ func (r *SecretsStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status sets pod status.
-func (r *SecretsStatus) Status() *SecretsStatusSpec {
+// TypedSpec allows to access the Spec with the proper type.
+func (r *SecretsStatus) TypedSpec() *SecretsStatusSpec {
 	return &r.spec
 }

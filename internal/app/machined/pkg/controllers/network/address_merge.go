@@ -75,10 +75,10 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 
 		for _, res := range list.Items {
 			address := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
-			id := network.AddressID(address.Status().LinkName, address.Status().Address)
+			id := network.AddressID(address.TypedSpec().LinkName, address.TypedSpec().Address)
 
 			existing, ok := addresses[id]
-			if ok && existing.Status().ConfigLayer > address.Status().ConfigLayer {
+			if ok && existing.TypedSpec().ConfigLayer > address.TypedSpec().ConfigLayer {
 				// skip this address, as existing one is higher layer
 				continue
 			}
@@ -92,7 +92,7 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 			if err = r.Modify(ctx, network.NewAddressSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				addr := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
 
-				*addr.Status() = *address.Status()
+				*addr.TypedSpec() = *address.TypedSpec()
 
 				return nil
 			}); err != nil {

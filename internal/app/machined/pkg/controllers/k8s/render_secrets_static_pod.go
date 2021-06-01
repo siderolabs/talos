@@ -298,8 +298,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		}
 
 		if err = r.Modify(ctx, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r resource.Resource) error {
-			r.(*k8s.SecretsStatus).Status().Ready = true
-			r.(*k8s.SecretsStatus).Status().Version = secretsRes.Metadata().Version().String()
+			r.(*k8s.SecretsStatus).TypedSpec().Ready = true
+			r.(*k8s.SecretsStatus).TypedSpec().Version = secretsRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {

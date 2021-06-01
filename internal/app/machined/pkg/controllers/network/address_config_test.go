@@ -109,8 +109,8 @@ func (suite *AddressConfigSuite) TestLoopback() {
 				"default/lo/127.0.0.1/8",
 				"default/lo/::1/128",
 			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("lo", r.Status().LinkName)
-				suite.Assert().Equal(nethelpers.ScopeHost, r.Status().Scope)
+				suite.Assert().Equal("lo", r.TypedSpec().LinkName)
+				suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
 
 				return nil
 			})
@@ -129,7 +129,7 @@ func (suite *AddressConfigSuite) TestCmdline() {
 			return suite.assertAddresses([]string{
 				"cmdline/eth1/172.20.0.2/24",
 			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("eth1", r.Status().LinkName)
+				suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
 
 				return nil
 			})
@@ -166,8 +166,8 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 			return suite.assertAddresses([]string{
 				fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
 			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal(ifaceName, r.Status().LinkName)
-				suite.Assert().Equal(network.ConfigCmdline, r.Status().ConfigLayer)
+				suite.Assert().Equal(ifaceName, r.TypedSpec().LinkName)
+				suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 
 				return nil
 			})

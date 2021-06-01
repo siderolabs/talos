@@ -114,7 +114,7 @@ func (suite *AddressMergeSuite) assertNoAddress(id string) error {
 
 func (suite *AddressMergeSuite) TestMerge() {
 	loopback := network.NewAddressSpec(network.ConfigNamespaceName, "default/lo/127.0.0.1/8")
-	*loopback.Status() = network.AddressSpecSpec{
+	*loopback.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("127.0.0.1/8"),
 		LinkName:    "lo",
 		Family:      nethelpers.FamilyInet4,
@@ -123,7 +123,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 	}
 
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")
-	*dhcp.Status() = network.AddressSpecSpec{
+	*dhcp.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
@@ -132,7 +132,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 	}
 
 	static := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.35/32")
-	*static.Status() = network.AddressSpecSpec{
+	*static.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("10.0.0.35/32"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
@@ -141,7 +141,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 	}
 
 	override := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.1/8")
-	*override.Status() = network.AddressSpecSpec{
+	*override.TypedSpec() = network.AddressSpecSpec{
 		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
@@ -162,11 +162,11 @@ func (suite *AddressMergeSuite) TestMerge() {
 			}, func(r *network.AddressSpec) error {
 				switch r.Metadata().ID() {
 				case "lo/127.0.0.1/8":
-					suite.Assert().Equal(*loopback.Status(), *r.Status())
+					suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
 				case "eth0/10.0.0.1/8":
-					suite.Assert().Equal(*override.Status(), *r.Status())
+					suite.Assert().Equal(*override.TypedSpec(), *r.TypedSpec())
 				case "eth0/10.0.0.35/32":
-					suite.Assert().Equal(*static.Status(), *r.Status())
+					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
 				return nil

@@ -118,8 +118,8 @@ func (suite *LinkStatusSuite) TestLoopbackInterface() {
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{"lo"}, func(r *network.LinkStatus) error {
-				suite.Assert().Equal("loopback", r.Status().Type.String())
-				suite.Assert().EqualValues(65536, r.Status().MTU)
+				suite.Assert().Equal("loopback", r.TypedSpec().Type.String())
+				suite.Assert().EqualValues(65536, r.TypedSpec().MTU)
 
 				return nil
 			})
@@ -153,9 +153,9 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{dummyInterface}, func(r *network.LinkStatus) error {
-				suite.Assert().Equal("ether", r.Status().Type.String())
-				suite.Assert().EqualValues(1400, r.Status().MTU)
-				suite.Assert().Equal(nethelpers.OperStateDown, r.Status().OperationalState)
+				suite.Assert().Equal("ether", r.TypedSpec().Type.String())
+				suite.Assert().EqualValues(1400, r.TypedSpec().MTU)
+				suite.Assert().Equal(nethelpers.OperStateDown, r.TypedSpec().OperationalState)
 
 				return nil
 			})
@@ -171,8 +171,8 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{dummyInterface}, func(r *network.LinkStatus) error {
-				if r.Status().OperationalState != nethelpers.OperStateUp && r.Status().OperationalState != nethelpers.OperStateUnknown {
-					return retry.ExpectedError(fmt.Errorf("operational state is not up: %s", r.Status().OperationalState))
+				if r.TypedSpec().OperationalState != nethelpers.OperStateUp && r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
+					return retry.ExpectedError(fmt.Errorf("operational state is not up: %s", r.TypedSpec().OperationalState))
 				}
 
 				return nil

@@ -166,7 +166,7 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 		}
 
 		if err = r.Modify(ctx, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r resource.Resource) error {
-			status := r.(*network.LinkStatus).Status()
+			status := r.(*network.LinkStatus).TypedSpec()
 
 			status.Index = link.Index
 			status.HardwareAddr = nethelpers.HardwareAddr(link.Attributes.Address)

@@ -175,7 +175,7 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 			ctx,
 			network.NewLinkSpec(network.ConfigNamespaceName, id),
 			func(r resource.Resource) error {
-				*r.(*network.LinkSpec).Status() = link
+				*r.(*network.LinkSpec).TypedSpec() = link
 
 				return nil
 			},

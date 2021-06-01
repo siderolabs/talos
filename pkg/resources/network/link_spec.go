@@ -145,7 +145,7 @@ func (r *LinkSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status sets pod status.
-func (r *LinkSpec) Status() *LinkSpecSpec {
+// TypedSpec allows to access the Spec with the proper type.
+func (r *LinkSpec) TypedSpec() *LinkSpecSpec {
 	return &r.spec
 }

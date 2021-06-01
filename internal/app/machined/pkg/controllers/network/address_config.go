@@ -164,7 +164,7 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 			ctx,
 			network.NewAddressSpec(network.ConfigNamespaceName, id),
 			func(r resource.Resource) error {
-				*r.(*network.AddressSpec).Status() = address
+				*r.(*network.AddressSpec).TypedSpec() = address
 
 				return nil
 			},

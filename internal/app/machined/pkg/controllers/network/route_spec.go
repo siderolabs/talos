@@ -134,23 +134,23 @@ func findRoutes(routes []rtnetlink.RouteMessage, destination netaddr.IPPrefix, g
 //nolint:gocyclo
 func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
 	links []rtnetlink.LinkMessage, routes []rtnetlink.RouteMessage, route *network.RouteSpec) error {
-	linkIndex := resolveLinkName(links, route.Status().OutLinkName)
+	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
 
-	destinationStr := route.Status().Destination.String()
+	destinationStr := route.TypedSpec().Destination.String()
 
-	if route.Status().Destination.IsZero() {
+	if route.TypedSpec().Destination.IsZero() {
 		destinationStr = "default"
 	}
 
 	switch route.Metadata().Phase() {
 	case resource.PhaseTearingDown:
-		for _, existing := range findRoutes(routes, route.Status().Destination, route.Status().Gateway) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway) {
 			// delete route
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
 			}
 
-			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.Status().Gateway, route.Status().OutLinkName)
+			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
 		}
 
 		// now remove finalizer as address was deleted
@@ -158,19 +158,19 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			return fmt.Errorf("error removing finalizer: %w", err)
 		}
 	case resource.PhaseRunning:
-		if linkIndex == 0 && route.Status().OutLinkName != "" {
+		if linkIndex == 0 && route.TypedSpec().OutLinkName != "" {
 			// route can't be created as link doesn't exist (yet), skip it
 			return nil
 		}
 
 		matchFound := false
 
-		for _, existing := range findRoutes(routes, route.Status().Destination, route.Status().Gateway) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway) {
 			// check if existing matches the spec: if it does, skip update
-			if existing.Scope == uint8(route.Status().Scope) && existing.Flags == uint32(route.Status().Flags) &&
-				existing.Protocol == uint8(route.Status().Protocol) && existing.Flags == uint32(route.Status().Flags) &&
-				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.Status().Priority &&
-				existing.Attributes.Table == uint32(route.Status().Table) {
+			if existing.Scope == uint8(route.TypedSpec().Scope) && existing.Flags == uint32(route.TypedSpec().Flags) &&
+				existing.Protocol == uint8(route.TypedSpec().Protocol) && existing.Flags == uint32(route.TypedSpec().Flags) &&
+				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
+				existing.Attributes.Table == uint32(route.TypedSpec().Table) {
 				matchFound = true
 
 				break
@@ -181,7 +181,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				return fmt.Errorf("error removing route: %w", err)
 			}
 
-			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.Status().Gateway, route.Status().OutLinkName)
+			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
 		}
 
 		if matchFound {
@@ -190,18 +190,18 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 		// add route
 		msg := &rtnetlink.RouteMessage{
-			Family:    uint8(route.Status().Family),
-			DstLength: route.Status().Destination.Bits,
-			Protocol:  uint8(route.Status().Protocol),
-			Scope:     uint8(route.Status().Scope),
-			Type:      uint8(route.Status().Type),
-			Flags:     uint32(route.Status().Flags),
+			Family:    uint8(route.TypedSpec().Family),
+			DstLength: route.TypedSpec().Destination.Bits,
+			Protocol:  uint8(route.TypedSpec().Protocol),
+			Scope:     uint8(route.TypedSpec().Scope),
+			Type:      uint8(route.TypedSpec().Type),
+			Flags:     uint32(route.TypedSpec().Flags),
 			Attributes: rtnetlink.RouteAttributes{
-				Dst:      route.Status().Destination.IP.IPAddr().IP,
-				Gateway:  route.Status().Gateway.IPAddr().IP,
+				Dst:      route.TypedSpec().Destination.IP.IPAddr().IP,
+				Gateway:  route.TypedSpec().Gateway.IPAddr().IP,
 				OutIface: linkIndex,
-				Priority: route.Status().Priority,
-				Table:    uint32(route.Status().Table),
+				Priority: route.TypedSpec().Priority,
+				Table:    uint32(route.TypedSpec().Table),
 			},
 		}
 
@@ -209,7 +209,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			return fmt.Errorf("error adding route: %w, message %+v", err, *msg)
 		}
 
-		logger.Sugar().Infof("created route to %s via %s (link %q)", destinationStr, route.Status().Gateway, route.Status().OutLinkName)
+		logger.Sugar().Infof("created route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
 	}
 
 	return nil

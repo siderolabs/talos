@@ -82,7 +82,7 @@ func (r *RouteSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status sets pod status.
-func (r *RouteSpec) Status() *RouteSpecSpec {
+// TypedSpec allows to access the Spec with the proper type.
+func (r *RouteSpec) TypedSpec() *RouteSpecSpec {
 	return &r.spec
 }

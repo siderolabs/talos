@@ -107,10 +107,10 @@ func (suite *LinkConfigSuite) TestLoopback() {
 			return suite.assertLinks([]string{
 				"default/lo",
 			}, func(r *network.LinkSpec) error {
-				suite.Assert().Equal("lo", r.Status().Name)
-				suite.Assert().True(r.Status().Up)
-				suite.Assert().False(r.Status().Logical)
-				suite.Assert().Equal(network.ConfigDefault, r.Status().ConfigLayer)
+				suite.Assert().Equal("lo", r.TypedSpec().Name)
+				suite.Assert().True(r.TypedSpec().Up)
+				suite.Assert().False(r.TypedSpec().Logical)
+				suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
 
 				return nil
 			})
@@ -129,10 +129,10 @@ func (suite *LinkConfigSuite) TestCmdline() {
 			return suite.assertLinks([]string{
 				"cmdline/eth1",
 			}, func(r *network.LinkSpec) error {
-				suite.Assert().Equal("eth1", r.Status().Name)
-				suite.Assert().True(r.Status().Up)
-				suite.Assert().False(r.Status().Logical)
-				suite.Assert().Equal(network.ConfigCmdline, r.Status().ConfigLayer)
+				suite.Assert().Equal("eth1", r.TypedSpec().Name)
+				suite.Assert().True(r.TypedSpec().Up)
+				suite.Assert().False(r.TypedSpec().Logical)
+				suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 
 				return nil
 			})
@@ -234,41 +234,41 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				"configuration/dummy0",
 				"configuration/wireguard0",
 			}, func(r *network.LinkSpec) error {
-				suite.Assert().Equal(network.ConfigMachineConfiguration, r.Status().ConfigLayer)
+				suite.Assert().Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
-				switch r.Status().Name {
+				switch r.TypedSpec().Name {
 				case "eth0", "eth1":
-					suite.Assert().True(r.Status().Up)
-					suite.Assert().False(r.Status().Logical)
+					suite.Assert().True(r.TypedSpec().Up)
+					suite.Assert().False(r.TypedSpec().Logical)
 				case "eth0.24", "eth0.48":
-					suite.Assert().True(r.Status().Up)
-					suite.Assert().True(r.Status().Logical)
-					suite.Assert().Equal(nethelpers.LinkEther, r.Status().Type)
-					suite.Assert().Equal(network.LinkKindVLAN, r.Status().Kind)
-					suite.Assert().Equal("eth0", r.Status().ParentName)
-					suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.Status().VLAN.Protocol)
+					suite.Assert().True(r.TypedSpec().Up)
+					suite.Assert().True(r.TypedSpec().Logical)
+					suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+					suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+					suite.Assert().Equal("eth0", r.TypedSpec().ParentName)
+					suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
 
-					if r.Status().Name == "eth0.24" {
-						suite.Assert().EqualValues(24, r.Status().VLAN.VID)
+					if r.TypedSpec().Name == "eth0.24" {
+						suite.Assert().EqualValues(24, r.TypedSpec().VLAN.VID)
 					} else {
-						suite.Assert().EqualValues(48, r.Status().VLAN.VID)
+						suite.Assert().EqualValues(48, r.TypedSpec().VLAN.VID)
 					}
 				case "eth2", "eth3":
-					suite.Assert().False(r.Status().Up)
-					suite.Assert().False(r.Status().Logical)
-					suite.Assert().Equal("bond0", r.Status().MasterName)
+					suite.Assert().False(r.TypedSpec().Up)
+					suite.Assert().False(r.TypedSpec().Logical)
+					suite.Assert().Equal("bond0", r.TypedSpec().MasterName)
 				case "bond0":
-					suite.Assert().True(r.Status().Up)
-					suite.Assert().True(r.Status().Logical)
-					suite.Assert().Equal(nethelpers.LinkEther, r.Status().Type)
-					suite.Assert().Equal(network.LinkKindBond, r.Status().Kind)
-					suite.Assert().Equal(nethelpers.BondModeXOR, r.Status().BondMaster.Mode)
-					suite.Assert().True(r.Status().BondMaster.UseCarrier)
+					suite.Assert().True(r.TypedSpec().Up)
+					suite.Assert().True(r.TypedSpec().Logical)
+					suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+					suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
+					suite.Assert().Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
+					suite.Assert().True(r.TypedSpec().BondMaster.UseCarrier)
 				case "wireguard0":
-					suite.Assert().True(r.Status().Up)
-					suite.Assert().True(r.Status().Logical)
-					suite.Assert().Equal(nethelpers.LinkNone, r.Status().Type)
-					suite.Assert().Equal(network.LinkKindWireguard, r.Status().Kind)
+					suite.Assert().True(r.TypedSpec().Up)
+					suite.Assert().True(r.TypedSpec().Logical)
+					suite.Assert().Equal(nethelpers.LinkNone, r.TypedSpec().Type)
+					suite.Assert().Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
 					suite.Assert().Equal(network.WireguardSpec{
 						PrivateKey: "ABC",
 						Peers: []network.WireguardPeer{
@@ -281,7 +281,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								},
 							},
 						},
-					}, r.Status().Wireguard)
+					}, r.TypedSpec().Wireguard)
 				}
 
 				return nil

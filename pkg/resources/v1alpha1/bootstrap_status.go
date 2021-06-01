@@ -77,7 +77,7 @@ func (r *BootstrapStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status returns .spec.
-func (r *BootstrapStatus) Status() *BootstrapStatusSpec {
+// TypedSpec allows to access the Spec with the proper type.
+func (r *BootstrapStatus) TypedSpec() *BootstrapStatusSpec {
 	return &r.spec
 }

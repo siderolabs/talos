@@ -77,7 +77,7 @@ func (r *AddressSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status sets pod status.
-func (r *AddressSpec) Status() *AddressSpecSpec {
+// TypedSpec allows to access the Spec with the proper type.
+func (r *AddressSpec) TypedSpec() *AddressSpecSpec {
 	return &r.spec
 }

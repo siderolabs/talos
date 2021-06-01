@@ -109,7 +109,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 		logger.Info("bootkube initialized status not found")
 
 		return r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
-			r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = false
+			r.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane = false
 
 			return nil
 		})
@@ -118,7 +118,7 @@ func (ctrl *BootstrapStatusController) readInitialized(ctx context.Context, r co
 	logger.Info("found bootkube initialized status in etcd")
 
 	if err = r.Modify(ctx, v1alpha1.NewBootstrapStatus(), func(r resource.Resource) error {
-		r.(*v1alpha1.BootstrapStatus).Status().SelfHostedControlPlane = true
+		r.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane = true
 
 		return nil
 	}); err != nil {

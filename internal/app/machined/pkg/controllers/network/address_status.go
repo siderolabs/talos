@@ -115,7 +115,7 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			id := network.AddressID(linkLookup[addr.Index], ipPrefix)
 
 			if err = r.Modify(ctx, network.NewAddressStatus(network.NamespaceName, id), func(r resource.Resource) error {
-				status := r.(*network.AddressStatus).Status()
+				status := r.(*network.AddressStatus).TypedSpec()
 
 				status.Address = ipPrefix
 				status.Local, _ = netaddr.FromStdIPRaw(addr.Attributes.Local)
