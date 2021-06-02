@@ -12,20 +12,23 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // CmdlineNetworking contains parsed cmdline networking settings.
 type CmdlineNetworking struct {
-	DHCP         bool
-	Address      netaddr.IPPrefix
-	Gateway      netaddr.IP
-	Hostname     string
-	LinkName     string
-	DNSAddresses []netaddr.IP
-	NTPAddresses []netaddr.IP
+	DHCP             bool
+	Address          netaddr.IPPrefix
+	Gateway          netaddr.IP
+	Hostname         string
+	LinkName         string
+	DNSAddresses     []netaddr.IP
+	NTPAddresses     []netaddr.IP
+	IgnoreInterfaces []string
 }
 
-// ParseCmdlineNetwork parses `ip=` kernel cmdline argument producing all the available configuration options.
+// ParseCmdlineNetwork parses `ip=` and Talos specific kernel cmdline argument producing all the available configuration options.
 //
 //nolint:gocyclo,cyclop
 func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
@@ -34,6 +37,18 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 		err      error
 	)
 
+	// process Talos specific kernel params
+	cmdlineHostname := cmdline.Get(constants.KernelParamHostname).First()
+	if cmdlineHostname != nil {
+		settings.Hostname = *cmdlineHostname
+	}
+
+	ignoreInterfaces := cmdline.Get(constants.KernelParamNetworkInterfaceIgnore)
+	for i := 0; ignoreInterfaces.Get(i) != nil; i++ {
+		settings.IgnoreInterfaces = append(settings.IgnoreInterfaces, *ignoreInterfaces.Get(i))
+	}
+
+	// standard ip=
 	ipSettings := cmdline.Get("ip").First()
 	if ipSettings == nil {
 		return settings, nil
@@ -81,7 +96,9 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 				settings.Address.Bits = uint8(ones)
 			case 4:
-				settings.Hostname = fields[4]
+				if settings.Hostname == "" {
+					settings.Hostname = fields[4]
+				}
 			case 5:
 				settings.LinkName = fields[5]
 			case 7, 8:
