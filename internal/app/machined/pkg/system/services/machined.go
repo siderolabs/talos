@@ -8,6 +8,7 @@ package services
 import (
 	"context"
 	"io"
+	"log"
 
 	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -16,7 +17,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 type machinedService struct {
@@ -25,12 +28,36 @@ type machinedService struct {
 
 // Main is an entrypoint the the API service.
 func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter io.Writer) error {
+	injector := &authz.Injector{
+		TrustMetadata: true,
+		Logger:        log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf,
+	}
+
+	authorizer := &authz.Authorizer{
+		Rules: map[string]role.Set{
+			"/cluster.ClusterService/HealthCheck": role.MakeSet(role.Admin, role.Reader),
+			"/machine.MachineService/List":        role.MakeSet(role.Admin, role.Reader),
+			"/machine.MachineService/Version":     role.MakeSet(role.Admin, role.Reader),
+
+			// TODO(rbac): More rules
+		},
+		FallbackRoles: role.MakeSet(role.Admin),
+		DontEnforce:   true, // TODO(rbac): Should be configurable with a feature gate
+		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
+	}
+
 	// Start the API server.
 	server := factory.NewServer(
 		&v1alpha1server.Server{
 			Controller: s.c,
 		},
 		factory.WithLog("machined ", logWriter),
+
+		factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
+		factory.WithStreamInterceptor(injector.StreamInterceptor()),
+
+		factory.WithUnaryInterceptor(authorizer.UnaryInterceptor()),
+		factory.WithStreamInterceptor(authorizer.StreamInterceptor()),
 	)
 
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))

@@ -21,6 +21,7 @@ import (
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 // Config returns the talos config for a given node type.
@@ -382,11 +383,11 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 }
 
 // NewAdminCertificateAndKey generates the admin Talos certificate and key.
-func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string) (p *x509.PEMEncodedCertificateAndKey, err error) {
+func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string, role role.Role) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	ips := []net.IP{net.ParseIP(loopback)}
 
 	opts := []x509.Option{
-		x509.Organization(constants.RoleAdmin),
+		x509.Organization(string(role)),
 		x509.IPAddresses(ips),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
@@ -432,6 +433,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		secrets.Clock.Now(),
 		secrets.Certs.OS,
 		loopback,
+		role.Admin,
 	)
 
 	if err != nil {

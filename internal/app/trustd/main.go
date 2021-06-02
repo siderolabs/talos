@@ -11,6 +11,7 @@ import (
 	stdlibnet "net"
 
 	"github.com/talos-systems/crypto/tls"
+	"github.com/talos-systems/crypto/x509"
 	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
@@ -84,7 +85,7 @@ func Main() {
 
 	var provider tls.CertificateProvider
 
-	provider, err = tls.NewRenewingCertificateProvider(generator, dnsNames, ips)
+	provider, err = tls.NewRenewingCertificateProvider(generator, x509.DNSNames(dnsNames), x509.IPAddresses(ips))
 	if err != nil {
 		log.Fatalln("failed to create local certificate provider:", err)
 	}

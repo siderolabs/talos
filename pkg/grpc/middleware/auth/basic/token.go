@@ -43,7 +43,7 @@ func (b *TokenCredentials) RequireTransportSecurity() bool {
 	return true
 }
 
-func (b *TokenCredentials) authorize(ctx context.Context) error {
+func (b *TokenCredentials) authenticate(ctx context.Context) error {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if len(md["token"]) > 0 && md["token"][0] == b.Token {
 			return nil
@@ -59,7 +59,7 @@ func (b *TokenCredentials) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 
-		if err := b.authorize(ctx); err != nil {
+		if err := b.authenticate(ctx); err != nil {
 			return nil, err
 		}
 

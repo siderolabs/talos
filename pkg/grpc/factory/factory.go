@@ -40,8 +40,8 @@ type Options struct {
 	LogPrefix          string
 	LogDestination     io.Writer
 	ServerOptions      []grpc.ServerOption
-	StreamInterceptors []grpc.StreamServerInterceptor
 	UnaryInterceptors  []grpc.UnaryServerInterceptor
+	StreamInterceptors []grpc.StreamServerInterceptor
 }
 
 // Option is the functional option func.
@@ -82,17 +82,17 @@ func ServerOptions(o ...grpc.ServerOption) Option {
 	}
 }
 
-// WithStreamInterceptor appends to the list of gRPC server stream interceptors.
-func WithStreamInterceptor(i grpc.StreamServerInterceptor) Option {
-	return func(args *Options) {
-		args.StreamInterceptors = append(args.StreamInterceptors, i)
-	}
-}
-
 // WithUnaryInterceptor appends to the list of gRPC server unary interceptors.
 func WithUnaryInterceptor(i grpc.UnaryServerInterceptor) Option {
 	return func(args *Options) {
 		args.UnaryInterceptors = append(args.UnaryInterceptors, i)
+	}
+}
+
+// WithStreamInterceptor appends to the list of gRPC server stream interceptors.
+func WithStreamInterceptor(i grpc.StreamServerInterceptor) Option {
+	return func(args *Options) {
+		args.StreamInterceptors = append(args.StreamInterceptors, i)
 	}
 }
 
@@ -114,7 +114,7 @@ func WithDefaultLog() Option {
 func recoveryHandler(logger *log.Logger) grpc_recovery.RecoveryHandlerFunc {
 	return func(p interface{}) error {
 		if logger != nil {
-			logger.Printf("panic:\n%s", string(debug.Stack()))
+			logger.Printf("panic: %v\n%s", p, string(debug.Stack()))
 		}
 
 		return status.Errorf(codes.Internal, "%v", p)
@@ -136,25 +136,25 @@ func NewDefaultOptions(setters ...Option) *Options {
 
 	if opts.LogDestination != nil {
 		logger = log.New(opts.LogDestination, opts.LogPrefix, log.Flags())
+	}
 
+	// Recovery is installed as the the first middleware in the chain to handle panics (via defer and recover()) in all subsequent middlewares.
+	recoveryOpt := grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))
+	opts.UnaryInterceptors = append([]grpc.UnaryServerInterceptor{grpc_recovery.UnaryServerInterceptor(recoveryOpt)}, opts.UnaryInterceptors...)
+	opts.StreamInterceptors = append([]grpc.StreamServerInterceptor{grpc_recovery.StreamServerInterceptor(recoveryOpt)}, opts.StreamInterceptors...)
+
+	if logger != nil {
+		// Logging is installed as the first middleware (even before recovery middleware) in the chain
+		// so that request in the form it was received and status sent on the wire is logged (error/success).
+		// It also tracks the whole duration of the request, including other middleware overhead.
 		logMiddleware := grpclog.NewMiddleware(logger)
-
-		// Logging is installed as the first middleware so that request in the form it was received,
-		// and status sent on the wire is logged (error/success). It also tracks whole duration of the
-		// request, including other middleware overhead.
 		opts.UnaryInterceptors = append([]grpc.UnaryServerInterceptor{logMiddleware.UnaryInterceptor()}, opts.UnaryInterceptors...)
 		opts.StreamInterceptors = append([]grpc.StreamServerInterceptor{logMiddleware.StreamInterceptor()}, opts.StreamInterceptors...)
 	}
 
-	// Install default recovery interceptors.
-	// Recovery is installed as the last middleware in the chain so that earlier middlewares in the chain
-	// have a chance to process the error (e.g. logging middleware).
-	opts.StreamInterceptors = append(opts.StreamInterceptors, grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))))
-	opts.UnaryInterceptors = append(opts.UnaryInterceptors, grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))))
-
 	opts.ServerOptions = append(opts.ServerOptions,
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(opts.UnaryInterceptors...)),
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
 	)
 
 	return opts
@@ -205,7 +205,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 	return net.Listen(opts.Network, address)
 }
 
-// ListenAndServe configures TLS for mutual authtentication by loading the CA into a
+// ListenAndServe configures TLS for mutual authentication by loading the CA into a
 // CertPool and configuring the server's policy for TLS Client Authentication.
 // Once TLS is configured, the gRPC options are built to make use of the TLS
 // configuration and the receiver (Server) is registered to the gRPC server.

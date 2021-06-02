@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -63,6 +64,8 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 	} else {
 		md.Set("proxyfrom", "unknown")
 	}
+
+	authz.SetRolesToMetadata(ctx, md)
 
 	outCtx := metadata.NewOutgoingContext(ctx, md)
 
