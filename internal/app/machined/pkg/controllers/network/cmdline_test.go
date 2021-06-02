@@ -87,6 +87,31 @@ func (suite *CmdlineSuite) TestParse() {
 
 			expectedError: "cmdline address parse failure: ParseIP(\"xyz\"): unable to parse IP",
 		},
+		{
+			name:    "hostname override",
+			cmdline: "ip=::::master1:eth1 talos.hostname=master2",
+
+			expectedSettings: network.CmdlineNetworking{
+				Hostname: "master2",
+				LinkName: "eth1",
+			},
+		},
+		{
+			name:    "only hostname",
+			cmdline: "talos.hostname=master2",
+
+			expectedSettings: network.CmdlineNetworking{
+				Hostname: "master2",
+			},
+		},
+		{
+			name:    "ignore interfaces",
+			cmdline: "talos.network.interface.ignore=eth2 talos.network.interface.ignore=eth3",
+
+			expectedSettings: network.CmdlineNetworking{
+				IgnoreInterfaces: []string{"eth2", "eth3"},
+			},
+		},
 	} {
 		test := test
 

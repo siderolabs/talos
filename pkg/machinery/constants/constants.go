@@ -55,10 +55,6 @@ const (
 	// hostname.
 	KernelParamHostname = "talos.hostname"
 
-	// KernelParamDefaultInterface is the kernel parameter for specifying the
-	// initial interface used to bootstrap the node.
-	KernelParamDefaultInterface = "talos.interface"
-
 	// KernelParamShutdown is the kernel parameter for specifying the
 	// shutdown type (halt/poweroff).
 	KernelParamShutdown = "talos.shutdown"
