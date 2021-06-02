@@ -52,9 +52,9 @@ var genConfigCmd = &cobra.Command{
 	Use:   "config <cluster name> <cluster endpoint>",
 	Short: "Generates a set of configuration files for Talos cluster",
 	Long: `The cluster endpoint is the URL for the Kubernetes API. If you decide to use
-	a control plane node, common in a single node control plane setup, use port 6443 as
-	this is the port that the API server binds to on every control plane node. For an HA
-	setup, usually involving a load balancer, use the IP and port of the load balancer.`,
+a control plane node, common in a single node control plane setup, use port 6443 as
+this is the port that the API server binds to on every control plane node. For an HA
+setup, usually involving a load balancer, use the IP and port of the load balancer.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Validate url input to ensure it has https:// scheme before we attempt to gen

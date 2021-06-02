@@ -81,7 +81,7 @@ roleRef:
 // certificates.
 //
 // This binding should be altered in the future to hold a list of node
-// names instead of targeting `system:nodes` so we can revoke invidivual
+// names instead of targeting `system:nodes` so we can revoke individual
 // node's ability to renew its certs.
 var csrRenewalRoleBindingTemplate = []byte(`kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

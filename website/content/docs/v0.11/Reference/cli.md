@@ -112,7 +112,7 @@ talosctl cluster create [flags]
   -h, --help                                    help for create
       --image string                            the image to use (default "ghcr.io/talos-systems/talos:latest")
       --init-node-as-endpoint                   use init node as endpoint instead of any load balancer endpoint
-      --initrd-path string                      the uncompressed kernel image to use (default "_out/initramfs-${ARCH}.xz")
+      --initrd-path string                      initramfs image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string                        location of pre-generated config files
       --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
       --ipv4                                    enable IPv4 network in the cluster (default true)
@@ -1071,9 +1071,9 @@ Generates a set of configuration files for Talos cluster
 ### Synopsis
 
 The cluster endpoint is the URL for the Kubernetes API. If you decide to use
-	a control plane node, common in a single node control plane setup, use port 6443 as
-	this is the port that the API server binds to on every control plane node. For an HA
-	setup, usually involving a load balancer, use the IP and port of the load balancer.
+a control plane node, common in a single node control plane setup, use port 6443 as
+this is the port that the API server binds to on every control plane node. For an HA
+setup, usually involving a load balancer, use the IP and port of the load balancer.
 
 ```
 talosctl gen config <cluster name> <cluster endpoint> [flags]
@@ -1155,9 +1155,10 @@ talosctl gen csr [flags]
 ### Options
 
 ```
-  -h, --help         help for csr
-      --ip string    generate the certificate for this IP address
-      --key string   path to the PEM encoded EC or RSA PRIVATE KEY
+  -h, --help            help for csr
+      --ip string       generate the certificate for this IP address
+      --key string      path to the PEM encoded EC or RSA PRIVATE KEY
+      --roles strings   roles (default [os:admin])
 ```
 
 ### Options inherited from parent commands

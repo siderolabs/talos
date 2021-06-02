@@ -126,7 +126,7 @@ func genTLSConfig(ips []net.IP) (tlsConfig *tls.Config, provider ttls.Certificat
 		return nil, nil, fmt.Errorf("failed to create local generator provider: %w", err)
 	}
 
-	provider, err = ttls.NewRenewingCertificateProvider(generator, dnsNames, ips)
+	provider, err = ttls.NewRenewingCertificateProvider(generator, x509.DNSNames(dnsNames), x509.IPAddresses(ips))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create local certificate provider: %w", err)
 	}

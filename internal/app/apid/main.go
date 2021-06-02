@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
+	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -118,6 +119,11 @@ func Main() {
 	var errGroup errgroup.Group
 
 	errGroup.Go(func() error {
+		injector := &authz.Injector{
+			TrustMetadata: false,
+			Logger:        log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf,
+		}
+
 		return factory.ListenAndServe(
 			router,
 			factory.Port(constants.ApidPort),
@@ -133,10 +139,17 @@ func Main() {
 						proxy.WithStreamedDetector(router.StreamedDetector),
 					)),
 			),
+			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
+			factory.WithStreamInterceptor(injector.StreamInterceptor()),
 		)
 	})
 
 	errGroup.Go(func() error {
+		injector := &authz.Injector{
+			TrustMetadata: true,
+			Logger:        log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf,
+		}
+
 		return factory.ListenAndServe(
 			router,
 			factory.Network("unix"),
@@ -150,6 +163,8 @@ func Main() {
 						proxy.WithStreamedDetector(router.StreamedDetector),
 					)),
 			),
+			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
+			factory.WithStreamInterceptor(injector.StreamInterceptor()),
 		)
 	})
 

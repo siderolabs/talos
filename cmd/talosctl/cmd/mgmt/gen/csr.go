@@ -17,12 +17,13 @@ import (
 	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 var genCSRCmdFlags struct {
-	key string
-	ip  string
+	key   string
+	ip    string
+	roles []string
 }
 
 // genCSRCmd represents the `gen csr` command.
@@ -54,8 +55,13 @@ var genCSRCmd = &cobra.Command{
 			return fmt.Errorf("invalid IP: %s", genCSRCmdFlags.ip)
 		}
 
+		roles, err := role.Parse(genCSRCmdFlags.roles)
+		if err != nil {
+			return err
+		}
+
 		ips := []net.IP{parsed}
-		opts = append(opts, x509.Organization(constants.RoleAdmin))
+		opts = append(opts, x509.Organization(roles.Strings()...))
 		opts = append(opts, x509.IPAddresses(ips))
 
 		csr, err := x509.NewCertificateSigningRequest(keyEC, opts...)
@@ -76,6 +82,7 @@ func init() {
 	cli.Should(cobra.MarkFlagRequired(genCSRCmd.Flags(), "key"))
 	genCSRCmd.Flags().StringVar(&genCSRCmdFlags.ip, "ip", "", "generate the certificate for this IP address")
 	cli.Should(cobra.MarkFlagRequired(genCSRCmd.Flags(), "ip"))
+	genCSRCmd.Flags().StringSliceVar(&genCSRCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
 
 	Cmd.AddCommand(genCSRCmd)
 }

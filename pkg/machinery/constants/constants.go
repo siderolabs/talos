@@ -420,10 +420,6 @@ const (
 
 	// DefaultSecondaryResolver is the default secondary DNS server.
 	DefaultSecondaryResolver = "8.8.8.8"
-
-	// RoleAdmin defines Talos role for admins.
-	// It matches Organization value of Talos client certificate.
-	RoleAdmin = "os:admin"
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -15,6 +15,7 @@ import (
 	genv1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 type GenerateSuite struct {
@@ -86,5 +87,5 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	cert, err := x509.ParseCertificate(creds.Crt.Certificate[0])
 	suite.Require().NoError(err)
 
-	suite.Equal([]string{constants.RoleAdmin}, cert.Subject.Organization)
+	suite.Equal([]string{string(role.Admin)}, cert.Subject.Organization)
 }
