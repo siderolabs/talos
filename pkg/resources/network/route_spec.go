@@ -38,7 +38,7 @@ type RouteSpecSpec struct {
 	ConfigLayer ConfigLayer              `yaml:"layer"`
 }
 
-// NewRouteSpec initializes a SecretsStatus resource.
+// NewRouteSpec initializes a RouteSpec resource.
 func NewRouteSpec(namespace resource.Namespace, id resource.ID) *RouteSpec {
 	r := &RouteSpec{
 		md:   resource.NewMetadata(namespace, RouteSpecType, id, resource.VersionUndefined),

@@ -48,7 +48,7 @@ type LinkStatusSpec struct {
 	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
 }
 
-// NewLinkStatus initializes a SecretsStatus resource.
+// NewLinkStatus initializes a LinkStatus resource.
 func NewLinkStatus(namespace resource.Namespace, id resource.ID) *LinkStatus {
 	r := &LinkStatus{
 		md:   resource.NewMetadata(namespace, LinkStatusType, id, resource.VersionUndefined),

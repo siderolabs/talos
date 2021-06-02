@@ -42,7 +42,7 @@ type NodeAddressSpec struct {
 	Addresses []netaddr.IP `yaml:"addresses"`
 }
 
-// NewNodeAddress initializes a SecretsStatus resource.
+// NewNodeAddress initializes a NodeAddress resource.
 func NewNodeAddress(namespace resource.Namespace, id resource.ID) *NodeAddress {
 	r := &NodeAddress{
 		md:   resource.NewMetadata(namespace, NodeAddressType, id, resource.VersionUndefined),

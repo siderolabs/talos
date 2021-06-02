@@ -27,12 +27,18 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&network.AddressStatus{},
 		&network.AddressSpec{},
+		&network.HostnameStatus{},
+		&network.HostnameSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},
 		&network.NodeAddress{},
+		&network.ResolverStatus{},
+		&network.ResolverSpec{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
+		&network.TimeServerStatus{},
+		&network.TimeServerSpec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

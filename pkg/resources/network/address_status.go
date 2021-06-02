@@ -37,7 +37,7 @@ type AddressStatusSpec struct {
 	Flags     nethelpers.AddressFlags `yaml:"flags"`
 }
 
-// NewAddressStatus initializes a SecretsStatus resource.
+// NewAddressStatus initializes a AddressStatus resource.
 func NewAddressStatus(namespace resource.Namespace, id resource.ID) *AddressStatus {
 	r := &AddressStatus{
 		md:   resource.NewMetadata(namespace, AddressStatusType, id, resource.VersionUndefined),

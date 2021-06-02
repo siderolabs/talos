@@ -415,6 +415,12 @@ const (
 	// https://manage.ntppool.org/manage/vendor
 	DefaultNTPServer = "pool.ntp.org"
 
+	// DefaultPrimaryResolver is the default primary DNS server.
+	DefaultPrimaryResolver = "1.1.1.1"
+
+	// DefaultSecondaryResolver is the default secondary DNS server.
+	DefaultSecondaryResolver = "8.8.8.8"
+
 	// RoleAdmin defines Talos role for admins.
 	// It matches Organization value of Talos client certificate.
 	RoleAdmin = "os:admin"
