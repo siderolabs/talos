@@ -140,7 +140,6 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 
 ```bash
 $ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:<port> --with-examples=false --with-docs=false
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -155,8 +154,6 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 #### Validate the Configuration Files
 
 ```bash
-$ talosctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
 $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
 $ talosctl validate --config join.yaml --mode cloud
@@ -168,26 +165,11 @@ join.yaml is valid for cloud mode
 > Note: There is a known issue that prevents Talos from running on T2 instance types.
 > Please use T3 if you need burstable instance types.
 
-#### Create the Bootstrap Node
-
-```bash
-aws ec2 run-instances \
-    --region $REGION \
-    --image-id $AMI \
-    --count 1 \
-    --instance-type t3.small \
-    --user-data file://init.yaml \
-    --subnet-id $SUBNET \
-    --security-group-ids $SECURITY_GROUP \
-    --associate-public-ip-address \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-cp-0}]"
-```
-
-#### Create the Remaining Control Plane Nodes
+#### Create the Control Plane Nodes
 
 ```bash
 CP_COUNT=1
-while [[ "$CP_COUNT" -lt 3 ]]; do
+while [[ "$CP_COUNT" -lt 4 ]]; do
   aws ec2 run-instances \
     --region $REGION \
     --image-id $AMI \
@@ -250,12 +232,25 @@ aws elbv2 create-listener \
     --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN
 ```
 
+### Bootstrap Etcd
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
 ### Retrieve the `kubeconfig`
 
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-talosctl --talosconfig talosconfig config node <control plane 1 IP>
 talosctl --talosconfig talosconfig kubeconfig .
 ```

@@ -126,16 +126,8 @@ Additionally, you can specify `--config-patch` with RFC6902 jsonpatch which will
 We are now ready to create our GCP nodes.
 
 ```bash
-# Create control plane 0
-gcloud compute instances create talos-controlplane-0 \
-  --image talos \
-  --zone $REGION-b \
-  --tags talos-controlplane \
-  --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./init.yaml
-
-# Create control plane 1/2
-for i in $( seq 1 2 ); do
+# Create the control plane nodes.
+for i in $( seq 1 3 ); do
   gcloud compute instances create talos-controlplane-$i \
     --image talos \
     --zone $REGION-b \
@@ -145,7 +137,7 @@ for i in $( seq 1 2 ); do
 done
 
 # Add control plane nodes to instance group
-for i in $( seq 0 1 2 ); do
+for i in $( seq 0 1 3 ); do
   gcloud compute instance-groups unmanaged add-instances talos-ig \
       --zone $REGION-b \
       --instances talos-controlplane-$i
@@ -159,7 +151,7 @@ gcloud compute instances create talos-worker-0 \
   --metadata-from-file=user-data=./join.yaml
 ```
 
-### Retrieve the `kubeconfig`
+### Bootstrap Etcd
 
 You should now be able to interact with your cluster with `talosctl`.
 We will need to discover the public IP for our first control plane node first.
@@ -169,9 +161,25 @@ CONTROL_PLANE_0_IP=$(gcloud compute instances describe talos-controlplane-0 \
                      --zone $REGION-b \
                      --format json \
                      | jq -r '.networkInterfaces[0].accessConfigs[0].natIP')
+```
 
-talosctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
-talosctl --talosconfig ./talosconfig config node $CONTROL_PLANE_0_IP
-talosctl --talosconfig ./talosconfig kubeconfig .
-kubectl --kubeconfig ./kubeconfig get nodes
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint $CONTROL_PLANE_0_IP
+talosctl --talosconfig talosconfig config node $CONTROL_PLANE_0_IP
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl --talosconfig talosconfig kubeconfig .
 ```

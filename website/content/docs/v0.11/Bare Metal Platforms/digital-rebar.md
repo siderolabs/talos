@@ -26,7 +26,6 @@ Using the DNS name of the load balancer, generate the base configuration files f
 
 ```bash
 $ talosctl gen config talos-k8s-metal-tutorial https://<load balancer IP or DNS>:<port>
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -42,8 +41,6 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 #### Validate the Configuration Files
 
 ```bash
-$ talosctl validate --config init.yaml --mode metal
-init.yaml is valid for metal mode
 $ talosctl validate --config controlplane.yaml --mode metal
 controlplane.yaml is valid for metal mode
 $ talosctl validate --config join.yaml --mode metal
@@ -53,7 +50,7 @@ join.yaml is valid for metal mode
 #### Publishing the Machine Configuration Files
 
 Digital Rebar has a build-in fileserver, which means we can use this feature to expose the talos configuration files.
-We will place `init.yaml`, `controlplane.yaml`, and `worker.yaml` into Digital Rebar file server by using the `drpcli` tools.
+We will place `controlplane.yaml`, and `worker.yaml` into Digital Rebar file server by using the `drpcli` tools.
 
 Copy the generated files from the step above into your Digital Rebar installation.
 
@@ -61,7 +58,7 @@ Copy the generated files from the step above into your Digital Rebar installatio
 drpcli file upload <file>.yaml as <file>.yaml
 ```
 
-Replacing `<file>` with init, controlplane or worker.
+Replacing `<file>` with controlplane or worker.
 
 ### Download the boot files
 
@@ -132,7 +129,6 @@ We're using some of Digital Rebar build in templating to make sure the machine g
 This is why we also include a `params.yaml` in the example directory to make sure the role is set to one of the following:
 
 - controlplane
-- init
 - worker
 
 The `{{.Param \"talos/role\"}}` then gets populated with one of the above roles.
@@ -150,12 +146,27 @@ Once this is done, you can boot the machine.
 
 To understand the boot process, we have a higher level overview located at [metal overview.](/v0.11/en/guides/metal/overview)
 
-### Retrieve the `kubeconfig`
+### Bootstrap Etcd
 
-Once everything is running we can retrieve the admin `kubeconfig` by running:
+To configure `talosctl` we will need the first control plane node's IP:
+
+Set the `endpoints` and `nodes`:
 
 ```bash
 talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
 talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
 talosctl --talosconfig talosconfig kubeconfig .
 ```

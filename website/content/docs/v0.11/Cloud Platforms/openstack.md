@@ -103,11 +103,8 @@ We are now ready to create our Openstack nodes.
 Create control plane:
 
 ```bash
-# Create control plane 1. Substitute the correct path to configuration files and the desired flavor.
-openstack server create talos-control-plane-1 --flavor m1.small --nic port-id=talos-control-plane-1 --image talos --user-data /path/to/init.yaml
-
 # Create control planes 2 and 3, substituting the same info.
-for i in $( seq 2 3 ); do
+for i in $( seq 1 3 ); do
   openstack server create talos-control-plane-$i --flavor m1.small --nic port-id=talos-control-plane-$i --image talos --user-data /path/to/controlplane.yaml
 done
 ```
@@ -121,15 +118,29 @@ openstack server create talos-worker-1 --flavor m1.small --network shared --imag
 
 > Note: This step can be repeated to add more workers.
 
-### Retrieve the `kubeconfig`
+### Bootstrap Etcd
 
 You should now be able to interact with your cluster with `talosctl`.
 We will use one of the floating IPs we allocated earlier.
 It does not matter which one.
 
+Set the `endpoints` and `nodes`:
+
 ```bash
-talosctl --talosconfig ./talosconfig config endpoint <FLOATING_IP>
-talosctl --talosconfig ./talosconfig config node <FLOATING_IP>
-talosctl --talosconfig ./talosconfig kubeconfig
-kubectl --kubeconfig ./kubeconfig get nodes
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl --talosconfig talosconfig kubeconfig .
 ```

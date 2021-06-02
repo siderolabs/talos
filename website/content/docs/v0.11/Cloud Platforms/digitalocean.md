@@ -56,7 +56,6 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 
 ```bash
 $ talosctl gen config talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>:<port>
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -68,8 +67,6 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 #### Validate the Configuration Files
 
 ```bash
-$ talosctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
 $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
 $ talosctl validate --config join.yaml --mode cloud
@@ -78,7 +75,9 @@ join.yaml is valid for cloud mode
 
 ### Create the Droplets
 
-#### Create the Bootstrap Node
+#### Create the Control Plane Nodes
+
+Run the following twice, to give ourselves three total control plane nodes:
 
 ```bash
 doctl compute droplet create \
@@ -87,19 +86,9 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
-    --user-data-file init.yaml \
+    --user-data-file controlplane.yaml \
     --ssh-keys <ssh key fingerprint> \
     talos-control-plane-1
-```
-
-> Note: Although SSH is not used by Talos, DigitalOcean still requires that an SSH key be associated with the droplet.
-> Create a dummy key that can be used to satisfy this requirement.
-
-#### Create the Remaining Control Plane Nodes
-
-Run the following twice, to give ourselves three total control plane nodes:
-
-```bash
 doctl compute droplet create \
     --region $REGION \
     --image <image ID> \
@@ -120,6 +109,9 @@ doctl compute droplet create \
     talos-control-plane-3
 ```
 
+> Note: Although SSH is not used by Talos, DigitalOcean still requires that an SSH key be associated with the droplet.
+> Create a dummy key that can be used to satisfy this requirement.
+
 #### Create the Worker Nodes
 
 Run the following to create a worker node:
@@ -135,7 +127,7 @@ doctl compute droplet create \
     talos-worker-1
 ```
 
-### Retrieve the `kubeconfig`
+### Bootstrap Etcd
 
 To configure `talosctl` we will need the first control plane node's IP:
 
@@ -143,10 +135,23 @@ To configure `talosctl` we will need the first control plane node's IP:
 doctl compute droplet get --format PublicIPv4 <droplet ID>
 ```
 
-At this point we can retrieve the admin `kubeconfig` by running:
+Set the `endpoints` and `nodes`:
 
 ```bash
 talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
 talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
 talosctl --talosconfig talosconfig kubeconfig .
 ```
