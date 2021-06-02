@@ -33,10 +33,10 @@ The path to your SD card can be found using `fdisk` on Linux or `diskutil` on ma
 In this example, we will assume `/dev/mmcblk0`.
 
 ```bash
-curl -LO https://github.com/raspberrypi/rpi-eeprom/releases/download/v2020.09.03-138a1/rpi-boot-eeprom-recovery-2020-09-03-vl805-000138a1.zip
+curl -Lo rpi-boot-eeprom-recovery.zip https://github.com/raspberrypi/rpi-eeprom/releases/download/v2021.04.29-138a1/rpi-boot-eeprom-recovery-2021-04-29-vl805-000138a1.zip
 sudo mkfs.fat -I /dev/mmcblk0
-sudo mount /dev/mmcblk0 /mnt
-sudo bsdtar rpi-boot-eeprom-recovery-2020-09-03-vl805-000138a1.zip -C /mnt
+sudo mount /dev/mmcblk0p1 /mnt
+sudo bsdtar rpi-boot-eeprom-recovery.zip -C /mnt
 ```
 
 Remove the SD card from your local machine and insert it into the Raspberry Pi.
