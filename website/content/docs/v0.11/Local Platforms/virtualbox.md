@@ -112,22 +112,21 @@ Issue the following command, updating the output directory, cluster name, and co
 talosctl gen config talos-vbox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out
 ```
 
-This will create several files in the \_out directory: init.yaml, controlplane.yaml, join.yaml, and talosconfig.
+This will create several files in the `_out` directory: controlplane.yaml, join.yaml, and talosconfig.
 
 ## Create Control Plane Node
 
-Using the `init.yaml` generated above, you can now apply this config using talosctl.
+Using the `controlplane.yaml` generated above, you can now apply this config using talosctl.
 Issue:
 
 ```bash
-talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/init.yaml
+talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/controlplane.yaml
 ```
 
 You should now see some action in the VirtualBox console for this VM.
 Talos will be installed to disk, the VM will reboot, and then Talos will configure the Kubernetes control plane on this VM.
 
 > Note: This process can be repeated multiple times to create an HA control plane.
-> Simply apply `controlplane.yaml` instead of `init.yaml` for subsequent nodes.
 
 ## Create Worker Node
 
@@ -157,12 +156,27 @@ talosctl config endpoint $CONTROL_PLANE_IP
 talosctl config node $CONTROL_PLANE_IP
 ```
 
-## Retrieve and Configure the `kubeconfig`
+### Bootstrap Etcd
 
-Fetch the kubeconfig file from the control plane node by issuing:
+Set the `endpoints` and `nodes`:
 
 ```bash
-talosctl kubeconfig
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl --talosconfig talosconfig kubeconfig .
 ```
 
 You can then use kubectl in this fashion:

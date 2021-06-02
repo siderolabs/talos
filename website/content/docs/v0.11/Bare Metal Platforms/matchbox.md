@@ -19,7 +19,6 @@ Using the DNS name of the load balancer, generate the base configuration files f
 
 ```bash
 $ talosctl gen config talos-k8s-metal-tutorial https://<load balancer IP or DNS>:<port>
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -31,8 +30,6 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 #### Validate the Configuration Files
 
 ```bash
-$ talosctl validate --config init.yaml --mode metal
-init.yaml is valid for metal mode
 $ talosctl validate --config controlplane.yaml --mode metal
 controlplane.yaml is valid for metal mode
 $ talosctl validate --config join.yaml --mode metal
@@ -43,7 +40,7 @@ join.yaml is valid for metal mode
 
 In bare-metal setups it is up to the user to provide the configuration files over HTTP(S).
 A special kernel parameter (`talos.config`) must be used to inform Talos about _where_ it should retreive its' configuration file.
-To keep things simple we will place `init.yaml`, `controlplane.yaml`, and `join.yaml` into Matchbox's `assets` directory.
+To keep things simple we will place `controlplane.yaml`, and `join.yaml` into Matchbox's `assets` directory.
 This directory is automatically served by Matchbox.
 
 ### Create the Matchbox Configuration Files
@@ -53,33 +50,7 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
 
 #### Profiles
 
-##### The Bootstrap Node
-
-```json
-{
-  "id": "init",
-  "name": "init",
-  "boot": {
-    "kernel": "/assets/vmlinuz",
-    "initrd": ["/assets/initramfs.xz"],
-    "args": [
-      "initrd=initramfs.xz",
-      "init_on_alloc=1",
-      "slab_nomerge",
-      "pti=on",
-      "console=tty0",
-      "console=ttyS0",
-      "printk.devkmsg=on",
-      "talos.platform=metal",
-      "talos.config=http://matchbox.talos.dev/assets/init.yaml"
-    ]
-  }
-}
-```
-
-> Note: Be sure to change `http://matchbox.talos.dev` to the endpoint of your matchbox server.
-
-##### Additional Control Plane Nodes
+##### Control Plane Nodes
 
 ```json
 {
@@ -102,6 +73,8 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
   }
 }
 ```
+
+> Note: Be sure to change `http://matchbox.talos.dev` to the endpoint of your matchbox server.
 
 ##### Worker Nodes
 
@@ -135,7 +108,7 @@ Now, create the following groups, and ensure that the `selector`s are accurate f
 {
   "id": "control-plane-1",
   "name": "control-plane-1",
-  "profile": "init",
+  "profile": "control-plane",
   "selector": {
     ...
   }
@@ -177,12 +150,25 @@ Now, create the following groups, and ensure that the `selector`s are accurate f
 Now that we have our configuraton files in place, boot all the machines.
 Talos will come up on each machine, grab its' configuration file, and bootstrap itself.
 
+### Bootstrap Etcd
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
 ### Retrieve the `kubeconfig`
 
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-talosctl --talosconfig talosconfig config node <control plane 1 IP>
 talosctl --talosconfig talosconfig kubeconfig .
 ```

@@ -54,20 +54,18 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 
 ```bash
 $ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:<port>
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
 ```
 
-Now add the required shebang (e.g. `#!talos`) at the top of `init.yaml`, `controlplane.yaml`, and `join.yaml`
+Now add the required shebang (e.g. `#!talos`) at the top of `controlplane.yaml`, and `join.yaml`
 At this point, you can modify the generated configs to your liking.
 Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
 
 #### Validate the Configuration Files
 
 ```bash
-talosctl validate --config init.yaml --mode metal
 talosctl validate --config controlplane.yaml --mode metal
 talosctl validate --config join.yaml --mode metal
 ```
@@ -75,20 +73,7 @@ talosctl validate --config join.yaml --mode metal
 > Note: Validation of the install disk could potentially fail as the validation
 > is performed on you local machine and the specified disk may not exist.
 
-#### Create the Bootstrap Node
-
-```bash
-packet device create \
-  --project-id $PROJECT_ID \
-  --facility $FACILITY \
-  --ipxe-script-url $PXE_SERVER \
-  --operating-system "custom_ipxe" \
-  --plan $PLAN\
-  --hostname $HOSTNAME\
-  --userdata-file init.yaml
-```
-
-#### Create the Remaining Control Plane Nodes
+#### Create the Control Plane Nodes
 
 ```bash
 packet device create \
@@ -116,12 +101,25 @@ packet device create \
   --userdata-file join.yaml
 ```
 
+### Bootstrap Etcd
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
 ### Retrieve the `kubeconfig`
 
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-talosctl --talosconfig talosconfig config node <control plane 1 IP>
 talosctl --talosconfig talosconfig kubeconfig .
 ```

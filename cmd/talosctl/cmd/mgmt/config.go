@@ -237,7 +237,7 @@ func writeV1Alpha1Config(args []string) error {
 		return err
 	}
 
-	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeControlPlane, machine.TypeJoin); err != nil {
 		return err
 	}
 

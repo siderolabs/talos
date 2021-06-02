@@ -25,7 +25,6 @@ Using the DNS name or name of the loadbalancer used in the prereq steps, generat
 
 ```bash
 $ talosctl gen config talos-k8s-vmware-tutorial https://<load balancer IP or DNS>:<port>
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -33,7 +32,6 @@ created talosconfig
 
 ```bash
 $ talosctl gen config talos-k8s-vmware-tutorial https://<DNS name>:6443
-created init.yaml
 created controlplane.yaml
 created join.yaml
 created talosconfig
@@ -45,8 +43,6 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 #### Validate the Configuration Files
 
 ```bash
-$ talosctl validate --config init.yaml --mode cloud
-init.yaml is valid for cloud mode
 $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
 $ talosctl validate --config join.yaml --mode cloud
@@ -108,7 +104,7 @@ To facilitate persistent storage using the vSphere cloud provider integration wi
 
 ```bash
 govc vm.change \
-  -e "guestinfo.talos.config=$(cat init.yaml | base64)" \
+  -e "guestinfo.talos.config=$(cat controlplane.yaml | base64)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-1
 ```

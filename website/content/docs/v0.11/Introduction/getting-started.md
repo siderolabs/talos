@@ -207,7 +207,6 @@ When you run this command, you will receive a number of files in your current
 directory:
 
 - `controlplane.yaml`
-- `init.yaml`
 - `join.yaml`
 - `talosconfig`
 
@@ -215,7 +214,7 @@ The three `.yaml` files are what we call Machine Configs.
 They are installed onto the Talos servers to act as their complete configuration,
 describing everything from what disk Talos should be installed to, to what
 sysctls to set, to what network settings it should have.
-In the case of the `controlplane.yaml` and `init.yaml`, it even describes how Talos should form its Kubernetes cluster.
+In the case of the `controlplane.yaml`, it even describes how Talos should form its Kubernetes cluster.
 
 The `talosconfig` file (which is also YAML) is your local client configuration
 file.

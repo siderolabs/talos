@@ -42,6 +42,18 @@ Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the clust
 * Linux kernel was updated to 5.10.29
 """
 
+    [notes.bootstrap]
+        title = "Default to Bootstrap workflow"
+        description = """\
+The `init.yaml` is no longer an output of `talosctl gen config`.
+We now encourage using the bootstrap API, instead it `init` node types, as we
+intend on deprecating this machine type in the future.
+The `init.yaml` and `controlplane.yaml` machine configs are identical with the
+exception of the machine type.
+Users can use a modified `controlplane.yaml` with the machine type set to
+`init` if they would like to avoid using the bootstrap API.
+"""
+
 [make_deps]
 
     [make_deps.tools]

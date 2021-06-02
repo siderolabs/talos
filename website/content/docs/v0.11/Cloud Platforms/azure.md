@@ -208,23 +208,8 @@ az vm availability-set create \
   --name talos-controlplane-av-set \
   -g $GROUP
 
-# Create controlplane 0
-az vm create \
-  --name talos-controlplane-0 \
-  --image talos \
-  --custom-data ./init.yaml \
-  -g $GROUP \
-  --admin-username talos \
-  --generate-ssh-keys \
-  --verbose \
-  --boot-diagnostics-storage $STORAGE_ACCOUNT \
-  --os-disk-size-gb 20 \
-  --nics talos-controlplane-nic-0 \
-  --availability-set talos-controlplane-av-set \
-  --no-wait
-
-# Create 2 more controlplane nodes
-for i in $( seq 1 2 ); do
+# Create the controlplane nodes
+for i in $( seq 1 3 ); do
   az vm create \
     --name talos-controlplane-$i \
     --image talos \
@@ -264,7 +249,7 @@ done
 # for troubleshooting
 ```
 
-### Retrieve the `kubeconfig`
+### Bootstrap Etcd
 
 You should now be able to interact with your cluster with `talosctl`.
 We will need to discover the public IP for our first control plane node first.
@@ -275,8 +260,25 @@ CONTROL_PLANE_0_IP=$(az network public-ip show \
                     --name talos-controlplane-public-ip-0 \
                     --query [ipAddress] \
                     --output tsv)
-talosctl --talosconfig ./talosconfig config endpoint $CONTROL_PLANE_0_IP
-talosctl --talosconfig ./talosconfig config node $CONTROL_PLANE_0_IP
-talosctl --talosconfig ./talosconfig kubeconfig .
-kubectl --kubeconfig ./kubeconfig get nodes
+```
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint $CONTROL_PLANE_0_IP
+talosctl --talosconfig talosconfig config node $CONTROL_PLANE_0_IP
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
+```
+
+### Retrieve the `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl --talosconfig talosconfig kubeconfig .
 ```

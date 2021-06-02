@@ -153,7 +153,6 @@ func (suite *GenSuite) TestGenConfigPatch() {
 		{
 			flag: "config-patch",
 			shouldAffect: map[string]bool{
-				"init.yaml":         true,
 				"controlplane.yaml": true,
 				"join.yaml":         true,
 			},
@@ -161,7 +160,6 @@ func (suite *GenSuite) TestGenConfigPatch() {
 		{
 			flag: "config-patch-control-plane",
 			shouldAffect: map[string]bool{
-				"init.yaml":         true,
 				"controlplane.yaml": true,
 			},
 		},
@@ -177,7 +175,7 @@ func (suite *GenSuite) TestGenConfigPatch() {
 		suite.Run(tt.flag, func() {
 			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)})
 
-			for _, configName := range []string{"init.yaml", "controlplane.yaml", "join.yaml"} {
+			for _, configName := range []string{"controlplane.yaml", "join.yaml"} {
 				cfg, err := configloader.NewFromFile(configName)
 
 				suite.Assert().NoError(err)
