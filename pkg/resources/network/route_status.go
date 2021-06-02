@@ -39,7 +39,7 @@ type RouteStatusSpec struct {
 	Protocol     nethelpers.RouteProtocol `yaml:"protocol"`
 }
 
-// NewRouteStatus initializes a SecretsStatus resource.
+// NewRouteStatus initializes a RouteStatus resource.
 func NewRouteStatus(namespace resource.Namespace, id resource.ID) *RouteStatus {
 	r := &RouteStatus{
 		md:   resource.NewMetadata(namespace, RouteStatusType, id, resource.VersionUndefined),

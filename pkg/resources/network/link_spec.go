@@ -28,7 +28,7 @@ type LinkSpecSpec struct {
 	Name string `yaml:"name"`
 
 	// Logical describes if the interface should be created on the fly if it doesn't exist.
-	Logical bool `yaml:"dynamic"`
+	Logical bool `yaml:"logical"`
 
 	// If Up is true, bring interface up, otherwise bring interface down.
 	//
@@ -101,7 +101,7 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	return nil
 }
 
-// NewLinkSpec initializes a SecretsStatus resource.
+// NewLinkSpec initializes a LinkSpec resource.
 func NewLinkSpec(namespace resource.Namespace, id resource.ID) *LinkSpec {
 	r := &LinkSpec{
 		md:   resource.NewMetadata(namespace, LinkSpecType, id, resource.VersionUndefined),

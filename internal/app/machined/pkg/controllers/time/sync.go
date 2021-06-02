@@ -17,8 +17,8 @@ import (
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/ntp"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -37,10 +37,15 @@ func (ctrl *SyncController) Name() string {
 func (ctrl *SyncController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
+			Namespace: network.NamespaceName,
+			Type:      network.TimeServerStatusType,
+			ID:        pointer.ToString(network.TimeServerID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        pointer.ToString(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
 		},
 	}
 }
@@ -109,6 +114,18 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			epoch++
 		}
 
+		timeServersStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, network.TimeServerID, resource.VersionUndefined))
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting time server status: %w", err)
+			}
+
+			// time server list is not ready yet, wait for the next reconcile
+			continue
+		}
+
+		timeServers := timeServersStatus.(*network.TimeServerStatus).TypedSpec().NTPServers
+
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
@@ -124,11 +141,6 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		if cfg != nil && cfg.(*config.MachineConfig).Config().Machine().Time().Disabled() {
 			syncDisabled = true
-		}
-
-		timeServers := []string{constants.DefaultNTPServer}
-		if cfg != nil {
-			timeServers = cfg.(*config.MachineConfig).Config().Machine().Time().Servers()
 		}
 
 		switch {

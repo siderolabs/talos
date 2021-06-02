@@ -33,7 +33,7 @@ type AddressSpecSpec struct {
 	ConfigLayer ConfigLayer             `yaml:"layer"`
 }
 
-// NewAddressSpec initializes a SecretsStatus resource.
+// NewAddressSpec initializes a AddressSpec resource.
 func NewAddressSpec(namespace resource.Namespace, id resource.ID) *AddressSpec {
 	r := &AddressSpec{
 		md:   resource.NewMetadata(namespace, AddressSpecType, id, resource.VersionUndefined),

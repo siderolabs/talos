@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 	v1alpha1resource "github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
@@ -95,6 +96,10 @@ func (suite *SyncSuite) TestReconcileContainerMode() {
 		NewNTPSyncer: suite.newMockSyncer,
 	}))
 
+	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
+	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
+
 	suite.startRuntime()
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -117,6 +122,10 @@ func (suite *SyncSuite) TestReconcileSyncDisabled() {
 	}))
 
 	suite.startRuntime()
+
+	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
+	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
@@ -163,6 +172,10 @@ func (suite *SyncSuite) TestReconcileSyncDefaultConfig() {
 
 	suite.startRuntime()
 
+	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
+	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
+
 	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
@@ -191,6 +204,10 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	}))
 
 	suite.startRuntime()
+
+	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
+	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
@@ -254,10 +271,8 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 		},
 	))
 
-	_, err := suite.state.UpdateWithConflicts(suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-		r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
-			TimeServers: []string{"127.0.0.1"},
-		}
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, timeServers.Metadata(), func(r resource.Resource) error {
+		r.(*network.TimeServerStatus).TypedSpec().NTPServers = []string{"127.0.0.1"}
 
 		return nil
 	})

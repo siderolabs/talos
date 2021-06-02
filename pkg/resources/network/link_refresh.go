@@ -31,7 +31,7 @@ type LinkRefreshSpec struct {
 	Generation int `yaml:"generation"`
 }
 
-// NewLinkRefresh initializes a SecretsStatus resource.
+// NewLinkRefresh initializes a LinkRefresh resource.
 func NewLinkRefresh(namespace resource.Namespace, id resource.ID) *LinkRefresh {
 	r := &LinkRefresh{
 		md:   resource.NewMetadata(namespace, LinkRefreshType, id, resource.VersionUndefined),

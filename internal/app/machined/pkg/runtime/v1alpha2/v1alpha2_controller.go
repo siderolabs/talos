@@ -76,6 +76,14 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
+		&network.HostnameConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.HostnameMergeController{},
+		// TODO: disabled to avoid conflict with networkd
+		// &network.HostnameSpecController{
+		// 	V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		// },
 		&network.LinkConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
@@ -83,13 +91,23 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.LinkStatusController{},
 		&network.LinkSpecController{},
 		&network.NodeAddressController{},
+		&network.ResolverConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.ResolverMergeController{},
+		&network.ResolverSpecController{},
 		&network.RouteConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&network.RouteMergeController{},
 		&network.RouteStatusController{},
 		&network.RouteSpecController{},
+		&network.TimeServerConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.TimeServerMergeController{},
 		&perf.StatsController{},
+		&network.TimeServerSpecController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},
 		&secrets.RootController{},
