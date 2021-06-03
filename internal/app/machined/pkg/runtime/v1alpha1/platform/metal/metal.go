@@ -45,6 +45,10 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 		return nil, errors.ErrNoConfigSource
 	}
 
+	if *option == constants.ConfigNone {
+		return nil, errors.ErrNoConfigSource
+	}
+
 	log.Printf("fetching machine config from: %q", *option)
 
 	u, err := url.Parse(*option)
