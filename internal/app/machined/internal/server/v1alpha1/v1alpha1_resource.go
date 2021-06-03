@@ -268,9 +268,23 @@ func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.Res
 	md := resource.NewMetadata(kind.Namespace, kind.Type, in.GetId(), resource.VersionUndefined)
 
 	if in.GetId() == "" {
-		err = resources.WatchKind(ctx, md, eventCh, state.WithBootstrapContents(true))
+		opts := []state.WatchKindOption{
+			state.WithBootstrapContents(true),
+		}
+
+		if in.TailEvents > 0 {
+			opts = append(opts, state.WithKindTailEvents(int(in.TailEvents)))
+		}
+
+		err = resources.WatchKind(ctx, md, eventCh, opts...)
 	} else {
-		err = resources.Watch(ctx, md, eventCh)
+		opts := []state.WatchOption{}
+
+		if in.TailEvents > 0 {
+			opts = append(opts, state.WithTailEvents(int(in.TailEvents)))
+		}
+
+		err = resources.Watch(ctx, md, eventCh, opts...)
 	}
 
 	if err != nil {
