@@ -3306,6 +3306,7 @@ The WatchResponse message contains the Resource returned.
 | namespace | [string](#string) |  |  |
 | type | [string](#string) |  |  |
 | id | [string](#string) |  |  |
+| tail_events | [uint32](#uint32) |  |  |
 
 
 
