@@ -101,10 +101,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 	}
 }
 
-// TestResetNoGraceful resets a worker in !graceful to test the flow.
-//
-// We can't reset control plane node in !graceful mode as it won't be able to join back the cluster.
-func (suite *ResetSuite) TestResetNoGraceful() {
+func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
 	}
@@ -113,9 +110,9 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	node := suite.RandomDiscoveredNode(machine.TypeJoin)
+	node := suite.RandomDiscoveredNode(nodeType)
 
-	suite.T().Log("Resetting node !graceful", node)
+	suite.T().Logf("Resetting %s node !graceful %s", nodeType, node)
 
 	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
@@ -131,6 +128,18 @@ func (suite *ResetSuite) TestResetNoGraceful() {
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
+}
+
+// TestResetNoGracefulWorker resets a worker in !graceful mode.
+func (suite *ResetSuite) TestResetNoGracefulWorker() {
+	suite.testResetNoGraceful(machine.TypeJoin)
+}
+
+// TestResetNoGracefulControlplane resets a control plane node in !graceful mode.
+//
+// As the node doesn't leave etcd, it relies on Talos to fix the problem on rejoin.
+func (suite *ResetSuite) TestResetNoGracefulControlplane() {
+	suite.testResetNoGraceful(machine.TypeControlPlane)
 }
 
 // TestResetWithSpecEphemeral resets only ephemeral partition on the node.

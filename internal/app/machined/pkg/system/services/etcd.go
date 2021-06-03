@@ -225,8 +225,14 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	}
 
 	for _, member := range list.Members {
+		// addMember only gets called when the etcd data directory is empty, so the node is about to join the etcd cluster
+		// if there's already a member with same hostname, it should be removed, as there will be a conflict between the existing
+		// member and a new joining member.
+		// here we assume that control plane nodes have unique hostnames (if that's not the case, it will be a problem anyways)
 		if member.Name == name {
-			return list, member.ID, nil
+			if _, err = client.MemberRemove(ctx, member.ID); err != nil {
+				return nil, 0, fmt.Errorf("error removing self from the member list: %w", err)
+			}
 		}
 	}
 
