@@ -15,6 +15,7 @@ import (
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/files"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/perf"
@@ -56,10 +57,11 @@ func NewState() (*State, error) {
 	}{
 		{v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."},
 		{config.NamespaceName, "Talos node configuration."},
+		{files.NamespaceName, "Files and file-like resources."},
 		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
-		{secrets.NamespaceName, "Resources with secret material."},
 		{network.NamespaceName, "Networking resources."},
 		{network.ConfigNamespaceName, "Networking configuration resources."},
+		{secrets.NamespaceName, "Resources with secret material."},
 		{perf.NamespaceName, "Stats resources."},
 	} {
 		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
@@ -74,6 +76,8 @@ func NewState() (*State, error) {
 		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},
+		&files.EtcFileSpec{},
+		&files.EtcFileStatus{},
 		&k8s.Manifest{},
 		&k8s.ManifestStatus{},
 		&k8s.StaticPod{},

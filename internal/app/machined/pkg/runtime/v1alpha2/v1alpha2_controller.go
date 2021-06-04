@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
@@ -21,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Controller implements runtime.V1alpha2Controller.
@@ -64,6 +66,10 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		},
 		&config.MachineTypeController{},
 		&config.K8sControlPlaneController{},
+		&files.EtcFileController{
+			EtcPath:    "/etc",
+			ShadowPath: constants.SystemEtcPath,
+		},
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.ExtraManifestController{},
 		&k8s.KubeletStaticPodController{},
@@ -76,6 +82,8 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
+		// TODO: disabled to avoid conflict with networkd
+		// &network.EtcFileController{},
 		&network.HostnameConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
