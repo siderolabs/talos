@@ -51,6 +51,12 @@ func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, 
 		return nil, fmt.Errorf("failed to decode extraConfig %s: %w", key, err)
 	}
 
+	if len(decoded) == 0 {
+		log.Printf("skipping zero-length config in extraConfig")
+
+		return nil, nil
+	}
+
 	return decoded, nil
 }
 
@@ -90,6 +96,12 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 				return nil, fmt.Errorf("failed to decode OVF property %s: %w", property.Key, err)
 			}
 
+			if len(decoded) == 0 {
+				log.Printf("skipping zero-length config in OVF")
+
+				return nil, nil
+			}
+
 			return decoded, nil
 		}
 	}
@@ -119,34 +131,10 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 
 		extraConfig := rpcvmx.NewConfig()
 
-		// try to fetch `talos.config` from OVF
-		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoConfigKey)
-
-		config, err := readConfigFromOvf(extraConfig, constants.VMwareGuestInfoConfigKey)
-		if err != nil {
-			return nil, err
-		}
-
-		if config != nil {
-			return config, nil
-		}
-
-		// try to fetch `userdata` from OVF
-		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoFallbackKey)
-
-		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoFallbackKey)
-		if err != nil {
-			return nil, err
-		}
-
-		if config != nil {
-			return config, nil
-		}
-
 		// try to fetch `talos.config` from plain extraConfig (ie, the old behavior)
 		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoConfigKey)
 
-		config, err = readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoConfigKey)
+		config, err := readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoConfigKey)
 		if err != nil {
 			return nil, err
 		}
@@ -159,6 +147,30 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 		log.Printf("trying to find '%s' in extraConfig", constants.VMwareGuestInfoFallbackKey)
 
 		config, err = readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoFallbackKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if config != nil {
+			return config, nil
+		}
+
+		// try to fetch `talos.config` from OVF
+		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoConfigKey)
+
+		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoConfigKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if config != nil {
+			return config, nil
+		}
+
+		// try to fetch `userdata` from OVF
+		log.Printf("trying to find '%s' in OVF env", constants.VMwareGuestInfoFallbackKey)
+
+		config, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoFallbackKey)
 		if err != nil {
 			return nil, err
 		}
