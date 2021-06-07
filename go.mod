@@ -79,7 +79,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.50.0
-	github.com/vmware/govmomi v0.25.0
+	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd/api/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4
