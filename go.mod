@@ -29,7 +29,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20210603165903-ca95c7538d17
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.6+incompatible
+	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.3.3
+	github.com/gdamore/tcell/v2 v2.3.9
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
@@ -57,7 +57,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/plunder-app/kube-vip v0.3.4
+	github.com/plunder-app/kube-vip v0.3.5
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210531104647-807e706f86d1
 	github.com/rs/xid v1.3.0
@@ -79,12 +79,12 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vmware-tanzu/sonobuoy v0.50.0
-	github.com/vmware/govmomi v0.25.0
+	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-beta.4
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4
-	go.etcd.io/etcd/client/v3 v3.5.0-beta.4
-	go.etcd.io/etcd/etcdutl/v3 v3.5.0-beta.4
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
