@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	humanize "github.com/dustin/go-humanize"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/crypto/x509"
@@ -241,6 +242,10 @@ var (
 				},
 			},
 		},
+	}
+
+	machineFeaturesExample = &FeaturesConfig{
+		RBAC: pointer.ToBool(true),
 	}
 
 	clusterConfigExample = struct {
@@ -612,6 +617,11 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineSystemDiskEncryptionExample
 	MachineSystemDiskEncryption *SystemDiskEncryptionConfig `yaml:"systemDiskEncryption,omitempty"`
+	//   description: |
+	//     Features describe individual Talos features that can be switched on or off.
+	//   examples:
+	//     - value: machineFeaturesExample
+	MachineFeatures *FeaturesConfig `yaml:"features,omitempty"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -1725,6 +1735,13 @@ type SystemDiskEncryptionConfig struct {
 	//   description: |
 	//     Ephemeral partition encryption.
 	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
+}
+
+// FeaturesConfig describe individual Talos features that can be switched on or off.
+type FeaturesConfig struct {
+	//   description: |
+	//     Enable role-based access control (RBAC).
+	RBAC *bool `yaml:"rbac"`
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

@@ -25,8 +25,8 @@ type Authorizer struct {
 	// Defines roles for gRPC methods not present in Rules.
 	FallbackRoles role.Set
 
-	// If true, makes the authorizer never return authorization error.
-	DontEnforce bool
+	// If false, makes the authorizer never return authorization error.
+	Enforce bool
 
 	// Logger.
 	Logger func(format string, v ...interface{})
@@ -81,7 +81,7 @@ func (a *Authorizer) authorize(ctx context.Context, method string) (context.Cont
 		return ctx, nil
 	}
 
-	if a.DontEnforce {
+	if !a.Enforce {
 		a.logf("not authorized (%v doesn't include %v), but authorization wasn't enforced", allowedRoles.Strings(), clientRoles.Strings())
 
 		return ctx, nil

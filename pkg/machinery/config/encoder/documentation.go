@@ -107,9 +107,7 @@ func (e *Example) Populate(index int) {
 // GetValue returns example value.
 func (e *Example) GetValue() interface{} {
 	e.valueMutex.RLock()
-	defer func() {
-		e.valueMutex.RUnlock()
-	}()
+	defer e.valueMutex.RUnlock()
 
 	return e.value
 }
