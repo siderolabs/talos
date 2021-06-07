@@ -273,6 +273,15 @@ func (m *MachineConfig) SystemDiskEncryption() config.SystemDiskEncryption {
 	return m.MachineSystemDiskEncryption
 }
 
+// Features implements the config.MachineConfig interface.
+func (m *MachineConfig) Features() config.Features {
+	if m.MachineFeatures == nil {
+		return &FeaturesConfig{}
+	}
+
+	return m.MachineFeatures
+}
+
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage

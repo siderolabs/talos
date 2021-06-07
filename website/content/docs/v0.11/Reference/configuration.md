@@ -704,6 +704,30 @@ systemDiskEncryption:
 
 <hr />
 
+<div class="dd">
+
+<code>features</code>  <i><a href="#featuresconfig">FeaturesConfig</a></i>
+
+</div>
+<div class="dt">
+
+Features describe individual Talos features that can be switched on or off.
+
+
+
+Examples:
+
+
+``` yaml
+features:
+    rbac: true # Enable role-based access control (RBAC).
+```
+
+
+</div>
+
+<hr />
+
 
 
 
@@ -4926,6 +4950,38 @@ State partition encryption.
 <div class="dt">
 
 Ephemeral partition encryption.
+
+</div>
+
+<hr />
+
+
+
+
+
+## FeaturesConfig
+FeaturesConfig describe individual Talos features that can be switched on or off.
+
+Appears in:
+
+
+- <code><a href="#machineconfig">MachineConfig</a>.features</code>
+
+
+``` yaml
+rbac: true # Enable role-based access control (RBAC).
+```
+
+<hr />
+
+<div class="dd">
+
+<code>rbac</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enable role-based access control (RBAC).
 
 </div>
 

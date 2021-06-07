@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/AlekSi/pointer"
 	"github.com/talos-systems/crypto/x509"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -50,6 +51,9 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		},
 		MachineDisks:                in.MachineDisks,
 		MachineSystemDiskEncryption: in.SystemDiskEncryptionConfig,
+		MachineFeatures: &v1alpha1.FeaturesConfig{
+			RBAC: pointer.ToBool(false), // TODO(rbac): change to true
+		},
 	}
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)

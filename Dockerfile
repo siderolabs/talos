@@ -102,9 +102,9 @@ ARG STRINGER_VERSION
 RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
-COPY ./hack/docgen /go/src/github.com/talos-systems/docgen
-RUN cd /go/src/github.com/talos-systems/docgen \
-    && go build . \
+COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
+RUN cd /go/src/github.com/talos-systems/talos-hack-docgen \
+    && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
 

@@ -42,7 +42,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 			// TODO(rbac): More rules
 		},
 		FallbackRoles: role.MakeSet(role.Admin),
-		DontEnforce:   true, // TODO(rbac): Should be configurable with a feature gate
+		Enforce:       r.Config().Machine().Features().RBACEnabled(),
 		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 

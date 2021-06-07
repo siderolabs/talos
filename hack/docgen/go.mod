@@ -1,6 +1,6 @@
-module github.com/talos-systems/docgen
+module github.com/talos-systems/talos-hack-docgen
 
-go 1.13
+go 1.16
 
 require (
 	gopkg.in/yaml.v2 v2.2.5

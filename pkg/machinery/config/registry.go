@@ -23,9 +23,8 @@ var registry = &Registry{
 
 // Registry represents the provider registry.
 type Registry struct {
+	m          sync.Mutex
 	registered map[string]func(string) interface{}
-
-	sync.Mutex
 }
 
 // Register registers a manifests with the registry.
@@ -39,8 +38,8 @@ func New(kind, version string) (interface{}, error) {
 }
 
 func (r *Registry) register(kind string, f func(version string) interface{}) {
-	r.Lock()
-	defer r.Unlock()
+	r.m.Lock()
+	defer r.m.Unlock()
 
 	if _, ok := r.registered[kind]; ok {
 		panic(ErrExists)
@@ -50,8 +49,8 @@ func (r *Registry) register(kind string, f func(version string) interface{}) {
 }
 
 func (r *Registry) new(kind, version string) (interface{}, error) {
-	r.Lock()
-	defer r.Unlock()
+	r.m.Lock()
+	defer r.m.Unlock()
 
 	f, ok := r.registered[kind]
 	if ok {
