@@ -323,8 +323,9 @@ github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e h1:Wf6HqHfScWJN9
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd/v22 v22.0.0/go.mod h1:xO0FLkIi5MaZafQlIrOotqXZ90ih+1atmu1JpKERPPk=
 github.com/coreos/go-systemd/v22 v22.1.0/go.mod h1:xO0FLkIi5MaZafQlIrOotqXZ90ih+1atmu1JpKERPPk=
-github.com/coreos/go-systemd/v22 v22.3.1 h1:7OO2CXWMYNDdaAzP51t4lCCZWwpQHmvPbm9sxWjm3So=
 github.com/coreos/go-systemd/v22 v22.3.1/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
+github.com/coreos/go-systemd/v22 v22.3.2 h1:D9/bQk5vlXQFZ6Kwuu6zaiXJ9oTPe68++AzAJc1DzSI=
+github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/cosi-project/runtime v0.0.0-20210603165903-ca95c7538d17 h1:Ub3PoblBG/YVcaJ+2Pj8hzQm0Zz76VrTuAmcKHhrxTk=
@@ -1318,8 +1319,9 @@ go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489 h1:1JFLBqwIgdyHN1Zt
 go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489/go.mod h1:yVHk9ub3CSBatqGNg7GRmsnfLWtoW60w4eDYfh7vHDg=
 go.etcd.io/etcd/api/v3 v3.5.0-beta.4 h1:etIejKeELg3fIXt0i71TXtx1OjK9q+oegcv00zipiis=
 go.etcd.io/etcd/api/v3 v3.5.0-beta.4/go.mod h1:yF0YUmBghT48aC0/eTFrhULo+uKQAr5spQQ6sRhPauE=
-go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4 h1:IVvCfkch8truS86wSy67AbnXCYq8nYpM8NPTW14Ttp0=
 go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4/go.mod h1:a+pbz+UrcOpvve1Qxf6tGovi15PjgtRhi0QTO2Nlc4U=
+go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0 h1:7mW2vCG+tthhWwORSD/G0eesRZ6ZkOh19P7CyrT9xfA=
+go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
 go.etcd.io/etcd/client/v2 v2.305.0-beta.4 h1:Tmrv1YITWmOZZzQsrPds8quF+ak/gkvx007+jTaKMGE=
 go.etcd.io/etcd/client/v2 v2.305.0-beta.4/go.mod h1:PImE2qIZFEHFgOrFrvOX3bJvS2xc4Q9SRpCnuCZTNAE=
 go.etcd.io/etcd/client/v3 v3.5.0-beta.4 h1:AW/Sj3Oq7ZYjgNsYU0xad/tu3BH/Jnn2OuLvQoUNMEM=
