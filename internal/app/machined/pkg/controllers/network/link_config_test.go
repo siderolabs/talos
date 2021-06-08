@@ -97,6 +97,28 @@ func (suite *LinkConfigSuite) assertLinks(requiredIDs []string, check func(*netw
 	return nil
 }
 
+func (suite *LinkConfigSuite) assertNoLinks(unexpectedIDs []string) error {
+	unexpIDs := make(map[string]struct{}, len(unexpectedIDs))
+
+	for _, id := range unexpectedIDs {
+		unexpIDs[id] = struct{}{}
+	}
+
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+	if err != nil {
+		return err
+	}
+
+	for _, res := range resources.Items {
+		_, unexpected := unexpIDs[res.Metadata().ID()]
+		if unexpected {
+			return retry.ExpectedErrorf("unexpected ID %q", res.Metadata().ID())
+		}
+	}
+
+	return nil
+}
+
 func (suite *LinkConfigSuite) TestLoopback() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{}))
 
@@ -285,6 +307,77 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				}
 
 				return nil
+			})
+		}))
+}
+
+func (suite *LinkConfigSuite) TestDefaultUp() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{
+		Cmdline: procfs.NewCmdline("talos.network.interface.ignore=eth2"),
+	}))
+
+	for _, link := range []string{"eth0", "eth1", "eth2"} {
+		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
+		linkStatus.TypedSpec().Type = nethelpers.LinkEther
+		linkStatus.TypedSpec().LinkState = true
+
+		suite.Require().NoError(suite.state.Create(suite.ctx, linkStatus))
+	}
+
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: []*v1alpha1.Device{
+					{
+						DeviceInterface: "eth0",
+						DeviceVlans: []*v1alpha1.Vlan{
+							{
+								VlanID:   24,
+								VlanCIDR: "10.0.0.1/8",
+							},
+							{
+								VlanID:   48,
+								VlanCIDR: "10.0.0.2/8",
+							},
+						},
+					},
+				},
+			},
+		},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+		},
+	})
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	suite.startRuntime()
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertLinks([]string{
+				"default/eth1",
+			}, func(r *network.LinkSpec) error {
+				suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+				suite.Assert().True(r.TypedSpec().Up)
+
+				return nil
+			})
+		}))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoLinks([]string{
+				"default/eth0",
+				"default/eth2",
 			})
 		}))
 }
