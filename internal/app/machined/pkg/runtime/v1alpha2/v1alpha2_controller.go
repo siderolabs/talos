@@ -110,6 +110,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.RouteMergeController{},
 		&network.RouteStatusController{},
 		&network.RouteSpecController{},
+		&network.StatusController{},
 		&network.TimeServerConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

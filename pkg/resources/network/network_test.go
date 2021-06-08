@@ -37,6 +37,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.ResolverSpec{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
+		&network.Status{},
 		&network.TimeServerStatus{},
 		&network.TimeServerSpec{},
 	} {
