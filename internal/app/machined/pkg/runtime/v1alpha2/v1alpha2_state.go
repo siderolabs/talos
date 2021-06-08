@@ -95,6 +95,7 @@ func NewState() (*State, error) {
 		&network.ResolverSpec{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
+		&network.Status{},
 		&network.TimeServerStatus{},
 		&network.TimeServerSpec{},
 		&perf.CPU{},
