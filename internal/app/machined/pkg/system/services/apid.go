@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/copy"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -71,6 +72,7 @@ func (o *APID) PostFunc(r runtime.Runtime, state events.ServiceState) (err error
 func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
 	conds := []conditions.Condition{
 		time.NewSyncCondition(r.State().V1Alpha2().Resources()),
+		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady),
 	}
 
 	if r.Config().Machine().Type() == machine.TypeJoin {
@@ -82,7 +84,7 @@ func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (o *APID) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd", "networkd"}
+	return []string{"containerd"}
 }
 
 // Runner implements the Service interface.

@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -44,21 +45,9 @@ func (ctrl *KubernetesController) Name() string {
 func (ctrl *KubernetesController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      timeresource.StatusType,
-			ID:        pointer.ToString(timeresource.StatusID),
+			Namespace: network.NamespaceName,
+			Type:      network.StatusType,
+			ID:        pointer.ToString(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -78,6 +67,50 @@ func (ctrl *KubernetesController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// wait for the network to be ready first, then switch to regular inputs
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+		// wait for network to be ready as it might change IPs/hostname
+		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return err
+		}
+
+		networkStatus := networkResource.(*network.Status).TypedSpec()
+
+		if networkStatus.AddressReady && networkStatus.HostnameReady {
+			break
+		}
+	}
+
+	// switch to regular inputs once the network is ready
+	if err := r.UpdateInputs([]controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.RootType,
+			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      timeresource.StatusType,
+			ID:        pointer.ToString(timeresource.StatusID),
+			Kind:      controller.InputWeak,
+		},
+	}); err != nil {
+		return fmt.Errorf("error updating inputs: %w", err)
+	}
+
+	r.QueueReconcile()
+
 	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
 	defer refreshTicker.Stop()
 
@@ -103,20 +136,6 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		k8sRoot := k8sRootRes.(*secrets.Root).KubernetesSpec()
-
-		// wait for networkd to be healthy as it might change IPs/hostname
-		networkdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "networkd", resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
-		}
-
-		if !networkdResource.(*v1alpha1.Service).Healthy() {
-			continue
-		}
 
 		// wait for time sync as certs depend on current time
 		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, timeresource.StatusType, timeresource.StatusID, resource.VersionUndefined))

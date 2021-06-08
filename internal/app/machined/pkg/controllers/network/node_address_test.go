@@ -125,6 +125,18 @@ func (suite *NodeAddressSuite) TestDefaults() {
 		}))
 }
 
+func (suite *NodeAddressSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewAddressStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkStatus(network.NamespaceName, "bar")))
+}
+
 func TestNodeAddressSuite(t *testing.T) {
 	suite.Run(t, new(NodeAddressSuite))
 }

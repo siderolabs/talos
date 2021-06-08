@@ -148,6 +148,7 @@ func (d *DHCP4) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return d.timeservers
 }
 
+//nolint:gocyclo
 func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -194,6 +195,7 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 			d.routes = append(d.routes, network.RouteSpecSpec{
 				Family:      nethelpers.FamilyInet4,
 				Destination: dst,
+				Source:      addr,
 				Gateway:     gw,
 				OutLinkName: d.linkName,
 				Table:       nethelpers.TableMain,
@@ -222,6 +224,10 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 		}
 	}
 
+	for i := range d.routes {
+		d.routes[i].Normalize()
+	}
+
 	if len(ack.DNS()) > 0 {
 		dns := make([]netaddr.IP, len(ack.DNS()))
 
@@ -240,12 +246,20 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	}
 
 	if ack.HostName() != "" {
-		d.hostname = []network.HostnameSpecSpec{
-			{
-				Hostname:    ack.HostName(),
-				Domainname:  ack.DomainName(),
-				ConfigLayer: network.ConfigOperator,
-			},
+		spec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigOperator,
+		}
+
+		if err = spec.ParseFQDN(ack.HostName()); err == nil {
+			if ack.DomainName() != "" {
+				spec.Domainname = ack.DomainName()
+			}
+
+			d.hostname = []network.HostnameSpecSpec{
+				spec,
+			}
+		} else {
+			d.hostname = nil
 		}
 	} else {
 		d.hostname = nil

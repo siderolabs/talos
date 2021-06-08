@@ -104,6 +104,14 @@ func (suite *AddressStatusSuite) TestLoopback() {
 		}))
 }
 
+func (suite *AddressStatusSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+}
+
 func TestAddressStatusSuite(t *testing.T) {
 	suite.Run(t, new(AddressStatusSuite))
 }

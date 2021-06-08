@@ -154,13 +154,13 @@ func (suite *RouteMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"/10.5.0.3",
-				"10.0.0.35/32/10.0.0.34",
+				"10.5.0.3/",
+				"10.0.0.34/10.0.0.35/32",
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
-				case "/10.5.0.3":
+				case "10.5.0.3/":
 					suite.Assert().Equal(*dhcp.TypedSpec(), *r.TypedSpec())
-				case "10.0.0.35/32/10.0.0.34":
+				case "10.0.0.34/10.0.0.35/32":
 					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
@@ -173,16 +173,16 @@ func (suite *RouteMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"/10.5.0.3",
-				"10.0.0.35/32/10.0.0.34",
+				"10.5.0.3/",
+				"10.0.0.34/10.0.0.35/32",
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
-				case "/10.5.0.3":
+				case "10.5.0.3/":
 					if *cmdline.TypedSpec() != *r.TypedSpec() {
 						// using retry here, as it might not be reconciled immediately
 						return retry.ExpectedError(fmt.Errorf("not equal yet"))
 					}
-				case "10.0.0.35/32/10.0.0.34":
+				case "10.0.0.34/10.0.0.35/32":
 					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
@@ -194,8 +194,19 @@ func (suite *RouteMergeSuite) TestMerge() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			return suite.assertNoRoute("10.0.0.35/32/10.0.0.34")
+			return suite.assertNoRoute("10.0.0.34/10.0.0.35/32")
 		}))
+}
+
+func (suite *RouteMergeSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewRouteSpec(network.ConfigNamespaceName, "bar")))
 }
 
 func TestRouteMergeSuite(t *testing.T) {

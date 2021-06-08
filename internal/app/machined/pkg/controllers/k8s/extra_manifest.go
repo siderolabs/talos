@@ -22,7 +22,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
 // ExtraManifestController renders manifests based on templates and config/secrets.
@@ -43,9 +43,9 @@ func (ctrl *ExtraManifestController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
+			Namespace: network.NamespaceName,
+			Type:      network.StatusType,
+			ID:        pointer.ToString(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -72,8 +72,8 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		// wait for networkd to be healthy as networking is required to download extra manifests
-		networkdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "networkd", resource.VersionUndefined))
+		// wait for network to be ready as networking is required to download extra manifests
+		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -82,7 +82,9 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		if !networkdResource.(*v1alpha1.Service).Healthy() {
+		networkStatus := networkResource.(*network.Status).TypedSpec()
+
+		if !(networkStatus.AddressReady && networkStatus.ConnectivityReady) {
 			continue
 		}
 

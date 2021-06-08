@@ -27,6 +27,7 @@ type RouteSpec struct {
 type RouteSpecSpec struct {
 	Family      nethelpers.Family        `yaml:"family"`
 	Destination netaddr.IPPrefix         `yaml:"dst"`
+	Source      netaddr.IPPrefix         `yaml:"src"`
 	Gateway     netaddr.IP               `yaml:"gateway"`
 	OutLinkName string                   `yaml:"outLinkName,omitempty"`
 	Table       nethelpers.RoutingTable  `yaml:"table"`
@@ -36,6 +37,40 @@ type RouteSpecSpec struct {
 	Flags       nethelpers.RouteFlags    `yaml:"flags"`
 	Protocol    nethelpers.RouteProtocol `yaml:"protocol"`
 	ConfigLayer ConfigLayer              `yaml:"layer"`
+}
+
+var (
+	zero16 = netaddr.MustParseIP("::")
+	zero4  = netaddr.MustParseIP("0.0.0.0")
+)
+
+// Normalize converts 0.0.0.0 to zero value.
+//
+//nolint:gocyclo
+func (route *RouteSpecSpec) Normalize() {
+	if route.Destination.Bits == 0 && (route.Destination.IP.Compare(zero4) == 0 || route.Destination.IP.Compare(zero16) == 0) {
+		// clear destination to be zero value to support "0.0.0.0/0" routes
+		route.Destination = netaddr.IPPrefix{}
+	}
+
+	if route.Gateway.Compare(zero4) == 0 || route.Gateway.Compare(zero16) == 0 {
+		route.Gateway = netaddr.IP{}
+	}
+
+	if route.Source.Bits == 0 && (route.Source.IP.Compare(zero4) == 0 || route.Source.IP.Compare(zero16) == 0) {
+		route.Source = netaddr.IPPrefix{}
+	}
+
+	switch {
+	case route.Gateway.IsZero():
+		route.Scope = nethelpers.ScopeLink
+	case route.Destination.IP.IsLinkLocalUnicast() || route.Destination.IP.IsLinkLocalMulticast():
+		route.Scope = nethelpers.ScopeLink
+	case route.Destination.IP.IsLoopback():
+		route.Scope = nethelpers.ScopeHost
+	default:
+		route.Scope = nethelpers.ScopeGlobal
+	}
 }
 
 // NewRouteSpec initializes a RouteSpec resource.

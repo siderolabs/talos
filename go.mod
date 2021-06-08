@@ -44,27 +44,39 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0
+	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210528123148-fb4eaaa00ad2
 	github.com/jsimonetti/rtnetlink v0.0.0-20210531051304-b34cb89a106b
+	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
+	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/plunder-app/kube-vip v0.3.5
+	github.com/prometheus/client_golang v1.10.0 // indirect
+	github.com/prometheus/common v0.23.0 // indirect
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210531104647-807e706f86d1
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
+	github.com/spf13/afero v1.6.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.1.3
+	github.com/spf13/viper v1.7.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.2.1-0.20210601174604-cd18ef62eb9f
 	github.com/talos-systems/go-blockdevice v0.2.1-0.20210526155905-30c2bc3cb62a
@@ -79,6 +91,7 @@ require (
 	github.com/talos-systems/net v0.2.1-0.20210212213224-05190541b0fa
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
@@ -88,14 +101,17 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
+	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20210430201628-1d252cf8125e
 	k8s.io/api v0.21.1
@@ -105,4 +121,6 @@ require (
 	k8s.io/cri-api v0.21.1
 	k8s.io/kubectl v0.21.1
 	k8s.io/kubelet v0.21.1
+	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.1.1 // indirect
 )

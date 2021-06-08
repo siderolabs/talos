@@ -180,6 +180,7 @@ COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
+COPY --from=go-generate /src/pkg/resources/network/ /pkg/resources/network/
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 

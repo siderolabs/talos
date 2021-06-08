@@ -10,12 +10,14 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
@@ -45,10 +47,10 @@ func (ctrl *RouteSpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,dupl
+//nolint:gocyclo
 func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// watch link changes as some routes might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
+	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK|unix.RTMGRP_IPV4_ROUTE)
 	if err != nil {
 		return err
 	}
@@ -98,18 +100,24 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 			return fmt.Errorf("error listing addresses: %w", err)
 		}
 
-		// loop over route and make reconcile decision
+		var multiErr *multierror.Error
+
+		// loop over routes and make reconcile decision
 		for _, res := range list.Items {
 			route := res.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
 
 			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
-				return err
+				multiErr = multierror.Append(multiErr, err)
 			}
+		}
+
+		if err = multiErr.ErrorOrNil(); err != nil {
+			return err
 		}
 	}
 }
 
-func findRoutes(routes []rtnetlink.RouteMessage, destination netaddr.IPPrefix, gateway netaddr.IP) []*rtnetlink.RouteMessage {
+func findRoutes(routes []rtnetlink.RouteMessage, destination netaddr.IPPrefix, gateway netaddr.IP, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
 	for i, route := range routes {
@@ -125,13 +133,17 @@ func findRoutes(routes []rtnetlink.RouteMessage, destination netaddr.IPPrefix, g
 			continue
 		}
 
+		if nethelpers.RoutingTable(route.Table) != table {
+			continue
+		}
+
 		result = append(result, &routes[i])
 	}
 
 	return result
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
 	links []rtnetlink.LinkMessage, routes []rtnetlink.RouteMessage, route *network.RouteSpec) error {
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
@@ -144,7 +156,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 	switch route.Metadata().Phase() {
 	case resource.PhaseTearingDown:
-		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
 			// delete route
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
@@ -165,15 +177,17 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 		matchFound := false
 
-		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
 			// check if existing matches the spec: if it does, skip update
 			if existing.Scope == uint8(route.TypedSpec().Scope) && existing.Flags == uint32(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) && existing.Flags == uint32(route.TypedSpec().Flags) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
-				existing.Attributes.Table == uint32(route.TypedSpec().Table) {
+				existing.Attributes.Table == uint32(route.TypedSpec().Table) &&
+				(route.TypedSpec().Source.IsZero() ||
+					existing.Attributes.Src.Equal(route.TypedSpec().Source.IP.IPAddr().IP)) {
 				matchFound = true
 
-				break
+				continue
 			}
 
 			// delete route, it doesn't match the spec
@@ -192,12 +206,14 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		msg := &rtnetlink.RouteMessage{
 			Family:    uint8(route.TypedSpec().Family),
 			DstLength: route.TypedSpec().Destination.Bits,
+			SrcLength: route.TypedSpec().Source.Bits,
 			Protocol:  uint8(route.TypedSpec().Protocol),
 			Scope:     uint8(route.TypedSpec().Scope),
 			Type:      uint8(route.TypedSpec().Type),
 			Flags:     uint32(route.TypedSpec().Flags),
 			Attributes: rtnetlink.RouteAttributes{
 				Dst:      route.TypedSpec().Destination.IP.IPAddr().IP,
+				Src:      route.TypedSpec().Source.IP.IPAddr().IP,
 				Gateway:  route.TypedSpec().Gateway.IPAddr().IP,
 				OutIface: linkIndex,
 				Priority: route.TypedSpec().Priority,

@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
 // CRI implements the Service interface. It serves as the concrete type with
@@ -44,12 +45,12 @@ func (c *CRI) PostFunc(r runtime.Runtime, state events.ServiceState) (err error)
 
 // Condition implements the Service interface.
 func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
-	return nil
+	return network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady, network.EtcFilesReady)
 }
 
 // DependsOn implements the Service interface.
 func (c *CRI) DependsOn(r runtime.Runtime) []string {
-	return []string{"networkd"}
+	return nil
 }
 
 // Runner implements the Service interface.

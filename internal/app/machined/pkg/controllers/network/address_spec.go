@@ -6,8 +6,10 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -48,7 +50,7 @@ func (ctrl *AddressSpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,dupl
+//nolint:gocyclo
 func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// watch link changes as some address might need to be re-applied if the link appears
 	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
@@ -219,7 +221,10 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				Flags:     uint32(address.TypedSpec().Flags),
 			},
 		}); err != nil {
-			return fmt.Errorf("error adding address %s to %q: %w", address.TypedSpec().Address, address.TypedSpec().LinkName, err)
+			// ignore EEXIST error
+			if !errors.Is(err, os.ErrExist) {
+				return fmt.Errorf("error adding address %s to %q: %w", address.TypedSpec().Address, address.TypedSpec().LinkName, err)
+			}
 		}
 
 		logger.Info("assigned address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))

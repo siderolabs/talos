@@ -91,6 +91,11 @@ func (r *StaticPodStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
+// Status gets pod status.
+func (r *StaticPodStatus) Status() *v1.PodStatus {
+	return r.spec.PodStatus
+}
+
 // SetStatus sets pod status.
 func (r *StaticPodStatus) SetStatus(status *v1.PodStatus) {
 	r.spec.PodStatus = status
