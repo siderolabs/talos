@@ -42,6 +42,11 @@ func (ctrl *LinkConfigController) Inputs() []controller.Input {
 			ID:        pointer.ToString(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -111,7 +116,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		// parse kernel cmdline for the interface name
-		cmdlineLink := ctrl.parseCmdline(logger)
+		cmdlineLink, cmdlineIgnored := ctrl.parseCmdline(logger)
 		if cmdlineLink.Name != "" {
 			if _, ignored := ignoredInterfaces[cmdlineLink.Name]; !ignored {
 				var ids []string
@@ -127,7 +132,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
-		// parse machine configuration for static routes
+		// parse machine configuration for link specs
 		if cfgProvider != nil {
 			links := ctrl.parseMachineConfiguration(logger, cfgProvider)
 
@@ -143,8 +148,56 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			}
 		}
 
-		// list link for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		// bring up any physical link not mentioned explicitly in the machine configuration
+		configuredLinks := map[string]struct{}{}
+
+		for _, linkName := range cmdlineIgnored {
+			configuredLinks[linkName] = struct{}{}
+		}
+
+		if cmdlineLink.Name != "" {
+			configuredLinks[cmdlineLink.Name] = struct{}{}
+		}
+
+		if cfgProvider != nil {
+			for _, device := range cfgProvider.Machine().Network().Devices() {
+				configuredLinks[device.Interface()] = struct{}{}
+			}
+		}
+
+		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		for _, item := range list.Items {
+			linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
+
+			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; !configured {
+				if linkStatus.Physical() {
+					var ids []string
+
+					ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
+						{
+							Name:        linkStatus.Metadata().ID(),
+							Up:          true,
+							ConfigLayer: network.ConfigDefault,
+						},
+					})
+
+					if err != nil {
+						return fmt.Errorf("error applying default link up: %w", err)
+					}
+
+					for _, id := range ids {
+						touchedIDs[id] = struct{}{}
+					}
+				}
+			}
+		}
+
+		// list links for cleanup
+		list, err = r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
@@ -189,23 +242,23 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 	return ids, nil
 }
 
-func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) network.LinkSpecSpec {
+func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) (network.LinkSpecSpec, []string) {
 	if ctrl.Cmdline == nil {
-		return network.LinkSpecSpec{}
+		return network.LinkSpecSpec{}, nil
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
 	if err != nil {
 		logger.Info("ignoring error", zap.Error(err))
 
-		return network.LinkSpecSpec{}
+		return network.LinkSpecSpec{}, nil
 	}
 
 	return network.LinkSpecSpec{
 		Name:        settings.LinkName,
 		Up:          true,
 		ConfigLayer: network.ConfigCmdline,
-	}
+	}, settings.IgnoreInterfaces
 }
 
 //nolint:gocyclo
