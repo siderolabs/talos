@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -24,7 +25,8 @@ import (
 
 // AddressConfigController manages network.AddressSpec based on machine configuration, kernel cmdline and some built-in defaults.
 type AddressConfigController struct {
-	Cmdline *procfs.Cmdline
+	Cmdline      *procfs.Cmdline
+	V1Alpha1Mode runtime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -179,6 +181,11 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 }
 
 func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpec {
+	if ctrl.V1Alpha1Mode == runtime.ModeContainer {
+		// skip configuring lo addresses in container mode
+		return nil
+	}
+
 	return []network.AddressSpecSpec{
 		{
 			Address: netaddr.IPPrefix{

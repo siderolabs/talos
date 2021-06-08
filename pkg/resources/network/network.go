@@ -35,7 +35,7 @@ func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
 	dst, _ := destination.MarshalText() //nolint:errcheck
 	gw, _ := gateway.MarshalText()      //nolint:errcheck
 
-	return fmt.Sprintf("%s/%s", string(dst), string(gw))
+	return fmt.Sprintf("%s/%s", string(gw), string(dst))
 }
 
 // OperatorID builds ID (primary key) for the operators.

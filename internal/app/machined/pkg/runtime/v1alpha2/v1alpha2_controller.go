@@ -77,21 +77,20 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.ManifestApplyController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&network.AddressConfigController{
-			Cmdline: procfs.ProcCmdline(),
+			Cmdline:      procfs.ProcCmdline(),
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
-		// TODO: disabled to avoid conflict with networkd
-		// &network.EtcFileController{},
+		&network.EtcFileController{},
 		&network.HostnameConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&network.HostnameMergeController{},
-		// TODO: disabled to avoid conflict with networkd
-		// &network.HostnameSpecController{
-		// 	V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		// },
+		&network.HostnameSpecController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&network.LinkConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
@@ -101,6 +100,13 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.NodeAddressController{},
 		&network.OperatorConfigController{
 			Cmdline: procfs.ProcCmdline(),
+		},
+		&network.OperatorSpecController{
+			V1alpha1Platform: ctrl.v1alpha1Runtime.State().Platform(),
+			State:            ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
+		},
+		&network.PlatformConfigController{
+			V1alpha1Platform: ctrl.v1alpha1Runtime.State().Platform(),
 		},
 		&network.ResolverConfigController{
 			Cmdline: procfs.ProcCmdline(),

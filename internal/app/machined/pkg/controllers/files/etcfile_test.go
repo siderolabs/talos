@@ -137,6 +137,17 @@ func (suite *EtcFileSuite) TestFiles() {
 	}
 }
 
+func (suite *EtcFileSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileSpec(files.NamespaceName, "bar")))
+}
+
 func TestEtcFileSuite(t *testing.T) {
 	suite.Run(t, new(EtcFileSuite))
 }

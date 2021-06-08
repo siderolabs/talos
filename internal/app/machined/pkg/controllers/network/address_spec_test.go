@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"sync"
 	"testing"
@@ -56,6 +57,10 @@ func (suite *AddressSpecSuite) SetupTest() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressSpecController{}))
 
 	suite.startRuntime()
+}
+
+func (suite *AddressSpecSuite) uniqueDummyInterface() string {
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
 }
 
 func (suite *AddressSpecSuite) startRuntime() {
@@ -163,7 +168,7 @@ func (suite *AddressSpecSuite) TestLoopback() {
 }
 
 func (suite *AddressSpecSuite) TestDummy() {
-	const dummyInterface = "dummy9"
+	dummyInterface := suite.uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -221,6 +226,17 @@ func (suite *AddressSpecSuite) TestDummy() {
 
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func (suite *AddressSpecSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewAddressSpec(network.NamespaceName, "bar")))
 }
 
 func TestAddressSpecSuite(t *testing.T) {

@@ -153,6 +153,17 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 		}))
 }
 
+func (suite *TimeServerMergeSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewTimeServerSpec(network.ConfigNamespaceName, "bar")))
+}
+
 func TestTimeServerMergeSuite(t *testing.T) {
 	suite.Run(t, new(TimeServerMergeSuite))
 }

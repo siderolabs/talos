@@ -104,6 +104,8 @@ func (ctrl *HostnameSpecController) Run(ctx context.Context, r controller.Runtim
 
 				// apply hostname unless running in container mode
 				if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
+					logger.Info("setting hostname", zap.String("hostname", spec.TypedSpec().Hostname), zap.String("domainname", spec.TypedSpec().Domainname))
+
 					if err = unix.Sethostname([]byte(spec.TypedSpec().Hostname)); err != nil {
 						return fmt.Errorf("error setting hostname: %w", err)
 					}

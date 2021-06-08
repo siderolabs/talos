@@ -200,15 +200,12 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 	route.OutLinkName = settings.LinkName
 	route.ConfigLayer = network.ConfigCmdline
 
+	route.Normalize()
+
 	return route
 }
 
-var (
-	zero16 = netaddr.MustParseIP("::")
-	zero4  = netaddr.MustParseIP("0.0.0.0")
-)
-
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (routes []network.RouteSpecSpec) {
 	convert := func(linkName string, in talosconfig.Route) (route network.RouteSpecSpec, err error) {
 		if in.Network() != "" {
@@ -216,17 +213,14 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 			if err != nil {
 				return route, fmt.Errorf("error parsing route network: %w", err)
 			}
-
-			if route.Destination.Bits == 0 && (route.Destination.IP.Compare(zero4) == 0 || route.Destination.IP.Compare(zero16) == 0) {
-				// clear destination to be zero value to support "0.0.0.0/0" routes
-				route.Destination = netaddr.IPPrefix{}
-			}
 		}
 
 		route.Gateway, err = netaddr.ParseIP(in.Gateway())
 		if err != nil {
 			return route, fmt.Errorf("error parsing route gateway: %w", err)
 		}
+
+		route.Normalize()
 
 		route.Priority = in.Metric()
 		if route.Priority == 0 {
@@ -243,15 +237,6 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 		route.Protocol = nethelpers.ProtocolStatic
 		route.OutLinkName = linkName
 		route.ConfigLayer = network.ConfigMachineConfiguration
-
-		switch {
-		case route.Destination.IP.IsLinkLocalUnicast() || route.Destination.IP.IsLinkLocalMulticast():
-			route.Scope = nethelpers.ScopeLink
-		case route.Destination.IP.IsLoopback():
-			route.Scope = nethelpers.ScopeHost
-		default:
-			route.Scope = nethelpers.ScopeGlobal
-		}
 
 		route.Type = nethelpers.TypeUnicast
 

@@ -48,7 +48,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/maintenance"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/networkd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -307,16 +306,6 @@ HOME_URL="https://docs.talos-systems.com/"
 BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
 
-// Hosts creates a persistent and writable /etc/hosts file.
-func Hosts() (err error) {
-	return createBindMount(filepath.Join(constants.SystemEtcPath, "hosts"), "/etc/hosts")
-}
-
-// ResolvConf creates a persistent and writable /etc/resolv.conf file.
-func ResolvConf() (err error) {
-	return createBindMount(filepath.Join(constants.SystemEtcPath, "resolv.conf"), "/etc/resolv.conf")
-}
-
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease() (err error) {
@@ -384,40 +373,12 @@ func createBindMount(src, dst string) (err error) {
 	return nil
 }
 
-// CreateEtcNetworkFiles represents the CreateEtcNetworkFiles task.
-func CreateEtcNetworkFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		// Create /etc/resolv.conf.
-		if err = ResolvConf(); err != nil {
-			return err
-		}
-
-		// Create /etc/hosts
-		return Hosts()
-	}, "createEtcNetworkFiles"
-}
-
 // CreateOSReleaseFile represents the CreateOSReleaseFile task.
 func CreateOSReleaseFile(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// Create /etc/os-release.
 		return OSRelease()
 	}, "createOSReleaseFile"
-}
-
-// SetupDiscoveryNetwork represents the task for setting up the initial network.
-func SetupDiscoveryNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		nwd, err := networkd.New(logger, r.Config())
-		if err != nil {
-			return err
-		}
-
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
-		return nwd.Configure(ctx)
-	}, "setupDiscoveryNetwork"
 }
 
 // LoadConfig represents the LoadConfig task.
@@ -568,20 +529,6 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "validateConfig"
 }
 
-// ResetNetwork resets the network.
-func ResetNetwork(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		nwd, err := networkd.New(logger, r.Config())
-		if err != nil {
-			return err
-		}
-
-		nwd.Reset()
-
-		return nil
-	}, "resetNetwork"
-}
-
 // SetUserEnvVars represents the SetUserEnvVars task.
 func SetUserEnvVars(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -630,7 +577,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		svcs.Load(
 			&services.APID{},
-			&services.Networkd{},
 			&services.CRI{},
 			&services.Kubelet{},
 		)
@@ -667,14 +613,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		return conditions.WaitForAll(all...).Wait(ctx)
 	}, "startAllServices"
-}
-
-// StopNetworkd represents the StopNetworkd task.
-func StopNetworkd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		// stop networkd so that it gives up on VIP lease
-		return system.Services(nil).Stop(ctx, "networkd")
-	}, "stopNetworkd"
 }
 
 // StopServicesForUpgrade represents the StopServicesForUpgrade task.

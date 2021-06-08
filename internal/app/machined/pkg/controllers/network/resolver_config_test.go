@@ -199,6 +199,25 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 		}))
 }
 
+func (suite *ResolverConfigSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+	}))
+	if state.IsConflictError(err) {
+		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
+	}
+
+	suite.Require().NoError(err)
+}
+
 func TestResolverConfigSuite(t *testing.T) {
 	suite.Run(t, new(ResolverConfigSuite))
 }

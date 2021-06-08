@@ -15,10 +15,10 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/talos-systems/talos/internal/app/networkd/pkg/nic"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // Metadata holds packet metadata info.
@@ -113,7 +113,7 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 	}
 
 	// translate the int returned from bond mode metadata to the type needed by networkd
-	bondMode := nic.BondMode(uint8(unmarshalledMetadataConfig.Network.Bonding.Mode))
+	bondMode := nethelpers.BondMode(uint8(unmarshalledMetadataConfig.Network.Bonding.Mode))
 
 	// determine bond name and build list of interfaces enslaved by the bond
 	devicesInBond := []string{}

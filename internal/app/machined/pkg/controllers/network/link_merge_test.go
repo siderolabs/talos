@@ -185,6 +185,17 @@ func (suite *LinkMergeSuite) TestMerge() {
 		}))
 }
 
+func (suite *LinkMergeSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkSpec(network.ConfigNamespaceName, "bar")))
+}
+
 func TestLinkMergeSuite(t *testing.T) {
 	suite.Run(t, new(LinkMergeSuite))
 }

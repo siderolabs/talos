@@ -190,6 +190,17 @@ func (suite *AddressMergeSuite) TestMerge() {
 		}))
 }
 
+func (suite *AddressMergeSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewAddressSpec(network.ConfigNamespaceName, "bar")))
+}
+
 func TestAddressMergeSuite(t *testing.T) {
 	suite.Run(t, new(AddressMergeSuite))
 }

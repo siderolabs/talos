@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -48,12 +49,15 @@ func (t *Trustd) PostFunc(r runtime.Runtime, state events.ServiceState) (err err
 
 // Condition implements the Service interface.
 func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
-	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
+	return conditions.WaitForAll(
+		timeresource.NewSyncCondition(r.State().V1Alpha2().Resources()),
+		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady),
+	)
 }
 
 // DependsOn implements the Service interface.
 func (t *Trustd) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd", "networkd"}
+	return []string{"containerd"}
 }
 
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {

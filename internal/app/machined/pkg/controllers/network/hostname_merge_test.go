@@ -132,6 +132,8 @@ func (suite *HostnameMergeSuite) TestMerge() {
 				"hostname",
 			}, func(r *network.HostnameSpec) error {
 				suite.Assert().Equal("bar.com", r.TypedSpec().FQDN())
+				suite.Assert().Equal("bar", r.TypedSpec().Hostname)
+				suite.Assert().Equal("com", r.TypedSpec().Domainname)
 
 				return nil
 			})
@@ -151,6 +153,17 @@ func (suite *HostnameMergeSuite) TestMerge() {
 				return nil
 			})
 		}))
+}
+
+func (suite *HostnameMergeSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameSpec(network.ConfigNamespaceName, "bar")))
 }
 
 func TestHostnameMergeSuite(t *testing.T) {

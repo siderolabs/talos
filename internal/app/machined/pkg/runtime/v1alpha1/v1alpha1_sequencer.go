@@ -64,7 +64,6 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 	).Append(
 		"cleanup",
 		StopAllPods,
-		StopNetworkd,
 	).AppendList(
 		stopAllPhaselist(r),
 	).Append(
@@ -114,11 +113,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			WriteIMAPolicy,
 		).Append(
 			"etc",
-			CreateEtcNetworkFiles,
 			CreateOSReleaseFile,
-		).Append(
-			"discoverNetwork",
-			SetupDiscoveryNetwork,
 		).AppendWhen(
 			r.State().Machine().Installed(),
 			"mountSystem",
@@ -130,12 +125,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			r.State().Machine().Installed(),
 			"unmountSystem",
 			UnmountStatePartition,
-		).Append(
-			"resetNetwork",
-			ResetNetwork,
-		).Append(
-			"setupNetwork",
-			SetupDiscoveryNetwork,
 		)
 	}
 
@@ -287,7 +276,6 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.Append(
 		"cleanup",
 		StopAllPods,
-		StopNetworkd,
 	).
 		AppendList(stopAllPhaselist(r)).
 		Append("reboot", Reboot)
@@ -315,12 +303,10 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			in.GetGraceful(),
 			"cleanup",
 			RemoveAllPods,
-			StopNetworkd,
 		).AppendWhen(
 			!in.GetGraceful(),
 			"cleanup",
 			StopAllPods,
-			StopNetworkd,
 		).AppendWhen(
 			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
@@ -355,7 +341,6 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 		Append(
 			"cleanup",
 			StopAllPods,
-			StopNetworkd,
 		).
 		AppendList(stopAllPhaselist(r)).
 		Append("shutdown", Shutdown)
@@ -374,7 +359,6 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		phases = phases.Append(
 			"cleanup",
 			StopAllPods,
-			StopNetworkd,
 		).AppendWhen(
 			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",
@@ -405,12 +389,10 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			!in.GetPreserve(),
 			"cleanup",
 			RemoveAllPods,
-			StopNetworkd,
 		).AppendWhen(
 			in.GetPreserve(),
 			"cleanup",
 			StopAllPods,
-			StopNetworkd,
 		).AppendWhen(
 			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
 			"leave",

@@ -35,6 +35,7 @@ import (
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -127,12 +128,15 @@ func (k *Kubelet) PostFunc(r runtime.Runtime, state events.ServiceState) (err er
 
 // Condition implements the Service interface.
 func (k *Kubelet) Condition(r runtime.Runtime) conditions.Condition {
-	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
+	return conditions.WaitForAll(
+		timeresource.NewSyncCondition(r.State().V1Alpha2().Resources()),
+		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady, network.EtcFilesReady),
+	)
 }
 
 // DependsOn implements the Service interface.
 func (k *Kubelet) DependsOn(r runtime.Runtime) []string {
-	return []string{"cri", "networkd"}
+	return []string{"cri"}
 }
 
 // Runner implements the Service interface.

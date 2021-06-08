@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"sync"
 	"testing"
@@ -65,6 +66,10 @@ func (suite *LinkStatusSuite) startRuntime() {
 
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
 	}()
+}
+
+func (suite *LinkStatusSuite) uniqueDummyInterface() string {
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
 }
 
 func (suite *LinkStatusSuite) assertInterfaces(requiredIDs []string, check func(*network.LinkStatus) error) error {
@@ -127,7 +132,7 @@ func (suite *LinkStatusSuite) TestLoopbackInterface() {
 }
 
 func (suite *LinkStatusSuite) TestDummyInterface() {
-	const dummyInterface = "dummy9"
+	dummyInterface := suite.uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -185,6 +190,17 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 		func() error {
 			return suite.assertNoInterface(dummyInterface)
 		}))
+}
+
+func (suite *LinkStatusSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkRefresh(network.NamespaceName, "bar")))
 }
 
 func TestLinkStatusSuite(t *testing.T) {

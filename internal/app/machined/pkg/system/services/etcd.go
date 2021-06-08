@@ -40,6 +40,7 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -113,12 +114,15 @@ func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error
 
 // Condition implements the Service interface.
 func (e *Etcd) Condition(r runtime.Runtime) conditions.Condition {
-	return timeresource.NewSyncCondition(r.State().V1Alpha2().Resources())
+	return conditions.WaitForAll(
+		timeresource.NewSyncCondition(r.State().V1Alpha2().Resources()),
+		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady, network.EtcFilesReady),
+	)
 }
 
 // DependsOn implements the Service interface.
 func (e *Etcd) DependsOn(r runtime.Runtime) []string {
-	return []string{"cri", "networkd"}
+	return []string{"cri"}
 }
 
 // Runner implements the Service interface.

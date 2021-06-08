@@ -137,6 +137,20 @@ func (suite *StatusSuite) TestEtcFiles() {
 		}))
 }
 
+func (suite *StatusSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewNodeAddress(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileStatus(files.NamespaceName, "bar")))
+}
+
 func TestStatusSuite(t *testing.T) {
 	suite.Run(t, new(StatusSuite))
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
@@ -108,12 +109,12 @@ metadata:
 		},
 	})
 
-	serviceNetworkd := v1alpha1.NewService("networkd")
-	serviceNetworkd.SetRunning(true)
-	serviceNetworkd.SetHealthy(true)
+	statusNetwork := network.NewStatus(network.NamespaceName, network.StatusID)
+	statusNetwork.TypedSpec().AddressReady = true
+	statusNetwork.TypedSpec().ConnectivityReady = true
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, configExtraManifests))
-	suite.Require().NoError(suite.state.Create(suite.ctx, serviceNetworkd))
+	suite.Require().NoError(suite.state.Create(suite.ctx, statusNetwork))
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {

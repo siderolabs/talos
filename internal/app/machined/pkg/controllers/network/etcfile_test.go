@@ -240,6 +240,29 @@ func (suite *EtcFileConfigSuite) TestOnlyHostname() {
 	)
 }
 
+func (suite *EtcFileConfigSuite) TearDownTest() {
+	suite.T().Log("tear down")
+
+	suite.ctxCancel()
+
+	suite.wg.Wait()
+
+	// trigger updates in resources to stop watch loops
+	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+	}))
+	if state.IsConflictError(err) {
+		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
+	}
+
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewNodeAddress(network.NamespaceName, "bar")))
+}
+
 func TestEtcFileConfigSuite(t *testing.T) {
 	suite.Run(t, new(EtcFileConfigSuite))
 }

@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -38,9 +39,9 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("networkd"),
+			Namespace: network.NamespaceName,
+			Type:      network.StatusType,
+			ID:        pointer.ToString(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -88,8 +89,8 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 
 		etcdRoot := etcdRootRes.(*secrets.Root).EtcdSpec()
 
-		// wait for networkd to be healthy as it might change IPs/hostname
-		networkdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "networkd", resource.VersionUndefined))
+		// wait for network to be ready as it might change IPs/hostname
+		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -98,7 +99,9 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return err
 		}
 
-		if !networkdResource.(*v1alpha1.Service).Healthy() {
+		networkStatus := networkResource.(*network.Status).TypedSpec()
+
+		if !(networkStatus.AddressReady && networkStatus.HostnameReady) {
 			continue
 		}
 
