@@ -12,12 +12,8 @@ import (
 
 // WithNodes wraps the context with metadata to send request to set of nodes.
 func WithNodes(ctx context.Context, nodes ...string) context.Context {
-	if len(nodes) == 0 {
-		return ctx
-	}
-
-	md := metadata.New(nil)
-	md.Set("nodes", nodes...)
+	md, _ := metadata.FromOutgoingContext(ctx)
+	md = metadata.Join(md, metadata.MD{"nodes": nodes})
 
 	return metadata.NewOutgoingContext(ctx, md)
 }

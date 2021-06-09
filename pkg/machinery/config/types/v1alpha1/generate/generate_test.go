@@ -64,27 +64,24 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	cfg, err := genv1alpha1.Config(machine.TypeInit, suite.input)
 	suite.Require().NoError(err)
 
-	// TODO(rbac): change to true
-	suite.False(cfg.MachineConfig.Features().RBACEnabled())
-	suite.False(*cfg.MachineConfig.MachineFeatures.RBAC)
+	suite.True(cfg.MachineConfig.Features().RBACEnabled())
+	suite.True(*cfg.MachineConfig.MachineFeatures.RBAC)
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	cfg, err := genv1alpha1.Config(machine.TypeControlPlane, suite.input)
 	suite.Require().NoError(err)
 
-	// TODO(rbac): change to true
-	suite.False(cfg.MachineConfig.Features().RBACEnabled())
-	suite.False(*cfg.MachineConfig.MachineFeatures.RBAC)
+	suite.True(cfg.MachineConfig.Features().RBACEnabled())
+	suite.True(*cfg.MachineConfig.MachineFeatures.RBAC)
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 	cfg, err := genv1alpha1.Config(machine.TypeJoin, suite.input)
 	suite.Require().NoError(err)
 
-	// TODO(rbac): change to true
-	suite.False(cfg.MachineConfig.Features().RBACEnabled())
-	suite.False(*cfg.MachineConfig.MachineFeatures.RBAC)
+	suite.True(cfg.MachineConfig.Features().RBACEnabled())
+	suite.True(*cfg.MachineConfig.MachineFeatures.RBAC)
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {

@@ -52,7 +52,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		MachineDisks:                in.MachineDisks,
 		MachineSystemDiskEncryption: in.SystemDiskEncryptionConfig,
 		MachineFeatures: &v1alpha1.FeaturesConfig{
-			RBAC: pointer.ToBool(false), // TODO(rbac): change to true
+			RBAC: pointer.ToBool(true),
 		},
 	}
 

@@ -38,16 +38,10 @@ func (l *Local) String() string {
 
 // GetConnection returns a grpc connection to the backend.
 func (l *Local) GetConnection(ctx context.Context) (context.Context, *grpc.ClientConn, error) {
-	origMd, ok := metadata.FromIncomingContext(ctx)
+	md, _ := metadata.FromIncomingContext(ctx)
+	md = metadata.Join(md, authz.RolesAsMetadata(authz.GetRoles(ctx)))
 
-	md := origMd.Copy()
-
-	authz.SetRolesToMetadata(ctx, md)
-
-	outCtx := ctx
-	if ok {
-		outCtx = metadata.NewOutgoingContext(ctx, md)
-	}
+	outCtx := metadata.NewOutgoingContext(ctx, md)
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
