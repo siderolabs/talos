@@ -13,8 +13,8 @@ type ConfigLayer int
 const (
 	ConfigDefault              ConfigLayer = iota // default
 	ConfigCmdline                                 // cmdline
-	ConfigDHCP                                    // dhcp
 	ConfigPlatform                                // platform
+	ConfigOperator                                // operator
 	ConfigMachineConfiguration                    // configuration
 )
 

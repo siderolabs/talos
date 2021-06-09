@@ -132,7 +132,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
 		Priority:    50,
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/10.0.0.35/32/10.0.0.34")
