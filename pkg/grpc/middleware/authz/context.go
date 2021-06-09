@@ -33,7 +33,7 @@ func rolesFromContext(ctx context.Context) role.Set {
 	return roles
 }
 
-// ContextWithRoles returns derived context with roles.
+// ContextWithRoles returns derived context with roles set.
 func ContextWithRoles(ctx context.Context, roles role.Set) context.Context {
 	// sanity check
 	if ctx.Value(ctxKey{}) != nil {

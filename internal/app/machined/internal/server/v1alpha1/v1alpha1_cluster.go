@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -41,8 +44,12 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 	}
 
 	// Run cluster readiness checks
+
 	checkCtx, checkCtxCancel := context.WithTimeout(srv.Context(), in.WaitTimeout.AsDuration())
 	defer checkCtxCancel()
+
+	md := authz.RolesAsMetadata(authz.GetRoles(srv.Context()))
+	checkCtx = metadata.NewOutgoingContext(checkCtx, md)
 
 	if err := clusterState.resolve(checkCtx, k8sProvider); err != nil {
 		return fmt.Errorf("error discovering nodes: %w", err)

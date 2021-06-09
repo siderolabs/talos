@@ -16,10 +16,9 @@ import (
 // Should be used only in this file.
 const mdKey = "talos-role"
 
-// SetRolesToMetadata gets roles from the context (where they were previously set by the Injector interceptor)
-// and sets them the metadata.
-func SetRolesToMetadata(ctx context.Context, md metadata.MD) {
-	md.Set(mdKey, GetRoles(ctx).Strings()...)
+// RolesAsMetadata converts roles to gRPC metadata.
+func RolesAsMetadata(roles role.Set) metadata.MD {
+	return metadata.MD{mdKey: roles.Strings()}
 }
 
 // getFromMetadata returns roles extracted from from gRPC metadata.
@@ -31,7 +30,10 @@ func getFromMetadata(ctx context.Context, logf func(format string, v ...interfac
 
 	strings := md.Get(mdKey)
 	roles, err := role.Parse(strings)
-	logf("parsed metadata %v as %v (err = %v)", strings, roles.Strings(), err)
+
+	if logf != nil {
+		logf("parsed metadata %v as %v (err = %v)", strings, roles.Strings(), err)
+	}
 
 	return roles
 }

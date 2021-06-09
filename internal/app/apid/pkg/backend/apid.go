@@ -53,19 +53,17 @@ func (a *APID) String() string {
 
 // GetConnection returns a grpc connection to the backend.
 func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.ClientConn, error) {
-	origMd, ok := metadata.FromIncomingContext(ctx)
+	md, _ := metadata.FromIncomingContext(ctx)
+	md = metadata.Join(md, authz.RolesAsMetadata(authz.GetRoles(ctx)))
 
-	md := origMd.Copy()
-	delete(md, "nodes")
-	delete(md, ":authority")
-
-	if ok {
-		md.Set("proxyfrom", origMd[":authority"]...)
+	if authority := md[":authority"]; len(authority) > 0 {
+		md.Set("proxyfrom", authority...)
 	} else {
 		md.Set("proxyfrom", "unknown")
 	}
 
-	authz.SetRolesToMetadata(ctx, md)
+	delete(md, ":authority")
+	delete(md, "nodes")
 
 	outCtx := metadata.NewOutgoingContext(ctx, md)
 
