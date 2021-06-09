@@ -128,7 +128,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.35/32")

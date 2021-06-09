@@ -106,13 +106,13 @@ func (suite *HostnameMergeSuite) TestMerge() {
 	dhcp1 := network.NewHostnameSpec(network.ConfigNamespaceName, "dhcp/eth0")
 	*dhcp1.TypedSpec() = network.HostnameSpecSpec{
 		Hostname:    "eth-0",
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	dhcp2 := network.NewHostnameSpec(network.ConfigNamespaceName, "dhcp/eth1")
 	*dhcp2.TypedSpec() = network.HostnameSpecSpec{
 		Hostname:    "eth-1",
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewHostnameSpec(network.ConfigNamespaceName, "configuration/hostname")

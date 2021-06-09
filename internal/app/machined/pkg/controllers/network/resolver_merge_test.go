@@ -108,13 +108,13 @@ func (suite *ResolverMergeSuite) TestMerge() {
 	dhcp1 := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth0")
 	*dhcp1.TypedSpec() = network.ResolverSpecSpec{
 		DNSServers:  []netaddr.IP{netaddr.MustParseIP("1.1.2.0")},
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	dhcp2 := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth1")
 	*dhcp2.TypedSpec() = network.ResolverSpecSpec{
 		DNSServers:  []netaddr.IP{netaddr.MustParseIP("1.1.2.1")},
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewResolverSpec(network.ConfigNamespaceName, "configuration/resolvers")

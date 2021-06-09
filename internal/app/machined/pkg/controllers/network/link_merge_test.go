@@ -123,7 +123,7 @@ func (suite *LinkMergeSuite) TestMerge() {
 		Name:        "eth0",
 		Up:          true,
 		MTU:         1450,
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/eth0")

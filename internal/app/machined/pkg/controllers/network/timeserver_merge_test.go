@@ -107,13 +107,13 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 	dhcp1 := network.NewTimeServerSpec(network.ConfigNamespaceName, "dhcp/eth0")
 	*dhcp1.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{"ntp.eth0"},
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	dhcp2 := network.NewTimeServerSpec(network.ConfigNamespaceName, "dhcp/eth1")
 	*dhcp2.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{"ntp.eth1"},
-		ConfigLayer: network.ConfigDHCP,
+		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewTimeServerSpec(network.ConfigNamespaceName, "configuration/timeservers")

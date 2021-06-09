@@ -10,14 +10,14 @@ func _() {
 	var x [1]struct{}
 	_ = x[ConfigDefault-0]
 	_ = x[ConfigCmdline-1]
-	_ = x[ConfigDHCP-2]
-	_ = x[ConfigPlatform-3]
+	_ = x[ConfigPlatform-2]
+	_ = x[ConfigOperator-3]
 	_ = x[ConfigMachineConfiguration-4]
 }
 
-const _ConfigLayer_name = "defaultcmdlinedhcpplatformconfiguration"
+const _ConfigLayer_name = "defaultcmdlineplatformoperatorconfiguration"
 
-var _ConfigLayer_index = [...]uint8{0, 7, 14, 18, 26, 39}
+var _ConfigLayer_index = [...]uint8{0, 7, 14, 22, 30, 43}
 
 func (i ConfigLayer) String() string {
 	if i < 0 || i >= ConfigLayer(len(_ConfigLayer_index)-1) {
