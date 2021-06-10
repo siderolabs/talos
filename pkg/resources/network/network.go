@@ -38,6 +38,11 @@ func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
 	return fmt.Sprintf("%s/%s", string(dst), string(gw))
 }
 
+// OperatorID builds ID (primary key) for the operators.
+func OperatorID(operator Operator, linkName string) string {
+	return fmt.Sprintf("%s/%s", operator, linkName)
+}
+
 // LayeredID builds configuration for the entity at some layer.
 func LayeredID(layer ConfigLayer, id string) string {
 	return fmt.Sprintf("%s/%s", layer, id)

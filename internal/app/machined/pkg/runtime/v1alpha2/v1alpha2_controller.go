@@ -99,6 +99,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.LinkStatusController{},
 		&network.LinkSpecController{},
 		&network.NodeAddressController{},
+		&network.OperatorConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
 		&network.ResolverConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
