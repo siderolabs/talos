@@ -91,6 +91,7 @@ func NewState() (*State, error) {
 		&network.LinkStatus{},
 		&network.LinkSpec{},
 		&network.NodeAddress{},
+		&network.OperatorSpec{},
 		&network.ResolverStatus{},
 		&network.ResolverSpec{},
 		&network.RouteStatus{},
