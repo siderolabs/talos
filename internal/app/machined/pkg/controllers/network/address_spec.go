@@ -12,11 +12,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/mdlayher/arp"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
@@ -176,18 +178,31 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		}
 
 		if existing := findAddress(addrs, linkIndex, address.TypedSpec().Address); existing != nil {
+			// clear out tentative flag, it is set by the kernel, we shouldn't try to enforce it
+			existing.Flags &= ^uint8(nethelpers.AddressTentative)
+			existing.Attributes.Flags &= ^uint32(nethelpers.AddressTentative)
+
 			// check if existing matches the spec: if it does, skip update
 			if existing.Scope == uint8(address.TypedSpec().Scope) && existing.Flags == uint8(address.TypedSpec().Flags) &&
 				existing.Attributes.Flags == uint32(address.TypedSpec().Flags) {
 				return nil
 			}
 
+			logger.Debug("replacing address",
+				zap.Stringer("address", address.TypedSpec().Address),
+				zap.String("link", address.TypedSpec().LinkName),
+				zap.Stringer("old_scope", nethelpers.Scope(existing.Scope)),
+				zap.Stringer("new_scope", address.TypedSpec().Scope),
+				zap.Stringer("old_flags", nethelpers.AddressFlags(existing.Attributes.Flags)),
+				zap.Stringer("new_flags", address.TypedSpec().Flags),
+			)
+
 			// delete address to get new one assigned below
 			if err := conn.Address.Delete(existing); err != nil {
 				return fmt.Errorf("error removing address: %w", err)
 			}
 
-			logger.Sugar().Infof("removed address %s from %q", address.TypedSpec().Address, address.TypedSpec().LinkName)
+			logger.Info("removed address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))
 		}
 
 		// add address
@@ -204,11 +219,55 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 				Flags:     uint32(address.TypedSpec().Flags),
 			},
 		}); err != nil {
-			return fmt.Errorf("error adding address: %w", err)
+			return fmt.Errorf("error adding address %s to %q: %w", address.TypedSpec().Address, address.TypedSpec().LinkName, err)
 		}
 
-		logger.Sugar().Infof("assigned address %s to %q", address.TypedSpec().Address, address.TypedSpec().LinkName)
+		logger.Info("assigned address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))
+
+		if address.TypedSpec().AnnounceWithARP {
+			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.IP); err != nil {
+				logger.Warn("failure sending gratuitous ARP", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName), zap.Error(err))
+			}
+		}
 	}
+
+	return nil
+}
+
+func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex uint32, ip netaddr.IP) error {
+	etherBrodcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+
+	if !ip.Is4() {
+		return nil
+	}
+
+	iface, err := net.InterfaceByIndex(int(linkIndex))
+	if err != nil {
+		return err
+	}
+
+	if len(iface.HardwareAddr) != 6 {
+		// not ethernet
+		return nil
+	}
+
+	cli, err := arp.Dial(iface)
+	if err != nil {
+		return fmt.Errorf("error creating arp client: %w", err)
+	}
+
+	defer cli.Close() //nolint:errcheck
+
+	packet, err := arp.NewPacket(arp.OperationRequest, cli.HardwareAddr(), ip.IPAddr().IP, cli.HardwareAddr(), ip.IPAddr().IP)
+	if err != nil {
+		return fmt.Errorf("error building packet: %w", err)
+	}
+
+	if err = cli.WriteTo(packet, etherBrodcast); err != nil {
+		return fmt.Errorf("error sending gratuitous ARP: %w", err)
+	}
+
+	logger.Info("sent gratuitous ARP", zap.Stringer("address", ip), zap.String("link", iface.Name))
 
 	return nil
 }

@@ -51,6 +51,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20210528123148-fb4eaaa00ad2
 	github.com/jsimonetti/rtnetlink v0.0.0-20210531051304-b34cb89a106b
 	github.com/mattn/go-isatty v0.0.13
+	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
