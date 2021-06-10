@@ -25,12 +25,13 @@ type AddressSpec struct {
 
 // AddressSpecSpec describes status of rendered secrets.
 type AddressSpecSpec struct {
-	Address     netaddr.IPPrefix        `yaml:"address"`
-	LinkName    string                  `yaml:"linkName"`
-	Family      nethelpers.Family       `yaml:"family"`
-	Scope       nethelpers.Scope        `yaml:"scope"`
-	Flags       nethelpers.AddressFlags `yaml:"flags"`
-	ConfigLayer ConfigLayer             `yaml:"layer"`
+	Address         netaddr.IPPrefix        `yaml:"address"`
+	LinkName        string                  `yaml:"linkName"`
+	Family          nethelpers.Family       `yaml:"family"`
+	Scope           nethelpers.Scope        `yaml:"scope"`
+	Flags           nethelpers.AddressFlags `yaml:"flags"`
+	AnnounceWithARP bool                    `yaml:"announceWithARP,omitempty"`
+	ConfigLayer     ConfigLayer             `yaml:"layer"`
 }
 
 // NewAddressSpec initializes a AddressSpec resource.
