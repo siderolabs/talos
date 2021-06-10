@@ -62,7 +62,7 @@ func (d *DHCP4) Prefix() string {
 
 // Run the operator loop.
 //
-//nolint:gocyclo
+//nolint:gocyclo,dupl
 func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 	const minRenewDuration = 5 * time.Second // protect from renewing too often
 
