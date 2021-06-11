@@ -279,7 +279,7 @@ func (n *NetworkInterface) RunControllers(ctx context.Context, r runtime.Runtime
 			return fmt.Errorf("failed to construct the wireguard controller on %q: %w", n.Name, err)
 		}
 
-		if err = n.wgController.Start(ctx, r, logger, eg); err != nil {
+		if err = n.wgController.Start(ctx, r, eg); err != nil {
 			return fmt.Errorf("failed to start the wireguard controller on %q: %w", n.Name, err)
 		}
 	}
