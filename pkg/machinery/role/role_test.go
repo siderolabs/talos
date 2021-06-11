@@ -15,8 +15,8 @@ import (
 func TestRole(t *testing.T) {
 	t.Parallel()
 
-	set, err := role.Parse([]string{"os:admin", "os:reader", "os:future", "os:impersonator", " "})
-	assert.EqualError(t, err, "2 errors occurred:\n\t* unexpected role \"os:future\"\n\t* unexpected role \" \"\n\n")
+	set, err := role.Parse([]string{"os:admin", "os:reader", "os:future", "os:impersonator", "", " "})
+	assert.EqualError(t, err, "1 error occurred:\n\t* unexpected role \"os:future\"\n\n")
 	assert.Equal(t, role.MakeSet(role.Admin, role.Reader, role.Role("os:future"), role.Impersonator), set)
 
 	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:reader"}, set.Strings())
