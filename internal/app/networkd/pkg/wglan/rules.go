@@ -17,6 +17,7 @@ import (
 	"github.com/google/nftables/expr"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/vishvananda/netlink"
+	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
@@ -103,7 +104,7 @@ func (m *RulesManager) maintain(ctx context.Context) {
 			return
 		case <-time.After(reconciliationInterval):
 			if err := m.reconcile(); err != nil {
-				m.c.logger.Print("ip rule reconciliation failed:", err)
+				m.c.logger.Warn("ip rule reconciliation failed", zap.Error(err))
 			}
 		}
 	}
@@ -332,7 +333,8 @@ func matchIPSet(set *nftables.Set, mark uint32, family nftables.TableFamily) []e
 func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 	c := &nftables.Conn{}
 
-	// NB: sets must be flushed before new members can be added
+	// NB: sets should be flushed before new members because nftables will fail
+	// if there are any conflicts between existing ranges and new ranges.
 
 	c.FlushSet(m.targetSet4)
 
@@ -344,16 +346,29 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 	)
 
 	for _, r := range ips.Ranges() {
+		fromBin, err := r.From().MarshalBinary()
+		if err != nil {
+			return fmt.Errorf("failed to marshal from IP %s: %w", r.From().String(), err)
+		}
+
+		toBin, err := r.To().Next().MarshalBinary()
+		if err != nil {
+			return fmt.Errorf("failed to marhsk to IP %q: %w", r.To().Next().String(), err)
+		}
+
 		se := []nftables.SetElement{
+
 			{
-				Key:         r.From().IPAddr().IP,
+				Key:         fromBin,
 				IntervalEnd: false,
 			},
 			{
-				Key:         r.To().Next().IPAddr().IP,
+				Key:         toBin,
 				IntervalEnd: true,
 			},
 		}
+
+		m.c.logger.Sugar().Infof("adding IP set %s - %s", r.From().String(), r.To().Next().String())
 
 		if r.From().Is6() {
 			setElements6 = append(setElements6, se...)
@@ -361,6 +376,8 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 			setElements4 = append(setElements4, se...)
 		}
 	}
+
+	m.c.logger.Sugar().Infof("Added %d IPv4 routes and %d IPv6 routes", len(setElements4), len(setElements6))
 
 	metricRouteCount.WithLabelValues("ipv4").
 		Set(float64(len(setElements4)))
@@ -380,6 +397,9 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 	if err := c.Flush(); err != nil {
 		return fmt.Errorf("failed to flush sets: %w", err)
 	}
+
+	// TODO:  check sets to make sure it actually worked, because nftables is
+	// notorious for this failing silently.
 
 	return nil
 }

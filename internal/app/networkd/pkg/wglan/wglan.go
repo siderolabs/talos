@@ -8,13 +8,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
 	"github.com/CyCoreSystems/netdiscover/discover"
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/wglan-manager/types"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -40,7 +42,7 @@ const reconciliationTimeout = 30 * time.Second
 // A Controller provides a control interface for the Wireguard LAN system.
 type Controller interface {
 	// Start activates the Wireguard LAN system
-	Start(ctx context.Context, r runtime.Runtime, logger *log.Logger, eg *errgroup.Group) error
+	Start(ctx context.Context, r runtime.Runtime, eg *errgroup.Group) error
 
 	// Reconcile forces the Controller to validate and connect each peer
 	Reconcile(ctx context.Context) error
@@ -153,7 +155,7 @@ type wgLanController struct {
 	discoverers []Discoverer
 	netdiscover discover.Discoverer
 
-	logger *log.Logger
+	logger *zap.Logger
 
 	reconcileSignal chan struct{}
 
@@ -194,12 +196,31 @@ func New(iface string, wgLanConfig *Config, wgConfig *wgtypes.Config) (Controlle
 	}, nil
 }
 
+func newLogger(r runtime.Runtime) (*zap.Logger, error) {
+	logWriter, err := r.Logging().ServiceLog("networkd").Writer()
+	if err != nil {
+		return nil, err
+	}
+
+	logger := logging.ZapLogger(
+		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
+		logging.NewLogDestination(logging.StdWriter, zapcore.InfoLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
+	).With(logging.Component("wglan"))
+
+	return logger, nil
+}
+
 // Start implements the Controller interface.
-func (c *wgLanController) Start(ctx context.Context, r runtime.Runtime, logger *log.Logger, eg *errgroup.Group) error {
+func (c *wgLanController) Start(ctx context.Context, r runtime.Runtime, eg *errgroup.Group) error {
 	rulesManager := new(RulesManager)
 
 	if err := rulesManager.Run(ctx, c); err != nil {
 		return fmt.Errorf("failed to run rules manager: %w", err)
+	}
+
+	logger, err := newLogger(r)
+	if err != nil {
+		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
 	eg.Go(func() error {
@@ -215,7 +236,7 @@ func (c *wgLanController) Start(ctx context.Context, r runtime.Runtime, logger *
 
 		c.reconcileSignal = make(chan struct{}, 1)
 
-		c.maintain(ctx, logger)
+		c.maintain(ctx)
 
 		return nil
 	})
@@ -372,7 +393,7 @@ func (c *wgLanController) updatePrePeers(ctx context.Context) error {
 	return merr.ErrorOrNil()
 }
 
-func (c *wgLanController) monitorPeers(ctx context.Context, logger *log.Logger) {
+func (c *wgLanController) monitorPeers(ctx context.Context) {
 	var peerCount, peerUpCount float64
 
 	for {
@@ -388,7 +409,7 @@ func (c *wgLanController) monitorPeers(ctx context.Context, logger *log.Logger) 
 
 		peerList, err := c.getPeers()
 		if err != nil {
-			logger.Println("failed to get Wireguard peers for state checking:", err)
+			c.logger.Warn("failed to get Wireguard peers for state checking:", zap.Error(err))
 		}
 
 		for _, p := range peerList {
@@ -400,7 +421,7 @@ func (c *wgLanController) monitorPeers(ctx context.Context, logger *log.Logger) 
 				pp := c.db.Get(p.PublicKey)
 				if pp != nil {
 					// NB: we can only do something about peers we know about
-					logger.Println("at least one peer is down; signaling reconciliation run")
+					c.logger.Info("at least one peer is down; signaling reconciliation run")
 
 					select {
 					case c.reconcileSignal <- struct{}{}:
@@ -418,13 +439,13 @@ func (c *wgLanController) monitorPeers(ctx context.Context, logger *log.Logger) 
 
 // TODO: remove when the below short-cycle override is removed.
 //nolint: ineffassign,wastedassign
-func (c *wgLanController) maintain(ctx context.Context, logger *log.Logger) {
+func (c *wgLanController) maintain(ctx context.Context) {
 	var err error
 
 	cycleInterval := minimumReconcileInterval
 
 	// TODO: hook up COSI resource monitoring for immediate reactions
-	go c.monitorPeers(ctx, logger)
+	go c.monitorPeers(ctx)
 
 	// TODO: add a monitor for k8s Node adds/removes
 
@@ -441,7 +462,7 @@ func (c *wgLanController) maintain(ctx context.Context, logger *log.Logger) {
 		if err = c.Reconcile(ctx); err != nil {
 			cycleInterval = minimumReconcileInterval
 
-			logger.Printf("wglan: failed to reconcile peer configuration for wglan %q: %s", c.iface.Name, err.Error())
+			c.logger.Sugar().Infof("failed to reconcile peer configuration for wglan %q: %s", c.iface.Name, err.Error())
 		}
 
 		// TODO: FIXME: until we use COSI for resource manipulation, our Peers can be wiped out from underneath us at any moment by the LinkSpec controller.
