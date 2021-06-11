@@ -13,7 +13,10 @@ import (
 // WithNodes wraps the context with metadata to send request to set of nodes.
 func WithNodes(ctx context.Context, nodes ...string) context.Context {
 	md, _ := metadata.FromOutgoingContext(ctx)
-	md = metadata.Join(md, metadata.MD{"nodes": nodes})
+
+	// overwrite any previous nodes in the context metadata with new value
+	md = md.Copy()
+	md.Set("nodes", nodes...)
 
 	return metadata.NewOutgoingContext(ctx, md)
 }
