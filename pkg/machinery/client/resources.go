@@ -177,11 +177,16 @@ func (client *ResourceWatchClient) Recv() (WatchResponse, error) {
 
 // Watch resources by kind or by kind and ID.
 func (c *ResourcesClient) Watch(ctx context.Context, resourceNamespace, resourceType, resourceID string, callOptions ...grpc.CallOption) (*ResourceWatchClient, error) {
-	client, err := c.client.Watch(ctx, &resourceapi.WatchRequest{
+	return c.WatchRequest(ctx, &resourceapi.WatchRequest{
 		Namespace: resourceNamespace,
 		Type:      resourceType,
 		Id:        resourceID,
 	}, callOptions...)
+}
+
+// WatchRequest resources by watch request.
+func (c *ResourcesClient) WatchRequest(ctx context.Context, request *resourceapi.WatchRequest, callOptions ...grpc.CallOption) (*ResourceWatchClient, error) {
+	client, err := c.client.Watch(ctx, request, callOptions...)
 
 	return &ResourceWatchClient{
 		grpcClient: client,
