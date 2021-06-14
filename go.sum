@@ -1272,8 +1272,6 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/urfave/cli v1.22.2/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
-github.com/viniciuschiele/tarx v0.0.0-20151205142357-6e3da540444d h1:Z8Bp/K+wf1+IUvu5Vk2Ml/mMI7fmZTT7rQjkLC8pAmQ=
-github.com/viniciuschiele/tarx v0.0.0-20151205142357-6e3da540444d/go.mod h1:8uo3DXfN526YN7JjAp4JkOMm4foTW4vPzPHaAzb4xiY=
 github.com/vishvananda/netlink v0.0.0-20181108222139-023a6dafdcdf/go.mod h1:+SR5DhBJrl6ZM7CoCKvpw5BKroDKQ+PJqOg65H/2ktk=
 github.com/vishvananda/netlink v1.1.0/go.mod h1:cTgwzPIzzgDAYoQrMm0EdrjRUBkTqKYppBueQtXaqoE=
 github.com/vishvananda/netlink v1.1.1-0.20200221165523-c79a4b7b4066/go.mod h1:FSQhuTO7eHT34mPzX+B04SUAjiqLxtXs1et0S6l9k4k=
@@ -1284,8 +1282,8 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f h1:p4VB7kIXpOQvVn1ZaTIVp+3vuYAXFe3OJEvjbUYJLaA=
 github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
-github.com/vmware-tanzu/sonobuoy v0.50.0 h1:tDCyzzFTe4YyEpXZhoQQH8OfHS/pWTfDGZ1NArAdO30=
-github.com/vmware-tanzu/sonobuoy v0.50.0/go.mod h1:4CnFknIEj/FI9+l1HmbblgwpTR2shupF5ZA1fLoEFVE=
+github.com/vmware-tanzu/sonobuoy v0.51.0 h1:zBxKlDucr0CApfoSJQLpyFy+EcVDOMxdaAw1X1IxSvs=
+github.com/vmware-tanzu/sonobuoy v0.51.0/go.mod h1:wKgT+1bXtYMc9LwH+jQttIyOkl47WrDa4MUEuctRJOE=
 github.com/vmware/govmomi v0.26.0 h1:JMZR5c7MHH3nCEAVYS3WyRIA35W3+b3tLwAqxVzq1Rw=
 github.com/vmware/govmomi v0.26.0/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
