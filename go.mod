@@ -82,14 +82,14 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.50.0
 	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.1
 	go.uber.org/zap v1.17.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
