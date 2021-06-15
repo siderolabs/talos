@@ -142,7 +142,7 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 			Index: int(link.Index),
 		})
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("error querying ethtool link state for %q: %w", link.Attributes.Name, err)
+			logger.Warn("error querying ethtool link state", zap.String("link", link.Attributes.Name), zap.Error(err))
 		}
 
 		// skip if previous call failed (e.g. not supported)
@@ -151,7 +151,7 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 				Index: int(link.Index),
 			})
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("error querying ethtool link info for %q: %w", link.Attributes.Name, err)
+				logger.Warn("error querying ethtool link info", zap.String("link", link.Attributes.Name), zap.Error(err))
 			}
 		}
 
@@ -161,7 +161,7 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 				Index: int(link.Index),
 			})
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("error querying ethtool link mode for %q: %w", link.Attributes.Name, err)
+				logger.Warn("error querying ethtool link mode", zap.String("link", link.Attributes.Name), zap.Error(err))
 			}
 		}
 
