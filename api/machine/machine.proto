@@ -3,13 +3,11 @@ syntax = "proto3";
 package machine;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/machine";
-option java_multiple_files = true;
-option java_outer_classname = "MachineApi";
-option java_package = "com.machine.api";
 
 import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "common/common.proto";
 
 // The machine service definition.
@@ -82,6 +80,9 @@ service MachineService {
   rpc SystemStat(google.protobuf.Empty) returns (SystemStatResponse);
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
+
+  // GenerateClientConfiguration generates talosctl client configuration (talosconfig).
+  rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
 }
 
 // rpc applyConfiguration
@@ -486,8 +487,6 @@ message DmesgRequest {
 }
 
 // rpc processes
-message ProcessesRequest {}
-
 message ProcessesResponse { repeated Process messages = 1; }
 
 message Process {
@@ -910,3 +909,26 @@ message GenerateConfigurationResponse {
 // RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
 message RemoveBootkubeInitializedKey { common.Metadata metadata = 1; }
 message RemoveBootkubeInitializedKeyResponse { repeated RemoveBootkubeInitializedKey messages = 1; }
+
+message GenerateClientConfigurationRequest {
+  // Roles in the generated client certificate.
+  repeated string roles = 1;
+  // Client certificate TTL.
+  google.protobuf.Duration crt_ttl = 2;
+}
+
+message GenerateClientConfiguration {
+  common.Metadata metadata = 1;
+  // PEM-encoded CA certificate.
+  bytes ca = 2;
+  // PEM-encoded generated client certificate.
+  bytes crt = 3;
+  // PEM-encoded generated client key.
+  bytes key = 4;
+  // Client configuration (talosconfig) file content.
+  bytes talosconfig = 5;
+}
+
+message GenerateClientConfigurationResponse {
+  repeated GenerateClientConfiguration messages = 1;
+}

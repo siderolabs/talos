@@ -3,9 +3,6 @@ syntax = "proto3";
 package time;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/time";
-option java_multiple_files = true;
-option java_outer_classname = "TimeApi";
-option java_package = "com.time.api";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";

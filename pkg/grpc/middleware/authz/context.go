@@ -17,20 +17,20 @@ type ctxKey struct{}
 // GetRoles returns roles stored in the context by the Injector interceptor.
 // May be used for additional checks in the API method handler.
 func GetRoles(ctx context.Context) role.Set {
-	roles := rolesFromContext(ctx)
+	set, ok := getFromContext(ctx)
 
-	if roles == nil {
+	if !ok {
 		panic("no roles in the context")
 	}
 
-	return roles
+	return set
 }
 
-// rolesFromContext returns roles stored in the context, or nil.
-func rolesFromContext(ctx context.Context) role.Set {
-	roles, _ := ctx.Value(ctxKey{}).(role.Set) //nolint:errcheck
+// getFromContext returns roles stored in the context.
+func getFromContext(ctx context.Context) (role.Set, bool) {
+	set, ok := ctx.Value(ctxKey{}).(role.Set)
 
-	return roles
+	return set, ok
 }
 
 // ContextWithRoles returns derived context with roles set.

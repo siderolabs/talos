@@ -8,13 +8,15 @@ import (
 	"context"
 	"strings"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
+
+// ErrNotAuthorized should be returned to the client when they are not authorized.
+var ErrNotAuthorized = status.Error(codes.PermissionDenied, "not authorized")
 
 // Authorizer checks that the user is authorized (has a valid role) to call intercepted gRPC method.
 // User roles should be set the Injector interceptor.
@@ -24,9 +26,6 @@ type Authorizer struct {
 
 	// Defines roles for gRPC methods not present in Rules.
 	FallbackRoles role.Set
-
-	// If false, makes the authorizer never return authorization error.
-	Enforce bool
 
 	// Logger.
 	Logger func(format string, v ...interface{})
@@ -56,21 +55,25 @@ func (a *Authorizer) logf(format string, v ...interface{}) {
 
 // authorize returns error if the user is not authorized (doesn't have a valid role) to call the given gRPC method.
 // User roles should be previously set the Injector interceptor.
-func (a *Authorizer) authorize(ctx context.Context, method string) (context.Context, error) {
+func (a *Authorizer) authorize(ctx context.Context, method string) error {
 	clientRoles := GetRoles(ctx)
 
-	var allowedRoles role.Set
+	var (
+		allowedRoles role.Set
+		found        bool
+	)
 
 	prefix := method
 	for prefix != "/" {
-		if allowedRoles = a.Rules[prefix]; allowedRoles != nil {
+		allowedRoles, found = a.Rules[prefix]
+		if found {
 			break
 		}
 
 		prefix = nextPrefix(prefix)
 	}
 
-	if allowedRoles == nil {
+	if !found {
 		a.logf("no explicit rule found for %q, falling back to %v", method, a.FallbackRoles.Strings())
 		allowedRoles = a.FallbackRoles
 	}
@@ -78,25 +81,18 @@ func (a *Authorizer) authorize(ctx context.Context, method string) (context.Cont
 	if allowedRoles.IncludesAny(clientRoles) {
 		a.logf("authorized (%v includes %v)", allowedRoles.Strings(), clientRoles.Strings())
 
-		return ctx, nil
-	}
-
-	if !a.Enforce {
-		a.logf("not authorized (%v doesn't include %v), but authorization wasn't enforced", allowedRoles.Strings(), clientRoles.Strings())
-
-		return ctx, nil
+		return nil
 	}
 
 	a.logf("not authorized (%v doesn't include %v)", allowedRoles.Strings(), clientRoles.Strings())
 
-	return nil, status.Error(codes.PermissionDenied, "not authorized")
+	return ErrNotAuthorized
 }
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (a *Authorizer) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		ctx, err := a.authorize(ctx, info.FullMethod)
-		if err != nil {
+		if err := a.authorize(ctx, info.FullMethod); err != nil {
 			return nil, err
 		}
 
@@ -107,14 +103,10 @@ func (a *Authorizer) UnaryInterceptor() grpc.UnaryServerInterceptor {
 // StreamInterceptor returns grpc StreamServerInterceptor.
 func (a *Authorizer) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		ctx, err := a.authorize(stream.Context(), info.FullMethod)
-		if err != nil {
+		if err := a.authorize(stream.Context(), info.FullMethod); err != nil {
 			return err
 		}
 
-		wrapped := grpc_middleware.WrapServerStream(stream)
-		wrapped.WrappedContext = ctx
-
-		return handler(srv, wrapped)
+		return handler(srv, stream)
 	}
 }

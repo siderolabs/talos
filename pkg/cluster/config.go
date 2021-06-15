@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // ConfigClientProvider builds Talos client from client config.
@@ -20,7 +20,7 @@ type ConfigClientProvider struct {
 	DefaultClient *client.Client
 
 	// TalosConfig is a client Talos configuration.
-	TalosConfig *config.Config
+	TalosConfig *clientconfig.Config
 
 	clients map[string]*client.Client
 }

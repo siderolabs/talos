@@ -3,9 +3,6 @@ syntax = "proto3";
 package resource;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource";
-option java_multiple_files = true;
-option java_outer_classname = "ResourceApi";
-option java_package = "com.resource.api";
 
 import "common/common.proto";
 
