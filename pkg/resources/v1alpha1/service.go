@@ -24,6 +24,7 @@ type Service struct {
 type ServiceSpec struct {
 	Running bool `yaml:"running"`
 	Healthy bool `yaml:"healthy"`
+	Unknown bool `yaml:"unknown"`
 }
 
 // NewService initializes a Service resource.
@@ -75,6 +76,10 @@ func (r *Service) ResourceDefinition() meta.ResourceDefinitionSpec {
 				Name:     "Healthy",
 				JSONPath: "{.healthy}",
 			},
+			{
+				Name:     "Health Unknown",
+				JSONPath: "{.unknown}",
+			},
 		},
 	}
 }
@@ -89,6 +94,11 @@ func (r *Service) SetHealthy(healthy bool) {
 	r.spec.Healthy = healthy
 }
 
+// SetUnknown changes .spec.unknown.
+func (r *Service) SetUnknown(unknown bool) {
+	r.spec.Unknown = unknown
+}
+
 // Running returns .spec.running.
 func (r *Service) Running() bool {
 	return r.spec.Running
@@ -97,4 +107,9 @@ func (r *Service) Running() bool {
 // Healthy returns .spec.healthy.
 func (r *Service) Healthy() bool {
 	return r.spec.Healthy
+}
+
+// Unknown returns .spec.unknown.
+func (r *Service) Unknown() bool {
+	return r.spec.Unknown
 }
