@@ -22,18 +22,25 @@ func RolesAsMetadata(roles role.Set) metadata.MD {
 }
 
 // getFromMetadata returns roles extracted from from gRPC metadata.
-func getFromMetadata(ctx context.Context, logf func(format string, v ...interface{})) role.Set {
+func getFromMetadata(ctx context.Context, logf func(format string, v ...interface{})) (role.Set, bool) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		panic("no request metadata")
 	}
 
 	strings := md.Get(mdKey)
-	roles, err := role.Parse(strings)
+	if len(strings) == 0 {
+		if logf != nil {
+			logf("no roles in metadata")
+		}
 
-	if logf != nil {
-		logf("parsed metadata %v as %v (err = %v)", strings, roles.Strings(), err)
+		return role.Zero, false
 	}
 
-	return roles
+	roles, unknownRoles := role.Parse(strings)
+	if logf != nil {
+		logf("parsed metadata %v as %v (unknownRoles = %v)", strings, roles.Strings(), unknownRoles)
+	}
+
+	return roles, true
 }

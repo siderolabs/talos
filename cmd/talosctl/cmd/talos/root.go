@@ -12,7 +12,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 var kubernetes bool
@@ -30,7 +30,7 @@ var (
 // WithClientNoNodes doesn't set any node information on request context.
 func WithClientNoNodes(action func(context.Context, *client.Client) error) error {
 	return cli.WithContext(context.Background(), func(ctx context.Context) error {
-		cfg, err := config.Open(Talosconfig)
+		cfg, err := clientconfig.Open(Talosconfig)
 		if err != nil {
 			return fmt.Errorf("failed to open config file %q: %w", Talosconfig, err)
 		}

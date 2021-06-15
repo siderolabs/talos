@@ -28,14 +28,22 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-const (
-	debugAddr = ":9981"
-)
-
 var (
 	endpoints       *string
 	useK8sEndpoints *bool
 )
+
+func runDebugServer(ctx context.Context) {
+	const debugAddr = ":9981"
+
+	debugLogFunc := func(msg string) {
+		log.Print(msg)
+	}
+
+	if err := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); err != nil {
+		log.Fatalf("failed to start debug server: %s", err)
+	}
+}
 
 // Main is the entrypoint of apid.
 func Main() {
@@ -46,14 +54,7 @@ func Main() {
 
 	flag.Parse()
 
-	go func() {
-		debugLogFunc := func(msg string) {
-			log.Print(msg)
-		}
-		if lErr := debug.ListenAndServe(context.TODO(), debugAddr, debugLogFunc); lErr != nil {
-			log.Fatalf("failed to start debug server: %s", lErr)
-		}
-	}()
+	go runDebugServer(context.TODO())
 
 	if err := startup.RandSeed(); err != nil {
 		log.Fatalf("failed to seed RNG: %v", err)
@@ -119,9 +120,14 @@ func Main() {
 	var errGroup errgroup.Group
 
 	errGroup.Go(func() error {
+		mode := authz.Disabled
+		if config.Machine().Features().RBACEnabled() {
+			mode = authz.Enabled
+		}
+
 		injector := &authz.Injector{
-			TrustMetadata: false,
-			Logger:        log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf,
+			Mode:   mode,
+			Logger: log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf,
 		}
 
 		return factory.ListenAndServe(
@@ -146,8 +152,8 @@ func Main() {
 
 	errGroup.Go(func() error {
 		injector := &authz.Injector{
-			TrustMetadata: true,
-			Logger:        log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf,
+			Mode:   authz.MetadataOnly,
+			Logger: log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf,
 		}
 
 		return factory.ListenAndServe(

@@ -5,6 +5,7 @@
 package talos
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -12,27 +13,48 @@ import (
 	"sort"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-)
-
-var (
-	ca  string
-	crt string
-	key string
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 // configCmd represents the config command.
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Manage the client configuration",
+	Short: "Manage the client configuration file (talosconfig)",
 	Long:  ``,
 }
 
-// configEndpointCmd represents the config endpoint command.
+func openConfigAndContext(context string) (*clientconfig.Config, error) {
+	c, err := clientconfig.Open(Talosconfig)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config: %w", err)
+	}
+
+	if context == "" {
+		context = c.Context
+	}
+
+	if context == "" {
+		return nil, fmt.Errorf("no context is set")
+	}
+
+	if _, ok := c.Contexts[context]; !ok {
+		return nil, fmt.Errorf("context %q is not defined", context)
+	}
+
+	return c, nil
+}
+
+// configEndpointCmd represents the `config endpoint` command.
 var configEndpointCmd = &cobra.Command{
 	Use:     "endpoint <endpoint>...",
 	Aliases: []string{"endpoints"},
@@ -58,7 +80,7 @@ var configEndpointCmd = &cobra.Command{
 	},
 }
 
-// configNodeCmd represents the config node command.
+// configNodeCmd represents the `config node` command.
 var configNodeCmd = &cobra.Command{
 	Use:     "node <endpoint>...",
 	Aliases: []string{"nodes"},
@@ -84,7 +106,7 @@ var configNodeCmd = &cobra.Command{
 	},
 }
 
-// configContextCmd represents the config context command.
+// configContextCmd represents the `config context` command.
 var configContextCmd = &cobra.Command{
 	Use:     "context <context>",
 	Short:   "Set the current context",
@@ -109,7 +131,14 @@ var configContextCmd = &cobra.Command{
 	},
 }
 
-// configAddCmd represents the config add command.
+// configAddCmdFlags represents the `config add` command flags.
+var configAddCmdFlags struct {
+	ca  string
+	crt string
+	key string
+}
+
+// configAddCmd represents the `config add` command.
 var configAddCmd = &cobra.Command{
 	Use:   "add <context>",
 	Short: "Add a new context",
@@ -122,17 +151,17 @@ var configAddCmd = &cobra.Command{
 			return fmt.Errorf("error reading config: %w", err)
 		}
 
-		caBytes, err := ioutil.ReadFile(ca)
+		caBytes, err := ioutil.ReadFile(configAddCmdFlags.ca)
 		if err != nil {
 			return fmt.Errorf("error reading CA: %w", err)
 		}
 
-		crtBytes, err := ioutil.ReadFile(crt)
+		crtBytes, err := ioutil.ReadFile(configAddCmdFlags.crt)
 		if err != nil {
 			return fmt.Errorf("error reading certificate: %w", err)
 		}
 
-		keyBytes, err := ioutil.ReadFile(key)
+		keyBytes, err := ioutil.ReadFile(configAddCmdFlags.key)
 		if err != nil {
 			return fmt.Errorf("error reading key: %w", err)
 		}
@@ -156,45 +185,12 @@ var configAddCmd = &cobra.Command{
 	},
 }
 
-// configGenerateCmd represents the config generate stub command.
-var configGenerateCmd = &cobra.Command{
-	Use:    "generate",
-	Short:  "Generate Talos config",
-	Long:   ``,
-	Hidden: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("'talosctl config generate' was renamed to 'talosctl gen config'")
-	},
-}
-
-func openConfigAndContext(context string) (*clientconfig.Config, error) {
-	c, err := clientconfig.Open(Talosconfig)
-	if err != nil {
-		return nil, fmt.Errorf("error reading config: %w", err)
-	}
-
-	if context == "" {
-		context = c.Context
-	}
-
-	if context == "" {
-		return nil, fmt.Errorf("no context is set")
-	}
-
-	if _, ok := c.Contexts[context]; !ok {
-		return nil, fmt.Errorf("context %q is not defined", context)
-	}
-
-	return c, nil
-}
-
-// configGetContexts represents config contexts command.
-var configGetContexts = &cobra.Command{
+// configGetContextsCmd represents the `config contexts` command.
+var configGetContextsCmd = &cobra.Command{
 	Use:     "contexts",
-	Short:   "List contexts defined in Talos config",
+	Short:   "List defined contexts",
 	Aliases: []string{"get-contexts"},
 	Long:    ``,
-	Hidden:  false,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := clientconfig.Open(Talosconfig)
 		if err != nil {
@@ -239,13 +235,12 @@ var configGetContexts = &cobra.Command{
 	},
 }
 
-// configMergeCmd represents the config merge command.
+// configMergeCmd represents the `config merge` command.
 var configMergeCmd = &cobra.Command{
-	Use:    "merge <from>",
-	Short:  "Merge additional contexts from another Talos config into the default config",
-	Long:   "Contexts with the same name are renamed while merging configs.",
-	Hidden: false,
-	Args:   cobra.MinimumNArgs(1),
+	Use:   "merge <from>",
+	Short: "Merge additional contexts from another client configuration file",
+	Long:  "Contexts with the same name are renamed while merging configs.",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		from := args[0]
 		c, err := clientconfig.Open(Talosconfig)
@@ -271,13 +266,80 @@ var configMergeCmd = &cobra.Command{
 	},
 }
 
+// configNewCmdFlags represents the `config new` command flags.
+var configNewCmdFlags struct {
+	roles  []string
+	crtTTL time.Duration
+}
+
+// configNewCmd represents the `config new` command.
+var configNewCmd = &cobra.Command{
+	Use:   "new [<path>]",
+	Short: "Generate a new client configuration file",
+	Args:  cobra.RangeArgs(0, 1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			args = []string{"talosconfig"}
+		}
+
+		path := args[0]
+
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "talosconfig"); err != nil {
+				return err
+			}
+
+			roles, unknownRoles := role.Parse(configNewCmdFlags.roles)
+			if len(unknownRoles) != 0 {
+				return fmt.Errorf("unknown roles: %s", strings.Join(unknownRoles, ", "))
+			}
+
+			if _, err := os.Stat(path); err == nil {
+				return fmt.Errorf("talosconfig file already exists: %q", path)
+			}
+
+			resp, err := c.GenerateClientConfiguration(ctx, &machineapi.GenerateClientConfigurationRequest{
+				Roles:  roles.Strings(),
+				CrtTtl: durationpb.New(configNewCmdFlags.crtTTL),
+			})
+			if err != nil {
+				return err
+			}
+
+			if l := len(resp.Messages); l != 1 {
+				panic(fmt.Sprintf("expected 1 message, got %d", l))
+			}
+
+			config, err := clientconfig.FromBytes(resp.Messages[0].Talosconfig)
+			if err != nil {
+				return err
+			}
+
+			return config.Save(path)
+		})
+	},
+}
+
 func init() {
-	configCmd.AddCommand(configContextCmd, configEndpointCmd, configNodeCmd, configAddCmd, configGenerateCmd, configMergeCmd, configGetContexts)
-	configAddCmd.Flags().StringVar(&ca, "ca", "", "the path to the CA certificate")
-	configAddCmd.Flags().StringVar(&crt, "crt", "", "the path to the certificate")
-	configAddCmd.Flags().StringVar(&key, "key", "", "the path to the key")
+	configCmd.AddCommand(
+		configEndpointCmd,
+		configNodeCmd,
+		configContextCmd,
+		configAddCmd,
+		configGetContextsCmd,
+		configMergeCmd,
+		configNewCmd,
+	)
+
+	configAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
+	configAddCmd.Flags().StringVar(&configAddCmdFlags.crt, "crt", "", "the path to the certificate")
+	configAddCmd.Flags().StringVar(&configAddCmdFlags.key, "key", "", "the path to the key")
 	cli.Should(configAddCmd.MarkFlagRequired("ca"))
 	cli.Should(configAddCmd.MarkFlagRequired("crt"))
 	cli.Should(configAddCmd.MarkFlagRequired("key"))
+
+	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
+	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
+
 	addCommand(configCmd)
 }

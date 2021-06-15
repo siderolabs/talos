@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
 	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -71,8 +72,8 @@ var applyConfigCmd = &cobra.Command{
 			if applyConfigCmdFlags.insecure {
 				ctx := context.Background()
 
-				if len(Nodes) != 1 {
-					return fmt.Errorf("insecure mode requires one and only one node, got %d", len(Nodes))
+				if err := helpers.FailIfMultiNodes(ctx, "apply-config"); err != nil {
+					return err
 				}
 
 				c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{

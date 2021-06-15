@@ -5,11 +5,8 @@
 package role
 
 import (
-	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 // Role represents Talos user role.
@@ -18,28 +15,41 @@ import (
 type Role string
 
 const (
+	// Prefix for all built-in roles.
+	Prefix = string("os:")
+
 	// Admin defines Talos role for admins.
-	Admin = Role("os:admin")
+	Admin = Role(Prefix + "admin")
 
 	// Reader defines Talos role for readers who can access read-only APIs that do not expose secrets.
-	Reader = Role("os:reader")
+	Reader = Role(Prefix + "reader")
 
-	// Impersonator defines internal Talos role for impersonating another user (and their role).
-	Impersonator = Role("os:impersonator")
+	// Impersonator defines Talos role for impersonating another user (and their role).
+	// Used internally, but may also be granted to the user.
+	Impersonator = Role(Prefix + "impersonator")
 )
 
 // Set represents a set of roles.
-type Set map[Role]struct{}
+type Set struct {
+	roles map[Role]struct{}
+}
 
-// all roles, including internal ones.
-var all = MakeSet(Admin, Reader, Impersonator)
+var (
+	// All roles that can be granted to users.
+	All = MakeSet(Admin, Reader, Impersonator)
+
+	// Zero is an empty set of roles.
+	Zero = MakeSet()
+)
 
 // MakeSet makes a set of roles from constants.
 // Use Parse in other cases.
 func MakeSet(roles ...Role) Set {
-	res := make(Set, len(roles))
+	res := Set{
+		roles: make(map[Role]struct{}, len(roles)),
+	}
 	for _, r := range roles {
-		res[r] = struct{}{}
+		res.roles[r] = struct{}{}
 	}
 
 	return res
@@ -47,11 +57,11 @@ func MakeSet(roles ...Role) Set {
 
 // Parse parses a set of roles.
 // The returned set is always non-nil and contains all roles, including unknown (for compatibility with future versions).
-// The returned error contains roles unknown to the current version.
-func Parse(str []string) (Set, error) {
-	res := make(Set)
+// The returned slice contains roles unknown to the current version.
+func Parse(str []string) (Set, []string) {
+	res := MakeSet()
 
-	var err *multierror.Error
+	var unknownRoles []string
 
 	for _, r := range str {
 		r = strings.TrimSpace(r)
@@ -62,21 +72,21 @@ func Parse(str []string) (Set, error) {
 		}
 
 		role := Role(r)
-		if _, ok := all[role]; !ok {
-			err = multierror.Append(err, fmt.Errorf("unexpected role %q", r))
+		if _, ok := All.roles[role]; !ok {
+			unknownRoles = append(unknownRoles, r)
 		}
 
-		res[role] = struct{}{}
+		res.roles[role] = struct{}{}
 	}
 
-	return res, err.ErrorOrNil()
+	return res, unknownRoles
 }
 
 // Strings returns a set as a slice of strings.
 func (s Set) Strings() []string {
-	res := make([]string, 0, len(s))
+	res := make([]string, 0, len(s.roles))
 
-	for r := range s {
+	for r := range s.roles {
 		res = append(res, string(r))
 	}
 
@@ -86,12 +96,21 @@ func (s Set) Strings() []string {
 }
 
 // IncludesAny returns true if there is a non-empty intersection between sets.
+//
+// Returns false if any set is empty.
 func (s Set) IncludesAny(other Set) bool {
-	for r := range other {
-		if _, ok := s[r]; ok {
+	for r := range other.roles {
+		if _, ok := s.roles[r]; ok {
 			return true
 		}
 	}
 
 	return false
+}
+
+// Includes returns true if given role is present in the set.
+func (s Set) Includes(role Role) bool {
+	_, ok := s.roles[role]
+
+	return ok
 }
