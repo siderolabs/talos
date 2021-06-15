@@ -79,7 +79,8 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 						svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
 
 						svc.SetRunning(true)
-						svc.SetHealthy(msg.GetHealth().GetHealthy() && !msg.GetHealth().GetUnknown())
+						svc.SetHealthy(msg.GetHealth().GetHealthy())
+						svc.SetUnknown(msg.GetHealth().GetUnknown())
 
 						return nil
 					}); err != nil {
