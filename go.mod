@@ -17,6 +17,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.3.1
+	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.2
@@ -40,7 +41,7 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.3.9
+	github.com/gdamore/tcell/v2 v2.3.11
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
@@ -65,8 +66,6 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.10.0 // indirect
-	github.com/prometheus/common v0.23.0 // indirect
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210531104647-807e706f86d1
 	github.com/rs/xid v1.3.0
@@ -92,18 +91,18 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	github.com/vmware-tanzu/sonobuoy v0.50.0
+	github.com/vmware-tanzu/sonobuoy v0.51.0
 	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
-	go.etcd.io/etcd/api/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
-	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.1
 	go.uber.org/zap v1.17.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210531080801-fdfd190a6549
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
