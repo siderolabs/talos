@@ -1939,6 +1939,35 @@ talosctl stats [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl talosconfig
+
+Generate a new client configuration file
+
+```
+talosctl talosconfig [<path>] [flags]
+```
+
+### Options
+
+```
+      --crt-ttl duration   certificate TTL (default 87600h0m0s)
+  -h, --help               help for talosconfig
+      --roles strings      roles (default [os:admin])
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl time
 
 Gets current server time
@@ -2177,6 +2206,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
 * [talosctl stats](#talosctl-stats)	 - Get container stats
+* [talosctl talosconfig](#talosctl-talosconfig)	 - Generate a new client configuration file
 * [talosctl time](#talosctl-time)	 - Gets current server time
 * [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node
 * [talosctl upgrade-k8s](#talosctl-upgrade-k8s)	 - Upgrade Kubernetes control plane in the Talos cluster.

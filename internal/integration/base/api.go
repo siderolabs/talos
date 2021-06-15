@@ -26,7 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
@@ -42,7 +42,7 @@ type APISuite struct {
 
 // SetupSuite initializes Talos API client.
 func (apiSuite *APISuite) SetupSuite() {
-	cfg, err := config.Open(apiSuite.TalosConfig)
+	cfg, err := clientconfig.Open(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
 
 	opts := []client.OptionFunc{

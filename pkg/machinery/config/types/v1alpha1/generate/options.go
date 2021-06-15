@@ -7,6 +7,7 @@ package generate
 import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 // GenOption controls generate options specific to input generation.
@@ -193,6 +194,15 @@ func WithSystemDiskEncryption(cfg *v1alpha1.SystemDiskEncryptionConfig) GenOptio
 	}
 }
 
+// WithRoles specifies user roles.
+func WithRoles(roles role.Set) GenOption {
+	return func(o *GenOptions) error {
+		o.Roles = roles
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList               []string
@@ -211,11 +221,13 @@ type GenOptions struct {
 	MachineDisks               []*v1alpha1.MachineDisk
 	VersionContract            *config.VersionContract
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
+	Roles                      role.Set
 }
 
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
 	return GenOptions{
 		Persist: true,
+		Roles:   role.MakeSet(role.Admin),
 	}
 }

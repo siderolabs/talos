@@ -16,10 +16,24 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
+// InjectorMode specifies how roles are extracted.
+type InjectorMode int
+
+const (
+	// Disabled is used when RBAC is disabled in the machine configuration. All roles are assumed.
+	Disabled InjectorMode = iota
+
+	// MetadataOnly is used internally. Checks only metadata.
+	MetadataOnly
+
+	// Enabled is used when RBAC is enabled in the machine configuration. Roles are extracted normally.
+	Enabled
+)
+
 // Injector sets roles to the context.
 type Injector struct {
-	// If true, trust roles in gRPC metadata, do not check certificate.
-	TrustMetadata bool
+	// Mode.
+	Mode InjectorMode
 
 	// Logger.
 	Logger func(format string, v ...interface{})
@@ -32,15 +46,25 @@ func (i *Injector) logf(format string, v ...interface{}) {
 }
 
 // extractRoles returns roles extracted from the user's certificate (in case of the first apid instance),
-// or from gRPC metadata (in case of subsequent apid instances or machined).
+// or from gRPC metadata (in case of subsequent apid instances, machined, or user with impersonator role).
 func (i *Injector) extractRoles(ctx context.Context) role.Set {
 	// sanity check
-	if rolesFromContext(ctx) != nil {
+	if _, ok := getFromContext(ctx); ok {
 		panic("roles should not be present in the context at this point")
 	}
 
-	// check certificate first, if needed
-	if !i.TrustMetadata {
+	switch i.Mode {
+	case Disabled:
+		i.logf("RBAC is disabled, injecting all roles")
+
+		return role.All
+
+	case MetadataOnly:
+		roles, _ := getFromMetadata(ctx, i.logf)
+
+		return roles
+
+	case Enabled:
 		p, ok := peer.FromContext(ctx)
 		if !ok {
 			panic("can't get peer information")
@@ -59,17 +83,25 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 
 		// TODO validate cert.KeyUsage, cert.ExtKeyUsage, cert.Issuer.Organization, other fields there?
 
-		roles, err := role.Parse(strings)
-		i.logf("parsed peer's orgs %v as %v (err = %v)", strings, roles.Strings(), err)
+		roles, unknownRoles := role.Parse(strings)
+		i.logf("parsed peer's certificate orgs %v as %v (unknownRoles = %v)", strings, roles.Strings(), unknownRoles)
 
-		// not impersonator (not proxied request), return extracted roles
-		if _, ok := roles[role.Impersonator]; !ok {
-			return roles
+		// trust gRPC metadata from clients with impersonator role if present
+		// (including requests proxied from other apid instances)
+		if roles.Includes(role.Impersonator) {
+			metadataRoles, ok := getFromMetadata(ctx, i.logf)
+			if ok {
+				return metadataRoles
+			}
+
+			// that's a real user with impersonator role then
+			i.logf("no roles in metadadata, returning parsed roles")
 		}
+
+		return roles
 	}
 
-	// trust gRPC metadata from clients with impersonator role (that's proxied request), or if configured
-	return getFromMetadata(ctx, i.logf)
+	panic("not reached")
 }
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.

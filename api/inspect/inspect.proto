@@ -3,9 +3,6 @@ syntax = "proto3";
 package inspect;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/inspect";
-option java_multiple_files = true;
-option java_outer_classname = "InspectApi";
-option java_package = "com.inspect.api";
 
 import "google/protobuf/empty.proto";
 import "common/common.proto";

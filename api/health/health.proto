@@ -6,6 +6,7 @@ option go_package = "github.com/talos-systems/talos/pkg/machinery/api/health";
 
 import "google/protobuf/empty.proto";
 
+// The health service definition.
 service Health {
   rpc Check(google.protobuf.Empty) returns (HealthCheckResponse);
   rpc Watch(HealthWatchRequest)  returns (stream HealthCheckResponse);

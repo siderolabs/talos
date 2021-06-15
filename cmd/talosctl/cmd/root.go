@@ -13,7 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // rootCmd represents the base command when called without any subcommands.
@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	defaultTalosConfig, err := config.GetDefaultPath()
+	defaultTalosConfig, err := clientconfig.GetDefaultPath()
 	if err != nil {
 		return err
 	}

@@ -83,6 +83,9 @@ description: Talos gRPC API reference.
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FileInfo](#machine.FileInfo)
+    - [GenerateClientConfiguration](#machine.GenerateClientConfiguration)
+    - [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest)
+    - [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse)
     - [GenerateConfiguration](#machine.GenerateConfiguration)
     - [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest)
     - [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse)
@@ -109,7 +112,6 @@ description: Talos gRPC API reference.
     - [PlatformInfo](#machine.PlatformInfo)
     - [Process](#machine.Process)
     - [ProcessInfo](#machine.ProcessInfo)
-    - [ProcessesRequest](#machine.ProcessesRequest)
     - [ProcessesResponse](#machine.ProcessesResponse)
     - [ReadRequest](#machine.ReadRequest)
     - [Reboot](#machine.Reboot)
@@ -487,7 +489,7 @@ Common metadata message nested in all reply message types
 <a name="health.Health"></a>
 
 ### Health
-
+The health service definition.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
@@ -1364,6 +1366,56 @@ TODO: unix timestamp or include proto's Date type |
 
 
 
+<a name="machine.GenerateClientConfiguration"></a>
+
+### GenerateClientConfiguration
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| ca | [bytes](#bytes) |  | PEM-encoded CA certificate. |
+| crt | [bytes](#bytes) |  | PEM-encoded generated client certificate. |
+| key | [bytes](#bytes) |  | PEM-encoded generated client key. |
+| talosconfig | [bytes](#bytes) |  | Client configuration (talosconfig) file content. |
+
+
+
+
+
+
+<a name="machine.GenerateClientConfigurationRequest"></a>
+
+### GenerateClientConfigurationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| roles | [string](#string) | repeated | Roles in the generated client certificate. |
+| crt_ttl | [google.protobuf.Duration](#google.protobuf.Duration) |  | Client certificate TTL. |
+
+
+
+
+
+
+<a name="machine.GenerateClientConfigurationResponse"></a>
+
+### GenerateClientConfigurationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [GenerateClientConfiguration](#machine.GenerateClientConfiguration) | repeated |  |
+
+
+
+
+
+
 <a name="machine.GenerateConfiguration"></a>
 
 ### GenerateConfiguration
@@ -1865,20 +1917,10 @@ The messages message containing the requested df stats.
 
 
 
-<a name="machine.ProcessesRequest"></a>
-
-### ProcessesRequest
-rpc processes
-
-
-
-
-
-
 <a name="machine.ProcessesResponse"></a>
 
 ### ProcessesResponse
-
+rpc processes
 
 
 | Field | Type | Label | Description |
@@ -2958,6 +3000,7 @@ This method is available only on control plane nodes (which run etcd). |
 | SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
 | Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
+| GenerateClientConfiguration | [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest) | [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse) | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |
 
  <!-- end services -->
 
