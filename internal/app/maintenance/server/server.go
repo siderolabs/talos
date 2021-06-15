@@ -10,6 +10,8 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	networkserver "github.com/talos-systems/talos/internal/app/networkd/pkg/server"
@@ -51,7 +53,7 @@ func (s *Server) Register(obj *grpc.Server) {
 }
 
 // ApplyConfiguration implements machine.MachineService.
-func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (reply *machine.ApplyConfigurationResponse, err error) {
+func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	if in.OnReboot {
 		return nil, fmt.Errorf("apply configuration on reboot is not supported in maintenance mode")
 	}
@@ -66,7 +68,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
-	reply = &machine.ApplyConfigurationResponse{
+	reply := &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{
 			{
 				Warnings: warnings,
@@ -80,7 +82,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.
-func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
+func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (*machine.GenerateConfigurationResponse, error) {
 	if in.MachineConfig == nil {
 		return nil, fmt.Errorf("invalid generate request")
 	}
@@ -92,4 +94,9 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 	}
 
 	return configuration.Generate(ctx, in)
+}
+
+// GenerateClientConfiguration implements the machine.MachineServer interface.
+func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) cannot be generated in the maintenance mode")
 }

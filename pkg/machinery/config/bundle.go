@@ -5,12 +5,14 @@
 // Package config provides methods to generate and consume Talos configuration.
 package config
 
-import "github.com/talos-systems/talos/pkg/machinery/client/config"
+import (
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+)
 
 // ProviderBundle defines the configuration bundle interface.
 type ProviderBundle interface {
 	Init() Provider
 	ControlPlane() Provider
 	Join() Provider
-	TalosConfig() *config.Config
+	TalosConfig() *clientconfig.Config
 }

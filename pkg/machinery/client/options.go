@@ -10,14 +10,14 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // Options contains the set of client configuration options.
 type Options struct {
 	endpointsOverride []string
-	config            *config.Config
-	configContext     *config.Context
+	config            *clientconfig.Config
+	configContext     *clientconfig.Context
 	tlsConfig         *tls.Config
 	grpcDialOptions   []grpc.DialOption
 
@@ -32,7 +32,7 @@ type OptionFunc func(*Options) error
 
 // WithConfig configures the Client with the configuration provided.
 // Additionally use WithContextName to override the default context in the Config.
-func WithConfig(cfg *config.Config) OptionFunc {
+func WithConfig(cfg *clientconfig.Config) OptionFunc {
 	return func(o *Options) error {
 		o.config = cfg
 
@@ -52,7 +52,7 @@ func WithContextName(name string) OptionFunc {
 }
 
 // WithConfigContext configures the Client with the configuration context provided.
-func WithConfigContext(cfg *config.Context) OptionFunc {
+func WithConfigContext(cfg *clientconfig.Context) OptionFunc {
 	return func(o *Options) error {
 		o.configContext = cfg
 
@@ -92,7 +92,7 @@ func WithEndpoints(endpoints ...string) OptionFunc {
 // Additionally use WithContextName to select a context other than the default.
 func WithDefaultConfig() OptionFunc {
 	return func(o *Options) (err error) {
-		defaultConfigPath, err := config.GetDefaultPath()
+		defaultConfigPath, err := clientconfig.GetDefaultPath()
 		if err != nil {
 			return fmt.Errorf("no client configuration provided and no default path found: %w", err)
 		}
@@ -105,7 +105,7 @@ func WithDefaultConfig() OptionFunc {
 // Additionally use WithContextName to select a context other than the default.
 func WithConfigFromFile(fn string) OptionFunc {
 	return func(o *Options) (err error) {
-		cfg, err := config.Open(fn)
+		cfg, err := clientconfig.Open(fn)
 		if err != nil {
 			return fmt.Errorf("failed to read config from %q: %w", fn, err)
 		}

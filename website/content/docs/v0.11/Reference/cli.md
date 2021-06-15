@@ -110,11 +110,11 @@ talosctl cluster create [flags]
       --endpoint string                         use endpoint instead of provider defaults
   -p, --exposed-ports string                    Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
   -h, --help                                    help for create
-      --image string                            the image to use (default "ghcr.io/talos-systems/talos:latest")
+      --image string                            the image to use (default "ghcr.io/aleksi/talos:latest")
       --init-node-as-endpoint                   use init node as endpoint instead of any load balancer endpoint
       --initrd-path string                      initramfs image to use (default "_out/initramfs-${ARCH}.xz")
   -i, --input-dir string                        location of pre-generated config files
-      --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
+      --install-image string                    the installer image to use (default "ghcr.io/aleksi/installer:latest")
       --ipv4                                    enable IPv4 network in the cluster (default true)
       --ipv6                                    enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                         the ISO path to use for the initial boot (VM only)
@@ -1089,7 +1089,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --dns-domain string                   the dns domain to use for cluster (default "cluster.local")
   -h, --help                                help for config
       --install-disk string                 the disk to install to (default "/dev/sda")
-      --install-image string                the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
+      --install-image string                the image used to perform an installation (default "ghcr.io/aleksi/installer:latest")
       --kubernetes-version string           desired kubernetes version to run
   -o, --output-dir string                   destination to output generated files
   -p, --persist                             the desired persist value for configs (default true)

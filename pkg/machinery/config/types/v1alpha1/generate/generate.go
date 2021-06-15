@@ -383,11 +383,11 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 }
 
 // NewAdminCertificateAndKey generates the admin Talos certificate and key.
-func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string, role role.Role) (p *x509.PEMEncodedCertificateAndKey, err error) {
+func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string, roles role.Set) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	ips := []net.IP{net.ParseIP(loopback)}
 
 	opts := []x509.Option{
-		x509.Organization(string(role)),
+		x509.Organization(roles.Strings()...),
 		x509.IPAddresses(ips),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
@@ -417,23 +417,13 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		}
 	}
 
-	var loopback, podNet, serviceNet string
-
-	if tnet.IsIPv6(net.ParseIP(endpoint)) {
-		loopback = "::1"
-		podNet = constants.DefaultIPv6PodNet
-		serviceNet = constants.DefaultIPv6ServiceNet
-	} else {
-		loopback = "127.0.0.1"
-		podNet = constants.DefaultIPv4PodNet
-		serviceNet = constants.DefaultIPv4ServiceNet
-	}
+	loopback, podNet, serviceNet := Foo(endpoint)
 
 	secrets.Certs.Admin, err = NewAdminCertificateAndKey(
 		secrets.Clock.Now(),
 		secrets.Certs.OS,
 		loopback,
-		role.Admin,
+		options.Roles,
 	)
 
 	if err != nil {
@@ -478,6 +468,21 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 	}
 
 	return input, nil
+}
+
+// TODO(rbac) Rename function once it is clear what it does.
+func Foo(endpoint string) (loopback, podNet, serviceNet string) {
+	if tnet.IsIPv6(net.ParseIP(endpoint)) {
+		loopback = "::1"
+		podNet = constants.DefaultIPv6PodNet
+		serviceNet = constants.DefaultIPv6ServiceNet
+	} else {
+		loopback = "127.0.0.1"
+		podNet = constants.DefaultIPv4PodNet
+		serviceNet = constants.DefaultIPv4ServiceNet
+	}
+
+	return
 }
 
 // randBytes returns a random string consisting of the characters in

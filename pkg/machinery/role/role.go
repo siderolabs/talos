@@ -29,6 +29,7 @@ const (
 )
 
 // Set represents a set of roles.
+// TODO(rbac): convert to struct to support disabled RBAC feature and per-method authorization.
 type Set map[Role]struct{}
 
 // all roles, including internal ones.

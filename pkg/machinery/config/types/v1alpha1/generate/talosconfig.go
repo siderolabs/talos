@@ -7,11 +7,11 @@ package generate
 import (
 	"encoding/base64"
 
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // Talosconfig returns the talos admin Talos config.
-func Talosconfig(in *Input, opts ...GenOption) (*config.Config, error) {
+func Talosconfig(in *Input, opts ...GenOption) (*clientconfig.Config, error) {
 	options := DefaultGenOptions()
 
 	for _, opt := range opts {
@@ -20,9 +20,9 @@ func Talosconfig(in *Input, opts ...GenOption) (*config.Config, error) {
 		}
 	}
 
-	return &config.Config{
+	return &clientconfig.Config{
 		Context: in.ClusterName,
-		Contexts: map[string]*config.Context{
+		Contexts: map[string]*clientconfig.Context{
 			in.ClusterName: {
 				Endpoints: options.EndpointList,
 				CA:        base64.StdEncoding.EncodeToString(in.Certs.OS.Crt),

@@ -69,8 +69,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -1914,6 +1916,47 @@ func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *empty.Emp
 			{},
 		},
 	}, nil
+}
+
+// GenerateClientConfiguration implements the machine.MachineServer interface.
+func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
+	input := &generate.Input{
+		ClusterName: s.Controller.Runtime().Config().Cluster().Name(),
+		Certs: &generate.Certs{
+			OS: s.Controller.Runtime().Config().Machine().Security().CA(),
+		},
+	}
+
+	loopback, _, _ := generate.Foo(s.Controller.Runtime().Config().Cluster().Endpoint().String())
+	roles, _ := role.Parse(in.Roles)
+	cert, err := generate.NewAdminCertificateAndKey(time.Now(), input.Certs.OS, loopback, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	input.Certs.Admin = cert
+	talosconfig, err := generate.Talosconfig(input)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := talosconfig.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &machine.GenerateClientConfigurationResponse{
+		Messages: []*machine.GenerateClientConfiguration{
+			{
+				Ca:          string(input.Certs.OS.Crt),
+				Crt:         string(cert.Crt),
+				Key:         string(cert.Key),
+				Talosconfig: string(b),
+			},
+		},
+	}
+
+	return reply, nil
 }
 
 func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {

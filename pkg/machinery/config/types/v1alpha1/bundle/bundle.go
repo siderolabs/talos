@@ -13,7 +13,7 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -72,7 +72,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 
 		defer talosConfig.Close() //nolint:errcheck
 
-		if bundle.TalosCfg, err = config.ReadFrom(talosConfig); err != nil {
+		if bundle.TalosCfg, err = clientconfig.ReadFrom(talosConfig); err != nil {
 			return bundle, err
 		}
 
