@@ -12,18 +12,23 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
-func TestRole(t *testing.T) {
+func TestSet(t *testing.T) {
 	t.Parallel()
 
-	set, err := role.Parse([]string{"os:admin", "os:reader", "os:future", "os:impersonator", "", " "})
-	assert.EqualError(t, err, "1 error occurred:\n\t* unexpected role \"os:future\"\n\n")
-	assert.Equal(t, role.MakeSet(role.Admin, role.Reader, role.Role("os:future"), role.Impersonator), set)
+	roles, unknownRoles := role.Parse([]string{"os:admin", "os:reader", "os:future", "os:impersonator", "", " "})
+	assert.Equal(t, []string{"os:future"}, unknownRoles)
+	assert.Equal(t, role.MakeSet(role.Admin, role.Reader, role.Role("os:future"), role.Impersonator), roles)
 
-	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:reader"}, set.Strings())
-	assert.Equal(t, []string{}, role.Set.Strings(nil))
+	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:reader"}, roles.Strings())
+	assert.Equal(t, []string{}, role.MakeSet().Strings())
 
-	_, ok := set[role.Admin]
-	assert.True(t, ok)
-	assert.True(t, set.IncludesAny(role.MakeSet(role.Admin)))
-	assert.False(t, set.IncludesAny(nil))
+	assert.True(t, roles.Includes(role.Admin))
+	assert.False(t, roles.Includes(role.Role("wrong")))
+
+	assert.True(t, roles.IncludesAny(role.MakeSet(role.Admin)))
+	assert.False(t, roles.IncludesAny(role.MakeSet(role.Role("wrong"))))
+
+	assert.False(t, roles.IncludesAny(role.MakeSet()))
+	assert.False(t, role.MakeSet().IncludesAny(roles))
+	assert.False(t, role.MakeSet().IncludesAny(role.MakeSet()))
 }

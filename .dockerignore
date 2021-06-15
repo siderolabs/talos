@@ -5,7 +5,6 @@
 !hack
 !internal
 !pkg
-!vendor
 !website
 !.golangci.yml
 !.markdownlint.json

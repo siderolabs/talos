@@ -706,7 +706,6 @@ systemDiskEncryption:
 
 <div class="dd">
 
-<code>features</code>  <i><a href="#featuresconfig">FeaturesConfig</a></i>
 
 </div>
 <div class="dt">
@@ -720,7 +719,6 @@ Examples:
 
 ``` yaml
 features:
-    rbac: true # Enable role-based access control (RBAC).
 ```
 
 
@@ -5134,7 +5132,3 @@ contents: /etc/kubernetes/auth
 </div>
 
 <hr />
-
-
-
-

@@ -71,6 +71,8 @@ type MachineServiceClient interface {
 	SystemStat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SystemStatResponse, error)
 	Upgrade(ctx context.Context, in *UpgradeRequest, opts ...grpc.CallOption) (*UpgradeResponse, error)
 	Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
+	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).
+	GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error)
 }
 
 type machineServiceClient struct {
@@ -682,6 +684,15 @@ func (c *machineServiceClient) Version(ctx context.Context, in *emptypb.Empty, o
 	return out, nil
 }
 
+func (c *machineServiceClient) GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error) {
+	out := new(GenerateClientConfigurationResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/GenerateClientConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
 // for forward compatibility
@@ -735,6 +746,8 @@ type MachineServiceServer interface {
 	SystemStat(context.Context, *emptypb.Empty) (*SystemStatResponse, error)
 	Upgrade(context.Context, *UpgradeRequest) (*UpgradeResponse, error)
 	Version(context.Context, *emptypb.Empty) (*VersionResponse, error)
+	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).
+	GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error)
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -903,6 +916,10 @@ func (UnimplementedMachineServiceServer) Upgrade(context.Context, *UpgradeReques
 
 func (UnimplementedMachineServiceServer) Version(context.Context, *emptypb.Empty) (*VersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
+}
+
+func (UnimplementedMachineServiceServer) GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateClientConfiguration not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 
@@ -1690,6 +1707,24 @@ func _MachineService_Version_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MachineService_GenerateClientConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateClientConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).GenerateClientConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/GenerateClientConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).GenerateClientConfiguration(ctx, req.(*GenerateClientConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1820,6 +1855,10 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Version",
 			Handler:    _MachineService_Version_Handler,
+		},
+		{
+			MethodName: "GenerateClientConfiguration",
+			Handler:    _MachineService_GenerateClientConfiguration_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

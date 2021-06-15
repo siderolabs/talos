@@ -55,9 +55,9 @@ var genCSRCmd = &cobra.Command{
 			return fmt.Errorf("invalid IP: %s", genCSRCmdFlags.ip)
 		}
 
-		roles, err := role.Parse(genCSRCmdFlags.roles)
+		roles, unknownRoles := role.Parse(genCSRCmdFlags.roles)
 		if err != nil {
-			return err
+			return fmt.Errorf("unknown roles: %s", strings.Join(unknownRoles, ", "))
 		}
 
 		ips := []net.IP{parsed}

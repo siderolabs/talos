@@ -383,13 +383,10 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 }
 
 // NewAdminCertificateAndKey generates the admin Talos certificate and key.
-func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, loopback string, role role.Role) (p *x509.PEMEncodedCertificateAndKey, err error) {
-	ips := []net.IP{net.ParseIP(loopback)}
-
+func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, roles role.Set, ttl time.Duration) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	opts := []x509.Option{
-		x509.Organization(string(role)),
-		x509.IPAddresses(ips),
-		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
+		x509.Organization(roles.Strings()...),
+		x509.NotAfter(currentTime.Add(ttl)),
 		x509.NotBefore(currentTime),
 	}
 
@@ -417,14 +414,12 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		}
 	}
 
-	var loopback, podNet, serviceNet string
+	var podNet, serviceNet string
 
 	if tnet.IsIPv6(net.ParseIP(endpoint)) {
-		loopback = "::1"
 		podNet = constants.DefaultIPv6PodNet
 		serviceNet = constants.DefaultIPv6ServiceNet
 	} else {
-		loopback = "127.0.0.1"
 		podNet = constants.DefaultIPv4PodNet
 		serviceNet = constants.DefaultIPv4ServiceNet
 	}
@@ -432,8 +427,8 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 	secrets.Certs.Admin, err = NewAdminCertificateAndKey(
 		secrets.Clock.Now(),
 		secrets.Certs.OS,
-		loopback,
-		role.Admin,
+		options.Roles,
+		87600*time.Hour,
 	)
 
 	if err != nil {

@@ -35,7 +35,7 @@ import (
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
 	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -103,7 +103,7 @@ func (c *Client) resolveConfigContext() error {
 }
 
 // GetConfigContext returns resolved config context.
-func (c *Client) GetConfigContext() *config.Context {
+func (c *Client) GetConfigContext() *clientconfig.Context {
 	if err := c.resolveConfigContext(); err != nil {
 		return nil
 	}
@@ -223,7 +223,7 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 }
 
 // CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.
-func CredentialsFromConfigContext(context *config.Context) (*Credentials, error) {
+func CredentialsFromConfigContext(context *clientconfig.Context) (*Credentials, error) {
 	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding CA: %w", err)
@@ -253,8 +253,8 @@ func CredentialsFromConfigContext(context *config.Context) (*Credentials, error)
 // NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
 //
 // Deprecated: use Option-based methods for client creation.
-func NewClientContextAndCredentialsFromConfig(p, ctx string) (context *config.Context, creds *Credentials, err error) {
-	c, err := config.Open(p)
+func NewClientContextAndCredentialsFromConfig(p, ctx string) (context *clientconfig.Context, creds *Credentials, err error) {
+	c, err := clientconfig.Open(p)
 	if err != nil {
 		return
 	}
@@ -267,7 +267,7 @@ func NewClientContextAndCredentialsFromConfig(p, ctx string) (context *config.Co
 // NewClientContextAndCredentialsFromParsedConfig initializes Credentials from parsed configuration.
 //
 // Deprecated: use Option-based methods for client creation.
-func NewClientContextAndCredentialsFromParsedConfig(c *config.Config, ctx string) (context *config.Context, creds *Credentials, err error) {
+func NewClientContextAndCredentialsFromParsedConfig(c *clientconfig.Config, ctx string) (context *clientconfig.Context, creds *Credentials, err error) {
 	if ctx != "" {
 		c.Context = ctx
 	}
@@ -938,6 +938,17 @@ func (c *Client) EtcdRecover(ctx context.Context, snapshot io.Reader, callOption
 	}
 
 	return cli.CloseAndRecv()
+}
+
+// GenerateClientConfiguration implements proto.MachineServiceClient interface.
+func (c *Client) GenerateClientConfiguration(ctx context.Context, req *machineapi.GenerateClientConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateClientConfigurationResponse, err error) { //nolint:lll
+	resp, err = c.MachineClient.GenerateClientConfiguration(ctx, req, callOptions...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.GenerateClientConfigurationResponse) //nolint:errcheck
+
+	return
 }
 
 // MachineStream is a common interface for streams returned by streaming APIs.

@@ -26,9 +26,17 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-const (
-	debugAddr = ":9983"
-)
+func runDebugServer(ctx context.Context) {
+	const debugAddr = ":9983"
+
+	debugLogFunc := func(msg string) {
+		log.Print(msg)
+	}
+
+	if err := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); err != nil {
+		log.Fatalf("failed to start debug server: %s", err)
+	}
+}
 
 // Main is the entrypoint into trustd.
 //
@@ -38,14 +46,7 @@ func Main() {
 
 	flag.Parse()
 
-	go func() {
-		debugLogFunc := func(msg string) {
-			log.Print(msg)
-		}
-		if lErr := debug.ListenAndServe(context.TODO(), debugAddr, debugLogFunc); lErr != nil {
-			log.Fatalf("failed to start debug server: %s", lErr)
-		}
-	}()
+	go runDebugServer(context.TODO())
 
 	var err error
 

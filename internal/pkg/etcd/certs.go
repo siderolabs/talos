@@ -45,7 +45,7 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 	}
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA, opts...)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}

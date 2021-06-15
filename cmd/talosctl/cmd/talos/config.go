@@ -194,7 +194,6 @@ var configGetContexts = &cobra.Command{
 	Short:   "List contexts defined in Talos config",
 	Aliases: []string{"get-contexts"},
 	Long:    ``,
-	Hidden:  false,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := clientconfig.Open(Talosconfig)
 		if err != nil {
@@ -241,11 +240,10 @@ var configGetContexts = &cobra.Command{
 
 // configMergeCmd represents the config merge command.
 var configMergeCmd = &cobra.Command{
-	Use:    "merge <from>",
-	Short:  "Merge additional contexts from another Talos config into the default config",
-	Long:   "Contexts with the same name are renamed while merging configs.",
-	Hidden: false,
-	Args:   cobra.MinimumNArgs(1),
+	Use:   "merge <from>",
+	Short: "Merge additional contexts from another Talos config into the default config",
+	Long:  "Contexts with the same name are renamed while merging configs.",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		from := args[0]
 		c, err := clientconfig.Open(Talosconfig)

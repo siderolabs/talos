@@ -38,6 +38,8 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
@@ -68,9 +70,12 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -1914,6 +1919,53 @@ func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *empty.Emp
 			{},
 		},
 	}, nil
+}
+
+// GenerateClientConfiguration implements the machine.MachineServer interface.
+func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
+		return nil, status.Error(codes.FailedPrecondition, "client configuration (talosconfig) can't be generated on worker nodes")
+	}
+
+	crtTTL := in.CrtTtl.AsDuration()
+	if crtTTL <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "crt_ttl should be positive")
+	}
+
+	ca := s.Controller.Runtime().Config().Machine().Security().CA()
+
+	roles, _ := role.Parse(in.Roles)
+
+	cert, err := generate.NewAdminCertificateAndKey(time.Now(), ca, roles, crtTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	// make a nice context name
+	contextName := s.Controller.Runtime().Config().Cluster().Name()
+	if r := roles.Strings(); len(r) == 1 {
+		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
+	}
+
+	talosconfig := clientconfig.NewConfig(contextName, nil, ca.Crt, cert)
+
+	b, err := talosconfig.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &machine.GenerateClientConfigurationResponse{
+		Messages: []*machine.GenerateClientConfiguration{
+			{
+				Ca:          ca.Crt,
+				Crt:         cert.Crt,
+				Key:         cert.Key,
+				Talosconfig: b,
+			},
+		},
+	}
+
+	return reply, nil
 }
 
 func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {
