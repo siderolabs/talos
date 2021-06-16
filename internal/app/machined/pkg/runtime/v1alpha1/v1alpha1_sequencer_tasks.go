@@ -1485,7 +1485,13 @@ func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 		//nolint:errcheck
 		defer meta.Close()
 
-		opts := []mount.Option{mount.WithFlags(mount.SkipIfMounted)}
+		flags := mount.SkipIfMounted
+
+		if seq == runtime.SequenceInitialize {
+			flags |= mount.SkipIfNoFilesystem
+		}
+
+		opts := []mount.Option{mount.WithFlags(flags)}
 
 		var encryption config.Encryption
 		// first try reading encryption from the config

@@ -185,6 +185,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
+		"saveStateEncryptionConfig",
+		SaveStateEncryptionConfig,
+	).AppendWhen(
+		r.State().Platform().Mode() != runtime.ModeContainer,
 		"mountState",
 		MountStatePartition,
 	).Append(

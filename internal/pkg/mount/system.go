@@ -157,9 +157,13 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 			return fmt.Errorf("failed to determine format options for partition label %s", part.Name)
 		}
 
-		p.fstype = opts.FileSystemType
+		if !o.MountFlags.Check(SkipIfNoFilesystem) {
+			p.fstype = opts.FileSystemType
 
-		return partition.Format(p.source, opts)
+			return partition.Format(p.source, opts)
+		}
+
+		return nil
 	})
 
 	opts = append(opts, WithPreMountHooks(preMountHooks...))
