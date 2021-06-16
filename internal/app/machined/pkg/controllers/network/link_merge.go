@@ -111,6 +111,8 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 			}); err != nil {
 				return fmt.Errorf("error updating resource: %w", err)
 			}
+
+			logger.Debug("merged link spec", zap.String("id", id), zap.Any("spec", link))
 		}
 
 		// list link for cleanup

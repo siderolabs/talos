@@ -192,15 +192,16 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						DeviceCIDR:      "192.168.0.24/28",
 					},
 					{
+						DeviceInterface: "eth1",
+						DeviceMTU:       9001,
+					},
+					{
 						DeviceIgnore:    true,
 						DeviceInterface: "eth2",
 						DeviceCIDR:      "192.168.0.24/28",
 					},
 					{
 						DeviceInterface: "eth2",
-					},
-					{
-						DeviceInterface: "eth3",
 					},
 					{
 						DeviceInterface: "bond0",
@@ -262,6 +263,12 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				case "eth0", "eth1":
 					suite.Assert().True(r.TypedSpec().Up)
 					suite.Assert().False(r.TypedSpec().Logical)
+
+					if r.TypedSpec().Name == "eth0" {
+						suite.Assert().EqualValues(0, r.TypedSpec().MTU)
+					} else {
+						suite.Assert().EqualValues(9001, r.TypedSpec().MTU)
+					}
 				case "eth0.24", "eth0.48":
 					suite.Assert().True(r.TypedSpec().Up)
 					suite.Assert().True(r.TypedSpec().Logical)
@@ -276,7 +283,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						suite.Assert().EqualValues(48, r.TypedSpec().VLAN.VID)
 					}
 				case "eth2", "eth3":
-					suite.Assert().False(r.TypedSpec().Up)
+					suite.Assert().True(r.TypedSpec().Up)
 					suite.Assert().False(r.TypedSpec().Logical)
 					suite.Assert().Equal("bond0", r.TypedSpec().MasterName)
 				case "bond0":
@@ -316,7 +323,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		Cmdline: procfs.NewCmdline("talos.network.interface.ignore=eth2"),
 	}))
 
-	for _, link := range []string{"eth0", "eth1", "eth2"} {
+	for _, link := range []string{"eth0", "eth1", "eth2", "eth3", "eth4"} {
 		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
 		linkStatus.TypedSpec().Type = nethelpers.LinkEther
 		linkStatus.TypedSpec().LinkState = true
@@ -342,6 +349,15 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 							{
 								VlanID:   48,
 								VlanCIDR: "10.0.0.2/8",
+							},
+						},
+					},
+					{
+						DeviceInterface: "bond0",
+						DeviceBond: &v1alpha1.Bond{
+							BondInterfaces: []string{
+								"eth3",
+								"eth4",
 							},
 						},
 					},
@@ -378,6 +394,8 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 			return suite.assertNoLinks([]string{
 				"default/eth0",
 				"default/eth2",
+				"default/eth3",
+				"default/eth4",
 			})
 		}))
 }
