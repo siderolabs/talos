@@ -34,6 +34,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
@@ -185,7 +186,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	return restart.New(containerd.NewRunner(
-		r.Config().Debug(),
+		r.Config().Debug() && r.Config().Machine().Type() == machine.TypeJoin, // enable debug logs only for the worker nodes
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),

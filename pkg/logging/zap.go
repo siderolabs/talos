@@ -61,7 +61,7 @@ var StdWriter = &LogWrapper{nil}
 // LogDestination defines logging destination Config.
 type LogDestination struct {
 	// Level log level.
-	Level  zap.AtomicLevel
+	Level  zapcore.LevelEnabler
 	writer io.Writer
 	config zapcore.EncoderConfig
 }
@@ -91,7 +91,7 @@ func WithColoredLevels() EncoderOption {
 }
 
 // NewLogDestination creates new log destination.
-func NewLogDestination(writer io.Writer, logLevel zapcore.Level, options ...EncoderOption) *LogDestination {
+func NewLogDestination(writer io.Writer, logLevel zapcore.LevelEnabler, options ...EncoderOption) *LogDestination {
 	config := zap.NewDevelopmentEncoderConfig()
 	config.ConsoleSeparator = " "
 	config.StacktraceKey = "error"
@@ -101,7 +101,7 @@ func NewLogDestination(writer io.Writer, logLevel zapcore.Level, options ...Enco
 	}
 
 	return &LogDestination{
-		Level:  zap.NewAtomicLevelAt(logLevel),
+		Level:  logLevel,
 		config: config,
 		writer: writer,
 	}
