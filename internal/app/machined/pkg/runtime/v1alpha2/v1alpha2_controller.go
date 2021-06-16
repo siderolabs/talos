@@ -9,7 +9,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
@@ -23,11 +26,14 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	configresource "github.com/talos-systems/talos/pkg/resources/config"
 )
 
 // Controller implements runtime.V1alpha2Controller.
 type Controller struct {
 	controllerRuntime *osruntime.Runtime
+	consoleLogLevel   zap.AtomicLevel
+	logger            *zap.Logger
 
 	v1alpha1Runtime runtime.Runtime
 }
@@ -36,6 +42,7 @@ type Controller struct {
 func NewController(v1alpha1Runtime runtime.Runtime, loggingManager runtime.LoggingManager) (*Controller, error) {
 	ctrl := &Controller{
 		v1alpha1Runtime: v1alpha1Runtime,
+		consoleLogLevel: zap.NewAtomicLevel(),
 	}
 
 	logWriter, err := loggingManager.ServiceLog("controller-runtime").Writer()
@@ -43,18 +50,21 @@ func NewController(v1alpha1Runtime runtime.Runtime, loggingManager runtime.Loggi
 		return nil, err
 	}
 
-	logger := logging.ZapLogger(
+	ctrl.logger = logging.ZapLogger(
 		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
-		logging.NewLogDestination(logging.StdWriter, zapcore.InfoLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
+		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
 	).With(logging.Component("controller-runtime"))
 
-	ctrl.controllerRuntime, err = osruntime.NewRuntime(v1alpha1Runtime.State().V1Alpha2().Resources(), logger)
+	ctrl.controllerRuntime, err = osruntime.NewRuntime(v1alpha1Runtime.State().V1Alpha2().Resources(), ctrl.logger)
 
 	return ctrl, err
 }
 
 // Run the controller runtime.
 func (ctrl *Controller) Run(ctx context.Context) error {
+	// adjust the log level based on machine configuration
+	go ctrl.watchMachineConfig(ctx, ctrl.logger)
+
 	for _, c := range []controller.Controller{
 		&v1alpha1.BootstrapStatusController{},
 		&v1alpha1.ServiceController{
@@ -141,4 +151,39 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 // DependencyGraph returns controller-resources dependencies.
 func (ctrl *Controller) DependencyGraph() (*controller.DependencyGraph, error) {
 	return ctrl.controllerRuntime.GetDependencyGraph()
+}
+
+func (ctrl *Controller) watchMachineConfig(ctx context.Context, logger *zap.Logger) {
+	watchCh := make(chan state.Event)
+
+	if err := ctrl.v1alpha1Runtime.State().V1Alpha2().Resources().Watch(
+		ctx,
+		resource.NewMetadata(configresource.NamespaceName, configresource.MachineConfigType, configresource.V1Alpha1ID, resource.VersionUndefined),
+		watchCh,
+	); err != nil {
+		logger.Warn("error watching machine configuration", zap.Error(err))
+
+		return
+	}
+
+	for {
+		logLevel := zapcore.InfoLevel
+
+		select {
+		case event := <-watchCh:
+			if event.Type != state.Destroyed {
+				if event.Resource.(*configresource.MachineConfig).Config().Debug() {
+					logLevel = zapcore.DebugLevel
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+
+		if ctrl.consoleLogLevel.Level() != logLevel {
+			ctrl.consoleLogLevel.SetLevel(logLevel)
+
+			ctrl.logger.Info("setting console log level", zap.Stringer("level", logLevel))
+		}
+	}
 }

@@ -101,9 +101,11 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 
 	// the config changes allowed to be applied immediately are:
 	// * cluster config
+	// * .machine.debug
 	// * .machine.time
 	// * .machine.network
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
+	newConfig.ConfigDebug = currentConfig.ConfigDebug
 
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
