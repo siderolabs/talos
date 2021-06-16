@@ -63,6 +63,8 @@ var (
 )
 
 // Merge with other, overwriting fields from other if set.
+//
+//nolint:gocyclo
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	if spec.Logical != other.Logical {
 		return fmt.Errorf("mismatch on logical for %q: %v != %v", spec.Name, spec.Logical, other.Logical)
@@ -82,6 +84,14 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 
 	if other.Type != 0 {
 		spec.Type = 0
+	}
+
+	if other.ParentName != "" {
+		spec.ParentName = other.ParentName
+	}
+
+	if other.MasterName != "" {
+		spec.MasterName = other.MasterName
 	}
 
 	if other.VLAN != zeroVLAN {

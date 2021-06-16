@@ -403,7 +403,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		}
 
 		// sync UP flag
-		existingUp := existing.Attributes.OperationalState == rtnetlink.OperStateUnknown || existing.Attributes.OperationalState == rtnetlink.OperStateUp
+		existingUp := existing.Flags&unix.IFF_UP == unix.IFF_UP
 		if existingUp != link.TypedSpec().Up {
 			flags := uint32(0)
 
@@ -456,6 +456,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				Family: existing.Family,
 				Type:   existing.Type,
 				Index:  existing.Index,
+				Change: unix.IFF_UP,
 				Attributes: &rtnetlink.LinkAttributes{
 					Master: pointer.ToUint32(masterIndex),
 				},

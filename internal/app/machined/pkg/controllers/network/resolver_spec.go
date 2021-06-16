@@ -87,6 +87,14 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 					return fmt.Errorf("error removing finalizer: %w", err)
 				}
 			case resource.PhaseRunning:
+				resolvers := make([]string, len(spec.TypedSpec().DNSServers))
+
+				for i := range resolvers {
+					resolvers[i] = spec.TypedSpec().DNSServers[i].String()
+				}
+
+				logger.Info("setting resolvers", zap.Strings("resolvers", resolvers))
+
 				if err = r.Modify(ctx, network.NewResolverStatus(network.NamespaceName, spec.Metadata().ID()), func(r resource.Resource) error {
 					status := r.(*network.ResolverStatus) //nolint:forcetypeassert,errcheck
 

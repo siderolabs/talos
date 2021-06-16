@@ -339,7 +339,7 @@ func (suite *LinkSpecSuite) TestBond() {
 		Name:        dummy0Name,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
-		Up:          false,
+		Up:          true,
 		Logical:     true,
 		MasterName:  bondName,
 		ConfigLayer: network.ConfigDefault,
@@ -351,7 +351,7 @@ func (suite *LinkSpecSuite) TestBond() {
 		Name:        dummy1Name,
 		Type:        nethelpers.LinkEther,
 		Kind:        "dummy",
-		Up:          false,
+		Up:          true,
 		Logical:     true,
 		MasterName:  bondName,
 		ConfigLayer: network.ConfigDefault,
@@ -374,8 +374,8 @@ func (suite *LinkSpecSuite) TestBond() {
 				case dummy0Name, dummy1Name:
 					suite.Assert().Equal("dummy", r.TypedSpec().Kind)
 
-					if r.TypedSpec().OperationalState != nethelpers.OperStateDown {
-						return retry.ExpectedErrorf("link is not down: %s", r.TypedSpec().OperationalState)
+					if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
+						return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
 					}
 
 					if r.TypedSpec().MasterIndex == 0 {
