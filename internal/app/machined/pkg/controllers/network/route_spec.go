@@ -149,9 +149,18 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
 
 	destinationStr := route.TypedSpec().Destination.String()
-
 	if route.TypedSpec().Destination.IsZero() {
 		destinationStr = "default"
+	}
+
+	sourceStr := route.TypedSpec().Source.String()
+	if route.TypedSpec().Source.IsZero() {
+		sourceStr = ""
+	}
+
+	gatewayStr := route.TypedSpec().Gateway.String()
+	if route.TypedSpec().Gateway.IsZero() {
+		gatewayStr = ""
 	}
 
 	switch route.Metadata().Phase() {
@@ -162,7 +171,12 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				return fmt.Errorf("error removing route: %w", err)
 			}
 
-			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
+			logger.Info("deleted route",
+				zap.String("destination", destinationStr),
+				zap.String("gateway", gatewayStr),
+				zap.Stringer("table", route.TypedSpec().Table),
+				zap.String("link", route.TypedSpec().OutLinkName),
+			)
 		}
 
 		// now remove finalizer as address was deleted
@@ -178,11 +192,10 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		matchFound := false
 
 		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
-			// check if existing matches the spec: if it does, skip update
-			if existing.Scope == uint8(route.TypedSpec().Scope) && existing.Flags == uint32(route.TypedSpec().Flags) &&
-				existing.Protocol == uint8(route.TypedSpec().Protocol) && existing.Flags == uint32(route.TypedSpec().Flags) &&
+			// check if existing route matches the spec: if it does, skip update
+			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
+				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
-				existing.Attributes.Table == uint32(route.TypedSpec().Table) &&
 				(route.TypedSpec().Source.IsZero() ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.IP.IPAddr().IP)) {
 				matchFound = true
@@ -190,12 +203,29 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				continue
 			}
 
-			// delete route, it doesn't match the spec
+			// delete the route, it doesn't match the spec
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
 			}
 
-			logger.Sugar().Infof("removed route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
+			logger.Debug("removed route due to mismatch",
+				zap.String("destination", destinationStr),
+				zap.String("gateway", gatewayStr),
+				zap.Stringer("table", route.TypedSpec().Table),
+				zap.String("link", route.TypedSpec().OutLinkName),
+				zap.Stringer("old_scope", nethelpers.Scope(existing.Scope)),
+				zap.Stringer("new_scope", route.TypedSpec().Scope),
+				zap.Stringer("old_flags", nethelpers.RouteFlags(existing.Flags)),
+				zap.Stringer("new_flags", route.TypedSpec().Flags),
+				zap.Stringer("old_protocol", nethelpers.RouteProtocol(existing.Protocol)),
+				zap.Stringer("new_protocol", route.TypedSpec().Protocol),
+				zap.Uint32("old_link_index", existing.Attributes.OutIface),
+				zap.Uint32("new_link_index", linkIndex),
+				zap.Uint32("old_priority", existing.Attributes.Priority),
+				zap.Uint32("new_priority", route.TypedSpec().Priority),
+				zap.Stringer("old_source", existing.Attributes.Src),
+				zap.String("new_source", sourceStr),
+			)
 		}
 
 		if matchFound {
@@ -225,7 +255,12 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			return fmt.Errorf("error adding route: %w, message %+v", err, *msg)
 		}
 
-		logger.Sugar().Infof("created route to %s via %s (link %q)", destinationStr, route.TypedSpec().Gateway, route.TypedSpec().OutLinkName)
+		logger.Info("created route",
+			zap.String("destination", destinationStr),
+			zap.String("gateway", gatewayStr),
+			zap.Stringer("table", route.TypedSpec().Table),
+			zap.String("link", route.TypedSpec().OutLinkName),
+		)
 	}
 
 	return nil

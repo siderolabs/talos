@@ -18,13 +18,18 @@ type RouteFlags uint32
 func (flags RouteFlags) String() string {
 	var values []string
 
-	for flag := RouteNotify; flag <= RoutePrefix; flag <<= 1 {
+	for flag := RouteNotify; flag <= RouteTrap; flag <<= 1 {
 		if (RouteFlag(flags) & flag) == flag {
 			values = append(values, flag.String())
 		}
 	}
 
 	return strings.Join(values, ",")
+}
+
+// Equal tests for RouteFlags equality ignoring flags not managed by this implementation.
+func (flags RouteFlags) Equal(other RouteFlags) bool {
+	return (flags & RouteFlags(RouteFlagsMask)) == (other & RouteFlags(RouteFlagsMask))
 }
 
 // MarshalYAML implements yaml.Marshaler.
@@ -37,8 +42,15 @@ type RouteFlag uint32
 
 // RouteFlag constants.
 const (
-	RouteNotify   RouteFlag = unix.RTM_F_NOTIFY   // notify
-	RouteCloned   RouteFlag = unix.RTM_F_CLONED   // cloned
-	RouteEqualize RouteFlag = unix.RTM_F_EQUALIZE // equalize
-	RoutePrefix   RouteFlag = unix.RTM_F_PREFIX   // prefix
+	RouteNotify      RouteFlag = unix.RTM_F_NOTIFY       // notify
+	RouteCloned      RouteFlag = unix.RTM_F_CLONED       // cloned
+	RouteEqualize    RouteFlag = unix.RTM_F_EQUALIZE     // equalize
+	RoutePrefix      RouteFlag = unix.RTM_F_PREFIX       // prefix
+	RouteLookupTable RouteFlag = unix.RTM_F_LOOKUP_TABLE // lookup_table
+	RouteFIBMatch    RouteFlag = unix.RTM_F_FIB_MATCH    // fib_match
+	RouteOffload     RouteFlag = unix.RTM_F_OFFLOAD      // offload
+	RouteTrap        RouteFlag = unix.RTM_F_TRAP         // trap
 )
+
+// RouteFlagsMask is a supported set of flags to manage.
+const RouteFlagsMask = RouteNotify | RouteCloned | RouteEqualize | RoutePrefix

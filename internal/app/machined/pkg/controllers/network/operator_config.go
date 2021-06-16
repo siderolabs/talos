@@ -117,6 +117,12 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					continue
 				}
 
+				if device.Bond() != nil {
+					for _, link := range device.Bond().Interfaces() {
+						configuredInterfaces[link] = struct{}{}
+					}
+				}
+
 				if device.DHCP() && device.DHCPOptions().IPv4() {
 					routeMetric := device.DHCPOptions().RouteMetric()
 					if routeMetric == 0 {

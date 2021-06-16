@@ -12,6 +12,10 @@ func _() {
 	_ = x[RouteCloned-512]
 	_ = x[RouteEqualize-1024]
 	_ = x[RoutePrefix-2048]
+	_ = x[RouteLookupTable-4096]
+	_ = x[RouteFIBMatch-8192]
+	_ = x[RouteOffload-16384]
+	_ = x[RouteTrap-32768]
 }
 
 const (
@@ -19,6 +23,10 @@ const (
 	_RouteFlag_name_1 = "cloned"
 	_RouteFlag_name_2 = "equalize"
 	_RouteFlag_name_3 = "prefix"
+	_RouteFlag_name_4 = "lookup_table"
+	_RouteFlag_name_5 = "fib_match"
+	_RouteFlag_name_6 = "offload"
+	_RouteFlag_name_7 = "trap"
 )
 
 func (i RouteFlag) String() string {
@@ -31,6 +39,14 @@ func (i RouteFlag) String() string {
 		return _RouteFlag_name_2
 	case i == 2048:
 		return _RouteFlag_name_3
+	case i == 4096:
+		return _RouteFlag_name_4
+	case i == 8192:
+		return _RouteFlag_name_5
+	case i == 16384:
+		return _RouteFlag_name_6
+	case i == 32768:
+		return _RouteFlag_name_7
 	default:
 		return "RouteFlag(" + strconv.FormatInt(int64(i), 10) + ")"
 	}

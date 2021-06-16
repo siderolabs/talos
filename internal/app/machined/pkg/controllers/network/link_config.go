@@ -162,6 +162,12 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		if cfgProvider != nil {
 			for _, device := range cfgProvider.Machine().Network().Devices() {
 				configuredLinks[device.Interface()] = struct{}{}
+
+				if device.Bond() != nil {
+					for _, link := range device.Bond().Interfaces() {
+						configuredLinks[link] = struct{}{}
+					}
+				}
 			}
 		}
 
@@ -262,7 +268,7 @@ func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) (network.Link
 }
 
 //nolint:gocyclo
-func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (links []network.LinkSpecSpec) {
+func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) []network.LinkSpecSpec {
 	// scan for the bonds
 	bondedLinks := map[string]string{} // mapping physical interface -> bond interface
 
@@ -276,7 +282,7 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 		}
 
 		for _, linkName := range device.Bond().Interfaces() {
-			if _, exists := bondedLinks[linkName]; exists {
+			if bondName, exists := bondedLinks[linkName]; exists && bondName != device.Interface() {
 				logger.Sugar().Warnf("link %q is included into more than two bonds", linkName)
 			}
 
@@ -284,50 +290,70 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 		}
 	}
 
+	linkMap := map[string]*network.LinkSpecSpec{}
+
 	for _, device := range cfgProvider.Machine().Network().Devices() {
 		if device.Ignore() {
 			continue
 		}
 
-		link := network.LinkSpecSpec{
-			Name:        device.Interface(),
-			MTU:         uint32(device.MTU()),
-			Up:          true,
-			ConfigLayer: network.ConfigMachineConfiguration,
+		if _, exists := linkMap[device.Interface()]; !exists {
+			linkMap[device.Interface()] = &network.LinkSpecSpec{
+				Name:        device.Interface(),
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
 		}
 
-		if bondName := bondedLinks[device.Interface()]; bondName != "" {
-			bondSlave(&link, bondName)
+		if device.MTU() != 0 {
+			linkMap[device.Interface()].MTU = uint32(device.MTU())
 		}
 
 		if device.Bond() != nil {
-			if err := bondMaster(&link, device.Bond()); err != nil {
+			if err := bondMaster(linkMap[device.Interface()], device.Bond()); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
 			}
 		}
 
 		if device.WireguardConfig() != nil {
-			if err := wireguardLink(&link, device.WireguardConfig()); err != nil {
+			if err := wireguardLink(linkMap[device.Interface()], device.WireguardConfig()); err != nil {
 				logger.Error("error parsing wireguard config", zap.Error(err))
 			}
 		}
 
 		if device.Dummy() {
-			dummyLink(&link)
+			dummyLink(linkMap[device.Interface()])
 		}
 
 		for _, vlan := range device.Vlans() {
-			links = append(links, vlanLink(device.Interface(), vlan))
+			vlanSpec := vlanLink(device.Interface(), vlan)
+
+			linkMap[vlanSpec.Name] = &vlanSpec
+		}
+	}
+
+	for slaveName, bondName := range bondedLinks {
+		if _, exists := linkMap[slaveName]; !exists {
+			linkMap[slaveName] = &network.LinkSpecSpec{
+				Name:        slaveName,
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
 		}
 
-		links = append(links, link)
+		bondSlave(linkMap[slaveName], bondName)
+	}
+
+	links := make([]network.LinkSpecSpec, 0, len(linkMap))
+
+	for _, link := range linkMap {
+		links = append(links, *link)
 	}
 
 	return links
 }
 
 func bondSlave(link *network.LinkSpecSpec, bondName string) {
-	link.Up = false
 	link.MasterName = bondName
 }
 
