@@ -35,6 +35,17 @@ func (spec *HostnameStatusSpec) FQDN() string {
 	return spec.Hostname + "." + spec.Domainname
 }
 
+// DNSNames returns DNS names to be added to the certificate based on the hostname and fqdn.
+func (spec *HostnameStatusSpec) DNSNames() []string {
+	result := []string{spec.Hostname}
+
+	if spec.Domainname != "" {
+		result = append(result, spec.FQDN())
+	}
+
+	return result
+}
+
 // NewHostnameStatus initializes a HostnameStatus resource.
 func NewHostnameStatus(namespace resource.Namespace, id resource.ID) *HostnameStatus {
 	r := &HostnameStatus{
