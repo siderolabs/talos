@@ -367,6 +367,7 @@ local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privile
         "SHORT_INTEGRATION_TEST": "yes",
         "USE_DISK_IMAGE": "true",
         "IMAGE_REGISTRY": local_registry,
+        "WITH_DISK_ENCRYPTION": "true",
 });
 local integration_canal_reset = Step("e2e-canal-reset", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
         "INTEGRATION_TEST_RUN": "TestIntegration/api.ResetSuite/TestResetWithSpec",

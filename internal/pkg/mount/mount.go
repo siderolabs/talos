@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
@@ -44,6 +45,7 @@ func Mount(mountpoints *Points) (err error) {
 	return nil
 }
 
+//nolint:gocyclo
 func mountMountpoint(mountpoint *Point) (err error) {
 	var skipMount bool
 
@@ -59,6 +61,10 @@ func mountMountpoint(mountpoint *Point) (err error) {
 		if err != nil {
 			return fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
 		}
+	}
+
+	if mountpoint.MountFlags.Check(SkipIfNoFilesystem) && mountpoint.Fstype() == filesystem.Unknown {
+		skipMount = true
 	}
 
 	if !skipMount {
