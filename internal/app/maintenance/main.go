@@ -11,27 +11,46 @@ import (
 	"log"
 	"net"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	ttls "github.com/talos-systems/crypto/tls"
 	"github.com/talos-systems/crypto/x509"
-	tnet "github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/maintenance/server"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
 // Run executes the configuration receiver, returning any configuration it receives.
+//
+//nolint:gocyclo
 func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
-	ips, err := tnet.IPAddrs()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get list of IPs: %w", err)
+	logger.Println("waiting for network address and hostname to be ready")
+
+	if err := network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady).Wait(ctx); err != nil {
+		return nil, fmt.Errorf("error waiting for the network to be ready: %w", err)
 	}
 
-	tlsConfig, provider, err := genTLSConfig(ips)
+	currentAddresses, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined))
+	if err != nil {
+		return nil, fmt.Errorf("error getting node addresses: %w", err)
+	}
+
+	ips := currentAddresses.(*network.NodeAddress).TypedSpec().Addresses
+
+	hostnameStatus, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+	if err != nil {
+		return nil, fmt.Errorf("error getting node hostname: %w", err)
+	}
+
+	dnsNames := hostnameStatus.(*network.HostnameStatus).TypedSpec().DNSNames()
+
+	tlsConfig, provider, err := genTLSConfig(ips, dnsNames)
 	if err != nil {
 		return nil, err
 	}
@@ -106,17 +125,18 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	}
 }
 
-func genTLSConfig(ips []net.IP) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
+func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
 	ca, err := x509.NewSelfSignedCertificateAuthority()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate self-signed CA: %w", err)
 	}
 
-	ips = append(ips, net.ParseIP("127.0.0.1"), net.ParseIP("::1"))
+	ips = append(ips, netaddr.MustParseIP("127.0.0.1"), netaddr.MustParseIP("::1"))
 
-	dnsNames, err := tnet.DNSNames()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get DNS names: %w", err)
+	netIPs := make([]net.IP, len(ips))
+
+	for i := range netIPs {
+		netIPs[i] = ips[i].IPAddr().IP
 	}
 
 	var generator ttls.Generator
@@ -126,7 +146,7 @@ func genTLSConfig(ips []net.IP) (tlsConfig *tls.Config, provider ttls.Certificat
 		return nil, nil, fmt.Errorf("failed to create local generator provider: %w", err)
 	}
 
-	provider, err = ttls.NewRenewingCertificateProvider(generator, x509.DNSNames(dnsNames), x509.IPAddresses(ips))
+	provider, err = ttls.NewRenewingCertificateProvider(generator, x509.DNSNames(dnsNames), x509.IPAddresses(netIPs))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create local certificate provider: %w", err)
 	}
