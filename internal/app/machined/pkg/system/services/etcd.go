@@ -207,11 +207,11 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerCertAndKey.Key, 0o400); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerCertAndKey.Key, 0o400); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peerCertAndKey.Crt, 0o400); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peerCertAndKey.Crt, 0o400); err != nil {
 		return err
 	}
 
@@ -220,7 +220,7 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdClientKey, clientCertAndKey.Key, 0o400); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdClientKey, clientCertAndKey.Key, 0o400); err != nil {
 		return err
 	}
 

@@ -28,7 +28,7 @@ type Etcd struct {
 type EtcdCertsSpec struct {
 	EtcdPeer      *x509.PEMEncodedCertificateAndKey `yaml:"etcdPeer"`
 	EtcdClient    *x509.PEMEncodedCertificateAndKey `yaml:"etcdClient"`
-	EtcdApiServer *x509.PEMEncodedCertificateAndKey `yaml:"etcdApiServer"`
+	EtcdAPIServer *x509.PEMEncodedCertificateAndKey `yaml:"EtcdAPIServer"`
 }
 
 // NewEtcd initializes a Etc resource.
