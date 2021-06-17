@@ -1713,6 +1713,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 				Hostname:   member.GetName(),
 				PeerUrls:   member.GetPeerURLs(),
 				ClientUrls: member.GetClientURLs(),
+				IsLearner:  member.GetIsLearner(),
 			},
 		)
 

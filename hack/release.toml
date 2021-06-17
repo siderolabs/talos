@@ -39,7 +39,8 @@ Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the clust
         title = "Component Updates"
         description = """\
 * containerd was updated to 1.5.2
-* Linux kernel was updated to 5.10.29
+* Linux kernel was updated to 5.10.38
+* etcd was updated to 3.5.0
 """
 
     [notes.bootstrap]

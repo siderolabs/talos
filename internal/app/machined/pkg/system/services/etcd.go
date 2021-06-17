@@ -52,6 +52,11 @@ type Etcd struct {
 	RecoverSkipHashCheck bool
 
 	args []string
+
+	// if the new member was added as a learner during the service start, its ID is kept here
+	learnerMemberID uint64
+
+	promoteCtxCancel context.CancelFunc
 }
 
 // ID implements the Service interface.
@@ -89,6 +94,9 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
+	// Clear any previously set learner member ID
+	e.learnerMemberID = 0
+
 	switch r.Config().Machine().Type() { //nolint:exhaustive
 	case machine.TypeInit:
 		err = e.argsForInit(ctx, r)
@@ -109,6 +117,10 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 // PostFunc implements the Service interface.
 func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if e.promoteCtxCancel != nil {
+		e.promoteCtxCancel()
+	}
+
 	return nil
 }
 
@@ -145,6 +157,20 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	if goruntime.GOARCH == "arm64" {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")
+	}
+
+	if e.learnerMemberID != 0 {
+		var promoteCtx context.Context
+
+		promoteCtx, e.promoteCtxCancel = context.WithCancel(context.Background())
+
+		go func() {
+			if err := promoteMember(promoteCtx, r, e.learnerMemberID); err != nil && !errors.Is(err, context.Canceled) {
+				log.Printf("failed promoting member: %s", err)
+			} else if err == nil {
+				log.Printf("successfully promoted etcd member")
+			}
+		}()
 	}
 
 	return restart.New(containerd.NewRunner(
@@ -240,7 +266,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 		}
 	}
 
-	add, err := client.MemberAdd(ctx, addrs)
+	add, err := client.MemberAddAsLearner(ctx, addrs)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error adding member: %w", err)
 	}
@@ -253,7 +279,9 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, err error) {
+func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, learnerMemberID uint64, err error) {
+	var id uint64
+
 	err = retry.Constant(10*time.Minute,
 		retry.WithUnits(3*time.Second),
 		retry.WithJitter(time.Second),
@@ -262,7 +290,6 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		var (
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
-			id        uint64
 		)
 
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
@@ -298,10 +325,10 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to build cluster arguments: %w", err)
+		return "", 0, fmt.Errorf("failed to build cluster arguments: %w", err)
 	}
 
-	return initial, nil
+	return initial, id, nil
 }
 
 //nolint:gocyclo
@@ -376,7 +403,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return err
 				}
@@ -468,7 +495,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 			if e.Bootstrap {
 				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 			} else {
-				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
 				}
@@ -523,6 +550,24 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 	}
 
 	return nil
+}
+
+func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {
+	// try to promote a member (call might fail until the member catches up with the leader)
+	return retry.Constant(10*time.Minute,
+		retry.WithUnits(3*time.Second),
+		retry.WithJitter(time.Second),
+		retry.WithErrorLogging(true),
+	).RetryWithContext(ctx, func(ctx context.Context) error {
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		_, err = client.MemberPromote(ctx, memberID)
+
+		return retry.ExpectedError(err)
+	})
 }
 
 // IsDirEmpty checks if a directory is empty or not.
