@@ -52,7 +52,8 @@ func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
 //
 //nolint:maligned
 type Input struct {
-	Certs *Certs
+	Certs           *Certs
+	VersionContract *config.VersionContract
 
 	// ControlplaneEndpoint is the canonical address of the kubernetes control
 	// plane.  It can be a DNS name, the IP address of a load balancer, or
@@ -453,6 +454,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 
 	input = &Input{
 		Certs:                      secrets.Certs,
+		VersionContract:            options.VersionContract,
 		ControlPlaneEndpoint:       endpoint,
 		PodNet:                     []string{podNet},
 		ServiceNet:                 []string{serviceNet},

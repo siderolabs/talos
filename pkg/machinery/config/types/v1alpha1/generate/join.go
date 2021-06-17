@@ -51,9 +51,11 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		},
 		MachineDisks:                in.MachineDisks,
 		MachineSystemDiskEncryption: in.SystemDiskEncryptionConfig,
-		MachineFeatures: &v1alpha1.FeaturesConfig{
-			RBAC: pointer.ToBool(true),
-		},
+		MachineFeatures:             &v1alpha1.FeaturesConfig{},
+	}
+
+	if in.VersionContract.SupportsRBACFeature() {
+		machine.MachineFeatures.RBAC = pointer.ToBool(true)
 	}
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)

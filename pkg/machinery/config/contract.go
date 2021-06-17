@@ -24,6 +24,8 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion0_11    = &VersionContract{0, 11}
+	TalosVersion0_10    = &VersionContract{0, 10}
 	TalosVersion0_9     = &VersionContract{0, 9}
 	TalosVersion0_8     = &VersionContract{0, 8}
 )
@@ -71,4 +73,9 @@ func (contract *VersionContract) SupportsAggregatorCA() bool {
 // SupportsServiceAccount returns true if version of Talos supports ServiceAccount in the config.
 func (contract *VersionContract) SupportsServiceAccount() bool {
 	return contract.Greater(TalosVersion0_8)
+}
+
+// SupportsRBACFeature returns true if version of Talos supports RBAC feature gate.
+func (contract *VersionContract) SupportsRBACFeature() bool {
+	return contract.Greater(TalosVersion0_10)
 }
