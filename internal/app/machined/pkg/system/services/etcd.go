@@ -19,7 +19,10 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -41,6 +44,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 )
 
@@ -147,6 +151,8 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")
 	}
 
+	env = append(env, "ETCD_CIPHER_SUITES=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305") //nolint:lll
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
@@ -187,29 +193,73 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	}
 }
 
+//nolint:gocyclo
 func generatePKI(r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
-	certAndKey, err := etcd.GeneratePeerCert(r.Config().Cluster().Etcd().CA())
-	if err != nil {
+	// wait for etcd certificates to be generated in the controller
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	watchCh := make(chan state.Event)
+
+	if err = r.State().V1Alpha2().Resources().Watch(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined), watchCh); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, certAndKey.Key, 0o500); err != nil {
-		return err
+	var event state.Event
+
+	for {
+		event = <-watchCh
+
+		if event.Type == state.Created || event.Type == state.Updated {
+			break
+		}
 	}
 
-	return ioutil.WriteFile(constants.KubernetesEtcdPeerCert, certAndKey.Crt, 0o500)
+	etcdCerts := event.Resource.(*secrets.Etcd).Certs()
+
+	for _, keypair := range []struct {
+		getter   func() *x509.PEMEncodedCertificateAndKey
+		keyPath  string
+		certPath string
+	}{
+		{
+			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.Etcd },
+			keyPath:  constants.KubernetesEtcdKey,
+			certPath: constants.KubernetesEtcdCert,
+		},
+		{
+			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdPeer },
+			keyPath:  constants.KubernetesEtcdPeerKey,
+			certPath: constants.KubernetesEtcdPeerCert,
+		},
+		{
+			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdAdmin },
+			keyPath:  constants.KubernetesEtcdAdminKey,
+			certPath: constants.KubernetesEtcdAdminCert,
+		},
+	} {
+		if err = ioutil.WriteFile(keypair.keyPath, keypair.getter().Key, 0o400); err != nil {
+			return err
+		}
+
+		if err = ioutil.WriteFile(keypair.certPath, keypair.getter().Crt, 0o400); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
@@ -341,13 +391,14 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
-		"cert-file":             constants.KubernetesEtcdPeerCert,
-		"key-file":              constants.KubernetesEtcdPeerKey,
+		"client-cert-auth":      "true",
+		"cert-file":             constants.KubernetesEtcdCert,
+		"key-file":              constants.KubernetesEtcdKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
 		"peer-client-cert-auth": "true",
 		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
@@ -423,13 +474,14 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"client-cert-auth":      "true",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
 		"key-file":              constants.KubernetesEtcdPeerKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
 		"peer-client-cert-auth": "true",
 		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())

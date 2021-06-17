@@ -78,7 +78,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.1-0.20210615131117-6bc5bb50c527
+	github.com/talos-systems/crypto v0.3.1-0.20210617123329-d3cb77220384
 	github.com/talos-systems/go-blockdevice v0.2.1
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-debug v0.2.1-0.20210525175311-3d0a6e1bf5e3
