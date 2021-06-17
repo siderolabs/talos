@@ -5,18 +5,18 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"os"
 	"reflect"
-	"syscall"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
 )
 
 // Runtime implements the Runtime interface.
@@ -141,42 +141,10 @@ func (r *Runtime) Logging() runtime.LoggingManager {
 
 // NodeName implements the Runtime interface.
 func (r *Runtime) NodeName() (string, error) {
-	// attempt to fetch hostname and domain name via syscalls and concat them if necessary
-	if r.Config().Machine().Kubelet().RegisterWithFQDN() {
-		var utsName syscall.Utsname
-		if err := syscall.Uname(&utsName); err != nil {
-			return "", err
-		}
-
-		nodeName := utsNameVarToString(utsName.Nodename)
-		log.Printf("Nodename is %s", nodeName)
-
-		domainName := utsNameVarToString(utsName.Domainname)
-		log.Printf("Domain name is %s", domainName)
-
-		// As odd as it looks, the Uname method sets domainName to this "(none)" string if not set.
-		if domainName != "(none)" {
-			return fmt.Sprintf("%s.%s", nodeName, domainName), nil
-		}
-
-		return nodeName, nil
+	nodenameResource, err := r.s.V1Alpha2().Resources().Get(context.Background(), resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+	if err != nil {
+		return "", fmt.Errorf("error getting nodename resource: %w", err)
 	}
 
-	// default to os.Hostname if we don't need to worry about fqdn.
-	return os.Hostname()
-}
-
-// converts int8 array to a string
-// borrowed from https://github.com/aisola/go-coreutils/blob/master/uname/uname.go#L98
-func utsNameVarToString(unameArray [65]int8) string {
-	var byteString [65]byte
-
-	var indexLength int
-
-	for unameArray[indexLength] != 0 {
-		byteString[indexLength] = uint8(unameArray[indexLength])
-		indexLength++
-	}
-
-	return string(byteString[:indexLength])
+	return nodenameResource.(*k8s.Nodename).TypedSpec().Nodename, nil
 }
