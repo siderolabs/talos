@@ -6,7 +6,6 @@ package check
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/talos-systems/talos/pkg/conditions"
@@ -20,22 +19,6 @@ func DefaultClusterChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
 				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for bootkube to finish on init node
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("bootkube to finish", func(ctx context.Context) error {
-				err := ServiceStateAssertion(ctx, cluster, "bootkube", "Finished", "Skipped")
-				if err != nil {
-					if errors.Is(err, ErrServiceNotFound) {
-						return nil
-					}
-
-					return err
-				}
-
-				return nil
 			}, 5*time.Minute, 5*time.Second)
 		},
 
