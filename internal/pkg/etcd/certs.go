@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	stdlibx509 "crypto/x509"
+
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/net"
 )
@@ -43,9 +45,14 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 		x509.DNSNames(dnsNames),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
 	}
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA, opts...)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}
@@ -87,9 +94,13 @@ func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEnco
 		x509.DNSNames(dnsNames),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+		}),
 	}
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA, opts...)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}

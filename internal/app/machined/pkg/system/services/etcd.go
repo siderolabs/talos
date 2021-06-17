@@ -194,11 +194,11 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
@@ -207,11 +207,11 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerCertAndKey.Key, 0o500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerCertAndKey.Key, 0o400); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peerCertAndKey.Crt, 0o500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peerCertAndKey.Crt, 0o400); err != nil {
 		return err
 	}
 
@@ -220,11 +220,11 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdClientKey, clientCertAndKey.Key, 0o500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesEtcdClientKey, clientCertAndKey.Key, 0o400); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(constants.KubernetesEtcdClientCert, clientCertAndKey.Crt, 0o500)
+	return ioutil.WriteFile(constants.KubernetesEtcdClientCert, clientCertAndKey.Crt, 0o400)
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
