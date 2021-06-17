@@ -89,7 +89,7 @@ var etcdMemberListCmd = &cobra.Command{
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			node := ""
-			pattern := "%s\t%s\t%s\t%s\n"
+			pattern := "%s\t%s\t%s\t%s\t%v\n"
 
 			for i, message := range response.Messages {
 				if message.Metadata != nil && message.Metadata.Hostname != "" {
@@ -103,10 +103,10 @@ var etcdMemberListCmd = &cobra.Command{
 				for j, member := range message.Members {
 					if i == 0 && j == 0 {
 						if node != "" {
-							fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS")
+							fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
 							pattern = "%s\t" + pattern
 						} else {
-							fmt.Fprintln(w, "ID\tHOSTNAME\tPEER URLS\tCLIENT URLS")
+							fmt.Fprintln(w, "ID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
 						}
 					}
 
@@ -115,6 +115,7 @@ var etcdMemberListCmd = &cobra.Command{
 						member.Hostname,
 						strings.Join(member.PeerUrls, ","),
 						strings.Join(member.ClientUrls, ","),
+						member.IsLearner,
 					}
 					if node != "" {
 						args = append([]interface{}{node}, args...)

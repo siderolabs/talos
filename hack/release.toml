@@ -63,6 +63,13 @@ the default values overwritten by Talos.
 * Talos is built with Go 1.16.6
 """
 
+    [notes.etcd]
+        title = "etcd"
+        description = """\
+New etcd cluster members are now joined in [learner mode](https://etcd.io/docs/v3.4/learning/design-learner/), which improves cluster resiliency
+to member join issues.
+"""
+
     [notes.capi]
         title = "Cluster API v0.3.x"
         description = """\

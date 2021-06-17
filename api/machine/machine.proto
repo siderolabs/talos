@@ -791,6 +791,8 @@ message EtcdMember {
   repeated string peer_urls = 4;
   // the list of URLs the member exposes to the cluster for communication.
   repeated string client_urls = 5;
+  // learner flag
+  bool is_learner = 6;
 }
 
 // EtcdMembers contains the list of members registered on the host.

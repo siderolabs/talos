@@ -58,6 +58,11 @@ type Etcd struct {
 
 	args   []string
 	client *etcd.Client
+
+	// if the new member was added as a learner during the service start, its ID is kept here
+	learnerMemberID uint64
+
+	promoteCtxCancel context.CancelFunc
 }
 
 // ID implements the Service interface.
@@ -95,6 +100,9 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
+	// Clear any previously set learner member ID
+	e.learnerMemberID = 0
+
 	switch t := r.Config().Machine().Type(); t {
 	case machine.TypeInit:
 		return e.argsForInit(ctx, r)
@@ -111,6 +119,10 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 // PostFunc implements the Service interface.
 func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if e.promoteCtxCancel != nil {
+		e.promoteCtxCancel()
+	}
+
 	if e.client != nil {
 		e.client.Close() //nolint:errcheck
 	}
@@ -156,6 +168,20 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	env = append(env, "ETCD_CIPHER_SUITES=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305") //nolint:lll
+
+	if e.learnerMemberID != 0 {
+		var promoteCtx context.Context
+
+		promoteCtx, e.promoteCtxCancel = context.WithCancel(context.Background())
+
+		go func() {
+			if err := promoteMember(promoteCtx, r, e.learnerMemberID); err != nil && !errors.Is(err, context.Canceled) {
+				log.Printf("failed promoting member: %s", err)
+			} else if err == nil {
+				log.Printf("successfully promoted etcd member")
+			}
+		}()
+	}
 
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
@@ -304,7 +330,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 		}
 	}
 
-	add, err := client.MemberAdd(ctx, addrs)
+	add, err := client.MemberAddAsLearner(ctx, addrs)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error adding member: %w", err)
 	}
@@ -317,7 +343,9 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, err error) {
+func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, learnerMemberID uint64, err error) {
+	var id uint64
+
 	err = retry.Constant(10*time.Minute,
 		retry.WithUnits(3*time.Second),
 		retry.WithJitter(time.Second),
@@ -326,7 +354,6 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		var (
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
-			id        uint64
 		)
 
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
@@ -362,10 +389,10 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to build cluster arguments: %w", err)
+		return "", 0, fmt.Errorf("failed to build cluster arguments: %w", err)
 	}
 
-	return initial, nil
+	return initial, id, nil
 }
 
 //nolint:gocyclo
@@ -441,7 +468,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return err
 				}
@@ -534,7 +561,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 			if e.Bootstrap {
 				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
 			} else {
-				initialCluster, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
 					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
 				}
@@ -589,6 +616,27 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 	}
 
 	return nil
+}
+
+func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {
+	// try to promote a member until it succeeds (call might fail until the member catches up with the leader)
+	// promote member call will fail until member catches up with the master
+	return retry.Constant(10*time.Minute,
+		retry.WithUnits(10*time.Second),
+		retry.WithJitter(time.Second),
+		retry.WithErrorLogging(true),
+	).RetryWithContext(ctx, func(ctx context.Context) error {
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		defer client.Close() //nolint:errcheck
+
+		_, err = client.MemberPromote(ctx, memberID)
+
+		return retry.ExpectedError(err)
+	})
 }
 
 // IsDirEmpty checks if a directory is empty or not.

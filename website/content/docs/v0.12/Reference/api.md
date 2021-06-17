@@ -1023,6 +1023,7 @@ EtcdMember describes a single etcd member.
 | hostname | [string](#string) |  | human-readable name of the member. |
 | peer_urls | [string](#string) | repeated | the list of URLs the member exposes to clients for communication. |
 | client_urls | [string](#string) | repeated | the list of URLs the member exposes to the cluster for communication. |
+| is_learner | [bool](#bool) |  | learner flag |
 
 
 
