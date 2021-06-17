@@ -26,7 +26,9 @@ type Etcd struct {
 
 // EtcdCertsSpec describes etcd certs secrets.
 type EtcdCertsSpec struct {
-	EtcdPeer *x509.PEMEncodedCertificateAndKey `yaml:"etcdPeer"`
+	EtcdPeer      *x509.PEMEncodedCertificateAndKey `yaml:"etcdPeer"`
+	EtcdClient    *x509.PEMEncodedCertificateAndKey `yaml:"etcdClient"`
+	EtcdApiServer *x509.PEMEncodedCertificateAndKey `yaml:"etcdApiServer"`
 }
 
 // NewEtcd initializes a Etc resource.

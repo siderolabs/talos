@@ -97,6 +97,50 @@ func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEnco
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
 			stdlibx509.ExtKeyUsageServerAuth,
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	}
+
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading CA from config: %w", err)
+	}
+
+	keyPair, err := x509.NewKeyPair(ca, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating client key pair: %w", err)
+	}
+
+	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
+}
+
+// GenerateKubeAPIClientCert generates kube-apiserver client certificate and key from etcd CA.
+func GenerateKubeAPIClientCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+	ips, err := net.IPAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
+	}
+
+	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
+	if net.IsIPv6(ips...) {
+		ips = append(ips, stdlibnet.ParseIP("::1"))
+	}
+
+	dnsNames, err := net.DNSNames()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get host DNS names: %w", err)
+	}
+
+	dnsNames = append(dnsNames, "localhost")
+
+	opts := []x509.Option{
+		x509.CommonName("kube-apiserver"),
+		x509.DNSNames(dnsNames),
+		x509.IPAddresses(ips),
+		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
 		}),
 	}
 

@@ -135,6 +135,16 @@ func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.RootEtcdSpec, etcdCe
 		return fmt.Errorf("error generating etcd certs: %w", err)
 	}
 
+	etcdCerts.EtcdClient, err = etcd.GenerateClientCert(etcdRoot.EtcdCA)
+	if err != nil {
+		return fmt.Errorf("error generating etcd client certs: %w", err)
+	}
+
+	etcdCerts.EtcdApiServer, err = etcd.GenerateKubeAPIClientCert(etcdRoot.EtcdCA)
+	if err != nil {
+		return fmt.Errorf("error generating kube-apiserver etcd certs: %w", err)
+	}
+
 	return nil
 }
 

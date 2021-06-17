@@ -39,8 +39,8 @@ type Client struct {
 // a list of endpoints.
 func NewClient(endpoints []string) (client *Client, err error) {
 	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubernetesEtcdPeerCert,
-		KeyFile:       constants.KubernetesEtcdPeerKey,
+		CertFile:      constants.KubernetesEtcdClientCert,
+		KeyFile:       constants.KubernetesEtcdClientKey,
 		TrustedCAFile: constants.KubernetesEtcdCACert,
 	}
 
