@@ -141,11 +141,17 @@ const (
 	// KubernetesEtcdCAKey is the path to the etcd CA private key.
 	KubernetesEtcdCAKey = EtcdPKIPath + "/" + "ca.key"
 
-	// KubernetesEtcdPeerCert is the path to the etcd CA certificate.
+	// KubernetesEtcdPeerCert is the path to the etcd peer certificate.
 	KubernetesEtcdPeerCert = EtcdPKIPath + "/" + "peer.crt"
 
-	// KubernetesEtcdPeerKey is the path to the etcd CA private key.
+	// KubernetesEtcdPeerKey is the path to the etcd peer private key.
 	KubernetesEtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
+
+	// KubernetesEtcdCert is the path to the etcd client certificate.
+	KubernetesEtcdCert = EtcdPKIPath + "/" + "client.crt"
+
+	// KubernetesEtcdKey is the path to the etcd client private key.
+	KubernetesEtcdKey = EtcdPKIPath + "/" + "client.key"
 
 	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic.
 	KubernetesEtcdListenClientPort = "2379"

@@ -149,7 +149,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						certFilename: "etcd-client-ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return etcdSecrets.EtcdPeer },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return etcdSecrets.EtcdAPIServer },
 						certFilename: "etcd-client.crt",
 						keyFilename:  "etcd-client.key",
 					},

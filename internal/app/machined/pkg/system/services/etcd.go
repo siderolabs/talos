@@ -147,6 +147,8 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")
 	}
 
+	env = append(env, "ETCD_CIPHER_SUITES=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305") //nolint:lll
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
@@ -192,24 +194,37 @@ func generatePKI(r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o400); err != nil {
 		return fmt.Errorf("failed to write CA key: %w", err)
 	}
 
-	certAndKey, err := etcd.GeneratePeerCert(r.Config().Cluster().Etcd().CA())
+	peerCertAndKey, err := etcd.GeneratePeerCert(r.Config().Cluster().Etcd().CA())
 	if err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesEtcdPeerKey, certAndKey.Key, 0o500); err != nil {
+	if err = ioutil.WriteFile(constants.KubernetesEtcdPeerKey, peerCertAndKey.Key, 0o400); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(constants.KubernetesEtcdPeerCert, certAndKey.Crt, 0o500)
+	if err = ioutil.WriteFile(constants.KubernetesEtcdPeerCert, peerCertAndKey.Crt, 0o400); err != nil {
+		return err
+	}
+
+	clientCertAndKey, err := etcd.GenerateClientCert(r.Config().Cluster().Etcd().CA())
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(constants.KubernetesEtcdKey, clientCertAndKey.Key, 0o400); err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(constants.KubernetesEtcdCert, clientCertAndKey.Crt, 0o400)
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
@@ -341,13 +356,14 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
-		"cert-file":             constants.KubernetesEtcdPeerCert,
-		"key-file":              constants.KubernetesEtcdPeerKey,
+		"client-cert-auth":      "true",
+		"cert-file":             constants.KubernetesEtcdCert,
+		"key-file":              constants.KubernetesEtcdKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
 		"peer-client-cert-auth": "true",
 		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
@@ -423,13 +439,14 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"client-cert-auth":      "true",
 		"cert-file":             constants.KubernetesEtcdPeerCert,
 		"key-file":              constants.KubernetesEtcdPeerKey,
 		"trusted-ca-file":       constants.KubernetesEtcdCACert,
 		"peer-client-cert-auth": "true",
 		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 		"peer-key-file":         constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())

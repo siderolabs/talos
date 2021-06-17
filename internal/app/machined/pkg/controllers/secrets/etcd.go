@@ -130,9 +130,19 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.RootEtcdSpec, etcdCerts *secrets.EtcdCertsSpec) error {
 	var err error
 
+	etcdCerts.Etcd, err = etcd.GenerateClientCert(etcdRoot.EtcdCA)
+	if err != nil {
+		return fmt.Errorf("error generating etcd client certs: %w", err)
+	}
+
 	etcdCerts.EtcdPeer, err = etcd.GeneratePeerCert(etcdRoot.EtcdCA)
 	if err != nil {
-		return fmt.Errorf("error generating etcd certs: %w", err)
+		return fmt.Errorf("error generating etcd peer certs: %w", err)
+	}
+
+	etcdCerts.EtcdAPIServer, err = etcd.GenerateKubeAPIClientCert(etcdRoot.EtcdCA)
+	if err != nil {
+		return fmt.Errorf("error generating kube-apiserver etcd client certs: %w", err)
 	}
 
 	return nil

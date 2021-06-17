@@ -5,6 +5,7 @@
 package etcd
 
 import (
+	stdlibx509 "crypto/x509"
 	"fmt"
 	stdlibnet "net"
 	"os"
@@ -14,8 +15,8 @@ import (
 	"github.com/talos-systems/net"
 )
 
-// GeneratePeerCert generates etcd peer certificate and key from etcd CA.
-func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+// NewCommonOptions set common certificate options.
+func NewCommonOptions() ([]x509.Option, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
@@ -38,12 +39,30 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 
 	dnsNames = append(dnsNames, "localhost")
 
-	opts := []x509.Option{
+	return []x509.Option{
 		x509.CommonName(hostname),
 		x509.DNSNames(dnsNames),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
+	}, nil
+}
+
+// GeneratePeerCert generates etcd peer certificate and key from etcd CA.
+//
+//nolint:dupl
+func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts, err := NewCommonOptions()
+	if err != nil {
+		return nil, err
 	}
+
+	opts = append(opts,
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	)
 
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
 	if err != nil {
@@ -53,6 +72,62 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 	keyPair, err := x509.NewKeyPair(ca, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating peer key pair: %w", err)
+	}
+
+	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
+}
+
+// GenerateClientCert generates etcd client certificate and key from etcd CA.
+//
+//nolint:dupl
+func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts, err := NewCommonOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	opts = append(opts,
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	)
+
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading CA from config: %w", err)
+	}
+
+	keyPair, err := x509.NewKeyPair(ca, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating client key pair: %w", err)
+	}
+
+	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
+}
+
+// GenerateKubeAPIClientCert generates kube-apiserver client certificate and key from etcd CA.
+func GenerateKubeAPIClientCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts, err := NewCommonOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	opts = append(opts, x509.CommonName("kube-apiserver"))
+	opts = append(opts,
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	)
+
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	if err != nil {
+		return nil, fmt.Errorf("failed loading CA from config: %w", err)
+	}
+
+	keyPair, err := x509.NewKeyPair(ca, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating client key pair: %w", err)
 	}
 
 	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
