@@ -45,6 +45,12 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.NodenameType,
+			ID:        pointer.ToString(k8s.NodenameID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        pointer.ToString("kubelet"),
@@ -179,6 +185,14 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
+		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		if err != nil {
+			// nodename should exist if the kubelet is running
+			return err
+		}
+
+		nodename := nodenameResource.(*k8s.Nodename).TypedSpec().Nodename
+
 		staticPods, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing static pods: %w", err)
@@ -203,7 +217,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		// render static pods first, and attempt to build kubelet client last,
 		// as if kubelet issues certs from the API server, API server should be launched first.
-		kubeletClient, err = kubelet.NewClient(secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key, rootSecrets.CA.Crt)
+		kubeletClient, err = kubelet.NewClient(nodename, secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key, rootSecrets.CA.Crt)
 		if err != nil {
 			return fmt.Errorf("error building kubelet client: %w", err)
 		}

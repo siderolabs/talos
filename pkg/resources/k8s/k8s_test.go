@@ -27,6 +27,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&k8s.ManifestStatus{},
 		&k8s.Manifest{},
+		&k8s.Nodename{},
 		&k8s.SecretsStatus{},
 		&k8s.StaticPodStatus{},
 		&k8s.StaticPod{},

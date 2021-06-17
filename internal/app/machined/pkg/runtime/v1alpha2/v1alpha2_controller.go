@@ -85,6 +85,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.KubeletStaticPodController{},
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
+		&k8s.NodenameController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&network.AddressConfigController{
 			Cmdline:      procfs.ProcCmdline(),
