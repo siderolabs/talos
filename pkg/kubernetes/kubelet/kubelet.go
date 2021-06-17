@@ -29,12 +29,7 @@ type Client struct {
 }
 
 // NewClient creates new kubelet API client.
-func NewClient(clientCert, clientKey, caPEM []byte) (*Client, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, error) {
 	config := &rest.Config{
 		Host: fmt.Sprintf("https://127.0.0.1:%d/", constants.KubeletPort),
 		ContentConfig: rest.ContentConfig{
@@ -45,7 +40,7 @@ func NewClient(clientCert, clientKey, caPEM []byte) (*Client, error) {
 			CertData:   clientCert,
 			KeyData:    clientKey,
 			CAData:     caPEM,
-			ServerName: hostname,
+			ServerName: nodename,
 		},
 	}
 

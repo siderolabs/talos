@@ -80,6 +80,7 @@ func NewState() (*State, error) {
 		&files.EtcFileStatus{},
 		&k8s.Manifest{},
 		&k8s.ManifestStatus{},
+		&k8s.Nodename{},
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
