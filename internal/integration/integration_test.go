@@ -21,7 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/cli"
 	"github.com/talos-systems/talos/internal/integration/k8s"
 	provision_test "github.com/talos-systems/talos/internal/integration/provision"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"
@@ -116,9 +116,9 @@ func TestIntegration(t *testing.T) {
 }
 
 func init() {
-	defaultTalosConfig, _ := config.GetDefaultPath() //nolint:errcheck
+	defaultTalosConfig, _ := clientconfig.GetDefaultPath() //nolint:errcheck
 
-	defaultStateDir, err := config.GetTalosDirectory()
+	defaultStateDir, err := clientconfig.GetTalosDirectory()
 	if err == nil {
 		defaultStateDir = filepath.Join(defaultStateDir, "clusters")
 	}

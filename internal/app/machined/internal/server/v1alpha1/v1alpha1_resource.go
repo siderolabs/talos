@@ -16,7 +16,9 @@ import (
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 
+	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 // ResourceServer implements ResourceService API.
@@ -118,6 +120,15 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 }
 
 func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind) error {
+	roles := authz.GetRoles(ctx)
+
+	// TODO(rbac): check sensitivity levels once they are added to COSI
+	if strings.Contains(kind.Type, "secret") {
+		if !roles.Includes(role.Admin) {
+			return authz.ErrNotAuthorized
+		}
+	}
+
 	registeredNamespaces, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().List(ctx, resource.NewMetadata(meta.NamespaceName, meta.NamespaceType, "", resource.VersionUndefined))
 	if err != nil {
 		return err

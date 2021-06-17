@@ -341,7 +341,7 @@ talosctl config add <context> [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config context
 
@@ -368,11 +368,11 @@ talosctl config context <context> [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config contexts
 
-List contexts defined in Talos config
+List defined contexts
 
 ```
 talosctl config contexts [flags]
@@ -395,7 +395,7 @@ talosctl config contexts [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config endpoint
 
@@ -422,11 +422,11 @@ talosctl config endpoint <endpoint>... [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config merge
 
-Merge additional contexts from another Talos config into the default config
+Merge additional contexts from another client configuration file
 
 ### Synopsis
 
@@ -453,7 +453,36 @@ talosctl config merge <from> [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
+
+## talosctl config new
+
+Generate a new client configuration file
+
+```
+talosctl config new [<path>] [flags]
+```
+
+### Options
+
+```
+      --crt-ttl duration   certificate TTL (default 87600h0m0s)
+  -h, --help               help for new
+      --roles strings      roles (default [os:admin])
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config node
 
@@ -480,11 +509,11 @@ talosctl config node <endpoint>... [flags]
 
 ### SEE ALSO
 
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
 ## talosctl config
 
-Manage the client configuration
+Manage the client configuration file (talosconfig)
 
 ### Options
 
@@ -506,9 +535,10 @@ Manage the client configuration
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl config add](#talosctl-config-add)	 - Add a new context
 * [talosctl config context](#talosctl-config-context)	 - Set the current context
-* [talosctl config contexts](#talosctl-config-contexts)	 - List contexts defined in Talos config
+* [talosctl config contexts](#talosctl-config-contexts)	 - List defined contexts
 * [talosctl config endpoint](#talosctl-config-endpoint)	 - Set the endpoint(s) for the current context
-* [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another Talos config into the default config
+* [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another client configuration file
+* [talosctl config new](#talosctl-config-new)	 - Generate a new client configuration file
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
 
 ## talosctl conformance kubernetes
@@ -2142,7 +2172,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
-* [talosctl config](#talosctl-config)	 - Manage the client configuration
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl convert-k8s](#talosctl-convert-k8s)	 - Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).

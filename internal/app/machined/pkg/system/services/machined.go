@@ -29,20 +29,24 @@ type machinedService struct {
 // Main is an entrypoint the the API service.
 func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter io.Writer) error {
 	injector := &authz.Injector{
-		TrustMetadata: true,
-		Logger:        log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf,
+		Mode:   authz.MetadataOnly,
+		Logger: log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf,
 	}
 
 	authorizer := &authz.Authorizer{
 		Rules: map[string]role.Set{
+			"/machine.MachineService/GenerateClientConfiguration": role.MakeSet(role.Admin),
+
 			"/cluster.ClusterService/HealthCheck": role.MakeSet(role.Admin, role.Reader),
 			"/machine.MachineService/List":        role.MakeSet(role.Admin, role.Reader),
 			"/machine.MachineService/Version":     role.MakeSet(role.Admin, role.Reader),
 
+			// per-type authorization is handled by the service itself
+			"/resource.ResourceService": role.MakeSet(role.Admin, role.Reader),
+
 			// TODO(rbac): More rules
 		},
 		FallbackRoles: role.MakeSet(role.Admin),
-		Enforce:       r.Config().Machine().Features().RBACEnabled(),
 		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 

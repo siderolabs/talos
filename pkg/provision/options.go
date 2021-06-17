@@ -10,7 +10,7 @@ import (
 	"runtime"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 // Option controls Provisioner.
@@ -35,7 +35,7 @@ func WithEndpoint(endpoint string) Option {
 }
 
 // WithTalosConfig specifies talosconfig to use when acessing Talos cluster.
-func WithTalosConfig(talosConfig *config.Config) Option {
+func WithTalosConfig(talosConfig *clientconfig.Config) Option {
 	return func(o *Options) error {
 		o.TalosConfig = talosConfig
 
@@ -100,7 +100,7 @@ func WithDockerPortsHostIP(hostIP string) Option {
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
-	TalosConfig   *config.Config
+	TalosConfig   *clientconfig.Config
 	TalosClient   *client.Client
 	ForceEndpoint string
 	TargetArch    string

@@ -19,6 +19,8 @@ const (
 	Overlay
 	// SkipIfMounted is a flag for skipping mount if the mountpoint is already mounted.
 	SkipIfMounted
+	// SkipIfNoFilesystem is a flag for skipping formatting and mounting if the mountpoint has not filesystem.
+	SkipIfNoFilesystem
 )
 
 // Flags is the mount flags.

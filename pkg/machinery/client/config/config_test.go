@@ -9,74 +9,74 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
 func TestConfigMerge(t *testing.T) {
-	context1 := &config.Context{}
-	context2 := &config.Context{}
+	context1 := &clientconfig.Context{}
+	context2 := &clientconfig.Context{}
 
 	for _, tt := range []struct {
 		name          string
-		config        *config.Config
-		configToMerge *config.Config
+		config        *clientconfig.Config
+		configToMerge *clientconfig.Config
 
 		expectedContext  string
-		expectedContexts map[string]*config.Context
+		expectedContexts map[string]*clientconfig.Context
 	}{
 		{
 			name:   "IntoEmpty",
-			config: &config.Config{},
-			configToMerge: &config.Config{
+			config: &clientconfig.Config{},
+			configToMerge: &clientconfig.Config{
 				Context: "foo",
-				Contexts: map[string]*config.Context{
+				Contexts: map[string]*clientconfig.Context{
 					"foo": context1,
 				},
 			},
 
 			expectedContext: "foo",
-			expectedContexts: map[string]*config.Context{
+			expectedContexts: map[string]*clientconfig.Context{
 				"foo": context1,
 			},
 		},
 		{
 			name: "NoConflict",
-			config: &config.Config{
+			config: &clientconfig.Config{
 				Context: "bar",
-				Contexts: map[string]*config.Context{
+				Contexts: map[string]*clientconfig.Context{
 					"bar": context2,
 				},
 			},
-			configToMerge: &config.Config{
+			configToMerge: &clientconfig.Config{
 				Context: "",
-				Contexts: map[string]*config.Context{
+				Contexts: map[string]*clientconfig.Context{
 					"foo": context1,
 				},
 			},
 
 			expectedContext: "bar",
-			expectedContexts: map[string]*config.Context{
+			expectedContexts: map[string]*clientconfig.Context{
 				"foo": context1,
 				"bar": context2,
 			},
 		},
 		{
 			name: "WithRename",
-			config: &config.Config{
+			config: &clientconfig.Config{
 				Context: "bar",
-				Contexts: map[string]*config.Context{
+				Contexts: map[string]*clientconfig.Context{
 					"bar": context2,
 				},
 			},
-			configToMerge: &config.Config{
+			configToMerge: &clientconfig.Config{
 				Context: "bar",
-				Contexts: map[string]*config.Context{
+				Contexts: map[string]*clientconfig.Context{
 					"bar": context1,
 				},
 			},
 
 			expectedContext: "bar-1",
-			expectedContexts: map[string]*config.Context{
+			expectedContexts: map[string]*clientconfig.Context{
 				"bar-1": context1,
 				"bar":   context2,
 			},

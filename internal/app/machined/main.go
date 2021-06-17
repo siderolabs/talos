@@ -38,10 +38,6 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-const (
-	debugAddr = ":9982"
-)
-
 func init() {
 	// Explicitly set the default http client transport to work around proxy.Do
 	// once. This is the http.DefaultTransport with the Proxy func overridden so
@@ -178,6 +174,18 @@ func handle(err error) {
 	}
 }
 
+func runDebugServer(ctx context.Context) {
+	const debugAddr = ":9982"
+
+	debugLogFunc := func(msg string) {
+		log.Print(msg)
+	}
+
+	if err := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); err != nil {
+		log.Fatalf("failed to start debug server: %s", err)
+	}
+}
+
 //nolint:gocyclo
 func run() error {
 	errCh := make(chan error)
@@ -201,14 +209,7 @@ func run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func() {
-		debugLogFunc := func(msg string) {
-			log.Print(msg)
-		}
-		if lErr := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); lErr != nil {
-			log.Fatalf("failed to start debug server: %s", lErr)
-		}
-	}()
+	go runDebugServer(ctx)
 
 	// Schedule service shutdown on any return.
 	defer system.Services(c.Runtime()).Shutdown(ctx)
