@@ -47,16 +47,33 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, config.TalosVersionCurrent.SupportsAggregatorCA())
 	assert.True(t, config.TalosVersionCurrent.SupportsECDSAKeys())
 	assert.True(t, config.TalosVersionCurrent.SupportsServiceAccount())
+	assert.True(t, config.TalosVersionCurrent.SupportsRBACFeature())
+}
+
+func TestContract0_11(t *testing.T) {
+	assert.True(t, config.TalosVersion0_11.SupportsAggregatorCA())
+	assert.True(t, config.TalosVersion0_11.SupportsECDSAKeys())
+	assert.True(t, config.TalosVersion0_11.SupportsServiceAccount())
+	assert.True(t, config.TalosVersion0_11.SupportsRBACFeature())
+}
+
+func TestContract0_10(t *testing.T) {
+	assert.True(t, config.TalosVersion0_10.SupportsAggregatorCA())
+	assert.True(t, config.TalosVersion0_10.SupportsECDSAKeys())
+	assert.True(t, config.TalosVersion0_10.SupportsServiceAccount())
+	assert.False(t, config.TalosVersion0_10.SupportsRBACFeature())
 }
 
 func TestContract0_9(t *testing.T) {
 	assert.True(t, config.TalosVersion0_9.SupportsAggregatorCA())
 	assert.True(t, config.TalosVersion0_9.SupportsECDSAKeys())
 	assert.True(t, config.TalosVersion0_9.SupportsServiceAccount())
+	assert.False(t, config.TalosVersion0_9.SupportsRBACFeature())
 }
 
 func TestContract0_8(t *testing.T) {
 	assert.False(t, config.TalosVersion0_8.SupportsAggregatorCA())
 	assert.False(t, config.TalosVersion0_8.SupportsECDSAKeys())
 	assert.False(t, config.TalosVersion0_8.SupportsServiceAccount())
+	assert.False(t, config.TalosVersion0_9.SupportsRBACFeature())
 }
