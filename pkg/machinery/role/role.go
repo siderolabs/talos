@@ -24,6 +24,9 @@ const (
 	// Reader defines Talos role for readers who can access read-only APIs that do not expose secrets.
 	Reader = Role(Prefix + "reader")
 
+	// EtcdBackup defines Talos role that allows making etcd backups.
+	EtcdBackup = Role(Prefix + "etcd:backup")
+
 	// Impersonator defines Talos role for impersonating another user (and their role).
 	// Used internally, but may also be granted to the user.
 	Impersonator = Role(Prefix + "impersonator")
@@ -36,7 +39,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Reader, Impersonator)
+	All = MakeSet(Admin, Reader, EtcdBackup, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()

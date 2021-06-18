@@ -31,10 +31,10 @@ type Authorizer struct {
 	Logger func(format string, v ...interface{})
 }
 
-// nextPrefix returns path's prefix, stopping on slashes and dots:
+// NextPrefix returns path's prefix, stopping on slashes and dots:
 // /machine.MachineService/List -> /machine.MachineService -> /machine -> / -> / -> ...
 // The chain ends with "/" no matter what.
-func nextPrefix(path string) string {
+func NextPrefix(path string) string {
 	if path == "" || path[0] != '/' {
 		return "/"
 	}
@@ -70,7 +70,7 @@ func (a *Authorizer) authorize(ctx context.Context, method string) error {
 			break
 		}
 
-		prefix = nextPrefix(prefix)
+		prefix = NextPrefix(prefix)
 	}
 
 	if !found {

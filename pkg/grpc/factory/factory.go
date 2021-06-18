@@ -20,6 +20,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
 	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
@@ -37,11 +38,12 @@ type Options struct {
 	SocketPath         string
 	Network            string
 	Config             *tls.Config
-	LogPrefix          string
-	LogDestination     io.Writer
 	ServerOptions      []grpc.ServerOption
 	UnaryInterceptors  []grpc.UnaryServerInterceptor
 	StreamInterceptors []grpc.StreamServerInterceptor
+	LogPrefix          string
+	LogDestination     io.Writer
+	Reflection         bool
 }
 
 // Option is the functional option func.
@@ -111,6 +113,13 @@ func WithDefaultLog() Option {
 	}
 }
 
+// WithReflection enables gRPC reflection APIs: https://github.com/grpc/grpc/blob/master/doc/server-reflection.md
+func WithReflection() Option {
+	return func(args *Options) {
+		args.Reflection = true
+	}
+}
+
 func recoveryHandler(logger *log.Logger) grpc_recovery.RecoveryHandlerFunc {
 	return func(p interface{}) error {
 		if logger != nil {
@@ -166,6 +175,10 @@ func NewServer(r Registrator, setters ...Option) *grpc.Server {
 
 	server := grpc.NewServer(opts.ServerOptions...)
 	r.Register(server)
+
+	if opts.Reflection {
+		reflection.Register(server)
+	}
 
 	return server
 }

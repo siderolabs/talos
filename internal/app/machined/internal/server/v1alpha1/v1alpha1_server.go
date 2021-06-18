@@ -587,17 +587,6 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	return reply, nil
 }
 
-// Recover recovers the control plane.
-func (s *Server) Recover(ctx context.Context, in *machine.RecoverRequest) (reply *machine.RecoverResponse, err error) {
-	log.Printf("recover request received")
-
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
-		return nil, fmt.Errorf("recover can only be performed on a control plane node")
-	}
-
-	return nil, fmt.Errorf("recover is not supported since Talos 0.9, use apply-config to update control plane configuration")
-}
-
 // ServiceList returns list of the registered services and their status.
 func (s *Server) ServiceList(ctx context.Context, in *empty.Empty) (result *machine.ServiceListResponse, err error) {
 	services := system.Services(s.Controller.Runtime()).List()
