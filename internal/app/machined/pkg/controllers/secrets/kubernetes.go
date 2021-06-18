@@ -159,6 +159,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesSpec, k8sSecrets *secrets.KubernetesCertsSpec) error {
 	urls := []string{k8sRoot.Endpoint.Hostname()}
 	urls = append(urls, k8sRoot.CertSANs...)
@@ -173,6 +174,21 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		"kubernetes.default.svc",
 		"kubernetes.default.svc."+k8sRoot.DNSDomain,
 	)
+
+	// Add localhost if it is not in the list yet
+	localhostFound := false
+
+	for _, dnsName := range altNames.DNSNames {
+		if dnsName == "localhost" {
+			localhostFound = true
+
+			break
+		}
+	}
+
+	if !localhostFound {
+		altNames.DNSNames = append(altNames.DNSNames, "localhost")
+	}
 
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.CA)
 	if err != nil {
@@ -229,7 +245,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		CommonName:   constants.KubernetesControllerManagerOrganization,
 		Organization: constants.KubernetesControllerManagerOrganization,
 
-		Endpoint:    k8sRoot.Endpoint.String(),
+		Endpoint:    "https://localhost:6443/",
 		Username:    constants.KubernetesControllerManagerOrganization,
 		ContextName: "default",
 	}, &buf); err != nil {
@@ -249,7 +265,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		CommonName:   constants.KubernetesSchedulerOrganization,
 		Organization: constants.KubernetesSchedulerOrganization,
 
-		Endpoint:    k8sRoot.Endpoint.String(),
+		Endpoint:    "https://localhost:6443/",
 		Username:    constants.KubernetesSchedulerOrganization,
 		ContextName: "default",
 	}, &buf); err != nil {
@@ -319,7 +335,9 @@ func (adapter *generateAdminAdapter) Name() string {
 }
 
 func (adapter *generateAdminAdapter) Endpoint() *url.URL {
-	return adapter.k8sRoot.Endpoint
+	u, _ := url.Parse("https://localhost:6443/") //nolint:errcheck
+
+	return u
 }
 
 func (adapter *generateAdminAdapter) CA() *x509.PEMEncodedCertificateAndKey {
