@@ -443,9 +443,9 @@ func removeInitializedKey(ctx context.Context, cluster cluster.ClientProvider, n
 
 	fmt.Println("removing self-hosted initialized key")
 
-	_, err = c.MachineClient.RemoveBootkubeInitializedKey(ctx, &emptypb.Empty{})
+	_, err = c.MachineClient.RemoveBootkubeInitializedKey(ctx, &emptypb.Empty{}) //nolint:staticcheck
 	if err != nil {
-		return fmt.Errorf("error removing self-hosted iniitialized key: %w", err)
+		return fmt.Errorf("error removing self-hosted initialized key: %w", err)
 	}
 
 	return nil

@@ -16,18 +16,6 @@ description: Talos gRPC API reference.
     - [Code](#common.Code)
     - [ContainerDriver](#common.ContainerDriver)
   
-- [health/health.proto](#health/health.proto)
-    - [HealthCheck](#health.HealthCheck)
-    - [HealthCheckResponse](#health.HealthCheckResponse)
-    - [HealthWatchRequest](#health.HealthWatchRequest)
-    - [ReadyCheck](#health.ReadyCheck)
-    - [ReadyCheckResponse](#health.ReadyCheckResponse)
-  
-    - [HealthCheck.ServingStatus](#health.HealthCheck.ServingStatus)
-    - [ReadyCheck.ReadyStatus](#health.ReadyCheck.ReadyStatus)
-  
-    - [Health](#health.Health)
-  
 - [inspect/inspect.proto](#inspect/inspect.proto)
     - [ControllerDependencyEdge](#inspect.ControllerDependencyEdge)
     - [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse)
@@ -116,9 +104,6 @@ description: Talos gRPC API reference.
     - [ReadRequest](#machine.ReadRequest)
     - [Reboot](#machine.Reboot)
     - [RebootResponse](#machine.RebootResponse)
-    - [Recover](#machine.Recover)
-    - [RecoverRequest](#machine.RecoverRequest)
-    - [RecoverResponse](#machine.RecoverResponse)
     - [RemoveBootkubeInitializedKey](#machine.RemoveBootkubeInitializedKey)
     - [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse)
     - [Reset](#machine.Reset)
@@ -174,7 +159,6 @@ description: Talos gRPC API reference.
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
-    - [RecoverRequest.Source](#machine.RecoverRequest.Source)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
     - [TaskEvent.Action](#machine.TaskEvent.Action)
@@ -367,135 +351,6 @@ Common metadata message nested in all reply message types
  <!-- end enums -->
 
  <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="health/health.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## health/health.proto
-
-
-
-<a name="health.HealthCheck"></a>
-
-### HealthCheck
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [HealthCheck.ServingStatus](#health.HealthCheck.ServingStatus) |  |  |
-
-
-
-
-
-
-<a name="health.HealthCheckResponse"></a>
-
-### HealthCheckResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [HealthCheck](#health.HealthCheck) | repeated |  |
-
-
-
-
-
-
-<a name="health.HealthWatchRequest"></a>
-
-### HealthWatchRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| interval_seconds | [int64](#int64) |  |  |
-
-
-
-
-
-
-<a name="health.ReadyCheck"></a>
-
-### ReadyCheck
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [ReadyCheck.ReadyStatus](#health.ReadyCheck.ReadyStatus) |  |  |
-
-
-
-
-
-
-<a name="health.ReadyCheckResponse"></a>
-
-### ReadyCheckResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [ReadyCheck](#health.ReadyCheck) | repeated |  |
-
-
-
-
-
- <!-- end messages -->
-
-
-<a name="health.HealthCheck.ServingStatus"></a>
-
-### HealthCheck.ServingStatus
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| UNKNOWN | 0 |  |
-| SERVING | 1 |  |
-| NOT_SERVING | 2 |  |
-
-
-
-<a name="health.ReadyCheck.ReadyStatus"></a>
-
-### ReadyCheck.ReadyStatus
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| UNKNOWN | 0 |  |
-| READY | 1 |  |
-| NOT_READY | 2 |  |
-
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="health.Health"></a>
-
-### Health
-The health service definition.
-
-| Method Name | Request Type | Response Type | Description |
-| ----------- | ------------ | ------------- | ------------|
-| Check | [.google.protobuf.Empty](#google.protobuf.Empty) | [HealthCheckResponse](#health.HealthCheckResponse) |  |
-| Watch | [HealthWatchRequest](#health.HealthWatchRequest) | [HealthCheckResponse](#health.HealthCheckResponse) stream |  |
-| Ready | [.google.protobuf.Empty](#google.protobuf.Empty) | [ReadyCheckResponse](#health.ReadyCheckResponse) |  |
 
  <!-- end services -->
 
@@ -1978,51 +1833,6 @@ The reboot message containing the reboot status.
 
 
 
-<a name="machine.Recover"></a>
-
-### Recover
-The recover message containing the recover status.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-
-
-
-
-
-
-<a name="machine.RecoverRequest"></a>
-
-### RecoverRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| source | [RecoverRequest.Source](#machine.RecoverRequest.Source) |  |  |
-
-
-
-
-
-
-<a name="machine.RecoverResponse"></a>
-
-### RecoverResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [Recover](#machine.Recover) | repeated |  |
-
-
-
-
-
-
 <a name="machine.RemoveBootkubeInitializedKey"></a>
 
 ### RemoveBootkubeInitializedKey
@@ -2889,18 +2699,6 @@ File type.
 
 
 
-<a name="machine.RecoverRequest.Source"></a>
-
-### RecoverRequest.Source
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| ETCD | 0 |  |
-| APISERVER | 1 |  |
-
-
-
 <a name="machine.SequenceEvent.Action"></a>
 
 ### SequenceEvent.Action
@@ -2989,7 +2787,6 @@ This method is available only on control plane nodes (which run etcd). |
 | Restart | [RestartRequest](#machine.RestartRequest) | [RestartResponse](#machine.RestartResponse) |  |
 | Rollback | [RollbackRequest](#machine.RollbackRequest) | [RollbackResponse](#machine.RollbackResponse) |  |
 | Reset | [ResetRequest](#machine.ResetRequest) | [ResetResponse](#machine.ResetResponse) |  |
-| Recover | [RecoverRequest](#machine.RecoverRequest) | [RecoverResponse](#machine.RecoverResponse) |  |
 | RemoveBootkubeInitializedKey | [.google.protobuf.Empty](#google.protobuf.Empty) | [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse) |  |
 | ServiceList | [.google.protobuf.Empty](#google.protobuf.Empty) | [ServiceListResponse](#machine.ServiceListResponse) |  |
 | ServiceRestart | [ServiceRestartRequest](#machine.ServiceRestartRequest) | [ServiceRestartResponse](#machine.ServiceRestartResponse) |  |

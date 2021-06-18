@@ -68,9 +68,9 @@ service MachineService {
   rpc Restart(RestartRequest) returns (RestartResponse);
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
-  rpc Recover(RecoverRequest) returns (RecoverResponse);
-  rpc RemoveBootkubeInitializedKey(google.protobuf.Empty)
-      returns (RemoveBootkubeInitializedKeyResponse);
+  rpc RemoveBootkubeInitializedKey(google.protobuf.Empty) returns (RemoveBootkubeInitializedKeyResponse) {
+    option deprecated = true;
+  };
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
@@ -206,21 +206,6 @@ message ResetRequest {
 // The reset message containing the restart status.
 message Reset { common.Metadata metadata = 1; }
 message ResetResponse { repeated Reset messages = 1; }
-
-// rpc recover
-
-message RecoverRequest {
-  enum Source {
-    ETCD = 0;
-    APISERVER = 1;
-  }
-
-  Source source = 1;
-}
-
-// The recover message containing the recover status.
-message Recover { common.Metadata metadata = 1; }
-message RecoverResponse { repeated Recover messages = 1; }
 
 // rpc shutdown
 // The messages message containing the shutdown status.
