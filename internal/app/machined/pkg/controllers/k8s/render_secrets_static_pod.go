@@ -220,7 +220,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .Secrets.AdminKubeconfig }}"),
+						template: []byte("{{ .Secrets.ControllerManagerKubeconfig }}"),
 					},
 				},
 			},
@@ -230,7 +230,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .Secrets.AdminKubeconfig }}"),
+						template: []byte("{{ .Secrets.SchedulerKubeconfig }}"),
 					},
 				},
 			},

@@ -156,6 +156,12 @@ const (
 	// KubernetesAdminCertOrganization defines Organization values of Kubernetes admin certificate.
 	KubernetesAdminCertOrganization = "system:masters"
 
+	// KubernetesControllerManagerOrganization defines Organization value of kube-controller-manager client certificate.
+	KubernetesControllerManagerOrganization = "system:kube-controller-manager"
+
+	// KubernetesSchedulerOrganization defines Organization value of kube-scheduler client certificate.
+	KubernetesSchedulerOrganization = "system:kube-scheduler"
+
 	// KubernetesAdminCertDefaultLifetime defines default lifetime for Kubernetes generated admin certificate.
 	KubernetesAdminCertDefaultLifetime = 365 * 24 * time.Hour
 

@@ -30,7 +30,9 @@ type KubernetesCertsSpec struct {
 	APIServerKubeletClient *x509.PEMEncodedCertificateAndKey `yaml:"apiServerKubeletClient"`
 	FrontProxy             *x509.PEMEncodedCertificateAndKey `yaml:"frontProxy"`
 
-	AdminKubeconfig string `yaml:"adminKubeconfig"`
+	SchedulerKubeconfig         string `yaml:"schedulerKubeconfig"`
+	ControllerManagerKubeconfig string `yaml:"controllerManagerKubeconfig"`
+	AdminKubeconfig             string `yaml:"adminKubeconfig"`
 }
 
 // NewKubernetes initializes a Kubernetes resource.

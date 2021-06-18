@@ -19,11 +19,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-type AdminSuite struct {
+type GenerateSuite struct {
 	suite.Suite
 }
 
-func (suite *AdminSuite) TestGenerate() {
+func (suite *GenerateSuite) TestGenerateAdmin() {
 	for _, rsa := range []bool{true, false} {
 		rsa := rsa
 
@@ -63,6 +63,37 @@ func (suite *AdminSuite) TestGenerate() {
 	}
 }
 
-func TestAdminSuite(t *testing.T) {
-	suite.Run(t, new(AdminSuite))
+func (suite *GenerateSuite) TestGenerate() {
+	ca, err := x509.NewSelfSignedCertificateAuthority(x509.RSA(false))
+	suite.Require().NoError(err)
+
+	k8sCA := x509.NewCertificateAndKeyFromCertificateAuthority(ca)
+
+	input := kubeconfig.GenerateInput{
+		ClusterName: "foo",
+
+		CA:                  k8sCA,
+		CertificateLifetime: time.Hour,
+
+		CommonName:   "system:kube-controller-manager",
+		Organization: "system:kube-controller-manager",
+
+		Endpoint:    "https://localhost:6443/",
+		Username:    "kube-controller-manager",
+		ContextName: "kube-controller-manager",
+	}
+
+	var buf bytes.Buffer
+
+	suite.Require().NoError(kubeconfig.Generate(&input, &buf))
+
+	// verify config via k8s client
+	config, err := clientcmd.Load(buf.Bytes())
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(clientcmd.ConfirmUsable(*config, "kube-controller-manager@foo"))
+}
+
+func TestGenerateSuite(t *testing.T) {
+	suite.Run(t, new(GenerateSuite))
 }
