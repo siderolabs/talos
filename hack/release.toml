@@ -39,7 +39,7 @@ Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the clust
         title = "Component Updates"
         description = """\
 * containerd was updated to 1.5.2
-* Linux kernel was updated to 5.10.29
+* Linux kernel was updated to 5.10.38
 """
 
     [notes.bootstrap]
@@ -53,6 +53,35 @@ exception of the machine type.
 Users can use a modified `controlplane.yaml` with the machine type set to
 `init` if they would like to avoid using the bootstrap API.
 """
+
+    [notes.networking]
+        title = "Networking Configuration"
+        description = """\
+Talos networking configuration was completely rewritten to be based on controllers
+and resources.
+There are no changes to the machine configuration, but any update to `.machine.network` can now
+be applied in immediate mode (without a reboot).
+Talos should be setting up network configuration much faster on boot now, not blocking on DHCP for unconfigured
+interfaces and skipping the reset network step.
+"""
+
+    [notes.rbac]
+        title = "Talos API RBAC"
+        description = """\
+Limited RBAC support in Talos API is now enabled by default for Talos 0.11.
+Default `talosconfig` has `os:admin` role embedded in the certificate so that all the APIs are available.
+Certificates with reduced set of roles can be created with `talosctl config new` command.
+
+When upgrading from Talos 0.10, RBAC is not enabled by default. Before enabling RBAC, generate `talosconfig` with
+`os:admin` role first to make sure that administrator still has access to the cluster when RBAC is enabled.
+
+List of available roles:
+
+* `os:admin` role enables every Talos API
+* `os:reader` role limits access to read-only APIs which do not return sensitive data
+* `os:etcd:backup` role only allows `talosctl etcd snapshot` API call (for etcd backup automation)
+"""
+
 
 [make_deps]
 
