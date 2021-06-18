@@ -498,17 +498,6 @@ func (c *Client) Reboot(ctx context.Context) (err error) {
 	return
 }
 
-// Recover implements the proto.MachineServiceClient interface.
-func (c *Client) Recover(ctx context.Context, source machineapi.RecoverRequest_Source) (err error) {
-	resp, err := c.MachineClient.Recover(ctx, &machineapi.RecoverRequest{Source: source})
-
-	if err == nil {
-		_, err = FilterMessages(resp, err)
-	}
-
-	return
-}
-
 // Rollback implements the proto.MachineServiceClient interface.
 func (c *Client) Rollback(ctx context.Context) (err error) {
 	resp, err := c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})

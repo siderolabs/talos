@@ -141,8 +141,6 @@ FROM build AS generate-build
 COPY ./api/vendor/ /api/vendor/
 COPY ./api/common/common.proto /api/common/common.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api common/common.proto
-COPY ./api/health/health.proto /api/health/health.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api health/health.proto
 COPY ./api/security/security.proto /api/security/security.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api security/security.proto
 COPY ./api/storage/storage.proto /api/storage/storage.proto
@@ -171,7 +169,6 @@ RUN --mount=type=cache,target=/.cache go generate ./...
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
-COPY --from=generate-build /api/health/*.pb.go /pkg/machinery/api/health/
 COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
 COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
 COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
@@ -653,7 +650,6 @@ COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
 RUN protoc \
     -I/protos \
     -I/protos/common \
-    -I/protos/health \
     -I/protos/inspect \
     -I/protos/machine \
     -I/protos/network \
@@ -665,7 +661,6 @@ RUN protoc \
     --doc_opt=/tmp/markdown.tmpl,api.md \
     --doc_out=/tmp \
     /protos/common/*.proto \
-    /protos/health/*.proto \
     /protos/inspect/*.proto \
     /protos/machine/*.proto \
     /protos/network/*.proto \

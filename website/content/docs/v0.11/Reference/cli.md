@@ -1741,34 +1741,6 @@ talosctl reboot [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl recover
-
-Recover a control plane
-
-```
-talosctl recover [flags]
-```
-
-### Options
-
-```
-  -h, --help            help for recover
-  -s, --source string   The data source for restoring the control plane manifests from (valid options are "apiserver" and "etcd") (default "apiserver")
-```
-
-### Options inherited from parent commands
-
-```
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl reset
 
 Reset a node
@@ -2199,7 +2171,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine
 * [talosctl reboot](#talosctl-reboot)	 - Reboot a node
-* [talosctl recover](#talosctl-recover)	 - Recover a control plane
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation
