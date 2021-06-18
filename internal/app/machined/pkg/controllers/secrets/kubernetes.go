@@ -220,6 +220,46 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 
 	var buf bytes.Buffer
 
+	if err = kubeconfig.Generate(&kubeconfig.GenerateInput{
+		ClusterName: k8sRoot.Name,
+
+		CA:                  k8sRoot.CA,
+		CertificateLifetime: KubernetesCertificateValidityDuration,
+
+		CommonName:   constants.KubernetesControllerManagerOrganization,
+		Organization: constants.KubernetesControllerManagerOrganization,
+
+		Endpoint:    k8sRoot.Endpoint.String(),
+		Username:    constants.KubernetesControllerManagerOrganization,
+		ContextName: "default",
+	}, &buf); err != nil {
+		return fmt.Errorf("failed to generate controller manager kubeconfig: %w", err)
+	}
+
+	k8sSecrets.ControllerManagerKubeconfig = buf.String()
+
+	buf.Reset()
+
+	if err = kubeconfig.Generate(&kubeconfig.GenerateInput{
+		ClusterName: k8sRoot.Name,
+
+		CA:                  k8sRoot.CA,
+		CertificateLifetime: KubernetesCertificateValidityDuration,
+
+		CommonName:   constants.KubernetesSchedulerOrganization,
+		Organization: constants.KubernetesSchedulerOrganization,
+
+		Endpoint:    k8sRoot.Endpoint.String(),
+		Username:    constants.KubernetesSchedulerOrganization,
+		ContextName: "default",
+	}, &buf); err != nil {
+		return fmt.Errorf("failed to generate scheduler kubeconfig: %w", err)
+	}
+
+	k8sSecrets.SchedulerKubeconfig = buf.String()
+
+	buf.Reset()
+
 	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{k8sRoot: k8sRoot}, &buf); err != nil {
 		return fmt.Errorf("failed to generate admin kubeconfig: %w", err)
 	}

@@ -300,6 +300,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		"/go-runner",
 		"/usr/local/bin/kube-controller-manager",
 		"--allocate-node-cidrs=true",
+		"--bind-address=127.0.0.1",
+		"--port=0",
 		fmt.Sprintf("--cluster-cidr=%s", cfg.PodCIDR),
 		fmt.Sprintf("--service-cluster-ip-range=%s", cfg.ServiceCIDR),
 		fmt.Sprintf("--cluster-signing-cert-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
@@ -310,6 +312,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		fmt.Sprintf("--root-ca-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
 		fmt.Sprintf("--service-account-private-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")),
 		"--profiling=false",
+		"--use-service-account-credentials",
 	}
 
 	if cfg.CloudProvider != "" {
@@ -356,6 +359,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path:   "/healthz",
+									Host:   "localhost",
 									Port:   intstr.FromInt(10257),
 									Scheme: v1.URISchemeHTTPS,
 								},
@@ -401,6 +405,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"/go-runner",
 		"/usr/local/bin/kube-scheduler",
 		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
+		"--bind-address=127.0.0.1",
 		"--leader-elect=true",
 		"--profiling=false",
 	}
@@ -445,6 +450,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path:   "/healthz",
+									Host:   "localhost",
 									Port:   intstr.FromInt(10259),
 									Scheme: v1.URISchemeHTTPS,
 								},
