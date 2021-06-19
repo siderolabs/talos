@@ -406,6 +406,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"/usr/local/bin/kube-scheduler",
 		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
 		"--bind-address=127.0.0.1",
+		"--port=0",
 		"--leader-elect=true",
 		"--profiling=false",
 	}
