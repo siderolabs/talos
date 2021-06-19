@@ -240,6 +240,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
+				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
 						Name:    "kube-apiserver",
@@ -308,6 +309,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		fmt.Sprintf("--cluster-signing-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key")),
 		"--configure-cloud-routes=false",
 		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
+		fmt.Sprintf("--authentication-kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
+		fmt.Sprintf("--authorization-kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
 		"--leader-elect=true",
 		fmt.Sprintf("--root-ca-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
 		fmt.Sprintf("--service-account-private-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")),
@@ -343,6 +346,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 			},
 			Spec: v1.PodSpec{
+				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
 						Name:    "kube-controller-manager",
@@ -405,6 +409,9 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"/go-runner",
 		"/usr/local/bin/kube-scheduler",
 		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
+		"--authentication-tolerate-lookup-failure=false",
+		fmt.Sprintf("--authentication-kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
+		fmt.Sprintf("--authorization-kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
 		"--bind-address=127.0.0.1",
 		"--port=0",
 		"--leader-elect=true",
@@ -435,6 +442,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
+				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
 						Name:    "kube-scheduler",
