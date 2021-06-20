@@ -499,6 +499,7 @@ RUN apk add --no-cache --update \
     xorriso \
     xz
 ARG TARGETARCH
+ENV TARGETARCH ${TARGETARCH}
 COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 RUN ln -s /bin/installer /bin/talosctl
@@ -514,10 +515,10 @@ ONBUILD RUN apk add --no-cache --update \
 ONBUILD WORKDIR /initramfs
 ONBUILD ARG RM
 ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
-    && cpio -idvm < /usr/install/initramfs \
+    && cpio -idvm < /usr/install/${TARGETARCH}/initramfs \
     && unsquashfs -f -d /rootfs rootfs.sqsh \
     && for f in ${RM}; do rm -rfv /rootfs$f; done \
-    && rm /usr/install/initramfs \
+    && rm /usr/install/${TARGETARCH}/initramfs \
     && rm rootfs.sqsh
 ONBUILD COPY --from=customization / /rootfs
 ONBUILD RUN find /rootfs \
