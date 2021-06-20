@@ -31,7 +31,7 @@ FROM scratch AS customization
 COPY --from=<custom kernel image> /lib/modules /lib/modules
 
 FROM ghcr.io/talos-systems/installer:latest
-COPY --from=<custom kernel image> /boot/vmlinuz /usr/install/vmlinuz
+COPY --from=<custom kernel image> /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
 ```
 
 When building the image, the `customization` stage will automatically be copied into the rootfs.
