@@ -161,6 +161,7 @@ spec:
           mountPath: /etc/kubernetes
           readOnly: true
       hostNetwork: true
+      priorityClassName: system-cluster-critical
       serviceAccountName: kube-proxy
       tolerations:
       - effect: NoSchedule
