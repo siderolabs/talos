@@ -94,13 +94,18 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		}
 	}
 
+	skipOverlayMountsCheck, err := shouldSkipOverlayMountsCheck(sequence)
+	if err != nil {
+		return nil, err
+	}
+
 	manifest.Devices[opts.Disk] = Device{
 		Device: opts.Disk,
 
 		ResetPartitionTable: opts.Force,
 		Zero:                opts.Zero,
 
-		SkipOverlayMountsCheck: sequence == runtime.SequenceNoop,
+		SkipOverlayMountsCheck: skipOverlayMountsCheck,
 	}
 
 	// Initialize any slices we need. Note that a boot partition is not
@@ -532,4 +537,21 @@ func (m *Manifest) zeroDevice(device Device) (err error) {
 	log.Printf("wiped %q with %q", device.Device, method)
 
 	return bd.Close()
+}
+
+func shouldSkipOverlayMountsCheck(sequence runtime.Sequence) (bool, error) {
+	var skipOverlayMountsCheck bool
+
+	_, err := os.Stat("/.dockerenv")
+
+	switch {
+	case err == nil:
+		skipOverlayMountsCheck = true
+	case os.IsNotExist(err):
+		skipOverlayMountsCheck = sequence == runtime.SequenceNoop
+	default:
+		return false, fmt.Errorf("cannot determine if /.dockerenv exists: %w", err)
+	}
+
+	return skipOverlayMountsCheck, nil
 }
