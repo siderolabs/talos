@@ -3,6 +3,7 @@ module github.com/talos-systems/talos
 go 1.16
 
 replace (
+	// Use nested module.
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
 
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
@@ -28,7 +29,7 @@ require (
 	github.com/containernetworking/plugins v0.9.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20210611144007-85ab1ee09d8c
+	github.com/cosi-project/runtime v0.0.0-20210621171302-3698c5142954
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0

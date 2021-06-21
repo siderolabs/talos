@@ -90,6 +90,7 @@ func (r *MachineConfig) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             MachineConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

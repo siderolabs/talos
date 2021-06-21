@@ -77,6 +77,7 @@ func (r *Kubernetes) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             KubernetesType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
