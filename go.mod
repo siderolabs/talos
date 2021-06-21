@@ -95,7 +95,7 @@ require (
 	github.com/vmware/govmomi v0.26.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd/api/v3 v3.5.0-rc.1
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0-rc.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0-rc.1
 	go.uber.org/zap v1.17.0
