@@ -1117,6 +1117,7 @@ Examples:
 ``` yaml
 coreDNS:
     image: docker.io/coredns/coredns:1.8.4 # The `image` field is an override to the default coredns image.
+    replicas: 2 # The `replicas` field is an override to the default coredns number of desired replicas.
 ```
 
 
@@ -2241,6 +2242,7 @@ Appears in:
 
 ``` yaml
 image: docker.io/coredns/coredns:1.8.4 # The `image` field is an override to the default coredns image.
+replicas: 2 # The `replicas` field is an override to the default coredns number of desired replicas.
 ```
 
 <hr />
@@ -2266,6 +2268,20 @@ Disable coredns deployment on cluster bootstrap.
 <div class="dt">
 
 The `image` field is an override to the default coredns image.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>replicas</code>  <i>int</i>
+
+</div>
+<div class="dt">
+
+The `replicas` field is an override to the default coredns number of desired replicas.
+The default is `2`.
 
 </div>
 
