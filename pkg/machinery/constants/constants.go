@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.10.38-talos"
+	DefaultKernelVersion = "5.10.45-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -239,7 +239,7 @@ const (
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	DefaultEtcdVersion = "v3.4.15"
+	DefaultEtcdVersion = "v3.4.16"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
