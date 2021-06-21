@@ -111,6 +111,7 @@ func (r *Root) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             RootType,
 		Aliases:          []resource.Type{"rootSecret", "rootSecrets"},
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

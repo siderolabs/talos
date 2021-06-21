@@ -75,22 +75,22 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 	matched := []*meta.ResourceDefinition{}
 
 	for _, item := range registeredResources.Items {
-		resourceDefinition, ok := item.(*meta.ResourceDefinition)
+		rd, ok := item.(*meta.ResourceDefinition)
 		if !ok {
 			return nil, fmt.Errorf("unexpected resource definition type")
 		}
 
-		if strings.EqualFold(resourceDefinition.Metadata().ID(), kind.Type) {
-			matched = append(matched, resourceDefinition)
+		if strings.EqualFold(rd.Metadata().ID(), kind.Type) {
+			matched = append(matched, rd)
 
 			continue
 		}
 
-		spec := resourceDefinition.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
+		spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
 
 		for _, alias := range spec.Aliases {
 			if strings.EqualFold(alias, kind.Type) {
-				matched = append(matched, resourceDefinition)
+				matched = append(matched, rd)
 
 				break
 			}
@@ -119,14 +119,19 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 	}
 }
 
-func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind) error {
+func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind, rd *meta.ResourceDefinition) error {
 	roles := authz.GetRoles(ctx)
+	spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
 
-	// TODO(rbac): check sensitivity levels once they are added to COSI
-	if strings.Contains(kind.Type, "secret") {
+	switch spec.Sensitivity {
+	case meta.Sensitive:
 		if !roles.Includes(role.Admin) {
 			return authz.ErrNotAuthorized
 		}
+	case meta.NonSensitive:
+		// nothing
+	default:
+		return fmt.Errorf("unexpected sensitivity %q", spec.Sensitivity)
 	}
 
 	registeredNamespaces, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().List(ctx, resource.NewMetadata(meta.NamespaceName, meta.NamespaceType, "", resource.VersionUndefined))
@@ -145,17 +150,17 @@ func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind
 
 // Get implements resource.ResourceServiceServer interface.
 func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*resourceapi.GetResponse, error) {
-	kind := resourceKind{
+	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
 	}
 
-	resourceDefinition, err := s.resolveResourceKind(ctx, &kind)
+	rd, err := s.resolveResourceKind(ctx, kind)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.checkReadAccess(ctx, &kind); err != nil {
+	if err = s.checkReadAccess(ctx, kind, rd); err != nil {
 		return nil, err
 	}
 
@@ -170,7 +175,7 @@ func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*
 		return nil, err
 	}
 
-	protoD, err := marshalResource(resourceDefinition)
+	protoD, err := marshalResource(rd)
 	if err != nil {
 		return nil, err
 	}
@@ -192,17 +197,17 @@ func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*
 
 // List implements resource.ResourceServiceServer interface.
 func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.ResourceService_ListServer) error {
-	kind := resourceKind{
+	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
 	}
 
-	resourceDefinition, err := s.resolveResourceKind(srv.Context(), &kind)
+	rd, err := s.resolveResourceKind(srv.Context(), kind)
 	if err != nil {
 		return err
 	}
 
-	if err = s.checkReadAccess(srv.Context(), &kind); err != nil {
+	if err = s.checkReadAccess(srv.Context(), kind, rd); err != nil {
 		return err
 	}
 
@@ -213,7 +218,7 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 		return err
 	}
 
-	protoD, err := marshalResource(resourceDefinition)
+	protoD, err := marshalResource(rd)
 	if err != nil {
 		return err
 	}
@@ -244,23 +249,23 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 //
 //nolint:gocyclo
 func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceService_WatchServer) error {
-	kind := resourceKind{
+	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
 	}
 
-	resourceDefinition, err := s.resolveResourceKind(srv.Context(), &kind)
+	rd, err := s.resolveResourceKind(srv.Context(), kind)
 	if err != nil {
 		return err
 	}
 
-	if err = s.checkReadAccess(srv.Context(), &kind); err != nil {
+	if err = s.checkReadAccess(srv.Context(), kind, rd); err != nil {
 		return err
 	}
 
 	resources := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
-	protoD, err := marshalResource(resourceDefinition)
+	protoD, err := marshalResource(rd)
 	if err != nil {
 		return err
 	}

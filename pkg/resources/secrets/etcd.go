@@ -71,6 +71,7 @@ func (r *Etcd) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             EtcdType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
