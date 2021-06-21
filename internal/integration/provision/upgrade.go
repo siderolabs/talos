@@ -74,7 +74,7 @@ const (
 
 	previousK8sVersion = "1.20.6" // constants.DefaultKubernetesVersion in the previousRelease
 	stableK8sVersion   = "1.21.0" // constants.DefaultKubernetesVersion in the stableRelease
-	currentK8sVersion  = "1.21.1" // next k8s version being tested
+	currentK8sVersion  = "1.21.2" // next k8s version being tested
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
