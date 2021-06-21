@@ -117,7 +117,7 @@ require (
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1 // indirect
 	k8s.io/client-go v0.21.1
-	k8s.io/cri-api v0.21.1
+	k8s.io/cri-api v0.21.2
 	k8s.io/kubectl v0.21.1
 	k8s.io/kubelet v0.21.1
 	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10 // indirect
