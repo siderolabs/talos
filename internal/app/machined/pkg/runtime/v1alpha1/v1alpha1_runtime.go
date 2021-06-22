@@ -69,8 +69,6 @@ func (r *Runtime) SetConfig(b []byte) error {
 }
 
 // CanApplyImmediate implements the Runtime interface.
-//
-//nolint:gocyclo
 func (r *Runtime) CanApplyImmediate(b []byte) error {
 	cfg, err := r.ValidateConfig(b)
 	if err != nil {
@@ -104,14 +102,13 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	// * .machine.debug
 	// * .machine.time
 	// * .machine.network
+	// * .machine.certCANs
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
-	}
-
-	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
+		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
 	}
 

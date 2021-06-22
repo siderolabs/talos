@@ -25,6 +25,7 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
+		&k8s.Endpoint{},
 		&k8s.ManifestStatus{},
 		&k8s.Manifest{},
 		&k8s.Nodename{},

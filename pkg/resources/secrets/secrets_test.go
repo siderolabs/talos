@@ -25,6 +25,7 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
+		&secrets.API{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},
