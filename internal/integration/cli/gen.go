@@ -8,7 +8,6 @@ package cli
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"regexp"
 
@@ -31,10 +30,9 @@ func (suite *GenSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *GenSuite) SetupTest() {
-	var err error
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
+	var err error
 	suite.savedCwd, err = os.Getwd()
 	suite.Require().NoError(err)
 
@@ -45,10 +43,6 @@ func (suite *GenSuite) SetupTest() {
 func (suite *GenSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))
-	}
-
-	if suite.tmpDir != "" {
-		suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 	}
 }
 

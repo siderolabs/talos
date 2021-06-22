@@ -135,10 +135,10 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 	return &stdout, &stderr, err
 }
 
-// Run executes command, asserts on its exit status/output, and returns stdout.
+// run executes command, asserts on its exit status/output, and returns stdout.
 //
 //nolint:gocyclo,nakedret
-func Run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string) {
+func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string) {
 	var opts runOptions
 
 	for _, o := range options {

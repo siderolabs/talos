@@ -7,8 +7,6 @@
 package cli
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 
@@ -34,10 +32,7 @@ func (suite *TalosconfigSuite) TestList() {
 
 // TestMerge checks how talosctl config merge.
 func (suite *TalosconfigSuite) TestMerge() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	defer os.RemoveAll(tempDir) //nolint:errcheck
-
-	suite.Require().NoError(err)
+	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"gen", "config", "-o", tempDir, "foo", "https://192.168.0.1:6443"})
 

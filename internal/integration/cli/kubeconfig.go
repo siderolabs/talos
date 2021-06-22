@@ -7,7 +7,6 @@
 package cli
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,10 +29,7 @@ func (suite *KubeconfigSuite) SuiteName() string {
 
 // TestDirectory generates kubeconfig in specified directory.
 func (suite *KubeconfigSuite) TestDirectory() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), tempDir},
 		base.StdoutEmpty())
@@ -41,16 +37,13 @@ func (suite *KubeconfigSuite) TestDirectory() {
 	path := filepath.Join(tempDir, "kubeconfig")
 	suite.Require().FileExists(path)
 
-	_, err = clientcmd.LoadFromFile(path)
+	_, err := clientcmd.LoadFromFile(path)
 	suite.Require().NoError(err)
 }
 
 // TestCwd generates kubeconfig in cwd.
 func (suite *KubeconfigSuite) TestCwd() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	savedCwd, err := os.Getwd()
 	suite.Require().NoError(err)
@@ -67,10 +60,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 // TestCustomName generates kubeconfig with custom name.
 func (suite *KubeconfigSuite) TestCustomName() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
 		base.StdoutEmpty())
@@ -89,10 +79,7 @@ func (suite *KubeconfigSuite) TestMultiNodeFail() {
 
 // TestMergeRename tests merge config into existing kubeconfig with default rename conflict resolution.
 func (suite *KubeconfigSuite) TestMergeRename() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	path := filepath.Join(tempDir, "config")
 
@@ -108,10 +95,7 @@ func (suite *KubeconfigSuite) TestMergeRename() {
 
 // TestMergeOverwrite test merge config into existing kubeconfig with overwrite conflict resolution.
 func (suite *KubeconfigSuite) TestMergeOverwrite() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	path := filepath.Join(tempDir, "config")
 
