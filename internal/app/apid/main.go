@@ -9,8 +9,10 @@ import (
 	"flag"
 	"log"
 	"regexp"
-	"strings"
 
+	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
 	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"golang.org/x/sync/errgroup"
@@ -23,15 +25,11 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/factory"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-var (
-	endpoints       *string
-	useK8sEndpoints *bool
-)
+var rbacEnabled *bool
 
 func runDebugServer(ctx context.Context) {
 	const debugAddr = ":9981"
@@ -49,8 +47,7 @@ func runDebugServer(ctx context.Context) {
 func Main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	endpoints = flag.String("endpoints", "", "the static list of IPs of the control plane nodes")
-	useK8sEndpoints = flag.Bool("use-kubernetes-endpoints", false, "use Kubernetes master node endpoints as control plane endpoints")
+	rbacEnabled = flag.Bool("enable-rbac", false, "enable RBAC for Talos API")
 
 	flag.Parse()
 
@@ -60,22 +57,15 @@ func Main() {
 		log.Fatalf("failed to seed RNG: %v", err)
 	}
 
-	config, err := configloader.NewFromStdin()
+	runtimeConn, err := grpc.Dial("unix://"+constants.APIRuntimeSocketPath, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("open config: %v", err)
+		log.Fatalf("failed to dial runtime connection: %v", err)
 	}
 
-	var endpointsProvider provider.Endpoints
+	stateClient := v1alpha1.NewStateClient(runtimeConn)
+	resources := state.WrapCore(client.NewAdapter(stateClient))
 
-	if *useK8sEndpoints {
-		endpointsProvider = &provider.KubernetesEndpoints{}
-	} else {
-		endpointsProvider = &provider.StaticEndpoints{
-			Endpoints: strings.Split(*endpoints, ","),
-		}
-	}
-
-	tlsConfig, err := provider.NewTLSConfig(config, endpointsProvider)
+	tlsConfig, err := provider.NewTLSConfig(resources)
 	if err != nil {
 		log.Fatalf("failed to create remote certificate provider: %+v", err)
 	}
@@ -106,8 +96,9 @@ func Main() {
 		"/machine.MachineService/List",
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/Read",
-		"/resource.ResourceService/List",
-		"/resource.ResourceService/Watch",
+		// TODO: revert me
+		"/talos.resource.ResourceService/List",
+		"/talos.resource.ResourceService/Watch",
 		"/os.OSService/Dmesg",
 		"/cluster.ClusterService/HealthCheck",
 	} {
@@ -121,7 +112,7 @@ func Main() {
 
 	errGroup.Go(func() error {
 		mode := authz.Disabled
-		if config.Machine().Features().RBACEnabled() {
+		if *rbacEnabled {
 			mode = authz.Enabled
 		}
 

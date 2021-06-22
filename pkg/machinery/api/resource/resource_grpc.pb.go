@@ -34,7 +34,7 @@ func NewResourceServiceClient(cc grpc.ClientConnInterface) ResourceServiceClient
 
 func (c *resourceServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/resource.ResourceService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/talos.resource.ResourceService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (c *resourceServiceClient) Get(ctx context.Context, in *GetRequest, opts ..
 }
 
 func (c *resourceServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ResourceService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ResourceService_ServiceDesc.Streams[0], "/resource.ResourceService/List", opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceService_ServiceDesc.Streams[0], "/talos.resource.ResourceService/List", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (x *resourceServiceListClient) Recv() (*ListResponse, error) {
 }
 
 func (c *resourceServiceClient) Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceService_WatchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ResourceService_ServiceDesc.Streams[1], "/resource.ResourceService/Watch", opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceService_ServiceDesc.Streams[1], "/talos.resource.ResourceService/Watch", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func _ResourceService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/resource.ResourceService/Get",
+		FullMethod: "/talos.resource.ResourceService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ResourceServiceServer).Get(ctx, req.(*GetRequest))
@@ -206,7 +206,7 @@ func (x *resourceServiceWatchServer) Send(m *WatchResponse) error {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ResourceService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "resource.ResourceService",
+	ServiceName: "talos.resource.ResourceService",
 	HandlerType: (*ResourceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

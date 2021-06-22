@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package resource;
+package talos.resource;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource";
 

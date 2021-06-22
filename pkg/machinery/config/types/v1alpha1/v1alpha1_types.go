@@ -1741,7 +1741,7 @@ type SystemDiskEncryptionConfig struct {
 type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
-	RBAC *bool `yaml:"rbac"`
+	RBAC *bool `yaml:"rbac,omitempty"`
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

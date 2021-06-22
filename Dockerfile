@@ -155,6 +155,8 @@ COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api cluster/cluster.proto
 COPY ./api/resource/resource.proto /api/resource/resource.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api resource/resource.proto
+COPY ./api/resource/secrets.proto /api/resource/secrets.proto
+RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api resource/secrets.proto
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api inspect/inspect.proto
 # Gofumports generated files to adjust import order
