@@ -8,7 +8,6 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -29,10 +28,9 @@ func (suite *ValidateSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ValidateSuite) SetupTest() {
-	var err error
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
+	var err error
 	suite.savedCwd, err = os.Getwd()
 	suite.Require().NoError(err)
 
@@ -43,10 +41,6 @@ func (suite *ValidateSuite) SetupTest() {
 func (suite *ValidateSuite) TearDownTest() {
 	if suite.savedCwd != "" {
 		suite.Require().NoError(os.Chdir(suite.savedCwd))
-	}
-
-	if suite.tmpDir != "" {
-		suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 	}
 }
 

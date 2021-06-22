@@ -8,9 +8,7 @@ package base
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -73,10 +71,7 @@ func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
 
 func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	// pull down kubeconfig into temporary directory
-	tempDir, err := ioutil.TempDir("", "talos")
-	cliSuite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := cliSuite.T().TempDir()
 
 	// rely on `nodes:` being set in talosconfig
 	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())
@@ -96,7 +91,10 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 }
 
 func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
-	// TODO: add support for calling `talosctl config endpoint` before running talosctl
+	if cliSuite.Endpoint != "" {
+		args = append([]string{"--endpoints", cliSuite.Endpoint}, args...)
+	}
+
 	args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
 
 	return exec.Command(cliSuite.TalosctlPath, args...)
@@ -104,7 +102,7 @@ func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 
 // RunCLI runs talosctl binary with the options provided.
 func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout string) {
-	return Run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
+	return run(&cliSuite.Suite, cliSuite.buildCLICmd(args), options...)
 }
 
 // RunAndWaitForMatch retries command until output matches.

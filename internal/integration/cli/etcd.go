@@ -7,8 +7,6 @@
 package cli
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 
@@ -46,12 +44,7 @@ func (suite *EtcdSuite) TestForfeitLeadership() {
 
 // TestSnapshot tests etcd snapshot (backup).
 func (suite *EtcdSuite) TestSnapshot() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer func() {
-		suite.Assert().NoError(os.RemoveAll(tempDir))
-	}()
+	tempDir := suite.T().TempDir()
 
 	dbPath := filepath.Join(tempDir, "snapshot.db")
 

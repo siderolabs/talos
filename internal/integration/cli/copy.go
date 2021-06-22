@@ -7,7 +7,6 @@
 package cli
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,15 +26,12 @@ func (suite *CopySuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *CopySuite) TestSuccess() {
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer os.RemoveAll(tempDir) //nolint:errcheck
+	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"copy", "--nodes", suite.RandomDiscoveredNode(), "/etc/os-release", tempDir},
 		base.StdoutEmpty())
 
-	_, err = os.Stat(filepath.Join(tempDir, "os-release"))
+	_, err := os.Stat(filepath.Join(tempDir, "os-release"))
 	suite.Require().NoError(err)
 }
 
