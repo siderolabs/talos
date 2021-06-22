@@ -66,6 +66,10 @@ func (g *RemoteGenerator) SetEndpoints(endpoints []string) error {
 	g.connMu.Lock()
 	defer g.connMu.Unlock()
 
+	if g.conn != nil {
+		g.conn.Close() //nolint:errcheck
+	}
+
 	g.conn = conn
 	g.client = securityapi.NewSecurityServiceClient(g.conn)
 
@@ -104,6 +108,7 @@ func (g *RemoteGenerator) certificate(in *securityapi.CertificateRequest) (resp 
 }
 
 func (g *RemoteGenerator) poll(in *securityapi.CertificateRequest) (ca, crt []byte, err error) {
+	// TODO: rewrite with retry package
 	timeout := time.NewTimer(time.Minute * 5)
 	defer timeout.Stop()
 

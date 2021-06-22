@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/talos-systems/crypto/x509"
+	"inet.af/netaddr"
 )
 
 // RootType is type of Root secret resource.
@@ -19,6 +20,7 @@ const RootType = resource.Type("RootSecrets.secrets.talos.dev")
 
 // IDs of various resources of RootType.
 const (
+	RootOSID         = resource.ID("os")
 	RootEtcdID       = resource.ID("etcd")
 	RootKubernetesID = resource.ID("k8s")
 )
@@ -27,6 +29,15 @@ const (
 type Root struct {
 	md   resource.Metadata
 	spec interface{}
+}
+
+// RootOSSpec describes operating system CA.
+type RootOSSpec struct {
+	CA              *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	CertSANIPs      []netaddr.IP                      `yaml:"certSANIPs"`
+	CertSANDNSNames []string                          `yaml:"certSANDNSNames"`
+
+	Token string `yaml:"token"`
 }
 
 // RootEtcdSpec describes etcd CA secrets.
@@ -59,6 +70,8 @@ func NewRoot(id resource.ID) *Root {
 	}
 
 	switch id {
+	case RootOSID:
+		r.spec = &RootOSSpec{}
 	case RootEtcdID:
 		r.spec = &RootEtcdSpec{}
 	case RootKubernetesID:
@@ -89,6 +102,9 @@ func (r *Root) DeepCopy() resource.Resource {
 	var specCopy interface{}
 
 	switch v := r.spec.(type) {
+	case *RootOSSpec:
+		vv := *v
+		specCopy = &vv
 	case *RootEtcdSpec:
 		vv := *v
 		specCopy = &vv
@@ -113,6 +129,11 @@ func (r *Root) ResourceDefinition() meta.ResourceDefinitionSpec {
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
+}
+
+// OSSpec returns .spec.
+func (r *Root) OSSpec() *RootOSSpec {
+	return r.spec.(*RootOSSpec)
 }
 
 // EtcdSpec returns .spec.

@@ -76,6 +76,7 @@ import (
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/role"
+	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -313,7 +314,14 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 	log.Printf("bootstrap request received")
 
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
-		return nil, fmt.Errorf("bootstrap can only be performed on a control plane node")
+		return nil, status.Error(codes.FailedPrecondition, "bootstrap can only be performed on a control plane node")
+	}
+
+	timeCtx, timeCtxCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer timeCtxCancel()
+
+	if err := timeresource.NewSyncCondition(s.Controller.Runtime().State().V1Alpha2().Resources()).Wait(timeCtx); err != nil {
+		return nil, status.Error(codes.FailedPrecondition, "time is not in sync yet")
 	}
 
 	go func() {

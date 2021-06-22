@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
+	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -70,8 +71,8 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error destroying static pods: %w", err)
+				if err = ctrl.teardown(ctx, r, secrets.RootOSID, secrets.RootEtcdID, secrets.RootKubernetesID); err != nil {
+					return fmt.Errorf("error destroying secrets: %w", err)
 				}
 
 				continue
@@ -93,8 +94,15 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 
 		machineType := machineTypeRes.(*config.MachineType).MachineType()
 
+		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootOSID), func(r resource.Resource) error {
+			return ctrl.updateOSSecrets(cfgProvider, r.(*secrets.Root).OSSpec())
+		}); err != nil {
+			return err
+		}
+
+		// TODO: k8s secrets (partial) should be valid for the worker nodes as well, worker node should have machine (OS) CA cert (?)
 		if machineType != machine.TypeControlPlane && machineType != machine.TypeInit {
-			if err = ctrl.teardownAll(ctx, r); err != nil {
+			if err = ctrl.teardown(ctx, r, secrets.RootEtcdID, secrets.RootKubernetesID); err != nil {
 				return fmt.Errorf("error destroying secrets: %w", err)
 			}
 
@@ -113,6 +121,25 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 			return err
 		}
 	}
+}
+
+func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, osSecrets *secrets.RootOSSpec) error {
+	osSecrets.CA = cfgProvider.Machine().Security().CA()
+
+	osSecrets.CertSANIPs = nil
+	osSecrets.CertSANDNSNames = nil
+
+	for _, san := range cfgProvider.Machine().Security().CertSANs() {
+		if ip, err := netaddr.ParseIP(san); err == nil {
+			osSecrets.CertSANIPs = append(osSecrets.CertSANIPs, ip)
+		} else {
+			osSecrets.CertSANDNSNames = append(osSecrets.CertSANDNSNames, san)
+		}
+	}
+
+	osSecrets.Token = cfgProvider.Machine().Security().Token()
+
+	return nil
 }
 
 func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, etcdSecrets *secrets.RootEtcdSpec) error {
@@ -160,17 +187,13 @@ func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k
 	return nil
 }
 
-func (ctrl *RootController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	list, err := r.List(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, "", resource.VersionUndefined))
-	if err != nil {
-		return err
-	}
-
+func (ctrl *RootController) teardown(ctx context.Context, r controller.Runtime, ids ...resource.ID) error {
 	// TODO: change this to proper teardown sequence
-
-	for _, res := range list.Items {
-		if err = r.Destroy(ctx, res.Metadata()); err != nil {
-			return err
+	for _, id := range ids {
+		if err := r.Destroy(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, id, resource.VersionUndefined)); err != nil {
+			if !state.IsNotFoundError(err) {
+				return err
+			}
 		}
 	}
 

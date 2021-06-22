@@ -14,6 +14,8 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -69,7 +71,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 		defer cancel()
 
 		if err = cli.Bootstrap(retryCtx, &machineapi.BootstrapRequest{}); err != nil {
-			if strings.Contains(err.Error(), "connection refused") {
+			if status.Code(err) == codes.FailedPrecondition || strings.Contains(err.Error(), "connection refused") {
 				return retry.ExpectedError(err)
 			}
 

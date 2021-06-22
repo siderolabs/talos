@@ -316,6 +316,9 @@ const (
 	// APISocketPath is the path to file socket of apid.
 	APISocketPath = SystemRunPath + "/apid/apid.sock"
 
+	// APIRuntimeSocketPath is the path to file socket of runtime server for apid.
+	APIRuntimeSocketPath = SystemRunPath + "/apid/runtime.sock"
+
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 
