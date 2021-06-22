@@ -213,6 +213,7 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 			d.routes = append(d.routes, network.RouteSpecSpec{
 				Family:      nethelpers.FamilyInet4,
 				Gateway:     gw,
+				Source:      addr,
 				OutLinkName: d.linkName,
 				Table:       nethelpers.TableMain,
 				Priority:    d.routeMetric,
