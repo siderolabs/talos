@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
@@ -36,6 +37,8 @@ func marshalResource(r resource.Resource) (*resourceapi.Resource, error) {
 		Version:   r.Metadata().Version().String(),
 		Phase:     r.Metadata().Phase().String(),
 		Owner:     r.Metadata().Owner(),
+		Created:   timestamppb.New(r.Metadata().Created()),
+		Updated:   timestamppb.New(r.Metadata().Updated()),
 	}
 
 	for _, fin := range *r.Metadata().Finalizers() {
