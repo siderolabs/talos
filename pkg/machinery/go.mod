@@ -11,7 +11,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/containerd/go-cni v1.0.2
 	github.com/containernetworking/cni v0.8.1 // indirect; security fix in 0.8.1
-	github.com/cosi-project/runtime v0.0.0-20210623125951-f1649aff7641
+	github.com/cosi-project/runtime v0.0.0-20210623202226-821d5c362131
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/ghodss/yaml v1.0.0
