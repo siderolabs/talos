@@ -9,9 +9,11 @@ import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"io"
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/spf13/pflag"
@@ -85,7 +87,14 @@ func main() {
 		log.Fatalf("failed: %s", err)
 	}
 
-	e := json.NewEncoder(os.Stdout)
+	f, err := os.Create(filepath.Join(DefaultOptions.ArtifactsPath, "cloud-images.json"))
+	if err != nil {
+		log.Fatalf("failed: %s", err)
+	}
+
+	defer f.Close()
+
+	e := json.NewEncoder(io.MultiWriter(os.Stdout, f))
 	e.SetIndent("", "  ")
 	e.Encode(&result) //nolint:errcheck
 }

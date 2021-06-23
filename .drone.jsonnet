@@ -488,28 +488,11 @@ local conformance_pipelines = [
   Pipeline('cron-conformance-qemu', default_pipeline_steps + [conformance_k8s_qemu], [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 
-// Cloud images pipeline.
-
-local cloud_images = Step("cloud-images", depends_on=[load_artifacts], environment=creds_env_vars);
-
-local upload_images_steps = default_pipeline_steps + [
-  cloud_images,
-];
-
-
-local upload_images_trigger = {
-  trigger: {
-    target: {
-      include: ['upload-images'],
-    },
-  },
-};
-
-local upload_images_pipeline = Pipeline('upload-images', upload_images_steps) + upload_images_trigger;
-
 // Release pipeline.
 
 local boot = Step('boot', depends_on=[e2e_docker, e2e_qemu]);
+
+local cloud_images = Step("cloud-images", depends_on=[load_artifacts], environment=creds_env_vars);
 
 local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
 
@@ -528,6 +511,7 @@ local release = {
       '_out/azure-arm64.tar.gz',
       '_out/boot-amd64.tar.gz',
       '_out/boot-arm64.tar.gz',
+      '_out/cloud-images.json',
       '_out/digital-ocean-amd64.tar.gz',
       '_out/digital-ocean-arm64.tar.gz',
       '_out/gcp-amd64.tar.gz',
@@ -563,11 +547,12 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [build.name, boot.name, talosctl_cni_bundle.name, images.name, sbcs.name, iso.name, push.name, release_notes.name]
+  depends_on: [build.name, boot.name, cloud_images.name, talosctl_cni_bundle.name, images.name, sbcs.name, iso.name, push.name, release_notes.name]
 };
 
 local release_steps = default_steps + [
   boot,
+  cloud_images,
   release_notes,
   release,
 ];
