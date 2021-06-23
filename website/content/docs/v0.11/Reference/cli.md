@@ -90,6 +90,7 @@ talosctl cluster create [flags]
 
 ```
       --arch string                             cluster architecture (default "amd64")
+      --bad-rtc                                 launch VM with bad RTC state (QEMU only)
       --cidr string                             CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                    search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
       --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.11.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")

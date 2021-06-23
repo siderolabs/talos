@@ -48,6 +48,7 @@ type LaunchConfig struct {
 	EnableKVM         bool
 	BootloaderEnabled bool
 	NodeUUID          uuid.UUID
+	BadRTC            bool
 
 	// Talos config
 	Config string
@@ -219,7 +220,7 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 
 // launchVM runs qemu with args built based on config.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func launchVM(config *LaunchConfig) error {
 	bootOrder := config.DefaultBootOrder
 
@@ -227,10 +228,16 @@ func launchVM(config *LaunchConfig) error {
 		bootOrder = "nc"
 	}
 
+	cpuArg := "max"
+
+	if config.BadRTC {
+		cpuArg += ",-kvmclock"
+	}
+
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
-		"-cpu", "max",
+		"-cpu", cpuArg,
 		"-nographic",
 		"-netdev", fmt.Sprintf("tap,id=net0,ifname=%s,script=no,downscript=no", config.tapName),
 		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s", config.vmMAC),
@@ -282,6 +289,13 @@ func launchVM(config *LaunchConfig) error {
 				"-append", config.KernelArgs,
 			)
 		}
+	}
+
+	if config.BadRTC {
+		args = append(args,
+			"-rtc",
+			"base=2011-11-11T11:11:00,clock=rt",
+		)
 	}
 
 	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.QemuExecutable, strings.Join(args, " "))
