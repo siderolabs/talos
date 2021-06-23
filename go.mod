@@ -82,7 +82,7 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.1
 	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
 	github.com/talos-systems/go-debug v0.2.1-0.20210525175311-3d0a6e1bf5e3
-	github.com/talos-systems/go-kmsg v0.1.0
+	github.com/talos-systems/go-kmsg v0.1.1
 	github.com/talos-systems/go-loadbalancer v0.1.1
 	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
 	github.com/talos-systems/go-retry v0.3.1-0.20210616175710-c78cc953d9e9
