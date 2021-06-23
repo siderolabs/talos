@@ -107,6 +107,7 @@ var (
 	configPatch               string
 	configPatchControlPlane   string
 	configPatchJoin           string
+	badRTC                    bool
 )
 
 // createCmd represents the cluster up command.
@@ -491,6 +492,7 @@ func create(ctx context.Context) (err error) {
 			NanoCPUs:            nanoCPUs,
 			Disks:               disks,
 			SkipInjectingConfig: skipInjectingConfig,
+			BadRTC:              badRTC,
 		}
 
 		if i == 0 {
@@ -542,6 +544,7 @@ func create(ctx context.Context) (err error) {
 				Disks:               disks,
 				Config:              cfg,
 				SkipInjectingConfig: skipInjectingConfig,
+				BadRTC:              badRTC,
 			})
 	}
 
@@ -809,5 +812,6 @@ func init() {
 	createCmd.Flags().StringVar(&configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
 	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	createCmd.Flags().StringVar(&configPatchJoin, "config-patch-join", "", "patch generated machineconfigs (applied to 'join' type)")
+	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	Cmd.AddCommand(createCmd)
 }

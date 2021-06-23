@@ -148,6 +148,11 @@ type NodeRequest struct {
 	// BootOrder can be forced to be "nc" (PXE boot) via the API in QEMU provisioner.
 	DefaultBootOrder string
 
+	// Testing features
+
+	// BadRTC resets RTC to well known time in the past (QEMU provisioner).
+	BadRTC bool
+
 	// PXE-booted VMs
 	PXEBooted        bool
 	TFTPServer       string
