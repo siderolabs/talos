@@ -28,11 +28,11 @@ message Metadata {
     string type = 2;
     string id = 3;
     string version = 4;
-    string owner = 5;
-    string phase = 6;
-    google.protobuf.Timestamp created = 7;
-    google.protobuf.Timestamp updated = 8;
-    repeated string finalizers = 9;
+    string owner = 7;
+    string phase = 5;
+    google.protobuf.Timestamp created = 8;
+    google.protobuf.Timestamp updated = 9;
+    repeated string finalizers = 6;
 }
 
 message Spec {
