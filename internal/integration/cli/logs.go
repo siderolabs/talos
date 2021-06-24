@@ -53,7 +53,6 @@ func (suite *LogsSuite) TestTailLogs() {
 func (suite *LogsSuite) TestServiceNotFound() {
 	suite.RunCLI([]string{"logs", "--nodes", suite.RandomDiscoveredNode(), "servicenotfound"},
 		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`ERROR:.+ log "servicenotfound" was not registered`)),
 	)
 }

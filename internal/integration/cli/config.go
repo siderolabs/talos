@@ -12,25 +12,26 @@ import (
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// TalosconfigSuite verifies dmesg command.
+// TalosconfigSuite checks `talosctl config`.
 type TalosconfigSuite struct {
 	base.CLISuite
 }
 
-// SuiteName ...
+// SuiteName implements base.NamedSuite.
 func (suite *TalosconfigSuite) SuiteName() string {
 	return "cli.TalosconfigSuite"
 }
 
-// TestList checks how talosctl config merge.
+// TestList checks `talosctl config contexts`.
 func (suite *TalosconfigSuite) TestList() {
 	suite.RunCLI([]string{"config", "contexts"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CURRENT`)))
 }
 
-// TestMerge checks how talosctl config merge.
+// TestMerge checks `talosctl config merge`.
 func (suite *TalosconfigSuite) TestMerge() {
 	tempDir := suite.T().TempDir()
 
@@ -59,6 +60,25 @@ func (suite *TalosconfigSuite) TestMerge() {
 	suite.Require().NoError(err)
 
 	suite.Require().NotNil(c.Contexts["foo-1"])
+}
+
+// TestNew checks `talosctl config new`.
+func (suite *TalosconfigSuite) TestNew() {
+	tempDir := suite.T().TempDir()
+
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+
+	talosconfigPath := filepath.Join(tempDir, "talosconfig")
+	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", talosconfigPath},
+		base.StdoutEmpty())
+
+	suite.RunCLI([]string{"--nodes", node, "--talosconfig", talosconfigPath, "ls", "/etc/hosts"},
+		base.StdoutShouldMatch(regexp.MustCompile(`hosts`)))
+
+	suite.RunCLI([]string{"--nodes", node, "--talosconfig", talosconfigPath, "read", "/etc/hosts"},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)))
 }
 
 func init() {

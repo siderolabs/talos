@@ -8,7 +8,6 @@ package base
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -28,25 +27,18 @@ type runOptions struct {
 	stdoutEmpty           bool
 	stderrNotEmpty        bool
 	stdoutRegexps         []*regexp.Regexp
-	stderrRegexps         []*regexp.Regexp
 	stdoutNegativeRegexps []*regexp.Regexp
+	stderrRegexps         []*regexp.Regexp
 	stderrNegativeRegexps []*regexp.Regexp
 	stdoutMatchers        []MatchFunc
 	stderrMatchers        []MatchFunc
 }
 
-// ShouldFail tells Run command should fail.
-//
-// ShouldFail also sets StdErrNotEmpty.
+// ShouldFail tells run command should fail (with non-empty stderr).
+// Implies StderrNotEmpty.
 func ShouldFail() RunOption {
 	return func(opts *runOptions) {
 		opts.shouldFail = true
-	}
-}
-
-// StderrNotEmpty tells run that stderr of the command should not be empty.
-func StderrNotEmpty() RunOption {
-	return func(opts *runOptions) {
 		opts.stderrNotEmpty = true
 	}
 }
@@ -55,6 +47,13 @@ func StderrNotEmpty() RunOption {
 func StdoutEmpty() RunOption {
 	return func(opts *runOptions) {
 		opts.stdoutEmpty = true
+	}
+}
+
+// StderrNotEmpty tells run that stderr of the command should not be empty.
+func StderrNotEmpty() RunOption {
+	return func(opts *runOptions) {
+		opts.stderrNotEmpty = true
 	}
 }
 
@@ -72,14 +71,14 @@ func StdoutShouldNotMatch(r *regexp.Regexp) RunOption {
 	}
 }
 
-// StderrShouldMatch appends to the set of regexps sterr contents should match.
+// StderrShouldMatch appends to the set of regexps stderr contents should match.
 func StderrShouldMatch(r *regexp.Regexp) RunOption {
 	return func(opts *runOptions) {
 		opts.stderrRegexps = append(opts.stderrRegexps, r)
 	}
 }
 
-// StderrShouldNotMatch appends to the set of regexps sterr contents should not match.
+// StderrShouldNotMatch appends to the set of regexps stderr contents should not match.
 func StderrShouldNotMatch(r *regexp.Regexp) RunOption {
 	return func(opts *runOptions) {
 		opts.stderrNegativeRegexps = append(opts.stderrNegativeRegexps, r)
@@ -108,7 +107,7 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 
 	cmd.Stdin = nil
 	cmd.Stdout = &stdout
-	cmd.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	cmd.Stderr = &stderr
 	cmd.Env = []string{}
 
 	// filter environment variables
@@ -146,6 +145,11 @@ func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string
 	}
 
 	stdoutBuf, stderrBuf, err := runAndWait(suite, cmd)
+	if err != nil {
+		// check that command failed, not something else happened
+		_, ok := err.(*exec.ExitError)
+		suite.Require().True(ok, "%s", err)
+	}
 
 	if stdoutBuf != nil {
 		stdout = stdoutBuf.String()
@@ -156,19 +160,10 @@ func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string
 		stderr = stderrBuf.String()
 	}
 
-	if err == nil {
-		if opts.shouldFail {
-			suite.Assert().NotNil(err, "command should have failed but it exited with zero exit code")
-		}
+	if opts.shouldFail {
+		suite.Assert().Error(err, "command expected to fail, but did not")
 	} else {
-		exitErr, ok := err.(*exec.ExitError)
-		if !ok {
-			suite.Require().Nil(err, "command failed to be run")
-		}
-
-		if !opts.shouldFail {
-			suite.Assert().Nil(exitErr, "command failed with exit code: %d", exitErr.ExitCode())
-		}
+		suite.Assert().NoError(err, "command failed")
 	}
 
 	if opts.stdoutEmpty {

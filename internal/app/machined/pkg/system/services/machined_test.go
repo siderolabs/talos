@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -51,7 +50,7 @@ func collectMethods(t *testing.T) map[string]struct{} {
 	return methods
 }
 
-func TestRules(t *testing.T) { //nolint:gocyclo
+func TestRules(t *testing.T) {
 	t.Parallel()
 
 	methods := collectMethods(t)
@@ -61,25 +60,8 @@ func TestRules(t *testing.T) { //nolint:gocyclo
 		t.Parallel()
 
 		for rule := range rules {
-			var found bool
-			for method := range methods {
-				prefix := method
-				for prefix != "/" {
-					if prefix == rule {
-						found = true
-
-						break
-					}
-
-					prefix = authz.NextPrefix(prefix)
-				}
-
-				if found {
-					break
-				}
-			}
-
-			assert.True(t, found, "no method for rule %q", rule)
+			_, ok := methods[rule]
+			assert.True(t, ok, "no method for rule %q", rule)
 		}
 	})
 
@@ -88,25 +70,8 @@ func TestRules(t *testing.T) { //nolint:gocyclo
 		t.Parallel()
 
 		for method := range methods {
-			var found bool
-			for rule := range rules {
-				prefix := method
-				for prefix != "/" {
-					if prefix == rule {
-						found = true
-
-						break
-					}
-
-					prefix = authz.NextPrefix(prefix)
-				}
-
-				if found {
-					break
-				}
-			}
-
-			assert.True(t, found, "no rule for method %q", method)
+			_, ok := rules[method]
+			assert.True(t, ok, "no rule for method %q", method)
 		}
 	})
 }

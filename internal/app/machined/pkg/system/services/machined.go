@@ -72,7 +72,9 @@ var rules = map[string]role.Set{
 	"/network.NetworkService/Routes":     role.MakeSet(role.Admin, role.Reader),
 
 	// per-type authorization is handled by the service itself
-	"/resource.ResourceService": role.MakeSet(role.Admin, role.Reader),
+	"/resource.ResourceService/Get":   role.MakeSet(role.Admin, role.Reader),
+	"/resource.ResourceService/List":  role.MakeSet(role.Admin, role.Reader),
+	"/resource.ResourceService/Watch": role.MakeSet(role.Admin, role.Reader),
 
 	"/storage.StorageService/Disks": role.MakeSet(role.Admin, role.Reader),
 

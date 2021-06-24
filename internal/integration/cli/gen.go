@@ -106,26 +106,22 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:6443"`))))
+		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:6443"`)))
 
 	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1:6443"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:6443"`))))
+		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:6443"`)))
 
 	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1:2000"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
+		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:2000"`)))
 
 	suite.RunCLI([]string{"gen", "config", "foo", "http://192.168.0.1:2000"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta(`try: "https://192.168.0.1:2000"`))))
+		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:2000"`)))
 }
 
 // TestGenConfigPatch verifies that gen config --config-patch works.

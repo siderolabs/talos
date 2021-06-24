@@ -63,13 +63,13 @@ func (suite *PatchSuite) TestError() {
 	suite.Require().NoError(err)
 
 	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig"},
-		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
+		base.StdoutEmpty(), base.ShouldFail())
 	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "v1alpha2"},
-		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
+		base.StdoutEmpty(), base.ShouldFail())
 	suite.RunCLI([]string{"patch", "--nodes", node, "--patch-file", "/nnnope", "machineconfig"},
-		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
+		base.StdoutEmpty(), base.ShouldFail())
 	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", "it's not even a json", "machineconfig"},
-		base.StderrNotEmpty(), base.StdoutEmpty(), base.ShouldFail())
+		base.StdoutEmpty(), base.ShouldFail())
 }
 
 func init() {

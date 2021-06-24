@@ -315,6 +315,9 @@ var configNewCmd = &cobra.Command{
 				return err
 			}
 
+			// make the new config immediately useful
+			config.Contexts[config.Context].Endpoints = c.GetEndpoints()
+
 			return config.Save(path)
 		})
 	},
