@@ -78,15 +78,15 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.1-0.20210617123329-d3cb77220384
+	github.com/talos-systems/crypto v0.3.1
 	github.com/talos-systems/go-blockdevice v0.2.1
-	github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0
-	github.com/talos-systems/go-debug v0.2.1-0.20210525175311-3d0a6e1bf5e3
+	github.com/talos-systems/go-cmd v0.1.0
+	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
 	github.com/talos-systems/go-loadbalancer v0.1.1
-	github.com/talos-systems/go-procfs v0.0.0-20210108152626-8cbc42d3dc24
-	github.com/talos-systems/go-retry v0.3.1-0.20210616175710-c78cc953d9e9
-	github.com/talos-systems/go-smbios v0.0.0-20210422124317-d3a32bea731a
+	github.com/talos-systems/go-procfs v0.1.0
+	github.com/talos-systems/go-retry v0.3.1
+	github.com/talos-systems/go-smbios v0.1.0
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
