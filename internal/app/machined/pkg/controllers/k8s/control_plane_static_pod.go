@@ -171,7 +171,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	cfg := configResource.APIServer()
 
 	args := []string{
-		"/go-runner",
 		"/usr/local/bin/kube-apiserver",
 		"--enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeClaimResize,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,Priority,NodeRestriction", //nolint:lll
 		"--advertise-address=$(POD_IP)",
@@ -298,7 +297,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	cfg := configResource.ControllerManager()
 
 	args := []string{
-		"/go-runner",
 		"/usr/local/bin/kube-controller-manager",
 		"--allocate-node-cidrs=true",
 		"--bind-address=127.0.0.1",
@@ -406,7 +404,6 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	cfg := configResource.Scheduler()
 
 	args := []string{
-		"/go-runner",
 		"/usr/local/bin/kube-scheduler",
 		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
 		"--authentication-tolerate-lookup-failure=false",
