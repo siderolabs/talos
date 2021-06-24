@@ -1041,7 +1041,11 @@ func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 				logger.Printf("unmounting %s\n", mountpoint)
 
 				if err = unix.Unmount(mountpoint, 0); err != nil {
-					return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
+					if errors.Is(err, syscall.EINVAL) {
+						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
+					} else {
+						return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
+					}
 				}
 			}
 		}
@@ -1077,7 +1081,11 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 				logger.Printf("unmounting %s\n", mountpoint)
 
 				if err = unix.Unmount(mountpoint, 0); err != nil {
-					return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
+					if errors.Is(err, syscall.EINVAL) {
+						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
+					} else {
+						return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
+					}
 				}
 			}
 		}
