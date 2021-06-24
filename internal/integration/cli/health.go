@@ -73,7 +73,6 @@ func (suite *HealthSuite) TestClientSide() {
 	}
 
 	suite.RunCLI(append([]string{"health"}, args...),
-		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
 	)
@@ -82,7 +81,6 @@ func (suite *HealthSuite) TestClientSide() {
 // TestServerSide does successful health check run from server-side.
 func (suite *HealthSuite) TestServerSide() {
 	suite.RunCLI([]string{"health", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
-		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
 	)

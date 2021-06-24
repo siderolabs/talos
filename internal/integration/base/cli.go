@@ -90,6 +90,8 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	}
 }
 
+// buildCLICmd builds exec.Cmd from TalosSuite and args.
+// TalosSuite flags are added at the beginning so they can be overridden by args.
 func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 	if cliSuite.Endpoint != "" {
 		args = append([]string{"--endpoints", cliSuite.Endpoint}, args...)

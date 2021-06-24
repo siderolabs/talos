@@ -129,7 +129,8 @@ func (suite *DiskUsageSuite) TestSuccess() {
 // TestError runs comand with error.
 func (suite *DiskUsageSuite) TestError() {
 	suite.RunCLI([]string{"usage", "--nodes", suite.RandomDiscoveredNode(), "/no/such/folder/here/just/for/sure"},
-		base.StderrNotEmpty(), base.StdoutEmpty())
+		base.StderrNotEmpty(),
+		base.StdoutEmpty())
 }
 
 func init() {
