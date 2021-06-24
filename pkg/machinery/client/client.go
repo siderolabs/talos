@@ -166,6 +166,11 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	return c, nil
 }
 
+// Conn returns raw grpc.ClientConn.
+func (c *Client) Conn() *grpc.ClientConn {
+	return c.conn
+}
+
 func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	endpoints := c.getEndpoints()
 
