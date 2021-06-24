@@ -15,6 +15,7 @@ import (
 
 	"github.com/containerd/containerd/oci"
 	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/go-debug"
@@ -44,7 +45,23 @@ func (o *APID) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	// Ensure socket dir exists
+	// filter apid access to make sure apid can only access its certificates
+	resources := state.Filter(
+		r.State().V1Alpha2().Resources(),
+		func(ctx context.Context, access state.Access) error {
+			if !access.Verb.Readonly() {
+				return fmt.Errorf("write access denied")
+			}
+
+			if !(access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.APIType && access.ResourceID == secrets.APIID) {
+				return fmt.Errorf("access denied")
+			}
+
+			return nil
+		},
+	)
+
+	// ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APIRuntimeSocketPath), 0o750); err != nil {
 		return err
 	}
@@ -54,9 +71,8 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	// TODO: filter State to return only resources apid needs
 	o.runtimeServer = grpc.NewServer()
-	v1alpha1.RegisterStateServer(o.runtimeServer, server.NewState(r.State().V1Alpha2().Resources()))
+	v1alpha1.RegisterStateServer(o.runtimeServer, server.NewState(resources))
 
 	go o.runtimeServer.Serve(listener) //nolint:errcheck
 
