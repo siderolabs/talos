@@ -72,13 +72,15 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 			switch i {
 			case 0:
-				settings.Address.IP, err = netaddr.ParseIP(fields[0])
+				var ip netaddr.IP
+
+				ip, err = netaddr.ParseIP(fields[0])
 				if err != nil {
 					return settings, fmt.Errorf("cmdline address parse failure: %s", err)
 				}
 
 				// default is to have complete address masked
-				settings.Address.Bits = settings.Address.IP.BitLen()
+				settings.Address = netaddr.IPPrefixFrom(ip, ip.BitLen())
 			case 2:
 				settings.Gateway, err = netaddr.ParseIP(fields[2])
 				if err != nil {
@@ -94,7 +96,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 				ones, _ := net.IPMask(netmask.IPAddr().IP).Size()
 
-				settings.Address.Bits = uint8(ones)
+				settings.Address = netaddr.IPPrefixFrom(settings.Address.IP(), uint8(ones))
 			case 4:
 				if settings.Hostname == "" {
 					settings.Hostname = fields[4]

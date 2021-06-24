@@ -48,7 +48,7 @@ var (
 //
 //nolint:gocyclo
 func (route *RouteSpecSpec) Normalize() {
-	if route.Destination.Bits == 0 && (route.Destination.IP.Compare(zero4) == 0 || route.Destination.IP.Compare(zero16) == 0) {
+	if route.Destination.Bits() == 0 && (route.Destination.IP().Compare(zero4) == 0 || route.Destination.IP().Compare(zero16) == 0) {
 		// clear destination to be zero value to support "0.0.0.0/0" routes
 		route.Destination = netaddr.IPPrefix{}
 	}
@@ -57,16 +57,16 @@ func (route *RouteSpecSpec) Normalize() {
 		route.Gateway = netaddr.IP{}
 	}
 
-	if route.Source.Bits == 0 && (route.Source.IP.Compare(zero4) == 0 || route.Source.IP.Compare(zero16) == 0) {
+	if route.Source.Bits() == 0 && (route.Source.IP().Compare(zero4) == 0 || route.Source.IP().Compare(zero16) == 0) {
 		route.Source = netaddr.IPPrefix{}
 	}
 
 	switch {
 	case route.Gateway.IsZero():
 		route.Scope = nethelpers.ScopeLink
-	case route.Destination.IP.IsLinkLocalUnicast() || route.Destination.IP.IsLinkLocalMulticast():
+	case route.Destination.IP().IsLinkLocalUnicast() || route.Destination.IP().IsLinkLocalMulticast():
 		route.Scope = nethelpers.ScopeLink
-	case route.Destination.IP.IsLoopback():
+	case route.Destination.IP().IsLoopback():
 		route.Scope = nethelpers.ScopeHost
 	default:
 		route.Scope = nethelpers.ScopeGlobal

@@ -130,11 +130,11 @@ func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix ne
 			continue
 		}
 
-		if addr.PrefixLength != ipPrefix.Bits {
+		if addr.PrefixLength != ipPrefix.Bits() {
 			continue
 		}
 
-		if !addr.Attributes.Address.Equal(ipPrefix.IP.IPAddr().IP) {
+		if !addr.Attributes.Address.Equal(ipPrefix.IP().IPAddr().IP) {
 			continue
 		}
 
@@ -210,13 +210,13 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		// add address
 		if err := conn.Address.New(&rtnetlink.AddressMessage{
 			Family:       uint8(address.TypedSpec().Family),
-			PrefixLength: address.TypedSpec().Address.Bits,
+			PrefixLength: address.TypedSpec().Address.Bits(),
 			Flags:        uint8(address.TypedSpec().Flags),
 			Scope:        uint8(address.TypedSpec().Scope),
 			Index:        linkIndex,
 			Attributes: rtnetlink.AddressAttributes{
-				Address:   address.TypedSpec().Address.IP.IPAddr().IP,
-				Local:     address.TypedSpec().Address.IP.IPAddr().IP,
+				Address:   address.TypedSpec().Address.IP().IPAddr().IP,
+				Local:     address.TypedSpec().Address.IP().IPAddr().IP,
 				Broadcast: broadcastAddr(address.TypedSpec().Address),
 				Flags:     uint32(address.TypedSpec().Flags),
 			},
@@ -230,7 +230,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		logger.Info("assigned address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))
 
 		if address.TypedSpec().AnnounceWithARP {
-			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.IP); err != nil {
+			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.IP()); err != nil {
 				logger.Warn("failure sending gratuitous ARP", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName), zap.Error(err))
 			}
 		}
@@ -278,7 +278,7 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 }
 
 func broadcastAddr(addr netaddr.IPPrefix) net.IP {
-	if !addr.IP.Is4() {
+	if !addr.IP().Is4() {
 		return nil
 	}
 
