@@ -4,34 +4,11 @@
 
 package authz_test
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
-)
-
-func TestNextPrefix(t *testing.T) {
-	t.Parallel()
-
-	for _, paths := range [][]string{
-		{"/machine.MachineService/List", "/machine.MachineService", "/machine", "/", "/"},
-		{"/.x", "/", "/"},
-		{".", "/", "/"},
-		{"./", "/", "/"},
-		{"foo", "/", "/"},
-		{"", "/", "/"},
-	} {
-		paths := paths
-		t.Run(paths[0], func(t *testing.T) {
-			t.Parallel()
-
-			for i, path := range paths[:len(paths)-1] {
-				expected := paths[i+1]
-				actual := authz.NextPrefix(path)
-				assert.Equal(t, expected, actual, "path = %q", path)
-			}
-		})
-	}
+func TestEmpty(t *testing.T) {
+	// added for accurate coverage estimation
+	//
+	// please remove it once any unit-test is added
+	// for this package
 }

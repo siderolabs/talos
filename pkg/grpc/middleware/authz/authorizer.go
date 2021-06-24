@@ -6,7 +6,6 @@ package authz
 
 import (
 	"context"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -31,22 +30,6 @@ type Authorizer struct {
 	Logger func(format string, v ...interface{})
 }
 
-// NextPrefix returns path's prefix, stopping on slashes and dots:
-// /machine.MachineService/List -> /machine.MachineService -> /machine -> / -> / -> ...
-// The chain ends with "/" no matter what.
-func NextPrefix(path string) string {
-	if path == "" || path[0] != '/' {
-		return "/"
-	}
-
-	i := strings.LastIndexAny(path, "/.")
-	if i <= 0 {
-		return "/"
-	}
-
-	return path[:i]
-}
-
 func (a *Authorizer) logf(format string, v ...interface{}) {
 	if a.Logger != nil {
 		a.Logger(format, v...)
@@ -56,28 +39,13 @@ func (a *Authorizer) logf(format string, v ...interface{}) {
 // authorize returns error if the user is not authorized (doesn't have a valid role) to call the given gRPC method.
 // User roles should be previously set the Injector interceptor.
 func (a *Authorizer) authorize(ctx context.Context, method string) error {
-	clientRoles := GetRoles(ctx)
-
-	var (
-		allowedRoles role.Set
-		found        bool
-	)
-
-	prefix := method
-	for prefix != "/" {
-		allowedRoles, found = a.Rules[prefix]
-		if found {
-			break
-		}
-
-		prefix = NextPrefix(prefix)
-	}
-
+	allowedRoles, found := a.Rules[method]
 	if !found {
 		a.logf("no explicit rule found for %q, falling back to %v", method, a.FallbackRoles.Strings())
 		allowedRoles = a.FallbackRoles
 	}
 
+	clientRoles := GetRoles(ctx)
 	if allowedRoles.IncludesAny(clientRoles) {
 		a.logf("authorized (%v includes %v)", allowedRoles.Strings(), clientRoles.Strings())
 

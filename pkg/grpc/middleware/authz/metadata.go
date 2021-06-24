@@ -16,9 +16,9 @@ import (
 // Should be used only in this file.
 const mdKey = "talos-role"
 
-// RolesAsMetadata converts roles to gRPC metadata.
-func RolesAsMetadata(roles role.Set) metadata.MD {
-	return metadata.MD{mdKey: roles.Strings()}
+// SetMetadata sets given roles in gRPC metadata.
+func SetMetadata(md metadata.MD, roles role.Set) {
+	md.Set(mdKey, roles.Strings()...)
 }
 
 // getFromMetadata returns roles extracted from from gRPC metadata.

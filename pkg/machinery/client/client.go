@@ -111,7 +111,9 @@ func (c *Client) GetConfigContext() *clientconfig.Context {
 	return c.options.configContext
 }
 
-func (c *Client) getEndpoints() []string {
+// GetEndpoints returns the client's endpoints from the override set with WithEndpoints
+// or from the configuration.
+func (c *Client) GetEndpoints() []string {
 	if c.options.unixSocketPath != "" {
 		return []string{c.options.unixSocketPath}
 	}
@@ -143,7 +145,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		}
 	}
 
-	if len(c.getEndpoints()) < 1 {
+	if len(c.GetEndpoints()) < 1 {
 		return nil, errors.New("failed to determine endpoints")
 	}
 
@@ -168,7 +170,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 
 // GetConn creates new gRPC connection.
 func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	endpoints := c.getEndpoints()
+	endpoints := c.GetEndpoints()
 
 	var target string
 
