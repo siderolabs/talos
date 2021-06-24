@@ -48,7 +48,8 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 	checkCtx, checkCtxCancel := context.WithTimeout(srv.Context(), in.WaitTimeout.AsDuration())
 	defer checkCtxCancel()
 
-	md := authz.RolesAsMetadata(authz.GetRoles(srv.Context()))
+	md := metadata.New(nil)
+	authz.SetMetadata(md, authz.GetRoles(srv.Context()))
 	checkCtx = metadata.NewOutgoingContext(checkCtx, md)
 
 	if err := clusterState.resolve(checkCtx, k8sProvider); err != nil {

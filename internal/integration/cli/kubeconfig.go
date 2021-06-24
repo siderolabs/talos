@@ -72,7 +72,6 @@ func (suite *KubeconfigSuite) TestCustomName() {
 func (suite *KubeconfigSuite) TestMultiNodeFail() {
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
 		base.ShouldFail(),
-		base.StderrNotEmpty(),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
 }

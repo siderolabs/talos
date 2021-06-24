@@ -9,28 +9,30 @@ package cli
 import (
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// TalosconfigSuite verifies dmesg command.
+// TalosconfigSuite checks `talosctl config`.
 type TalosconfigSuite struct {
 	base.CLISuite
 }
 
-// SuiteName ...
+// SuiteName implements base.NamedSuite.
 func (suite *TalosconfigSuite) SuiteName() string {
 	return "cli.TalosconfigSuite"
 }
 
-// TestList checks how talosctl config merge.
+// TestList checks `talosctl config contexts`.
 func (suite *TalosconfigSuite) TestList() {
 	suite.RunCLI([]string{"config", "contexts"},
 		base.StdoutShouldMatch(regexp.MustCompile(`CURRENT`)))
 }
 
-// TestMerge checks how talosctl config merge.
+// TestMerge checks `talosctl config merge`.
 func (suite *TalosconfigSuite) TestMerge() {
 	tempDir := suite.T().TempDir()
 
@@ -59,6 +61,126 @@ func (suite *TalosconfigSuite) TestMerge() {
 	suite.Require().NoError(err)
 
 	suite.Require().NotNil(c.Contexts["foo-1"])
+}
+
+// TestNew checks `talosctl config new`.
+func (suite *TalosconfigSuite) TestNew() {
+	tempDir := suite.T().TempDir()
+
+	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+
+	readerConfig := filepath.Join(tempDir, "talosconfig")
+	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", readerConfig},
+		base.StdoutEmpty())
+
+	// commands that work for both admin and reader
+	for _, tt := range []struct {
+		args []string
+		opts []base.RunOption
+	}{
+		{
+			args: []string{"ls", "/etc/hosts"},
+			opts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`hosts`))},
+		},
+	} {
+		tt := tt
+		name := strings.Join(tt.args, "_")
+		suite.Run(name, func() {
+			suite.T().Parallel()
+
+			args := append([]string{"--nodes", node}, tt.args...)
+			suite.RunCLI(args, tt.opts...)
+
+			args = append([]string{"--talosconfig", readerConfig}, args...)
+			suite.RunCLI(args, tt.opts...)
+		})
+	}
+
+	// commands that work for admin, but not for reader
+	for _, tt := range []struct {
+		args       []string
+		adminOpts  []base.RunOption
+		readerOpts []base.RunOption
+	}{
+		{
+			args:      []string{"read", "/etc/hosts"},
+			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`localhost`))},
+			readerOpts: []base.RunOption{
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+		{
+			args:      []string{"get", "mc"},
+			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`MachineConfig`))},
+			readerOpts: []base.RunOption{
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+		{
+			args:      []string{"get", "rootsecret"},
+			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`RootSecret`))},
+			readerOpts: []base.RunOption{
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+		{
+			args:      []string{"kubeconfig", tempDir},
+			adminOpts: []base.RunOption{base.StdoutEmpty()},
+			readerOpts: []base.RunOption{
+				base.ShouldFail(), // why this one fails, but not others?
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+	} {
+		tt := tt
+		name := strings.Join(tt.args, "_")
+		suite.Run(name, func() {
+			suite.T().Parallel()
+
+			args := append([]string{"--nodes", node}, tt.args...)
+			suite.RunCLI(args, tt.adminOpts...)
+
+			args = append([]string{"--talosconfig", readerConfig}, args...)
+			suite.RunCLI(args, tt.readerOpts...)
+		})
+	}
+
+	// destructive commands that don't work for reader
+	// (and that we don't test for admin because they are destructive)
+	for _, tt := range []struct {
+		args       []string
+		readerOpts []base.RunOption
+	}{
+		{
+			args: []string{"reboot"},
+			readerOpts: []base.RunOption{
+				base.ShouldFail(),
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+		{
+			args: []string{"reset"},
+			readerOpts: []base.RunOption{
+				base.ShouldFail(),
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+			},
+		},
+	} {
+		tt := tt
+		name := strings.Join(tt.args, "_")
+		suite.Run(name, func() {
+			suite.T().Parallel()
+
+			args := append([]string{"--nodes", node, "--talosconfig", readerConfig}, tt.args...)
+			suite.RunCLI(args, tt.readerOpts...)
+		})
+	}
 }
 
 func init() {
