@@ -97,19 +97,19 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 		},
 		&v1alpha1.MachineFile{
 			FileContent: `[plugins]
-  [plugins.cri]
-    [plugins.cri.registry]
-      [plugins.cri.registry.mirrors]
-        [plugins.cri.registry.mirrors."docker.io"]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
           endpoint = ["https://registry-1.docker.io", "https://registry-2.docker.io"]
-      [plugins.cri.registry.configs]
-        [plugins.cri.registry.configs."some.host:123"]
-          [plugins.cri.registry.configs."some.host:123".auth]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".auth]
             username = "root"
             password = "secret"
             auth = "auth"
             identitytoken = "token"
-          [plugins.cri.registry.configs."some.host:123".tls]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".tls]
             insecure_skip_verify = true
             ca_file = "/var/etc/cri/ca/some.host:123.crt"
             cert_file = "/var/etc/cri/client/some.host:123.crt"
