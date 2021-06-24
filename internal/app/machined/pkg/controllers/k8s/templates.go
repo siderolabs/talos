@@ -273,6 +273,12 @@ rules:
       - nodes
     verbs:
       - get
+  - apiGroups: ["discovery.k8s.io"]
+    resources:
+      - endpointslices
+    verbs:
+      - list
+      - watch
 ---
 apiVersion: v1
 kind: ConfigMap
