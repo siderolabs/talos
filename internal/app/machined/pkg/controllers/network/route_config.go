@@ -240,7 +240,7 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 
 		route.Type = nethelpers.TypeUnicast
 
-		if route.Destination.IP.IsMulticast() {
+		if route.Destination.IP().IsMulticast() {
 			route.Type = nethelpers.TypeMulticast
 		}
 

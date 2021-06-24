@@ -94,10 +94,7 @@ func (vip *VIP) AddressSpecs() []network.AddressSpecSpec {
 
 	return []network.AddressSpecSpec{
 		{
-			Address: netaddr.IPPrefix{
-				IP:   vip.sharedIP,
-				Bits: vip.sharedIP.BitLen(),
-			},
+			Address:         netaddr.IPPrefixFrom(vip.sharedIP, vip.sharedIP.BitLen()),
 			LinkName:        vip.linkName,
 			Family:          family,
 			Scope:           nethelpers.ScopeGlobal,
