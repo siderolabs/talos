@@ -147,7 +147,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		return nil, errors.New("failed to determine endpoints")
 	}
 
-	c.conn, err = c.getConn(ctx)
+	c.conn, err = c.GetConn(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client connection: %w", err)
 	}
@@ -166,7 +166,8 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	return c, nil
 }
 
-func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+// GetConn creates new gRPC connection.
+func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	endpoints := c.getEndpoints()
 
 	var target string
