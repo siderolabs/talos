@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -95,7 +96,16 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					logger.Debug("conflict detected", zap.String("id", id))
+
+					delete(routes, id)
+
+					// trigger another reconcile
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
 		}
 
@@ -111,12 +121,12 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 
 				okToDestroy, err = r.Teardown(ctx, res.Metadata())
 				if err != nil {
-					return fmt.Errorf("error cleaning up addresses: %w", err)
+					return fmt.Errorf("error cleaning up routes: %w", err)
 				}
 
 				if okToDestroy {
 					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up addresses: %w", err)
+						return fmt.Errorf("error cleaning up routes: %w", err)
 					}
 				}
 			}

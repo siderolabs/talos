@@ -98,9 +98,18 @@ func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Run
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					// conflict
+					final.NTPServers = nil
+
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
-		} else {
+		}
+
+		if final.NTPServers == nil {
 			// remove existing
 			var okToDestroy bool
 

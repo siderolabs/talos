@@ -90,9 +90,18 @@ func (ctrl *HostnameMergeController) Run(ctx context.Context, r controller.Runti
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					// conflict
+					final.Hostname = ""
+
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
-		} else {
+		}
+
+		if final.Hostname == "" {
 			// remove existing
 			var okToDestroy bool
 

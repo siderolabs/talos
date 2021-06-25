@@ -98,9 +98,18 @@ func (ctrl *ResolverMergeController) Run(ctx context.Context, r controller.Runti
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					// conflict
+					final.DNSServers = nil
+
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
-		} else {
+		}
+
+		if final.DNSServers == nil {
 			// remove existing
 			var okToDestroy bool
 
