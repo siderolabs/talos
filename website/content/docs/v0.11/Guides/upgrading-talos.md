@@ -20,6 +20,10 @@ TBD
 
 TBD
 
+### After Upgrade to 0.11
+
+TBD
+
 ## `talosctl` Upgrade
 
 To manually upgrade a Talos node, you will specify the node's IP address and the

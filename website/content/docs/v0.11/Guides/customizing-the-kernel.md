@@ -15,7 +15,7 @@ When used as a base image, the installer will perform the above steps automatica
 
 Build and push your own kernel:
 
- ```shell
+ ```sh
  git clone https://github.com/talos-systems/pkgs.git
  cd pkgs
  make kernel-menuconfig USERNAME=_your_github_user_name_
