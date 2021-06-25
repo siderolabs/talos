@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -109,7 +110,16 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					logger.Debug("conflict detected", zap.String("id", id))
+
+					delete(links, id)
+
+					// trigger another reconcile
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
 
 			logger.Debug("merged link spec", zap.String("id", id), zap.Any("spec", link))

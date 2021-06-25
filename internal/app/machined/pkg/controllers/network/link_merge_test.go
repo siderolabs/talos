@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -182,6 +183,94 @@ func (suite *LinkMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoLinks("lo")
+		}))
+}
+
+//nolint:gocyclo
+func (suite *LinkMergeSuite) TestMergeFlapping() {
+	// simulate two conflicting link definitions which are getting removed/added constantly
+	dhcp := network.NewLinkSpec(network.ConfigNamespaceName, "dhcp/eth0")
+	*dhcp.TypedSpec() = network.LinkSpecSpec{
+		Name:        "eth0",
+		Up:          true,
+		MTU:         1450,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/eth0")
+	*static.TypedSpec() = network.LinkSpecSpec{
+		Name:        "eth0",
+		Up:          true,
+		MTU:         1500,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	resources := []resource.Resource{dhcp, static}
+
+	flipflop := func(idx int) func() error {
+		return func() error {
+			for i := 0; i < 500; i++ {
+				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
+					return err
+				}
+
+				if err := suite.state.Destroy(suite.ctx, resources[idx].Metadata()); err != nil {
+					return err
+				}
+
+				time.Sleep(time.Millisecond)
+			}
+
+			return suite.state.Create(suite.ctx, resources[idx])
+		}
+	}
+
+	var eg errgroup.Group
+
+	eg.Go(flipflop(0))
+	eg.Go(flipflop(1))
+	eg.Go(func() error {
+		// add/remove finalizer to the merged resource
+		for i := 0; i < 1000; i++ {
+			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "eth0", resource.VersionUndefined), "foo"); err != nil {
+				if !state.IsNotFoundError(err) {
+					return err
+				}
+
+				continue
+			} else {
+				suite.T().Log("finalizer added")
+			}
+
+			time.Sleep(10 * time.Millisecond)
+
+			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "eth0", resource.VersionUndefined), "foo"); err != nil {
+				if err != nil && !state.IsNotFoundError(err) {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	suite.Require().NoError(eg.Wait())
+
+	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertLinks([]string{
+				"eth0",
+			}, func(r *network.LinkSpec) error {
+				if r.Metadata().Phase() != resource.PhaseRunning {
+					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
+				}
+
+				if r.TypedSpec().MTU != 1500 {
+					return retry.ExpectedErrorf("MTU %d != 1500", r.TypedSpec().MTU)
+				}
+
+				return nil
+			})
 		}))
 }
 

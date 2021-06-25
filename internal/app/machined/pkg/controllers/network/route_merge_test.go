@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
 	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
@@ -98,7 +99,7 @@ func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*net
 }
 
 func (suite *RouteMergeSuite) assertNoRoute(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -157,6 +158,8 @@ func (suite *RouteMergeSuite) TestMerge() {
 				"10.5.0.3/",
 				"10.0.0.34/10.0.0.35/32",
 			}, func(r *network.RouteSpec) error {
+				suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
+
 				switch r.Metadata().ID() {
 				case "10.5.0.3/":
 					suite.Assert().Equal(*dhcp.TypedSpec(), *r.TypedSpec())
@@ -176,6 +179,8 @@ func (suite *RouteMergeSuite) TestMerge() {
 				"10.5.0.3/",
 				"10.0.0.34/10.0.0.35/32",
 			}, func(r *network.RouteSpec) error {
+				suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
+
 				switch r.Metadata().ID() {
 				case "10.5.0.3/":
 					if *cmdline.TypedSpec() != *r.TypedSpec() {
@@ -195,6 +200,101 @@ func (suite *RouteMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoRoute("10.0.0.34/10.0.0.35/32")
+		}))
+}
+
+//nolint:gocyclo
+func (suite *RouteMergeSuite) TestMergeFlapping() {
+	// simulate two conflicting default route definitions which are getting removed/added constantly
+	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline//10.5.0.3")
+	*cmdline.TypedSpec() = network.RouteSpecSpec{
+		Gateway:     netaddr.MustParseIP("10.5.0.3"),
+		OutLinkName: "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Priority:    1024,
+		ConfigLayer: network.ConfigCmdline,
+	}
+
+	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp//10.5.0.3")
+	*dhcp.TypedSpec() = network.RouteSpecSpec{
+		Gateway:     netaddr.MustParseIP("10.5.0.3"),
+		OutLinkName: "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Priority:    50,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	resources := []resource.Resource{cmdline, dhcp}
+
+	flipflop := func(idx int) func() error {
+		return func() error {
+			for i := 0; i < 500; i++ {
+				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
+					return err
+				}
+
+				if err := suite.state.Destroy(suite.ctx, resources[idx].Metadata()); err != nil {
+					return err
+				}
+
+				time.Sleep(time.Millisecond)
+			}
+
+			return suite.state.Create(suite.ctx, resources[idx])
+		}
+	}
+
+	var eg errgroup.Group
+
+	eg.Go(flipflop(0))
+	eg.Go(flipflop(1))
+	eg.Go(func() error {
+		// add/remove finalizer to the merged resource
+		for i := 0; i < 1000; i++ {
+			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "10.5.0.3/", resource.VersionUndefined), "foo"); err != nil {
+				if !state.IsNotFoundError(err) {
+					return err
+				}
+
+				continue
+			} else {
+				suite.T().Log("finalizer added")
+			}
+
+			time.Sleep(10 * time.Millisecond)
+
+			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "10.5.0.3/", resource.VersionUndefined), "foo"); err != nil {
+				if err != nil && !state.IsNotFoundError(err) {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	suite.Require().NoError(eg.Wait())
+
+	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertRoutes([]string{
+				"10.5.0.3/",
+			}, func(r *network.RouteSpec) error {
+				if r.Metadata().Phase() != resource.PhaseRunning {
+					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
+				}
+
+				if *dhcp.TypedSpec() != *r.TypedSpec() {
+					// using retry here, as it might not be reconciled immediately
+					return retry.ExpectedError(fmt.Errorf("not equal yet"))
+				}
+
+				return nil
+			})
 		}))
 }
 
