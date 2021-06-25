@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"golang.org/x/sync/errgroup"
 	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
@@ -187,6 +188,97 @@ func (suite *AddressMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoAddress("eth0/10.0.0.35/32")
+		}))
+}
+
+//nolint:gocyclo
+func (suite *AddressMergeSuite) TestMergeFlapping() {
+	// simulate two conflicting address definitions which are getting removed/added constantly
+	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")
+	*dhcp.TypedSpec() = network.AddressSpecSpec{
+		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	override := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.1/8")
+	*override.TypedSpec() = network.AddressSpecSpec{
+		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeHost,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	resources := []resource.Resource{dhcp, override}
+
+	flipflop := func(idx int) func() error {
+		return func() error {
+			for i := 0; i < 500; i++ {
+				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
+					return err
+				}
+
+				if err := suite.state.Destroy(suite.ctx, resources[idx].Metadata()); err != nil {
+					return err
+				}
+
+				time.Sleep(time.Millisecond)
+			}
+
+			return suite.state.Create(suite.ctx, resources[idx])
+		}
+	}
+
+	var eg errgroup.Group
+
+	eg.Go(flipflop(0))
+	eg.Go(flipflop(1))
+	eg.Go(func() error {
+		// add/remove finalizer to the merged resource
+		for i := 0; i < 1000; i++ {
+			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "eth0/10.0.0.1/8", resource.VersionUndefined), "foo"); err != nil {
+				if !state.IsNotFoundError(err) {
+					return err
+				}
+
+				continue
+			} else {
+				suite.T().Log("finalizer added")
+			}
+
+			time.Sleep(10 * time.Millisecond)
+
+			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "eth0/10.0.0.1/8", resource.VersionUndefined), "foo"); err != nil {
+				if err != nil && !state.IsNotFoundError(err) {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	suite.Require().NoError(eg.Wait())
+
+	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertAddresses([]string{
+				"eth0/10.0.0.1/8",
+			}, func(r *network.AddressSpec) error {
+				if r.Metadata().Phase() != resource.PhaseRunning {
+					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
+				}
+
+				if *override.TypedSpec() != *r.TypedSpec() {
+					// using retry here, as it might not be reconciled immediately
+					return retry.ExpectedError(fmt.Errorf("not equal yet"))
+				}
+
+				return nil
+			})
 		}))
 }
 

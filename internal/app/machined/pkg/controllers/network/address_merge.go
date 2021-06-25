@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -95,7 +96,16 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating resource: %w", err)
+				if state.IsPhaseConflictError(err) {
+					logger.Debug("conflict detected", zap.String("id", id))
+
+					delete(addresses, id)
+
+					// trigger another reconcile
+					r.QueueReconcile()
+				} else {
+					return fmt.Errorf("error updating resource: %w", err)
+				}
 			}
 		}
 
