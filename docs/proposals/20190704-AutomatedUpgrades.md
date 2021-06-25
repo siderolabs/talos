@@ -175,7 +175,7 @@ Once the operator has decided scheduling, it will use the upgrade RPC to perform
 
 ## Rationale
 
-One of the goals in Talos is to allow for machines to be thought of as a container in that it is ephemeral, reproducable, and predictable.
+One of the goals in Talos is to allow for machines to be thought of as a container in that it is ephemeral, reproducible, and predictable.
 Since the `kubelet` can reproduce a machine's workload, it is not too crazy to think that we can facilitate upgrades by completely wiping a node, and then performing a fresh install as if the machine is new.
 
 ## Compatibility
