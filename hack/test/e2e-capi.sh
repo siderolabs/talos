@@ -4,6 +4,7 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
+export CAPI_VERSION="0.3.19"
 export CABPT_VERSION="0.2.0"
 export CACPPT_VERSION="0.1.0"
 export CAPA_VERSION="0.6.5"
@@ -25,6 +26,7 @@ export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
 set -x
 
 ${CLUSTERCTL} init \
+    --core "cluster-api:v${CAPI_VERSION}" \
     --control-plane "talos:v${CACPPT_VERSION}" \
     --infrastructure "aws:v${CAPA_VERSION},gcp:v${CAPG_VERSION}" \
     --bootstrap "talos:v${CABPT_VERSION}"
