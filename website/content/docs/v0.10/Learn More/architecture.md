@@ -23,7 +23,7 @@ This is a key component in reducing coupling and maintaining modularity.
 One of the more unique design decisions in Talos is the layout of the root file system.
 There are three "layers" to the Talos root file system.
 At its' core the rootfs is a read-only squashfs.
-The sqaushfs is then mounted as a loop device into memory.
+The squashfs is then mounted as a loop device into memory.
 This provides Talos with an immutable base.
 
 The next layer is a set of `tmpfs` file systems for runtime specific needs.
@@ -32,7 +32,7 @@ One reason for this is that we need special files such as `/etc/hosts`, and `/et
 For example, at boot Talos will write `/system/etc/hosts` and the bind mount it over `/etc/hosts`.
 This means that instead of making all of `/etc` writable, Talos only makes very specific files writable under `/etc`.
 
-All files under `/system` are completely reproducable.
+All files under `/system` are completely reproducible.
 For files and directories that need to persist across boots, Talos creates `overlayfs` file systems.
 The `/etc/kuberentes` is a good example of this.
 Directories like this are `overlayfs` backed by an XFS file system mounted at `/var`.
