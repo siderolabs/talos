@@ -65,6 +65,13 @@ func (suite *TalosconfigSuite) TestMerge() {
 
 // TestNew checks `talosctl config new`.
 func (suite *TalosconfigSuite) TestNew() {
+	stdout := suite.RunCLI([]string{"version"})
+
+	// TODO: fix test (https://github.com/talos-systems/talos/issues/3852)
+	if !strings.Contains(stdout, "Enabled:     RBAC") {
+		suite.T().Skip("skipping this test for now")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)

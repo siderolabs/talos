@@ -70,7 +70,7 @@ func printLong(v *machineapi.VersionInfo) {
 		return
 	}
 
-	fmt.Println(wr.String())
+	fmt.Print(wr.String())
 }
 
 // PrintShortVersion prints the tag and SHA.

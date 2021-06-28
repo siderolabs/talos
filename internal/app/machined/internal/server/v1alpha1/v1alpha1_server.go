@@ -1058,11 +1058,16 @@ func (s *Server) Version(ctx context.Context, in *empty.Empty) (reply *machine.V
 		}
 	}
 
+	features := &machine.FeaturesInfo{
+		Rbac: s.Controller.Runtime().Config().Machine().Features().RBACEnabled(),
+	}
+
 	return &machine.VersionResponse{
 		Messages: []*machine.Version{
 			{
 				Version:  version.NewVersion(),
 				Platform: platform,
+				Features: features,
 			},
 		},
 	}, nil

@@ -70,6 +70,7 @@ description: Talos gRPC API reference.
     - [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest)
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
+    - [FeaturesInfo](#machine.FeaturesInfo)
     - [FileInfo](#machine.FileInfo)
     - [GenerateClientConfiguration](#machine.GenerateClientConfiguration)
     - [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest)
@@ -1190,6 +1191,21 @@ EtcdMembers contains the list of members registered on the host.
 | tail_events | [int32](#int32) |  |  |
 | tail_id | [string](#string) |  |  |
 | tail_seconds | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.FeaturesInfo"></a>
+
+### FeaturesInfo
+FeaturesInfo describes individual Talos features that can be switched on or off.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rbac | [bool](#bool) |  | RBAC is true if role-based access control is enabled. |
 
 
 
@@ -2617,6 +2633,7 @@ rpc upgrade
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | version | [VersionInfo](#machine.VersionInfo) |  |  |
 | platform | [PlatformInfo](#machine.PlatformInfo) |  |  |
+| features | [FeaturesInfo](#machine.FeaturesInfo) |  | Features describe individual Talos features that can be switched on or off. |
 
 
 

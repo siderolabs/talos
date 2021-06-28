@@ -7,6 +7,7 @@ package talos
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -66,6 +67,13 @@ var versionCmd = &cobra.Command{
 				fmt.Printf("\t%s:        %s\n", "NODE", node)
 
 				version.PrintLongVersionFromExisting(msg.Version)
+
+				var enabledFeatures []string
+				if msg.Features.GetRbac() {
+					enabledFeatures = append(enabledFeatures, "RBAC")
+				}
+
+				fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
 			}
 
 			return nil
