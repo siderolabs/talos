@@ -12,37 +12,42 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-var (
+// versionCmdFlags represents the `talosctl version` command's flags.
+var versionCmdFlags struct {
 	clientOnly   bool
 	shortVersion bool
-)
+	json         bool
+}
 
-// versionCmd represents the version command.
+// versionCmd represents the `talosctl version` command.
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Prints the version",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Client:")
-		if shortVersion {
-			version.PrintShortVersion()
-		} else {
-			version.PrintLongVersion()
-		}
+		if !versionCmdFlags.json {
+			fmt.Println("Client:")
+			if versionCmdFlags.shortVersion {
+				version.PrintShortVersion()
+			} else {
+				version.PrintLongVersion()
+			}
 
-		// Exit early if we're only looking for client version
-		if clientOnly {
-			return nil
-		}
+			// Exit early if we're only looking for client version
+			if versionCmdFlags.clientOnly {
+				return nil
+			}
 
-		fmt.Println("Server:")
+			fmt.Println("Server:")
+		}
 
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var remotePeer peer.Peer
@@ -64,16 +69,26 @@ var versionCmd = &cobra.Command{
 					node = msg.Metadata.Hostname
 				}
 
-				fmt.Printf("\t%s:        %s\n", "NODE", node)
+				if !versionCmdFlags.json {
+					fmt.Printf("\t%s:        %s\n", "NODE", node)
 
-				version.PrintLongVersionFromExisting(msg.Version)
+					version.PrintLongVersionFromExisting(msg.Version)
 
-				var enabledFeatures []string
-				if msg.Features.GetRbac() {
-					enabledFeatures = append(enabledFeatures, "RBAC")
+					var enabledFeatures []string
+					if msg.Features.GetRbac() {
+						enabledFeatures = append(enabledFeatures, "RBAC")
+					}
+
+					fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
+
+					continue
 				}
 
-				fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
+				b, err := protojson.Marshal(msg)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("%s\n", b)
 			}
 
 			return nil
@@ -82,8 +97,12 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
-	versionCmd.Flags().BoolVar(&shortVersion, "short", false, "Print the short version")
-	versionCmd.Flags().BoolVar(&clientOnly, "client", false, "Print client version only")
+	versionCmd.Flags().BoolVar(&versionCmdFlags.shortVersion, "short", false, "Print the short version")
+	versionCmd.Flags().BoolVar(&versionCmdFlags.clientOnly, "client", false, "Print client version only")
+
+	// TODO remove when https://github.com/talos-systems/talos/issues/907 is implemented
+	versionCmd.Flags().BoolVar(&versionCmdFlags.json, "json", false, "")
+	cli.Should(versionCmd.Flags().MarkHidden("json"))
 
 	addCommand(versionCmd)
 }
