@@ -445,6 +445,97 @@ func (suite *LinkSpecSuite) TestBond() {
 		}))
 }
 
+//nolint:gocyclo
+func (suite *LinkSpecSuite) TestBond8023ad() {
+	bondName := suite.uniqueDummyInterface()
+	bond := network.NewLinkSpec(network.NamespaceName, bondName)
+	*bond.TypedSpec() = network.LinkSpecSpec{
+		Name:    bondName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindBond,
+		MTU:     9000,
+		Up:      true,
+		Logical: true,
+		BondMaster: network.BondMasterSpec{
+			Mode:       nethelpers.BondMode8023AD,
+			LACPRate:   nethelpers.LACPRateFast,
+			UseCarrier: true,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+	bond.TypedSpec().BondMaster.FillDefaults()
+
+	dummies := []resource.Resource{}
+	dummyNames := []string{}
+
+	for i := 0; i < 4; i++ {
+		dummyName := suite.uniqueDummyInterface()
+		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
+		*dummy.TypedSpec() = network.LinkSpecSpec{
+			Name:        dummyName,
+			Type:        nethelpers.LinkEther,
+			Kind:        "dummy",
+			Up:          true,
+			Logical:     true,
+			MasterName:  bondName,
+			ConfigLayer: network.ConfigDefault,
+		}
+
+		dummies = append(dummies, dummy)
+		dummyNames = append(dummyNames, dummyName)
+	}
+
+	for _, res := range append(dummies, bond) {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertInterfaces(append(dummyNames, bondName), func(r *network.LinkStatus) error {
+				if r.Metadata().ID() == bondName {
+					// master
+					suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
+
+					if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
+						return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
+					}
+				} else {
+					// slaves
+					suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+
+					if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
+						return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
+					}
+
+					if r.TypedSpec().MasterIndex == 0 {
+						return retry.ExpectedErrorf("masterIndex should be non-zero")
+					}
+				}
+
+				return nil
+			})
+		}))
+
+	// teardown the links
+	for _, r := range append(dummies, bond) {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoInterface(bondName)
+		}))
+}
+
 func (suite *LinkSpecSuite) TestWireguard() {
 	priv, err := wgtypes.GeneratePrivateKey()
 	suite.Require().NoError(err)
