@@ -401,6 +401,8 @@ message Version {
   common.Metadata metadata = 1;
   VersionInfo version = 2;
   PlatformInfo platform = 3;
+  // Features describe individual Talos features that can be switched on or off.
+  FeaturesInfo features = 4;
 }
 
 message VersionResponse { repeated Version messages = 1; }
@@ -417,6 +419,12 @@ message VersionInfo {
 message PlatformInfo {
   string name = 1;
   string mode = 2;
+}
+
+// FeaturesInfo describes individual Talos features that can be switched on or off.
+message FeaturesInfo {
+  // RBAC is true if role-based access control is enabled.
+  bool rbac = 1;
 }
 
 // rpc logs
