@@ -11,7 +11,10 @@ import (
 	"regexp"
 	"strings"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/talos-systems/talos/internal/integration/base"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -65,12 +68,13 @@ func (suite *TalosconfigSuite) TestMerge() {
 
 // TestNew checks `talosctl config new`.
 func (suite *TalosconfigSuite) TestNew() {
-	stdout := suite.RunCLI([]string{"version"})
+	stdout := suite.RunCLI([]string{"version", "--json"})
 
-	// TODO: fix test (https://github.com/talos-systems/talos/issues/3852)
-	if !strings.Contains(stdout, "Enabled:     RBAC") {
-		suite.T().Skip("skipping this test for now")
-	}
+	var v machineapi.Version
+	err := protojson.Unmarshal([]byte(stdout), &v)
+	suite.Require().NoError(err)
+
+	rbacEnabled := v.Features.GetRbac()
 
 	tempDir := suite.T().TempDir()
 
@@ -80,7 +84,7 @@ func (suite *TalosconfigSuite) TestNew() {
 	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", readerConfig},
 		base.StdoutEmpty())
 
-	// commands that work for both admin and reader
+	// commands that work for both admin and reader, with and without RBAC
 	for _, tt := range []struct {
 		args []string
 		opts []base.RunOption
@@ -103,7 +107,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		})
 	}
 
-	// commands that work for admin, but not for reader
+	// commands that work for admin, but not for reader (when RBAC is enabled)
 	for _, tt := range []struct {
 		args       []string
 		adminOpts  []base.RunOption
@@ -134,7 +138,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			},
 		},
 		{
-			args:      []string{"kubeconfig", tempDir},
+			args:      []string{"kubeconfig", "--force", tempDir},
 			adminOpts: []base.RunOption{base.StdoutEmpty()},
 			readerOpts: []base.RunOption{
 				base.ShouldFail(), // why this one fails, but not others?
@@ -152,8 +156,18 @@ func (suite *TalosconfigSuite) TestNew() {
 			suite.RunCLI(args, tt.adminOpts...)
 
 			args = append([]string{"--talosconfig", readerConfig}, args...)
-			suite.RunCLI(args, tt.readerOpts...)
+			if rbacEnabled {
+				suite.RunCLI(args, tt.readerOpts...)
+			} else {
+				// check that it works the same way as for admin with reader's config
+				suite.RunCLI(args, tt.adminOpts...)
+			}
 		})
+	}
+
+	// do not test destructive command with disabled RBAC
+	if !rbacEnabled {
+		return
 	}
 
 	// destructive commands that don't work for reader
