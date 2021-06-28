@@ -11,7 +11,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/containerd/go-cni v1.0.2
 	github.com/containernetworking/cni v0.8.1 // indirect; security fix in 0.8.1
-	github.com/cosi-project/runtime v0.0.0-20210624153826-3e48f565450e
+	github.com/cosi-project/runtime v0.0.0-20210625174835-93ead370bf57
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -27,9 +27,8 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.1
 	github.com/talos-systems/net v0.3.0
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
-	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
+	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	google.golang.org/protobuf v1.27.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
