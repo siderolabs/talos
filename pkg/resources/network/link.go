@@ -141,8 +141,11 @@ func (bond *BondMasterSpec) Encode() ([]byte, error) {
 	encoder.Uint8(unix.IFLA_BOND_FAIL_OVER_MAC, uint8(bond.FailOverMac))
 	encoder.Uint8(unix.IFLA_BOND_AD_SELECT, uint8(bond.ADSelect))
 	encoder.Uint32(unix.IFLA_BOND_MIIMON, bond.MIIMon)
-	encoder.Uint32(unix.IFLA_BOND_UPDELAY, bond.UpDelay)
-	encoder.Uint32(unix.IFLA_BOND_DOWNDELAY, bond.DownDelay)
+
+	if bond.MIIMon != 0 {
+		encoder.Uint32(unix.IFLA_BOND_UPDELAY, bond.UpDelay)
+		encoder.Uint32(unix.IFLA_BOND_DOWNDELAY, bond.DownDelay)
+	}
 
 	if bond.Mode != nethelpers.BondMode8023AD && bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
 		encoder.Uint32(unix.IFLA_BOND_ARP_INTERVAL, bond.ARPInterval)
@@ -177,7 +180,9 @@ func (bond *BondMasterSpec) Encode() ([]byte, error) {
 		encoder.Uint16(unix.IFLA_BOND_AD_USER_PORT_KEY, bond.ADUserPortKey)
 	}
 
-	encoder.Uint32(unix.IFLA_BOND_PEER_NOTIF_DELAY, bond.PeerNotifyDelay)
+	if bond.MIIMon != 0 {
+		encoder.Uint32(unix.IFLA_BOND_PEER_NOTIF_DELAY, bond.PeerNotifyDelay)
+	}
 
 	return encoder.Encode()
 }
