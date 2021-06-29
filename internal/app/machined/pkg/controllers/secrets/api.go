@@ -374,7 +374,7 @@ func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtim
 
 	var ca []byte
 
-	ca, serverCert.Crt, err = remoteGen.Identity(serverCSR)
+	ca, serverCert.Crt, err = remoteGen.IdentityContext(ctx, serverCSR)
 	if err != nil {
 		return fmt.Errorf("failed to sign API server CSR: %w", err)
 	}
@@ -387,7 +387,7 @@ func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtim
 		return fmt.Errorf("failed to generate API client CSR: %w", err)
 	}
 
-	_, clientCert.Crt, err = remoteGen.Identity(clientCSR)
+	_, clientCert.Crt, err = remoteGen.IdentityContext(ctx, clientCSR)
 	if err != nil {
 		return fmt.Errorf("failed to sign API client CSR: %w", err)
 	}
