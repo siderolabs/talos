@@ -37,10 +37,9 @@ func (widget *TopLine) Update(node string, data *data.Data) {
 	if nodeData == nil {
 		widget.Text = "n/a"
 	} else {
-		widget.Text = fmt.Sprintf("[%s](fg:yellow,mod:bold) (%s-%s): uptime %s, %d cores, %d procs",
+		widget.Text = fmt.Sprintf("[%s](fg:yellow,mod:bold) (%s): uptime %s, %d cores, %d procs",
 			nodeData.Hostname.GetHostname(),
 			nodeData.Version.GetVersion().GetTag(),
-			nodeData.Version.GetVersion().GetSha(),
 			time.Since(time.Unix(int64(nodeData.SystemStat.GetBootTime()), 0)).Round(time.Second),
 			len(nodeData.CPUsInfo.GetCpuInfo()),
 			len(nodeData.Processes.GetProcesses()),
