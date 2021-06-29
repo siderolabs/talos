@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -71,7 +72,12 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 		defer cancel()
 
 		if err = cli.Bootstrap(retryCtx, &machineapi.BootstrapRequest{}); err != nil {
-			if status.Code(err) == codes.FailedPrecondition || strings.Contains(err.Error(), "connection refused") {
+			switch {
+			case errors.Is(err, context.DeadlineExceeded):
+				return retry.ExpectedError(err)
+			case status.Code(err) == codes.FailedPrecondition || status.Code(err) == codes.DeadlineExceeded:
+				return retry.ExpectedError(err)
+			case strings.Contains(err.Error(), "connection refused"):
 				return retry.ExpectedError(err)
 			}
 
