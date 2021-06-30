@@ -86,6 +86,8 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 			routes[id] = route
 		}
 
+		conflictsDetected := 0
+
 		for id, route := range routes {
 			route := route
 
@@ -97,12 +99,11 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 				return nil
 			}); err != nil {
 				if state.IsPhaseConflictError(err) {
-					logger.Debug("conflict detected", zap.String("id", id))
+					// phase conflict, resource is being torn down, skip updating it and trigger reconcile
+					// later by failing the
+					conflictsDetected++
 
 					delete(routes, id)
-
-					// trigger another reconcile
-					r.QueueReconcile()
 				} else {
 					return fmt.Errorf("error updating resource: %w", err)
 				}
@@ -130,6 +131,10 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 					}
 				}
 			}
+		}
+
+		if conflictsDetected > 0 {
+			return fmt.Errorf("%d conflict(s) detected", conflictsDetected)
 		}
 	}
 }

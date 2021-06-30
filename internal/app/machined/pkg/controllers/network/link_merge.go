@@ -100,6 +100,8 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 			}
 		}
 
+		conflictsDetected := 0
+
 		for id, link := range links {
 			link := link
 
@@ -111,12 +113,11 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 				return nil
 			}); err != nil {
 				if state.IsPhaseConflictError(err) {
-					logger.Debug("conflict detected", zap.String("id", id))
+					// phase conflict, resource is being torn down, skip updating it and trigger reconcile
+					// later by failing the
+					conflictsDetected++
 
 					delete(links, id)
-
-					// trigger another reconcile
-					r.QueueReconcile()
 				} else {
 					return fmt.Errorf("error updating resource: %w", err)
 				}
@@ -146,6 +147,10 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 					}
 				}
 			}
+		}
+
+		if conflictsDetected > 0 {
+			return fmt.Errorf("%d conflict(s) detected", conflictsDetected)
 		}
 	}
 }
