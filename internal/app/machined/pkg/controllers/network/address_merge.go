@@ -86,6 +86,8 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 			addresses[id] = address
 		}
 
+		conflictsDetected := 0
+
 		for id, address := range addresses {
 			address := address
 
@@ -97,12 +99,11 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 				return nil
 			}); err != nil {
 				if state.IsPhaseConflictError(err) {
-					logger.Debug("conflict detected", zap.String("id", id))
+					// phase conflict, resource is being torn down, skip updating it and trigger reconcile
+					// later by failing the
+					conflictsDetected++
 
 					delete(addresses, id)
-
-					// trigger another reconcile
-					r.QueueReconcile()
 				} else {
 					return fmt.Errorf("error updating resource: %w", err)
 				}
@@ -130,6 +131,10 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 					}
 				}
 			}
+		}
+
+		if conflictsDetected > 0 {
+			return fmt.Errorf("%d conflict(s) detected", conflictsDetected)
 		}
 	}
 }
