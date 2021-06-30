@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-retry/retry"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -73,7 +74,11 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 	}
 
 	if err = hyperkubeUpgradeDs(ctx, k8sClient.Clientset, kubeProxy, options); err != nil {
-		return fmt.Errorf("error updating kube-proxy: %w", err)
+		if apierrors.IsNotFound(err) {
+			fmt.Println("kube-proxy skipped as DaemonSet was not found")
+		} else {
+			return fmt.Errorf("error updating kube-proxy: %w", err)
+		}
 	}
 
 	return nil
@@ -103,7 +108,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 
 	ctx = client.WithNodes(ctx, node)
 
-	fmt.Printf(" > updating node %q\n", node)
+	fmt.Printf(" > %q: starting update\n", node)
 
 	watchClient, err := c.Resources.Watch(ctx, config.NamespaceName, config.K8sControlPlaneType, service)
 	if err != nil {
@@ -137,10 +142,15 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 		}
 	}
 
+	fmt.Printf(" > %q: machine configuration patched\n", node)
+	fmt.Printf(" > %q: waiting for API server state pod update\n", node)
+
 	var expectedConfigVersion string
 
 	if !skipConfigWait {
-		watchUpdated, err := watchClient.Recv()
+		var watchUpdated client.WatchResponse
+
+		watchUpdated, err = watchClient.Recv()
 		if err != nil {
 			return fmt.Errorf("error watching config: %w", err)
 		}
@@ -154,9 +164,15 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 		expectedConfigVersion = watchInitial.Resource.Metadata().Version().String()
 	}
 
-	return retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second), retry.WithErrorLogging(true)).Retry(func() error {
+	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
 		return checkPodStatus(ctx, cluster, service, node, expectedConfigVersion)
-	})
+	}); err != nil {
+		return err
+	}
+
+	fmt.Printf(" < %q: successfully updated\n", node)
+
+	return nil
 }
 
 var errUpdateSkipped = fmt.Errorf("update skipped")
