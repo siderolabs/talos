@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/url"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
@@ -51,45 +52,48 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 
 	log.Printf("fetching machine config from: %q", *option)
 
-	u, err := url.Parse(*option)
+	downloadURL, err := PopulateURLParameters(*option, getSystemUUID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
+		return nil, err
+	}
+
+	switch downloadURL {
+	case constants.MetalConfigISOLabel:
+		return readConfigFromISO()
+	default:
+		return download.Download(ctx, downloadURL)
+	}
+}
+
+// PopulateURLParameters fills in empty parameters in the download URL.
+func PopulateURLParameters(downloadURL string, getSystemUUID func() (uuid.UUID, error)) (string, error) {
+	u, err := url.Parse(downloadURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
 	}
 
 	values := u.Query()
 
-	if len(values) > 0 {
-		for key, qValues := range values {
-			switch key {
-			case "uuid":
-				if len(qValues) != 1 {
-					uid, err := getSystemUUID()
-					if err != nil {
-						return nil, err
-					}
-
-					values.Set("uuid", uid.String())
-
-					break
+	for key, qValues := range values {
+		switch key {
+		case "uuid":
+			// don't touch uuid field if it already has some value
+			if !(len(qValues) == 1 && len(strings.TrimSpace(qValues[0])) > 0) {
+				uid, err := getSystemUUID()
+				if err != nil {
+					return "", err
 				}
 
-				values.Set("uuid", qValues[0])
-			default:
-				log.Printf("unsupported query parameter: %q", key)
+				values.Set("uuid", uid.String())
 			}
+		default:
+			log.Printf("unsupported query parameter: %q", key)
 		}
-
-		u.RawQuery = values.Encode()
-
-		*option = u.String()
 	}
 
-	switch *option {
-	case constants.MetalConfigISOLabel:
-		return readConfigFromISO()
-	default:
-		return download.Download(ctx, *option)
-	}
+	u.RawQuery = values.Encode()
+
+	return u.String(), nil
 }
 
 func getSystemUUID() (uuid.UUID, error) {
