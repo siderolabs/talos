@@ -7,6 +7,7 @@ package secrets
 import (
 	"bytes"
 	"context"
+	stdlibx509 "crypto/x509"
 	"fmt"
 	"net"
 	"net/url"
@@ -201,6 +202,10 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		x509.CommonName("kube-apiserver"),
 		x509.Organization("kube-master"),
 		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+		}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
@@ -212,6 +217,10 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 		x509.CommonName(constants.KubernetesAdminCertCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
 		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate api-server cert: %w", err)
@@ -227,6 +236,10 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 	frontProxy, err := x509.NewKeyPair(aggregatorCA,
 		x509.CommonName("front-proxy-client"),
 		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate aggregator cert: %w", err)

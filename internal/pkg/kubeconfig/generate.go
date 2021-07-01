@@ -5,6 +5,7 @@
 package kubeconfig
 
 import (
+	stdlibx509 "crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -100,7 +101,12 @@ func Generate(in *GenerateInput, out io.Writer) error {
 	clientCert, err := x509.NewKeyPair(k8sCA,
 		x509.CommonName(in.CommonName),
 		x509.Organization(in.Organization),
-		x509.NotAfter(time.Now().Add(in.CertificateLifetime)))
+		x509.NotAfter(time.Now().Add(in.CertificateLifetime)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	)
 	if err != nil {
 		return fmt.Errorf("error generating Kubernetes client certificate: %w", err)
 	}
