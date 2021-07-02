@@ -211,6 +211,7 @@ type Time interface {
 // related options.
 type Kubelet interface {
 	Image() string
+	ClusterDNS() []string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
 	RegisterWithFQDN() bool

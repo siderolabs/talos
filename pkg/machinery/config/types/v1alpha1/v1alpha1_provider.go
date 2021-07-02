@@ -287,6 +287,15 @@ func (k *KubeletConfig) Image() string {
 	return image
 }
 
+// ClusterDNS implements the config.Provider interface.
+func (k *KubeletConfig) ClusterDNS() []string {
+	if k == nil || k.KubeletClusterDNS == nil {
+		return nil
+	}
+
+	return k.KubeletClusterDNS
+}
+
 // ExtraArgs implements the config.Provider interface.
 func (k *KubeletConfig) ExtraArgs() map[string]string {
 	if k == nil || k.KubeletExtraArgs == nil {

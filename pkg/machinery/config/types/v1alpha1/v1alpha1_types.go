@@ -785,6 +785,11 @@ type KubeletConfig struct {
 	//     - value: kubeletImageExample
 	KubeletImage string `yaml:"image,omitempty"`
 	//   description: |
+	//     The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
+	//   examples:
+	//     - value: '[]string{"10.96.0.10", "169.254.2.53"}'
+	KubeletClusterDNS []string `yaml:"clusterDNS,omitempty"`
+	//   description: |
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
 	//   examples:
 	//     - value: >
