@@ -300,6 +300,11 @@ kubelet:
     extraArgs:
         feature-gates: ServerSideApply=true
 
+    # # The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
+    # clusterDNS:
+    #     - 10.96.0.10
+    #     - 169.254.2.53
+
     # # The `extraMounts` field is used to add additional mounts to the kubelet container.
     # extraMounts:
     #     - destination: /var/lib/example
@@ -1323,6 +1328,11 @@ image: ghcr.io/talos-systems/kubelet:v1.21.2 # The `image` field is an optional 
 extraArgs:
     feature-gates: ServerSideApply=true
 
+# # The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
+# clusterDNS:
+#     - 10.96.0.10
+#     - 169.254.2.53
+
 # # The `extraMounts` field is used to add additional mounts to the kubelet container.
 # extraMounts:
 #     - destination: /var/lib/example
@@ -1351,6 +1361,31 @@ Examples:
 
 ``` yaml
 image: ghcr.io/talos-systems/kubelet:v1.21.2
+```
+
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>clusterDNS</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
+
+
+
+Examples:
+
+
+``` yaml
+clusterDNS:
+    - 10.96.0.10
+    - 169.254.2.53
 ```
 
 

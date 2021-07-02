@@ -426,7 +426,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 4)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 5)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -434,28 +434,35 @@ func init() {
 	KubeletConfigDoc.Fields[0].Comments[encoder.LineComment] = "The `image` field is an optional reference to an alternative kubelet image."
 
 	KubeletConfigDoc.Fields[0].AddExample("", kubeletImageExample)
-	KubeletConfigDoc.Fields[1].Name = "extraArgs"
-	KubeletConfigDoc.Fields[1].Type = "map[string]string"
+	KubeletConfigDoc.Fields[1].Name = "clusterDNS"
+	KubeletConfigDoc.Fields[1].Type = "[]string"
 	KubeletConfigDoc.Fields[1].Note = ""
-	KubeletConfigDoc.Fields[1].Description = "The `extraArgs` field is used to provide additional flags to the kubelet."
-	KubeletConfigDoc.Fields[1].Comments[encoder.LineComment] = "The `extraArgs` field is used to provide additional flags to the kubelet."
+	KubeletConfigDoc.Fields[1].Description = "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list."
+	KubeletConfigDoc.Fields[1].Comments[encoder.LineComment] = "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list."
 
-	KubeletConfigDoc.Fields[1].AddExample("", map[string]string{
+	KubeletConfigDoc.Fields[1].AddExample("", []string{"10.96.0.10", "169.254.2.53"})
+	KubeletConfigDoc.Fields[2].Name = "extraArgs"
+	KubeletConfigDoc.Fields[2].Type = "map[string]string"
+	KubeletConfigDoc.Fields[2].Note = ""
+	KubeletConfigDoc.Fields[2].Description = "The `extraArgs` field is used to provide additional flags to the kubelet."
+	KubeletConfigDoc.Fields[2].Comments[encoder.LineComment] = "The `extraArgs` field is used to provide additional flags to the kubelet."
+
+	KubeletConfigDoc.Fields[2].AddExample("", map[string]string{
 		"key": "value",
 	})
-	KubeletConfigDoc.Fields[2].Name = "extraMounts"
-	KubeletConfigDoc.Fields[2].Type = "[]ExtraMount"
-	KubeletConfigDoc.Fields[2].Note = ""
-	KubeletConfigDoc.Fields[2].Description = "The `extraMounts` field is used to add additional mounts to the kubelet container."
-	KubeletConfigDoc.Fields[2].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
-
-	KubeletConfigDoc.Fields[2].AddExample("", kubeletExtraMountsExample)
-	KubeletConfigDoc.Fields[3].Name = "registerWithFQDN"
-	KubeletConfigDoc.Fields[3].Type = "bool"
+	KubeletConfigDoc.Fields[3].Name = "extraMounts"
+	KubeletConfigDoc.Fields[3].Type = "[]ExtraMount"
 	KubeletConfigDoc.Fields[3].Note = ""
-	KubeletConfigDoc.Fields[3].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
-	KubeletConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
-	KubeletConfigDoc.Fields[3].Values = []string{
+	KubeletConfigDoc.Fields[3].Description = "The `extraMounts` field is used to add additional mounts to the kubelet container."
+	KubeletConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
+
+	KubeletConfigDoc.Fields[3].AddExample("", kubeletExtraMountsExample)
+	KubeletConfigDoc.Fields[4].Name = "registerWithFQDN"
+	KubeletConfigDoc.Fields[4].Type = "bool"
+	KubeletConfigDoc.Fields[4].Note = ""
+	KubeletConfigDoc.Fields[4].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
+	KubeletConfigDoc.Fields[4].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
+	KubeletConfigDoc.Fields[4].Values = []string{
 		"true",
 		"yes",
 		"false",

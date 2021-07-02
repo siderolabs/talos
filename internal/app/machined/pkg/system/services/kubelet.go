@@ -318,10 +318,15 @@ func writeKubeletConfig(r runtime.Runtime) error {
 		return fmt.Errorf("failed to get DNS service IPs: %w", err)
 	}
 
-	dnsServiceIPsString := make([]string, 0, len(dnsServiceIPs))
+	dnsServiceIPsString := []string{}
 
-	for _, dnsIP := range dnsServiceIPs {
-		dnsServiceIPsString = append(dnsServiceIPsString, dnsIP.String())
+	dnsServiceIPsCustom := r.Config().Machine().Kubelet().ClusterDNS()
+	if dnsServiceIPsCustom == nil {
+		for _, dnsIP := range dnsServiceIPs {
+			dnsServiceIPsString = append(dnsServiceIPsString, dnsIP.String())
+		}
+	} else {
+		dnsServiceIPsString = dnsServiceIPsCustom
 	}
 
 	kubeletConfiguration := newKubeletConfiguration(dnsServiceIPsString, r.Config().Cluster().Network().DNSDomain())
