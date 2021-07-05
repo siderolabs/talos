@@ -70,8 +70,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
-	github.com/spf13/cobra v1.1.3
-	github.com/spf13/viper v1.8.0 // indirect
+	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.1
 	github.com/talos-systems/go-blockdevice v0.2.1
