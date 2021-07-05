@@ -6,6 +6,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -259,6 +260,11 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 
 				_, err = c.MoveLeader(ctx, m.GetID())
 				if err != nil {
+					if errors.Is(err, rpctypes.ErrNotLeader) {
+						// this member is not a leader anymore, so nothing to be done for the forfeit leadership
+						return "", nil
+					}
+
 					return "", err
 				}
 
