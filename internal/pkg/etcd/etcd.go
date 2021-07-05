@@ -78,6 +78,8 @@ func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCer
 		return nil, fmt.Errorf("error building kubernetes client from PKI: %w", err)
 	}
 
+	defer h.Close() //nolint:errcheck
+
 	var endpoints []string
 
 	if endpoints, err = h.MasterIPs(ctx); err != nil {
