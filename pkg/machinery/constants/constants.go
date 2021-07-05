@@ -163,10 +163,13 @@ const (
 	KubernetesEtcdListenClientPort = "2379"
 
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
-	KubernetesAdminCertCommonName = "apiserver-kubelet-client"
+	KubernetesAdminCertCommonName = "admin"
 
 	// KubernetesAdminCertOrganization defines Organization values of Kubernetes admin certificate.
 	KubernetesAdminCertOrganization = "system:masters"
+
+	// KubernetesAPIServerKubeletClientCommonName defines CN property of Kubernetes API server certificate to access kubelet API.
+	KubernetesAPIServerKubeletClientCommonName = "apiserver-kubelet-client"
 
 	// KubernetesControllerManagerOrganization defines Organization value of kube-controller-manager client certificate.
 	KubernetesControllerManagerOrganization = "system:kube-controller-manager"
