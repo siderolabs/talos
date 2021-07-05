@@ -1609,6 +1609,14 @@ type DeviceWireguardPeer struct {
 type DeviceVIPConfig struct {
 	// description: Specifies the IP address to be used.
 	SharedIP string `yaml:"ip,omitempty"`
+	// description: Specifies the Equinix Metal API settings to assign VIP to the node.
+	EquinixMetalConfig *VIPEquinixMetalConfig `yaml:"equinixMetal,omitempty"`
+}
+
+// VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
+type VIPEquinixMetalConfig struct {
+	// description: Specifies the Equinix Metal API Token.
+	EquinixMetalAPIToken string `yaml:"apiToken"`
 }
 
 // Bond contains the various options for configuring a bonded interface.

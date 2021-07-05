@@ -12,10 +12,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -102,7 +104,10 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		var specs []network.OperatorSpecSpec
+		var (
+			specs      []network.OperatorSpecSpec
+			specErrors *multierror.Error
+		)
 
 		// operators from the config
 		if cfgProvider != nil {
@@ -162,14 +167,31 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					if err != nil {
 						logger.Warn("ignoring vip parse failure", zap.Error(err), zap.String("link", device.Interface()))
 					} else {
-						specs = append(specs, network.OperatorSpecSpec{
+						spec := network.OperatorSpecSpec{
 							Operator:  network.OperatorVIP,
 							LinkName:  device.Interface(),
 							RequireUp: true,
 							VIP: network.VIPOperatorSpec{
-								IP: sharedIP,
+								IP:            sharedIP,
+								GratuitousARP: true,
 							},
-						})
+						}
+
+						switch {
+						// Equinix Metal VIP
+						case device.VIPConfig().EquinixMetal() != nil:
+							spec.VIP.GratuitousARP = false
+							spec.VIP.EquinixMetal.APIToken = device.VIPConfig().EquinixMetal().APIToken()
+
+							if err = vip.GetProjectAndDeviceIDs(ctx, &spec.VIP.EquinixMetal); err != nil {
+								specErrors = multierror.Append(specErrors, err)
+							} else {
+								specs = append(specs, spec)
+							}
+						// Regular layer 2 VIP
+						default:
+							specs = append(specs, spec)
+						}
 					}
 				}
 
@@ -185,8 +207,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						})
 					}
 				}
-				// TODO: DHCP6, VIP, WgLAN
-			} //nolint:wsl
+			}
 		}
 
 		// operators from defaults
@@ -218,7 +239,6 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		var ids []string
 
 		ids, err = ctrl.apply(ctx, r, specs)
-
 		if err != nil {
 			return fmt.Errorf("error applying operator specs: %w", err)
 		}
@@ -244,6 +264,11 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					return fmt.Errorf("error cleaning up routes: %w", err)
 				}
 			}
+		}
+
+		// last, check if some specs failed to build; fail last so that other operator specs are applied successfully
+		if err = specErrors.ErrorOrNil(); err != nil {
+			return err
 		}
 	}
 }

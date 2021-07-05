@@ -60,6 +60,7 @@ require (
 	github.com/mdlayher/netlink v1.4.1
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
+	github.com/packethost/packngo v0.19.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.2
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2

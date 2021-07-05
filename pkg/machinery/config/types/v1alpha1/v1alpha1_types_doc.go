@@ -47,6 +47,7 @@ var (
 	DeviceWireguardConfigDoc       encoder.Doc
 	DeviceWireguardPeerDoc         encoder.Doc
 	DeviceVIPConfigDoc             encoder.Doc
+	VIPEquinixMetalConfigDoc       encoder.Doc
 	BondDoc                        encoder.Doc
 	VlanDoc                        encoder.Doc
 	RouteDoc                       encoder.Doc
@@ -1478,12 +1479,33 @@ func init() {
 			FieldName: "vip",
 		},
 	}
-	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 1)
+	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 2)
 	DeviceVIPConfigDoc.Fields[0].Name = "ip"
 	DeviceVIPConfigDoc.Fields[0].Type = "string"
 	DeviceVIPConfigDoc.Fields[0].Note = ""
 	DeviceVIPConfigDoc.Fields[0].Description = "Specifies the IP address to be used."
 	DeviceVIPConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies the IP address to be used."
+	DeviceVIPConfigDoc.Fields[1].Name = "equinixMetal"
+	DeviceVIPConfigDoc.Fields[1].Type = "VIPEquinixMetalConfig"
+	DeviceVIPConfigDoc.Fields[1].Note = ""
+	DeviceVIPConfigDoc.Fields[1].Description = "Specifies the Equinix Metal API settings to assign VIP to the node."
+	DeviceVIPConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies the Equinix Metal API settings to assign VIP to the node."
+
+	VIPEquinixMetalConfigDoc.Type = "VIPEquinixMetalConfig"
+	VIPEquinixMetalConfigDoc.Comments[encoder.LineComment] = "VIPEquinixMetalConfig contains settings for Equinix Metal VIP management."
+	VIPEquinixMetalConfigDoc.Description = "VIPEquinixMetalConfig contains settings for Equinix Metal VIP management."
+	VIPEquinixMetalConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "DeviceVIPConfig",
+			FieldName: "equinixMetal",
+		},
+	}
+	VIPEquinixMetalConfigDoc.Fields = make([]encoder.Doc, 1)
+	VIPEquinixMetalConfigDoc.Fields[0].Name = "apiToken"
+	VIPEquinixMetalConfigDoc.Fields[0].Type = "string"
+	VIPEquinixMetalConfigDoc.Fields[0].Note = ""
+	VIPEquinixMetalConfigDoc.Fields[0].Description = "Specifies the Equinix Metal API Token."
+	VIPEquinixMetalConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies the Equinix Metal API Token."
 
 	BondDoc.Type = "Bond"
 	BondDoc.Comments[encoder.LineComment] = "Bond contains the various options for configuring a bonded interface."
@@ -2053,6 +2075,10 @@ func (_ DeviceVIPConfig) Doc() *encoder.Doc {
 	return &DeviceVIPConfigDoc
 }
 
+func (_ VIPEquinixMetalConfig) Doc() *encoder.Doc {
+	return &VIPEquinixMetalConfigDoc
+}
+
 func (_ Bond) Doc() *encoder.Doc {
 	return &BondDoc
 }
@@ -2139,6 +2165,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&DeviceWireguardConfigDoc,
 			&DeviceWireguardPeerDoc,
 			&DeviceVIPConfigDoc,
+			&VIPEquinixMetalConfigDoc,
 			&BondDoc,
 			&VlanDoc,
 			&RouteDoc,

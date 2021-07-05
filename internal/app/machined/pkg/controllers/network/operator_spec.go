@@ -389,7 +389,7 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 	case network.OperatorVIP:
 		logger = logger.With(zap.String("operator", "vip"))
 
-		return operator.NewVIP(logger, spec.LinkName, spec.VIP.IP, ctrl.State)
+		return operator.NewVIP(logger, spec.LinkName, spec.VIP, ctrl.State)
 	case network.OperatorWgLAN:
 		panic("not implemented")
 	default:

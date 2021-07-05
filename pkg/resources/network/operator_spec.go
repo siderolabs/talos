@@ -44,7 +44,17 @@ type DHCP6OperatorSpec struct {
 
 // VIPOperatorSpec describes virtual IP operator options.
 type VIPOperatorSpec struct {
-	IP netaddr.IP `yaml:"ip"`
+	IP            netaddr.IP `yaml:"ip"`
+	GratuitousARP bool       `yaml:"gratuitousARP"`
+
+	EquinixMetal VIPEquinixMetalSpec `yaml:"equinixMetal,omitempty"`
+}
+
+// VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.
+type VIPEquinixMetalSpec struct {
+	ProjectID string `yaml:"projectID"`
+	DeviceID  string `yaml:"deviceID"`
+	APIToken  string `yaml:"apiToken"`
 }
 
 // NewOperatorSpec initializes a OperatorSpec resource.
@@ -88,6 +98,7 @@ func (r *OperatorSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

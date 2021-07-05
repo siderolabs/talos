@@ -4020,6 +4020,44 @@ Specifies the IP address to be used.
 </div>
 
 <hr />
+<div class="dd">
+
+<code>equinixMetal</code>  <i><a href="#vipequinixmetalconfig">VIPEquinixMetalConfig</a></i>
+
+</div>
+<div class="dt">
+
+Specifies the Equinix Metal API settings to assign VIP to the node.
+
+</div>
+
+<hr />
+
+
+
+## VIPEquinixMetalConfig
+VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
+
+Appears in:
+
+- <code><a href="#devicevipconfig">DeviceVIPConfig</a>.equinixMetal</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>apiToken</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies the Equinix Metal API Token.
+
+</div>
+
+<hr />
 
 
 

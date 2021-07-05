@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 RELEASE_TOOL_IMAGE="ghcr.io/talos-systems/release-tool:latest"
 

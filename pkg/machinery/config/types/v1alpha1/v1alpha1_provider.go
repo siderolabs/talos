@@ -580,6 +580,20 @@ func (d *DeviceVIPConfig) IP() string {
 	return d.SharedIP
 }
 
+// EquinixMetal implements the config.VIPConfig interface.
+func (d *DeviceVIPConfig) EquinixMetal() config.VIPEquinixMetal {
+	if d.EquinixMetalConfig == nil {
+		return nil
+	}
+
+	return d.EquinixMetalConfig
+}
+
+// APIToken implements the config.VIPEquinixMetal interface.
+func (v *VIPEquinixMetalConfig) APIToken() string {
+	return v.EquinixMetalAPIToken
+}
+
 // WireguardConfig implements the MachineNetwork interface.
 func (d *Device) WireguardConfig() config.WireguardConfig {
 	if d.DeviceWireguardConfig == nil {

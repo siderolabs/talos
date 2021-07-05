@@ -135,6 +135,12 @@ type DHCPOptions interface {
 // VIPConfig contains settings for the Virtual (shared) IP setup.
 type VIPConfig interface {
 	IP() string
+	EquinixMetal() VIPEquinixMetal
+}
+
+// VIPEquinixMetal contains Equinix Metal API VIP settings.
+type VIPEquinixMetal interface {
+	APIToken() string
 }
 
 // WireguardConfig contains settings for configuring Wireguard network interface.
