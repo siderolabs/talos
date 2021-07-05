@@ -50,7 +50,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-getter v1.5.4
+	github.com/hashicorp/go-getter v1.5.5
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e
@@ -70,8 +70,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
-	github.com/spf13/cobra v1.1.3
-	github.com/spf13/viper v1.8.0 // indirect
+	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.1
 	github.com/talos-systems/go-blockdevice v0.2.1
@@ -94,19 +93,19 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
-	go.uber.org/zap v1.17.0
+	go.uber.org/zap v1.18.1
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
-	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.27.0
+	google.golang.org/grpc v1.39.0
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	inet.af/netaddr v0.0.0-20210603230628-bf05d8b52dda
+	inet.af/netaddr v0.0.0-20210704172029-d1acf45c3514
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/apiserver v0.21.2 // indirect; use the same version as other k8s deps
