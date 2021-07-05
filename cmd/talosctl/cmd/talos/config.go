@@ -5,16 +5,21 @@
 package talos
 
 import (
+	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
+	"text/template"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -323,6 +328,88 @@ var configNewCmd = &cobra.Command{
 	},
 }
 
+// configNewCmd represents the `config info` command output template.
+var configInfoCmdTemplate = template.Must(template.New("configInfoCmdTemplate").Option("missingkey=error").Parse(strings.TrimSpace(`
+Current context:     {{ .Context }}
+Nodes:               {{ .Nodes }}
+Endpoints:           {{ .Endpoints }}
+Roles:               {{ .Roles }}
+Certificate expires: {{ .CertTTL }} ({{ .CertNotAfter }})
+`)))
+
+// configInfoCommand implements `config info` command logic.
+//
+//nolint:goconst
+func configInfoCommand(config *clientconfig.Config, now time.Time) (string, error) {
+	context := config.Contexts[config.Context]
+
+	b, err := base64.StdEncoding.DecodeString(context.Crt)
+	if err != nil {
+		return "", err
+	}
+
+	block, _ := pem.Decode(b)
+	if block == nil {
+		return "", fmt.Errorf("error decoding PEM")
+	}
+
+	crt, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+
+	roles, _ := role.Parse(crt.Subject.Organization)
+
+	nodesS := "not defined"
+	if len(context.Nodes) > 0 {
+		nodesS = strings.Join(context.Nodes, ", ")
+	}
+
+	endpointsS := "not defined"
+	if len(context.Endpoints) > 0 {
+		endpointsS = strings.Join(context.Endpoints, ", ")
+	}
+
+	rolesS := "not defined"
+	if s := roles.Strings(); len(s) > 0 {
+		rolesS = strings.Join(s, ", ")
+	}
+
+	var res bytes.Buffer
+	err = configInfoCmdTemplate.Execute(&res, map[string]string{
+		"Context":      config.Context,
+		"Nodes":        nodesS,
+		"Endpoints":    endpointsS,
+		"Roles":        rolesS,
+		"CertTTL":      humanize.RelTime(crt.NotAfter, now, "ago", "from now"),
+		"CertNotAfter": crt.NotAfter.UTC().Format("2006-01-02"),
+	})
+
+	return res.String() + "\n", err
+}
+
+// configInfoCmd represents the `config info` command.
+var configInfoCmd = &cobra.Command{
+	Use:   "info",
+	Short: "Show information about the current context",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := openConfigAndContext("")
+		if err != nil {
+			return err
+		}
+
+		res, err := configInfoCommand(c, time.Now())
+		if err != nil {
+			return err
+		}
+
+		fmt.Print(res)
+
+		return nil
+	},
+}
+
 func init() {
 	configCmd.AddCommand(
 		configEndpointCmd,
@@ -332,6 +419,7 @@ func init() {
 		configGetContextsCmd,
 		configMergeCmd,
 		configNewCmd,
+		configInfoCmd,
 	)
 
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
