@@ -34,6 +34,7 @@ type K8sProvider interface {
 	K8sRestConfig(ctx context.Context) (*rest.Config, error)
 	K8sClient(ctx context.Context) (*kubernetes.Clientset, error)
 	K8sHelper(ctx context.Context) (*k8s.Client, error)
+	K8sClose() error
 }
 
 // CrashDumper captures Talos cluster state to the specified writer for debugging.

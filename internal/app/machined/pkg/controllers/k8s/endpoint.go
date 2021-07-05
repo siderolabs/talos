@@ -89,18 +89,21 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		client, err := kubernetes.NewClientFromKubeletKubeconfig()
-		if err != nil {
-			return fmt.Errorf("error building Kubernetes client: %w", err)
-		}
-
-		if err = ctrl.watchEndpoints(ctx, r, logger, client); err != nil {
+		if err = ctrl.watchEndpoints(ctx, r, logger); err != nil {
 			return err
 		}
 	}
 }
 
-func (ctrl *EndpointController) watchEndpoints(ctx context.Context, r controller.Runtime, logger *zap.Logger, client *kubernetes.Client) error {
+//nolint:gocyclo
+func (ctrl *EndpointController) watchEndpoints(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	client, err := kubernetes.NewClientFromKubeletKubeconfig()
+	if err != nil {
+		return fmt.Errorf("error building Kubernetes client: %w", err)
+	}
+
+	defer client.Close() //nolint:errcheck
+
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
