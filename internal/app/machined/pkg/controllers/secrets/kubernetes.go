@@ -209,7 +209,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 	k8sSecrets.APIServer = x509.NewCertificateAndKeyFromKeyPair(apiServer)
 
 	apiServerKubeletClient, err := x509.NewKeyPair(ca,
-		x509.CommonName(constants.KubernetesAdminCertCommonName),
+		x509.CommonName(constants.KubernetesAPIServerKubeletClientCommonName),
 		x509.Organization(constants.KubernetesAdminCertOrganization),
 		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),
 	)

@@ -108,8 +108,9 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 // with a TTL of 10 minutes.
 func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
 	opts := []x509.Option{
-		x509.CommonName("admin"),
-		x509.Organization("system:masters"),
+		x509.CommonName(constants.KubernetesAdminCertCommonName),
+		x509.Organization(constants.KubernetesAdminCertOrganization),
+		x509.NotBefore(time.Now().Add(-time.Minute)), // allow for a minute for the time to be not in sync across nodes
 		x509.NotAfter(time.Now().Add(10 * time.Minute)),
 	}
 
