@@ -40,7 +40,7 @@ var genCSRCmd = &cobra.Command{
 
 		pemBlock, _ := pem.Decode(keyBytes)
 		if pemBlock == nil {
-			return fmt.Errorf("error decoding PEM: %s", err)
+			return fmt.Errorf("error decoding PEM")
 		}
 
 		keyEC, err := stdlibx509.ParsePKCS8PrivateKey(pemBlock.Bytes)
