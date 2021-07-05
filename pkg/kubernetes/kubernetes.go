@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/connrotation"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -41,6 +43,12 @@ const (
 // Kubernetes API.
 type Client struct {
 	*kubernetes.Clientset
+
+	dialer *connrotation.Dialer
+}
+
+func newDialer() *connrotation.Dialer {
+	return connrotation.NewDialer((&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}).DialContext)
 }
 
 // NewClientFromKubeletKubeconfig initializes and returns a Client.
@@ -56,6 +64,9 @@ func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 		config.Timeout = 30 * time.Second
 	}
 
+	dialer := newDialer()
+	config.Dial = dialer.DialContext
+
 	var clientset *kubernetes.Clientset
 
 	clientset, err = kubernetes.NewForConfig(config)
@@ -63,19 +74,32 @@ func NewClientFromKubeletKubeconfig() (client *Client, err error) {
 		return nil, err
 	}
 
-	return &Client{clientset}, nil
+	return &Client{
+		Clientset: clientset,
+		dialer:    dialer,
+	}, nil
 }
 
 // NewForConfig initializes and returns a client using the provided config.
 func NewForConfig(config *restclient.Config) (client *Client, err error) {
 	var clientset *kubernetes.Clientset
 
+	if config.Dial != nil {
+		return nil, fmt.Errorf("dialer is already set")
+	}
+
+	dialer := newDialer()
+	config.Dial = dialer.DialContext
+
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{clientset}, nil
+	return &Client{
+		Clientset: clientset,
+		dialer:    dialer,
+	}, nil
 }
 
 // NewClientFromPKI initializes and returns a Client.
@@ -94,6 +118,9 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 		Timeout:         30 * time.Second,
 	}
 
+	dialer := newDialer()
+	config.Dial = dialer.DialContext
+
 	var clientset *kubernetes.Clientset
 
 	clientset, err = kubernetes.NewForConfig(config)
@@ -101,7 +128,10 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 		return nil, err
 	}
 
-	return &Client{clientset}, nil
+	return &Client{
+		Clientset: clientset,
+		dialer:    dialer,
+	}, nil
 }
 
 // NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate
@@ -130,6 +160,13 @@ func NewTemporaryClientFromPKI(ca *x509.PEMEncodedCertificateAndKey, endpoint *u
 	}
 
 	return h, nil
+}
+
+// Close all connections.
+func (h *Client) Close() error {
+	h.dialer.CloseAll()
+
+	return nil
 }
 
 // MasterIPs returns a list of control plane endpoints (IP addresses).

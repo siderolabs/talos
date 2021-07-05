@@ -49,3 +49,12 @@ func (k *KubernetesFromKubeletClient) K8sHelper(ctx context.Context) (*kubernete
 
 	return k.KubeHelper, nil
 }
+
+// K8sClose closes Kubernetes client.
+func (k *KubernetesFromKubeletClient) K8sClose() error {
+	if k.KubeHelper == nil {
+		return nil
+	}
+
+	return k.KubeHelper.Close()
+}

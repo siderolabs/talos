@@ -1110,6 +1110,8 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 			return err
 		}
 
+		defer kubeHelper.Close() //nolint:errcheck
+
 		return kubeHelper.CordonAndDrain(ctx, nodename)
 	}, "cordonAndDrainNode"
 }
@@ -1135,6 +1137,8 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			}); err != nil {
 			return err
 		}
+
+		defer kubeHelper.Close() //nolint:errcheck
 
 		if err = kubeHelper.WaitUntilReady(ctx, nodename); err != nil {
 			return err
@@ -1346,6 +1350,8 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 		if err != nil {
 			return err
 		}
+
+		defer h.Close() //nolint:errcheck
 
 		var nodename string
 

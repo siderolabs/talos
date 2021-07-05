@@ -28,6 +28,8 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 		ClientProvider: clientProvider,
 		ForceEndpoint:  in.GetClusterInfo().GetForceEndpoint(),
 	}
+	defer k8sProvider.K8sClose() //nolint:errcheck
+
 	clusterState := clusterState{
 		controlPlaneNodes: in.GetClusterInfo().GetControlPlaneNodes(),
 		workerNodes:       in.GetClusterInfo().GetWorkerNodes(),
