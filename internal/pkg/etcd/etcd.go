@@ -258,9 +258,14 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 			if m.GetID() != member.GetID() {
 				log.Printf("moving leadership from %q to %q", member.GetName(), m.GetName())
 
-				c.SetEndpoints(ep)
+				conn, err := c.Dial(ep)
+				if err != nil {
+					return "", err
+				}
 
-				_, err = c.MoveLeader(ctx, m.GetID())
+				maintenance := clientv3.NewMaintenanceFromMaintenanceClient(clientv3.RetryMaintenanceClient(c.Client, conn), c.Client)
+
+				_, err = maintenance.MoveLeader(ctx, m.GetID())
 				if err != nil {
 					if errors.Is(err, rpctypes.ErrNotLeader) {
 						// this member is not a leader anymore, so nothing to be done for the forfeit leadership
