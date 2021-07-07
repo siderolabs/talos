@@ -12,7 +12,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -37,7 +36,7 @@ var dmesgCmd = &cobra.Command{
 			for {
 				resp, err := stream.Recv()
 				if err != nil {
-					if err == io.EOF || status.Code(err) == codes.Canceled {
+					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 						break
 					}
 

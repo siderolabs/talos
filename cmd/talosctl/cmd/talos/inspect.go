@@ -14,7 +14,6 @@ import (
 	"github.com/emicklei/dot"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
@@ -89,7 +88,7 @@ to render the graph:
 						for {
 							resp, err := listClient.Recv()
 							if err != nil {
-								if err == io.EOF || status.Code(err) == codes.Canceled {
+								if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 									break
 								}
 
