@@ -101,6 +101,9 @@ RUN go install mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
 ARG STRINGER_VERSION
 RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
+ARG DEEPCOPY_GEN_VERSION
+RUN go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
+    && mv /go/bin/deepcopy-gen /toolchain/go/bin/deepcopy-gen
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
 RUN cd /go/src/github.com/talos-systems/talos-hack-docgen \
@@ -165,6 +168,7 @@ RUN gofumports -w -local github.com/talos-systems/talos /api/
 # run docgen for machinery config
 FROM build-go AS go-generate
 COPY ./pkg ./pkg
+COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...

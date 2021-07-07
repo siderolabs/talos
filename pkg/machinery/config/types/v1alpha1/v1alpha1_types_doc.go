@@ -14,6 +14,7 @@ var (
 	ConfigDoc                      encoder.Doc
 	MachineConfigDoc               encoder.Doc
 	ClusterConfigDoc               encoder.Doc
+	ExtraMountDoc                  encoder.Doc
 	KubeletConfigDoc               encoder.Doc
 	NetworkConfigDoc               encoder.Doc
 	InstallConfigDoc               encoder.Doc
@@ -401,6 +402,19 @@ func init() {
 		"no",
 	}
 
+	ExtraMountDoc.Type = "ExtraMount"
+	ExtraMountDoc.Comments[encoder.LineComment] = "ExtraMount wraps OCI Mount specification."
+	ExtraMountDoc.Description = "ExtraMount wraps OCI Mount specification."
+
+	ExtraMountDoc.AddExample("", kubeletExtraMountsExample)
+	ExtraMountDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "KubeletConfig",
+			FieldName: "extraMounts",
+		},
+	}
+	ExtraMountDoc.Fields = make([]encoder.Doc, 0)
+
 	KubeletConfigDoc.Type = "KubeletConfig"
 	KubeletConfigDoc.Comments[encoder.LineComment] = "KubeletConfig represents the kubelet config values."
 	KubeletConfigDoc.Description = "KubeletConfig represents the kubelet config values."
@@ -430,7 +444,7 @@ func init() {
 		"key": "value",
 	})
 	KubeletConfigDoc.Fields[2].Name = "extraMounts"
-	KubeletConfigDoc.Fields[2].Type = "[]Mount"
+	KubeletConfigDoc.Fields[2].Type = "[]ExtraMount"
 	KubeletConfigDoc.Fields[2].Note = ""
 	KubeletConfigDoc.Fields[2].Description = "The `extraMounts` field is used to add additional mounts to the kubelet container."
 	KubeletConfigDoc.Fields[2].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
@@ -1882,6 +1896,10 @@ func (_ ClusterConfig) Doc() *encoder.Doc {
 	return &ClusterConfigDoc
 }
 
+func (_ ExtraMount) Doc() *encoder.Doc {
+	return &ExtraMountDoc
+}
+
 func (_ KubeletConfig) Doc() *encoder.Doc {
 	return &KubeletConfigDoc
 }
@@ -2061,12 +2079,13 @@ func (_ ClusterInlineManifest) Doc() *encoder.Doc {
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
-		Name:        "Configuration",
-		Description: "Package v1alpha1 configuration file contains all the options available for configuring a machine.\n\nTo generate a set of basic configuration files, run:\n```bash\ntalosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>\n````\n\nThis will generate a machine config for each node type, and a talosconfig for the CLI.\n",
+		Name: "Configuration",
+		Description: "Package v1alpha1 configuration file contains all the options available for configuring a machine.\n\nTo generate a set of basic configuration files, run:\n\n	talosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>\n\nThis will generate a machine config for each node type, and a talosconfig for the CLI.\n",
 		Structs: []*encoder.Doc{
 			&ConfigDoc,
 			&MachineConfigDoc,
 			&ClusterConfigDoc,
+			&ExtraMountDoc,
 			&KubeletConfigDoc,
 			&NetworkConfigDoc,
 			&InstallConfigDoc,

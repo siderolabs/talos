@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -66,20 +65,10 @@ func (r *MachineConfig) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *MachineConfig) DeepCopy() resource.Resource {
-	b, err := r.spec.cfg.Bytes()
-	if err != nil {
-		panic(err) // TODO: DeepCopy() should support returning errors? or config should implement DeeCopy without errors?
-	}
-
-	c, err := configloader.NewFromBytes(b)
-	if err != nil {
-		panic(err)
-	}
-
 	return &MachineConfig{
 		md: r.md,
 		spec: &v1alpha1Spec{
-			cfg: c.(*v1alpha1.Config),
+			cfg: r.spec.cfg.(*v1alpha1.Config).DeepCopy(),
 		},
 	}
 }
