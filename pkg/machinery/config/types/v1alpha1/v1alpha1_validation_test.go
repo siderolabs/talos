@@ -313,6 +313,10 @@ func TestValidate(t *testing.T) {
 									BondUpDelay:         100,
 									BondPacketsPerSlave: 8,
 									BondADActorSysPrio:  48,
+									BondInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
 								},
 							},
 						},
@@ -327,6 +331,97 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: "3 errors occurred:\n\t* invalid bond type roundrobin\n\t* bond.upDelay can't be set if miiMon is zero\n\t* bond.adActorSysPrio is only available in 802.3ad mode\n\n",
+		},
+		{
+			name: "BondDoubleBond",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+							},
+							{
+								DeviceInterface: "bond1",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth1",
+										"eth2",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* interface \"eth1\" is declared as part of two bonds: \"bond0\" and \"bond1\"\n\n",
+		},
+		{
+			name: "BondSlaveAddressing",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+							},
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+							},
+							{
+								DeviceInterface: "eth0",
+								DeviceDHCP:      true,
+							},
+							{
+								DeviceInterface: "eth1",
+								DeviceCIDR:      "192.168.0.1/24",
+							},
+							{
+								DeviceInterface: "eth2",
+								DeviceCIDR:      "192.168.1.1/24",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* [networking.os.device] \"eth0\": bonded interface shouldn't have any addressing methods configured\n" +
+				"\t* [networking.os.device] \"eth1\": bonded interface shouldn't have any addressing methods configured\n\n",
 		},
 		{
 			name: "Wireguard",

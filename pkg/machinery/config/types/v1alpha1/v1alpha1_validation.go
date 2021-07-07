@@ -56,7 +56,7 @@ var (
 )
 
 // NetworkDeviceCheck defines the function type for checks.
-type NetworkDeviceCheck func(*Device) error
+type NetworkDeviceCheck func(*Device, map[string]string) error
 
 // Validate implements the config.Provider interface.
 //nolint:gocyclo,cyclop
@@ -125,8 +125,22 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 	}
 
 	if c.MachineConfig.MachineNetwork != nil {
+		bondedInterfaces := map[string]string{}
+
 		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
-			if err := ValidateNetworkDevices(device, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes); err != nil {
+			if device.Bond() != nil {
+				for _, iface := range device.Bond().Interfaces() {
+					if otherIface, exists := bondedInterfaces[iface]; exists && otherIface != device.Interface() {
+						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of two bonds: %q and %q", iface, otherIface, device.Interface()))
+					}
+
+					bondedInterfaces[iface] = device.Interface()
+				}
+			}
+		}
+
+		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+			if err := ValidateNetworkDevices(device, bondedInterfaces, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes); err != nil {
 				result = multierror.Append(result, err)
 			}
 		}
@@ -281,7 +295,7 @@ func (manifests ClusterInlineManifests) Validate() error {
 
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
-func ValidateNetworkDevices(d *Device, checks ...NetworkDeviceCheck) error {
+func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, checks ...NetworkDeviceCheck) error {
 	var result *multierror.Error
 
 	if d == nil {
@@ -293,14 +307,14 @@ func ValidateNetworkDevices(d *Device, checks ...NetworkDeviceCheck) error {
 	}
 
 	for _, check := range checks {
-		result = multierror.Append(result, check(d))
+		result = multierror.Append(result, check(d, bondedInterfaces))
 	}
 
 	return result.ErrorOrNil()
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
-func CheckDeviceInterface(d *Device) error {
+func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) error {
 	var result *multierror.Error
 
 	if d == nil {
@@ -471,11 +485,19 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified.
-func CheckDeviceAddressing(d *Device) error {
+//
+//nolint:gocyclo
+func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) error {
 	var result *multierror.Error
 
 	if d == nil {
 		return fmt.Errorf("empty device")
+	}
+
+	if _, bonded := bondedInterfaces[d.Interface()]; bonded {
+		if d.DeviceDHCP || d.DeviceCIDR != "" || d.DeviceVIPConfig != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded interface shouldn't have any addressing methods configured"))
+		}
 	}
 
 	// Test for both dhcp and cidr specified
@@ -501,7 +523,7 @@ func CheckDeviceAddressing(d *Device) error {
 }
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
-func CheckDeviceRoutes(d *Device) error {
+func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) error {
 	var result *multierror.Error
 
 	if d == nil {
