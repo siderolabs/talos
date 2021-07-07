@@ -1,6 +1,7 @@
-# Redirects from what the browser requests to what we serve.
-#
+/docs/latest/* /docs/v0.10/:splat 302
+
 # The Netlify documentation says that the following redirect rules are
-# equivalent, but that is not what is observed in practice.
-/docs/latest /docs/v0.10
-/docs/latest/ /docs/v0.10
+# equivalent: https://docs.netlify.com/routing/redirects/redirect-options/#trailing-slash
+# But that is not what is observed in practice.
+/docs/latest  /docs/v0.10/ 302
+/docs/latest/ /docs/v0.10/ 302
