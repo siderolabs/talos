@@ -11,14 +11,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/prometheus/procfs"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
 
 // Hostname implements the machine.MachineServer interface.
-func (s *Server) Hostname(ctx context.Context, in *empty.Empty) (*machine.HostnameResponse, error) {
+func (s *Server) Hostname(ctx context.Context, in *emptypb.Empty) (*machine.HostnameResponse, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (s *Server) Hostname(ctx context.Context, in *empty.Empty) (*machine.Hostna
 }
 
 // LoadAvg implements the machine.MachineServer interface.
-func (s *Server) LoadAvg(ctx context.Context, in *empty.Empty) (*machine.LoadAvgResponse, error) {
+func (s *Server) LoadAvg(ctx context.Context, in *emptypb.Empty) (*machine.LoadAvgResponse, error) {
 	fs, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *Server) LoadAvg(ctx context.Context, in *empty.Empty) (*machine.LoadAvg
 }
 
 // SystemStat implements the machine.MachineServer interface.
-func (s *Server) SystemStat(ctx context.Context, in *empty.Empty) (*machine.SystemStatResponse, error) {
+func (s *Server) SystemStat(ctx context.Context, in *emptypb.Empty) (*machine.SystemStatResponse, error) {
 	fs, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (s *Server) SystemStat(ctx context.Context, in *empty.Empty) (*machine.Syst
 }
 
 // CPUInfo implements the machine.MachineServer interface.
-func (s *Server) CPUInfo(ctx context.Context, in *empty.Empty) (*machine.CPUInfoResponse, error) {
+func (s *Server) CPUInfo(ctx context.Context, in *emptypb.Empty) (*machine.CPUInfoResponse, error) {
 	fs, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (s *Server) CPUInfo(ctx context.Context, in *empty.Empty) (*machine.CPUInfo
 }
 
 // NetworkDeviceStats implements the machine.MachineServer interface.
-func (s *Server) NetworkDeviceStats(ctx context.Context, in *empty.Empty) (*machine.NetworkDeviceStatsResponse, error) {
+func (s *Server) NetworkDeviceStats(ctx context.Context, in *emptypb.Empty) (*machine.NetworkDeviceStatsResponse, error) {
 	fs, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (s *Server) NetworkDeviceStats(ctx context.Context, in *empty.Empty) (*mach
 }
 
 // DiskStats implements the machine.MachineServer interface.
-func (s *Server) DiskStats(ctx context.Context, in *empty.Empty) (*machine.DiskStatsResponse, error) {
+func (s *Server) DiskStats(ctx context.Context, in *emptypb.Empty) (*machine.DiskStatsResponse, error) {
 	f, err := os.Open("/proc/diskstats")
 	if err != nil {
 		return nil, err

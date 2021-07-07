@@ -18,13 +18,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	grpctls "github.com/talos-systems/crypto/tls"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
@@ -322,7 +322,7 @@ func (c *Client) Close() error {
 
 // KubeconfigRaw returns K8s client config (kubeconfig).
 func (c *Client) KubeconfigRaw(ctx context.Context) (io.ReadCloser, <-chan error, error) {
-	stream, err := c.MachineClient.Kubeconfig(ctx, &empty.Empty{})
+	stream, err := c.MachineClient.Kubeconfig(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -408,7 +408,7 @@ func (c *Client) GenerateConfiguration(ctx context.Context, req *machineapi.Gene
 
 // Disks returns the list of block devices.
 func (c *Client) Disks(ctx context.Context, callOptions ...grpc.CallOption) (resp *storageapi.DisksResponse, err error) {
-	resp, err = c.StorageClient.Disks(ctx, &empty.Empty{}, callOptions...)
+	resp, err = c.StorageClient.Disks(ctx, &emptypb.Empty{}, callOptions...)
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
@@ -491,7 +491,7 @@ func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest)
 
 // Reboot implements the proto.MachineServiceClient interface.
 func (c *Client) Reboot(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Reboot(ctx, &empty.Empty{})
+	resp, err := c.MachineClient.Reboot(ctx, &emptypb.Empty{})
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)
@@ -524,7 +524,7 @@ func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest
 
 // Shutdown implements the proto.MachineServiceClient interface.
 func (c *Client) Shutdown(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Shutdown(ctx, &empty.Empty{})
+	resp, err := c.MachineClient.Shutdown(ctx, &emptypb.Empty{})
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)
@@ -558,7 +558,7 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver common.Conta
 func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.VersionResponse, err error) {
 	resp, err = c.MachineClient.Version(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -573,7 +573,7 @@ func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (r
 func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.RoutesResponse, err error) {
 	resp, err = c.NetworkClient.Routes(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -588,7 +588,7 @@ func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (re
 func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.InterfacesResponse, err error) {
 	resp, err = c.NetworkClient.Interfaces(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -603,7 +603,7 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ProcessesResponse, err error) {
 	resp, err = c.MachineClient.Processes(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -618,7 +618,7 @@ func (c *Client) Processes(ctx context.Context, callOptions ...grpc.CallOption) 
 func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MemoryResponse, err error) {
 	resp, err = c.MachineClient.Memory(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -633,7 +633,7 @@ func (c *Client) Memory(ctx context.Context, callOptions ...grpc.CallOption) (re
 func (c *Client) Mounts(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.MountsResponse, err error) {
 	resp, err = c.MachineClient.Mounts(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -691,7 +691,7 @@ func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, for
 func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.ServiceListResponse, err error) {
 	resp, err = c.MachineClient.ServiceList(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -717,7 +717,7 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 
 	resp, err = c.MachineClient.ServiceList(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 
@@ -798,7 +798,7 @@ func (c *Client) ServiceRestart(ctx context.Context, id string, callOptions ...g
 func (c *Client) Time(ctx context.Context, callOptions ...grpc.CallOption) (resp *timeapi.TimeResponse, err error) {
 	resp, err = c.TimeClient.Time(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 

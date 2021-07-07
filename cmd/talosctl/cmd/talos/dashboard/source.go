@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -86,7 +86,7 @@ func (source *APISource) gather() *data.Data {
 
 	gatherFuncs := []func() error{
 		func() error {
-			resp, err := source.MachineClient.Hostname(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.Hostname(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.LoadAvg(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.LoadAvg(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -128,7 +128,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.Version(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.Version(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -149,7 +149,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.Memory(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.Memory(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.SystemStat(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.SystemStat(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -191,7 +191,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.CPUInfo(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.CPUInfo(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -212,7 +212,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.NetworkDeviceStats(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.NetworkDeviceStats(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -233,7 +233,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.DiskStats(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.DiskStats(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}
@@ -254,7 +254,7 @@ func (source *APISource) gather() *data.Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.Processes(source.ctx, &empty.Empty{})
+			resp, err := source.MachineClient.Processes(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err
 			}

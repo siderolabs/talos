@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
 )
@@ -22,7 +22,7 @@ type InspectServer struct {
 }
 
 // ControllerRuntimeDependencies implements inspect.InspectService interface.
-func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *empty.Empty) (*inspectapi.ControllerRuntimeDependenciesResponse, error) {
+func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *emptypb.Empty) (*inspectapi.ControllerRuntimeDependenciesResponse, error) {
 	graph, err := s.server.Controller.V1Alpha2().DependencyGraph()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching dependency graph: %w", err)

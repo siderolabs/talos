@@ -12,9 +12,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	runtime "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
@@ -75,7 +75,7 @@ func (suite *TimedSuite) TestTime() {
 	suite.Require().NoError(err)
 
 	nClient := timeapi.NewTimeServiceClient(conn)
-	reply, err := nClient.Time(context.Background(), &empty.Empty{})
+	reply, err := nClient.Time(context.Background(), &emptypb.Empty{})
 	suite.Require().NoError(err)
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
 }

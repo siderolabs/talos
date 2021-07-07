@@ -10,10 +10,10 @@ import (
 	"log"
 	"net"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
@@ -29,7 +29,7 @@ func (r *NetworkServer) Register(s *grpc.Server) {
 }
 
 // Routes returns the hosts routing table.
-func (r *NetworkServer) Routes(ctx context.Context, in *empty.Empty) (reply *networkapi.RoutesResponse, err error) {
+func (r *NetworkServer) Routes(ctx context.Context, in *emptypb.Empty) (reply *networkapi.RoutesResponse, err error) {
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (r *NetworkServer) Routes(ctx context.Context, in *empty.Empty) (reply *net
 }
 
 // Interfaces returns the hosts network interfaces and addresses.
-func (r *NetworkServer) Interfaces(ctx context.Context, in *empty.Empty) (reply *networkapi.InterfacesResponse, err error) {
+func (r *NetworkServer) Interfaces(ctx context.Context, in *emptypb.Empty) (reply *networkapi.InterfacesResponse, err error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return reply, err

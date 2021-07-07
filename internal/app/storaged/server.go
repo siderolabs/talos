@@ -7,8 +7,8 @@ package internal
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 )
@@ -20,7 +20,7 @@ type Server struct {
 }
 
 // Disks implements storage.StorageService.
-func (s *Server) Disks(ctx context.Context, in *empty.Empty) (reply *storage.DisksResponse, err error) {
+func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.DisksResponse, err error) {
 	disks, err := disk.List()
 	if err != nil {
 		return nil, err

@@ -28,7 +28,6 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
-	"github.com/golang/protobuf/ptypes/empty"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
@@ -40,6 +39,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
@@ -210,7 +210,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 // Reboot implements the machine.MachineServer interface.
 //
 //nolint:dupl
-func (s *Server) Reboot(ctx context.Context, in *empty.Empty) (reply *machine.RebootResponse, err error) {
+func (s *Server) Reboot(ctx context.Context, in *emptypb.Empty) (reply *machine.RebootResponse, err error) {
 	log.Printf("reboot via API received")
 
 	if err := s.checkSupported(runtime.Reboot); err != nil {
@@ -348,7 +348,7 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 // Shutdown implements the machine.MachineServer interface.
 //
 //nolint:dupl
-func (s *Server) Shutdown(ctx context.Context, in *empty.Empty) (reply *machine.ShutdownResponse, err error) {
+func (s *Server) Shutdown(ctx context.Context, in *emptypb.Empty) (reply *machine.ShutdownResponse, err error) {
 	log.Printf("shutdown via API received")
 
 	if err = s.checkSupported(runtime.Shutdown); err != nil {
@@ -596,7 +596,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 }
 
 // ServiceList returns list of the registered services and their status.
-func (s *Server) ServiceList(ctx context.Context, in *empty.Empty) (result *machine.ServiceListResponse, err error) {
+func (s *Server) ServiceList(ctx context.Context, in *emptypb.Empty) (result *machine.ServiceListResponse, err error) {
 	services := system.Services(s.Controller.Runtime()).List()
 
 	result = &machine.ServiceListResponse{
@@ -976,7 +976,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 }
 
 // Mounts implements the machine.MachineServer interface.
-func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.MountsResponse, err error) {
+func (s *Server) Mounts(ctx context.Context, in *emptypb.Empty) (reply *machine.MountsResponse, err error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
 		return nil, err
@@ -1048,7 +1048,7 @@ func (s *Server) Mounts(ctx context.Context, in *empty.Empty) (reply *machine.Mo
 }
 
 // Version implements the machine.MachineServer interface.
-func (s *Server) Version(ctx context.Context, in *empty.Empty) (reply *machine.VersionResponse, err error) {
+func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (reply *machine.VersionResponse, err error) {
 	var platform *machine.PlatformInfo
 
 	if s.Controller.Runtime().State().Platform() != nil {
@@ -1074,7 +1074,7 @@ func (s *Server) Version(ctx context.Context, in *empty.Empty) (reply *machine.V
 }
 
 // Kubeconfig implements the machine.MachineServer interface.
-func (s *Server) Kubeconfig(empty *empty.Empty, obj machine.MachineService_KubeconfigServer) error {
+func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_KubeconfigServer) error {
 	var b bytes.Buffer
 
 	if err := kubeconfig.GenerateAdmin(s.Controller.Runtime().Config().Cluster(), &b); err != nil {
@@ -1543,7 +1543,7 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 }
 
 // Processes implements the machine.MachineServer interface.
-func (s *Server) Processes(ctx context.Context, in *empty.Empty) (reply *machine.ProcessesResponse, err error) {
+func (s *Server) Processes(ctx context.Context, in *emptypb.Empty) (reply *machine.ProcessesResponse, err error) {
 	procs, err := procfs.AllProcs()
 	if err != nil {
 		return nil, err
@@ -1608,7 +1608,7 @@ func (s *Server) Processes(ctx context.Context, in *empty.Empty) (reply *machine
 }
 
 // Memory implements the machine.MachineServer interface.
-func (s *Server) Memory(ctx context.Context, in *empty.Empty) (reply *machine.MemoryResponse, err error) {
+func (s *Server) Memory(ctx context.Context, in *emptypb.Empty) (reply *machine.MemoryResponse, err error) {
 	proc, err := procfs.NewDefaultFS()
 	if err != nil {
 		return nil, err
@@ -1900,7 +1900,7 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 //
 // Temporary API only used when converting from self-hosted to Talos-managed control plane.
 // This API can be removed once the conversion process is no longer needed (Talos 0.11?).
-func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *empty.Empty) (*machine.RemoveBootkubeInitializedKeyResponse, error) {
+func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *emptypb.Empty) (*machine.RemoveBootkubeInitializedKeyResponse, error) {
 	client, err := etcd.NewLocalClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
