@@ -304,7 +304,17 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 
 // ExtraMounts implements the config.Provider interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
-	return k.KubeletExtraMounts
+	if k.KubeletExtraMounts == nil {
+		return nil
+	}
+
+	out := make([]specs.Mount, len(k.KubeletExtraMounts))
+
+	for i := range k.KubeletExtraMounts {
+		out[i] = k.KubeletExtraMounts[i].Mount
+	}
+
+	return out
 }
 
 // RegisterWithFQDN implements the config.Provider interface.

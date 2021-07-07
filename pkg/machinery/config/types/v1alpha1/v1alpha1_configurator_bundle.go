@@ -22,6 +22,7 @@ import (
 
 // ConfigBundle defines the group of v1alpha1 config files.
 // docgen: nodoc
+// +k8s:deepcopy-gen=false
 type ConfigBundle struct {
 	InitCfg         *Config
 	ControlPlaneCfg *Config

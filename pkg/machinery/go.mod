@@ -23,7 +23,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.1
+	github.com/talos-systems/crypto v0.3.2-0.20210707205149-deec8d47700e
 	github.com/talos-systems/go-blockdevice v0.2.1
 	github.com/talos-systems/net v0.3.0
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
