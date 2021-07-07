@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -51,7 +50,7 @@ func ForEachResource(ctx context.Context, c *client.Client, callback func(ctx co
 		for {
 			msg, err := listClient.Recv()
 			if err != nil {
-				if err == io.EOF || status.Code(err) == codes.Canceled {
+				if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 					return nil
 				}
 

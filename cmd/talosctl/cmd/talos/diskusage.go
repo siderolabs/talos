@@ -14,7 +14,6 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -70,7 +69,7 @@ var duCmd = &cobra.Command{
 			for {
 				info, err := stream.Recv()
 				if err != nil {
-					if err == io.EOF || status.Code(err) == codes.Canceled {
+					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 						return w.Flush()
 					}
 
