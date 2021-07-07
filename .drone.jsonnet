@@ -562,6 +562,11 @@ local release_trigger = {
     event: [
       'tag',
     ],
+    ref: {
+      exclude: [
+        "refs/tags/pkg/**",
+      ],
+    },
   },
 };
 
