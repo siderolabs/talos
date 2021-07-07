@@ -7,8 +7,8 @@ package client
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
 )
@@ -20,7 +20,7 @@ type InspectClient struct {
 
 // ControllerRuntimeDependencies returns graph describing dependencies between controllers.
 func (c *InspectClient) ControllerRuntimeDependencies(ctx context.Context, callOptions ...grpc.CallOption) (*inspectapi.ControllerRuntimeDependenciesResponse, error) {
-	resp, err := c.client.ControllerRuntimeDependencies(ctx, &empty.Empty{}, callOptions...)
+	resp, err := c.client.ControllerRuntimeDependencies(ctx, &emptypb.Empty{}, callOptions...)
 
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)

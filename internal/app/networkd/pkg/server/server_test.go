@@ -12,10 +12,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/internal/app/networkd/pkg/server"
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
@@ -51,7 +51,7 @@ func (suite *NetworkSuite) TestRoutes() {
 	suite.Assert().NoError(err)
 
 	nClient := networkapi.NewNetworkServiceClient(conn)
-	resp, err := nClient.Routes(context.Background(), &empty.Empty{})
+	resp, err := nClient.Routes(context.Background(), &emptypb.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Messages[0].Routes), 0)
 }
@@ -76,7 +76,7 @@ func (suite *NetworkSuite) TestInterfaces() {
 	suite.Assert().NoError(err)
 
 	nClient := networkapi.NewNetworkServiceClient(conn)
-	resp, err := nClient.Interfaces(context.Background(), &empty.Empty{})
+	resp, err := nClient.Interfaces(context.Background(), &emptypb.Empty{})
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Messages[0].Interfaces), 0)
 }

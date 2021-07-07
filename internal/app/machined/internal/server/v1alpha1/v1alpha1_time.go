@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
@@ -36,7 +36,7 @@ func (r *TimeServer) Register(s *grpc.Server) {
 }
 
 // Time issues a query to the configured ntp server and displays the results.
-func (r *TimeServer) Time(ctx context.Context, in *empty.Empty) (reply *timeapi.TimeResponse, err error) {
+func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeapi.TimeResponse, err error) {
 	timeServers := r.ConfigProvider.Config().Machine().Time().Servers()
 
 	if len(timeServers) == 0 {

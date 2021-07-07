@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/rs/xid"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 )
@@ -107,7 +107,7 @@ func (event *Event) ToMachineEvent() (*machine.Event, error) {
 	}
 
 	return &machine.Event{
-		Data: &any.Any{
+		Data: &anypb.Any{
 			TypeUrl: event.TypeURL,
 			Value:   value,
 		},
