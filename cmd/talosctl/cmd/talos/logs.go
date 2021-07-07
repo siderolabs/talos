@@ -15,7 +15,6 @@ import (
 	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
@@ -158,7 +157,7 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 	for {
 		data, err := stream.Recv()
 		if err != nil {
-			if err == io.EOF || status.Code(err) == codes.Canceled {
+			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 				return
 			}
 			slicer.errCh <- err
