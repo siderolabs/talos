@@ -14,7 +14,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -126,7 +125,7 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 
 		info, err = stream.Recv()
 		if err != nil {
-			if err == io.EOF || status.Code(err) == codes.Canceled {
+			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 				break
 			}
 		}

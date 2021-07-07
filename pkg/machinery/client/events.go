@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -97,7 +96,7 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 	for {
 		event, err := stream.Recv()
 		if err != nil {
-			if err == io.EOF || status.Code(err) == codes.Canceled {
+			if err == io.EOF || StatusCode(err) == codes.Canceled {
 				return nil
 			}
 

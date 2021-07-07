@@ -13,7 +13,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -130,7 +129,7 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 		controlPlaneNodes = append(controlPlaneNodes, healthCmdFlags.clusterState.InitNode)
 	}
 
-	client, err := c.ClusterHealthCheck(ctx, healthCmdFlags.clusterWaitTimeout, &clusterapi.ClusterInfo{
+	healthCheckClient, err := c.ClusterHealthCheck(ctx, healthCmdFlags.clusterWaitTimeout, &clusterapi.ClusterInfo{
 		ControlPlaneNodes: controlPlaneNodes,
 		WorkerNodes:       healthCmdFlags.clusterState.WorkerNodes,
 		ForceEndpoint:     healthCmdFlags.forceEndpoint,
@@ -139,14 +138,14 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 		return err
 	}
 
-	if err := client.CloseSend(); err != nil {
+	if err := healthCheckClient.CloseSend(); err != nil {
 		return err
 	}
 
 	for {
-		msg, err := client.Recv()
+		msg, err := healthCheckClient.Recv()
 		if err != nil {
-			if err == io.EOF || status.Code(err) == codes.Canceled {
+			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
 				return nil
 			}
 

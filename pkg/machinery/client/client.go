@@ -24,7 +24,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
@@ -962,7 +961,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 		for {
 			data, err := stream.Recv()
 			if err != nil {
-				if err == io.EOF || status.Code(err) == codes.Canceled {
+				if err == io.EOF || StatusCode(err) == codes.Canceled {
 					return
 				}
 				//nolint:errcheck
