@@ -4,46 +4,48 @@
 
 package machine
 
-import "fmt"
+import (
+	"fmt"
+)
+
+//go:generate stringer -type=Type -linecomment
 
 // Type represents a machine type.
 type Type int
 
 const (
-	// TypeUnknown represents undefined node type.
-	TypeUnknown Type = iota
-	// TypeInit represents a bootstrap node.
-	TypeInit
-	// TypeControlPlane represents a control plane node.
-	TypeControlPlane
-	// TypeJoin represents a worker node.
-	TypeJoin
-)
+	// TypeUnknown represents undefined node type, when there is no machine configuration yet.
+	TypeUnknown Type = iota // unknown
 
-const (
-	typeUnknown      = "unknown"
-	typeInit         = "init"
-	typeControlPlane = "controlplane"
-	typeJoin         = "join"
-)
+	// TypeInit type designates the first control plane node to come up. You can think of it like a bootstrap node.
+	// This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.
+	TypeInit // init
 
-// String returns the string representation of Type.
-func (t Type) String() string {
-	return [...]string{typeUnknown, typeInit, typeControlPlane, typeJoin}[t]
-}
+	// TypeControlPlane designates the node as a control plane member.
+	// This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.
+	TypeControlPlane // controlplane
+
+	// TypeWorker designates the node as a worker node.
+	// This means it will be an available compute node for scheduling workloads.
+	TypeWorker // worker
+
+	// TypeJoin is the same as TypeWorker.
+	//
+	// Deprecated: use TypeWorker instead; this constant will be removed in 0.13
+	// (https://github.com/talos-systems/talos/issues/3910).
+	TypeJoin = TypeWorker
+)
 
 // ParseType parses string constant as Type.
-func ParseType(t string) (Type, error) {
-	switch t {
-	case typeUnknown:
-		return TypeUnknown, nil
-	case typeInit:
+func ParseType(s string) (Type, error) {
+	switch s {
+	case "init":
 		return TypeInit, nil
-	case typeControlPlane:
+	case "controlplane":
 		return TypeControlPlane, nil
-	case typeJoin:
-		return TypeJoin, nil
+	case "worker", "join", "":
+		return TypeWorker, nil
 	default:
-		return 0, fmt.Errorf("unknown machine type: %q", t)
+		return TypeUnknown, fmt.Errorf("invalid machine type: %q", s)
 	}
 }

@@ -96,7 +96,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 
 		machineType := machineTypeRes.(*config.MachineType).MachineType()
 
-		if machineType != machine.TypeControlPlane && machineType != machine.TypeInit {
+		if machineType == machine.TypeWorker {
 			if err = ctrl.teardownAll(ctx, r, logger); err != nil {
 				return fmt.Errorf("error destroying resources: %w", err)
 			}

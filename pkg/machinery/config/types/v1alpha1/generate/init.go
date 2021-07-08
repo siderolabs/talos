@@ -31,7 +31,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	}
 
 	machine := &v1alpha1.MachineConfig{
-		MachineType: "init",
+		MachineType: machine.TypeInit.String(),
 		MachineKubelet: &v1alpha1.KubeletConfig{
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},

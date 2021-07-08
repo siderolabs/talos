@@ -2700,7 +2700,8 @@ File type.
 | TYPE_UNKNOWN | 0 |  |
 | TYPE_INIT | 1 |  |
 | TYPE_CONTROL_PLANE | 2 |  |
-| TYPE_JOIN | 3 |  |
+| TYPE_WORKER | 3 |  |
+| TYPE_JOIN | 3 | Alias for TYPE_WORKER. |
 
 
 

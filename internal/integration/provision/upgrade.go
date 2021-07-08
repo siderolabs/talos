@@ -395,7 +395,7 @@ func (suite *UpgradeSuite) setupCluster() {
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("worker-%d", i),
-				Type:     machine.TypeJoin,
+				Type:     machine.TypeWorker,
 				IPs:      []net.IP{ips[suite.spec.MasterNodes+i-1]},
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
@@ -404,7 +404,7 @@ func (suite *UpgradeSuite) setupCluster() {
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config: suite.configBundle.Join(),
+				Config: suite.configBundle.Worker(),
 			})
 	}
 
@@ -629,7 +629,7 @@ func (suite *UpgradeSuite) TestRolling() {
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeJoin {
+		if node.Type == machine.TypeWorker {
 			suite.upgradeNode(client, node)
 		}
 	}

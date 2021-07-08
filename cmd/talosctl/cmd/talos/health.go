@@ -49,12 +49,12 @@ func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
 		return []string{cluster.InitNode}
 	case machine.TypeControlPlane:
 		return append([]string(nil), cluster.ControlPlaneNodes...)
-	case machine.TypeJoin:
+	case machine.TypeWorker:
 		return append([]string(nil), cluster.WorkerNodes...)
 	case machine.TypeUnknown:
-		return nil
+		fallthrough
 	default:
-		panic("unsupported machine type")
+		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
 }
 

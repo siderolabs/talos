@@ -26,13 +26,13 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 	networkConfig := &v1alpha1.NetworkConfig{}
 
 	for _, opt := range in.NetworkConfigOptions {
-		if err := opt(machine.TypeJoin, networkConfig); err != nil {
+		if err := opt(machine.TypeWorker, networkConfig); err != nil {
 			return nil, err
 		}
 	}
 
 	machine := &v1alpha1.MachineConfig{
-		MachineType:     "worker",
+		MachineType:     machine.TypeWorker.String(),
 		MachineToken:    in.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet: &v1alpha1.KubeletConfig{

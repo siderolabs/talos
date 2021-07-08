@@ -184,6 +184,8 @@ This means it will host etcd along with the Kubernetes master components such as
 Worker node type designates the node as a worker node.
 This means it will be an available compute node for scheduling workloads.
 
+This node type was previously known as "join"; that value is still supported but deprecated.
+
 
 Valid values:
 
@@ -192,7 +194,7 @@ Valid values:
 
   - <code>controlplane</code>
 
-  - <code>join</code>
+  - <code>worker</code>
 </div>
 
 <hr />

@@ -6,7 +6,11 @@
 
 package base
 
-import "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+import (
+	"fmt"
+
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+)
 
 type infoWrapper struct {
 	masterNodes []string
@@ -23,11 +27,11 @@ func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
 		return nil
 	case machine.TypeControlPlane:
 		return append([]string(nil), wrapper.masterNodes...)
-	case machine.TypeJoin:
+	case machine.TypeWorker:
 		return append([]string(nil), wrapper.workerNodes...)
 	case machine.TypeUnknown:
 		fallthrough
 	default:
-		panic("unreachable")
+		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
 }

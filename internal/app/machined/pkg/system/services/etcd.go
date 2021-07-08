@@ -93,22 +93,18 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
 
-	switch r.Config().Machine().Type() { //nolint:exhaustive
+	switch t := r.Config().Machine().Type(); t {
 	case machine.TypeInit:
-		err = e.argsForInit(ctx, r)
-		if err != nil {
-			return err
-		}
+		return e.argsForInit(ctx, r)
 	case machine.TypeControlPlane:
-		err = e.argsForControlPlane(ctx, r)
-		if err != nil {
-			return err
-		}
+		return e.argsForControlPlane(ctx, r)
+	case machine.TypeWorker:
+		return fmt.Errorf("unexpected machine type: %v", t)
+	case machine.TypeUnknown:
+		fallthrough
 	default:
-		return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
+		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
-
-	return nil
 }
 
 // PostFunc implements the Service interface.

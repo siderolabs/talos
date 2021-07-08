@@ -84,7 +84,7 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 
 	if conn.ExpandingCluster() {
 		machineTypes = []interface{}{
-			" worker ", machineapi.MachineConfig_MachineType(machine.TypeJoin),
+			" worker ", machineapi.MachineConfig_MachineType(machine.TypeWorker),
 			" control plane ", machineapi.MachineConfig_MachineType(machine.TypeControlPlane),
 		}
 		opts.MachineConfig.Type = machineapi.MachineConfig_MachineType(machine.TypeControlPlane)

@@ -200,7 +200,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 // GenerateConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
 		return nil, fmt.Errorf("config can't be generated on worker nodes")
 	}
 
@@ -313,7 +313,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
 		return nil, status.Error(codes.FailedPrecondition, "bootstrap can only be performed on a control plane node")
 	}
 
@@ -396,7 +396,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeJoin && !in.GetForce() {
+	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() {
 		client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create etcd client: %w", err)
@@ -1925,7 +1925,7 @@ func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *emptypb.E
 
 // GenerateClientConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeJoin {
+	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
 		return nil, status.Error(codes.FailedPrecondition, "client configuration (talosconfig) can't be generated on worker nodes")
 	}
 

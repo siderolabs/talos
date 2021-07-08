@@ -101,7 +101,7 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 
 		// TODO: k8s secrets (partial) should be valid for the worker nodes as well, worker node should have machine (OS) CA cert (?)
-		if machineType != machine.TypeControlPlane && machineType != machine.TypeInit {
+		if machineType == machine.TypeWorker {
 			if err = ctrl.teardown(ctx, r, secrets.RootEtcdID, secrets.RootKubernetesID); err != nil {
 				return fmt.Errorf("error destroying secrets: %w", err)
 			}

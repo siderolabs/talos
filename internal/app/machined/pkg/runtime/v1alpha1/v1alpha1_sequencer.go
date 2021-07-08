@@ -242,7 +242,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"startEverything",
 		StartAllServices,
 	).AppendWhen(
-		r.Config().Machine().Type() != machine.TypeJoin,
+		r.Config().Machine().Type() != machine.TypeWorker,
 		"labelMaster",
 		LabelNodeAsMaster,
 	).AppendWhen(
@@ -254,7 +254,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"bootloader",
 		UpdateBootloader,
 	).AppendWhen(
-		r.Config().Machine().Type() != machine.TypeJoin,
+		r.Config().Machine().Type() != machine.TypeWorker,
 		"checkControlPlaneStatus",
 		CheckControlPlaneStatus,
 	)
@@ -312,7 +312,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"cleanup",
 			StopAllPods,
 		).AppendWhen(
-			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeJoin),
+			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
 			LeaveEtcd,
 		).AppendList(
@@ -364,7 +364,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 			"cleanup",
 			StopAllPods,
 		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
 			LeaveEtcd,
 		).AppendList(
@@ -398,7 +398,7 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"cleanup",
 			StopAllPods,
 		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeJoin),
+			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
 			LeaveEtcd,
 		).Append(
