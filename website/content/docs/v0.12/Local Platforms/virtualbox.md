@@ -31,7 +31,7 @@ You can download `talosctl` via
 curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v0.11.0` for `linux` platform:
+For example version `v0.12.0` for `linux` platform:
 
 ```bash
 curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
@@ -50,7 +50,7 @@ mkdir -p _out/
 curl https://github.com/talos-systems/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
 ```
 
-For example version `v0.11.0` for `linux` platform:
+For example version `v0.12.0` for `linux` platform:
 
 ```bash
 mkdir -p _out/
@@ -112,7 +112,7 @@ Issue the following command, updating the output directory, cluster name, and co
 talosctl gen config talos-vbox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out
 ```
 
-This will create several files in the `_out` directory: controlplane.yaml, join.yaml, and talosconfig.
+This will create several files in the `_out` directory: controlplane.yaml, worker.yaml, and talosconfig.
 
 ## Create Control Plane Node
 
@@ -137,7 +137,7 @@ Take note of the worker node's IP address, which will be referred to as `$WORKER
 Issue:
 
 ```bash
-talosctl apply-config --insecure --nodes $WORKER_IP --file _out/join.yaml
+talosctl apply-config --insecure --nodes $WORKER_IP --file _out/worker.yaml
 ```
 
 > Note: This process can be repeated multiple times to add additional workers.

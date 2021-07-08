@@ -26,14 +26,14 @@ Using the DNS name or name of the loadbalancer used in the prereq steps, generat
 ```bash
 $ talosctl gen config talos-k8s-vmware-tutorial https://<load balancer IP or DNS>:<port>
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
 ```bash
 $ talosctl gen config talos-k8s-vmware-tutorial https://<DNS name>:6443
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -45,8 +45,8 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 ```bash
 $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
-$ talosctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ talosctl validate --config worker.yaml --mode cloud
+worker.yaml is valid for cloud mode
 ```
 
 ### Set Environment Variables
@@ -172,12 +172,12 @@ govc vm.power -on control-plane-3
 ```bash
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-1
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 worker.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-1
 govc vm.clone -on=false -vm talos-$TALOS_VERSION worker-2
 govc vm.change \
-  -e "guestinfo.talos.config=$(base64 join.yaml)" \
+  -e "guestinfo.talos.config=$(base64 worker.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/worker-2
 ```

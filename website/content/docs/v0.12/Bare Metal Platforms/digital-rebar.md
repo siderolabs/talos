@@ -27,7 +27,7 @@ Using the DNS name of the load balancer, generate the base configuration files f
 ```bash
 $ talosctl gen config talos-k8s-metal-tutorial https://<load balancer IP or DNS>:<port>
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -43,8 +43,8 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 ```bash
 $ talosctl validate --config controlplane.yaml --mode metal
 controlplane.yaml is valid for metal mode
-$ talosctl validate --config join.yaml --mode metal
-join.yaml is valid for metal mode
+$ talosctl validate --config worker.yaml --mode metal
+worker.yaml is valid for metal mode
 ```
 
 #### Publishing the Machine Configuration Files

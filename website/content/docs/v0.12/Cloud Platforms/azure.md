@@ -231,7 +231,7 @@ done
     --image talos \
     --vnet-name talos-vnet \
     --subnet talos-subnet \
-    --custom-data ./join.yaml \
+    --custom-data ./worker.yaml \
     -g $GROUP \
     --admin-username talos \
     --generate-ssh-keys \
