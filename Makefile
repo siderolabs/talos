@@ -1,7 +1,7 @@
 REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
-TAG ?= $(shell git describe --tag --always --dirty)
+TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]*)
 IMAGE_REGISTRY ?= $(REGISTRY)
 IMAGE_TAG ?= $(TAG)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
