@@ -1,55 +1,59 @@
 ---
-title: What's New in Talos 0.10
+title: What's New in Talos 0.11
 weight: 5
 ---
 
-## Disaster Recovery
+## Networking Configuration
 
-Talos now supports `etcd` [snapshots and recovery](../../guides/disaster-recovery/) from the snapshotted state.
-Periodic snapshots of `etcd` data can be taken with `talosctl etcd snapshot` command, and in case of catastrophic control plane
-failure `etcd` contents can be recovered from the latest snapshot with `talosctl bootstrap --recover-from=` command.
+Talos networking configuration was [completely rewritten](../../learn-more/networking-resources/) to be based on controllers
+and resources.
+There are no changes to the machine configuration, but any update to `.machine.network` can now
+be applied in immediate mode (without a reboot).
+Talos should be setting up network configuration much faster on boot now, not blocking on DHCP for unconfigured
+interfaces and skipping the reset network step.
 
-## Time Synchronization
+## Talos API RBAC
 
-The `timed` service was replaced with a new time sync controller without any machine configuration changes.
-There should be no user-visible changes in the way new time synchronization process works, logs are now
-available via `talosctl logs controller-runtime`.
-Talos now prefers last successful time server (by IP address) on each sync attempt, which improves sync accuracy.
+Limited [RBAC support](../../guides/rbac/) in Talos API is now enabled by default for Talos 0.11.
+Default `talosconfig` has `os:admin` role embedded in the certificate so that all the APIs are available.
+Certificates with reduced set of roles can be created with `talosctl config new` command.
 
-## Single Board Computers
+When upgrading from Talos 0.10, RBAC is not enabled by default.
+Before enabling RBAC, generate `talosconfig` with `os:admin` role first to make sure that administrator still has access to the cluster when RBAC is enabled.
 
-Talos added support for the [Radxa Rock PI 4c](../../single-board-computers/rockpi_4/) board.
-`u-boot` version was updated to fix the boot and USB issues on Raspberry Pi 4 8GiB version.
+List of available roles:
 
-## Optmizations
+* `os:admin` role enables every Talos API
+* `os:reader` role limits access to read-only APIs which do not return sensitive data
+* `os:etcd:backup` role only allows `talosctl etcd snapshot` API call (for etcd backup automation)
 
-Multiple optimizations were applied to reduce Talos `initramfs` size and memory footprint.
-As a result, we see a reduction of memory usage of around 100 MiB for the core Talos components which leaves more resources available for you workloads.
+## Default to Bootstrap workflow
 
-## Install Disk Selector
+The `init.yaml` is no longer an output of `talosctl gen config`.
+We now encourage using the bootstrap API, instead of `init` node types, as we
+intend on deprecating this machine type in the future.
+The `init.yaml` and `controlplane.yaml` machine configs are identical with the
+exception of the machine type.
+Users can use a modified `controlplane.yaml` with the machine type set to
+`init` if they would like to avoid using the bootstrap API.
 
-Install section of the machine config now has `diskSelector` [field](../../reference/configuration/#installconfig) that allows querying install disk using the list of qualifiers:
+## Component Updates
 
-```yaml
-...
-  install:
-    diskSelector:
-      size: >= 500GB
-      model: WDC*
-...
-```
+* containerd was updated to 1.5.2
+* Linux kernel was updated to 5.10.45
+* Kubernetes was updated to 1.21.2
+* etcd was updated to 3.4.16
 
-`talosctl -n <IP> disks -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
+## CoreDNS
 
-## Inline Kubernetes Manifests
+Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the cluster bootstrap.
 
-Kubernetes manifests can now be submitted in the machine configuration using the `cluster.inlineManifests` [field](../../reference/configuration/#clusterconfig),
-which works same way as `cluster.extraManifests` field, but manifest contents are passed inline in the machine configuration.
+## Legacy BIOS Support
 
-## Updated Components
+Added an option to the `machine.install` section of the machine config that can enable marking MBR partition bootable
+for the machines that have legacy BIOS which does not support GPT partitioning scheme.
 
-Linux: 5.10.19 -> 5.10.29
+## Multi-arch Installer
 
-Kubernetes: 1.20.5 -> 1.21.0
-
-Go: 1.15 -> 1.16
+Talos installer image (for any arch) now contains artifacts for both `amd64` and `arm64` architecture.
+This means that e.g. images for arm64 SBCs can be generated on amd64 host.
