@@ -55,11 +55,11 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 ```bash
 $ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:<port>
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
-Now add the required shebang (e.g. `#!talos`) at the top of `controlplane.yaml`, and `join.yaml`
+Now add the required shebang (e.g. `#!talos`) at the top of `controlplane.yaml`, and `worker.yaml`
 At this point, you can modify the generated configs to your liking.
 Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
 
@@ -67,7 +67,7 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 
 ```bash
 talosctl validate --config controlplane.yaml --mode metal
-talosctl validate --config join.yaml --mode metal
+talosctl validate --config worker.yaml --mode metal
 ```
 
 > Note: Validation of the install disk could potentially fail as the validation
@@ -98,7 +98,7 @@ packet device create \
   --operating-system "custom_ipxe" \
   --plan $PLAN\
   --hostname $HOSTNAME\
-  --userdata-file join.yaml
+  --userdata-file worker.yaml
 ```
 
 ### Bootstrap Etcd

@@ -38,13 +38,13 @@ The easiest way to install Talos is to use the ISO image.
 
 The latest ISO image can be found on the Github [Releases](https://github.com/talos-systems/talos/releases) page:
 
-- X86: [https://github.com/talos-systems/talos/releases/download/v0.11.0/talos-amd64.iso](https://github.com/talos-systems/talos/releases/download/v0.11.0/talos-amd64.iso)
-- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.11.0/talos-arm64.iso](https://github.com/talos-systems/talos/releases/download/v0.11.0/talos-arm64.iso)
+- X86: [https://github.com/talos-systems/talos/releases/download/v0.12.0/talos-amd64.iso](https://github.com/talos-systems/talos/releases/download/v0.12.0/talos-amd64.iso)
+- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.12.0/talos-arm64.iso](https://github.com/talos-systems/talos/releases/download/v0.12.0/talos-arm64.iso)
 
 For self-built media and network booting, you can use the kernel and initramfs:
 
-- X86: [https://github.com/talos-systems/talos/releases/download/v0.11.0/boot-amd64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.11.0/boot-amd64.tar.gz)
-- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.11.0/boot-ard64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.11.0/boot-ard64.tar.gz)
+- X86: [https://github.com/talos-systems/talos/releases/download/v0.12.0/boot-amd64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.12.0/boot-amd64.tar.gz)
+- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.12.0/boot-ard64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.12.0/boot-ard64.tar.gz)
 
 When booted from the ISO, Talos will run in RAM, and it will not install itself
 until it is provided a configuration.
@@ -207,7 +207,7 @@ When you run this command, you will receive a number of files in your current
 directory:
 
 - `controlplane.yaml`
-- `join.yaml`
+- `worker.yaml`
 - `talosconfig`
 
 The three `.yaml` files are what we call Machine Configs.
@@ -219,7 +219,7 @@ In the case of the `controlplane.yaml`, it even describes how Talos should form 
 The `talosconfig` file (which is also YAML) is your local client configuration
 file.
 
-### Controlplane, Init, and Join
+### Controlplane, Init, and Worker
 
 The three types of Machine Configs correspond to the three roles of Talos nodes.
 For our purposes, you can ignore the Init type.
@@ -227,13 +227,13 @@ It is a legacy type which will go away eventually.
 Its purpose was to self-bootstrap.
 Instead, we now use an API call to bootstrap the cluster, which is much more robust.
 
-That leaves us with Controlplane and Join.
+That leaves us with Controlplane and Worker.
 
 The Controlplane Machine Config describes the configuration of a Talos server on
 which the Kubernetes Controlplane should run.
-The Join Machine Config describes everything else: workload servers.
+The Worker Machine Config describes everything else: workload servers.
 
-The main difference between Controlplane Machine Config files and Join Machine
+The main difference between Controlplane Machine Config files and Worker Machine
 Config files is that the former contains information about how to form the
 Kubernetes cluster.
 
@@ -243,7 +243,7 @@ The generated files can be thought of as templates.
 Individual machines may need specific settings (for instance, each may have a
 different static IP address).
 When different files are needed for machines of the same type, simply
-copy the source template (`controlplane.yaml` or `join.yaml`) and make whatever
+copy the source template (`controlplane.yaml` or `worker.yaml`) and make whatever
 modifications need to be done.
 
 For instance, if you had three controlplane nodes and three worker nodes, you
@@ -254,7 +254,7 @@ may do something like this:
     cp controlplane.yaml cp$i.yaml
   end
   for i in $(seq 0 2); do
-    cp join.yaml w$i.yaml
+    cp worker.yaml w$i.yaml
   end
 ```
 

@@ -54,7 +54,7 @@ It is also possible to use generated configuration as a reference by pulling gen
 
 ```bash
 talosctl read -n 10.5.0.2 /system/state/config.yaml > controlplane.yaml
-talosctl read -n 10.5.0.3 /system/state/config.yaml > join.yaml
+talosctl read -n 10.5.0.3 /system/state/config.yaml > worker.yaml
 ```
 
 ### Manual Configuration

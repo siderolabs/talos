@@ -20,7 +20,7 @@ Using the DNS name of the load balancer, generate the base configuration files f
 ```bash
 $ talosctl gen config talos-k8s-metal-tutorial https://<load balancer IP or DNS>:<port>
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -32,15 +32,15 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 ```bash
 $ talosctl validate --config controlplane.yaml --mode metal
 controlplane.yaml is valid for metal mode
-$ talosctl validate --config join.yaml --mode metal
-join.yaml is valid for metal mode
+$ talosctl validate --config worker.yaml --mode metal
+worker.yaml is valid for metal mode
 ```
 
 #### Publishing the Machine Configuration Files
 
 In bare-metal setups it is up to the user to provide the configuration files over HTTP(S).
 A special kernel parameter (`talos.config`) must be used to inform Talos about _where_ it should retreive its' configuration file.
-To keep things simple we will place `controlplane.yaml`, and `join.yaml` into Matchbox's `assets` directory.
+To keep things simple we will place `controlplane.yaml`, and `worker.yaml` into Matchbox's `assets` directory.
 This directory is automatically served by Matchbox.
 
 ### Create the Matchbox Configuration Files
@@ -94,7 +94,7 @@ Download these files from the [release](https://github.com/talos-systems/talos/r
       "console=ttyS0",
       "printk.devkmsg=on",
       "talos.platform=metal",
-      "talos.config=http://matchbox.talos.dev/assets/join.yaml"
+      "talos.config=http://matchbox.talos.dev/assets/worker.yaml"
     ]
   }
 }

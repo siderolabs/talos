@@ -148,7 +148,7 @@ gcloud compute instances create talos-worker-0 \
   --image talos \
   --zone $REGION-b \
   --boot-disk-size 20GB \
-  --metadata-from-file=user-data=./join.yaml
+  --metadata-from-file=user-data=./worker.yaml
 ```
 
 ### Bootstrap Etcd

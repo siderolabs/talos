@@ -113,7 +113,7 @@ Create worker:
 
 ```bash
 # Update network name as necessary.
-openstack server create talos-worker-1 --flavor m1.small --network shared --image talos --user-data /path/to/join.yaml
+openstack server create talos-worker-1 --flavor m1.small --network shared --image talos --user-data /path/to/worker.yaml
 ```
 
 > Note: This step can be repeated to add more workers.

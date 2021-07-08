@@ -49,7 +49,7 @@ You can download `talosctl` and all required binaries via
 curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v0.11.0` for `linux` platform:
+For example version `v0.12.0` for `linux` platform:
 
 ```bash
 curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
@@ -100,7 +100,7 @@ curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz 
 curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs.xz -L -o _out/initramfs.xz
 ```
 
-For example version `v0.11.0`:
+For example version `v0.12.0`:
 
 ```bash
 curl https://github.com/talos-systems/talos/releases/latest/download/vmlinuz -L -o _out/vmlinuz
@@ -148,7 +148,7 @@ NAME                     TYPE           IP         CPU    RAM      DISK
 talos-default-master-1   Init           10.5.0.2   1.00   1.6 GB   4.3 GB
 talos-default-master-2   ControlPlane   10.5.0.3   1.00   1.6 GB   4.3 GB
 talos-default-master-3   ControlPlane   10.5.0.4   1.00   1.6 GB   4.3 GB
-talos-default-worker-1   Join           10.5.0.5   1.00   1.6 GB   4.3 GB
+talos-default-worker-1   Worker         10.5.0.5   1.00   1.6 GB   4.3 GB
 ```
 
 ## Cleaning Up

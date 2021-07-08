@@ -141,7 +141,7 @@ Using the DNS name of the loadbalancer created earlier, generate the base config
 ```bash
 $ talosctl gen config talos-k8s-aws-tutorial https://<load balancer IP or DNS>:<port> --with-examples=false --with-docs=false
 created controlplane.yaml
-created join.yaml
+created worker.yaml
 created talosconfig
 ```
 
@@ -156,8 +156,8 @@ Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will b
 ```bash
 $ talosctl validate --config controlplane.yaml --mode cloud
 controlplane.yaml is valid for cloud mode
-$ talosctl validate --config join.yaml --mode cloud
-join.yaml is valid for cloud mode
+$ talosctl validate --config worker.yaml --mode cloud
+worker.yaml is valid for cloud mode
 ```
 
 ### Create the EC2 Instances
@@ -194,7 +194,7 @@ aws ec2 run-instances \
     --image-id $AMI \
     --count 3 \
     --instance-type t3.small \
-    --user-data file://join.yaml \
+    --user-data file://worker.yaml \
     --subnet-id $SUBNET \
     --security-group-ids $SECURITY_GROUP
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=talos-aws-tutorial-worker}]"
