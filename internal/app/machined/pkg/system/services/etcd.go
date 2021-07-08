@@ -55,7 +55,8 @@ type Etcd struct {
 	RecoverFromSnapshot  bool
 	RecoverSkipHashCheck bool
 
-	args []string
+	args   []string
+	client *etcd.Client
 }
 
 // ID implements the Service interface.
@@ -109,6 +110,12 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 // PostFunc implements the Service interface.
 func (e *Etcd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if e.client != nil {
+		e.client.Close() //nolint:errcheck
+	}
+
+	e.client = nil
+
 	return nil
 }
 
@@ -169,14 +176,16 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface.
 func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
-		client, err := etcd.NewClient([]string{"127.0.0.1:2379"})
-		if err != nil {
-			return err
+		if e.client == nil {
+			var err error
+
+			e.client, err = etcd.NewLocalClient()
+			if err != nil {
+				return err
+			}
 		}
 
-		defer client.Close() //nolint:errcheck
-
-		return client.ValidateQuorum(ctx)
+		return e.client.ValidateQuorum(ctx)
 	}
 }
 
