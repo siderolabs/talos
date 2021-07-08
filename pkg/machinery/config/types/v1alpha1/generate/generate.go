@@ -25,27 +25,19 @@ import (
 )
 
 // Config returns the talos config for a given node type.
-func Config(t machine.Type, in *Input) (c *v1alpha1.Config, err error) {
+func Config(t machine.Type, in *Input) (*v1alpha1.Config, error) {
 	switch t {
 	case machine.TypeInit:
-		if c, err = initUd(in); err != nil {
-			return c, err
-		}
+		return initUd(in)
 	case machine.TypeControlPlane:
-		if c, err = controlPlaneUd(in); err != nil {
-			return c, err
-		}
-	case machine.TypeJoin:
-		if c, err = workerUd(in); err != nil {
-			return c, err
-		}
+		return controlPlaneUd(in)
+	case machine.TypeWorker:
+		return workerUd(in)
 	case machine.TypeUnknown:
 		fallthrough
 	default:
-		return c, errors.New("failed to determine config type to generate")
+		return nil, errors.New("failed to determine config type to generate")
 	}
-
-	return c, nil
 }
 
 // Input holds info about certs, ips, and node type.

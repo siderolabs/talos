@@ -581,7 +581,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			&services.Kubelet{},
 		)
 
-		switch r.Config().Machine().Type() {
+		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:
 			svcs.Load(
 				&services.Trustd{},
@@ -592,9 +592,12 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 				&services.Trustd{},
 				&services.Etcd{},
 			)
-		case machine.TypeJoin:
+		case machine.TypeWorker:
+			// nothing
 		case machine.TypeUnknown:
-			return fmt.Errorf("unexpected machine type: %s", r.Config().Machine().Type())
+			fallthrough
+		default:
+			panic(fmt.Sprintf("unexpected machine type %v", t))
 		}
 
 		system.Services(r).StartAll()

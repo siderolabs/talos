@@ -98,7 +98,7 @@ talosctl cluster create [flags]
       --cni-conf-dir string                     CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-patch string                     patch generated machineconfigs (applied to all node types)
       --config-patch-control-plane string       patch generated machineconfigs (applied to 'init' and 'controlplane' types)
-      --config-patch-join string                patch generated machineconfigs (applied to 'join' type)
+      --config-patch-worker string              patch generated machineconfigs (applied to 'worker' type)
       --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
@@ -1144,7 +1144,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --additional-sans strings             additional Subject-Alt-Names for the APIServer certificate
       --config-patch string                 patch generated machineconfigs (applied to all node types)
       --config-patch-control-plane string   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
-      --config-patch-join string            patch generated machineconfigs (applied to 'join' type)
+      --config-patch-worker string          patch generated machineconfigs (applied to 'worker' type)
       --dns-domain string                   the dns domain to use for cluster (default "cluster.local")
   -h, --help                                help for config
       --install-disk string                 the disk to install to (default "/dev/sda")

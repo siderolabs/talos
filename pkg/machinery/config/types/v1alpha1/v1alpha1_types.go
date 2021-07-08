@@ -505,10 +505,12 @@ type MachineConfig struct {
 	//
 	//     Worker node type designates the node as a worker node.
 	//     This means it will be an available compute node for scheduling workloads.
+	//
+	//     This node type was previously known as "join"; that value is still supported but deprecated.
 	//   values:
 	//     - "init"
 	//     - "controlplane"
-	//     - "join"
+	//     - "worker"
 	MachineType string `yaml:"type"`
 	//   description: |
 	//     The `token` is used by a machine to join the PKI of the cluster.

@@ -188,7 +188,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	return restart.New(containerd.NewRunner(
-		r.Config().Debug() && r.Config().Machine().Type() == machine.TypeJoin, // enable debug logs only for the worker nodes
+		r.Config().Debug() && r.Config().Machine().Type() == machine.TypeWorker, // enable debug logs only for the worker nodes
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),

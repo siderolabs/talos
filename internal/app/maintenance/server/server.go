@@ -89,7 +89,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 
 	machineType := v1alpha1machine.Type(in.MachineConfig.Type)
 
-	if machineType == v1alpha1machine.TypeJoin {
+	if machineType == v1alpha1machine.TypeWorker {
 		return nil, fmt.Errorf("join config can't be generated in the maintenance mode")
 	}
 

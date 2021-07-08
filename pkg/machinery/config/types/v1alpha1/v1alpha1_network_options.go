@@ -109,7 +109,7 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 // WithNetworkInterfaceVirtualIP configures interface for Virtual IP.
 func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 	return func(machineType machine.Type, cfg *NetworkConfig) error {
-		if machineType == machine.TypeJoin {
+		if machineType == machine.TypeWorker {
 			return nil
 		}
 

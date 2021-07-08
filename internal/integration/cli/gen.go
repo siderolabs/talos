@@ -144,7 +144,7 @@ func (suite *GenSuite) TestGenConfigPatch() {
 			flag: "config-patch",
 			shouldAffect: map[string]bool{
 				"controlplane.yaml": true,
-				"join.yaml":         true,
+				"worker.yaml":       true,
 			},
 		},
 		{
@@ -154,9 +154,9 @@ func (suite *GenSuite) TestGenConfigPatch() {
 			},
 		},
 		{
-			flag: "config-patch-join",
+			flag: "config-patch-worker",
 			shouldAffect: map[string]bool{
-				"join.yaml": true,
+				"worker.yaml": true,
 			},
 		},
 	} {
@@ -165,7 +165,7 @@ func (suite *GenSuite) TestGenConfigPatch() {
 		suite.Run(tt.flag, func() {
 			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)})
 
-			for _, configName := range []string{"controlplane.yaml", "join.yaml"} {
+			for _, configName := range []string{"controlplane.yaml", "worker.yaml"} {
 				cfg, err := configloader.NewFromFile(configName)
 
 				suite.Assert().NoError(err)
@@ -173,7 +173,7 @@ func (suite *GenSuite) TestGenConfigPatch() {
 				switch {
 				case tt.shouldAffect[configName]:
 					suite.Assert().Equal("bar", cfg.Cluster().Name(), "checking %q", configName)
-				case configName == "join.yaml":
+				case configName == "worker.yaml":
 					suite.Assert().Equal("", cfg.Cluster().Name(), "checking %q", configName)
 				default:
 					suite.Assert().Equal("foo", cfg.Cluster().Name(), "checking %q", configName)

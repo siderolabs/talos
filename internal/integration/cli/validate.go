@@ -48,7 +48,7 @@ func (suite *ValidateSuite) TearDownTest() {
 func (suite *ValidateSuite) TestValidate() {
 	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"})
 
-	for _, configFile := range []string{"controlplane.yaml", "join.yaml"} {
+	for _, configFile := range []string{"controlplane.yaml", "worker.yaml"} {
 		configFile := configFile
 
 		for _, mode := range []string{"cloud", "container"} {

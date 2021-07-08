@@ -39,7 +39,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		}
 
 		// Pull existing machine configs of each type
-		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin} {
+		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
 				return bundle, err
@@ -55,8 +55,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 				bundle.InitCfg = unmarshalledConfig
 			case machine.TypeControlPlane:
 				bundle.ControlPlaneCfg = unmarshalledConfig
-			case machine.TypeJoin:
-				bundle.JoinCfg = unmarshalledConfig
+			case machine.TypeWorker:
+				bundle.WorkerCfg = unmarshalledConfig
+			default:
+				panic("unreachable")
 			}
 		}
 
@@ -106,7 +108,7 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		return bundle, err
 	}
 
-	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeJoin} {
+	for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		var generatedConfig *v1alpha1.Config
 
 		generatedConfig, err = generate.Config(configType, input)
@@ -119,8 +121,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			bundle.InitCfg = generatedConfig
 		case machine.TypeControlPlane:
 			bundle.ControlPlaneCfg = generatedConfig
-		case machine.TypeJoin:
-			bundle.JoinCfg = generatedConfig
+		case machine.TypeWorker:
+			bundle.WorkerCfg = generatedConfig
+		default:
+			panic("unreachable")
 		}
 	}
 
@@ -145,7 +149,7 @@ func applyJSONPatches(bundle *v1alpha1.ConfigBundle, options Options) error {
 		return fmt.Errorf("error patching control plane configs: %w", err)
 	}
 
-	if err := bundle.ApplyJSONPatch(options.JSONPatchJoin, false, true); err != nil {
+	if err := bundle.ApplyJSONPatch(options.JSONPatchWorker, false, true); err != nil {
 		return fmt.Errorf("error patching worker config: %w", err)
 	}
 

@@ -7,6 +7,7 @@
 package cli
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -47,10 +48,12 @@ func (suite *HealthSuite) TestClientSide() {
 			switch node.Type {
 			case machine.TypeControlPlane:
 				args = append(args, "--control-plane-nodes", node.IPs[0].String())
-			case machine.TypeJoin:
+			case machine.TypeWorker:
 				args = append(args, "--worker-nodes", node.IPs[0].String())
 			case machine.TypeInit, machine.TypeUnknown:
-				panic("unexpected")
+				fallthrough
+			default:
+				panic(fmt.Sprintf("unexpected machine type %v", node.Type))
 			}
 		}
 	} else {
@@ -60,10 +63,12 @@ func (suite *HealthSuite) TestClientSide() {
 				args = append(args, "--init-node", node.IPs[0].String())
 			case machine.TypeControlPlane:
 				args = append(args, "--control-plane-nodes", node.IPs[0].String())
-			case machine.TypeJoin:
+			case machine.TypeWorker:
 				args = append(args, "--worker-nodes", node.IPs[0].String())
 			case machine.TypeUnknown:
-				panic("unexpected")
+				fallthrough
+			default:
+				panic(fmt.Sprintf("unexpected machine type %v", node.Type))
 			}
 		}
 	}

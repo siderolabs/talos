@@ -106,6 +106,7 @@ var (
 	useVIP                    bool
 	configPatch               string
 	configPatchControlPlane   string
+	configPatchWorker         string
 	configPatchJoin           string
 	badRTC                    bool
 )
@@ -123,6 +124,14 @@ var createCmd = &cobra.Command{
 
 //nolint:gocyclo,cyclop
 func create(ctx context.Context) (err error) {
+	if configPatchJoin != "" {
+		if configPatchWorker != "" {
+			return fmt.Errorf("both --config-patch-join and --config-patch-worker are passed")
+		}
+
+		configPatchWorker = configPatchJoin
+	}
+
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
 	}
@@ -442,7 +451,7 @@ func create(ctx context.Context) (err error) {
 		return err
 	}
 
-	if err = addConfigPatch(configPatchJoin, bundle.WithJSONPatchJoin); err != nil {
+	if err = addConfigPatch(configPatchWorker, bundle.WithJSONPatchWorker); err != nil {
 		return err
 	}
 
@@ -452,7 +461,7 @@ func create(ctx context.Context) (err error) {
 	}
 
 	if skipInjectingConfig {
-		types := []machine.Type{machine.TypeControlPlane, machine.TypeJoin}
+		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
 
 		if withInitNode {
 			types = append([]machine.Type{machine.TypeInit}, types...)
@@ -520,7 +529,7 @@ func create(ctx context.Context) (err error) {
 	for i := 1; i <= workers; i++ {
 		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
 
-		cfg := configBundle.Join()
+		cfg := configBundle.Worker()
 
 		nodeIPs := make([]net.IP, len(cidrs))
 		for j := range nodeIPs {
@@ -537,7 +546,7 @@ func create(ctx context.Context) (err error) {
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:                name,
-				Type:                machine.TypeJoin,
+				Type:                machine.TypeWorker,
 				IPs:                 nodeIPs,
 				Memory:              memory,
 				NanoCPUs:            nanoCPUs,
@@ -811,7 +820,12 @@ func init() {
 	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
 	createCmd.Flags().StringVar(&configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
 	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
-	createCmd.Flags().StringVar(&configPatchJoin, "config-patch-join", "", "patch generated machineconfigs (applied to 'join' type)")
+	createCmd.Flags().StringVar(&configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
+
+	// remove in 0.13: https://github.com/talos-systems/talos/issues/3910
+	createCmd.Flags().StringVar(&configPatchJoin, "config-patch-join", "", "")
+	cli.Should(createCmd.Flags().MarkDeprecated("config-patch-join", "use --config-patch-worker instead"))
+
 	Cmd.AddCommand(createCmd)
 }

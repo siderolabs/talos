@@ -78,8 +78,8 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 
 		machineType := machineTypeRes.(*config.MachineType).MachineType()
 
-		if machineType != machine.TypeJoin {
-			// TODO: implemented only for machine.TypeJoin for now, should be extended to support control plane machines (for etcd join).
+		if machineType != machine.TypeWorker {
+			// TODO: implemented only for machine.TypeWorker for now, should be extended to support control plane machines (for etcd join).
 			continue
 		}
 

@@ -188,6 +188,8 @@ func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
 }
 
 // NodeIPs returns list of node IP addresses by machine type.
+//
+//nolint:gocyclo
 func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs []string, err error) {
 	resp, err := h.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -200,13 +202,17 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 		_, labelMaster := node.Labels[constants.LabelNodeRoleMaster]
 		_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
 
-		skip := true
+		var skip bool
 
-		switch machineType { //nolint:exhaustive
+		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
 			skip = !(labelMaster || labelControlPlane)
-		case machine.TypeJoin:
+		case machine.TypeWorker:
 			skip = labelMaster || labelControlPlane
+		case machine.TypeUnknown:
+			fallthrough
+		default:
+			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
 
 		if skip {

@@ -26,26 +26,34 @@ import (
 type ConfigBundle struct {
 	InitCfg         *Config
 	ControlPlaneCfg *Config
-	JoinCfg         *Config
+	WorkerCfg       *Config
 	TalosCfg        *clientconfig.Config
 }
 
-// Init implements the ConfiguratorBundle interface.
+// Init implements the ProviderBundle interface.
 func (c *ConfigBundle) Init() config.Provider {
 	return c.InitCfg
 }
 
-// ControlPlane implements the ConfiguratorBundle interface.
+// ControlPlane implements the ProviderBundle interface.
 func (c *ConfigBundle) ControlPlane() config.Provider {
 	return c.ControlPlaneCfg
 }
 
-// Join implements the ConfiguratorBundle interface.
-func (c *ConfigBundle) Join() config.Provider {
-	return c.JoinCfg
+// Worker implements the ProviderBundle interface.
+func (c *ConfigBundle) Worker() config.Provider {
+	return c.WorkerCfg
 }
 
-// TalosConfig implements the ConfiguratorBundle interface.
+// Join implements the ProviderBundle interface.
+//
+// Deprecated: use Worker instead; this method will be removed in 0.13
+// (https://github.com/talos-systems/talos/issues/3910).
+func (c *ConfigBundle) Join() config.Provider {
+	return c.WorkerCfg
+}
+
+// TalosConfig implements the ProviderBundle interface.
 func (c *ConfigBundle) TalosConfig() *clientconfig.Config {
 	return c.TalosCfg
 }
@@ -61,7 +69,7 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 			err          error
 		)
 
-		switch t { //nolint:exhaustive
+		switch t {
 		case machine.TypeInit:
 			configString, err = c.Init().String(encoder.WithComments(commentsFlags))
 			if err != nil {
@@ -72,11 +80,15 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 			if err != nil {
 				return err
 			}
-		case machine.TypeJoin:
-			configString, err = c.Join().String(encoder.WithComments(commentsFlags))
+		case machine.TypeWorker:
+			configString, err = c.Worker().String(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
+		case machine.TypeUnknown:
+			fallthrough
+		default:
+			return fmt.Errorf("unexpected machine type %v", t)
 		}
 
 		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
@@ -90,7 +102,7 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 }
 
 // ApplyJSONPatch patches every config type with a patch.
-func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, patchJoin bool) error {
+func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, patchWorker bool) error {
 	if len(patch) == 0 {
 		return nil
 	}
@@ -130,8 +142,8 @@ func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, 
 		}
 	}
 
-	if patchJoin {
-		c.JoinCfg, err = apply(c.JoinCfg)
+	if patchWorker {
+		c.WorkerCfg, err = apply(c.WorkerCfg)
 		if err != nil {
 			return err
 		}

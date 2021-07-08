@@ -64,7 +64,26 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedWarnings: []string{
-				`machine type is empty`,
+				`use "worker" instead of "" for machine type`,
+			},
+		},
+		{
+			name: "JoinMachineType",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "join",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedWarnings: []string{
+				`use "worker" instead of "join" for machine type`,
 			},
 		},
 		{
@@ -81,14 +100,14 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			strict:        true,
-			expectedError: "1 error occurred:\n\t* warning: machine type is empty\n\n",
+			expectedError: "1 error occurred:\n\t* warning: use \"worker\" instead of \"\" for machine type\n\n",
 		},
 		{
 			name: "NoMachineInstall",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -104,7 +123,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -122,7 +141,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 					MachineInstall: &v1alpha1.InstallConfig{
 						InstallDisk: "/dev/vda",
 					},
@@ -143,7 +162,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -166,7 +185,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -185,7 +204,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -202,7 +221,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -225,7 +244,7 @@ func TestValidate(t *testing.T) {
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "join",
+					MachineType: "worker",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{

@@ -99,12 +99,12 @@ func (cluster *clusterState) NodesByType(t machine.Type) []string {
 		return nil
 	case machine.TypeControlPlane:
 		return append([]string(nil), cluster.controlPlaneNodes...)
-	case machine.TypeJoin:
+	case machine.TypeWorker:
 		return append([]string(nil), cluster.workerNodes...)
 	case machine.TypeUnknown:
-		return nil
+		fallthrough
 	default:
-		panic("unsupported machine type")
+		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
 }
 
@@ -120,7 +120,7 @@ func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.K
 			return err
 		}
 
-		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeJoin); err != nil {
+		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeWorker); err != nil {
 			return err
 		}
 	}

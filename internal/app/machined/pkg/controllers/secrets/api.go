@@ -108,11 +108,14 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 			if err = ctrl.reconcile(ctx, r, logger, true); err != nil {
 				return err
 			}
-		case machine.TypeJoin:
+		case machine.TypeWorker:
 			if err = ctrl.reconcile(ctx, r, logger, false); err != nil {
 				return err
 			}
-		case machine.TypeUnknown: // nothing to do
+		case machine.TypeUnknown:
+			// machine configuration is not loaded yet, do nothing
+		default:
+			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
 
 		if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -201,12 +204,14 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			if !isControlplane {
 				return fmt.Errorf("machine type changed")
 			}
-		case machine.TypeJoin:
+		case machine.TypeWorker:
 			if isControlplane {
 				return fmt.Errorf("machine type changed")
 			}
 		case machine.TypeUnknown:
 			return fmt.Errorf("machine type changed")
+		default:
+			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
 
 		rootResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootOSID, resource.VersionUndefined))

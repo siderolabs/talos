@@ -7,6 +7,7 @@
 package cli
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -37,10 +38,12 @@ func (suite *CrashdumpSuite) TestRun() {
 			args = append(args, "--init-node", node.IPs[0].String())
 		case machine.TypeControlPlane:
 			args = append(args, "--control-plane-nodes", node.IPs[0].String())
-		case machine.TypeJoin:
+		case machine.TypeWorker:
 			args = append(args, "--worker-nodes", node.IPs[0].String())
 		case machine.TypeUnknown:
-			panic("unexpected")
+			fallthrough
+		default:
+			panic(fmt.Sprintf("unexpected machine type %v", node.Type))
 		}
 	}
 

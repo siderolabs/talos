@@ -101,7 +101,7 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 		return roles
 	}
 
-	panic("not reached")
+	panic("unreachable")
 }
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.

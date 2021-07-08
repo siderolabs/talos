@@ -132,7 +132,7 @@ func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
 
 // TestResetNoGracefulWorker resets a worker in !graceful mode.
 func (suite *ResetSuite) TestResetNoGracefulWorker() {
-	suite.testResetNoGraceful(machine.TypeJoin)
+	suite.testResetNoGraceful(machine.TypeWorker)
 }
 
 // TestResetNoGracefulControlplane resets a control plane node in !graceful mode.

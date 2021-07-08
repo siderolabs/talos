@@ -99,7 +99,7 @@ func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
 // WorkerNodes returns subset of nodes which are Init/ControlPlane type.
 func (reqs NodeRequests) WorkerNodes() (nodes []NodeRequest) {
 	for i := range reqs {
-		if reqs[i].Type == machine.TypeJoin {
+		if reqs[i].Type == machine.TypeWorker {
 			nodes = append(nodes, reqs[i])
 		}
 	}

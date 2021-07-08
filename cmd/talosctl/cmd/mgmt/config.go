@@ -19,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
@@ -40,6 +41,7 @@ var genConfigCmdFlags struct {
 	outputDir               string
 	configPatch             string
 	configPatchControlPlane string
+	configPatchWorker       string
 	configPatchJoin         string
 	registryMirrors         []string
 	persistConfig           bool
@@ -57,6 +59,14 @@ this is the port that the API server binds to on every control plane node. For a
 setup, usually involving a load balancer, use the IP and port of the load balancer.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if genConfigCmdFlags.configPatchJoin != "" {
+			if genConfigCmdFlags.configPatchWorker != "" {
+				return fmt.Errorf("both --config-patch-join and --config-patch-worker are passed")
+			}
+
+			genConfigCmdFlags.configPatchWorker = genConfigCmdFlags.configPatchJoin
+		}
+
 		// Validate url input to ensure it has https:// scheme before we attempt to gen
 		u, err := url.Parse(args[1])
 		if err != nil {
@@ -120,7 +130,7 @@ func GenV1Alpha1Config(genOptions []generate.GenOption,
 	kubernetesVersion string,
 	configPatch string,
 	configPatchControlPlane string,
-	configPatchJoin string) (*v1alpha1.ConfigBundle, error) {
+	configPatchWorker string) (*v1alpha1.ConfigBundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
@@ -155,7 +165,7 @@ func GenV1Alpha1Config(genOptions []generate.GenOption,
 		return nil, err
 	}
 
-	if err := addConfigPatch(configPatchJoin, bundle.WithJSONPatchJoin); err != nil {
+	if err := addConfigPatch(configPatchWorker, bundle.WithJSONPatchWorker); err != nil {
 		return nil, err
 	}
 
@@ -232,12 +242,12 @@ func writeV1Alpha1Config(args []string) error {
 		genConfigCmdFlags.kubernetesVersion,
 		genConfigCmdFlags.configPatch,
 		genConfigCmdFlags.configPatchControlPlane,
-		genConfigCmdFlags.configPatchJoin)
+		genConfigCmdFlags.configPatchWorker)
 	if err != nil {
 		return err
 	}
 
-	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeControlPlane, machine.TypeJoin); err != nil {
+	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeControlPlane, machine.TypeWorker); err != nil {
 		return err
 	}
 
@@ -268,11 +278,15 @@ func init() {
 	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchJoin, "config-patch-join", "", "patch generated machineconfigs (applied to 'join' type)")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
+
+	// remove in 0.13: https://github.com/talos-systems/talos/issues/3910
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchJoin, "config-patch-join", "", "")
+	cli.Should(genConfigCmd.Flags().MarkDeprecated("config-patch-join", "use --config-patch-worker instead"))
 
 	gen.Cmd.AddCommand(genConfigCmd)
 }

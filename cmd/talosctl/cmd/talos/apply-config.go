@@ -177,7 +177,7 @@ func init() {
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "on-reboot", false, "apply the config on reboot")
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.immediate, "immediate", false, "apply the config immediately (without a reboot)")
 
-	// deprecated, to be removed in 0.10
+	// deprecated, to be removed in 0.12: https://github.com/talos-systems/talos/issues/3909
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "no-reboot", false, "apply the config only after the reboot")
 	applyConfigCmd.Flags().MarkHidden("no-reboot") //nolint:errcheck
 

@@ -6,6 +6,7 @@ package generate
 
 import (
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
@@ -14,7 +15,7 @@ func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
 		return nil, err
 	}
 
-	config.MachineConfig.MachineType = "controlplane"
+	config.MachineConfig.MachineType = machine.TypeControlPlane.String()
 
 	return config, nil
 }

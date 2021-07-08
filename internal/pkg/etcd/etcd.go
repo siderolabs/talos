@@ -97,31 +97,33 @@ func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCer
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
 func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider, preserve bool) error {
-	if config.Machine().Type() != machine.TypeJoin {
-		resp, err := c.MemberList(context.Background())
-		if err != nil {
-			return err
+	if config.Machine().Type() == machine.TypeWorker {
+		return nil
+	}
+
+	resp, err := c.MemberList(context.Background())
+	if err != nil {
+		return err
+	}
+
+	if !preserve {
+		if len(resp.Members) == 1 {
+			return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
+		}
+	}
+
+	if len(resp.Members) == 2 {
+		return fmt.Errorf("etcd member count(%d) is insufficient to maintain quorum if upgrade commences", len(resp.Members))
+	}
+
+	for _, member := range resp.Members {
+		// If the member is not started, the name will be an empty string.
+		if len(member.Name) == 0 {
+			return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
 		}
 
-		if !preserve {
-			if len(resp.Members) == 1 {
-				return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
-			}
-		}
-
-		if len(resp.Members) == 2 {
-			return fmt.Errorf("etcd member count(%d) is insufficient to maintain quorum if upgrade commences", len(resp.Members))
-		}
-
-		for _, member := range resp.Members {
-			// If the member is not started, the name will be an empty string.
-			if len(member.Name) == 0 {
-				return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
-			}
-
-			if err = validateMemberHealth(ctx, member.GetClientURLs()); err != nil {
-				return fmt.Errorf("etcd member %d is not healthy; all members must be healthy to perform an upgrade: %w", member.ID, err)
-			}
+		if err = validateMemberHealth(ctx, member.GetClientURLs()); err != nil {
+			return fmt.Errorf("etcd member %d is not healthy; all members must be healthy to perform an upgrade: %w", member.ID, err)
 		}
 	}
 

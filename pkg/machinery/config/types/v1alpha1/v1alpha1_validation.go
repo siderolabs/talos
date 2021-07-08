@@ -103,24 +103,25 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
-	// TODO rework machine type validation https://github.com/talos-systems/talos/issues/3413
-
-	if c.MachineConfig.MachineType == "" {
-		warnings = append(warnings, `machine type is empty`)
+	if t := c.Machine().Type(); t != machine.TypeUnknown && t.String() != c.MachineConfig.MachineType {
+		warnings = append(warnings, fmt.Sprintf("use %q instead of %q for machine type", t.String(), c.MachineConfig.MachineType))
 	}
 
-	if c.Machine().Type() == machine.TypeInit || c.Machine().Type() == machine.TypeControlPlane {
+	switch c.Machine().Type() { //nolint:exhaustive
+	case machine.TypeInit, machine.TypeControlPlane:
 		warn, err := ValidateCNI(c.Cluster().Network().CNI())
 		warnings = append(warnings, warn...)
 		result = multierror.Append(result, err)
-	}
 
-	if c.Machine().Type() == machine.TypeJoin {
+	case machine.TypeWorker:
 		for _, d := range c.Machine().Network().Devices() {
 			if d.VIPConfig() != nil {
 				result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
 			}
 		}
+
+	default:
+		result = multierror.Append(result, fmt.Errorf("unknown machine type %q", c.MachineConfig.MachineType))
 	}
 
 	if c.MachineConfig.MachineNetwork != nil {

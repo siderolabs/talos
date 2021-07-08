@@ -103,7 +103,7 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
-	cfg, err := genv1alpha1.Config(machine.TypeJoin, suite.input)
+	cfg, err := genv1alpha1.Config(machine.TypeWorker, suite.input)
 	suite.Require().NoError(err)
 
 	if suite.versionContract.SupportsRBACFeature() {

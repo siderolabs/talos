@@ -83,7 +83,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeJoin)
+	nodes := suite.DiscoverNodes().NodesByType(machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)
@@ -203,7 +203,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	node := suite.RandomDiscoveredNode(machine.TypeJoin)
+	node := suite.RandomDiscoveredNode(machine.TypeWorker)
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
