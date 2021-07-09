@@ -195,14 +195,6 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 			LinkName:    "lo",
 			ConfigLayer: network.ConfigDefault,
 		},
-		{
-			Address:     netaddr.IPPrefixFrom(netaddr.IPFrom16([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}), 128),
-			Family:      nethelpers.FamilyInet6,
-			Scope:       nethelpers.ScopeHost,
-			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-			LinkName:    "lo",
-			ConfigLayer: network.ConfigDefault,
-		},
 	}
 }
 
