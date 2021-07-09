@@ -199,7 +199,9 @@ func WriteRequiredSysctlsForContainer(seq runtime.Sequence, data interface{}) (r
 		}
 
 		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
+			if !errors.Is(err, os.ErrNotExist) { // ignore error if ipv6 is disabled
+				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
+			}
 		}
 
 		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
@@ -228,7 +230,9 @@ func WriteRequiredSysctls(seq runtime.Sequence, data interface{}) (runtime.TaskE
 		}
 
 		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
+			if !errors.Is(err, os.ErrNotExist) { // ignore error if ipv6 is disabled
+				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
+			}
 		}
 
 		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
