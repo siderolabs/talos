@@ -64,8 +64,6 @@ func (route *RouteSpecSpec) Normalize() {
 	switch {
 	case route.Gateway.IsZero():
 		route.Scope = nethelpers.ScopeLink
-	case route.Destination.IP().IsLinkLocalUnicast() || route.Destination.IP().IsLinkLocalMulticast():
-		route.Scope = nethelpers.ScopeLink
 	case route.Destination.IP().IsLoopback():
 		route.Scope = nethelpers.ScopeHost
 	default:
