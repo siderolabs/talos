@@ -107,7 +107,6 @@ func (suite *AddressConfigSuite) TestLoopback() {
 		func() error {
 			return suite.assertAddresses([]string{
 				"default/lo/127.0.0.1/8",
-				"default/lo/::1/128",
 			}, func(r *network.AddressSpec) error {
 				suite.Assert().Equal("lo", r.TypedSpec().LinkName)
 				suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
