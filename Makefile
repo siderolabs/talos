@@ -10,9 +10,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.6.0
-PKGS ?= v0.7.0-alpha.0
-EXTRAS ?= v0.4.0
+TOOLS ?= ghcr.io/talos-systems/tools:v0.7.0-alpha.0-2-g7172a5d
+PKGS ?= v0.7.0-alpha.0-3-gb6fca88
+EXTRAS ?= v0.5.0-alpha.0
 GO_VERSION ?= 1.16
 GOFUMPT_VERSION ?= v0.1.0
 STRINGER_VERSION ?= v0.1.3
