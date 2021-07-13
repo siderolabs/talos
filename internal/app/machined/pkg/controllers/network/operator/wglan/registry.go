@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/wglan-manager/client"
 	"github.com/talos-systems/wglan-manager/types"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,83 +25,67 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-var zeroKey = wgtypes.Key{}
-
-// Discoverer defines an interface by which Nodes may be discovered.
-type Discoverer interface {
-	// Add registers information about the Node
+// Registry defines an interface by which Nodes may be discovered and registered.
+type Registry interface {
+	// Add registers information about the Node to the registry.
 	Add(ctx context.Context, clusterID string, n *types.Node) error
 
-	List(ctx context.Context, clusterID string) ([]*PrePeer, error)
+	// List returns the list of Nodes stored within the registry.
+	List(ctx context.Context, clusterID string) ([]*Peer, error)
 }
 
-type externalDiscoverer struct {
-	urlRoot string
+// RegistryExternal defines an external API-based node regstry.
+type RegistryExternal struct {
+	URLRoot string
 }
 
-func (d *externalDiscoverer) Add(ctx context.Context, clusterID string, n *types.Node) error {
-	return client.Add(d.urlRoot, clusterID, n)
+// Add implements registry.Add.
+func (r *RegistryExternal) Add(ctx context.Context, clusterID string, n *types.Node) error {
+	return client.Add(r.URLRoot, clusterID, n)
 }
 
-func (d *externalDiscoverer) List(ctx context.Context, clusterID string) ([]*PrePeer, error) {
-	list, err := client.List(d.urlRoot, clusterID)
+// List implements registry.List.
+func (r *RegistryExternal) List(ctx context.Context, clusterID string) ([]*Peer, error) {
+	list, err := client.List(r.URLRoot, clusterID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get list of nodes from discovery service %q, cluster %q: %w", d.urlRoot, clusterID, err)
+		return nil, fmt.Errorf("failed to get list of nodes from discovery service %q, cluster %q: %w", r.URLRoot, clusterID, err)
 	}
 
 	if len(list) < 1 {
 		return nil, fmt.Errorf("no peers available")
 	}
 
-	var ret []*PrePeer //nolint: prealloc
+	var ret []*Peer //nolint: prealloc
 
 	for _, n := range list {
-		if n.ID == zeroKey {
-			return nil, fmt.Errorf("empty key received from discovery service %q, cluster %q", d.urlRoot, clusterID)
+		if n.ID == "" {
+			return nil, fmt.Errorf("empty key received from discovery service %q, cluster %q", r.URLRoot, clusterID)
 		}
 
 		if n.IP.IsZero() {
 			continue
 		}
 
-		ret = append(ret, &PrePeer{
-			IP:         n.IP,
-			NodeIPSets: d.populateNodeIPSets(n),
-			PublicKey:  n.ID,
+		ret = append(ret, &Peer{
+			node: n,
 		})
 	}
 
 	return ret, nil
 }
 
-func (d *externalDiscoverer) populateNodeIPSets(n *types.Node) (set *NodeIPSets) {
-	set = new(NodeIPSets)
-
-	if n == nil || n.ID == zeroKey {
-		return set
-	}
-
-	if len(n.SelfIPs) > 0 {
-		mergeIPSets(set.SelfIPs, n.SelfIPs)
-	}
-
-	for _, ep := range n.KnownEndpoints {
-		set.KnownEndpoints = append(set.KnownEndpoints, ep.Endpoint)
-	}
-
-	return set
+// RegistryKubernetes defines a Kubernetes-based node discoverer.
+type RegistryKubernetes struct {
+	IncludePodSubnets bool
 }
 
-type kubeDiscoverer struct {
-	includePodSubnets bool
-}
-
-func (d *kubeDiscoverer) secretName(nodeName string) string {
+func (r *RegistryKubernetes) secretName(nodeName string) string {
 	return fmt.Sprintf("%s-wglan-node", nodeName)
 }
 
-//nolint: gocyclo,cyclop
-func (d *kubeDiscoverer) Add(ctx context.Context, clusterID string, n *types.Node) (err error) {
+// Add implements registry.Add.
+//nolint: gocyclo
+func (r *RegistryKubernetes) Add(ctx context.Context, clusterID string, n *types.Node) (err error) {
 	var (
 		changed bool
 		kc      *kubernetes.Client
@@ -130,19 +113,14 @@ func (d *kubeDiscoverer) Add(ctx context.Context, clusterID string, n *types.Nod
 	}
 
 	// Set public key
-	if n.ID != zeroKey {
-		var existingKey wgtypes.Key
+	if n.ID != "" {
+		existingKey := keyFromNode(*node)
 
-		existingKey, err = keyFromNode(*node)
-		if err != nil {
-			return fmt.Errorf("failed to parse key from node %q: %w", node.Name, err)
-		}
-
-		if existingKey == zeroKey || existingKey != n.ID {
+		if existingKey == "" || existingKey != n.ID {
 			changed = true
 		}
 
-		node.Annotations[constants.WireguardPublicKeyAnnotation] = n.ID.String()
+		node.Annotations[constants.WireguardPublicKeyAnnotation] = n.ID
 	}
 
 	// Set wireguard IP
@@ -161,20 +139,23 @@ func (d *kubeDiscoverer) Add(ctx context.Context, clusterID string, n *types.Nod
 		node.Annotations[constants.WireguardIPAnnotation] = n.IP.String()
 	}
 
-	if len(n.SelfIPs) > 0 {
-		var existingIPs []netaddr.IP
+	if len(n.Addresses) > 0 {
+		var existingAddresses []*types.Address
 
-		existingIPs, err = ipsFromSelfIPs(*node)
+		before := len(n.Addresses)
+
+		existingAddresses, err = addressesFromKubernetesNode(*node)
 		if err != nil {
 			return fmt.Errorf("failed to parse self IPs from node %q: %w", node.Name, err)
 		}
 
-		var selfIPChanged bool
-		if existingIPs, selfIPChanged = mergeIPSets(existingIPs, n.SelfIPs); selfIPChanged {
+		n.AddAddresses(existingAddresses...)
+
+		if len(n.Addresses) != before {
 			changed = true
 		}
 
-		node.Annotations[constants.NetworkSelfIPsAnnotation] = ipsToListString(existingIPs)
+		node.Annotations[constants.NetworkSelfIPsAnnotation] = addressesToIPListString(n.Addresses)
 	}
 
 	if !changed {
@@ -193,7 +174,7 @@ func (d *kubeDiscoverer) Add(ctx context.Context, clusterID string, n *types.Nod
 
 	if _, err := kc.CoreV1().Nodes().Patch(ctx, n.Name, ktypes.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
 		if apierrors.IsConflict(err) {
-			return fmt.Errorf("unable to update node %q due to conflict: %w", d.secretName(n.Name), err)
+			return fmt.Errorf("unable to update node %q due to conflict: %w", r.secretName(n.Name), err)
 		}
 
 		return fmt.Errorf("error patching node %q: %w", n.Name, err)
@@ -202,7 +183,8 @@ func (d *kubeDiscoverer) Add(ctx context.Context, clusterID string, n *types.Nod
 	return nil
 }
 
-func (d *kubeDiscoverer) List(ctx context.Context, clusterID string) ([]*PrePeer, error) {
+// List implements registry.List.
+func (r *RegistryKubernetes) List(ctx context.Context, clusterID string) ([]*Peer, error) {
 	// See if we can yet construct a kubernetes client
 	kc, err := kubernetes.NewClientFromKubeletKubeconfig()
 	if err != nil {
@@ -214,28 +196,35 @@ func (d *kubeDiscoverer) List(ctx context.Context, clusterID string) ([]*PrePeer
 		return nil, fmt.Errorf("failed to get list of nodes: %w", err)
 	}
 
-	var list []*PrePeer //nolint: prealloc
+	var list []*Peer //nolint: prealloc
 
 	for _, n := range resp.Items {
-		p := new(PrePeer)
+		node := new(types.Node)
 
-		p.PublicKey, err = keyFromNode(n)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse public key from node %s: %w", n.Name, err)
-		}
-
-		if p.PublicKey == zeroKey {
+		if node.ID = keyFromNode(n); node.ID == "" {
 			continue
 		}
 
-		p.IP, err = ipFromNode(n)
+		node.Name = n.Name
+
+		node.IP, err = ipFromNode(n)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse wireguard IP from node %s: %w", n.Name, err)
 		}
 
-		p.NodeIPSets, err = populateNodeIPSets(n, d.includePodSubnets)
+		node.Addresses, err = addressesFromKubernetesNode(n)
 		if err != nil {
 			return nil, fmt.Errorf("failed to populate node IP sets from node %s: %w", n.Name, err)
+		}
+
+		assignedPrefixes, err := assignedPrefixesFromKubernetesNode(n)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct assigned prefix list from node %s: %w", n.Name, err)
+		}
+
+		p := &Peer{
+			node:             node,
+			assignedPrefixes: assignedPrefixes,
 		}
 
 		list = append(list, p)
@@ -244,17 +233,19 @@ func (d *kubeDiscoverer) List(ctx context.Context, clusterID string) ([]*PrePeer
 	return list, nil
 }
 
-func ipsToListString(ips []netaddr.IP) string {
-	out := make([]string, 0, len(ips))
+func addressesToIPListString(addresses []*types.Address) string {
+	out := make([]string, 0, len(addresses))
 
-	for _, ip := range ips {
-		out = append(out, ip.String())
+	for _, a := range addresses {
+		if !a.IP.IsZero() {
+			out = append(out, a.IP.String())
+		}
 	}
 
 	return strings.Join(out, ",")
 }
 
-func ipsFromSelfIPs(n v1.Node) (out []netaddr.IP, err error) {
+func addressesFromKubernetesNode(n v1.Node) (out []*types.Address, err error) {
 	var merr *multierror.Error
 
 	if data, ok := n.Annotations[constants.NetworkSelfIPsAnnotation]; ok {
@@ -267,78 +258,33 @@ func ipsFromSelfIPs(n v1.Node) (out []netaddr.IP, err error) {
 			}
 
 			if !ip.IsZero() {
-				out = append(out, ip)
+				out = append(out, &types.Address{IP: ip})
 			}
 		}
 	}
-
-	var found bool
 
 	// Also add IPs from status.addresses
 	for _, a := range n.Status.Addresses {
-		found = false
-
 		ip, err := netaddr.ParseIP(a.Address)
 		if err != nil {
-			continue // not all addresses will be IPs
+			out = append(out, &types.Address{Name: a.Address})
+
+			continue
 		}
 
-		for _, existing := range out {
-			if ip == existing {
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			out = append(out, ip)
-		}
+		out = append(out, &types.Address{IP: ip})
 	}
 
 	return out, merr.ErrorOrNil()
 }
 
-func knownEndpointsFromNode(n v1.Node) (out []netaddr.IPPort, err error) {
-	var merr *multierror.Error
-
-	if data, ok := n.Annotations[constants.WireguardKnownEndpointsAnnotation]; ok {
-		var found bool
-
-		for _, ipString := range strings.Split(data, ",") {
-			ip, err := netaddr.ParseIPPort(strings.TrimSpace(ipString))
-			if err != nil {
-				merr = multierror.Append(merr, fmt.Errorf("failed to parse known endpoint (%s) from node %q: %w", ipString, n.Name, err))
-
-				continue
-			}
-
-			found = false
-
-			for _, existing := range out {
-				if ip == existing {
-					found = true
-
-					break
-				}
-			}
-
-			if !found {
-				out = append(out, ip)
-			}
-		}
-	}
-
-	return out, merr.ErrorOrNil()
-}
-
-func keyFromNode(n v1.Node) (key wgtypes.Key, err error) {
+func keyFromNode(n v1.Node) string {
 	keyString, ok := n.Annotations[constants.WireguardPublicKeyAnnotation]
 	if !ok {
-		return key, nil
+		return ""
 	}
 
-	return wgtypes.ParseKey(keyString)
+	return keyString
 }
 
 func ipFromNode(n v1.Node) (ip netaddr.IP, err error) {
@@ -350,63 +296,21 @@ func ipFromNode(n v1.Node) (ip netaddr.IP, err error) {
 	return netaddr.ParseIP(data)
 }
 
-//nolint: gocyclo
-func populateNodeIPSets(n v1.Node, includePodSubnets bool) (set *NodeIPSets, err error) {
-	set = new(NodeIPSets)
-
-	assignedSetBuilder := &netaddr.IPSetBuilder{}
-
-	selfIPs, err := ipsFromSelfIPs(n)
-	if err != nil {
-		return set, fmt.Errorf("failed to parse node %q self-IPs: %w", n.Name, err)
-	}
+func assignedPrefixesFromKubernetesNode(n v1.Node) (*netaddr.IPSet, error) {
+	set := new(netaddr.IPSetBuilder)
 
 	if prefixes, ok := n.Annotations[constants.WireguardAssignedPrefixesAnnotation]; ok {
 		for _, prefixString := range strings.Split(prefixes, ",") {
-			var ip netaddr.IPPrefix
-
-			ip, err = netaddr.ParseIPPrefix(strings.TrimSpace(prefixString))
+			ip, err := netaddr.ParseIPPrefix(strings.TrimSpace(prefixString))
 			if err != nil {
 				continue
 			}
 
-			assignedSetBuilder.AddPrefix(ip)
+			set.AddPrefix(ip)
 		}
 	}
 
-	if includePodSubnets {
-		var ip netaddr.IPPrefix
-
-		ip, err = netaddr.ParseIPPrefix(n.Spec.PodCIDR)
-		if err == nil {
-			assignedSetBuilder.AddPrefix(ip)
-		}
-
-		for _, podSubnet := range n.Spec.PodCIDRs {
-			var podPrefix netaddr.IPPrefix
-
-			podPrefix, err = netaddr.ParseIPPrefix(podSubnet)
-			if err == nil {
-				assignedSetBuilder.AddPrefix(podPrefix)
-			}
-		}
-	}
-
-	knownEndpoints, err := knownEndpointsFromNode(n)
-	if err != nil {
-		return set, fmt.Errorf("failed to parse known endpoints from node %q: %w", n.Name, err)
-	}
-
-	set.SelfIPs = selfIPs
-
-	set.AssignedPrefixes, err = assignedSetBuilder.IPSet()
-	if err != nil {
-		return set, fmt.Errorf("failed to compile assigned IP set: %w", err)
-	}
-
-	set.KnownEndpoints = knownEndpoints
-
-	return set, nil
+	return set.IPSet()
 }
 
 /*
@@ -419,11 +323,11 @@ func (d *staticDiscoverer) Add(ctx context.Context, clusterID string, n *types.N
 	return nil
 }
 
-func (d *staticDiscoverer) List(ctx context.Context, clusterID string) ([]*PrePeer, error) {
-	var list []*PrePeer
+func (d *staticDiscoverer) List(ctx context.Context, clusterID string) ([]*Peer, error) {
+	var list []*Peer
 
 	for _, p := range d.peers {
-		list = append(list, &PrePeer{
+		list = append(list, &Peer{
 			PublicKey: p.PublicKey,
 		})
 	}

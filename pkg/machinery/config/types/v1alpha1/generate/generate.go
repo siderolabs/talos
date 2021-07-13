@@ -7,8 +7,10 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"time"
@@ -56,6 +58,7 @@ type Input struct {
 	AdditionalSubjectAltNames []string
 	AdditionalMachineCertSANs []string
 
+	ClusterID         string
 	ClusterName       string
 	ServiceDomain     string
 	PodNet            []string
@@ -439,6 +442,11 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 
 	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
 
+	clusterID, err := genV4UUID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate ClusterID: %w", err)
+	}
+
 	input = &Input{
 		Certs:                      secrets.Certs,
 		VersionContract:            options.VersionContract,
@@ -446,6 +454,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		PodNet:                     []string{podNet},
 		ServiceNet:                 []string{serviceNet},
 		ServiceDomain:              options.DNSDomain,
+		ClusterID:                  clusterID,
 		ClusterName:                clustername,
 		KubernetesVersion:          kubernetesVersion,
 		Secrets:                    secrets.Secrets,
@@ -532,4 +541,34 @@ func emptyIf(str, check string) string {
 	}
 
 	return str
+}
+
+func genV4UUID() (string, error) {
+	uuid := make([]byte, 0, 16)
+
+	_, err := io.ReadFull(rand.Reader, uuid)
+	if err != nil {
+		return "", err
+	}
+
+	uuid[6] = (uuid[6] & 0x0f) | 0x40 // Version 4
+	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Variant is 10
+
+	return encodeUUIDString(uuid), nil
+}
+
+func encodeUUIDString(uuid []byte) string {
+	dst := make([]byte, 0, 36)
+
+	hex.Encode(dst, uuid[:4])
+	dst[8] = '-'
+	hex.Encode(dst[9:13], uuid[4:6])
+	dst[13] = '-'
+	hex.Encode(dst[14:18], uuid[6:8])
+	dst[18] = '-'
+	hex.Encode(dst[19:23], uuid[8:10])
+	dst[23] = '-'
+	hex.Encode(dst[24:], uuid[10:])
+
+	return string(dst)
 }

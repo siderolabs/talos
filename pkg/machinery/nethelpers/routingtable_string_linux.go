@@ -19,9 +19,7 @@ const (
 	_RoutingTable_name_1 = "defaultmainlocal"
 )
 
-var (
-	_RoutingTable_index_1 = [...]uint8{0, 7, 11, 16}
-)
+var _RoutingTable_index_1 = [...]uint8{0, 7, 11, 16}
 
 func (i RoutingTable) String() string {
 	switch {

@@ -261,6 +261,7 @@ type RegistryTLSConfig interface {
 // ClusterConfig defines the requirements for a config that pertains to cluster
 // related options.
 type ClusterConfig interface {
+	ID() string
 	Name() string
 	APIServer() APIServer
 	ControllerManager() ControllerManager

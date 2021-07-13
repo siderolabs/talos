@@ -55,12 +55,14 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e
 	github.com/jsimonetti/rtnetlink v0.0.0-20210614053835-9c52e516c709
-	github.com/klauspost/compress v1.12.3 // indirect
+	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
+	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
+	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pin/tftp v2.1.0+incompatible
@@ -84,7 +86,7 @@ require (
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
-	github.com/talos-systems/wglan-manager v0.0.0-20210527223853-576288fc7559
+	github.com/talos-systems/wglan-manager v0.0.2
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
@@ -95,8 +97,9 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
+	go.uber.org/atomic v1.8.0 // indirect
 	go.uber.org/zap v1.18.1
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff
 	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

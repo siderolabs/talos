@@ -633,6 +633,10 @@ type MachineConfig struct {
 //     - value: clusterConfigExample
 type ClusterConfig struct {
 	//   description: |
+	//     Globally unique identifier for this cluster.
+	//     This is generally a UUID.
+	ClusterID string `yaml:"id"`
+	//   description: |
 	//     Provides control plane specific configuration options.
 	//   examples:
 	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.
