@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/coreos/go-semver/semver"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,6 +29,7 @@ type UpgradeOptions struct {
 	ToVersion   string
 
 	ControlPlaneEndpoint string
+	LogOutput            io.Writer
 
 	extraUpdaters                []daemonsetUpdater
 	podCheckpointerExtraUpdaters []daemonsetUpdater
@@ -45,6 +47,15 @@ func (options *UpgradeOptions) Path() string {
 	}
 
 	return fmt.Sprintf("%d.%d->%d.%d", from.Major, from.Minor, to.Major, to.Minor)
+}
+
+// Log writes the line to logger or to stdout if no logger was provided.
+func (options *UpgradeOptions) Log(line string, args ...interface{}) {
+	if options.LogOutput != nil {
+		options.LogOutput.Write([]byte(fmt.Sprintf(line, args...))) //nolint:errcheck
+	}
+
+	fmt.Printf(line+"\n", args...)
 }
 
 type daemonsetUpdater func(ds string, daemonset *appsv1.DaemonSet) error

@@ -65,7 +65,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		return fmt.Errorf("no master nodes discovered")
 	}
 
-	fmt.Printf("discovered master nodes %q\n", options.masterNodes)
+	options.Log("discovered master nodes %q", options.masterNodes)
 
 	for _, service := range []string{kubeAPIServer, kubeControllerManager, kubeScheduler} {
 		if err = upgradeConfigPatch(ctx, cluster, options, service); err != nil {
@@ -85,7 +85,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 }
 
 func upgradeConfigPatch(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {
-	fmt.Printf("updating %q to version %q\n", service, options.ToVersion)
+	options.Log("updating %q to version %q", service, options.ToVersion)
 
 	for _, node := range options.masterNodes {
 		if err := upgradeNodeConfigPatch(ctx, cluster, options, service, node); err != nil {
@@ -108,7 +108,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 
 	ctx = client.WithNodes(ctx, node)
 
-	fmt.Printf(" > %q: starting update\n", node)
+	options.Log(" > %q: starting update", node)
 
 	watchClient, err := c.Resources.Watch(ctx, config.NamespaceName, config.K8sControlPlaneType, service)
 	if err != nil {

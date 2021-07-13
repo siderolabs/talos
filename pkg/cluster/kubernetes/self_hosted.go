@@ -43,7 +43,7 @@ func UpgradeSelfHosted(ctx context.Context, cluster cluster.K8sProvider, options
 
 		options.extraUpdaters = append(options.extraUpdaters, serviceAccountUpdater)
 
-		if err = serviceAccountSecretsUpdate(ctx, cluster); err != nil {
+		if err = serviceAccountSecretsUpdate(ctx, cluster, options); err != nil {
 			return err
 		}
 
@@ -68,13 +68,13 @@ func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, options 
 		return fmt.Errorf("error building K8s client: %w", err)
 	}
 
-	if err = podCheckpointerGracePeriod(ctx, clientset, "0m"); err != nil {
+	if err = podCheckpointerGracePeriod(ctx, clientset, "0m", options); err != nil {
 		return fmt.Errorf("error setting pod-checkpointer grace period: %w", err)
 	}
 
 	graceTimeout := 5 * time.Minute
 
-	fmt.Printf("sleeping %s to let the pod-checkpointer self-checkpoint be updated\n", graceTimeout.String())
+	options.Log("sleeping %s to let the pod-checkpointer self-checkpoint be updated", graceTimeout.String())
 	time.Sleep(graceTimeout)
 
 	daemonsets := []string{kubeAPIServer, kubeControllerManager, kubeScheduler, kubeProxy}
@@ -85,7 +85,7 @@ func hyperkubeUpgrade(ctx context.Context, cluster cluster.K8sProvider, options 
 		}
 	}
 
-	if err = podCheckpointerGracePeriod(ctx, clientset, graceTimeout.String(), options.podCheckpointerExtraUpdaters...); err != nil {
+	if err = podCheckpointerGracePeriod(ctx, clientset, graceTimeout.String(), options, options.podCheckpointerExtraUpdaters...); err != nil {
 		return fmt.Errorf("error setting pod-checkpointer grace period: %w", err)
 	}
 
@@ -158,8 +158,8 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 	})
 }
 
-func podCheckpointerGracePeriod(ctx context.Context, clientset *kubernetes.Clientset, gracePeriod string, extraUpdaters ...daemonsetUpdater) error {
-	fmt.Printf("updating pod-checkpointer grace period to %q\n", gracePeriod)
+func podCheckpointerGracePeriod(ctx context.Context, clientset *kubernetes.Clientset, gracePeriod string, options UpgradeOptions, extraUpdaters ...daemonsetUpdater) error {
+	options.Log("updating pod-checkpointer grace period to %q", gracePeriod)
 
 	return updateDaemonset(ctx, clientset, "pod-checkpointer", func(daemonset *appsv1.DaemonSet) error {
 		if len(daemonset.Spec.Template.Spec.Containers) != 1 {
@@ -186,7 +186,7 @@ func podCheckpointerGracePeriod(ctx context.Context, clientset *kubernetes.Clien
 //nolint:gocyclo
 func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds string, options UpgradeOptions) error {
 	if ds == kubeAPIServer {
-		fmt.Printf("temporarily taking %q out of pod-checkpointer control\n", ds)
+		options.Log("temporarily taking %q out of pod-checkpointer control", ds)
 
 		if err := updateDaemonset(ctx, clientset, ds, func(daemonset *appsv1.DaemonSet) error {
 			delete(daemonset.Spec.Template.Annotations, checkpointerAnnotation)
@@ -197,7 +197,7 @@ func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds
 		}
 	}
 
-	fmt.Printf("updating daemonset %q to version %q\n", ds, options.ToVersion)
+	options.Log("updating daemonset %q to version %q", ds, options.ToVersion)
 
 	return updateDaemonset(ctx, clientset, ds, func(daemonset *appsv1.DaemonSet) error {
 		if len(daemonset.Spec.Template.Spec.Containers) != 1 {
@@ -245,7 +245,7 @@ func hyperkubeUpgradeDs(ctx context.Context, clientset *kubernetes.Clientset, ds
 	})
 }
 
-func serviceAccountSecretsUpdate(ctx context.Context, cluster cluster.K8sProvider) error {
+func serviceAccountSecretsUpdate(ctx context.Context, cluster cluster.K8sProvider, options UpgradeOptions) error {
 	const serviceAccountKey = "service-account.key"
 
 	clientset, err := cluster.K8sClient(ctx)
@@ -278,7 +278,7 @@ func serviceAccountSecretsUpdate(ctx context.Context, cluster cluster.K8sProvide
 		return fmt.Errorf("error updating kube-apiserver secrets: %w", err)
 	}
 
-	fmt.Printf("patched kube-apiserver secrets for %q\n", serviceAccountKey)
+	options.Log("patched kube-apiserver secrets for %q", serviceAccountKey)
 
 	return nil
 }
