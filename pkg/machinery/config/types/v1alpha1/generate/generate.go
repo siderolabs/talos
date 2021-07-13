@@ -460,16 +460,11 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		return nil, err
 	}
 
-	var additionalSubjectAltNames []string
+	additionalSubjectAltNames := append([]string(nil), options.AdditionalSubjectAltNames...)
 
-	var additionalMachineCertSANs []string
-
-	if len(options.EndpointList) > 0 {
-		additionalSubjectAltNames = options.EndpointList
-		additionalMachineCertSANs = options.EndpointList
+	if !options.VersionContract.SupportsDynamicCertSANs() {
+		additionalSubjectAltNames = append(additionalSubjectAltNames, options.EndpointList...)
 	}
-
-	additionalSubjectAltNames = append(additionalSubjectAltNames, options.AdditionalSubjectAltNames...)
 
 	input = &Input{
 		Certs:                      secrets.Certs,
@@ -485,7 +480,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		Secrets:                    secrets.Secrets,
 		TrustdInfo:                 secrets.TrustdInfo,
 		AdditionalSubjectAltNames:  additionalSubjectAltNames,
-		AdditionalMachineCertSANs:  additionalMachineCertSANs,
+		AdditionalMachineCertSANs:  additionalSubjectAltNames,
 		InstallDisk:                options.InstallDisk,
 		InstallImage:               options.InstallImage,
 		InstallExtraKernelArgs:     options.InstallExtraKernelArgs,
