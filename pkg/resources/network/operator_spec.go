@@ -30,6 +30,7 @@ type OperatorSpecSpec struct {
 	DHCP4 DHCP4OperatorSpec `yaml:"dhcp4,omitempty"`
 	DHCP6 DHCP6OperatorSpec `yaml:"dhcp6,omitempty"`
 	VIP   VIPOperatorSpec   `yaml:"vip,omitempty"`
+	WgLAN WgLANOperatorSpec `yaml:"wglan,omitempty"`
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.
@@ -55,6 +56,16 @@ type VIPEquinixMetalSpec struct {
 	ProjectID string `yaml:"projectID"`
 	DeviceID  string `yaml:"deviceID"`
 	APIToken  string `yaml:"apiToken"`
+}
+
+// WgLANOperatorSpec describes Wireguard LAN operator options.
+type WgLANOperatorSpec struct {
+	ClusterID     string           `yaml:"clusterID"`
+	DiscoveryURL  string           `yaml:"discoveryURL,omitempty"`
+	InterfaceName string           `yaml:"interface,omitempty"`
+	PodNetworking bool             `yaml:"podNetworking"`
+	Prefix        netaddr.IPPrefix `yaml:"prefix"`
+	PrivateKey    string           `yaml:"privateKey"`
 }
 
 // NewOperatorSpec initializes a OperatorSpec resource.

@@ -391,7 +391,9 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 
 		return operator.NewVIP(logger, spec.LinkName, spec.VIP, ctrl.State)
 	case network.OperatorWgLAN:
-		panic("not implemented")
+		logger = logger.With(zap.String("operator", "wglan"))
+
+		return operator.NewWgLAN(logger, spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
 	}

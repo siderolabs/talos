@@ -8,14 +8,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"time"
 
 	"github.com/google/nftables"
 	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/hashicorp/go-multierror"
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -28,7 +27,7 @@ const reconciliationInterval = time.Minute
 
 // RulesManager maintains the NFTables, Route Rules, and Routing Table for WgLAN.
 type RulesManager struct {
-	c *wgLanController
+	db *PeerDB
 
 	// externalMark is the firewall mark used by Wireguard to indicate packets which should not be routed through the Wireguard interface because they are the Wireguard interface's _own_ packets.
 	externalMark uint32
@@ -50,18 +49,14 @@ type RulesManager struct {
 
 	// targetSet6 is a handle for the IPv6 target IP nftables set
 	targetSet6 *nftables.Set
+
+	logger *zap.Logger
 }
 
 // Run starts the Rules Manager, maintaining the components over time.
-func (m *RulesManager) Run(ctx context.Context, c *wgLanController) error {
-	m.c = c
-
+func (m *RulesManager) Run(ctx context.Context, logger *zap.Logger, db *PeerDB) error {
 	if m.externalMark == 0 {
 		m.externalMark = constants.WireguardDefaultFirewallMark
-
-		if m.c.wg != nil && m.c.wg.FirewallMark != nil {
-			m.externalMark = uint32(*m.c.wg.FirewallMark)
-		}
 	}
 
 	if m.internalMark == 0 {
@@ -72,7 +67,9 @@ func (m *RulesManager) Run(ctx context.Context, c *wgLanController) error {
 		m.targetTable = constants.WireguardDefaultRoutingTable
 	}
 
-	if err := m.setup(c.iface.Index, c.routingTable); err != nil {
+	m.logger = logger
+
+	if err := m.setup(); err != nil {
 		return fmt.Errorf("failed to setup initial routes and rules: %w", err)
 	}
 
@@ -81,37 +78,57 @@ func (m *RulesManager) Run(ctx context.Context, c *wgLanController) error {
 	return nil
 }
 
-func (m *RulesManager) setup(iface int, routingTable int) error {
-	if err := ensureRoutingTable(iface, routingTable); err != nil {
-		return fmt.Errorf("failed to ensure existence of Wireguard LAN routing table: %w", err)
-	}
-
+func (m *RulesManager) setup() error {
 	if err := m.createRules(); err != nil {
 		return fmt.Errorf("failed to ensure wireguard force rule: %w", err)
 	}
 
-	if err := m.createNFTable(); err != nil {
-		return fmt.Errorf("failed to create nftables table: %w", err)
+	if err := m.reconcile(); err != nil {
+		return fmt.Errorf("failed to perform initial table construction: %w", err)
 	}
 
 	return nil
 }
 
 func (m *RulesManager) maintain(ctx context.Context) {
+	defer func() {
+		if err := m.deleteNFTable(); err != nil {
+			m.logger.Warn("failed to delete NFTable", zap.Error(err))
+		}
+
+		if err := m.deleteRules(); err != nil {
+			m.logger.Warn("failed to delete IP route rules", zap.Error(err))
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
+			m.logger.Info("shutting down rules manager")
+
 			return
 		case <-time.After(reconciliationInterval):
 			if err := m.reconcile(); err != nil {
-				m.c.logger.Warn("ip rule reconciliation failed", zap.Error(err))
+				m.logger.Warn("ip rule reconciliation failed", zap.Error(err))
 			}
 		}
 	}
 }
 
 func (m *RulesManager) collectTargets() (*netaddr.IPSet, error) {
-	return m.c.allDestinations()
+	b := new(netaddr.IPSetBuilder)
+
+	for _, pp := range m.db.List() {
+		if pp == nil || !pp.peerUp {
+			continue
+		}
+
+		if routeSet, err := pp.AllowedPrefixes(); err != nil {
+			b.AddSet(routeSet)
+		}
+	}
+
+	return b.IPSet()
 }
 
 func (m *RulesManager) reconcile() error {
@@ -124,7 +141,7 @@ func (m *RulesManager) reconcile() error {
 		return nil
 	}
 
-	if err := m.updateSets(desired); err != nil {
+	if err := m.setNFTable(desired); err != nil {
 		return fmt.Errorf("failed to update IP sets: %w", err)
 	}
 
@@ -133,8 +150,36 @@ func (m *RulesManager) reconcile() error {
 	return nil
 }
 
-func (m *RulesManager) createNFTable() error {
+func (m *RulesManager) deleteNFTable() error {
 	c := &nftables.Conn{}
+
+	// NB: sets should be flushed before new members because nftables will fail
+	// if there are any conflicts between existing ranges and new ranges.
+
+	c.FlushSet(m.targetSet4)
+
+	c.FlushSet(m.targetSet6)
+
+	c.FlushTable(m.nfTable)
+
+	if err := c.Flush(); err != nil {
+		return fmt.Errorf("failed to execute nftable creation: %w", err)
+	}
+
+	return nil
+}
+
+func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
+	c := &nftables.Conn{}
+
+	// NB: sets should be flushed before new members because nftables will fail
+	// if there are any conflicts between existing ranges and new ranges.
+
+	c.FlushSet(m.targetSet4)
+
+	c.FlushSet(m.targetSet6)
+
+	c.FlushTable(m.nfTable)
 
 	// Basic boilerplate; create a table & chain.
 	table := &nftables.Table{
@@ -174,12 +219,8 @@ func (m *RulesManager) createNFTable() error {
 		KeyType:  nftables.TypeIP6Addr,
 	}
 
-	var (
-		setElements4 []nftables.SetElement
-		setElements6 []nftables.SetElement
-	)
+	setElements4, setElements6 := m.setElements(ips)
 
-	// Create the set with a bunch of initial values.
 	if err := c.AddSet(targetSetV4, setElements4); err != nil {
 		return fmt.Errorf("failed to add IPv4 set: %w", err)
 	}
@@ -330,34 +371,27 @@ func matchIPSet(set *nftables.Set, mark uint32, family nftables.TableFamily) []e
 	}
 }
 
-func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
-	c := &nftables.Conn{}
-
-	// NB: sets should be flushed before new members because nftables will fail
-	// if there are any conflicts between existing ranges and new ranges.
-
-	c.FlushSet(m.targetSet4)
-
-	c.FlushSet(m.targetSet6)
-
-	var (
-		setElements4 []nftables.SetElement
-		setElements6 []nftables.SetElement
-	)
+func (m *RulesManager) setElements(ips *netaddr.IPSet) (setElements4, setElements6 []nftables.SetElement) {
+	if ips == nil {
+		return nil, nil
+	}
 
 	for _, r := range ips.Ranges() {
 		fromBin, err := r.From().MarshalBinary()
 		if err != nil {
-			return fmt.Errorf("failed to marshal from IP %s: %w", r.From().String(), err)
+			m.logger.Sugar().Warn("failed to marshal from set from IP: %q: %w", r.From().String(), err)
+
+			continue
 		}
 
 		toBin, err := r.To().Next().MarshalBinary()
 		if err != nil {
-			return fmt.Errorf("failed to marhsk to IP %q: %w", r.To().Next().String(), err)
+			m.logger.Sugar().Warn("failed to marshal to IP %q: %w", r.To().Next().String(), err)
+
+			continue
 		}
 
 		se := []nftables.SetElement{
-
 			{
 				Key:         fromBin,
 				IntervalEnd: false,
@@ -368,7 +402,7 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 			},
 		}
 
-		m.c.logger.Sugar().Infof("adding IP set %s - %s", r.From().String(), r.To().Next().String())
+		m.logger.Sugar().Debugf("adding IP set %s - %s", r.From().String(), r.To().Next().String())
 
 		if r.From().Is6() {
 			setElements6 = append(setElements6, se...)
@@ -377,7 +411,7 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 		}
 	}
 
-	m.c.logger.Sugar().Infof("Added %d IPv4 routes and %d IPv6 routes", len(setElements4), len(setElements6))
+	m.logger.Sugar().Infof("Added %d IPv4 routes and %d IPv6 routes", len(setElements4), len(setElements6))
 
 	metricRouteCount.WithLabelValues("ipv4").
 		Set(float64(len(setElements4)))
@@ -385,23 +419,7 @@ func (m *RulesManager) updateSets(ips *netaddr.IPSet) error {
 	metricRouteCount.WithLabelValues("ipv6").
 		Set(float64(len(setElements6)))
 
-	// Create the set with a bunch of initial values.
-	if err := c.SetAddElements(m.targetSet4, setElements4); err != nil {
-		return fmt.Errorf("failed to add IPv4 set: %w", err)
-	}
-
-	if err := c.SetAddElements(m.targetSet6, setElements6); err != nil {
-		return fmt.Errorf("failed to add IPv6 set: %w", err)
-	}
-
-	if err := c.Flush(); err != nil {
-		return fmt.Errorf("failed to flush sets: %w", err)
-	}
-
-	// TODO:  check sets to make sure it actually worked, because nftables is
-	// notorious for this failing silently.
-
-	return nil
+	return setElements4, setElements6
 }
 
 func nextRuleNumber(nc *netlink.Handle, family int) int {
@@ -472,55 +490,49 @@ func (m *RulesManager) createRules() error {
 	return nil
 }
 
-func ensureRoutingTable(iface int, tableID int) error {
-	rtnlc, err := rtnetlink.Dial(nil)
+func (m *RulesManager) deleteRulesFamily(nc *netlink.Handle, family int) error {
+	var merr *multierror.Error
+
+	list, err := nc.RuleList(family)
 	if err != nil {
-		return fmt.Errorf("failed to dial rtnetlink: %w", err)
+		merr = multierror.Append(merr, fmt.Errorf("failed to get route rules: %w", err))
 	}
 
-	defer rtnlc.Close() //nolint: errcheck
+	for _, r := range list {
+		if r.Table == m.targetTable &&
+			r.Mark == int(m.internalMark) {
+			thisRule := r
 
-	msg4 := &rtnetlink.RouteMessage{
-		Family:    unix.AF_INET,
-		DstLength: 0,
-		Table:     uint8(tableID),
-		Protocol:  unix.RTPROT_STATIC,
-		Scope:     unix.RT_SCOPE_UNIVERSE,
-		Type:      unix.RTN_UNICAST,
-		Attributes: rtnetlink.RouteAttributes{
-			Dst:      net.ParseIP("0.0.0.0"),
-			OutIface: uint32(iface),
-			Priority: 1,
-			Table:    uint32(tableID),
-		},
-	}
+			if err := nc.RuleDel(&thisRule); err != nil {
+				if !errors.Is(err, os.ErrNotExist) {
+					merr = multierror.Append(merr, err)
+				}
+			}
 
-	msg6 := &rtnetlink.RouteMessage{
-		Family:    unix.AF_INET6,
-		DstLength: 0,
-		Table:     uint8(tableID),
-		Protocol:  unix.RTPROT_STATIC,
-		Scope:     unix.RT_SCOPE_UNIVERSE,
-		Type:      unix.RTN_UNICAST,
-		Attributes: rtnetlink.RouteAttributes{
-			Dst:      net.ParseIP("::"),
-			OutIface: uint32(iface),
-			Priority: 1,
-			Table:    uint32(tableID),
-		},
-	}
-
-	if err = rtnlc.Route.Add(msg4); err != nil {
-		if !errors.Is(err, os.ErrExist) {
-			return fmt.Errorf("failed to add default IPv4 route to Wireguard routing table: %w", err)
+			break
 		}
 	}
 
-	if err = rtnlc.Route.Add(msg6); err != nil {
-		if !errors.Is(err, os.ErrExist) {
-			return fmt.Errorf("failed to add default IPv6 route to Wireguard routing table: %w", err)
-		}
+	return merr.ErrorOrNil()
+}
+
+func (m *RulesManager) deleteRules() error {
+	var merr *multierror.Error
+
+	nc, err := netlink.NewHandle()
+	if err != nil {
+		return fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
-	return nil
+	defer nc.Delete()
+
+	if err = m.deleteRulesFamily(nc, unix.AF_INET); err != nil {
+		merr = multierror.Append(merr, fmt.Errorf("failed to delete all IPv4 route rules: %w", err))
+	}
+
+	if err = m.deleteRulesFamily(nc, unix.AF_INET6); err != nil {
+		merr = multierror.Append(merr, fmt.Errorf("failed to delete all IPv6 route rules: %w", err))
+	}
+
+	return merr.ErrorOrNil()
 }

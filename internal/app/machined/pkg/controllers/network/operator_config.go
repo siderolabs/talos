@@ -195,6 +195,43 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					}
 				}
 
+				if device.WireguardConfig() != nil && device.WireguardConfig().AutomaticNodes() {
+					var (
+						clusterID string
+						prefix    netaddr.IPPrefix
+						privKey   string
+					)
+
+					clusterID = cfgProvider.Cluster().ID()
+					if device.WireguardConfig().ClusterID() != "" {
+						clusterID = device.WireguardConfig().ClusterID()
+					}
+
+					prefix, err = device.WireguardConfig().AutomaticNodesPrefix()
+					if err != nil {
+						return fmt.Errorf("failed to retrieve KubeSpan prefix: %w", err)
+					}
+
+					privKey, err = device.WireguardConfig().PrivateKey()
+					if err != nil {
+						return fmt.Errorf("failed to retrieve KubeSpan private key: %w", err)
+					}
+
+					specs = append(specs, network.OperatorSpecSpec{
+						Operator:  network.OperatorWgLAN,
+						LinkName:  device.Interface(),
+						RequireUp: true,
+						WgLAN: network.WgLANOperatorSpec{
+							ClusterID:     clusterID,
+							DiscoveryURL:  device.WireguardConfig().NATDiscoveryService(),
+							InterfaceName: device.Interface(),
+							PodNetworking: device.WireguardConfig().PodNetworkingEnabled(),
+							Prefix:        prefix,
+							PrivateKey:    privKey,
+						},
+					})
+				}
+
 				for _, vlan := range device.Vlans() {
 					if vlan.DHCP() {
 						specs = append(specs, network.OperatorSpecSpec{
