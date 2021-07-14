@@ -32,7 +32,7 @@ for the machines that have legacy BIOS which does not support GPT partitioning s
     [notes.coredns]
         title = "CoreDNS"
         description = """\
-Added the flag `cluster.coreDNS.disabled` to coreDNS deployment during the cluster bootstrap.
+Added the flag `cluster.coreDNS.disabled` to disable coreDNS deployment during the cluster bootstrap.
 """
 
     [notes.components]
