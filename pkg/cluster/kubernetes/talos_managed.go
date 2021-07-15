@@ -75,7 +75,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 
 	if err = hyperkubeUpgradeDs(ctx, k8sClient.Clientset, kubeProxy, options); err != nil {
 		if apierrors.IsNotFound(err) {
-			fmt.Println("kube-proxy skipped as DaemonSet was not found")
+			options.Log("kube-proxy skipped as DaemonSet was not found")
 		} else {
 			return fmt.Errorf("error updating kube-proxy: %w", err)
 		}
@@ -142,8 +142,8 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 		}
 	}
 
-	fmt.Printf(" > %q: machine configuration patched\n", node)
-	fmt.Printf(" > %q: waiting for API server state pod update\n", node)
+	options.Log(" > %q: machine configuration patched", node)
+	options.Log(" > %q: waiting for API server state pod update", node)
 
 	var expectedConfigVersion string
 
@@ -170,7 +170,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 		return err
 	}
 
-	fmt.Printf(" < %q: successfully updated\n", node)
+	options.Log(" < %q: successfully updated", node)
 
 	return nil
 }
