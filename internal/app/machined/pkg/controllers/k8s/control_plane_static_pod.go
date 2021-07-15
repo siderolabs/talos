@@ -226,7 +226,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		fmt.Sprintf("--etcd-certfile=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt")),
 		fmt.Sprintf("--etcd-keyfile=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key")),
 		fmt.Sprintf("--etcd-servers=%s", strings.Join(cfg.EtcdServers, ",")),
-		"--insecure-port=0",
 		fmt.Sprintf("--kubelet-client-certificate=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt")),
 		fmt.Sprintf("--kubelet-client-key=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key")),
 		fmt.Sprintf("--secure-port=%d", cfg.LocalPort),

@@ -42,6 +42,8 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 	case "1.20->1.20":
 	case "1.20->1.21":
 	case "1.21->1.21":
+	case "1.21->1.22":
+	case "1.22->1.22":
 
 	default:
 		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
