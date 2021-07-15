@@ -290,7 +290,6 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"container-runtime":          "remote",
 		"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
 		"config":                     "/etc/kubernetes/kubelet.yaml",
-		"dynamic-config-dir":         "/etc/kubernetes/kubelet",
 
 		"cert-dir":     constants.KubeletPKIDir,
 		"cni-conf-dir": cni.DefaultNetDir,
