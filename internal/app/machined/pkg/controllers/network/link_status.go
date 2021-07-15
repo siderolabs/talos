@@ -67,10 +67,10 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 
 	ethtoolWatcher, err := watch.NewEthtool(r)
 	if err != nil {
-		return err
+		logger.Warn("ethtool watcher failed to start", zap.Error(err))
+	} else {
+		defer ethtoolWatcher.Done()
 	}
-
-	defer ethtoolWatcher.Done()
 
 	conn, err := rtnetlink.Dial(nil)
 	if err != nil {
@@ -81,10 +81,10 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 
 	ethClient, err := ethtool.New()
 	if err != nil {
-		return fmt.Errorf("error dialing ethtool socket: %w", err)
+		logger.Warn("error dialing ethtool socket", zap.Error(err))
+	} else {
+		defer ethClient.Close() //nolint:errcheck
 	}
-
-	defer ethClient.Close() //nolint:errcheck
 
 	wgClient, err := wgctrl.New()
 	if err != nil {
@@ -137,31 +137,33 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 			ethMode  *ethtool.LinkMode
 		)
 
-		// query additional information via ethtool (if supported)
-		ethState, err = ethClient.LinkState(ethtool.Interface{
-			Index: int(link.Index),
-		})
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			logger.Warn("error querying ethtool link state", zap.String("link", link.Attributes.Name), zap.Error(err))
-		}
-
-		// skip if previous call failed (e.g. not supported)
-		if err == nil {
-			ethInfo, err = ethClient.LinkInfo(ethtool.Interface{
+		if ethClient != nil {
+			// query additional information via ethtool (if supported)
+			ethState, err = ethClient.LinkState(ethtool.Interface{
 				Index: int(link.Index),
 			})
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				logger.Warn("error querying ethtool link info", zap.String("link", link.Attributes.Name), zap.Error(err))
+				logger.Warn("error querying ethtool link state", zap.String("link", link.Attributes.Name), zap.Error(err))
 			}
-		}
 
-		// skip if previous call failed (e.g. not supported)
-		if err == nil {
-			ethMode, err = ethClient.LinkMode(ethtool.Interface{
-				Index: int(link.Index),
-			})
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				logger.Warn("error querying ethtool link mode", zap.String("link", link.Attributes.Name), zap.Error(err))
+			// skip if previous call failed (e.g. not supported)
+			if err == nil {
+				ethInfo, err = ethClient.LinkInfo(ethtool.Interface{
+					Index: int(link.Index),
+				})
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					logger.Warn("error querying ethtool link info", zap.String("link", link.Attributes.Name), zap.Error(err))
+				}
+			}
+
+			// skip if previous call failed (e.g. not supported)
+			if err == nil {
+				ethMode, err = ethClient.LinkMode(ethtool.Interface{
+					Index: int(link.Index),
+				})
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					logger.Warn("error querying ethtool link mode", zap.String("link", link.Attributes.Name), zap.Error(err))
+				}
 			}
 		}
 
