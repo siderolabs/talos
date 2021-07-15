@@ -53,6 +53,8 @@ func (options *UpgradeOptions) Path() string {
 func (options *UpgradeOptions) Log(line string, args ...interface{}) {
 	if options.LogOutput != nil {
 		options.LogOutput.Write([]byte(fmt.Sprintf(line, args...))) //nolint:errcheck
+
+		return
 	}
 
 	fmt.Printf(line+"\n", args...)
