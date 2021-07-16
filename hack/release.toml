@@ -40,7 +40,7 @@ Added the flag `cluster.coreDNS.disabled` to disable coreDNS deployment during t
         description = """\
 * containerd was updated to 1.5.2
 * Linux kernel was updated to 5.10.45
-* Kubernetes was updated to 1.21.2
+* Kubernetes was updated to 1.21.3
 * etcd was updated to 3.4.16
 * CoreDNS was updated to 1.8.4
 """
