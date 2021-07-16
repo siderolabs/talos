@@ -72,9 +72,9 @@ const (
 	stableRelease   = "v0.10.1" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.20.6" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.21.0" // constants.DefaultKubernetesVersion in the stableRelease
-	currentK8sVersion  = "1.21.2" // next k8s version being tested
+	previousK8sVersion = "1.20.6"                           // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.21.0"                           // constants.DefaultKubernetesVersion in the stableRelease
+	currentK8sVersion  = constants.DefaultKubernetesVersion // next k8s version being tested
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
