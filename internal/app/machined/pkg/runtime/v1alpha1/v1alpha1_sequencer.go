@@ -90,6 +90,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			SetupSystemDirectory,
 		).Append(
 			"etc",
+			CreateSystemCgroups,
 			CreateOSReleaseFile,
 		).Append(
 			"config",
@@ -113,6 +114,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			WriteIMAPolicy,
 		).Append(
 			"etc",
+			CreateSystemCgroups,
 			CreateOSReleaseFile,
 		).AppendWhen(
 			r.State().Machine().Installed(),
