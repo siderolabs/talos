@@ -158,7 +158,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "sysfs", Destination: "/sys", Source: "/sys", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/sys/fs/cgroup", Source: "/sys/fs/cgroup", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: constants.CgroupMountPath, Source: constants.CgroupMountPath, Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/lib/modules", Source: "/lib/modules", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/kubernetes", Source: "/etc/kubernetes", Options: []string{"bind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
@@ -272,6 +272,9 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		ClusterDNS:          clusterDNS,
 		SerializeImagePulls: &f,
 		FailSwapOn:          &f,
+		CgroupRoot:          "/",
+		SystemCgroups:       constants.CgroupSystem,
+		KubeletCgroups:      constants.CgroupSystem + "/kubelet",
 	}
 }
 

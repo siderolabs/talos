@@ -6,6 +6,7 @@ package process
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/cgroups"
+	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/containerd/sys"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
@@ -104,6 +107,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	return cmd, w, nil
 }
 
+//nolint:gocyclo
 func (p *processRunner) run(eventSink events.Recorder) error {
 	cmd, logCloser, err := p.build()
 	if err != nil {
@@ -126,6 +130,32 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	if p.opts.OOMScoreAdj != 0 {
 		if err = sys.AdjustOOMScore(cmd.Process.Pid, p.opts.OOMScoreAdj); err != nil {
 			eventSink(events.StateRunning, "Failed to change OOMScoreAdj to process %s", p)
+		}
+	}
+
+	if cgroups.Mode() == cgroups.Unified {
+		var cg *cgroupsv2.Manager
+
+		cg, err = cgroupsv2.LoadManager(constants.CgroupMountPath, constants.CgroupRuntime)
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s", constants.CgroupRuntime)
+		}
+
+		if err = cg.AddProc(uint64(cmd.Process.Pid)); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
+			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+		}
+	} else {
+		var cg cgroups.Cgroup
+
+		cg, err = cgroups.Load(cgroups.V1, cgroups.StaticPath(constants.CgroupRuntime))
+		if err != nil {
+			return fmt.Errorf("failed to load cgroup %s", constants.CgroupRuntime)
+		}
+
+		if err = cg.Add(cgroups.Process{
+			Pid: cmd.Process.Pid,
+		}); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
+			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
 		}
 	}
 

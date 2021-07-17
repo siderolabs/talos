@@ -12,11 +12,13 @@ import (
 	"path"
 	"strings"
 	"syscall"
+	"time"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/containerd/containerd"
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/errdefs"
+	v2 "github.com/containerd/containerd/metrics/types/v2"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/typeurl"
 	"github.com/hashicorp/go-multierror"
@@ -173,23 +175,33 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 			return nil, fmt.Errorf("error unmarshalling metrics for %q: %w", cntr.ID(), err)
 		}
 
-		data, ok := anydata.(*v1.Metrics)
-		if !ok {
-			return nil, errors.New("failed to convert metric data to v1.Metrics")
-		}
-
 		cp.Metrics = &ctrs.ContainerMetrics{}
 
-		mem := data.Memory
-		if mem != nil && mem.Usage != nil {
-			if mem.TotalInactiveFile < mem.Usage.Usage {
-				cp.Metrics.MemoryUsage = mem.Usage.Usage - mem.TotalInactiveFile
+		switch data := anydata.(type) {
+		case *v1.Metrics:
+			mem := data.Memory
+			if mem != nil && mem.Usage != nil {
+				if mem.TotalInactiveFile < mem.Usage.Usage {
+					cp.Metrics.MemoryUsage = mem.Usage.Usage - mem.TotalInactiveFile
+				}
 			}
-		}
 
-		cpu := data.CPU
-		if cpu != nil && cpu.Usage != nil {
-			cp.Metrics.CPUUsage = cpu.Usage.Total
+			cpu := data.CPU
+			if cpu != nil && cpu.Usage != nil {
+				cp.Metrics.CPUUsage = cpu.Usage.Total
+			}
+		case *v2.Metrics:
+			mem := data.Memory
+			if mem != nil {
+				cp.Metrics.MemoryUsage = mem.Usage
+			}
+
+			cpu := data.CPU
+			if cpu != nil {
+				cp.Metrics.CPUUsage = cpu.UsageUsec * uint64(time.Microsecond/time.Nanosecond) // convert to nsec
+			}
+		default:
+			return nil, errors.New("failed to convert metric data to cgroups Metrics")
 		}
 	}
 

@@ -387,6 +387,18 @@ const (
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
 
+	// CgroupMountPath is the default mount path for unified cgroupsv2 setup.
+	CgroupMountPath = "/sys/fs/cgroup"
+
+	// CgroupInit is the cgroup name for init process.
+	CgroupInit = "/init"
+
+	// CgroupSystem is the cgroup name for system processes.
+	CgroupSystem = "/system"
+
+	// CgroupRuntime is the cgroup name for containerd runtime processes.
+	CgroupRuntime = CgroupSystem + "/runtime"
+
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
 

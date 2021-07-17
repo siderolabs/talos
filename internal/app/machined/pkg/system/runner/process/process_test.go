@@ -15,6 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/cgroups"
+	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
@@ -24,6 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
@@ -49,6 +53,14 @@ func (suite *ProcessSuite) SetupSuite() {
 
 	if suite.runReaper {
 		reaper.Run()
+	}
+
+	if cgroups.Mode() == cgroups.Unified {
+		_, err := cgroupsv2.NewManager(constants.CgroupMountPath, constants.CgroupRuntime, &cgroupsv2.Resources{})
+		suite.Require().NoError(err)
+	} else {
+		_, err := cgroups.New(cgroups.V1, cgroups.StaticPath(constants.CgroupRuntime), &specs.LinuxResources{})
+		suite.Require().NoError(err)
 	}
 }
 
