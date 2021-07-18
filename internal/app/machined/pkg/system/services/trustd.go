@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/pkg/cap"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/go-debug"
 
@@ -97,6 +98,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithMemoryLimit(int64(1000000*512)),
+			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, t.ID(r))),

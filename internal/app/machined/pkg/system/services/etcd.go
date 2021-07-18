@@ -19,6 +19,7 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/pkg/cap"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -165,6 +166,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 		),

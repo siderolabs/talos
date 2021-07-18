@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/pkg/cap"
 	"github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
@@ -149,6 +150,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
+			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, o.ID(r))),
