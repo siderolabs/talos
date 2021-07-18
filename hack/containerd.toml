@@ -1,8 +1,6 @@
 version = 2
 
-disabled_plugins = ["io.containerd.snapshotter.v1.aufs", "io.containerd.v1.zfs", "io.containerd.snapshotter.v1.zfs", "io.containerd.v1.devmapper", "io.containerd.snapshotter.v1.devmapper", "io.containerd.snapshotter.v1.btrfs"]
+required_plugins = ["io.containerd.grpc.v1.cri"]
+disabled_plugins = ["io.containerd.internal.v1.restart"]
 
-imports = ["/var/cri/conf.d/*.toml"]
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
+imports = ["/var/etc/cri/conf.d/*.toml"]

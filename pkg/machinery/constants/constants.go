@@ -326,6 +326,9 @@ const (
 	// CRIContainerdConfig is the path to the config for the containerd instance that provides the CRI.
 	CRIContainerdConfig = "/etc/cri/containerd.toml"
 
+	// CRIContainerdConfigDir is the path to the config/certs for the containerd instance that provides the CRI.
+	CRIContainerdConfigDir = "/var/etc/cri/conf.d"
+
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 

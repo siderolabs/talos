@@ -8,7 +8,9 @@ package containerd
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 
@@ -17,25 +19,152 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// GenerateHostsTLSConfig returns a HostFileConfig.
+//
+func GenerateHostsTLSConfig(h HostFileConfig, r config.RegistryTLSConfig, registryHost string) ([]config.File, HostFileConfig) {
+	hostFile := h
+
+	extraFiles := []config.File{}
+	hostFile.SkipVerify = r.InsecureSkipVerify()
+
+	if r.CA() != nil {
+		path := filepath.Join(constants.CRIContainerdConfigDir, registryHost, fmt.Sprintf("%s-ca.crt", registryHost))
+		hostFile.CACert = path
+
+		extraFiles = append(extraFiles, &v1alpha1.MachineFile{
+			FileContent:     string(r.CA()),
+			FilePermissions: 0o600,
+			FilePath:        path,
+			FileOp:          "create",
+		})
+	}
+
+	if r.ClientIdentity() != nil {
+		clientPair := [2]string{}
+
+		if r.ClientIdentity().Crt != nil {
+			path := filepath.Join(constants.CRIContainerdConfigDir, registryHost, fmt.Sprintf("%s.crt", registryHost))
+
+			extraFiles = append(extraFiles, &v1alpha1.MachineFile{
+				FileContent:     string(r.ClientIdentity().Crt),
+				FilePermissions: 0o600,
+				FilePath:        path,
+				FileOp:          "create",
+			})
+
+			clientPair[0] = path
+		}
+
+		if r.ClientIdentity().Key != nil {
+			path := filepath.Join(constants.CRIContainerdConfigDir, registryHost, fmt.Sprintf("%s.key", registryHost))
+
+			extraFiles = append(extraFiles, &v1alpha1.MachineFile{
+				FileContent:     string(r.ClientIdentity().Key),
+				FilePermissions: 0o600,
+				FilePath:        path,
+				FileOp:          "create",
+			})
+
+			clientPair[1] = path
+		}
+
+		if r.ClientIdentity().Crt != nil || r.ClientIdentity().Key != nil {
+			hostFile.Client = [][2]string{}
+			hostFile.Client = append(hostFile.Client, clientPair)
+		}
+	}
+
+	return extraFiles, hostFile
+}
+
 // GenerateRegistriesConfig returns a list of extra files.
 //
 //nolint:gocyclo
 func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
-	caPath := filepath.Join("/var", filepath.Dir(constants.CRIContainerdConfig), "ca")
-	clientPath := filepath.Join("/var", filepath.Dir(constants.CRIContainerdConfig), "client")
-
-	var ctrdCfg Config
-	ctrdCfg.Plugins.CRI.Registry.Mirrors = make(map[string]Mirror)
+	ctrdCfg := Config{}
+	ctrdCfg.Plugins.CRI.Registry.ConfigPath = constants.CRIContainerdConfigDir
 	ctrdCfg.Plugins.CRI.Registry.Configs = make(map[string]RegistryConfig)
 
+	extraFiles := []config.File{}
+	registryConfig := r.Config()
+
 	for mirrorName, mirrorConfig := range r.Mirrors() {
-		ctrdCfg.Plugins.CRI.Registry.Mirrors[mirrorName] = Mirror{Endpoints: mirrorConfig.Endpoints()}
+		mirrorNametURL := mirrorName
+		if !strings.HasPrefix(mirrorNametURL, "http") {
+			mirrorNametURL = "https://" + mirrorName
+		}
+
+		mirrorCfg := RegistryFileConfig{}
+		mirrorCfg.Server = mirrorNametURL
+		mirrorCfg.HostConfigs = make(map[string]HostFileConfig)
+
+		for _, mirror := range mirrorConfig.Endpoints() {
+			u, err := url.Parse(mirror)
+			if err != nil {
+				return nil, err
+			}
+
+			mirrorKey := mirror
+			if strings.HasPrefix(mirror, "https") {
+				mirrorKey = u.Host
+			}
+
+			hostCfg := HostFileConfig{
+				Capabilities: []string{"pull", "resolve"},
+			}
+
+			if registryConfig[mirrorKey] != nil {
+				if registryConfig[mirrorKey].TLS() != nil {
+					var files []config.File
+
+					files, hostCfg = GenerateHostsTLSConfig(hostCfg, registryConfig[mirrorKey].TLS(), u.Host)
+					extraFiles = append(extraFiles, files...)
+				}
+
+				if registryConfig[mirrorKey].Auth() != nil {
+					cfg := RegistryConfig{}
+					auth := registryConfig[mirrorKey].Auth()
+					cfg.Auth = &AuthConfig{
+						Username:      auth.Username(),
+						Password:      auth.Password(),
+						Auth:          auth.Auth(),
+						IdentityToken: auth.IdentityToken(),
+					}
+					ctrdCfg.Plugins.CRI.Registry.Configs[u.Host] = cfg
+				}
+
+				delete(registryConfig, mirrorKey)
+			}
+
+			mirrorCfg.HostConfigs[mirror] = hostCfg
+		}
+
+		var buf bytes.Buffer
+
+		if err := toml.NewEncoder(&buf).Encode(&mirrorCfg); err != nil {
+			return nil, err
+		}
+
+		extraFiles = append(extraFiles, &v1alpha1.MachineFile{
+			FileContent:     buf.String(),
+			FilePermissions: 0o600,
+			FilePath:        filepath.Join(constants.CRIContainerdConfigDir, mirrorName, "hosts.toml"),
+			FileOp:          "create",
+		})
 	}
 
-	var extraFiles []config.File
-
-	for registryHost, hostConfig := range r.Config() {
+	for registryHost, hostConfig := range registryConfig {
 		cfg := RegistryConfig{}
+
+		registryHostURL := registryHost
+		if !strings.HasPrefix(registryHostURL, "http") {
+			registryHostURL = "https://" + registryHost
+		}
+
+		u, err := url.Parse(registryHostURL)
+		if err != nil {
+			return nil, err
+		}
 
 		if hostConfig.Auth() != nil {
 			cfg.Auth = &AuthConfig{
@@ -46,53 +175,32 @@ func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
 			}
 		}
 
+		registryCfg := RegistryFileConfig{}
+		registryCfg.Server = registryHostURL
+		registryCfg.HostConfigs = make(map[string]HostFileConfig)
+
 		if hostConfig.TLS() != nil {
-			cfg.TLS = &TLSConfig{
-				InsecureSkipVerify: hostConfig.TLS().InsecureSkipVerify(),
-			}
+			files, hostCfg := GenerateHostsTLSConfig(HostFileConfig{}, hostConfig.TLS(), u.Host)
+			extraFiles = append(extraFiles, files...)
 
-			if hostConfig.TLS().CA() != nil {
-				path := filepath.Join(caPath, fmt.Sprintf("%s.crt", registryHost))
-
-				extraFiles = append(extraFiles, &v1alpha1.MachineFile{
-					FileContent:     string(hostConfig.TLS().CA()),
-					FilePermissions: 0o600,
-					FilePath:        path,
-					FileOp:          "create",
-				})
-
-				cfg.TLS.CAFile = path
-			}
-
-			if hostConfig.TLS().ClientIdentity() != nil && hostConfig.TLS().ClientIdentity().Crt != nil {
-				path := filepath.Join(clientPath, fmt.Sprintf("%s.crt", registryHost))
-
-				extraFiles = append(extraFiles, &v1alpha1.MachineFile{
-					FileContent:     string(hostConfig.TLS().ClientIdentity().Crt),
-					FilePermissions: 0o600,
-					FilePath:        path,
-					FileOp:          "create",
-				})
-
-				cfg.TLS.CertFile = path
-			}
-
-			if hostConfig.TLS().ClientIdentity() != nil && hostConfig.TLS().ClientIdentity().Key != nil {
-				path := filepath.Join(clientPath, fmt.Sprintf("%s.key", registryHost))
-
-				extraFiles = append(extraFiles, &v1alpha1.MachineFile{
-					FileContent:     string(hostConfig.TLS().ClientIdentity().Key),
-					FilePermissions: 0o600,
-					FilePath:        path,
-					FileOp:          "create",
-				})
-
-				cfg.TLS.KeyFile = path
-			}
+			registryCfg.HostConfigs[registryHostURL] = hostCfg
 		}
 
-		if cfg.Auth != nil || cfg.TLS != nil {
-			ctrdCfg.Plugins.CRI.Registry.Configs[registryHost] = cfg
+		var buf bytes.Buffer
+
+		if err := toml.NewEncoder(&buf).Encode(&registryCfg); err != nil {
+			return nil, err
+		}
+
+		extraFiles = append(extraFiles, &v1alpha1.MachineFile{
+			FileContent:     buf.String(),
+			FilePermissions: 0o600,
+			FilePath:        filepath.Join(constants.CRIContainerdConfigDir, u.Host, "hosts.toml"),
+			FileOp:          "create",
+		})
+
+		if cfg.Auth != nil {
+			ctrdCfg.Plugins.CRI.Registry.Configs[u.Host] = cfg
 		}
 	}
 
@@ -108,7 +216,7 @@ func GenerateRegistriesConfig(r config.Registries) ([]config.File, error) {
 	return append(extraFiles, &v1alpha1.MachineFile{
 		FileContent:     buf.String(),
 		FilePermissions: 0o644,
-		FilePath:        constants.CRIContainerdConfig,
-		FileOp:          "append",
+		FilePath:        constants.CRIContainerdConfigDir + "/registry.toml",
+		FileOp:          "create",
 	}), nil
 }

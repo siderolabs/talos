@@ -344,8 +344,9 @@ COPY hack/containerd.toml /rootfs/etc/cri/containerd.toml
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
-RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system}
-RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni,usr/libexec/kubernetes}
+RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
@@ -386,8 +387,9 @@ COPY hack/containerd.toml /rootfs/etc/cri/containerd.toml
 RUN touch /rootfs/etc/resolv.conf
 RUN touch /rootfs/etc/hosts
 RUN touch /rootfs/etc/os-release
-RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system}
-RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni,usr/libexec/kubernetes}
+RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates

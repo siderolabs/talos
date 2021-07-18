@@ -4,37 +4,23 @@
 
 package containerd
 
-// Mirror represents a registry mirror.
-type Mirror struct {
-	Endpoints []string `toml:"endpoint"`
-}
-
 // AuthConfig represents the registry auth options.
 type AuthConfig struct {
-	Username      string `toml:"username"`
-	Password      string `toml:"password"`
-	Auth          string `toml:"auth"`
-	IdentityToken string `toml:"identitytoken"`
-}
-
-// TLSConfig represents the registry TLS options.
-type TLSConfig struct {
-	InsecureSkipVerify bool   `toml:"insecure_skip_verify"`
-	CAFile             string `toml:"ca_file"`
-	CertFile           string `toml:"cert_file"`
-	KeyFile            string `toml:"key_file"`
+	Username      string `toml:"username,omitempty"`
+	Password      string `toml:"password,omitempty"`
+	Auth          string `toml:"auth,omitempty"`
+	IdentityToken string `toml:"identitytoken,omitempty"`
 }
 
 // RegistryConfig represents a registry.
 type RegistryConfig struct {
 	Auth *AuthConfig `toml:"auth"`
-	TLS  *TLSConfig  `toml:"tls"`
 }
 
 // Registry represents the registry configuration.
 type Registry struct {
-	Mirrors map[string]Mirror         `toml:"mirrors"`
-	Configs map[string]RegistryConfig `toml:"configs"`
+	ConfigPath string                    `toml:"config_path"`
+	Configs    map[string]RegistryConfig `toml:"configs"`
 }
 
 // CRIConfig represents the CRI config.
@@ -50,4 +36,18 @@ type PluginsConfig struct {
 // Config represnts the containerd config.
 type Config struct {
 	Plugins PluginsConfig `toml:"plugins"`
+}
+
+// RegistryFileConfig represnts the containerd registry config.
+type RegistryFileConfig struct {
+	Server      string                    `toml:"server"`
+	HostConfigs map[string]HostFileConfig `toml:"host"`
+}
+
+// HostFileConfig represnts the containerd host config.
+type HostFileConfig struct {
+	Capabilities []string    `toml:"capabilities,omitempty"`
+	CACert       string      `toml:"ca,omitempty"`
+	Client       [][2]string `toml:"client,omitempty"`
+	SkipVerify   bool        `toml:"skip_verify,omitempty"`
 }

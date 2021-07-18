@@ -58,9 +58,12 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ID: c.ID(r),
 		ProcessArgs: []string{
 			"/bin/containerd",
-			"--address", constants.SystemContainerdAddress,
-			"--state", filepath.Join(constants.SystemRunPath, "containerd"),
-			"--root", filepath.Join(constants.SystemVarPath, "lib", "containerd"),
+			"--address",
+			constants.SystemContainerdAddress,
+			"--state",
+			filepath.Join(constants.SystemRunPath, "containerd"),
+			"--root",
+			filepath.Join(constants.SystemVarPath, "lib", "containerd"),
 		},
 	}
 

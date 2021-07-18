@@ -78,30 +78,54 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 	suite.Require().NoError(err)
 	suite.Assert().Equal([]config.File{
 		&v1alpha1.MachineFile{
+			FileContent: `server = "https://docker.io"
+
+[host]
+  [host."https://registry-1.docker.io"]
+    capabilities = ["pull", "resolve"]
+  [host."https://registry-2.docker.io"]
+    capabilities = ["pull", "resolve"]
+`,
+			FilePermissions: 0o600,
+			FilePath:        constants.CRIContainerdConfigDir + "/docker.io/hosts.toml",
+			FileOp:          "create",
+		},
+		&v1alpha1.MachineFile{
 			FileContent:     `cacert`,
 			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/ca/some.host:123.crt",
+			FilePath:        constants.CRIContainerdConfigDir + "/some.host:123/some.host:123-ca.crt",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
 			FileContent:     `clientcert`,
 			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/client/some.host:123.crt",
+			FilePath:        constants.CRIContainerdConfigDir + "/some.host:123/some.host:123.crt",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
 			FileContent:     `clientkey`,
 			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/client/some.host:123.key",
+			FilePath:        constants.CRIContainerdConfigDir + "/some.host:123/some.host:123.key",
+			FileOp:          "create",
+		},
+		&v1alpha1.MachineFile{
+			FileContent: `server = "https://some.host:123"
+
+[host]
+  [host."https://some.host:123"]
+    ca = "/var/etc/cri/conf.d/some.host:123/some.host:123-ca.crt"
+    client = [["/var/etc/cri/conf.d/some.host:123/some.host:123.crt", "/var/etc/cri/conf.d/some.host:123/some.host:123.key"]]
+    skip_verify = true
+`,
+			FilePermissions: 0o600,
+			FilePath:        constants.CRIContainerdConfigDir + "/some.host:123/hosts.toml",
 			FileOp:          "create",
 		},
 		&v1alpha1.MachineFile{
 			FileContent: `[plugins]
   [plugins."io.containerd.grpc.v1.cri"]
     [plugins."io.containerd.grpc.v1.cri".registry]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-          endpoint = ["https://registry-1.docker.io", "https://registry-2.docker.io"]
+      config_path = "/var/etc/cri/conf.d"
       [plugins."io.containerd.grpc.v1.cri".registry.configs]
         [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123"]
           [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".auth]
@@ -109,15 +133,73 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
             password = "secret"
             auth = "auth"
             identitytoken = "token"
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".tls]
-            insecure_skip_verify = true
-            ca_file = "/var/etc/cri/ca/some.host:123.crt"
-            cert_file = "/var/etc/cri/client/some.host:123.crt"
-            key_file = "/var/etc/cri/client/some.host:123.key"
 `,
 			FilePermissions: 0o644,
-			FilePath:        constants.CRIContainerdConfig,
-			FileOp:          "append",
+			FilePath:        constants.CRIContainerdConfigDir + "/registry.toml",
+			FileOp:          "create",
+		},
+	}, files)
+}
+
+func (suite *ConfigSuite) TestGenerateRegistriesInsecureConfig() {
+	cfg := &mockConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+			"myregistrydomain.com": {
+				MirrorEndpoints: []string{"http://myregistrydomain.local", "https://myregistrydomain.com"},
+			},
+		},
+		config: map[string]*v1alpha1.RegistryConfig{
+			"http://myregistrydomain.local": {
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername: "root",
+					RegistryPassword: "secret",
+				},
+			},
+			"myregistrydomain.com": {
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSCA: []byte("cacert"),
+				},
+			},
+		},
+	}
+
+	files, err := containerd.GenerateRegistriesConfig(cfg)
+	suite.Require().NoError(err)
+	suite.Assert().Equal([]config.File{
+		&v1alpha1.MachineFile{
+			FileContent:     `cacert`,
+			FilePermissions: 0o600,
+			FilePath:        constants.CRIContainerdConfigDir + "/myregistrydomain.com/myregistrydomain.com-ca.crt",
+			FileOp:          "create",
+		},
+		&v1alpha1.MachineFile{
+			FileContent: `server = "https://myregistrydomain.com"
+
+[host]
+  [host."http://myregistrydomain.local"]
+    capabilities = ["pull", "resolve"]
+  [host."https://myregistrydomain.com"]
+    capabilities = ["pull", "resolve"]
+    ca = "/var/etc/cri/conf.d/myregistrydomain.com/myregistrydomain.com-ca.crt"
+`,
+			FilePermissions: 0o600,
+			FilePath:        constants.CRIContainerdConfigDir + "/myregistrydomain.com/hosts.toml",
+			FileOp:          "create",
+		},
+		&v1alpha1.MachineFile{
+			FileContent: `[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/var/etc/cri/conf.d"
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."myregistrydomain.local"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."myregistrydomain.local".auth]
+            username = "root"
+            password = "secret"
+`,
+			FilePermissions: 0o644,
+			FilePath:        constants.CRIContainerdConfigDir + "/registry.toml",
+			FileOp:          "create",
 		},
 	}, files)
 }
