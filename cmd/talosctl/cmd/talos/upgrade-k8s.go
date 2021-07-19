@@ -34,7 +34,6 @@ func init() {
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
-	cli.Should(upgradeK8sCmd.MarkFlagRequired("from"))
 	cli.Should(upgradeK8sCmd.MarkFlagRequired("to"))
 	addCommand(upgradeK8sCmd)
 }
@@ -54,6 +53,17 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 			ClientProvider: clientProvider,
 			ForceEndpoint:  upgradeOptions.ControlPlaneEndpoint,
 		},
+	}
+
+	var err error
+
+	if upgradeOptions.FromVersion == "" {
+		upgradeOptions.FromVersion, err = k8s.DetectLowestVersion(ctx, &state, upgradeOptions)
+		if err != nil {
+			return fmt.Errorf("error detecting the lowest Kubernetes version %w", err)
+		}
+
+		upgradeOptions.Log("automatically detected the lowest Kubernetes version %s", upgradeOptions.FromVersion)
 	}
 
 	selfHosted, err := k8s.IsSelfHostedControlPlane(ctx, &state, Nodes[0])
