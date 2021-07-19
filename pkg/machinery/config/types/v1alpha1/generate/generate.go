@@ -544,11 +544,14 @@ func emptyIf(str, check string) string {
 }
 
 func genV4UUID() (string, error) {
-	uuid := make([]byte, 0, 16)
+	uuid := make([]byte, 16, 16)
 
-	_, err := io.ReadFull(rand.Reader, uuid)
+	n, err := io.ReadFull(rand.Reader, uuid)
 	if err != nil {
 		return "", err
+	}
+	if n != 16 {
+		return "", fmt.Errorf("failed to write full random UUID")
 	}
 
 	uuid[6] = (uuid[6] & 0x0f) | 0x40 // Version 4
@@ -558,7 +561,7 @@ func genV4UUID() (string, error) {
 }
 
 func encodeUUIDString(uuid []byte) string {
-	dst := make([]byte, 0, 36)
+	dst := make([]byte, 36, 36)
 
 	hex.Encode(dst, uuid[:4])
 	dst[8] = '-'
