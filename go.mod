@@ -106,12 +106,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20210704172029-d1acf45c3514
 	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
+	k8s.io/apimachinery v0.21.3
 	k8s.io/apiserver v0.21.2 // indirect; use the same version as other k8s deps
 	k8s.io/client-go v0.21.2
 	k8s.io/cri-api v0.21.2
 	k8s.io/kubectl v0.21.2
 	k8s.io/kubelet v0.21.2
 	k8s.io/utils v0.0.0-20210527160623-6fdb442a123b // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.1.1 // indirect
 )
