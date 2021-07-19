@@ -416,6 +416,8 @@ github.com/gdamore/encoding v1.0.0/go.mod h1:alR0ol34c49FCSBLjhosxzcPHQbf2trDkoo
 github.com/gdamore/tcell/v2 v2.3.3/go.mod h1:cTTuF84Dlj/RqmaCIV5p4w8uG1zWdk0SF6oBpwHp4fU=
 github.com/gdamore/tcell/v2 v2.3.11 h1:ECO6WqHGbKZ3HrSL7bG/zArMCmLaNr5vcjjMVnLHpzc=
 github.com/gdamore/tcell/v2 v2.3.11/go.mod h1:cTTuF84Dlj/RqmaCIV5p4w8uG1zWdk0SF6oBpwHp4fU=
+github.com/gdamore/tcell/v2 v2.4.0 h1:W6dxJEmaxYvhICFoTY3WrLLEXsQ11SaFnKGVEXW57KM=
+github.com/gdamore/tcell/v2 v2.4.0/go.mod h1:cTTuF84Dlj/RqmaCIV5p4w8uG1zWdk0SF6oBpwHp4fU=
 github.com/gertd/go-pluralize v0.1.7 h1:RgvJTJ5W7olOoAks97BOwOlekBFsLEyh00W48Z6ZEZY=
 github.com/gertd/go-pluralize v0.1.7/go.mod h1:O4eNeeIf91MHh1GJ2I47DNtaesm66NYvjYgAahcqSDQ=
 github.com/getsentry/raven-go v0.2.0 h1:no+xWJRb5ZI7eE8TWgIq1jLulQiIoLG0IfYxv5JYMGs=
