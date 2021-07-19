@@ -18,10 +18,10 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.3.1
-	github.com/aws/aws-sdk-go v1.38.66 // indirect
+	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.2
+	github.com/containerd/containerd v1.5.3
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
@@ -42,11 +42,11 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.3.11
+	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.5
@@ -59,7 +59,6 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
-	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/pin/tftp v2.1.0+incompatible
@@ -105,13 +104,12 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20210704172029-d1acf45c3514
-	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
-	k8s.io/apiserver v0.21.2 // indirect; use the same version as other k8s deps
-	k8s.io/client-go v0.21.2
-	k8s.io/cri-api v0.21.2
-	k8s.io/kubectl v0.21.2
-	k8s.io/kubelet v0.21.2
+	k8s.io/api v0.21.3
+	k8s.io/apimachinery v0.21.3
+	k8s.io/apiserver v0.21.3 // indirect; use the same version as other k8s deps
+	k8s.io/client-go v0.21.3
+	k8s.io/cri-api v0.21.3
+	k8s.io/kubectl v0.21.3
+	k8s.io/kubelet v0.21.3
 	k8s.io/utils v0.0.0-20210527160623-6fdb442a123b // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.1.1 // indirect
 )
