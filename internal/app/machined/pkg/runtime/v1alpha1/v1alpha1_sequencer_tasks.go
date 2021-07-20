@@ -306,7 +306,7 @@ NAME="{{ .Name }}"
 ID={{ .ID }}
 VERSION_ID={{ .Version }}
 PRETTY_NAME="{{ .Name }} ({{ .Version }})"
-HOME_URL="https://docs.talos-systems.com/"
+HOME_URL="https://www.talos.dev/"
 BUG_REPORT_URL="https://github.com/talos-systems/talos/issues"
 `
 
