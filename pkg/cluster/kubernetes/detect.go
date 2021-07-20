@@ -33,9 +33,12 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 		return "", err
 	}
 
-	version, err := semver.NewVersion(options.ToVersion)
-	if err != nil {
-		return "", err
+	var version *semver.Version
+	if options.ToVersion != "" {
+		version, err = semver.NewVersion(options.ToVersion)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	for _, pod := range pods.Items {
@@ -61,7 +64,7 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				continue
 			}
 
-			if v.LessThan(*version) {
+			if version == nil || v.LessThan(*version) {
 				version = v
 			}
 		}
