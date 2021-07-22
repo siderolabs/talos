@@ -156,6 +156,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, o.ID(r))),
 			oci.WithRootFSReadonly(),
 		),
+		runner.WithOOMScoreAdj(-998),
 	),
 		restart.WithType(restart.Forever),
 	), nil

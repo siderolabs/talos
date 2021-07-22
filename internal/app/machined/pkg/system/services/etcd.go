@@ -170,6 +170,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 		),
+		runner.WithOOMScoreAdj(-998),
 	),
 		restart.WithType(restart.Forever),
 	), nil
