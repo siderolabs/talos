@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/sys"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -120,6 +121,12 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("error starting process: %w", err)
+	}
+
+	if p.opts.OOMScoreAdj != 0 {
+		if err = sys.AdjustOOMScore(cmd.Process.Pid, p.opts.OOMScoreAdj); err != nil {
+			eventSink(events.StateRunning, "Failed to change OOMScoreAdj to process %s", p)
+		}
 	}
 
 	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmd.Process.Pid)

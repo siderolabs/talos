@@ -74,6 +74,7 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(env),
+		runner.WithOOMScoreAdj(-999),
 	),
 		restart.WithType(restart.Forever),
 	), nil

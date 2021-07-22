@@ -56,6 +56,8 @@ type Options struct {
 	GracefulShutdownTimeout time.Duration
 	// Stdin is the process standard input.
 	Stdin io.ReadSeeker
+	// Specify an oom_score_adj for the process.
+	OOMScoreAdj int
 }
 
 // Option is the functional option func.
@@ -70,6 +72,7 @@ func DefaultOptions() *Options {
 		GracefulShutdownTimeout: 10 * time.Second,
 		ContainerdAddress:       constants.CRIContainerdAddress,
 		Stdin:                   nil,
+		OOMScoreAdj:             0,
 	}
 }
 
@@ -133,5 +136,12 @@ func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 func WithStdin(stdin io.ReadSeeker) Option {
 	return func(args *Options) {
 		args.Stdin = stdin
+	}
+}
+
+// WithOOMScoreAdj sets the oom_score_adj.
+func WithOOMScoreAdj(score int) Option {
+	return func(args *Options) {
+		args.OOMScoreAdj = score
 	}
 }
