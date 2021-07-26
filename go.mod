@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.3
+	github.com/containerd/containerd v1.5.4
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
