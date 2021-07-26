@@ -1,6 +1,6 @@
 ## [Talos 0.11.0-alpha.2](https://github.com/talos-systems/talos/releases/tag/v0.11.0-alpha.2) (2021-06-23)
 
-Welcome to the v0.11.0-alpha.2 release of Talos!  
+Welcome to the v0.11.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -485,7 +485,7 @@ Previous release can be found at [v0.10.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.11.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.11.0-alpha.1) (2021-06-18)
 
-Welcome to the v0.11.0-alpha.1 release of Talos!  
+Welcome to the v0.11.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -981,7 +981,7 @@ Previous release can be found at [v0.10.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.11.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.11.0-alpha.0) (2021-05-26)
 
-Welcome to the v0.11.0-alpha.0 release of Talos!  
+Welcome to the v0.11.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -1237,7 +1237,7 @@ Previous release can be found at [v0.10.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.10.0-alpha.2](https://github.com/talos-systems/talos/releases/tag/v0.10.0-alpha.2) (2021-04-08)
 
-Welcome to the v0.10.0-alpha.2 release of Talos!  
+Welcome to the v0.10.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -1267,7 +1267,7 @@ Install section of the machine config now has `diskSelector` field that allows q
 `talosctl disks -n <node> -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
 
 
-### Optmizations
+### Optimizations
 
 * Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
 
@@ -1525,7 +1525,7 @@ Previous release can be found at [v0.9.0](https://github.com/talos-systems/talos
 
 ## [Talos 0.10.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.10.0-alpha.1) (2021-03-31)
 
-Welcome to the v0.10.0-alpha.1 release of Talos!  
+Welcome to the v0.10.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -1549,7 +1549,7 @@ Install section of the machine config now has `diskSelector` field that allows q
 `talosctl disks -n <node> -i` can be used to check allowed disk qualifiers when the node is running in the maintenance mode.
 
 
-### Optmizations
+### Optimizations
 
 * Talos `system` services now run without container images on initramfs from the single executable; this change reduces RAM usage, initramfs size and boot time..
 
@@ -1778,7 +1778,7 @@ Previous release can be found at [v0.9.0](https://github.com/talos-systems/talos
 
 ## [Talos 0.10.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.10.0-alpha.0) (2021-03-17)
 
-Welcome to the v0.10.0-alpha.0 release of Talos!  
+Welcome to the v0.10.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 

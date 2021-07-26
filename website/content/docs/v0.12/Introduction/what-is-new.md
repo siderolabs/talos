@@ -21,7 +21,7 @@ Talos now prefers last successful time server (by IP address) on each sync attem
 Talos added support for the [Radxa Rock PI 4c](../../single-board-computers/rockpi_4/) board.
 `u-boot` version was updated to fix the boot and USB issues on Raspberry Pi 4 8GiB version.
 
-## Optmizations
+## Optimizations
 
 Multiple optimizations were applied to reduce Talos `initramfs` size and memory footprint.
 As a result, we see a reduction of memory usage of around 100 MiB for the core Talos components which leaves more resources available for you workloads.
