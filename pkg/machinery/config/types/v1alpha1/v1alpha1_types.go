@@ -1401,6 +1401,15 @@ type EncryptionConfig struct {
 	//     Cipher kind to use for the encryption.
 	//     Depends on the encryption provider.
 	EncryptionCipher string `yaml:"cipher,omitempty"`
+	//   description: >
+	//     Defines the encryption key length.
+	EncryptionKeySize uint `yaml:"keySize,omitempty"`
+	//   description: >
+	//     Defines the encryption sector size.
+	EncryptionBlockSize uint64 `yaml:"blockSize,omitempty"`
+	//   description: >
+	//     Additional --perf parameters for the LUKS2 encryption.
+	EncryptionPerfOptions []string `yaml:"options,omitempty"`
 }
 
 // EncryptionKey represents configuration for disk encryption key.
@@ -1412,7 +1421,7 @@ type EncryptionKey struct {
 	//     Deterministically generated key from the node UUID and PartitionLabel.
 	KeyNodeID *EncryptionKeyNodeID `yaml:"nodeID,omitempty"`
 	//   description: >
-	//     Key slot number for luks2 encryption.
+	//     Key slot number for LUKS2 encryption.
 	KeySlot int `yaml:"slot"`
 }
 

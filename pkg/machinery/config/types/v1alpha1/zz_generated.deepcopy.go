@@ -559,6 +559,11 @@ func (in *EncryptionConfig) DeepCopyInto(out *EncryptionConfig) {
 			}
 		}
 	}
+	if in.EncryptionPerfOptions != nil {
+		in, out := &in.EncryptionPerfOptions, &out.EncryptionPerfOptions
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

@@ -1131,7 +1131,7 @@ func init() {
 			FieldName: "ephemeral",
 		},
 	}
-	EncryptionConfigDoc.Fields = make([]encoder.Doc, 3)
+	EncryptionConfigDoc.Fields = make([]encoder.Doc, 6)
 	EncryptionConfigDoc.Fields[0].Name = "provider"
 	EncryptionConfigDoc.Fields[0].Type = "string"
 	EncryptionConfigDoc.Fields[0].Note = ""
@@ -1149,6 +1149,21 @@ func init() {
 	EncryptionConfigDoc.Fields[2].Note = ""
 	EncryptionConfigDoc.Fields[2].Description = "Cipher kind to use for the encryption. Depends on the encryption provider."
 	EncryptionConfigDoc.Fields[2].Comments[encoder.LineComment] = "Cipher kind to use for the encryption. Depends on the encryption provider."
+	EncryptionConfigDoc.Fields[3].Name = "keySize"
+	EncryptionConfigDoc.Fields[3].Type = "uint"
+	EncryptionConfigDoc.Fields[3].Note = ""
+	EncryptionConfigDoc.Fields[3].Description = "Defines the encryption key length."
+	EncryptionConfigDoc.Fields[3].Comments[encoder.LineComment] = "Defines the encryption key length."
+	EncryptionConfigDoc.Fields[4].Name = "blockSize"
+	EncryptionConfigDoc.Fields[4].Type = "uint64"
+	EncryptionConfigDoc.Fields[4].Note = ""
+	EncryptionConfigDoc.Fields[4].Description = "Defines the encryption sector size."
+	EncryptionConfigDoc.Fields[4].Comments[encoder.LineComment] = "Defines the encryption sector size."
+	EncryptionConfigDoc.Fields[5].Name = "options"
+	EncryptionConfigDoc.Fields[5].Type = "[]string"
+	EncryptionConfigDoc.Fields[5].Note = ""
+	EncryptionConfigDoc.Fields[5].Description = "Additional --perf parameters for the LUKS2 encryption."
+	EncryptionConfigDoc.Fields[5].Comments[encoder.LineComment] = "Additional --perf parameters for the LUKS2 encryption."
 
 	EncryptionKeyDoc.Type = "EncryptionKey"
 	EncryptionKeyDoc.Comments[encoder.LineComment] = "EncryptionKey represents configuration for disk encryption key."
@@ -1173,8 +1188,8 @@ func init() {
 	EncryptionKeyDoc.Fields[2].Name = "slot"
 	EncryptionKeyDoc.Fields[2].Type = "int"
 	EncryptionKeyDoc.Fields[2].Note = ""
-	EncryptionKeyDoc.Fields[2].Description = "Key slot number for luks2 encryption."
-	EncryptionKeyDoc.Fields[2].Comments[encoder.LineComment] = "Key slot number for luks2 encryption."
+	EncryptionKeyDoc.Fields[2].Description = "Key slot number for LUKS2 encryption."
+	EncryptionKeyDoc.Fields[2].Comments[encoder.LineComment] = "Key slot number for LUKS2 encryption."
 
 	EncryptionKeyStaticDoc.Type = "EncryptionKeyStatic"
 	EncryptionKeyStaticDoc.Comments[encoder.LineComment] = "EncryptionKeyStatic represents throw away key type."

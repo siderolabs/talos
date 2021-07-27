@@ -702,7 +702,7 @@ systemDiskEncryption:
         keys:
             - # Deterministically generated key from the node UUID and PartitionLabel.
               nodeID: {}
-              slot: 0 # Key slot number for luks2 encryption.
+              slot: 0 # Key slot number for LUKS2 encryption.
 ```
 
 
@@ -3294,6 +3294,45 @@ Cipher kind to use for the encryption. Depends on the encryption provider.
 
 <hr />
 
+<div class="dd">
+
+<code>keySize</code>  <i>uint</i>
+
+</div>
+<div class="dt">
+
+Defines the encryption key length.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>blockSize</code>  <i>uint64</i>
+
+</div>
+<div class="dt">
+
+Defines the encryption sector size.
+
+</div>
+
+<hr />
+
+<div class="dd">
+
+<code>options</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+Additional --perf parameters for the LUKS2 encryption.
+
+</div>
+
+<hr />
+
 
 
 
@@ -3343,7 +3382,7 @@ Deterministically generated key from the node UUID and PartitionLabel.
 </div>
 <div class="dt">
 
-Key slot number for luks2 encryption.
+Key slot number for LUKS2 encryption.
 
 </div>
 
@@ -4980,7 +5019,7 @@ ephemeral:
     keys:
         - # Deterministically generated key from the node UUID and PartitionLabel.
           nodeID: {}
-          slot: 0 # Key slot number for luks2 encryption.
+          slot: 0 # Key slot number for LUKS2 encryption.
 ```
 
 <hr />

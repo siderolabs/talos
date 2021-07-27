@@ -36,8 +36,28 @@ func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encry
 			return nil, err
 		}
 
+		opts := []luks.Option{}
+		if encryptionConfig.KeySize() != 0 {
+			opts = append(opts, luks.WithKeySize(encryptionConfig.KeySize()))
+		}
+
+		if encryptionConfig.BlockSize() != 0 {
+			opts = append(opts, luks.WithBlockSize(encryptionConfig.BlockSize()))
+		}
+
+		if encryptionConfig.Options() != nil {
+			for _, opt := range encryptionConfig.Options() {
+				if err = luks.ValidatePerfOption(opt); err != nil {
+					return nil, err
+				}
+			}
+
+			opts = append(opts, luks.WithPerfOptions(encryptionConfig.Options()...))
+		}
+
 		provider = luks.New(
 			cipher,
+			opts...,
 		)
 	default:
 		return nil, fmt.Errorf("unknown encryption kind %s", encryptionConfig.Kind())
