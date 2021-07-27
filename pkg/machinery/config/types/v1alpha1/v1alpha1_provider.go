@@ -1023,6 +1023,21 @@ func (e *EncryptionConfig) Cipher() string {
 	return e.EncryptionCipher
 }
 
+// KeySize implements the config.Provider interface.
+func (e *EncryptionConfig) KeySize() uint {
+	return e.EncryptionKeySize
+}
+
+// BlockSize implements the config.Provider interface.
+func (e *EncryptionConfig) BlockSize() uint64 {
+	return e.EncryptionBlockSize
+}
+
+// Options implements the config.Provider interface.
+func (e *EncryptionConfig) Options() []string {
+	return e.EncryptionPerfOptions
+}
+
 // Keys implements the config.Provider interface.
 func (e *EncryptionConfig) Keys() []config.EncryptionKey {
 	keys := make([]config.EncryptionKey, len(e.EncryptionKeys))

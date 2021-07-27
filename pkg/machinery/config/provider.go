@@ -393,6 +393,9 @@ type EncryptionKeyNodeID interface{}
 type Encryption interface {
 	Kind() string
 	Cipher() string
+	KeySize() uint
+	BlockSize() uint64
+	Options() []string
 	Keys() []EncryptionKey
 }
 
