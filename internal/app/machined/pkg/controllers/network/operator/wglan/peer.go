@@ -36,6 +36,13 @@ const MaximumReconcileInterval = 5 * time.Minute
 
 const reconciliationTimeout = 30 * time.Second
 
+// Hostnamer provides a Hostname on request.
+type Hostnamer interface {
+
+	// Hostname indicates the Hostname of the node.
+	Hostname(ctx context.Context) ([]byte, error)
+}
+
 // PeerManager maintains the database of WgLAN Peers.
 type PeerManager struct {
 	Config *Config
@@ -69,8 +76,8 @@ type Config struct {
 	// LinkName is the name of the Wireguard interface.
 	LinkName string
 
-	// NodeName is the (Kubernetes) name of this Node.
-	NodeName string
+	// Hostnamer is a provider of this node's hostname.
+	Hostnamer Hostnamer
 
 	// PublicKey is the public key of the Wireguard interface.
 	PublicKey string
@@ -80,6 +87,20 @@ type Config struct {
 
 	// Subnet defines an explicit subnet to be used for Wireguard.
 	Subnet netaddr.IPPrefix
+}
+
+// Hostname returns the hostname of the Node, if known.
+func (c *Config) Hostname(ctx context.Context) string {
+	if c.Hostnamer != nil {
+		b, err := c.Hostnamer.Hostname(ctx)
+		if err != nil {
+			return ""
+		}
+
+		return string(b)
+	}
+
+	return ""
 }
 
 // Peer describes a potential Wireguard Peer.
@@ -337,7 +358,7 @@ func (m *PeerManager) registerSelf(ctx context.Context) error {
 	n := &types.Node{
 		ID:        m.Config.PublicKey,
 		IP:        m.Config.IP.IP(),
-		Name:      m.Config.NodeName,
+		Name:      m.Config.Hostname(ctx),
 		Addresses: addrs,
 	}
 
@@ -345,7 +366,7 @@ func (m *PeerManager) registerSelf(ctx context.Context) error {
 
 	for _, r := range m.registries {
 		if err := r.Add(ctx, m.Config.ClusterID, n); err != nil {
-			merr = multierror.Append(merr, err)
+			merr = multierror.Append(merr, fmt.Errorf("registration of node %q to registry %q failed: %w", n.Name, r.Name(), err))
 		}
 	}
 
@@ -362,6 +383,10 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 			merr = multierror.Append(merr, err)
 
 			continue
+		}
+
+		if len(ppList) == 0 {
+			merr = multierror.Append(merr, fmt.Errorf("no peers found in registry %q", r.Name()))
 		}
 
 		for _, p := range ppList {
@@ -426,7 +451,7 @@ func (m *PeerManager) getWGPeers() ([]wgtypes.Peer, error) {
 
 	d, err := wc.Device(m.Config.LinkName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load wireguard device status: %w", err)
+		return nil, fmt.Errorf("failed to load wireguard device (%q) status: %w", m.Config.LinkName, err)
 	}
 
 	return d.Peers, nil

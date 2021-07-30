@@ -297,7 +297,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				case "wireguard0":
 					suite.Assert().True(r.TypedSpec().Up)
 					suite.Assert().True(r.TypedSpec().Logical)
-					suite.Assert().Equal(nethelpers.LinkNone, r.TypedSpec().Type)
+					suite.Assert().Equal(nethelpers.LinkNetrom, r.TypedSpec().Type)
 					suite.Assert().Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
 					suite.Assert().Equal(network.WireguardSpec{
 						PrivateKey: "GGGVHfw2u74/Urnse4G/DYnRdjy8LtMRe12eSv7MqmA=",

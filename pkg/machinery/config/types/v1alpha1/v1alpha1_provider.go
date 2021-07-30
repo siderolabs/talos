@@ -6,10 +6,8 @@ package v1alpha1
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	stdx509 "crypto/x509"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
@@ -614,24 +612,7 @@ func (wc *DeviceWireguardConfig) PrivateKey() (string, error) {
 		return wc.WireguardPrivateKey, nil
 	}
 
-	const WireguardKeyLen = 32
-
-	// NB:  procedure stolen from wgctrl-go to avoid importing entire package:
-	// https://github.com/WireGuard/wgctrl-go/blob/92e472f520a5/wgtypes/types.go#L89.
-	privateKey := make([]byte, WireguardKeyLen)
-	if _, err := rand.Read(privateKey); err != nil {
-		return "", fmt.Errorf("failed to read random bytes to generate private key: %v", err)
-	}
-
-	// Modify random bytes using algorithm described at:
-	// https://cr.yp.to/ecdh.html.
-	privateKey[0] &= 248
-	privateKey[31] &= 127
-	privateKey[31] |= 64
-
-	wc.WireguardPrivateKey = base64.StdEncoding.EncodeToString(privateKey)
-
-	return wc.WireguardPrivateKey, nil
+	return "", fmt.Errorf("no private key")
 }
 
 // ListenPort implements the MachineNetwork interface.

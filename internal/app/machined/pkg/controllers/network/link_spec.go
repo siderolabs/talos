@@ -197,7 +197,9 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			replace := false
 
 			// if type/kind doesn't match, recreate the link to change it
-			if existing.Type != uint16(link.TypedSpec().Type) || existing.Attributes.Info.Kind != link.TypedSpec().Kind {
+			// FIXME:  disabled for Wireguard because Type always returns 0 even though it should be 0xFFFE.
+			if existing.Attributes.Info.Kind != network.LinkKindWireguard && 
+			   existing.Type != uint16(link.TypedSpec().Type) || existing.Attributes.Info.Kind != link.TypedSpec().Kind {
 				logger.Info("replacing logical link",
 					zap.String("old_kind", existing.Attributes.Info.Kind),
 					zap.String("new_kind", link.TypedSpec().Kind),

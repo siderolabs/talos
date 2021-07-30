@@ -471,7 +471,7 @@ func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfi
 
 	link.Logical = true
 	link.Kind = network.LinkKindWireguard
-	link.Type = nethelpers.LinkNone
+	link.Type = nethelpers.LinkNetrom
 	link.Wireguard = network.WireguardSpec{
 		PrivateKey:   privKey,
 		ListenPort:   config.ListenPort(),

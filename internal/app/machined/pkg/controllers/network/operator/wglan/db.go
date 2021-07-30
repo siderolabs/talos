@@ -20,6 +20,10 @@ type PeerDB struct {
 
 // Get returns the Peer with the given Public Key, if it is in the database.
 func (d *PeerDB) Get(id wgtypes.Key) *Peer {
+	if d == nil {
+		return nil
+	}
+
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -36,6 +40,10 @@ func (d *PeerDB) Get(id wgtypes.Key) *Peer {
 
 // List returns the set of Peers from the database.
 func (d *PeerDB) List() (list []*Peer) {
+	if d == nil {
+		return nil
+	}
+
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -52,6 +60,10 @@ func (d *PeerDB) List() (list []*Peer) {
 
 // Merge adds or merges the Peer information with any existing information in the database for that Peer.
 func (d *PeerDB) Merge(p *Peer) error {
+	if d == nil {
+		return fmt.Errorf("empty PeerDB")
+	}
+
 	d.mu.Lock()
 	defer d.mu.Unlock()
 

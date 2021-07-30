@@ -40,7 +40,7 @@ type WgLAN struct {
 }
 
 // NewWgLAN creates a Wireguard LAN operator.
-func NewWgLAN(logger *zap.Logger, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string, podNetworking bool) *WgLAN {
+func NewWgLAN(logger *zap.Logger, hostnamer wglan.Hostnamer, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string, podNetworking bool) *WgLAN {
 	if discoveryURL == "" {
 		discoveryURL = constants.WireguardDefaultNATDiscoveryService
 	}
@@ -66,6 +66,8 @@ func NewWgLAN(logger *zap.Logger, linkName string, prefix netaddr.IPPrefix, clus
 		DiscoveryURL:     discoveryURL,
 		EnablePodRouting: podNetworking,
 		IP:               ip,
+		LinkName:         linkName,
+		Hostnamer:        hostnamer,
 		PublicKey:        pubKey,
 		RoutingTable:     constants.WireguardDefaultRoutingTable,
 		Subnet:           prefix,
@@ -127,13 +129,15 @@ func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
 
 // LinkSpecs implements Operator interface.
 func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
+	o.logger.Info("returning link specs...")
+
 	return []network.LinkSpecSpec{
 		{
 			Name:       o.Config.LinkName,
 			Logical:    true,
 			Up:         true,
 			Kind:       network.LinkKindWireguard,
-			Type:       nethelpers.LinkNone,
+			Type:       nethelpers.LinkNetrom,
 			VLAN:       network.VLANSpec{},
 			BondMaster: network.BondMasterSpec{},
 			Wireguard: network.WireguardSpec{
@@ -209,6 +213,10 @@ func (o *WgLAN) getPeers(defaultPort uint16) (out []network.WireguardPeer) {
 		if pp.PublicKey() != o.Config.PublicKey {
 			out = append(out, pc)
 		}
+	}
+
+	if len(out) == 0 {
+		o.logger.Info("no peers found in local WgLAN database")
 	}
 
 	return out
