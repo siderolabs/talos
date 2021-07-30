@@ -393,7 +393,7 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 	case network.OperatorWgLAN:
 		logger = logger.With(zap.String("operator", "wglan"))
 
-		return operator.NewWgLAN(logger, spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
+		return operator.NewWgLAN(logger, ctrl.V1alpha1Platform, spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
 	}

@@ -6,6 +6,7 @@ package v1alpha1_test
 
 import (
 	"context"
+	"encoding/base64"
 	"net"
 	"testing"
 
@@ -111,4 +112,19 @@ func TestInterfaces(t *testing.T) {
 
 	tok := new(v1alpha1.ClusterConfig).Token()
 	assert.Implements(t, (*config.Token)(nil), (tok))
+}
+
+func TestWireguardKeyGeneration(t *testing.T) {
+	privateKey, err := v1alpha1.GenerateWireguardKey()
+	if err != nil {
+		t.Errorf("failed to generate wireguard key: %w", err)
+		return
+	}
+
+	keyString := base64.StdEncoding.EncodeToString(privateKey)
+
+	if err = v1alpha1.CheckWireguardKey(keyString); err != nil {
+		t.Errorf("wireguard key (%s) validation failed: %w", keyString, err)
+		return
+	}
 }

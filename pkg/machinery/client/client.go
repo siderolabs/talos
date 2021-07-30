@@ -603,7 +603,7 @@ func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption)
 func (c *Client) WireguardDevices(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.WireguardDevicesResponse, err error) {
 	resp, err = c.NetworkClient.WireguardDevices(
 		ctx,
-		&empty.Empty{},
+		&emptypb.Empty{},
 		callOptions...,
 	)
 

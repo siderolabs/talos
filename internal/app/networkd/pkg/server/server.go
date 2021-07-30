@@ -119,7 +119,7 @@ func (r *NetworkServer) Interfaces(ctx context.Context, in *emptypb.Empty) (repl
 }
 
 // WireguardDevices returns the status of each Wireguard device and its associated Peers.
-func (r *NetworkServer) WireguardDevices(ctx context.Context, in *empty.Empty) (reply *networkapi.WireguardDevicesResponse, err error) {
+func (r *NetworkServer) WireguardDevices(ctx context.Context, in *emptypb.Empty) (reply *networkapi.WireguardDevicesResponse, err error) {
 	wc, err := wgctrl.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Wireguard client: %w", err)

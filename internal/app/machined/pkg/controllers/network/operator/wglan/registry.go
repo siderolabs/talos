@@ -32,6 +32,9 @@ type Registry interface {
 
 	// List returns the list of Nodes stored within the registry.
 	List(ctx context.Context, clusterID string) ([]*Peer, error)
+
+	// Name indicates the name of the Registry.
+	Name() string
 }
 
 // RegistryExternal defines an external API-based node regstry.
@@ -72,6 +75,11 @@ func (r *RegistryExternal) List(ctx context.Context, clusterID string) ([]*Peer,
 	}
 
 	return ret, nil
+}
+
+// Name implements registry.Name.
+func (r *RegistryExternal) Name() string {
+return "external"
 }
 
 // RegistryKubernetes defines a Kubernetes-based node discoverer.
@@ -231,6 +239,11 @@ func (r *RegistryKubernetes) List(ctx context.Context, clusterID string) ([]*Pee
 	}
 
 	return list, nil
+}
+
+// Name implements registry.Name.
+func (r *RegistryKubernetes) Name() string {
+	return "kubernetes"
 }
 
 func addressesToIPListString(addresses []*types.Address) string {

@@ -456,13 +456,13 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 	}
 
 	if b.WireguardPrivateKey != "" {
-		if err := checkWireguardKey(b.WireguardPrivateKey); err != nil {
+		if err := CheckWireguardKey(b.WireguardPrivateKey); err != nil {
 			result = multierror.Append(result, fmt.Errorf("private key is invalid: %w", err))
 		}
 	}
 
 	for _, peer := range b.WireguardPeers {
-		if err := checkWireguardKey(peer.WireguardPublicKey); err != nil {
+		if err := CheckWireguardKey(peer.WireguardPublicKey); err != nil {
 			result = multierror.Append(result, fmt.Errorf("public key invalid: %w", err))
 		}
 
@@ -535,8 +535,8 @@ func validateIPOrCIDR(address string) error {
 	return nil
 }
 
-// checkWireguardKey is implemented to avoid pulling in wgctrl code to keep machinery dependencies slim.
-func checkWireguardKey(key string) error {
+// CheckWireguardKey is implemented to avoid pulling in wgctrl code to keep machinery dependencies slim.
+func CheckWireguardKey(key string) error {
 	raw, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return err

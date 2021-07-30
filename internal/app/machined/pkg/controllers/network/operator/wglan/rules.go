@@ -175,11 +175,17 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 	// NB: sets should be flushed before new members because nftables will fail
 	// if there are any conflicts between existing ranges and new ranges.
 
-	c.FlushSet(m.targetSet4)
+	if m.targetSet4 != nil {
+		c.FlushSet(m.targetSet4)
+	}
 
-	c.FlushSet(m.targetSet6)
+	if m.targetSet6 != nil {
+		c.FlushSet(m.targetSet6)
+	}
 
-	c.FlushTable(m.nfTable)
+	if m.nfTable != nil {
+		c.FlushTable(m.nfTable)
+	}
 
 	// Basic boilerplate; create a table & chain.
 	table := &nftables.Table{
