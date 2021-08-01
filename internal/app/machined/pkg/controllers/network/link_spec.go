@@ -136,8 +136,9 @@ func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage
 
 // syncLink syncs kernel state with the LinkSpec link.
 //
-// This method is really long, but it's hard to break it down in multiple pieces, are those pieces and steps are inter-dependent, so, instead,
-// I'm going to provide high-level flow of the method here to help understand it:
+// This method is really long, but it's hard to break it down in multiple pieces,
+// as those pieces and steps are inter-dependent.
+// Instead, then, we provide a high-level flow of the method here to help understand it:
 //
 // First of all, if the spec is being torn down - remove the link from the kernel, done.
 // If the link spec is not being torn down, start the sync process:
@@ -198,8 +199,8 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			// if type/kind doesn't match, recreate the link to change it
 			// FIXME:  disabled for Wireguard because Type always returns 0 even though it should be 0xFFFE.
-			if existing.Attributes.Info.Kind != network.LinkKindWireguard && 
-			   existing.Type != uint16(link.TypedSpec().Type) || existing.Attributes.Info.Kind != link.TypedSpec().Kind {
+			if existing.Attributes.Info.Kind != network.LinkKindWireguard &&
+				existing.Type != uint16(link.TypedSpec().Type) || existing.Attributes.Info.Kind != link.TypedSpec().Kind {
 				logger.Info("replacing logical link",
 					zap.String("old_kind", existing.Attributes.Info.Kind),
 					zap.String("new_kind", link.TypedSpec().Kind),

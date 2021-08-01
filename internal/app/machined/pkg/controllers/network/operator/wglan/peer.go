@@ -36,12 +36,8 @@ const MaximumReconcileInterval = 5 * time.Minute
 
 const reconciliationTimeout = 30 * time.Second
 
-// Hostnamer provides a Hostname on request.
-type Hostnamer interface {
-
-	// Hostname indicates the Hostname of the node.
-	Hostname(ctx context.Context) ([]byte, error)
-}
+// NodenameFunc is a function which should return the Kubernetes Nodename, when it is available.
+type NodenameFunc func() string
 
 // PeerManager maintains the database of WgLAN Peers.
 type PeerManager struct {
@@ -53,6 +49,8 @@ type PeerManager struct {
 
 	registries  []Registry
 	netdiscover discover.Discoverer
+
+	logger *zap.Logger
 }
 
 // Config describes the configuration of the Wireguard LAN system.
@@ -76,8 +74,8 @@ type Config struct {
 	// LinkName is the name of the Wireguard interface.
 	LinkName string
 
-	// Hostnamer is a provider of this node's hostname.
-	Hostnamer Hostnamer
+	// Nodename is a function which should returnt he Kubernetes Nodename, when it is available.
+	Nodename NodenameFunc
 
 	// PublicKey is the public key of the Wireguard interface.
 	PublicKey string
@@ -87,20 +85,6 @@ type Config struct {
 
 	// Subnet defines an explicit subnet to be used for Wireguard.
 	Subnet netaddr.IPPrefix
-}
-
-// Hostname returns the hostname of the Node, if known.
-func (c *Config) Hostname(ctx context.Context) string {
-	if c.Hostnamer != nil {
-		b, err := c.Hostnamer.Hostname(ctx)
-		if err != nil {
-			return ""
-		}
-
-		return string(b)
-	}
-
-	return ""
 }
 
 // Peer describes a potential Wireguard Peer.
@@ -125,9 +109,7 @@ func (p *Peer) PublicKey() string {
 
 // PossibleEndpoints describes the set of potential endpoints for contacting the given node.
 // If defaultPort == 0, the global system default will be used.
-func (p *Peer) PossibleEndpoints(defaultPort uint16) (out []netaddr.IPPort, err error) {
-	var merr *multierror.Error
-
+func (p *Peer) PossibleEndpoints(defaultPort uint16) (out []netaddr.IPPort) {
 	for _, a := range p.node.Addresses {
 		port := a.Port
 
@@ -149,15 +131,14 @@ func (p *Peer) PossibleEndpoints(defaultPort uint16) (out []netaddr.IPPort, err 
 
 		ips, err := resolveHostname(a.Name, port)
 		if err != nil {
-			merr = multierror.Append(merr, fmt.Errorf("failed to resolve hostname %q: %w", a.Name, err))
-
+			// NB: it is expected that hostnames may often not be resolvable
 			continue
 		}
 
 		out = append(out, ips...)
 	}
 
-	return out, merr.ErrorOrNil()
+	return out
 }
 
 // AllowedPrefixes describes the set of prefixes for addresses which should be allowed to be received from this Node.
@@ -228,10 +209,7 @@ func (p *Peer) SelectEndpoint(defaultPort uint16) error {
 }
 
 func (p *Peer) nextEndpoint(defaultPort uint16) (ep netaddr.IPPort, err error) {
-	list, err := p.PossibleEndpoints(defaultPort)
-	if err != nil {
-		return ep, fmt.Errorf("failed to collect possible endpoints: %w", err)
-	}
+	list := p.PossibleEndpoints(defaultPort)
 
 	if len(list) < 1 {
 		return ep, fmt.Errorf("no endpoints available")
@@ -358,7 +336,7 @@ func (m *PeerManager) registerSelf(ctx context.Context) error {
 	n := &types.Node{
 		ID:        m.Config.PublicKey,
 		IP:        m.Config.IP.IP(),
-		Name:      m.Config.Hostname(ctx),
+		Name:      m.Config.Nodename(),
 		Addresses: addrs,
 	}
 
@@ -376,8 +354,10 @@ func (m *PeerManager) registerSelf(ctx context.Context) error {
 func (m *PeerManager) updatePeers(ctx context.Context) error {
 	var merr *multierror.Error
 
+	m.logger.Sugar().Debugf("updating peers for cluster %q", m.Config.ClusterID)
+
 	// Merge Peers from Registries
-	for i, r := range m.registries {
+	for _, r := range m.registries {
 		ppList, err := r.List(ctx, m.Config.ClusterID)
 		if err != nil {
 			merr = multierror.Append(merr, err)
@@ -389,9 +369,11 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 			merr = multierror.Append(merr, fmt.Errorf("no peers found in registry %q", r.Name()))
 		}
 
+		m.logger.Sugar().Debugf("received %d peers from registry %q", len(ppList), r.Name())
+
 		for _, p := range ppList {
 			if p.PublicKey() == "" {
-				merr = multierror.Append(merr, fmt.Errorf("received empty peer from discoverer %d", i))
+				merr = multierror.Append(merr, fmt.Errorf("received empty peer from registry %q", r.Name()))
 
 				continue
 			}
@@ -422,6 +404,8 @@ func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger) error {
 	var err error
 
 	cycleInterval := MinimumReconcileInterval
+
+	m.logger = logger
 
 	// TODO: add a monitor for k8s Node adds/removes
 

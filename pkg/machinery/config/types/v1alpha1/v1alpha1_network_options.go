@@ -121,7 +121,7 @@ func WithNetworkInterfaceWgLAN() NetworkConfigOption {
 		cfg.NetworkInterfaces = append(cfg.NetworkInterfaces, &Device{
 			DeviceInterface: "wglan0",
 			DeviceWireguardConfig: &DeviceWireguardConfig{
-				WireguardPrivateKey: base64.StdEncoding.EncodeToString(privKey),
+				WireguardPrivateKey:           base64.StdEncoding.EncodeToString(privKey),
 				WireguardEnableAutomaticNodes: true,
 				WireguardEnablePodNetworking:  true,
 			},
@@ -164,5 +164,4 @@ func GenerateWireguardKey() ([]byte, error) {
 	privateKey[31] |= 64
 
 	return privateKey, nil
-
 }

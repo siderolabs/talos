@@ -79,7 +79,7 @@ func (r *RegistryExternal) List(ctx context.Context, clusterID string) ([]*Peer,
 
 // Name implements registry.Name.
 func (r *RegistryExternal) Name() string {
-return "external"
+	return "external"
 }
 
 // RegistryKubernetes defines a Kubernetes-based node discoverer.
@@ -225,7 +225,7 @@ func (r *RegistryKubernetes) List(ctx context.Context, clusterID string) ([]*Pee
 			return nil, fmt.Errorf("failed to populate node IP sets from node %s: %w", n.Name, err)
 		}
 
-		assignedPrefixes, err := assignedPrefixesFromKubernetesNode(n)
+		assignedPrefixes, err := assignedPrefixesFromKubernetesNode(n, r.IncludePodSubnets)
 		if err != nil {
 			return nil, fmt.Errorf("failed to construct assigned prefix list from node %s: %w", n.Name, err)
 		}
@@ -309,12 +309,23 @@ func ipFromNode(n v1.Node) (ip netaddr.IP, err error) {
 	return netaddr.ParseIP(data)
 }
 
-func assignedPrefixesFromKubernetesNode(n v1.Node) (*netaddr.IPSet, error) {
+func assignedPrefixesFromKubernetesNode(n v1.Node, includePodSubnets bool) (*netaddr.IPSet, error) {
 	set := new(netaddr.IPSetBuilder)
 
 	if prefixes, ok := n.Annotations[constants.WireguardAssignedPrefixesAnnotation]; ok {
 		for _, prefixString := range strings.Split(prefixes, ",") {
 			ip, err := netaddr.ParseIPPrefix(strings.TrimSpace(prefixString))
+			if err != nil {
+				continue
+			}
+
+			set.AddPrefix(ip)
+		}
+	}
+
+	if includePodSubnets {
+		for _, prefix := range n.Spec.PodCIDRs {
+			ip, err := netaddr.ParseIPPrefix(prefix)
 			if err != nil {
 				continue
 			}

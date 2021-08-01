@@ -117,6 +117,7 @@ func TestWireguardKeyGeneration(t *testing.T) {
 	privateKey, err := v1alpha1.GenerateWireguardKey()
 	if err != nil {
 		t.Errorf("failed to generate wireguard key: %w", err)
+
 		return
 	}
 
@@ -124,6 +125,7 @@ func TestWireguardKeyGeneration(t *testing.T) {
 
 	if err = v1alpha1.CheckWireguardKey(keyString); err != nil {
 		t.Errorf("wireguard key (%s) validation failed: %w", keyString, err)
+
 		return
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -127,7 +128,7 @@ func (mock *mockOperator) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return mock.timeservers
 }
 
-func (suite *OperatorSpecSuite) newOperator(logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
+func (suite *OperatorSpecSuite) newOperator(ctx context.Context, r controller.Runtime, logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
 	return &mockOperator{
 		spec: *spec,
 	}
