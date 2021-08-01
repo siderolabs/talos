@@ -67,6 +67,8 @@ func (m *RulesManager) Run(ctx context.Context, logger *zap.Logger, db *PeerDB) 
 		m.targetTable = constants.WireguardDefaultRoutingTable
 	}
 
+	m.db = db
+
 	m.logger = logger
 
 	if err := m.setup(); err != nil {
@@ -119,13 +121,16 @@ func (m *RulesManager) collectTargets() (*netaddr.IPSet, error) {
 	b := new(netaddr.IPSetBuilder)
 
 	for _, pp := range m.db.List() {
-		if pp == nil || !pp.peerUp {
+		if pp == nil {
 			continue
 		}
 
-		if routeSet, err := pp.AllowedPrefixes(); err != nil {
-			b.AddSet(routeSet)
+		routeSet, err := pp.AllowedPrefixes()
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire allowed prefixes for peer %s", pp.node.Name)
 		}
+
+		b.AddSet(routeSet)
 	}
 
 	return b.IPSet()
@@ -408,16 +413,12 @@ func (m *RulesManager) setElements(ips *netaddr.IPSet) (setElements4, setElement
 			},
 		}
 
-		m.logger.Sugar().Debugf("adding IP set %s - %s", r.From().String(), r.To().Next().String())
-
 		if r.From().Is6() {
 			setElements6 = append(setElements6, se...)
 		} else {
 			setElements4 = append(setElements4, se...)
 		}
 	}
-
-	m.logger.Sugar().Infof("Added %d IPv4 routes and %d IPv6 routes", len(setElements4), len(setElements6))
 
 	metricRouteCount.WithLabelValues("ipv4").
 		Set(float64(len(setElements4)))

@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
@@ -47,6 +48,11 @@ func (ctrl *OperatorSpecController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.NodenameType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -205,7 +211,7 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 	for id := range shouldRun {
 		if _, exists := ctrl.operators[id]; !exists {
 			ctrl.operators[id] = &operatorRunState{
-				Operator: ctrl.Factory(logger, shouldRun[id]),
+				Operator: ctrl.Factory(ctx, r, logger, shouldRun[id]),
 				Spec:     *shouldRun[id],
 			}
 
@@ -374,9 +380,9 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 }
 
 // OperatorFactory creates operator based on the spec.
-type OperatorFactory func(*zap.Logger, *network.OperatorSpecSpec) operator.Operator
+type OperatorFactory func(context.Context, controller.Runtime, *zap.Logger, *network.OperatorSpecSpec) operator.Operator
 
-func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
+func (ctrl *OperatorSpecController) newOperator(ctx context.Context, r controller.Runtime, logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
 	switch spec.Operator {
 	case network.OperatorDHCP4:
 		logger = logger.With(zap.String("operator", "dhcp4"))
@@ -393,8 +399,24 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 	case network.OperatorWgLAN:
 		logger = logger.With(zap.String("operator", "wglan"))
 
-		return operator.NewWgLAN(logger, ctrl.V1alpha1Platform, spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
+		return operator.NewWgLAN(logger, ctrl.NodenameFunc(ctx, r, logger), spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
+	}
+}
+
+// NodenameFunc provides a function which will return the registered Kubernetes Node name, when it is available.
+//
+// TODO: this is probably no the best way to do this, since we have to import the context and controller runtime at _factory_ time rather than at runtime.
+func (ctrl *OperatorSpecController) NodenameFunc(ctx context.Context, r controller.Runtime, logger *zap.Logger) func() string {
+	return func() string {
+		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		if err != nil {
+			logger.With(zap.Error(err)).Debug("kubernetes hostname not available")
+
+			return ""
+		}
+
+		return nodenameResource.(*k8s.Nodename).TypedSpec().Nodename
 	}
 }

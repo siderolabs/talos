@@ -40,7 +40,7 @@ type WgLAN struct {
 }
 
 // NewWgLAN creates a Wireguard LAN operator.
-func NewWgLAN(logger *zap.Logger, hostnamer wglan.Hostnamer, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string, podNetworking bool) *WgLAN {
+func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string, podNetworking bool) *WgLAN {
 	if discoveryURL == "" {
 		discoveryURL = constants.WireguardDefaultNATDiscoveryService
 	}
@@ -67,7 +67,7 @@ func NewWgLAN(logger *zap.Logger, hostnamer wglan.Hostnamer, linkName string, pr
 		EnablePodRouting: podNetworking,
 		IP:               ip,
 		LinkName:         linkName,
-		Hostnamer:        hostnamer,
+		Nodename:         nodenameFunc,
 		PublicKey:        pubKey,
 		RoutingTable:     constants.WireguardDefaultRoutingTable,
 		Subnet:           prefix,
@@ -76,6 +76,7 @@ func NewWgLAN(logger *zap.Logger, hostnamer wglan.Hostnamer, linkName string, pr
 	return &WgLAN{
 		Config:      cfg,
 		logger:      logger,
+		fwMark:      constants.WireguardDefaultFirewallMark,
 		clusterHash: fmt.Sprintf("%x", clusterHash[:]),
 		privateKey:  privateKey,
 		db:          new(wglan.PeerDB),
@@ -129,7 +130,7 @@ func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
 
 // LinkSpecs implements Operator interface.
 func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
-	o.logger.Info("returning link specs...")
+	peerList := o.getPeers(o.listenPort)
 
 	return []network.LinkSpecSpec{
 		{
@@ -144,7 +145,7 @@ func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
 				PrivateKey:   o.privateKey,
 				ListenPort:   int(o.listenPort),
 				FirewallMark: o.fwMark,
-				Peers:        o.getPeers(o.listenPort),
+				Peers:        peerList,
 			},
 			ConfigLayer: network.ConfigOperator,
 		},
