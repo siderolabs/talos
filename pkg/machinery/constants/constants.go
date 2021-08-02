@@ -411,10 +411,6 @@ const (
 	// DefaultDNSDomain is the default DNS domain.
 	DefaultDNSDomain = "cluster.local"
 
-	// InitializedKey is the key used to indicate if the cluster has been
-	// initialized.
-	InitializedKey = "initialized"
-
 	// BootTimeout is the timeout to run all services.
 	BootTimeout = 15 * time.Minute
 

@@ -1896,33 +1896,6 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 	})
 }
 
-// RemoveBootkubeInitializedKey implements machine.MachineService.
-//
-// Temporary API only used when converting from self-hosted to Talos-managed control plane.
-// This API can be removed once the conversion process is no longer needed (Talos 0.11?).
-func (s *Server) RemoveBootkubeInitializedKey(ctx context.Context, in *emptypb.Empty) (*machine.RemoveBootkubeInitializedKeyResponse, error) {
-	client, err := etcd.NewLocalClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create etcd client: %w", err)
-	}
-
-	//nolint:errcheck
-	defer client.Close()
-
-	ctx = clientv3.WithRequireLeader(ctx)
-
-	_, err = client.Delete(ctx, constants.InitializedKey)
-	if err != nil {
-		return nil, fmt.Errorf("error deleting initialized key: %w", err)
-	}
-
-	return &machine.RemoveBootkubeInitializedKeyResponse{
-		Messages: []*machine.RemoveBootkubeInitializedKey{
-			{},
-		},
-	}, nil
-}
-
 // GenerateClientConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {

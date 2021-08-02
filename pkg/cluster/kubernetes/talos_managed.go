@@ -36,13 +36,9 @@ type UpgradeProvider interface {
 //nolint:gocyclo
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	switch path := options.Path(); path {
-	case "1.19->1.19":
-		// nothing
-
-	case "1.19->1.20":
-		options.extraUpdaters = append(options.extraUpdaters, addControlPlaneToleration())
-
 	// nothing for all those
+	case "1.19->1.19":
+	case "1.19->1.20":
 	case "1.20->1.20":
 	case "1.20->1.21":
 	case "1.21->1.21":
@@ -73,7 +69,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		}
 	}
 
-	if err = hyperkubeUpgradeDs(ctx, k8sClient.Clientset, kubeProxy, options); err != nil {
+	if err = upgradeDaemonset(ctx, k8sClient.Clientset, kubeProxy, options); err != nil {
 		if apierrors.IsNotFound(err) {
 			options.Log("kube-proxy skipped as DaemonSet was not found")
 		} else {

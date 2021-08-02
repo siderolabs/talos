@@ -61,8 +61,8 @@ func (ctrl *ManifestApplyController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.BootstrapStatusType,
-			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("etcd"),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -100,7 +100,8 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 
 		secrets := secretsResources.(*secrets.Kubernetes).Certs()
 
-		bootstrapStatus, err := r.Get(ctx, v1alpha1.NewBootstrapStatus().Metadata())
+		// wait for etcd to be healthy as controller relies on etcd for locking
+		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -109,9 +110,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		if bootstrapStatus.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane {
-			logger.Info("skipped as running self-hosted control plane")
-
+		if !etcdResource.(*v1alpha1.Service).Healthy() {
 			continue
 		}
 

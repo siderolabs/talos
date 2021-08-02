@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 type ControlPlaneStaticPodSuite struct {
@@ -53,6 +54,12 @@ func (suite *ControlPlaneStaticPodSuite) SetupTest() {
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
+
+	etcdService := v1alpha1.NewService("etcd")
+	etcdService.SetRunning(true)
+	etcdService.SetHealthy(true)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, etcdService))
 
 	suite.startRuntime()
 }

@@ -68,9 +68,6 @@ service MachineService {
   rpc Restart(RestartRequest) returns (RestartResponse);
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
-  rpc RemoveBootkubeInitializedKey(google.protobuf.Empty) returns (RemoveBootkubeInitializedKeyResponse) {
-    option deprecated = true;
-  };
   rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
@@ -901,10 +898,6 @@ message GenerateConfiguration {
 message GenerateConfigurationResponse {
   repeated GenerateConfiguration messages = 1;
 }
-
-// RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
-message RemoveBootkubeInitializedKey { common.Metadata metadata = 1; }
-message RemoveBootkubeInitializedKeyResponse { repeated RemoveBootkubeInitializedKey messages = 1; }
 
 message GenerateClientConfigurationRequest {
   // Roles in the generated client certificate.
