@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/perf"
+	"github.com/talos-systems/talos/pkg/resources/runtime"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	"github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
@@ -102,6 +103,8 @@ func NewState() (*State, error) {
 		&network.TimeServerSpec{},
 		&perf.CPU{},
 		&perf.Memory{},
+		&runtime.KernelParamSpec{},
+		&runtime.KernelParamStatus{},
 		&secrets.API{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},

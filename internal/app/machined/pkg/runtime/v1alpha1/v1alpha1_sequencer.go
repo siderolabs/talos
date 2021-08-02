@@ -86,7 +86,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			SetupLogger,
 		).Append(
 			"systemRequirements",
-			WriteRequiredSysctlsForContainer,
 			SetupSystemDirectory,
 		).Append(
 			"etc",
@@ -103,7 +102,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"systemRequirements",
 			EnforceKSPPRequirements,
-			WriteRequiredSysctls,
 			SetupSystemDirectory,
 			MountBPFFS,
 			MountCgroups,
@@ -235,7 +233,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"userSetup",
 		WriteUserFiles,
-		WriteUserSysctls,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"lvm",

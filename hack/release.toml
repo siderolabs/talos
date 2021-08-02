@@ -36,6 +36,14 @@ before upgrading to Talos 0.12.
 Current control plane status can be checked with `talosctl get bootstrapstatus` before performing upgrade to Talos 0.12.
 """
 
+    [notes.cosi]
+        title = "Sysctl Configuration"
+        description = """\
+Sysctl Kernel Params configuration was completely rewritten to be based on controllers and resources,
+which makes it possible to apply `.machine.sysctls` in immediate mode (without a reboot).
+`talosctl get kernelparams` returns merged list of KSPP, Kubernetes and user defined params along with
+the default values overwritten by Talos.
+"""
 
 [make_deps]
 

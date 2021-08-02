@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/pkg/sysctl"
+	"github.com/talos-systems/talos/pkg/kernel"
 )
 
 // RequiredKSPPKernelParameters is the set of kernel parameters required to
@@ -46,10 +46,9 @@ func EnforceKSPPKernelParameters() error {
 	return result.ErrorOrNil()
 }
 
-// EnforceKSPPSysctls verifies that all required KSPP kernel sysctls are set
-// with the right value.
-func EnforceKSPPSysctls() (err error) {
-	props := []*sysctl.SystemProperty{
+// GetKernelParams returns the list of KSPP kernels.
+func GetKernelParams() []*kernel.Param {
+	return []*kernel.Param{
 		{
 			Key:   "kernel.kptr_restrict",
 			Value: "1",
@@ -62,7 +61,7 @@ func EnforceKSPPSysctls() (err error) {
 			Key:   "kernel.perf_event_paranoid",
 			Value: "3",
 		},
-		// We can skip this sysctl because CONFIG_KEXEC is not set.
+		// We can skip this kernel because CONFIG_KEXEC is not set.
 		// {
 		// 	Key:   "kernel.kexec_load_disabled",
 		// 	Value: "1",
@@ -84,12 +83,4 @@ func EnforceKSPPSysctls() (err error) {
 			Value: "2",
 		},
 	}
-
-	for _, prop := range props {
-		if err = sysctl.WriteSystemProperty(prop); err != nil {
-			return
-		}
-	}
-
-	return nil
 }

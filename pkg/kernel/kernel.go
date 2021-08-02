@@ -2,31 +2,37 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package sysctl
+package kernel
 
 import (
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 )
 
-// SystemProperty represents a kernel system property.
-type SystemProperty struct {
+// Param represents a kernel system property.
+type Param struct {
 	Key   string
 	Value string
 }
 
-// WriteSystemProperty writes a value to a key under /proc/sys.
-func WriteSystemProperty(prop *SystemProperty) error {
+// WriteParam writes a value to a key under /proc/sys.
+func WriteParam(prop *Param) error {
 	return ioutil.WriteFile(prop.Path(), []byte(prop.Value), 0o644)
 }
 
-// ReadSystemProperty reads a value from a key under /proc/sys.
-func ReadSystemProperty(prop *SystemProperty) ([]byte, error) {
+// ReadParam reads a value from a key under /proc/sys.
+func ReadParam(prop *Param) ([]byte, error) {
 	return ioutil.ReadFile(prop.Path())
 }
 
+// DeleteParam deletes a value from a key under /proc/sys.
+func DeleteParam(prop *Param) error {
+	return os.Remove(prop.Path())
+}
+
 // Path returns the path to the systctl file under /proc/sys.
-func (prop *SystemProperty) Path() string {
+func (prop *Param) Path() string {
 	return path.Join("/proc/sys", strings.ReplaceAll(prop.Key, ".", "/"))
 }
