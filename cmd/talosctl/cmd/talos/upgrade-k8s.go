@@ -21,7 +21,7 @@ import (
 var upgradeK8sCmd = &cobra.Command{
 	Use:   "upgrade-k8s",
 	Short: "Upgrade Kubernetes control plane in the Talos cluster.",
-	Long:  `Command runs upgrade of Kubernetes control plane components between specified versions. Pod-checkpointer is handled in a special way to speed up kube-apisever upgrades.`,
+	Long:  `Command runs upgrade of Kubernetes control plane components between specified versions.`,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(upgradeKubernetes)
@@ -64,15 +64,6 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 		}
 
 		upgradeOptions.Log("automatically detected the lowest Kubernetes version %s", upgradeOptions.FromVersion)
-	}
-
-	selfHosted, err := k8s.IsSelfHostedControlPlane(ctx, &state, Nodes[0])
-	if err != nil {
-		return fmt.Errorf("error checking self-hosted status: %w", err)
-	}
-
-	if selfHosted {
-		return k8s.UpgradeSelfHosted(ctx, &state, upgradeOptions)
 	}
 
 	return k8s.UpgradeTalosManaged(ctx, &state, upgradeOptions)

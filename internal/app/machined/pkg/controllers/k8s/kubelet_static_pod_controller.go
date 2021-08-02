@@ -68,12 +68,6 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 			ID:        pointer.ToString(secrets.RootKubernetesID),
 			Kind:      controller.InputWeak,
 		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.BootstrapStatusType,
-			ID:        pointer.ToString(v1alpha1.BootstrapStatusID),
-			Kind:      controller.InputWeak,
-		},
 	}
 }
 
@@ -165,25 +159,6 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		}
 
 		secrets := secretsResource.(*secrets.Kubernetes).Certs()
-
-		bootstrapStatus, err := r.Get(ctx, v1alpha1.NewBootstrapStatus().Metadata())
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
-		}
-
-		if bootstrapStatus.(*v1alpha1.BootstrapStatus).TypedSpec().SelfHostedControlPlane {
-			logger.Info("skipped as running self-hosted control plane")
-
-			if err = ctrl.cleanupPods(logger, nil); err != nil {
-				return fmt.Errorf("error cleaning up static pods: %w", err)
-			}
-
-			continue
-		}
 
 		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 		if err != nil {

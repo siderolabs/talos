@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.
@@ -47,6 +48,12 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 			ID:        pointer.ToString(k8s.StaticPodSecretsStaticPodID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        pointer.ToString("etcd"),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -69,6 +76,20 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		}
+
+		// wait for etcd to be healthy as kube-apiserver is using local etcd instance
+		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return err
+		}
+
+		if !etcdResource.(*v1alpha1.Service).Healthy() {
+			continue
 		}
 
 		secretsStatusResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.SecretsStatusType, k8s.StaticPodSecretsStaticPodID, resource.VersionUndefined))

@@ -66,7 +66,6 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 	go ctrl.watchMachineConfig(ctx, ctrl.logger)
 
 	for _, c := range []controller.Controller{
-		&v1alpha1.BootstrapStatusController{},
 		&v1alpha1.ServiceController{
 			// V1Events
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),

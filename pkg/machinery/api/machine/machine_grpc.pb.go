@@ -64,8 +64,6 @@ type MachineServiceClient interface {
 	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartResponse, error)
 	Rollback(ctx context.Context, in *RollbackRequest, opts ...grpc.CallOption) (*RollbackResponse, error)
 	Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
-	// Deprecated: Do not use.
-	RemoveBootkubeInitializedKey(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RemoveBootkubeInitializedKeyResponse, error)
 	ServiceList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ServiceListResponse, error)
 	ServiceRestart(ctx context.Context, in *ServiceRestartRequest, opts ...grpc.CallOption) (*ServiceRestartResponse, error)
 	ServiceStart(ctx context.Context, in *ServiceStartRequest, opts ...grpc.CallOption) (*ServiceStartResponse, error)
@@ -589,16 +587,6 @@ func (c *machineServiceClient) Reset(ctx context.Context, in *ResetRequest, opts
 	return out, nil
 }
 
-// Deprecated: Do not use.
-func (c *machineServiceClient) RemoveBootkubeInitializedKey(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RemoveBootkubeInitializedKeyResponse, error) {
-	out := new(RemoveBootkubeInitializedKeyResponse)
-	err := c.cc.Invoke(ctx, "/machine.MachineService/RemoveBootkubeInitializedKey", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *machineServiceClient) ServiceList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ServiceListResponse, error) {
 	out := new(ServiceListResponse)
 	err := c.cc.Invoke(ctx, "/machine.MachineService/ServiceList", in, out, opts...)
@@ -731,8 +719,6 @@ type MachineServiceServer interface {
 	Restart(context.Context, *RestartRequest) (*RestartResponse, error)
 	Rollback(context.Context, *RollbackRequest) (*RollbackResponse, error)
 	Reset(context.Context, *ResetRequest) (*ResetResponse, error)
-	// Deprecated: Do not use.
-	RemoveBootkubeInitializedKey(context.Context, *emptypb.Empty) (*RemoveBootkubeInitializedKeyResponse, error)
 	ServiceList(context.Context, *emptypb.Empty) (*ServiceListResponse, error)
 	ServiceRestart(context.Context, *ServiceRestartRequest) (*ServiceRestartResponse, error)
 	ServiceStart(context.Context, *ServiceStartRequest) (*ServiceStartResponse, error)
@@ -868,10 +854,6 @@ func (UnimplementedMachineServiceServer) Rollback(context.Context, *RollbackRequ
 
 func (UnimplementedMachineServiceServer) Reset(context.Context, *ResetRequest) (*ResetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
-}
-
-func (UnimplementedMachineServiceServer) RemoveBootkubeInitializedKey(context.Context, *emptypb.Empty) (*RemoveBootkubeInitializedKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveBootkubeInitializedKey not implemented")
 }
 
 func (UnimplementedMachineServiceServer) ServiceList(context.Context, *emptypb.Empty) (*ServiceListResponse, error) {
@@ -1501,24 +1483,6 @@ func _MachineService_Reset_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MachineService_RemoveBootkubeInitializedKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MachineServiceServer).RemoveBootkubeInitializedKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/machine.MachineService/RemoveBootkubeInitializedKey",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).RemoveBootkubeInitializedKey(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MachineService_ServiceList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -1785,10 +1749,6 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Reset",
 			Handler:    _MachineService_Reset_Handler,
-		},
-		{
-			MethodName: "RemoveBootkubeInitializedKey",
-			Handler:    _MachineService_RemoveBootkubeInitializedKey_Handler,
 		},
 		{
 			MethodName: "ServiceList",

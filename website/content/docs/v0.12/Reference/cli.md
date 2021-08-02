@@ -650,42 +650,6 @@ talosctl containers [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl convert-k8s
-
-Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).
-
-### Synopsis
-
-Command converts control plane bootstrapped on Talos <= 0.8 to Talos-managed control plane (Talos >= 0.9).
-As part of the conversion process tool reads existing configuration of the control plane, updates
-Talos node configuration to reflect changes made since the boostrap time. Once config is updated,
-tool releases static pods and deletes self-hosted DaemonSets.
-
-```
-talosctl convert-k8s [flags]
-```
-
-### Options
-
-```
-      --endpoint string   the cluster control plane endpoint
-      --force             skip prompts, assume yes
-  -h, --help              help for convert-k8s
-```
-
-### Options inherited from parent commands
-
-```
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl copy
 
 Copy data out from the node
@@ -2035,7 +1999,7 @@ Upgrade Kubernetes control plane in the Talos cluster.
 
 ### Synopsis
 
-Command runs upgrade of Kubernetes control plane components between specified versions. Pod-checkpointer is handled in a special way to speed up kube-apisever upgrades.
+Command runs upgrade of Kubernetes control plane components between specified versions.
 
 ```
 talosctl upgrade-k8s [flags]
@@ -2176,7 +2140,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
-* [talosctl convert-k8s](#talosctl-convert-k8s)	 - Convert Kubernetes control plane from self-hosted (bootkube) to Talos-managed (static pods).
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics

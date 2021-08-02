@@ -25,7 +25,6 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
-		&v1alpha1.BootstrapStatus{},
 		&v1alpha1.Service{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))

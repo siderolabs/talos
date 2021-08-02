@@ -105,8 +105,6 @@ description: Talos gRPC API reference.
     - [ReadRequest](#machine.ReadRequest)
     - [Reboot](#machine.Reboot)
     - [RebootResponse](#machine.RebootResponse)
-    - [RemoveBootkubeInitializedKey](#machine.RemoveBootkubeInitializedKey)
-    - [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse)
     - [Reset](#machine.Reset)
     - [ResetPartitionSpec](#machine.ResetPartitionSpec)
     - [ResetRequest](#machine.ResetRequest)
@@ -1849,36 +1847,6 @@ The reboot message containing the reboot status.
 
 
 
-<a name="machine.RemoveBootkubeInitializedKey"></a>
-
-### RemoveBootkubeInitializedKey
-RemoveBootkubeInitializedKeyResponse describes the response to a RemoveBootkubeInitializedKey request.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-
-
-
-
-
-
-<a name="machine.RemoveBootkubeInitializedKeyResponse"></a>
-
-### RemoveBootkubeInitializedKeyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [RemoveBootkubeInitializedKey](#machine.RemoveBootkubeInitializedKey) | repeated |  |
-
-
-
-
-
-
 <a name="machine.Reset"></a>
 
 ### Reset
@@ -2805,7 +2773,6 @@ This method is available only on control plane nodes (which run etcd). |
 | Restart | [RestartRequest](#machine.RestartRequest) | [RestartResponse](#machine.RestartResponse) |  |
 | Rollback | [RollbackRequest](#machine.RollbackRequest) | [RollbackResponse](#machine.RollbackResponse) |  |
 | Reset | [ResetRequest](#machine.ResetRequest) | [ResetResponse](#machine.ResetResponse) |  |
-| RemoveBootkubeInitializedKey | [.google.protobuf.Empty](#google.protobuf.Empty) | [RemoveBootkubeInitializedKeyResponse](#machine.RemoveBootkubeInitializedKeyResponse) |  |
 | ServiceList | [.google.protobuf.Empty](#google.protobuf.Empty) | [ServiceListResponse](#machine.ServiceListResponse) |  |
 | ServiceRestart | [ServiceRestartRequest](#machine.ServiceRestartRequest) | [ServiceRestartResponse](#machine.ServiceRestartResponse) |  |
 | ServiceStart | [ServiceStartRequest](#machine.ServiceStartRequest) | [ServiceStartResponse](#machine.ServiceStartResponse) |  |

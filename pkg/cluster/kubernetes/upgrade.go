@@ -13,9 +13,7 @@ import (
 )
 
 const (
-	namespace                 = "kube-system"
-	checkpointerAnnotation    = "checkpointer.alpha.coreos.com/checkpoint"
-	checkpointedPodAnnotation = "checkpointer.alpha.coreos.com/checkpoint-of"
+	namespace = "kube-system"
 
 	kubeAPIServer         = "kube-apiserver"
 	kubeControllerManager = "kube-controller-manager"
@@ -31,9 +29,8 @@ type UpgradeOptions struct {
 	ControlPlaneEndpoint string
 	LogOutput            io.Writer
 
-	extraUpdaters                []daemonsetUpdater
-	podCheckpointerExtraUpdaters []daemonsetUpdater
-	masterNodes                  []string
+	extraUpdaters []daemonsetUpdater
+	masterNodes   []string
 }
 
 // Path returns upgrade path in a form "FromMajor.FromMinor->ToMajor.ToMinor" (e.g. "1.20->1.21"),
