@@ -103,6 +103,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	// * .machine.time
 	// * .machine.network
 	// * .machine.certCANs
+	// * .machine.sysctls
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 
@@ -110,6 +111,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
+		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {

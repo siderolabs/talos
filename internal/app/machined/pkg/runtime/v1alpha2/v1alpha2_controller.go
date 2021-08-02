@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
+	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
@@ -135,8 +136,13 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&network.TimeServerMergeController{},
-		&perf.StatsController{},
 		&network.TimeServerSpecController{},
+		&perf.StatsController{},
+		&runtimecontrollers.KernelParamConfigController{},
+		&runtimecontrollers.KernelParamDefaultsController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&runtimecontrollers.KernelParamSpecController{},
 		&secrets.APIController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},

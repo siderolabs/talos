@@ -52,11 +52,12 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/internal/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/images"
+	"github.com/talos-systems/talos/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -64,7 +65,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/sysctl"
+	resourceruntime "github.com/talos-systems/talos/pkg/resources/runtime"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -86,7 +87,7 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 
 		// disable ratelimiting for kmsg, otherwise logs might be not visible.
 		// this should be set via kernel arg, but in case it's not set, try to force it.
-		if err = sysctl.WriteSystemProperty(&sysctl.SystemProperty{
+		if err = kernel.WriteParam(&kernel.Param{
 			Key:   "kernel.printk_devkmsg",
 			Value: "on\n",
 		}); err != nil {
@@ -112,7 +113,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 			return err
 		}
 
-		return kspp.EnforceKSPPSysctls()
+		return resourceruntime.NewKernelParamsSetCondition(r.State().V1Alpha2().Resources(), kspp.GetKernelParams()...).Wait(ctx)
 	}, "enforceKSPPRequirements"
 }
 
@@ -220,60 +221,6 @@ func MountPseudoFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		return mount.Mount(mountpoints)
 	}, "mountPseudoFilesystems"
-}
-
-// WriteRequiredSysctlsForContainer represents the WriteRequiredSysctlsForContainer task.
-func WriteRequiredSysctlsForContainer(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var multiErr *multierror.Error
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv4.ip_forward: %w", err))
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-			if !errors.Is(err, os.ErrNotExist) { // ignore error if ipv6 is disabled
-				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
-			}
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set kernel.pid_max: %w", err))
-		}
-
-		return multiErr.ErrorOrNil()
-	}, "writeRequiredSysctlsForContainer"
-}
-
-// WriteRequiredSysctls represents the WriteRequiredSysctls task.
-func WriteRequiredSysctls(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var multiErr *multierror.Error
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv4.ip_forward", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv4.ip_forward: %w", err))
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.bridge.bridge-nf-call-iptables", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.bridge.bridge-nf-call-iptables: %w", err))
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.bridge.bridge-nf-call-ip6tables", Value: "1"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.bridge.bridge-nf-call-ip6tables: %w", err))
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "net.ipv6.conf.default.forwarding", Value: "1"}); err != nil {
-			if !errors.Is(err, os.ErrNotExist) { // ignore error if ipv6 is disabled
-				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set net.ipv6.conf.default.forwarding: %w", err))
-			}
-		}
-
-		if err := sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: "kernel.pid_max", Value: "262144"}); err != nil {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("failed to set kernel.pid_max: %w", err))
-		}
-
-		return multiErr.ErrorOrNil()
-	}, "writeRequiredSysctls"
 }
 
 // SetRLimit represents the SetRLimit task.
@@ -1019,21 +966,6 @@ func existsAndIsFile(p string) (err error) {
 	}
 
 	return nil
-}
-
-// WriteUserSysctls represents the WriteUserSysctls task.
-func WriteUserSysctls(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var result *multierror.Error
-
-		for k, v := range r.Config().Machine().Sysctls() {
-			if err = sysctl.WriteSystemProperty(&sysctl.SystemProperty{Key: k, Value: v}); err != nil {
-				return err
-			}
-		}
-
-		return result.ErrorOrNil()
-	}, "writeUserSysctls"
 }
 
 // UnmountOverlayFilesystems represents the UnmountOverlayFilesystems task.
