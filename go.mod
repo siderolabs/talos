@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.4
+	github.com/containerd/containerd v1.5.5
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
@@ -60,7 +60,7 @@ require (
 	github.com/mdlayher/genetlink v1.0.0
 	github.com/mdlayher/netlink v1.4.1
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.1
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
