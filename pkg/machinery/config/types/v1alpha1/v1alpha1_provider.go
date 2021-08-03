@@ -673,7 +673,7 @@ func (wc *DeviceWireguardConfig) AutomaticNodes() bool {
 
 // AutomaticNodesPrefix implements the WireguardConfig interface.
 func (wc *DeviceWireguardConfig) AutomaticNodesPrefix() (netaddr.IPPrefix, error) {
-	prefix := constants.WireguardDefaultNodesPrefix
+	prefix := "::/0" // TODO: placeholder for removed interface function
 
 	if wc.WireguardAutomaticNodesPrefix != "" {
 		prefix = wc.WireguardAutomaticNodesPrefix

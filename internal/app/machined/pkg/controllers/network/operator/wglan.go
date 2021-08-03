@@ -248,6 +248,8 @@ func firstRealMAC() (net.HardwareAddr, error) {
 		return nil, fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
+	defer h.Delete()
+
 	list, err := h.LinkList()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of links: %w", err)

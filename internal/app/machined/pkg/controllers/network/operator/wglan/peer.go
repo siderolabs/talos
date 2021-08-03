@@ -424,7 +424,7 @@ func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger, notifyCh chan
 			logger.Sugar().Infof("failed to reconcile peer configuration for wglan %q: %s", m.Config.LinkName, err.Error())
 		}
 
-		notifyCh <-struct{}{}
+		notifyCh <- struct{}{}
 	}
 }
 
