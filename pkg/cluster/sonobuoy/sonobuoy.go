@@ -187,12 +187,14 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	runConfig.Wait = options.RunTimeout
 	runConfig.WaitOutput = waitOutput
 
-	runConfig.E2EConfig = &client.E2EConfig{
-		Focus:    strings.Join(options.RunTests, "|"),
-		Parallel: fmt.Sprintf("%v", options.Parallel),
-	}
 	runConfig.DynamicPlugins = []string{"e2e"}
-	runConfig.KubeConformanceImage = fmt.Sprintf("%s:v%s", config.UpstreamKubeConformanceImageURL, options.KubernetesVersion)
+	runConfig.PluginEnvOverrides = map[string]map[string]string{
+		"e2e": {
+			"E2E_FOCUS":    strings.Join(options.RunTests, "|"),
+			"E2E_PARALLEL": fmt.Sprintf("%v", options.Parallel),
+		},
+	}
+	runConfig.KubeVersion = fmt.Sprintf("v%s", options.KubernetesVersion)
 
 	if err = sclient.Run(runConfig); err != nil {
 		return fmt.Errorf("sonobuoy run failed: %w", err)
