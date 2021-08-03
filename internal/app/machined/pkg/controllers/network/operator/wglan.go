@@ -107,7 +107,7 @@ func (o *WgLAN) Run(ctx context.Context, notifyCh chan<- struct{}) {
 
 		peerManager = wglan.NewPeerManager(o.Config, o.db)
 
-		if err := peerManager.Run(ctx, o.logger); err != nil {
+		if err := peerManager.Run(ctx, o.logger, notifyCh); err != nil {
 			o.logger.Warn("failed to start peer manager", zap.Error(err))
 		}
 	}
