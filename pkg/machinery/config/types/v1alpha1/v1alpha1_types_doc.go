@@ -1149,6 +1149,13 @@ func init() {
 	EncryptionConfigDoc.Fields[2].Note = ""
 	EncryptionConfigDoc.Fields[2].Description = "Cipher kind to use for the encryption. Depends on the encryption provider."
 	EncryptionConfigDoc.Fields[2].Comments[encoder.LineComment] = "Cipher kind to use for the encryption. Depends on the encryption provider."
+
+	EncryptionConfigDoc.Fields[2].AddExample("", "aes-xts-plain64")
+	EncryptionConfigDoc.Fields[2].Values = []string{
+		"aes-xts-plain64",
+		"xchacha12,aes-adiantum-plain64",
+		"xchacha20,aes-adiantum-plain64",
+	}
 	EncryptionConfigDoc.Fields[3].Name = "keySize"
 	EncryptionConfigDoc.Fields[3].Type = "uint"
 	EncryptionConfigDoc.Fields[3].Note = ""
@@ -1159,11 +1166,20 @@ func init() {
 	EncryptionConfigDoc.Fields[4].Note = ""
 	EncryptionConfigDoc.Fields[4].Description = "Defines the encryption sector size."
 	EncryptionConfigDoc.Fields[4].Comments[encoder.LineComment] = "Defines the encryption sector size."
+
+	EncryptionConfigDoc.Fields[4].AddExample("", 4096)
 	EncryptionConfigDoc.Fields[5].Name = "options"
 	EncryptionConfigDoc.Fields[5].Type = "[]string"
 	EncryptionConfigDoc.Fields[5].Note = ""
 	EncryptionConfigDoc.Fields[5].Description = "Additional --perf parameters for the LUKS2 encryption."
 	EncryptionConfigDoc.Fields[5].Comments[encoder.LineComment] = "Additional --perf parameters for the LUKS2 encryption."
+
+	EncryptionConfigDoc.Fields[5].AddExample("", []string{"no_read_workqueue", "no_write_workqueue"})
+	EncryptionConfigDoc.Fields[5].Values = []string{
+		"no_read_workqueue",
+		"no_write_workqueue",
+		"same_cpu_crypt",
+	}
 
 	EncryptionKeyDoc.Type = "EncryptionKey"
 	EncryptionKeyDoc.Comments[encoder.LineComment] = "EncryptionKey represents configuration for disk encryption key."

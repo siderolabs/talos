@@ -1275,7 +1275,6 @@ type ClusterNetworkConfig struct {
 	//   description: |
 	//     The service subnet CIDR.
 	//   examples:
-	//   examples:
 	//     -  value: >
 	//          []string{"10.96.0.0/12"}
 	ServiceSubnet []string `yaml:"serviceSubnets"`
@@ -1400,15 +1399,30 @@ type EncryptionConfig struct {
 	//   description: >
 	//     Cipher kind to use for the encryption.
 	//     Depends on the encryption provider.
+	//   values:
+	//     - aes-xts-plain64
+	//     - xchacha12,aes-adiantum-plain64
+	//     - xchacha20,aes-adiantum-plain64
+	//   examples:
+	//     - value: '"aes-xts-plain64"'
 	EncryptionCipher string `yaml:"cipher,omitempty"`
 	//   description: >
 	//     Defines the encryption key length.
 	EncryptionKeySize uint `yaml:"keySize,omitempty"`
 	//   description: >
 	//     Defines the encryption sector size.
+	//   examples:
+	//     - value: '4096'
 	EncryptionBlockSize uint64 `yaml:"blockSize,omitempty"`
 	//   description: >
 	//     Additional --perf parameters for the LUKS2 encryption.
+	//   values:
+	//     - no_read_workqueue
+	//     - no_write_workqueue
+	//     - same_cpu_crypt
+	//   examples:
+	//     -  value: >
+	//          []string{"no_read_workqueue","no_write_workqueue"}
 	EncryptionPerfOptions []string `yaml:"options,omitempty"`
 }
 

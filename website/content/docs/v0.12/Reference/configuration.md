@@ -703,6 +703,17 @@ systemDiskEncryption:
             - # Deterministically generated key from the node UUID and PartitionLabel.
               nodeID: {}
               slot: 0 # Key slot number for LUKS2 encryption.
+
+        # # Cipher kind to use for the encryption. Depends on the encryption provider.
+        # cipher: aes-xts-plain64
+
+        # # Defines the encryption sector size.
+        # blockSize: 4096
+
+        # # Additional --perf parameters for the LUKS2 encryption.
+        # options:
+        #     - no_read_workqueue
+        #     - no_write_workqueue
 ```
 
 
@@ -3290,6 +3301,25 @@ Defines the encryption keys generation and storage method.
 
 Cipher kind to use for the encryption. Depends on the encryption provider.
 
+
+Valid values:
+
+
+  - <code>aes-xts-plain64</code>
+
+  - <code>xchacha12,aes-adiantum-plain64</code>
+
+  - <code>xchacha20,aes-adiantum-plain64</code>
+
+
+Examples:
+
+
+``` yaml
+cipher: aes-xts-plain64
+```
+
+
 </div>
 
 <hr />
@@ -3316,6 +3346,16 @@ Defines the encryption key length.
 
 Defines the encryption sector size.
 
+
+
+Examples:
+
+
+``` yaml
+blockSize: 4096
+```
+
+
 </div>
 
 <hr />
@@ -3328,6 +3368,27 @@ Defines the encryption sector size.
 <div class="dt">
 
 Additional --perf parameters for the LUKS2 encryption.
+
+
+Valid values:
+
+
+  - <code>no_read_workqueue</code>
+
+  - <code>no_write_workqueue</code>
+
+  - <code>same_cpu_crypt</code>
+
+
+Examples:
+
+
+``` yaml
+options:
+    - no_read_workqueue
+    - no_write_workqueue
+```
+
 
 </div>
 
@@ -5020,6 +5081,17 @@ ephemeral:
         - # Deterministically generated key from the node UUID and PartitionLabel.
           nodeID: {}
           slot: 0 # Key slot number for LUKS2 encryption.
+
+    # # Cipher kind to use for the encryption. Depends on the encryption provider.
+    # cipher: aes-xts-plain64
+
+    # # Defines the encryption sector size.
+    # blockSize: 4096
+
+    # # Additional --perf parameters for the LUKS2 encryption.
+    # options:
+    #     - no_read_workqueue
+    #     - no_write_workqueue
 ```
 
 <hr />
