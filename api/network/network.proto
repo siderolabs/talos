@@ -5,14 +5,12 @@ package network;
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/network";
 
 import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 import "common/common.proto";
 
 // The network service definition.
 service NetworkService {
   rpc Routes(google.protobuf.Empty) returns (RoutesResponse);
   rpc Interfaces(google.protobuf.Empty) returns (InterfacesResponse);
-  rpc WireguardDevices(google.protobuf.Empty) returns (WireguardDevicesResponse);
 }
 
 enum AddressFamily {
@@ -101,35 +99,4 @@ message Interface {
   string hardwareaddr = 4;
   InterfaceFlags flags = 5;
   repeated string ipaddress = 6;
-}
-
-message WireguardDevicesResponse {
-  repeated WireguardDevices messages = 1;
-}
-
-message WireguardDevices {
-  common.Metadata metadata = 1;
-  repeated WireguardDevice devices = 2;
-}
-
-// WireguardDevice roughly represents wgtypes.Device
-message WireguardDevice {
-  string name = 1;
-  string public_key = 2;
-  uint32 listen_port = 3;
-  uint32 fwmark = 4;
-  repeated WireguardPeer peers = 5;
-}
-
-// WireguardPeer represents wgtypes.Peer
-message WireguardPeer {
-  string public_key = 2;
-//  string preshared_key = 3; // NB: treat as secret data
-  string endpoint = 4;
-  uint64 persistent_keepalive_interval_seconds = 5;
-  google.protobuf.Timestamp last_handshake = 6;
-  uint64 receive_bytes = 7;
-  uint64 transmit_bytes = 8;
-  repeated string allowed_ips = 9;
-  int32 protocol_version = 10;
 }

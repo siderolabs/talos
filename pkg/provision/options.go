@@ -114,9 +114,6 @@ type Options struct {
 	// Expose ports to worker machines in docker provisioner
 	DockerPorts       []string
 	DockerPortsHostIP string
-
-	// Enable WgLAN
-	WgLANEnabled bool
 }
 
 // DefaultOptions returns default options.

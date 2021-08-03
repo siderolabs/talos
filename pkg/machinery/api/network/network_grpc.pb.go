@@ -26,7 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 type NetworkServiceClient interface {
 	Routes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RoutesResponse, error)
 	Interfaces(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InterfacesResponse, error)
-	WireguardDevices(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*WireguardDevicesResponse, error)
 }
 
 type networkServiceClient struct {
@@ -55,22 +54,12 @@ func (c *networkServiceClient) Interfaces(ctx context.Context, in *emptypb.Empty
 	return out, nil
 }
 
-func (c *networkServiceClient) WireguardDevices(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*WireguardDevicesResponse, error) {
-	out := new(WireguardDevicesResponse)
-	err := c.cc.Invoke(ctx, "/network.NetworkService/WireguardDevices", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // NetworkServiceServer is the server API for NetworkService service.
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
 	Routes(context.Context, *emptypb.Empty) (*RoutesResponse, error)
 	Interfaces(context.Context, *emptypb.Empty) (*InterfacesResponse, error)
-	WireguardDevices(context.Context, *emptypb.Empty) (*WireguardDevicesResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -83,10 +72,6 @@ func (UnimplementedNetworkServiceServer) Routes(context.Context, *emptypb.Empty)
 
 func (UnimplementedNetworkServiceServer) Interfaces(context.Context, *emptypb.Empty) (*InterfacesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Interfaces not implemented")
-}
-
-func (UnimplementedNetworkServiceServer) WireguardDevices(context.Context, *emptypb.Empty) (*WireguardDevicesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method WireguardDevices not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -137,24 +122,6 @@ func _NetworkService_Interfaces_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_WireguardDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NetworkServiceServer).WireguardDevices(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/network.NetworkService/WireguardDevices",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).WireguardDevices(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // NetworkService_ServiceDesc is the grpc.ServiceDesc for NetworkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -169,10 +136,6 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Interfaces",
 			Handler:    _NetworkService_Interfaces_Handler,
-		},
-		{
-			MethodName: "WireguardDevices",
-			Handler:    _NetworkService_WireguardDevices_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
