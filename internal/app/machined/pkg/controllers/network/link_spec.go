@@ -379,6 +379,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			link.TypedSpec().Wireguard.Sort()
 
+			// order here is important: we allow listenPort to be zero in the configuration
 			if !existingSpec.Equal(&link.TypedSpec().Wireguard) {
 				config, err := link.TypedSpec().Wireguard.Encode(&existingSpec)
 				if err != nil {
@@ -389,7 +390,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					return fmt.Errorf("error configuring wireguard device %q: %w", link.TypedSpec().Name, err)
 				}
 
-				logger.Info("reconfigured wireguard link")
+				logger.Info("reconfigured wireguard link", zap.Int("peers", len(link.TypedSpec().Wireguard.Peers)))
 
 				// notify link status controller, as wireguard updates can't be watched via netlink API
 				if err = r.Modify(ctx, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r resource.Resource) error {

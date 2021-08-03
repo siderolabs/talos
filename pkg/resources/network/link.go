@@ -312,7 +312,8 @@ func (spec *WireguardSpec) Equal(other *WireguardSpec) bool {
 		return false
 	}
 
-	if spec.ListenPort != other.ListenPort {
+	// listenPort of '0' means use any available port, so we shouldn't consider this to be a "change"
+	if spec.ListenPort != other.ListenPort && other.ListenPort != 0 {
 		return false
 	}
 
@@ -498,6 +499,38 @@ func (spec *WireguardSpec) Decode(dev *wgtypes.Device) {
 
 		for j := range dev.Peers[i].AllowedIPs {
 			spec.Peers[i].AllowedIPs[j], _ = netaddr.FromStdIPNet(&dev.Peers[i].AllowedIPs[j])
+		}
+	}
+}
+
+// Merge with other Wireguard spec overwriting non-zero values.
+func (spec *WireguardSpec) Merge(other WireguardSpec) {
+	if other.ListenPort != 0 {
+		spec.ListenPort = other.ListenPort
+	}
+
+	if other.FirewallMark != 0 {
+		spec.FirewallMark = other.FirewallMark
+	}
+
+	if other.PrivateKey != "" {
+		spec.PrivateKey = other.PrivateKey
+	}
+
+	// avoid adding same peer twice, no real peer information merging for now
+	for _, peer := range other.Peers {
+		exists := false
+
+		for _, p := range spec.Peers {
+			if p.PublicKey == peer.PublicKey {
+				exists = true
+
+				break
+			}
+		}
+
+		if !exists {
+			spec.Peers = append(spec.Peers, peer)
 		}
 	}
 }

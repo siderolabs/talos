@@ -166,6 +166,15 @@ func TestWireguardSpecDecode(t *testing.T) {
 	assert.Equal(t, expected, spec)
 	assert.True(t, expected.Equal(&spec))
 
+	// zeroed out listen port is still acceptable on the right side
+	spec.ListenPort = 0
+	assert.True(t, expected.Equal(&spec))
+
+	// ... but not on the left side
+	expected.ListenPort = 0
+	spec.ListenPort = 30000
+	assert.False(t, expected.Equal(&spec))
+
 	var zeroSpec network.WireguardSpec
 
 	assert.False(t, zeroSpec.Equal(&spec))
@@ -317,4 +326,158 @@ func TestWireguardSpecEncode(t *testing.T) {
 			},
 		},
 	}, delta)
+}
+
+func TestWireguardSpecMerge(t *testing.T) {
+	priv, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub1, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pub2, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		spec  network.WireguardSpec
+		other network.WireguardSpec
+
+		expected network.WireguardSpec
+	}{
+		{
+			name: "zero",
+		},
+		{
+			name: "speczero",
+			other: network.WireguardSpec{
+				ListenPort: 456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+
+			expected: network.WireguardSpec{
+				ListenPort: 456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+		},
+		{
+			name: "otherzero",
+			spec: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub1.String(),
+					},
+				},
+			},
+
+			expected: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub1.String(),
+					},
+				},
+			},
+		},
+		{
+			name: "mixed",
+			spec: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub1.String(),
+					},
+				},
+			},
+			other: network.WireguardSpec{
+				ListenPort: 456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+
+			expected: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				ListenPort:   456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub1.String(),
+					},
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+		},
+		{
+			name: "peerconflict",
+			spec: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey:                   pub1.String(),
+						PersistentKeepaliveInterval: time.Second,
+					},
+				},
+			},
+			other: network.WireguardSpec{
+				ListenPort: 456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey: pub1.String(),
+						Endpoint:  "127.0.0.1:466",
+					},
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+
+			expected: network.WireguardSpec{
+				PrivateKey:   priv.String(),
+				FirewallMark: 34,
+				ListenPort:   456,
+				Peers: []network.WireguardPeer{
+					{
+						PublicKey:                   pub1.String(),
+						PersistentKeepaliveInterval: time.Second,
+					},
+					{
+						PublicKey: pub2.String(),
+						Endpoint:  "127.0.0.1:3445",
+					},
+				},
+			},
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			spec := tt.spec
+			spec.Merge(tt.other)
+
+			assert.Equal(t, tt.expected, spec)
+		})
+	}
 }

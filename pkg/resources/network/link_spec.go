@@ -83,7 +83,7 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	}
 
 	if other.Type != 0 {
-		spec.Type = 0
+		spec.Type = other.Type
 	}
 
 	if other.ParentName != "" {
@@ -102,8 +102,14 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 		spec.BondMaster = other.BondMaster
 	}
 
+	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
+	// Thus, we handle each Wireguard configuration value discretely.
 	if !other.Wireguard.IsZero() {
-		spec.Wireguard = other.Wireguard
+		if spec.Wireguard.IsZero() {
+			spec.Wireguard = other.Wireguard
+		} else {
+			spec.Wireguard.Merge(other.Wireguard)
+		}
 	}
 
 	spec.ConfigLayer = other.ConfigLayer
