@@ -400,7 +400,7 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 }
 
 // Run starts the PeerMananager, keeping the database of Peers up to date.
-func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger) error {
+func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger, notifyCh chan<- struct{}) error {
 	var err error
 
 	cycleInterval := MinimumReconcileInterval
@@ -423,6 +423,8 @@ func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger) error {
 
 			logger.Sugar().Infof("failed to reconcile peer configuration for wglan %q: %s", m.Config.LinkName, err.Error())
 		}
+
+		notifyCh <-struct{}{}
 	}
 }
 
