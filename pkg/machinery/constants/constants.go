@@ -305,8 +305,14 @@ const (
 	// ApidPort is the port for the apid service.
 	ApidPort = 50000
 
+	// ApidUserID is the user ID for apid.
+	ApidUserID = 50
+
 	// TrustdPort is the port for the trustd service.
 	TrustdPort = 50001
+
+	// TrustdUserID is the user ID for trustd.
+	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
 	DefaultContainerdVersion = "1.5.5"

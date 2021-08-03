@@ -8,6 +8,8 @@ import (
 	"context"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 
 	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -112,8 +114,23 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 		factory.WithStreamInterceptor(authorizer.StreamInterceptor()),
 	)
 
+	// ensure socket dir exists
+	if err := os.MkdirAll(filepath.Dir(constants.MachineSocketPath), 0o750); err != nil {
+		return err
+	}
+
+	// set the final leaf to be world-executable to make apid connect to the socket
+	if err := os.Chmod(filepath.Dir(constants.MachineSocketPath), 0o751); err != nil {
+		return err
+	}
+
 	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
 	if err != nil {
+		return err
+	}
+
+	// chown the socket path to make it accessible to the apid
+	if err := os.Chown(constants.MachineSocketPath, constants.ApidUserID, constants.ApidUserID); err != nil {
 		return err
 	}
 

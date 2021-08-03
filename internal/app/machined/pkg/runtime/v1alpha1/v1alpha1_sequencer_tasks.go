@@ -120,8 +120,14 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 // SetupSystemDirectory represents the SetupSystemDirectory task.
 func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{constants.SystemEtcPath, constants.SystemRunPath, constants.SystemVarPath, constants.StateMountPoint} {
+		for _, p := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
+				return err
+			}
+		}
+
+		for _, p := range []string{constants.SystemRunPath} {
+			if err = os.MkdirAll(p, 0o751); err != nil {
 				return err
 			}
 		}

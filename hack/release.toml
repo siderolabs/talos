@@ -93,6 +93,7 @@ Talos can be configued to use Kubernetes 1.21 or CAPI v0.4.x components can be u
 * etcd PKI moved to `/system/secrets`
 * kubelet bootstrap CSR auto-signing scoped to kubelet bootstrap tokens only
 * enforce default seccomp profile on all system containers
+* run system services apid and trustd as non-root users
 """
 
     [notes.equinixmetal]
@@ -105,7 +106,7 @@ Talos automatically re-assigns IP using the Equinix Metal API when leadership ch
     [notes.configuration]
         title = "Machine Config Validation"
         description = """\
-Unknown keys in the machine config now make the config invalid, 
+Unknown keys in the machine config now make the config invalid,
 so any attempt to apply/edit the configuration with the unknown keys will lead into an error.
 """
 

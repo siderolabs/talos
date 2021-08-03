@@ -67,8 +67,18 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
+	// set the final leaf to be world-executable to make apid connect to the socket
+	if err := os.Chmod(filepath.Dir(constants.APIRuntimeSocketPath), 0o751); err != nil {
+		return err
+	}
+
 	listener, err := net.Listen("unix", constants.APIRuntimeSocketPath)
 	if err != nil {
+		return err
+	}
+
+	// chown the socket path to make it accessible to the apid
+	if err := os.Chown(constants.APIRuntimeSocketPath, constants.ApidUserID, constants.ApidUserID); err != nil {
 		return err
 	}
 
@@ -101,6 +111,11 @@ func (o *APID) DependsOn(r runtime.Runtime) []string {
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
+		return nil, err
+	}
+
+	// Make sure apid user owns socket directory.
+	if err := os.Chown(filepath.Dir(constants.APISocketPath), constants.ApidUserID, constants.ApidUserID); err != nil {
 		return nil, err
 	}
 
@@ -155,6 +170,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithMounts(mounts),
 			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, o.ID(r))),
 			oci.WithRootFSReadonly(),
+			oci.WithUser(fmt.Sprintf("%d:%d", constants.ApidUserID, constants.ApidUserID)),
 		),
 		runner.WithOOMScoreAdj(-998),
 	),

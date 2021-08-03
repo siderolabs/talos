@@ -103,6 +103,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithMounts(mounts),
 			oci.WithRootFSPath(filepath.Join(constants.SystemLibexecPath, t.ID(r))),
 			oci.WithRootFSReadonly(),
+			oci.WithUser(fmt.Sprintf("%d:%d", constants.TrustdUserID, constants.TrustdUserID)),
 		),
 		runner.WithOOMScoreAdj(-998),
 	),

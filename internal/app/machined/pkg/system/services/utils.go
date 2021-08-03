@@ -19,13 +19,13 @@ import (
 func prepareRootfs(id string) error {
 	rootfsPath := filepath.Join(constants.SystemLibexecPath, id)
 
-	if err := os.MkdirAll(rootfsPath, 0o700); err != nil {
+	if err := os.MkdirAll(rootfsPath, 0o711); err != nil { // rwx--x--x, non-root programs should be able to follow path
 		return fmt.Errorf("failed to create rootfs %q: %w", rootfsPath, err)
 	}
 
 	executablePath := filepath.Join(rootfsPath, id)
 
-	if err := ioutil.WriteFile(executablePath, nil, 0o500); err != nil {
+	if err := ioutil.WriteFile(executablePath, nil, 0o555); err != nil { // r-xr-xr-x, non-root programs should be able to execute & read
 		return fmt.Errorf("failed to create empty executable %q: %w", executablePath, err)
 	}
 
