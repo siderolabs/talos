@@ -274,6 +274,79 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 		}))
 }
 
+func (suite *LinkMergeSuite) TestMergeWireguard() {
+	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/wglan0")
+	*static.TypedSpec() = network.LinkSpecSpec{
+		Name: "wglan0",
+		Wireguard: network.WireguardSpec{
+			ListenPort: 1234,
+			Peers: []network.WireguardPeer{
+				{
+					PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
+					Endpoint:  "127.0.0.1:9999",
+				},
+			},
+		},
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	wglanOperator := network.NewLinkSpec(network.ConfigNamespaceName, "wglan/wglan0")
+	*wglanOperator.TypedSpec() = network.LinkSpecSpec{
+		Name: "wglan0",
+		Wireguard: network.WireguardSpec{
+			PrivateKey: "IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=",
+			ListenPort: 3456,
+			Peers: []network.WireguardPeer{
+				{
+					PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
+					Endpoint:  "127.0.0.1:1234",
+				},
+			},
+		},
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	for _, res := range []resource.Resource{static, wglanOperator} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertLinks([]string{
+				"wglan0",
+			}, func(r *network.LinkSpec) error {
+				suite.Assert().Equal("IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=", r.TypedSpec().Wireguard.PrivateKey)
+				suite.Assert().Equal(1234, r.TypedSpec().Wireguard.ListenPort)
+				suite.Assert().Len(r.TypedSpec().Wireguard.Peers, 2)
+
+				suite.Assert().Equal(
+					network.WireguardPeer{
+						PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
+						Endpoint:  "127.0.0.1:1234",
+					},
+					r.TypedSpec().Wireguard.Peers[0],
+				)
+
+				suite.Assert().Equal(
+					network.WireguardPeer{
+						PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
+						Endpoint:  "127.0.0.1:9999",
+					},
+					r.TypedSpec().Wireguard.Peers[1],
+				)
+
+				return nil
+			})
+		}))
+
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, wglanOperator.Metadata()))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertNoLinks("wglan0")
+		}))
+}
+
 func (suite *LinkMergeSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
