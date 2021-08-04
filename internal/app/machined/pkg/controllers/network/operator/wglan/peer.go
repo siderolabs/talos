@@ -62,12 +62,6 @@ type Config struct {
 	// DiscoveryURL is the URL at which node and peer coordination occurs and from which the set of public keys of the member peers may be collected.
 	DiscoveryURL string
 
-	// EnablePodRouting indicates that routes for Pod networks should also be added.
-	EnablePodRouting bool
-
-	// ForceLocalRoutes require all inter-node traffic to be encrypted, even when direct routes exist.
-	ForceLocalRoutes bool
-
 	// IP is the IP address of the Wireguard interface itself.
 	IP netaddr.IPPrefix
 
@@ -263,9 +257,7 @@ func NewPeerManager(cfg *Config, db *PeerDB) *PeerManager {
 			&RegistryExternal{
 				URLRoot: cfg.DiscoveryURL,
 			},
-			&RegistryKubernetes{
-				IncludePodSubnets: cfg.EnablePodRouting,
-			},
+			&RegistryKubernetes{},
 		},
 		netdiscover: discover.NewDiscoverer(),
 	}

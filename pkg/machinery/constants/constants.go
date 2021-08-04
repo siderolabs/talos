@@ -471,9 +471,6 @@ const (
 	// It is used to signal that matching packets should be forced into the Wireguard interface.
 	WireguardDefaultForceFirewallMark = 0x51821
 
-	// WireguardDefaultNodesPrefix is the default prefix to use for Wireguard Automatic Node addition.
-	WireguardDefaultNodesPrefix = "0200:1001::/64"
-
 	// WireguardDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	WireguardDefaultPeerKeepalive = 25 * time.Second
 

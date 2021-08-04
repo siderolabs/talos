@@ -1590,27 +1590,16 @@ type DeviceWireguardConfig struct {
 	//   description: Specifies a list of peer configurations to apply to a device.
 	WireguardPeers []*DeviceWireguardPeer `yaml:"peers,omitempty"`
 	//   description: |
-	//     Indicates whether this Wireguard interface should provide backup Pod-to-Pod connectivity.
-	//     Note that this requires the Nodes to already exist as Peers, which means it generally requires enableAutomaticNodes, as well.
-	//
-	WireguardEnablePodNetworking bool `yaml:"enablePodNetworking,omitempty"`
-	//   description: |
-	//     Indicates whether cluster Nodes should be automatically added as Peers.
-	WireguardEnableAutomaticNodes bool `yaml:"enableAutomaticNodes,omitempty"`
+	//     Indicates whether KubeSpan should be enabled on this interface.
+	WireguardEnableKubeSpan bool `yaml:"enableKubeSpan,omitempty"`
 	//   description: |
 	//     Indicates the IPv6 prefix to be used for automatically-added Node Peers.
 	//     The prefix must be at least /64.
-	//     If not provided, the default, 0200:1001::/64, will be used (if Automatic Nodes is enabled).
-	//     Note that this default prefix is not routable over the public Internet and it is deprecated by the IETF.
-	//     However, it _is_ used by the Yggdrasil Network, which provides similar connectivity in a public cloud.
-	//     Note also that no IPv6 connectivity is required to use this prefix.
-	WireguardAutomaticNodesPrefix string `yaml:"automaticNodePrefix,omitempty"`
+	//     If not provided (and it is recommended to not provide one), a cluster-unique deterministic address in the RFC4193 range will be used.
+	//     Note also that IPv6 connectivity is NOT required to use this prefix.
+	WireguardKubeSpanPrefix string `yaml:"kubeSpanPrefix,omitempty"`
 	//   description: Use the specified URL for the NAT discovery service.
-	WireguardNATDiscoveryService string `yaml:"natDiscoveryService,omitempty"`
-	//   description: |
-	//     Defines a cluster ID for automatic Node addition.
-	//     If not defined, the main cluster ID will be used.
-	WireguardClusterID string `yaml:"clusterID,omitempty"`
+	WireguardKubeSpanDiscoveryService string `yaml:"kubespanDiscoveryService,omitempty"`
 }
 
 // DeviceWireguardPeer a WireGuard device peer configuration.

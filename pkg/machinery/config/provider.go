@@ -144,11 +144,9 @@ type WireguardConfig interface {
 	ListenPort() int
 	FirewallMark() int
 	Peers() []WireguardPeer
-	PodNetworkingEnabled() bool
-	AutomaticNodes() bool
-	AutomaticNodesPrefix() (netaddr.IPPrefix, error)
-	NATDiscoveryService() string
-	ClusterID() string
+	KubeSpanEnabled() bool
+	KubeSpanPrefix() (netaddr.IPPrefix, error)
+	KubeSpanDiscoveryService() string
 }
 
 // WireguardPeer a WireGuard device peer configuration.

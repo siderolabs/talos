@@ -17,6 +17,7 @@ import (
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
@@ -173,7 +174,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					}
 				}
 
-				if device.WireguardConfig() != nil && device.WireguardConfig().AutomaticNodes() {
+				if device.WireguardConfig() != nil && device.WireguardConfig().KubeSpanEnabled() {
 					var (
 						clusterID string
 						prefix    netaddr.IPPrefix
@@ -181,14 +182,17 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					)
 
 					clusterID = cfgProvider.Cluster().ID()
-					if device.WireguardConfig().ClusterID() != "" {
-						clusterID = device.WireguardConfig().ClusterID()
+
+					prefix, err = device.WireguardConfig().KubeSpanPrefix()
+					if prefix.IsZero() || err != nil {
+						prefix = nethelpers.ULAPrefix(clusterID, nethelpers.ULAKubeSpan)
+
+						if prefix.IsZero() {
+							return fmt.Errorf("failed to get the KubeSpan prefix")
+						}
 					}
 
-					prefix, err = device.WireguardConfig().AutomaticNodesPrefix()
-					if err != nil {
-						return fmt.Errorf("failed to retrieve KubeSpan prefix: %w", err)
-					}
+					logger.Sugar().Debugf("KubeSpan prefix: %s", prefix.String())
 
 					privKey, err = device.WireguardConfig().PrivateKey()
 					if err != nil {
@@ -201,9 +205,8 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						RequireUp: true,
 						WgLAN: network.WgLANOperatorSpec{
 							ClusterID:     clusterID,
-							DiscoveryURL:  device.WireguardConfig().NATDiscoveryService(),
+							DiscoveryURL:  device.WireguardConfig().KubeSpanDiscoveryService(),
 							InterfaceName: device.Interface(),
-							PodNetworking: device.WireguardConfig().PodNetworkingEnabled(),
 							Prefix:        prefix,
 							PrivateKey:    privKey,
 						},

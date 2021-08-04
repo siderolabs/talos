@@ -110,8 +110,8 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 	}
 }
 
-// WithNetworkInterfaceWgLAN configures a WgLAN interface.
-func WithNetworkInterfaceWgLAN() NetworkConfigOption {
+// WithKubeSpan configures a KubeSpan interface.
+func WithKubeSpan() NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		privKey, err := GenerateWireguardKey()
 		if err != nil {
@@ -119,11 +119,10 @@ func WithNetworkInterfaceWgLAN() NetworkConfigOption {
 		}
 
 		cfg.NetworkInterfaces = append(cfg.NetworkInterfaces, &Device{
-			DeviceInterface: "wglan0",
+			DeviceInterface: "kubespan",
 			DeviceWireguardConfig: &DeviceWireguardConfig{
 				WireguardPrivateKey:           base64.StdEncoding.EncodeToString(privKey),
-				WireguardEnableAutomaticNodes: true,
-				WireguardEnablePodNetworking:  true,
+				WireguardEnableKubeSpan: true,
 			},
 		})
 

@@ -443,8 +443,8 @@ func checkBond(b *Bond) error {
 func checkWireguard(b *DeviceWireguardConfig) error {
 	var result *multierror.Error
 
-	if b.WireguardPrivateKey == "" && !b.WireguardEnableAutomaticNodes {
-		result = multierror.Append(result, fmt.Errorf("private key must not be empty unless automatic nodes is enabled"))
+	if b.WireguardPrivateKey == "" && !b.WireguardEnableKubeSpan {
+		result = multierror.Append(result, fmt.Errorf("private key must not be empty unless KubeSpan is enabled"))
 	}
 
 	if b.WireguardPrivateKey != "" {
@@ -476,12 +476,12 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 		result = multierror.Append(result, fmt.Errorf("invalid Wireguard listen port: %d", b.WireguardListenPort))
 	}
 
-	if b.WireguardAutomaticNodesPrefix != "" {
-		prefix, err := netaddr.ParseIPPrefix(b.WireguardAutomaticNodesPrefix)
+	if b.WireguardKubeSpanPrefix != "" {
+		prefix, err := netaddr.ParseIPPrefix(b.WireguardKubeSpanPrefix)
 		if err != nil {
-			result = multierror.Append(result, fmt.Errorf("invalid Wireguard Automatic Nodes prefix %q: %w", b.WireguardAutomaticNodesPrefix, err))
+			result = multierror.Append(result, fmt.Errorf("invalid KubeSpan prefix %q: %w", b.WireguardKubeSpanPrefix, err))
 		} else if prefix.Bits() < uint8(64) {
-			result = multierror.Append(result, fmt.Errorf("invalide Wireguard Automatic Nodes prefix length %q: must be at least 64 bits", prefix.Bits()))
+			result = multierror.Append(result, fmt.Errorf("invalide KubeSpan prefix length %q: must be at least 64 bits", prefix.Bits()))
 		}
 	}
 

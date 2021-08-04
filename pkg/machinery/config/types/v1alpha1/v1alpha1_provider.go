@@ -617,10 +617,6 @@ func (wc *DeviceWireguardConfig) PrivateKey() (string, error) {
 
 // ListenPort implements the MachineNetwork interface.
 func (wc *DeviceWireguardConfig) ListenPort() int {
-	if wc.WireguardListenPort == 0 {
-		wc.WireguardListenPort = 51820
-	}
-
 	return wc.WireguardListenPort
 }
 
@@ -640,39 +636,23 @@ func (wc *DeviceWireguardConfig) Peers() []config.WireguardPeer {
 	return peers
 }
 
-// PodNetworkingEnabled implements the WireguardConfig interface.
-func (wc *DeviceWireguardConfig) PodNetworkingEnabled() bool {
-	return wc.WireguardEnablePodNetworking
+// KubeSpanEnabled implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) KubeSpanEnabled() bool {
+	return wc.WireguardEnableKubeSpan
 }
 
-// AutomaticNodes implements the WireguardConfig interface.
-func (wc *DeviceWireguardConfig) AutomaticNodes() bool {
-	return wc.WireguardEnableAutomaticNodes
+// KubeSpanPrefix implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) KubeSpanPrefix() (netaddr.IPPrefix, error) {
+	return netaddr.ParseIPPrefix(wc.WireguardKubeSpanPrefix)
 }
 
-// AutomaticNodesPrefix implements the WireguardConfig interface.
-func (wc *DeviceWireguardConfig) AutomaticNodesPrefix() (netaddr.IPPrefix, error) {
-	prefix := constants.WireguardDefaultNodesPrefix
-
-	if wc.WireguardAutomaticNodesPrefix != "" {
-		prefix = wc.WireguardAutomaticNodesPrefix
-	}
-
-	return netaddr.ParseIPPrefix(prefix)
-}
-
-// NATDiscoveryService implements the WireguardConfig interface.
-func (wc *DeviceWireguardConfig) NATDiscoveryService() string {
-	if wc.WireguardNATDiscoveryService != "" {
-		return wc.WireguardNATDiscoveryService
+// WireguardKubeSpanDiscoveryService implements the WireguardConfig interface.
+func (wc *DeviceWireguardConfig) KubeSpanDiscoveryService() string {
+	if wc.WireguardKubeSpanDiscoveryService != "" {
+		return wc.WireguardKubeSpanDiscoveryService
 	}
 
 	return constants.WireguardDefaultNATDiscoveryService
-}
-
-// ClusterID implements the WireguardConfig interface.
-func (wc *DeviceWireguardConfig) ClusterID() string {
-	return wc.WireguardClusterID
 }
 
 // PublicKey implements the MachineNetwork interface.

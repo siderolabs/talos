@@ -82,10 +82,11 @@ beyond the enabling flags for most installations.
 
 WgLAN is constructed from a number of pieces:
 
-- Address generation:  IPv6 EUI64-style address generation based on a
-     non-routing default prefix: `0200:1001::/64`.
+- Address generation:  IPv6 EUI64-style address generation based on an
+     RFC4193 Unique Local Addressing prefix deterministrically generated from
+     a cluster-unique identifier.
      While this is an IPv6 address, you are free to use any combination of IPv4
-     and IPv6 addresses in your cluster.  
+     and IPv6 addresses in the rest of your cluster.  
      There is no need for you to enable IPv6 in Kubernetes at all.
 - Public Key discovery: WgLAN uses any of a set of discovery mechanisms for
      determining its peers, their public keys, and the addresses which should be
