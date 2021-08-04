@@ -291,6 +291,9 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 
+		log.Printf("logical/physical block size: %d/%d", pt.Header().LBA.LogicalBlockSize, pt.Header().LBA.PhysicalBlockSize)
+		log.Printf("minimum/optimal I/O size: %d/%d", pt.Header().LBA.MinimalIOSize, pt.Header().LBA.OptimalIOSize)
+
 		if err = pt.Write(); err != nil {
 			return err
 		}
