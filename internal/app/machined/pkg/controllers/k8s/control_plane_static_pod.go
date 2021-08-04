@@ -193,7 +193,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args := []string{
 		"/usr/local/bin/kube-apiserver",
-		"--enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeClaimResize,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota,Priority,NodeRestriction", //nolint:lll
+		"--enable-admission-plugins=PodSecurityPolicy,NodeRestriction",
 		"--advertise-address=$(POD_IP)",
 		"--allow-privileged=true",
 		fmt.Sprintf("--api-audiences=%s", cfg.ControlPlaneEndpoint),
