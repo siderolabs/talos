@@ -21,7 +21,9 @@ const (
 	_Scope_name_2 = "linkhostnowhere"
 )
 
-var _Scope_index_2 = [...]uint8{0, 4, 8, 15}
+var (
+	_Scope_index_2 = [...]uint8{0, 4, 8, 15}
+)
 
 func (i Scope) String() string {
 	switch {

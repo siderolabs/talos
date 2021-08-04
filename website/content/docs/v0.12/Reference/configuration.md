@@ -3954,67 +3954,39 @@ Specifies a list of peer configurations to apply to a device.
 <hr />
 <div class="dd">
 
-<code>enablePodNetworking</code>  <i>bool</i>
+<code>enableKubeSpan</code>  <i>bool</i>
 
 </div>
 <div class="dt">
 
-Indicates whether this Wireguard interface should provide backup Pod-to-Pod connectivity.
-Note that this requires the Nodes to already exist as Peers, which means it generally requires enableAutomaticNodes, as well.
+Indicates whether KubeSpan should be enabled on this interface.
 
 </div>
 
 <hr />
 <div class="dd">
 
-<code>enableAutomaticNodes</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates whether cluster Nodes should be automatically added as Peers.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>automaticNodePrefix</code>  <i>string</i>
+<code>kubeSpanPrefix</code>  <i>string</i>
 
 </div>
 <div class="dt">
 
 Indicates the IPv6 prefix to be used for automatically-added Node Peers.
 The prefix must be at least /64.
-If not provided, the default, 0200:1001::/64, will be used (if Automatic Nodes is enabled).
-Note that this default prefix is not routable over the public Internet and it is deprecated by the IETF.
-However, it _is_ used by the Yggdrasil Network, which provides similar connectivity in a public cloud.
-Note also that no IPv6 connectivity is required to use this prefix.
+If not provided (and it is recommended to not provide one), a cluster-unique deterministic address in the RFC4193 range will be used.
+Note also that IPv6 connectivity is NOT required to use this prefix.
 
 </div>
 
 <hr />
 <div class="dd">
 
-<code>natDiscoveryService</code>  <i>string</i>
+<code>kubespanDiscoveryService</code>  <i>string</i>
 
 </div>
 <div class="dt">
 
 Use the specified URL for the NAT discovery service.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>clusterID</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Defines a cluster ID for automatic Node addition.
-If not defined, the main cluster ID will be used.
 
 </div>
 

@@ -139,8 +139,8 @@ talosctl cluster create [flags]
       --with-bootloader                         enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-debug                              enable debug in Talos config to send service logs to the console
       --with-init-node                          create the cluster with an init node
+      --with-kubespan                           **ALPHA** enable KubeSpan system
       --with-uefi                               enable UEFI on x86_64 architecture (always enabled for arm64)
-      --with-wglan                              **ALPHA** enable WgLAN system
       --workers int                             the number of workers to create (default 1)
 ```
 
