@@ -74,7 +74,7 @@ require (
 	github.com/spf13/viper v1.8.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.1
-	github.com/talos-systems/go-blockdevice v0.2.1
+	github.com/talos-systems/go-blockdevice v0.2.2
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
