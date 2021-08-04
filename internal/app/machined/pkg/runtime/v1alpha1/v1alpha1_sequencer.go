@@ -232,6 +232,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"overlay",
 		MountOverlayFilesystems,
+	).Append(
+		"udevSetup",
+		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"udevd",

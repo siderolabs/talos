@@ -67,6 +67,7 @@ var (
 	DiscoveryRegistriesConfigDoc   encoder.Doc
 	RegistryKubernetesConfigDoc    encoder.Doc
 	RegistryServiceConfigDoc       encoder.Doc
+	UdevConfigDoc                  encoder.Doc
 )
 
 func init() {
@@ -128,7 +129,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 15)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 16)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -248,6 +249,13 @@ func init() {
 	MachineConfigDoc.Fields[14].Comments[encoder.LineComment] = "Features describe individual Talos features that can be switched on or off."
 
 	MachineConfigDoc.Fields[14].AddExample("", machineFeaturesExample)
+	MachineConfigDoc.Fields[15].Name = "udev"
+	MachineConfigDoc.Fields[15].Type = "UdevConfig"
+	MachineConfigDoc.Fields[15].Note = ""
+	MachineConfigDoc.Fields[15].Description = "Configures the udev system."
+	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Configures the udev system."
+
+	MachineConfigDoc.Fields[15].AddExample("", machineUdevExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
@@ -2136,6 +2144,24 @@ func init() {
 	RegistryServiceConfigDoc.Fields[1].Comments[encoder.LineComment] = "External service endpoint."
 
 	RegistryServiceConfigDoc.Fields[1].AddExample("", constants.DefaultDiscoveryServiceEndpoint)
+
+	UdevConfigDoc.Type = "UdevConfig"
+	UdevConfigDoc.Comments[encoder.LineComment] = "UdevConfig describes how the udev system should be configured."
+	UdevConfigDoc.Description = "UdevConfig describes how the udev system should be configured."
+
+	UdevConfigDoc.AddExample("", machineUdevExample)
+	UdevConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "udev",
+		},
+	}
+	UdevConfigDoc.Fields = make([]encoder.Doc, 1)
+	UdevConfigDoc.Fields[0].Name = "rules"
+	UdevConfigDoc.Fields[0].Type = "[]string"
+	UdevConfigDoc.Fields[0].Note = ""
+	UdevConfigDoc.Fields[0].Description = "List of udev rules to apply to the udev system"
+	UdevConfigDoc.Fields[0].Comments[encoder.LineComment] = "List of udev rules to apply to the udev system"
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -2358,6 +2384,10 @@ func (_ RegistryServiceConfig) Doc() *encoder.Doc {
 	return &RegistryServiceConfigDoc
 }
 
+func (_ UdevConfig) Doc() *encoder.Doc {
+	return &UdevConfigDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -2419,6 +2449,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&DiscoveryRegistriesConfigDoc,
 			&RegistryKubernetesConfigDoc,
 			&RegistryServiceConfigDoc,
+			&UdevConfigDoc,
 		},
 	}
 }

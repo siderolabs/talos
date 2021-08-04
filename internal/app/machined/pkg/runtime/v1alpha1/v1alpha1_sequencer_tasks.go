@@ -589,6 +589,30 @@ func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "startContainerd"
 }
 
+// WriteUdevRules is the task that writes udev rules to a udev rules file.
+func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		rules := r.Config().Machine().Udev().Rules()
+
+		if len(rules) == 0 {
+			return nil
+		}
+
+		var content strings.Builder
+
+		for _, rule := range rules {
+			content.WriteString(strings.ReplaceAll(rule, "\n", "\\\n"))
+			content.WriteByte('\n')
+		}
+
+		if err = ioutil.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
+			return fmt.Errorf("failed writing custom udev rules: %w", err)
+		}
+
+		return nil
+	}, "writeUdevRules"
+}
+
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

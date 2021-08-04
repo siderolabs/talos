@@ -738,6 +738,31 @@ features:
 </div>
 
 <hr />
+<div class="dd">
+
+<code>udev</code>  <i><a href="#udevconfig">UdevConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configures the udev system.
+
+
+
+Examples:
+
+
+``` yaml
+udev:
+    # List of udev rules to apply to the udev system
+    rules:
+        - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
+```
+
+
+</div>
+
+<hr />
 
 
 
@@ -5525,6 +5550,37 @@ Examples:
 endpoint: https://discovery.talos.dev/
 ```
 
+
+</div>
+
+<hr />
+
+
+
+## UdevConfig
+UdevConfig describes how the udev system should be configured.
+
+Appears in:
+
+- <code><a href="#machineconfig">MachineConfig</a>.udev</code>
+
+
+``` yaml
+# List of udev rules to apply to the udev system
+rules:
+    - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
+```
+
+<hr />
+
+<div class="dd">
+
+<code>rules</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+List of udev rules to apply to the udev system
 
 </div>
 

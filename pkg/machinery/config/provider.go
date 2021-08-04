@@ -49,6 +49,7 @@ type MachineConfig interface {
 	Registries() Registries
 	SystemDiskEncryption() SystemDiskEncryption
 	Features() Features
+	Udev() UdevConfig
 }
 
 // Disk represents the options available for partitioning, formatting, and
@@ -477,4 +478,9 @@ type KubernetesRegistry interface {
 type ServiceRegistry interface {
 	Enabled() bool
 	Endpoint() string
+}
+
+// UdevConfig describes configuration for udev.
+type UdevConfig interface {
+	Rules() []string
 }

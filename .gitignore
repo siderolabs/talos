@@ -3,6 +3,7 @@
 bin
 _out
 .vscode
+.idea
 *.code-workspace
 init.yaml
 controlplane.yaml

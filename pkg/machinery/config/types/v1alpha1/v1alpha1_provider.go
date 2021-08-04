@@ -285,6 +285,15 @@ func (m *MachineConfig) Features() config.Features {
 	return m.MachineFeatures
 }
 
+// Udev implements the config.MachineConfig interface.
+func (m *MachineConfig) Udev() config.UdevConfig {
+	if m.MachineUdev == nil {
+		return &UdevConfig{}
+	}
+
+	return m.MachineUdev
+}
+
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage
@@ -1201,4 +1210,9 @@ func (v VolumeMountConfig) Name() string {
 // ReadOnly implements the config.VolumeMount interface.
 func (v VolumeMountConfig) ReadOnly() bool {
 	return v.VolumeReadOnly
+}
+
+// Rules implements config.Udev interface.
+func (u *UdevConfig) Rules() []string {
+	return u.UdevRules
 }

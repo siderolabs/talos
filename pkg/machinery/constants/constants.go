@@ -512,6 +512,9 @@ const (
 
 	// KubeSpanLinkName is the link name for the KubeSpan Wireguard interface.
 	KubeSpanLinkName = "kubespan"
+
+	// UdevRulesPath rules file path.
+	UdevRulesPath = "/usr/etc/udev/rules.d/99-talos.rules"
 )
 
 // See https://linux.die.net/man/3/klogctl

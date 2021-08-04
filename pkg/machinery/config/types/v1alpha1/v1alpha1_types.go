@@ -250,6 +250,10 @@ var (
 		RBAC: pointer.ToBool(true),
 	}
 
+	machineUdevExample = &UdevConfig{
+		UdevRules: []string{"SUBSYSTEM==\"drm\", KERNEL==\"renderD*\", GROUP=\"44\", MODE=\"0660\""},
+	}
+
 	clusterConfigExample = struct {
 		ControlPlane *ControlPlaneConfig   `yaml:"controlPlane"`
 		ClusterName  string                `yaml:"clusterName"`
@@ -651,6 +655,11 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineFeaturesExample
 	MachineFeatures *FeaturesConfig `yaml:"features,omitempty"`
+	//   description: |
+	//     Configures the udev system.
+	//   examples:
+	//     - value: machineUdevExample
+	MachineUdev *UdevConfig `yaml:"udev,omitempty"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -2005,4 +2014,11 @@ type RegistryServiceConfig struct {
 	// examples:
 	//   - value: constants.DefaultDiscoveryServiceEndpoint
 	RegistryEndpoint string `yaml:"endpoint,omitempty"`
+}
+
+// UdevConfig describes how the udev system should be configured.
+type UdevConfig struct {
+	//   description: |
+	//     List of udev rules to apply to the udev system
+	UdevRules []string `yaml:"rules,omitempty"`
 }
