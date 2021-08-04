@@ -399,7 +399,7 @@ func (ctrl *OperatorSpecController) newOperator(ctx context.Context, r controlle
 	case network.OperatorWgLAN:
 		logger = logger.With(zap.String("operator", "wglan"))
 
-		return operator.NewWgLAN(logger, ctrl.NodenameFunc(ctx, r, logger), spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL, spec.WgLAN.PodNetworking)
+		return operator.NewWgLAN(logger, ctrl.NodenameFunc(ctx, r, logger), spec.LinkName, spec.WgLAN.Prefix, spec.WgLAN.ClusterID, spec.WgLAN.PrivateKey, spec.WgLAN.DiscoveryURL)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
 	}
@@ -407,7 +407,7 @@ func (ctrl *OperatorSpecController) newOperator(ctx context.Context, r controlle
 
 // NodenameFunc provides a function which will return the registered Kubernetes Node name, when it is available.
 //
-// TODO: this is probably no the best way to do this, since we have to import the context and controller runtime at _factory_ time rather than at runtime.
+// TODO: this is probably not the best way to do this, since we have to import the context and controller runtime at _factory_ time rather than at runtime.
 func (ctrl *OperatorSpecController) NodenameFunc(ctx context.Context, r controller.Runtime, logger *zap.Logger) func() string {
 	return func() string {
 		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))

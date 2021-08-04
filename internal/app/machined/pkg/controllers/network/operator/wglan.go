@@ -6,7 +6,6 @@ package operator
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"net"
 	"time"
@@ -30,9 +29,8 @@ type WgLAN struct {
 
 	privateKey string
 
-	clusterHash string
-	fwMark      int
-	listenPort  uint16
+	fwMark     int
+	listenPort uint16
 
 	db *wglan.PeerDB
 
@@ -40,7 +38,7 @@ type WgLAN struct {
 }
 
 // NewWgLAN creates a Wireguard LAN operator.
-func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string, podNetworking bool) *WgLAN {
+func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string) *WgLAN {
 	if discoveryURL == "" {
 		discoveryURL = constants.WireguardDefaultNATDiscoveryService
 	}
@@ -59,27 +57,24 @@ func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName stri
 
 	pubKey := privKey.PublicKey().String()
 
-	clusterHash := sha256.Sum256([]byte(clusterID))
-
 	cfg := &wglan.Config{
-		ClusterID:        clusterID,
-		DiscoveryURL:     discoveryURL,
-		EnablePodRouting: podNetworking,
-		IP:               ip,
-		LinkName:         linkName,
-		Nodename:         nodenameFunc,
-		PublicKey:        pubKey,
-		RoutingTable:     constants.WireguardDefaultRoutingTable,
-		Subnet:           prefix,
+		ClusterID:    clusterID,
+		DiscoveryURL: discoveryURL,
+		IP:           ip,
+		LinkName:     linkName,
+		Nodename:     nodenameFunc,
+		PublicKey:    pubKey,
+		RoutingTable: constants.WireguardDefaultRoutingTable,
+		Subnet:       prefix,
 	}
 
 	return &WgLAN{
-		Config:      cfg,
-		logger:      logger,
-		fwMark:      constants.WireguardDefaultFirewallMark,
-		clusterHash: fmt.Sprintf("%x", clusterHash[:]),
-		privateKey:  privateKey,
-		db:          new(wglan.PeerDB),
+		Config:     cfg,
+		logger:     logger,
+		fwMark:     constants.WireguardDefaultFirewallMark,
+		privateKey: privateKey,
+		listenPort: constants.WireguardDefaultPort,
+		db:         new(wglan.PeerDB),
 	}
 }
 
@@ -115,6 +110,10 @@ func (o *WgLAN) Run(ctx context.Context, notifyCh chan<- struct{}) {
 
 // AddressSpecs implements Operator interface.
 func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
+	if o == nil || o.Config == nil {
+		return nil
+	}
+
 	return []network.AddressSpecSpec{
 		{
 			Address:         o.Config.IP,
@@ -130,6 +129,10 @@ func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
 
 // LinkSpecs implements Operator interface.
 func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
+	if o == nil || o.Config == nil {
+		return nil
+	}
+
 	peerList := o.getPeers(o.listenPort)
 
 	return []network.LinkSpecSpec{
@@ -154,6 +157,10 @@ func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
 
 // RouteSpecs implements Operator interface.
 func (o *WgLAN) RouteSpecs() []network.RouteSpecSpec {
+	if o == nil || o.Config == nil {
+		return nil
+	}
+
 	return []network.RouteSpecSpec{
 		{
 			Family:      unix.AF_INET,
@@ -224,6 +231,10 @@ func (o *WgLAN) getPeers(defaultPort uint16) (out []network.WireguardPeer) {
 }
 
 func wgEUI64(prefix netaddr.IPPrefix) (out netaddr.IPPrefix, err error) {
+	if prefix.IsZero() {
+		return out, fmt.Errorf("cannot calculate IP from zero prefix")
+	}
+
 	mac, err := firstRealMAC()
 	if err != nil {
 		return out, fmt.Errorf("failed to find first MAC address: %w", err)
