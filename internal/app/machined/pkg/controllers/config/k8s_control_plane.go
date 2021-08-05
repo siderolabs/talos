@@ -141,14 +141,15 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 
 	return r.Modify(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
-			Image:                cfgProvider.Cluster().APIServer().Image(),
-			CloudProvider:        cloudProvider,
-			ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
-			EtcdServers:          []string{"https://127.0.0.1:2379"},
-			LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
-			ServiceCIDR:          cfgProvider.Cluster().Network().ServiceCIDR(),
-			ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),
-			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+			Image:                    cfgProvider.Cluster().APIServer().Image(),
+			CloudProvider:            cloudProvider,
+			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
+			EtcdServers:              []string{"https://127.0.0.1:2379"},
+			LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
+			ServiceCIDR:              cfgProvider.Cluster().Network().ServiceCIDR(),
+			ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
+			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 		})
 
 		return nil
@@ -234,6 +235,8 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
 			FlannelImage:    images.Flannel,
 			FlannelCNIImage: images.FlannelCNI,
+
+			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 		})
 
 		return nil

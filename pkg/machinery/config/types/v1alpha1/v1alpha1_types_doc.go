@@ -796,7 +796,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 4)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 5)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -819,6 +819,11 @@ func init() {
 	APIServerConfigDoc.Fields[3].Note = ""
 	APIServerConfigDoc.Fields[3].Description = "Extra certificate subject alternative names for the API server's certificate."
 	APIServerConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
+	APIServerConfigDoc.Fields[4].Name = "disablePodSecurityPolicy"
+	APIServerConfigDoc.Fields[4].Type = "bool"
+	APIServerConfigDoc.Fields[4].Note = ""
+	APIServerConfigDoc.Fields[4].Description = "Disable PodSecurityPolicy in the API server and default manifests."
+	APIServerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Disable PodSecurityPolicy in the API server and default manifests."
 
 	ControllerManagerConfigDoc.Type = "ControllerManagerConfig"
 	ControllerManagerConfigDoc.Comments[encoder.LineComment] = "ControllerManagerConfig represents the kube controller manager configuration options."

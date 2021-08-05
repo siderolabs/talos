@@ -2489,6 +2489,19 @@ Extra certificate subject alternative names for the API server's certificate.
 
 <hr />
 
+<div class="dd">
+
+<code>disablePodSecurityPolicy</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable PodSecurityPolicy in the API server and default manifests.
+
+</div>
+
+<hr />
+
 
 
 

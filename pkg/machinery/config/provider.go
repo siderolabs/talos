@@ -307,6 +307,7 @@ type APIServer interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
+	DisablePodSecurityPolicy() bool
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related

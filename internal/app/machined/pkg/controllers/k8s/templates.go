@@ -473,10 +473,6 @@ kind: ClusterRole
 metadata:
   name: flannel
 rules:
-  - apiGroups: ['extensions']
-    resources: ['podsecuritypolicies']
-    verbs: ['use']
-    resourceNames: ['psp.flannel.unprivileged']
   - apiGroups:
       - ""
     resources:

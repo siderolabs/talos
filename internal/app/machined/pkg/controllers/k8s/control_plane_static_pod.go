@@ -191,9 +191,15 @@ func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.APIServer()
 
+	enabledAdmissionPlugins := []string{"NodeRestriction"}
+
+	if cfg.PodSecurityPolicyEnabled {
+		enabledAdmissionPlugins = append(enabledAdmissionPlugins, "PodSecurityPolicy")
+	}
+
 	args := []string{
 		"/usr/local/bin/kube-apiserver",
-		"--enable-admission-plugins=PodSecurityPolicy,NodeRestriction",
+		fmt.Sprintf("--enable-admission-plugins=%s", strings.Join(enabledAdmissionPlugins, ",")),
 		"--advertise-address=$(POD_IP)",
 		"--allow-privileged=true",
 		fmt.Sprintf("--api-audiences=%s", cfg.ControlPlaneEndpoint),
