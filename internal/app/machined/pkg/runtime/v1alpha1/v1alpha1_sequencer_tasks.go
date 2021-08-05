@@ -61,6 +61,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -427,9 +428,9 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			fetchCtx, ctxCancel := context.WithTimeout(context.Background(), 70*time.Second)
 			defer ctxCancel()
 
-			b, e := fetchConfig(fetchCtx, r)
+			b, e := fetchConfig(fetchCtx, logger, r)
 			if errors.Is(e, perrors.ErrNoConfigSource) {
-				logger.Println("starting maintenance service")
+				logger.Println("config not found or empty, starting maintenance service")
 
 				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
@@ -484,7 +485,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		var b []byte
 
-		b, err = r.Config().Bytes()
+		b, err = r.Config().Bytes(encoder.WithComments(encoder.CommentsDisabled))
 		if err != nil {
 			return err
 		}
@@ -493,7 +494,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 	}, "saveConfig"
 }
 
-func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
+func fetchConfig(ctx context.Context, logger *log.Logger, r runtime.Runtime) (out []byte, err error) {
 	var b []byte
 
 	if b, err = r.State().Platform().Configuration(ctx); err != nil {
@@ -523,6 +524,13 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 		b = unzippedData
 	}
 
+	_, e := validateConfigRaw(logger, r, b)
+	if e != nil {
+		logger.Println("failed to validate downloaded config, ignore this config")
+
+		return nil, perrors.ErrNoConfigSource
+	}
+
 	return b, nil
 }
 
@@ -532,6 +540,10 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 		return nil, fmt.Errorf("maintenance service failed: %w", err)
 	}
 
+	return validateConfigRaw(logger, r, cfgBytes)
+}
+
+func validateConfigRaw(logger *log.Logger, r runtime.Runtime, cfgBytes []byte) ([]byte, error) {
 	provider, err := configloader.NewFromBytes(cfgBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config provider: %w", err)
