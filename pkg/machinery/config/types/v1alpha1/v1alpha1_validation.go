@@ -47,9 +47,6 @@ var (
 
 	// Networking.
 
-	// ErrBadAddressing denotes that an incorrect combination of network
-	// address methods have been specified.
-	ErrBadAddressing = errors.New("invalid network device addressing method")
 	// ErrInvalidAddress denotes that a bad address was provided.
 	ErrInvalidAddress = errors.New("invalid network address")
 )
@@ -485,8 +482,6 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified.
-//
-//nolint:gocyclo
 func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) error {
 	var result *multierror.Error
 
@@ -498,11 +493,6 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) error 
 		if d.DeviceDHCP || d.DeviceCIDR != "" || d.DeviceVIPConfig != nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded interface shouldn't have any addressing methods configured"))
 		}
-	}
-
-	// Test for both dhcp and cidr specified
-	if d.DeviceDHCP && d.DeviceCIDR != "" {
-		result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device", d.DeviceInterface, ErrBadAddressing))
 	}
 
 	// ensure cidr is a valid address

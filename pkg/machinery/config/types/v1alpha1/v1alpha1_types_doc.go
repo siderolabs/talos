@@ -1317,7 +1317,7 @@ func init() {
 	DeviceDoc.Fields[1].Name = "cidr"
 	DeviceDoc.Fields[1].Type = "string"
 	DeviceDoc.Fields[1].Note = ""
-	DeviceDoc.Fields[1].Description = "Assigns a static IP address to the interface.\nThis should be in proper CIDR notation.\n\n> Note: This option is mutually exclusive with DHCP option."
+	DeviceDoc.Fields[1].Description = "Assigns a static IP address to the interface.\nThis should be in proper CIDR notation."
 	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Assigns a static IP address to the interface."
 
 	DeviceDoc.Fields[1].AddExample("", "10.5.0.0/16")
@@ -1348,7 +1348,7 @@ func init() {
 	DeviceDoc.Fields[6].Name = "dhcp"
 	DeviceDoc.Fields[6].Type = "bool"
 	DeviceDoc.Fields[6].Note = ""
-	DeviceDoc.Fields[6].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`\n\n> Note: This option is mutually exclusive with CIDR.\n>\n> Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to \"\" and DHCP to false\n> in order for Talos to skip configuration of addresses.\n> All other options will still apply."
+	DeviceDoc.Fields[6].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
 	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
 
 	DeviceDoc.Fields[6].AddExample("", true)
