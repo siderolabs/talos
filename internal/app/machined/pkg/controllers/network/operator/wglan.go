@@ -120,7 +120,7 @@ func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
 			LinkName:        o.Config.LinkName,
 			Family:          unix.AF_INET6,
 			Scope:           unix.RT_SCOPE_UNIVERSE,
-			Flags:           0,
+			Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
 			AnnounceWithARP: false,
 			ConfigLayer:     network.ConfigOperator,
 		},
@@ -164,7 +164,7 @@ func (o *WgLAN) RouteSpecs() []network.RouteSpecSpec {
 	return []network.RouteSpecSpec{
 		{
 			Family:      unix.AF_INET,
-			Destination: netaddr.MustParseIPPrefix("0.0.0.0/0"),
+			Destination: netaddr.IPPrefix{},
 			Source:      netaddr.IPPrefix{},
 			Gateway:     netaddr.IP{},
 			OutLinkName: o.Config.LinkName,
@@ -178,7 +178,7 @@ func (o *WgLAN) RouteSpecs() []network.RouteSpecSpec {
 		},
 		{
 			Family:      unix.AF_INET6,
-			Destination: netaddr.MustParseIPPrefix("::/0"),
+			Destination: netaddr.IPPrefix{},
 			Source:      netaddr.IPPrefix{},
 			Gateway:     netaddr.IP{},
 			OutLinkName: o.Config.LinkName,
