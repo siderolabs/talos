@@ -46,14 +46,15 @@ type K8sExtraVolume struct {
 
 // K8sControlPlaneAPIServerSpec is configuration for kube-apiserver.
 type K8sControlPlaneAPIServerSpec struct {
-	Image                string            `yaml:"image"`
-	CloudProvider        string            `yaml:"cloudProvider"`
-	ControlPlaneEndpoint string            `yaml:"controlPlaneEndpoint"`
-	EtcdServers          []string          `yaml:"etcdServers"`
-	LocalPort            int               `yaml:"localPort"`
-	ServiceCIDR          string            `yaml:"serviceCIDR"`
-	ExtraArgs            map[string]string `yaml:"extraArgs"`
-	ExtraVolumes         []K8sExtraVolume  `yaml:"extraVolumes"`
+	Image                    string            `yaml:"image"`
+	CloudProvider            string            `yaml:"cloudProvider"`
+	ControlPlaneEndpoint     string            `yaml:"controlPlaneEndpoint"`
+	EtcdServers              []string          `yaml:"etcdServers"`
+	LocalPort                int               `yaml:"localPort"`
+	ServiceCIDR              string            `yaml:"serviceCIDR"`
+	ExtraArgs                map[string]string `yaml:"extraArgs"`
+	ExtraVolumes             []K8sExtraVolume  `yaml:"extraVolumes"`
+	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
 }
 
 // K8sControlPlaneControllerManagerSpec is configuration for kube-controller-manager.
@@ -97,6 +98,8 @@ type K8sManifestsSpec struct {
 	FlannelEnabled  bool   `yaml:"flannelEnabled"`
 	FlannelImage    string `yaml:"flannelImage"`
 	FlannelCNIImage string `yaml:"flannelCNIImage"`
+
+	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled"`
 }
 
 // ExtraManifest defines a single extra manifest to download.

@@ -105,6 +105,8 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 	FlannelEnabled:  true,
 	FlannelImage:    "foo/bar",
 	FlannelCNIImage: "foo/bar",
+
+	PodSecurityPolicyEnabled: true,
 }
 
 func (suite *ManifestSuite) TestReconcileDefaults() {
@@ -123,7 +125,9 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 					"01-csr-approver-role-binding",
 					"01-csr-node-bootstrap",
 					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding", "03-default-pod-security-policy", "05-flannel",
+					"02-kube-system-sa-role-binding",
+					"03-default-pod-security-policy",
+					"05-flannel",
 					"10-kube-proxy",
 					"11-core-dns",
 					"11-core-dns-svc",
@@ -152,7 +156,9 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 					"01-csr-approver-role-binding",
 					"01-csr-node-bootstrap",
 					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding", "03-default-pod-security-policy", "05-flannel",
+					"02-kube-system-sa-role-binding",
+					"03-default-pod-security-policy",
+					"05-flannel",
 					"11-core-dns",
 					"11-core-dns-svc",
 					"11-kube-config-in-cluster",
@@ -182,7 +188,9 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 					"01-csr-approver-role-binding",
 					"01-csr-node-bootstrap",
 					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding", "03-default-pod-security-policy", "05-flannel",
+					"02-kube-system-sa-role-binding",
+					"03-default-pod-security-policy",
+					"05-flannel",
 					"10-kube-proxy",
 					"11-core-dns",
 					"11-core-dns-svc",
@@ -205,6 +213,36 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("--bind-address=\"::\"", args[len(args)-1])
+}
+
+func (suite *ManifestSuite) TestReconcileDisablePSP() {
+	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	manifestConfig := config.NewK8sManifests()
+	spec := defaultManifestSpec
+	spec.PodSecurityPolicyEnabled = false
+	manifestConfig.SetManifests(spec)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
+	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertManifests(
+				[]string{
+					"00-kubelet-bootstrapping-token",
+					"01-csr-approver-role-binding",
+					"01-csr-node-bootstrap",
+					"01-csr-renewal-role-binding",
+					"02-kube-system-sa-role-binding",
+					"05-flannel",
+					"10-kube-proxy",
+					"11-core-dns",
+					"11-core-dns-svc",
+					"11-kube-config-in-cluster",
+				},
+			)
+		},
+	))
 }
 
 func (suite *ManifestSuite) TearDownTest() {

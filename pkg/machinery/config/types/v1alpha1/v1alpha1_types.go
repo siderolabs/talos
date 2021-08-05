@@ -1157,6 +1157,9 @@ type APIServerConfig struct {
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
 	CertSANs []string `yaml:"certSANs,omitempty"`
+	//   description: |
+	//     Disable PodSecurityPolicy in the API server and default manifests.
+	DisablePodSecurityPolicyConfig bool `yaml:"disablePodSecurityPolicy,omitempty"`
 }
 
 // ControllerManagerConfig represents the kube controller manager configuration options.
