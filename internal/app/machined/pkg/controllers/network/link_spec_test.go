@@ -551,7 +551,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	wg := network.NewLinkSpec(network.NamespaceName, wgInterface)
 	*wg.TypedSpec() = network.LinkSpecSpec{
 		Name:    wgInterface,
-		Type:    nethelpers.LinkNetrom,
+		Type:    nethelpers.LinkNone,
 		Kind:    "wireguard",
 		Up:      true,
 		Logical: true,
