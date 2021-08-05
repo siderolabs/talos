@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go v1.38.66 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.2
+	github.com/containerd/containerd v1.5.5
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
@@ -62,13 +62,12 @@ require (
 	github.com/mdlayher/netlink v1.4.1
 	github.com/mdlayher/raw v0.0.0-20210412142147-51b895745faf // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.6.0
 	github.com/rivo/tview v0.0.0-20210608105643-d4fb0348227b
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.8.0 // indirect
