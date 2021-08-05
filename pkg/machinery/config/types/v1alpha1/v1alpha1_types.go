@@ -1502,8 +1502,6 @@ type Device struct {
 	//   description: |
 	//     Assigns a static IP address to the interface.
 	//     This should be in proper CIDR notation.
-	//
-	//     > Note: This option is mutually exclusive with DHCP option.
 	//   examples:
 	//     - value: '"10.5.0.0/16"'
 	DeviceCIDR string `yaml:"cidr,omitempty"`
@@ -1532,11 +1530,6 @@ type Device struct {
 	//     - `OptionDNSDomainSearchList`
 	//     - `OptionHostName`
 	//
-	//     > Note: This option is mutually exclusive with CIDR.
-	//     >
-	//     > Note: To configure an interface with *only* IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
-	//     > in order for Talos to skip configuration of addresses.
-	//     > All other options will still apply.
 	//   examples:
 	//     - value: true
 	DeviceDHCP bool `yaml:"dhcp,omitempty"`
