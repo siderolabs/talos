@@ -233,7 +233,15 @@ data:
         user: service-account
 `)
 
-var coreDNSTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
+var coreDNSTemplate = []byte(`apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coredns
+  namespace: kube-system
+  labels:
+    kubernetes.io/cluster-service: "true"
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: system:coredns
@@ -288,18 +296,22 @@ data:
     .:53 {
         errors
         health {
-          lameduck 5s
+            lameduck 5s
         }
         ready
         log . {
             class error
         }
+        prometheus :9153
+
         kubernetes {{ .ClusterDomain }} in-addr.arpa ip6.arpa {
             pods insecure
             fallthrough in-addr.arpa ip6.arpa
         }
-        prometheus :9153
         forward . /etc/resolv.conf
+        {{- if not .DNSServiceIPv6 }}
+        rewrite stop type AAAA A
+        {{- end }}
         cache 30
         loop
         reload
@@ -405,14 +417,6 @@ spec:
             items:
             - key: Corefile
               path: Corefile
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: coredns
-  namespace: kube-system
-  labels:
-    kubernetes.io/cluster-service: "true"
 `)
 
 var coreDNSSvcTemplate = []byte(`apiVersion: v1
@@ -430,33 +434,26 @@ metadata:
 spec:
   selector:
     k8s-app: kube-dns
-  clusterIP: {{ .DNSServiceIP }}
-  ports:
-    - name: dns
-      port: 53
-      protocol: UDP
-    - name: dns-tcp
-      port: 53
-      protocol: TCP
-`)
-
-var coreDNSv6SvcTemplate = []byte(`apiVersion: v1
-kind: Service
-metadata:
-  name: kube-dnsv6
-  namespace: kube-system
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "9153"
-  labels:
-    k8s-app: kube-dns
-    kubernetes.io/cluster-service: "true"
-    kubernetes.io/name: "CoreDNS"
-spec:
-  selector:
-    k8s-app: kube-dns
-  clusterIP: {{ .DNSServiceIPv6 }}
-  ipFamily: IPv6
+  clusterIP: {{ or .DNSServiceIP .DNSServiceIPv6 }}
+  clusterIPs:
+  {{- if .DNSServiceIP }}
+    - {{ .DNSServiceIP }}
+  {{- end }}
+  {{- if .DNSServiceIPv6 }}
+    - {{ .DNSServiceIPv6 }}
+  {{- end }}
+  ipFamilies:
+  {{- if .DNSServiceIP }}
+    - IPv4
+  {{- end }}
+  {{- if .DNSServiceIPv6 }}
+    - IPv6
+  {{- end }}
+  {{- if and .DNSServiceIP .DNSServiceIPv6 }}
+  ipFamilyPolicy: RequireDualStack
+  {{- else }}
+  ipFamilyPolicy: SingleStack
+  {{- end }}
   ports:
     - name: dns
       port: 53
