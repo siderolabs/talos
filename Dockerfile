@@ -501,6 +501,7 @@ RUN apk add --no-cache --update \
     efibootmgr \
     mtools \
     qemu-img \
+    tar \
     util-linux \
     xfsprogs \
     xorriso \
