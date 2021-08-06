@@ -37,16 +37,19 @@ stringData:
   token-id: "{{ .Secrets.BootstrapTokenID }}"
   token-secret: "{{ .Secrets.BootstrapTokenSecret }}"
   usage-bootstrap-authentication: "true"
+
+  # Extra groups to authenticate the token as. Must start with "system:bootstrappers:"
+  auth-extra-groups: system:bootstrappers:nodes
 `)
 
 // csrNodeBootstrapTemplate lets bootstrapping tokens and nodes request CSRs.
-var csrNodeBootstrapTemplate = []byte(`kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+var csrNodeBootstrapTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
   name: system-bootstrap-node-bootstrapper
 subjects:
 - kind: Group
-  name: system:bootstrappers
+  name: system:bootstrappers:nodes
   apiGroup: rbac.authorization.k8s.io
 - kind: Group
   name: system:nodes
@@ -62,13 +65,13 @@ roleRef:
 // credentials.
 //
 // This binding should be removed to disable CSR auto-approval.
-var csrApproverRoleBindingTemplate = []byte(`kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+var csrApproverRoleBindingTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
   name: system-bootstrap-approve-node-client-csr
 subjects:
 - kind: Group
-  name: system:bootstrappers
+  name: system:bootstrappers:nodes
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
@@ -83,8 +86,8 @@ roleRef:
 // This binding should be altered in the future to hold a list of node
 // names instead of targeting `system:nodes` so we can revoke individual
 // node's ability to renew its certs.
-var csrRenewalRoleBindingTemplate = []byte(`kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
+var csrRenewalRoleBindingTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
 metadata:
   name: system-bootstrap-node-renewal
 subjects:
