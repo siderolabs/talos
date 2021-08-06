@@ -186,7 +186,7 @@ func tar(filename, src, dir string) error {
 }
 
 func xz(filename string) error {
-	if _, err := cmd.Run("xz", "-0", filename); err != nil {
+	if _, err := cmd.Run("xz", "-6", "-T", "0", filename); err != nil {
 		return err
 	}
 
