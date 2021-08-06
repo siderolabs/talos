@@ -201,6 +201,7 @@ local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depen
 local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
 local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"IMAGE_REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
 local e2e_iso = Step("e2e-iso", privileged=true, target="e2e-iso", depends_on=[build, unit_tests, iso, talosctl_cni_bundle], when={event: ['pull_request']}, environment={"IMAGE_REGISTRY": local_registry});
+local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
 
 local coverage = {
   name: 'coverage',
@@ -311,6 +312,7 @@ local default_steps = [
   e2e_iso,
   e2e_qemu,
   e2e_docker,
+  release_notes,
   push,
   push_latest,
 ];
@@ -494,8 +496,6 @@ local boot = Step('boot', depends_on=[e2e_docker, e2e_qemu]);
 
 local cloud_images = Step("cloud-images", depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
 
-local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
-
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
   name: 'release',
@@ -553,7 +553,6 @@ local release = {
 local release_steps = default_steps + [
   boot,
   cloud_images,
-  release_notes,
   release,
 ];
 

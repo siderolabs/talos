@@ -1,12 +1,12 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 RELEASE_TOOL_IMAGE="ghcr.io/talos-systems/release-tool:latest"
 
 function release-tool {
   docker pull "${RELEASE_TOOL_IMAGE}" >/dev/null
-  docker run --rm -w /src -v "${PWD}":/src:ro "${RELEASE_TOOL_IMAGE}" -l -d -n -t "${1}" ./hack/release.toml
+  docker run --rm -w /src -v "${PWD}":/src:ro "${RELEASE_TOOL_IMAGE}" -l -d -n ${2} -t "${1}" ./hack/release.toml
 }
 
 function changelog {
@@ -19,11 +19,18 @@ function changelog {
 }
 
 function release-notes {
-  release-tool "${2}" > "${1}"
+  release-tool "${2}" --gfm > "${1}"
 
   echo -e '\n## Images\n\n```' >> ${1}
   ${ARTIFACTS}/talosctl-linux-amd64 images >> ${1}
   echo -e '```\n' >> ${1}
+
+  size=$(stat -c%s "${1}")
+
+  if (( size > 25000 )); then
+    echo "Release notes size exceeds GitHub limit of 25000 bytes"
+    exit 1
+  fi
 }
 
 function cherry-pick {
