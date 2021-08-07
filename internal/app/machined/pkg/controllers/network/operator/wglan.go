@@ -250,7 +250,7 @@ func wgEUI64(prefix netaddr.IPPrefix) (out netaddr.IPPrefix, err error) {
 		return out, fmt.Errorf("failed to parse intermediate standard IP %q: %w", stdIP.String(), err)
 	}
 
-	return netaddr.IPPrefixFrom(ip, prefix.Bits()), nil
+	return netaddr.IPPrefixFrom(ip, ip.BitLen()), nil
 }
 
 func firstRealMAC() (net.HardwareAddr, error) {
