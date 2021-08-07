@@ -6,6 +6,7 @@ package network
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
 	"sort"
 	"time"
@@ -263,6 +264,7 @@ type WireguardSpec struct {
 // WireguardPeer describes a single peer.
 type WireguardPeer struct {
 	PublicKey                   string             `yaml:"publicKey"`
+	PresharedKey                string             `yaml:"presharedKey"`
 	Endpoint                    string             `yaml:"endpoint"`
 	PersistentKeepaliveInterval time.Duration      `yaml:"persistenKeepaliveInterval"`
 	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs"`
@@ -271,6 +273,10 @@ type WireguardPeer struct {
 // Equal checks two WireguardPeer structs for equality.
 func (peer *WireguardPeer) Equal(other *WireguardPeer) bool {
 	if peer.PublicKey != other.PublicKey {
+		return false
+	}
+
+	if peer.PresharedKey != other.PresharedKey {
 		return false
 	}
 
@@ -392,9 +398,20 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 
 	for l < len(existing.Peers) || r < len(spec.Peers) {
 		addPeer := func(peer *WireguardPeer) error {
+			var psk *wgtypes.Key
+
 			pubKey, err := wgtypes.ParseKey(peer.PublicKey)
 			if err != nil {
 				return err
+			}
+
+			if peer.PresharedKey != "" {
+				presharedKey, err := wgtypes.ParseKey(peer.PresharedKey)
+				if err != nil {
+					return fmt.Errorf("preshared key for peer %s is invalid: %w", peer.PublicKey, err)
+				}
+
+				psk = &presharedKey
 			}
 
 			var endpoint *net.UDPAddr
@@ -414,6 +431,7 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 
 			cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
 				PublicKey:                   pubKey,
+				PresharedKey:                psk,
 				Endpoint:                    endpoint,
 				PersistentKeepaliveInterval: &peer.PersistentKeepaliveInterval,
 				AllowedIPs:                  allowedIPs,

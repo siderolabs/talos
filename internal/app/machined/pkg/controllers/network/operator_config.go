@@ -176,12 +176,14 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 				if device.WireguardConfig() != nil && device.WireguardConfig().KubeSpanEnabled() {
 					var (
-						clusterID string
-						prefix    netaddr.IPPrefix
-						privKey   string
+						clusterID     string
+						clusterSecret string
+						prefix        netaddr.IPPrefix
+						privKey       string
 					)
 
 					clusterID = cfgProvider.Cluster().ID()
+					clusterSecret = cfgProvider.Cluster().Secret()
 
 					prefix, err = device.WireguardConfig().KubeSpanPrefix()
 					if prefix.IsZero() || err != nil {
@@ -205,6 +207,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						RequireUp: true,
 						WgLAN: network.WgLANOperatorSpec{
 							ClusterID:     clusterID,
+							ClusterSecret: clusterSecret,
 							DiscoveryURL:  device.WireguardConfig().KubeSpanDiscoveryService(),
 							InterfaceName: device.Interface(),
 							Prefix:        prefix,

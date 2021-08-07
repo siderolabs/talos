@@ -65,6 +65,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterID:      in.ClusterID,
+		ClusterSecret:   in.ClusterSecret,
 		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.K8s.Crt},
 		BootstrapToken: in.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{

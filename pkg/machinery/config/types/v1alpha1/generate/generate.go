@@ -7,6 +7,7 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -60,6 +61,7 @@ type Input struct {
 
 	ClusterID         string
 	ClusterName       string
+	ClusterSecret     string
 	ServiceDomain     string
 	PodNet            []string
 	ServiceNet        []string
@@ -447,6 +449,11 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		return nil, fmt.Errorf("failed to generate ClusterID: %w", err)
 	}
 
+	clusterSecret, err := v1alpha1.GenerateWireguardKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate cluster secret: %w", err)
+	}
+
 	input = &Input{
 		Certs:                      secrets.Certs,
 		VersionContract:            options.VersionContract,
@@ -456,6 +463,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		ServiceDomain:              options.DNSDomain,
 		ClusterID:                  clusterID,
 		ClusterName:                clustername,
+		ClusterSecret:              base64.StdEncoding.EncodeToString(clusterSecret),
 		KubernetesVersion:          kubernetesVersion,
 		Secrets:                    secrets.Secrets,
 		TrustdInfo:                 secrets.TrustdInfo,
@@ -575,4 +583,19 @@ func encodeUUIDString(uuid []byte) string {
 	hex.Encode(dst[24:], uuid[10:])
 
 	return string(dst)
+}
+
+func genClusterSecret() (string, error) {
+	secret := make([]byte, 32)
+
+	n, err := io.ReadFull(rand.Reader, secret)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from random number generator: %w", err)
+	}
+
+	if n != 32 {
+		return "", fmt.Errorf("failed to read full random numbers for secret; read %d out of %d: %w", n, 32, err)
+	}
+
+	return string(secret), nil
 }

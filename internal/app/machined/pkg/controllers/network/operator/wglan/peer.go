@@ -59,6 +59,10 @@ type Config struct {
 	// If provided, this ID must be a globally-unique name, so using a UUID is not a bad idea.
 	ClusterID string
 
+	// ClusterSecret is the secret for the Wireguard LAN interface.
+	// If provided, this will be used as a secret shared key for the Wireguard interface.
+	ClusterSecret string
+
 	// DiscoveryURL is the URL at which node and peer coordination occurs and from which the set of public keys of the member peers may be collected.
 	DiscoveryURL string
 
@@ -223,7 +227,7 @@ func (p *Peer) nextEndpoint(defaultPort uint16) (ep netaddr.IPPort, err error) {
 }
 
 // PeerConfig returns the Wireguard Peer Config for the Peer's current state.
-func (p *Peer) PeerConfig(defaultPort uint16) (pc network.WireguardPeer, err error) {
+func (p *Peer) PeerConfig(defaultPort uint16, psk string) (pc network.WireguardPeer, err error) {
 	keepAlive := constants.WireguardDefaultPeerKeepalive
 
 	allowed, err := p.AllowedPrefixes()
@@ -233,6 +237,7 @@ func (p *Peer) PeerConfig(defaultPort uint16) (pc network.WireguardPeer, err err
 
 	pc = network.WireguardPeer{
 		PublicKey:                   p.PublicKey(),
+		PresharedKey: psk,
 		AllowedIPs:                  allowed.Prefixes(),
 		PersistentKeepaliveInterval: keepAlive,
 	}

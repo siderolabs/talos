@@ -51,6 +51,7 @@ type VIPOperatorSpec struct {
 // WgLANOperatorSpec describes Wireguard LAN operator options.
 type WgLANOperatorSpec struct {
 	ClusterID     string           `yaml:"clusterID"`
+	ClusterSecret string           `yaml:"clusterSecret"`
 	DiscoveryURL  string           `yaml:"discoveryURL,omitempty"`
 	InterfaceName string           `yaml:"interface,omitempty"`
 	PodNetworking bool             `yaml:"podNetworking"`

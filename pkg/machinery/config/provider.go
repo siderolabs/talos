@@ -261,6 +261,7 @@ type RegistryTLSConfig interface {
 type ClusterConfig interface {
 	ID() string
 	Name() string
+	Secret() string
 	APIServer() APIServer
 	ControllerManager() ControllerManager
 	Proxy() Proxy

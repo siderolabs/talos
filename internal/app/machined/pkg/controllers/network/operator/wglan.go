@@ -38,17 +38,17 @@ type WgLAN struct {
 }
 
 // NewWgLAN creates a Wireguard LAN operator.
-func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, prefix netaddr.IPPrefix, clusterID string, privateKey string, discoveryURL string) *WgLAN {
-	if discoveryURL == "" {
-		discoveryURL = constants.WireguardDefaultNATDiscoveryService
+func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, spec network.WgLANOperatorSpec) *WgLAN {
+	if spec.DiscoveryURL == "" {
+		spec.DiscoveryURL = constants.WireguardDefaultNATDiscoveryService
 	}
 
-	privKey, err := wgtypes.ParseKey(privateKey)
+	privKey, err := wgtypes.ParseKey(spec.PrivateKey)
 	if err != nil {
-		logger.Sugar().Fatalf("failed to parse Wireguard private key %q: %w", privateKey, err)
+		logger.Sugar().Fatalf("failed to parse Wireguard private key %q: %w", spec.PrivateKey, err)
 	}
 
-	ip, err := wgEUI64(prefix)
+	ip, err := wgEUI64(spec.Prefix)
 	if err != nil {
 		logger.Warn("failed to generate local IP address", zap.Error(err))
 
@@ -58,21 +58,22 @@ func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName stri
 	pubKey := privKey.PublicKey().String()
 
 	cfg := &wglan.Config{
-		ClusterID:    clusterID,
-		DiscoveryURL: discoveryURL,
-		IP:           ip,
-		LinkName:     linkName,
-		Nodename:     nodenameFunc,
-		PublicKey:    pubKey,
-		RoutingTable: constants.WireguardDefaultRoutingTable,
-		Subnet:       prefix,
+		ClusterID:     spec.ClusterID,
+		ClusterSecret: spec.ClusterSecret,
+		DiscoveryURL:  spec.DiscoveryURL,
+		IP:            ip,
+		LinkName:      linkName,
+		Nodename:      nodenameFunc,
+		PublicKey:     pubKey,
+		RoutingTable:  constants.WireguardDefaultRoutingTable,
+		Subnet:        spec.Prefix,
 	}
 
 	return &WgLAN{
 		Config:     cfg,
 		logger:     logger,
 		fwMark:     constants.WireguardDefaultFirewallMark,
-		privateKey: privateKey,
+		privateKey: spec.PrivateKey,
 		listenPort: constants.WireguardDefaultPort,
 		db:         new(wglan.PeerDB),
 	}
@@ -133,7 +134,7 @@ func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
 		return nil
 	}
 
-	peerList := o.getPeers(o.listenPort)
+	peerList := o.getPeers(o.listenPort, o.Config.ClusterSecret)
 
 	return []network.LinkSpecSpec{
 		{
@@ -208,9 +209,9 @@ func (o *WgLAN) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return nil
 }
 
-func (o *WgLAN) getPeers(defaultPort uint16) (out []network.WireguardPeer) {
+func (o *WgLAN) getPeers(defaultPort uint16, psk string) (out []network.WireguardPeer) {
 	for _, pp := range o.db.List() {
-		pc, err := pp.PeerConfig(defaultPort)
+		pc, err := pp.PeerConfig(defaultPort, psk)
 		if err != nil {
 			o.logger.Warn("failed to construct peer config",
 				zap.String("peer", pp.PublicKey()),

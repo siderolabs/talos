@@ -182,6 +182,11 @@ func (c *ClusterConfig) ID() string {
 	return c.ClusterID
 }
 
+// Secret returns the cluster secret.
+func (c *ClusterConfig) Secret() string {
+	return c.ClusterSecret
+}
+
 // CNI implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) CNI() config.CNI {
 	switch {
