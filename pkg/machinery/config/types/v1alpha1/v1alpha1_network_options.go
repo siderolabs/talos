@@ -113,7 +113,7 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 // WithKubeSpan configures a KubeSpan interface.
 func WithKubeSpan() NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		privKey, err := GenerateWireguardKey()
+		privKey, err := GenerateWireguardPrivateKey()
 		if err != nil {
 			return fmt.Errorf("failed to generate private key for Wireguard: %w", err)
 		}
@@ -121,7 +121,7 @@ func WithKubeSpan() NetworkConfigOption {
 		cfg.NetworkInterfaces = append(cfg.NetworkInterfaces, &Device{
 			DeviceInterface: "kubespan",
 			DeviceWireguardConfig: &DeviceWireguardConfig{
-				WireguardPrivateKey:           base64.StdEncoding.EncodeToString(privKey),
+				WireguardPrivateKey:     base64.StdEncoding.EncodeToString(privKey),
 				WireguardEnableKubeSpan: true,
 			},
 		})
@@ -145,15 +145,10 @@ func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 	}
 }
 
-// GenerateWireguardKey generates a random Wireguard private key.
-func GenerateWireguardKey() ([]byte, error) {
-	const WireguardKeyLen = 32
-
-	// NB:  procedure stolen from wgctrl-go to avoid importing entire package:
-	// https://github.com/WireGuard/wgctrl-go/blob/92e472f520a5/wgtypes/types.go#L89.
-	privateKey := make([]byte, WireguardKeyLen)
-	if _, err := rand.Read(privateKey); err != nil {
-		return nil, fmt.Errorf("failed to read random bytes to generate private key: %v", err)
+func GenerateWireguardPrivateKey() ([]byte, error) {
+	privateKey, err := GenerateWireguardKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate random key: %w", err)
 	}
 
 	// Modify random bytes using algorithm described at:
@@ -163,4 +158,18 @@ func GenerateWireguardKey() ([]byte, error) {
 	privateKey[31] |= 64
 
 	return privateKey, nil
+}
+
+// GenerateWireguardKey generates a random Wireguard private key.
+func GenerateWireguardKey() ([]byte, error) {
+	const WireguardKeyLen = 32
+
+	// NB:  procedure stolen from wgctrl-go to avoid importing entire package:
+	// https://github.com/WireGuard/wgctrl-go/blob/92e472f520a5/wgtypes/types.go#L89.
+	k := make([]byte, WireguardKeyLen)
+	if _, err := rand.Read(k); err != nil {
+		return nil, fmt.Errorf("failed to read random bytes to generate wireguard key: %v", err)
+	}
+
+	return k, nil
 }

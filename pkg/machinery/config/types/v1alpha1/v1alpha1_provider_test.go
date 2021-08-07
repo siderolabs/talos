@@ -115,7 +115,7 @@ func TestInterfaces(t *testing.T) {
 }
 
 func TestWireguardKeyGeneration(t *testing.T) {
-	privateKey, err := v1alpha1.GenerateWireguardKey()
+	privateKey, err := v1alpha1.GenerateWireguardPrivateKey()
 	if err != nil {
 		t.Errorf("failed to generate wireguard key: %w", err)
 

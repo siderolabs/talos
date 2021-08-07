@@ -581,3 +581,18 @@ func randBytes(size int) ([]byte, error) {
 
 	return buf, nil
 }
+
+func genClusterSecret() (string, error) {
+	secret := make([]byte, 32)
+
+	n, err := io.ReadFull(rand.Reader, secret)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from random number generator: %w", err)
+	}
+
+	if n != 32 {
+		return "", fmt.Errorf("failed to read full random numbers for secret; read %d out of %d: %w", n, 32, err)
+	}
+
+	return string(secret), nil
+}
