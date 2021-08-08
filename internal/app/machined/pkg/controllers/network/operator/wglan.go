@@ -213,10 +213,12 @@ func (o *WgLAN) getPeers(defaultPort uint16, psk string) (out []network.Wireguar
 	for _, pp := range o.db.List() {
 		pc, err := pp.PeerConfig(defaultPort, psk)
 		if err != nil {
-			o.logger.Warn("failed to construct peer config",
+			o.logger.Debug("failed to construct peer config",
 				zap.String("peer", pp.PublicKey()),
 				zap.Error(err),
 			)
+
+			continue
 		}
 
 		if pp.PublicKey() != o.Config.PublicKey {
