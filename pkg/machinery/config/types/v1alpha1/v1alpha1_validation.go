@@ -449,7 +449,7 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 
 	if b.WireguardPrivateKey != "" {
 		if err := CheckWireguardKey(b.WireguardPrivateKey); err != nil {
-			result = multierror.Append(result, fmt.Errorf("private key is invalid: %w", err))
+			result = multierror.Append(result, fmt.Errorf("private key %q is invalid: %w", b.WireguardPrivateKey, err))
 		}
 	}
 
