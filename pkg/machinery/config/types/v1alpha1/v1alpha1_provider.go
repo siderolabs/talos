@@ -628,12 +628,8 @@ func (d *DHCPOptions) IPv6() bool {
 }
 
 // PrivateKey implements the MachineNetwork interface.
-func (wc *DeviceWireguardConfig) PrivateKey() (string, error) {
-	if wc.WireguardPrivateKey != "" {
-		return wc.WireguardPrivateKey, nil
-	}
-
-	return "", fmt.Errorf("no private key")
+func (wc *DeviceWireguardConfig) PrivateKey() string {
+	return wc.WireguardPrivateKey
 }
 
 // ListenPort implements the MachineNetwork interface.

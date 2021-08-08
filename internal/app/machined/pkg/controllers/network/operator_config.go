@@ -200,8 +200,8 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					var (
 						clusterID     string
 						clusterSecret string
-						prefix        netaddr.IPPrefix
 						privKey       string
+						prefix        netaddr.IPPrefix
 					)
 
 					clusterID = cfgProvider.Cluster().ID()
@@ -218,9 +218,13 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 					logger.Sugar().Debugf("KubeSpan prefix: %s", prefix.String())
 
-					privKey, err = device.WireguardConfig().PrivateKey()
-					if err != nil {
-						return fmt.Errorf("failed to retrieve KubeSpan private key: %w", err)
+					privKey = device.WireguardConfig().PrivateKey()
+
+					if privKey == "" {
+						privKey, err = loadOrCreatePrivateKey()
+						if err != nil {
+							logger.Sugar().Errorf("failed to load kubespan private key: %w", err)
+						}
 					}
 
 					specs = append(specs, network.OperatorSpecSpec{

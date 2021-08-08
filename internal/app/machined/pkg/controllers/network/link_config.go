@@ -464,9 +464,14 @@ func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {
 }
 
 func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfig) error {
-	privKey, err := config.PrivateKey()
-	if err != nil {
-		return fmt.Errorf("failed to read wireguard private key: %w", err)
+	privKey := config.PrivateKey()
+	if privKey == "" && config.KubeSpanEnabled() {
+		var err error
+
+		privKey, err = loadOrCreatePrivateKey()
+		if err != nil {
+			return fmt.Errorf("no private key set and failed to generate temporary key: %w", err)
+		}
 	}
 
 	link.Logical = true

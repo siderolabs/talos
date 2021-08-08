@@ -146,7 +146,7 @@ type VIPEquinixMetal interface {
 
 // WireguardConfig contains settings for configuring Wireguard network interface.
 type WireguardConfig interface {
-	PrivateKey() (string, error)
+	PrivateKey() string
 	ListenPort() int
 	FirewallMark() int
 	Peers() []WireguardPeer

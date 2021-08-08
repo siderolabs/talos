@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 
 	"github.com/AlekSi/pointer"
@@ -113,15 +112,9 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 // WithKubeSpan configures a KubeSpan interface.
 func WithKubeSpan() NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
-		privKey, err := GenerateWireguardPrivateKey()
-		if err != nil {
-			return fmt.Errorf("failed to generate private key for Wireguard: %w", err)
-		}
-
 		cfg.NetworkInterfaces = append(cfg.NetworkInterfaces, &Device{
 			DeviceInterface: "kubespan",
 			DeviceWireguardConfig: &DeviceWireguardConfig{
-				WireguardPrivateKey:     base64.StdEncoding.EncodeToString(privKey),
 				WireguardEnableKubeSpan: true,
 			},
 		})
