@@ -97,6 +97,8 @@ type Peer struct {
 
 	endpointChanged time.Time
 
+	added time.Time
+
 	peerUp bool
 }
 
@@ -178,6 +180,8 @@ func (p *Peer) Merge(other *Peer) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to build assigned IP set: %w", err)
 	}
+
+	p.added = other.added
 
 	return nil
 }
@@ -353,6 +357,8 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 
 	m.logger.Sugar().Debugf("updating peers for cluster %q", m.Config.ClusterID)
 
+	now := time.Now()
+
 	// Merge Peers from Registries
 	for _, r := range m.registries {
 		ppList, err := r.List(ctx, m.Config.ClusterID)
@@ -379,19 +385,15 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 				continue
 			}
 
+			p.added = time.Now()
+
 			if err := m.db.Merge(p); err != nil {
 				merr = multierror.Append(merr, fmt.Errorf("failed to merge peer %q: %w", p.PublicKey(), err))
 			}
 		}
 	}
 
-	// Merge existing Peers from the Wireguard interface
-	peerList, err := m.getWGPeers()
-	if err != nil {
-		merr = multierror.Append(merr, fmt.Errorf("failed to get current wireguard peer list: %w", err))
-	} else if err := mergeExistingPeers(m.db, peerList); err != nil {
-		merr = multierror.Append(merr, fmt.Errorf("failed to merge existing peers into Peer database: %w", err))
-	}
+	m.db.ExpireBefore(now)
 
 	return merr.ErrorOrNil()
 }

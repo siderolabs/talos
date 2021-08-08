@@ -7,6 +7,7 @@ package wglan
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -87,4 +88,34 @@ func (d *PeerDB) Merge(p *Peer) error {
 	}
 
 	return nil
+}
+
+// ExpireBefore removes Peers from the database which have not been updated since before the given time.
+func (d *PeerDB) ExpireBefore(when time.Time) {
+	if d == nil {
+		return
+	}
+
+	var deleteList []string
+
+	for _, p := range d.List() {
+		if p.added.Before(when) {
+			deleteList = append(deleteList, p.PublicKey())
+		}
+	}
+
+	if len(deleteList) < 1 {
+		return
+	}
+
+	d.mu.Lock()
+
+	for _, id := range deleteList {
+		d.db[id] = nil
+		delete(d.db, id)
+	}
+
+	d.mu.Unlock()
+
+	return
 }
