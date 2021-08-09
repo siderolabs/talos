@@ -4,10 +4,10 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-export CAPI_VERSION="0.3.19"
+export CAPI_VERSION="0.3.22"
 export CABPT_VERSION="0.2.0"
-export CACPPT_VERSION="0.1.0"
-export CAPA_VERSION="0.6.5"
+export CACPPT_VERSION="0.1.1"
+export CAPA_VERSION="0.6.8"
 export CAPG_VERSION="0.3.1"
 
 # We need to override this here since e2e.sh will set it to ${TMP}/capi/kubeconfig.

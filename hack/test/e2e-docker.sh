@@ -11,14 +11,15 @@ function create_cluster {
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
-    --provisioner "${PROVISIONER}" \
-    --name "${CLUSTER_NAME}" \
-    --image "${IMAGE}" \
+    --provisioner="${PROVISIONER}" \
+    --name="${CLUSTER_NAME}" \
+    --kubernetes-version=${K8S_VERSION} \
+    --image="${IMAGE}" \
     --masters=1 \
     --workers=1 \
-    --mtu 1450 \
-    --memory 2048 \
-    --cpus 2.0 \
+    --mtu=1450 \
+    --memory=2048 \
+    --cpus=2.0 \
     --with-init-node=false \
     --docker-host-ip=127.0.0.1 \
     --endpoint=127.0.0.1 \
