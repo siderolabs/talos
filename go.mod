@@ -17,7 +17,7 @@ replace (
 
 require (
 	github.com/AlekSi/pointer v1.1.0
-	github.com/BurntSushi/toml v0.3.1
+	github.com/BurntSushi/toml v0.4.1
 	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
