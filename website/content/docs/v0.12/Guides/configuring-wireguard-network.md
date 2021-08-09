@@ -83,7 +83,8 @@ network:
     - interface: wg0
       mtu: 1500
       # ip address add dev wg0 192.168.2.1/24
-      cidr: 192.168.2.1/24
+      addresses:
+        - 192.168.2.1/24
       # wg set wg0 listen-port 51820 private-key /path/to/private-key peer ABCDEF... allowed-ips 192.168.88.0/24 endpoint 209.202.254.14:8172
       wireguard:
         privateKey: <privatekey file contents>

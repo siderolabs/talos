@@ -112,7 +112,7 @@ type ExtraHost interface {
 // Device represents a network interface.
 type Device interface {
 	Interface() string
-	CIDR() string
+	Addresses() []string
 	Routes() []Route
 	Bond() Bond
 	Vlans() []Vlan
@@ -187,7 +187,7 @@ type Bond interface {
 
 // Vlan represents vlan settings for a device.
 type Vlan interface {
-	CIDR() string
+	Addresses() []string
 	Routes() []Route
 	DHCP() bool
 	ID() uint16

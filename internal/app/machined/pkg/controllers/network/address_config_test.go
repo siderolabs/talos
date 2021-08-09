@@ -200,11 +200,28 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 						DeviceCIDR:      "2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
 					},
 					{
+						DeviceInterface: "eth5",
+						DeviceCIDR:      "10.5.0.7",
+					},
+					{
+						DeviceInterface: "eth6",
+						DeviceAddresses: []string{
+							"10.5.0.8",
+							"2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
+						},
+					},
+					{
 						DeviceInterface: "eth0",
 						DeviceVlans: []*v1alpha1.Vlan{
 							{
 								VlanID:   24,
 								VlanCIDR: "10.0.0.1/8",
+							},
+							{
+								VlanID: 25,
+								VlanAddresses: []string{
+									"11.0.0.1/8",
+								},
 							},
 						},
 					},
@@ -227,7 +244,11 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 			return suite.assertAddresses([]string{
 				"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
 				"configuration/eth3/192.168.0.24/28",
+				"configuration/eth5/10.5.0.7/32",
+				"configuration/eth6/10.5.0.8/32",
+				"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
 				"configuration/eth0.24/10.0.0.1/8",
+				"configuration/eth0.25/11.0.0.1/8",
 			}, func(r *network.AddressSpec) error {
 				return nil
 			})

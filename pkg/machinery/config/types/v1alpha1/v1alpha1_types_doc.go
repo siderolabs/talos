@@ -1293,7 +1293,7 @@ func init() {
 			FieldName: "interfaces",
 		},
 	}
-	DeviceDoc.Fields = make([]encoder.Doc, 12)
+	DeviceDoc.Fields = make([]encoder.Doc, 13)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
 	DeviceDoc.Fields[0].Note = ""
@@ -1301,77 +1301,77 @@ func init() {
 	DeviceDoc.Fields[0].Comments[encoder.LineComment] = "The interface name."
 
 	DeviceDoc.Fields[0].AddExample("", "eth0")
-	DeviceDoc.Fields[1].Name = "cidr"
-	DeviceDoc.Fields[1].Type = "string"
+	DeviceDoc.Fields[1].Name = "addresses"
+	DeviceDoc.Fields[1].Type = "[]string"
 	DeviceDoc.Fields[1].Note = ""
-	DeviceDoc.Fields[1].Description = "Assigns a static IP address to the interface.\nThis should be in proper CIDR notation."
-	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Assigns a static IP address to the interface."
+	DeviceDoc.Fields[1].Description = "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed)."
+	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Assigns static IP addresses to the interface."
 
-	DeviceDoc.Fields[1].AddExample("", "10.5.0.0/16")
-	DeviceDoc.Fields[2].Name = "routes"
-	DeviceDoc.Fields[2].Type = "[]Route"
-	DeviceDoc.Fields[2].Note = ""
-	DeviceDoc.Fields[2].Description = "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
-	DeviceDoc.Fields[2].Comments[encoder.LineComment] = "A list of routes associated with the interface."
-
-	DeviceDoc.Fields[2].AddExample("", networkConfigRoutesExample)
-	DeviceDoc.Fields[3].Name = "bond"
-	DeviceDoc.Fields[3].Type = "Bond"
+	DeviceDoc.Fields[1].AddExample("", []string{"10.5.0.0/16", "192.168.3.7"})
+	DeviceDoc.Fields[3].Name = "routes"
+	DeviceDoc.Fields[3].Type = "[]Route"
 	DeviceDoc.Fields[3].Note = ""
-	DeviceDoc.Fields[3].Description = "Bond specific options."
-	DeviceDoc.Fields[3].Comments[encoder.LineComment] = "Bond specific options."
+	DeviceDoc.Fields[3].Description = "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
+	DeviceDoc.Fields[3].Comments[encoder.LineComment] = "A list of routes associated with the interface."
 
-	DeviceDoc.Fields[3].AddExample("", networkConfigBondExample)
-	DeviceDoc.Fields[4].Name = "vlans"
-	DeviceDoc.Fields[4].Type = "[]Vlan"
+	DeviceDoc.Fields[3].AddExample("", networkConfigRoutesExample)
+	DeviceDoc.Fields[4].Name = "bond"
+	DeviceDoc.Fields[4].Type = "Bond"
 	DeviceDoc.Fields[4].Note = ""
-	DeviceDoc.Fields[4].Description = "VLAN specific options."
-	DeviceDoc.Fields[4].Comments[encoder.LineComment] = "VLAN specific options."
-	DeviceDoc.Fields[5].Name = "mtu"
-	DeviceDoc.Fields[5].Type = "int"
-	DeviceDoc.Fields[5].Note = ""
-	DeviceDoc.Fields[5].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
-	DeviceDoc.Fields[5].Comments[encoder.LineComment] = "The interface's MTU."
-	DeviceDoc.Fields[6].Name = "dhcp"
-	DeviceDoc.Fields[6].Type = "bool"
-	DeviceDoc.Fields[6].Note = ""
-	DeviceDoc.Fields[6].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
-	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+	DeviceDoc.Fields[4].Description = "Bond specific options."
+	DeviceDoc.Fields[4].Comments[encoder.LineComment] = "Bond specific options."
 
-	DeviceDoc.Fields[6].AddExample("", true)
-	DeviceDoc.Fields[7].Name = "ignore"
+	DeviceDoc.Fields[4].AddExample("", networkConfigBondExample)
+	DeviceDoc.Fields[5].Name = "vlans"
+	DeviceDoc.Fields[5].Type = "[]Vlan"
+	DeviceDoc.Fields[5].Note = ""
+	DeviceDoc.Fields[5].Description = "VLAN specific options."
+	DeviceDoc.Fields[5].Comments[encoder.LineComment] = "VLAN specific options."
+	DeviceDoc.Fields[6].Name = "mtu"
+	DeviceDoc.Fields[6].Type = "int"
+	DeviceDoc.Fields[6].Note = ""
+	DeviceDoc.Fields[6].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
+	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "The interface's MTU."
+	DeviceDoc.Fields[7].Name = "dhcp"
 	DeviceDoc.Fields[7].Type = "bool"
 	DeviceDoc.Fields[7].Note = ""
-	DeviceDoc.Fields[7].Description = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[8].Name = "dummy"
+	DeviceDoc.Fields[7].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
+	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+
+	DeviceDoc.Fields[7].AddExample("", true)
+	DeviceDoc.Fields[8].Name = "ignore"
 	DeviceDoc.Fields[8].Type = "bool"
 	DeviceDoc.Fields[8].Note = ""
-	DeviceDoc.Fields[8].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
-	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
-	DeviceDoc.Fields[9].Name = "dhcpOptions"
-	DeviceDoc.Fields[9].Type = "DHCPOptions"
+	DeviceDoc.Fields[8].Description = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[9].Name = "dummy"
+	DeviceDoc.Fields[9].Type = "bool"
 	DeviceDoc.Fields[9].Note = ""
-	DeviceDoc.Fields[9].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
-	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "DHCP specific options."
-
-	DeviceDoc.Fields[9].AddExample("", networkConfigDHCPOptionsExample)
-	DeviceDoc.Fields[10].Name = "wireguard"
-	DeviceDoc.Fields[10].Type = "DeviceWireguardConfig"
+	DeviceDoc.Fields[9].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
+	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
+	DeviceDoc.Fields[10].Name = "dhcpOptions"
+	DeviceDoc.Fields[10].Type = "DHCPOptions"
 	DeviceDoc.Fields[10].Note = ""
-	DeviceDoc.Fields[10].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
-	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "Wireguard specific configuration."
+	DeviceDoc.Fields[10].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "DHCP specific options."
 
-	DeviceDoc.Fields[10].AddExample("wireguard server example", networkConfigWireguardHostExample)
-
-	DeviceDoc.Fields[10].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
-	DeviceDoc.Fields[11].Name = "vip"
-	DeviceDoc.Fields[11].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[10].AddExample("", networkConfigDHCPOptionsExample)
+	DeviceDoc.Fields[11].Name = "wireguard"
+	DeviceDoc.Fields[11].Type = "DeviceWireguardConfig"
 	DeviceDoc.Fields[11].Note = ""
-	DeviceDoc.Fields[11].Description = "Virtual (shared) IP address configuration."
-	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[11].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
+	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "Wireguard specific configuration."
 
-	DeviceDoc.Fields[11].AddExample("", networkConfigVIPLayer2Example)
+	DeviceDoc.Fields[11].AddExample("wireguard server example", networkConfigWireguardHostExample)
+
+	DeviceDoc.Fields[11].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
+	DeviceDoc.Fields[12].Name = "vip"
+	DeviceDoc.Fields[12].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[12].Note = ""
+	DeviceDoc.Fields[12].Description = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+
+	DeviceDoc.Fields[12].AddExample("", networkConfigVIPLayer2Example)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
@@ -1642,27 +1642,27 @@ func init() {
 			FieldName: "vlans",
 		},
 	}
-	VlanDoc.Fields = make([]encoder.Doc, 4)
-	VlanDoc.Fields[0].Name = "cidr"
-	VlanDoc.Fields[0].Type = "string"
+	VlanDoc.Fields = make([]encoder.Doc, 5)
+	VlanDoc.Fields[0].Name = "addresses"
+	VlanDoc.Fields[0].Type = "[]string"
 	VlanDoc.Fields[0].Note = ""
-	VlanDoc.Fields[0].Description = "The CIDR to use."
-	VlanDoc.Fields[0].Comments[encoder.LineComment] = "The CIDR to use."
-	VlanDoc.Fields[1].Name = "routes"
-	VlanDoc.Fields[1].Type = "[]Route"
-	VlanDoc.Fields[1].Note = ""
-	VlanDoc.Fields[1].Description = "A list of routes associated with the VLAN."
-	VlanDoc.Fields[1].Comments[encoder.LineComment] = "A list of routes associated with the VLAN."
-	VlanDoc.Fields[2].Name = "dhcp"
-	VlanDoc.Fields[2].Type = "bool"
+	VlanDoc.Fields[0].Description = "The addresses in CIDR notation or as plain IPs to use."
+	VlanDoc.Fields[0].Comments[encoder.LineComment] = "The addresses in CIDR notation or as plain IPs to use."
+	VlanDoc.Fields[2].Name = "routes"
+	VlanDoc.Fields[2].Type = "[]Route"
 	VlanDoc.Fields[2].Note = ""
-	VlanDoc.Fields[2].Description = "Indicates if DHCP should be used."
-	VlanDoc.Fields[2].Comments[encoder.LineComment] = "Indicates if DHCP should be used."
-	VlanDoc.Fields[3].Name = "vlanId"
-	VlanDoc.Fields[3].Type = "uint16"
+	VlanDoc.Fields[2].Description = "A list of routes associated with the VLAN."
+	VlanDoc.Fields[2].Comments[encoder.LineComment] = "A list of routes associated with the VLAN."
+	VlanDoc.Fields[3].Name = "dhcp"
+	VlanDoc.Fields[3].Type = "bool"
 	VlanDoc.Fields[3].Note = ""
-	VlanDoc.Fields[3].Description = "The VLAN's ID."
-	VlanDoc.Fields[3].Comments[encoder.LineComment] = "The VLAN's ID."
+	VlanDoc.Fields[3].Description = "Indicates if DHCP should be used."
+	VlanDoc.Fields[3].Comments[encoder.LineComment] = "Indicates if DHCP should be used."
+	VlanDoc.Fields[4].Name = "vlanId"
+	VlanDoc.Fields[4].Type = "uint16"
+	VlanDoc.Fields[4].Note = ""
+	VlanDoc.Fields[4].Description = "The VLAN's ID."
+	VlanDoc.Fields[4].Comments[encoder.LineComment] = "The VLAN's ID."
 
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.LineComment] = "Route represents a network route."

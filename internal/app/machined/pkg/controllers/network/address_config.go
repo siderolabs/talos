@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -228,16 +229,30 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 	return address
 }
 
+func parseIPOrIPPrefix(address string) (netaddr.IPPrefix, error) {
+	if strings.IndexByte(address, '/') >= 0 {
+		return netaddr.ParseIPPrefix(address)
+	}
+
+	// parse as IP address and assume netmask of all ones
+	ip, err := netaddr.ParseIP(address)
+	if err != nil {
+		return netaddr.IPPrefix{}, err
+	}
+
+	return netaddr.IPPrefixFrom(ip, ip.BitLen()), nil
+}
+
 func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (addresses []network.AddressSpecSpec) {
 	for _, device := range cfgProvider.Machine().Network().Devices() {
 		if device.Ignore() {
 			continue
 		}
 
-		if device.CIDR() != "" {
-			ipPrefix, err := netaddr.ParseIPPrefix(device.CIDR())
+		for _, cidr := range device.Addresses() {
+			ipPrefix, err := parseIPOrIPPrefix(cidr)
 			if err != nil {
-				logger.Info(fmt.Sprintf("skipping address %q on interface %q", device.CIDR(), device.Interface()), zap.Error(err))
+				logger.Info(fmt.Sprintf("skipping address %q on interface %q", cidr, device.Interface()), zap.Error(err))
 
 				continue
 			}
@@ -260,10 +275,10 @@ func (ctrl *AddressConfigController) parseMachineConfiguration(logger *zap.Logge
 		}
 
 		for _, vlan := range device.Vlans() {
-			if vlan.CIDR() != "" {
-				ipPrefix, err := netaddr.ParseIPPrefix(vlan.CIDR())
+			for _, cidr := range vlan.Addresses() {
+				ipPrefix, err := netaddr.ParseIPPrefix(cidr)
 				if err != nil {
-					logger.Info(fmt.Sprintf("skipping address %q on interface %q vlan %d", device.CIDR(), device.Interface(), vlan.ID()), zap.Error(err))
+					logger.Info(fmt.Sprintf("skipping address %q on interface %q vlan %d", cidr, device.Interface(), vlan.ID()), zap.Error(err))
 
 					continue
 				}

@@ -294,6 +294,187 @@ func TestValidate(t *testing.T) {
 			expectedError: "2 errors occurred:\n\t* inline manifest name can't be empty\n\t* inline manifest name \"foo\" is duplicate\n\n",
 		},
 		{
+			name: "DeviceCIDRInvalid",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceCIDR:      "10.3.x",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError:    "1 error occurred:\n\t* [networking.os.device.CIDR] \"eth0\": failed to parse IP address \"10.3.x\"\n\n",
+			expectedWarnings: []string{"\"eth0\": machine.network.interface.cidr is deprecated, please use machine.network.interface.addresses"},
+		},
+		{
+			name: "DeviceAddressInvalid",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceAddresses: []string{
+									"192.168.0.5/24",
+									"10.35.7.8",
+									"10.3.x/24",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.addresses] \"eth0\": invalid CIDR address: 10.3.x/24\n\n",
+		},
+		{
+			name: "DeviceAddressAndCIDR",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceCIDR:      "192.24.3.45",
+								DeviceAddresses: []string{
+									"192.168.0.5/24",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError:    "1 error occurred:\n\t* [networking.os.device] \"eth0\": interface can't have both .cidr and .addresses set\n\n",
+			expectedWarnings: []string{"\"eth0\": machine.network.interface.cidr is deprecated, please use machine.network.interface.addresses"},
+		},
+		{
+			name: "VlanCIDRInvalid",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID:   25,
+										VlanCIDR: "10.3.x",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.vlan.CIDR] eth0.25: failed to parse IP address \"10.3.x\"\n\n",
+		},
+		{
+			name: "VlanAddressInvalid",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID: 25,
+										VlanAddresses: []string{
+											"192.168.0.5/24",
+											"10.35.7.8",
+											"10.3.x/24",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.vlan.addresses] eth0.25: invalid CIDR address: 10.3.x/24\n\n",
+		},
+		{
+			name: "VlanAddressAndCIDR",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID:   26,
+										VlanCIDR: "192.24.3.45",
+										VlanAddresses: []string{
+											"192.168.0.5/24",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.vlan] eth0.26: vlan can't have both .cidr and .addresses set\n\n",
+		},
+		{
 			name: "BondDefaultConfig",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
@@ -422,7 +603,9 @@ func TestValidate(t *testing.T) {
 							},
 							{
 								DeviceInterface: "eth1",
-								DeviceCIDR:      "192.168.0.1/24",
+								DeviceAddresses: []string{
+									"192.168.0.1/24",
+								},
 							},
 							{
 								DeviceInterface: "eth2",
@@ -441,6 +624,9 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "2 errors occurred:\n\t* [networking.os.device] \"eth0\": bonded interface shouldn't have any addressing methods configured\n" +
 				"\t* [networking.os.device] \"eth1\": bonded interface shouldn't have any addressing methods configured\n\n",
+			expectedWarnings: []string{
+				"\"eth2\": machine.network.interface.cidr is deprecated, please use machine.network.interface.addresses",
+			},
 		},
 		{
 			name: "Wireguard",

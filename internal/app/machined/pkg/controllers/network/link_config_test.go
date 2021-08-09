@@ -178,18 +178,22 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						DeviceInterface: "eth0",
 						DeviceVlans: []*v1alpha1.Vlan{
 							{
-								VlanID:   24,
-								VlanCIDR: "10.0.0.1/8",
+								VlanID: 24,
+								VlanAddresses: []string{
+									"10.0.0.1/8",
+								},
 							},
 							{
-								VlanID:   48,
-								VlanCIDR: "10.0.0.2/8",
+								VlanID: 48,
+								VlanAddresses: []string{
+									"10.0.0.2/8",
+								},
 							},
 						},
 					},
 					{
 						DeviceInterface: "eth1",
-						DeviceCIDR:      "192.168.0.24/28",
+						DeviceAddresses: []string{"192.168.0.24/28"},
 					},
 					{
 						DeviceInterface: "eth1",
@@ -198,7 +202,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 					{
 						DeviceIgnore:    true,
 						DeviceInterface: "eth2",
-						DeviceCIDR:      "192.168.0.24/28",
+						DeviceAddresses: []string{"192.168.0.24/28"},
 					},
 					{
 						DeviceInterface: "eth2",
@@ -343,12 +347,16 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 						DeviceInterface: "eth0",
 						DeviceVlans: []*v1alpha1.Vlan{
 							{
-								VlanID:   24,
-								VlanCIDR: "10.0.0.1/8",
+								VlanID: 24,
+								VlanAddresses: []string{
+									"10.0.0.1/8",
+								},
 							},
 							{
-								VlanID:   48,
-								VlanCIDR: "10.0.0.2/8",
+								VlanID: 48,
+								VlanAddresses: []string{
+									"10.0.0.2/8",
+								},
 							},
 						},
 					},

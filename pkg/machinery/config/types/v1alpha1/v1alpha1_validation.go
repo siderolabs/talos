@@ -52,7 +52,7 @@ var (
 )
 
 // NetworkDeviceCheck defines the function type for checks.
-type NetworkDeviceCheck func(*Device, map[string]string) error
+type NetworkDeviceCheck func(*Device, map[string]string) ([]string, error)
 
 // Validate implements the config.Provider interface.
 //nolint:gocyclo,cyclop
@@ -137,9 +137,9 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 
 		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
-			if err := ValidateNetworkDevices(device, bondedInterfaces, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes); err != nil {
-				result = multierror.Append(result, err)
-			}
+			warn, err := ValidateNetworkDevices(device, bondedInterfaces, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes)
+			warnings = append(warnings, warn...)
+			result = multierror.Append(result, err)
 		}
 	}
 
@@ -292,30 +292,34 @@ func (manifests ClusterInlineManifests) Validate() error {
 
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
-func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, checks ...NetworkDeviceCheck) error {
+func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, checks ...NetworkDeviceCheck) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return fmt.Errorf("empty device")
+		return nil, fmt.Errorf("empty device")
 	}
 
 	if d.DeviceIgnore {
-		return result.ErrorOrNil()
+		return nil, result.ErrorOrNil()
 	}
+
+	var warnings []string
 
 	for _, check := range checks {
-		result = multierror.Append(result, check(d, bondedInterfaces))
+		warn, err := check(d, bondedInterfaces)
+		warnings = append(warnings, warn...)
+		result = multierror.Append(result, err)
 	}
 
-	return result.ErrorOrNil()
+	return warnings, result.ErrorOrNil()
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
-func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) error {
+func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return fmt.Errorf("empty device")
+		return nil, fmt.Errorf("empty device")
 	}
 
 	if d.DeviceInterface == "" {
@@ -330,7 +334,11 @@ func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) error {
 		result = multierror.Append(result, checkWireguard(d.DeviceWireguardConfig))
 	}
 
-	return result.ErrorOrNil()
+	if d.DeviceVlans != nil {
+		result = multierror.Append(result, checkVlans(d))
+	}
+
+	return nil, result.ErrorOrNil()
 }
 
 //nolint:gocyclo,cyclop
@@ -480,25 +488,82 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 	return result.ErrorOrNil()
 }
 
+func checkVlans(d *Device) error {
+	var result *multierror.Error
+
+	// check VLAN addressing
+	for _, vlan := range d.DeviceVlans {
+		if len(vlan.VlanAddresses) > 0 && vlan.VlanCIDR != "" {
+			result = multierror.Append(result, fmt.Errorf("[%s] %s.%d: %s", "networking.os.device.vlan", d.DeviceInterface, vlan.VlanID, "vlan can't have both .cidr and .addresses set"))
+		}
+
+		if vlan.VlanCIDR != "" {
+			if err := validateIPOrCIDR(vlan.VlanCIDR); err != nil {
+				result = multierror.Append(result, fmt.Errorf("[%s] %s.%d: %w", "networking.os.device.vlan.CIDR", d.DeviceInterface, vlan.VlanID, err))
+			}
+		}
+
+		for _, address := range vlan.VlanAddresses {
+			if err := validateIPOrCIDR(address); err != nil {
+				result = multierror.Append(result, fmt.Errorf("[%s] %s.%d: %w", "networking.os.device.vlan.addresses", d.DeviceInterface, vlan.VlanID, err))
+			}
+		}
+	}
+
+	return result.ErrorOrNil()
+}
+
+func validateIPOrCIDR(address string) error {
+	if strings.IndexByte(address, '/') >= 0 {
+		_, _, err := net.ParseCIDR(address)
+
+		return err
+	}
+
+	if ip := net.ParseIP(address); ip == nil {
+		return fmt.Errorf("failed to parse IP address %q", address)
+	}
+
+	return nil
+}
+
 // CheckDeviceAddressing ensures that an appropriate addressing method.
 // has been specified.
-func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) error {
+//
+//nolint:gocyclo
+func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return fmt.Errorf("empty device")
+		return nil, fmt.Errorf("empty device")
 	}
 
+	var warnings []string
+
 	if _, bonded := bondedInterfaces[d.Interface()]; bonded {
-		if d.DeviceDHCP || d.DeviceCIDR != "" || d.DeviceVIPConfig != nil {
+		if d.DeviceDHCP || d.DeviceCIDR != "" || len(d.DeviceAddresses) > 0 || d.DeviceVIPConfig != nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded interface shouldn't have any addressing methods configured"))
 		}
 	}
 
+	// ensure either legacy CIDR is set or new addresses, but not both
+	if len(d.DeviceAddresses) > 0 && d.DeviceCIDR != "" {
+		result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "interface can't have both .cidr and .addresses set"))
+	}
+
 	// ensure cidr is a valid address
 	if d.DeviceCIDR != "" {
-		if _, _, err := net.ParseCIDR(d.DeviceCIDR); err != nil {
+		if err := validateIPOrCIDR(d.DeviceCIDR); err != nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.CIDR", d.DeviceInterface, err))
+		}
+
+		warnings = append(warnings, fmt.Sprintf("%q: machine.network.interface.cidr is deprecated, please use machine.network.interface.addresses", d.DeviceInterface))
+	}
+
+	// ensure addresses are valid addresses
+	for _, address := range d.DeviceAddresses {
+		if err := validateIPOrCIDR(address); err != nil {
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.addresses", d.DeviceInterface, err))
 		}
 	}
 
@@ -509,19 +574,19 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) error 
 		}
 	}
 
-	return result.ErrorOrNil()
+	return warnings, result.ErrorOrNil()
 }
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
-func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) error {
+func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return fmt.Errorf("empty device")
+		return nil, fmt.Errorf("empty device")
 	}
 
 	if len(d.DeviceRoutes) == 0 {
-		return result.ErrorOrNil()
+		return nil, result.ErrorOrNil()
 	}
 
 	for idx, route := range d.DeviceRoutes {
@@ -536,5 +601,5 @@ func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) error {
 		}
 	}
 
-	return result.ErrorOrNil()
+	return nil, result.ErrorOrNil()
 }
