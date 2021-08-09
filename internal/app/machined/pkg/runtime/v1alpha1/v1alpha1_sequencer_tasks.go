@@ -429,7 +429,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			b, e := fetchConfig(fetchCtx, r)
 			if errors.Is(e, perrors.ErrNoConfigSource) {
-				logger.Println("starting maintenance service")
+				logger.Println("machine configuration not found; starting maintenance service")
 
 				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
