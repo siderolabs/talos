@@ -407,10 +407,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			return nil, fmt.Errorf("failed to acquire upgrade mutex: %w", err)
 		}
 
-		// TODO: after we upgrade to v3.4, we can use mu.TryLock() here, to fail
-		// immediately if the lock is not available, instead of blocking here until
-		// the context times out or the upgrade lock comes available.
-		if err = mu.Lock(ctx); err != nil {
+		if err = mu.TryLock(ctx); err != nil {
 			return nil, fmt.Errorf("failed to acquire upgrade lock: %w", err)
 		}
 
