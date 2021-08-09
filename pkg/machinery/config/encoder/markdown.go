@@ -36,12 +36,11 @@ Examples:
 {{ if $struct.AppearsIn -}}
 Appears in:
 
-{{ range $appearance := $struct.AppearsIn }}
+{{ range $appearance := $struct.AppearsIn -}}
 - <code>{{ encodeType $appearance.TypeName }}.{{ $appearance.FieldName }}</code>
 {{ end -}}
 {{ end }}
 {{ if $struct.Examples -}}
-
 {{ range $example := $struct.Examples }}
 {{ yaml $example.GetValue "" }}
 {{- end -}}
@@ -51,7 +50,7 @@ Appears in:
 
 <hr />
 
-{{ range $field := $struct.Fields -}}
+{{ range $field := $struct.Fields }}{{ if $field.Name -}}
 <div class="dd">
 
 <code>{{ $field.Name }}</code>  <i>{{ encodeType $field.Type }}</i>
@@ -80,11 +79,7 @@ Valid values:
 </div>
 
 <hr />
-
-{{ end }}
-
-{{ end -}}
-
+{{ end }}{{ end }}{{ end }}
 {{ if $struct.Values -}}
 
 {{ $struct.Type }} Valid Values:
