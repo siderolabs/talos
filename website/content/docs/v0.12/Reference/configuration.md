@@ -47,7 +47,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>debug</code>  <i>bool</i>
@@ -74,7 +73,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>persist</code>  <i>bool</i>
@@ -98,7 +96,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>machine</code>  <i><a href="#machineconfig">MachineConfig</a></i>
@@ -111,7 +108,6 @@ Provides machine specific configuration options.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>cluster</code>  <i><a href="#clusterconfig">ClusterConfig</a></i>
@@ -127,13 +123,10 @@ Provides cluster specific configuration options.
 
 
 
-
-
 ## MachineConfig
 MachineConfig represents the machine-specific config values.
 
 Appears in:
-
 
 - <code><a href="#config">Config</a>.machine</code>
 
@@ -151,7 +144,7 @@ install:
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
-    # # Look up disk using disk characteristics like model, size, serial and others.
+    # # Look up disk using disk attributes like model, size, serial and others.
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
@@ -198,7 +191,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>token</code>  <i>string</i>
@@ -225,7 +217,6 @@ token: 328hom.uqjzh6jnn2eie9oi
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
@@ -251,7 +242,6 @@ ca:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>certSANs</code>  <i>[]string</i>
@@ -278,7 +268,6 @@ certSANs:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>kubelet</code>  <i><a href="#kubeletconfig">KubeletConfig</a></i>
@@ -319,7 +308,6 @@ kubelet:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>network</code>  <i><a href="#networkconfig">NetworkConfig</a></i>
@@ -410,7 +398,6 @@ network:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>disks</code>  <i>[]<a href="#machinedisk">MachineDisk</a></i>
@@ -450,7 +437,6 @@ disks:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>install</code>  <i><a href="#installconfig">InstallConfig</a></i>
@@ -476,7 +462,7 @@ install:
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
-    # # Look up disk using disk characteristics like model, size, serial and others.
+    # # Look up disk using disk attributes like model, size, serial and others.
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
@@ -486,7 +472,6 @@ install:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>files</code>  <i>[]<a href="#machinefile">MachineFile</a></i>
@@ -521,7 +506,6 @@ files:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>env</code>  <i>Env</i>
@@ -572,7 +556,6 @@ env:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>time</code>  <i><a href="#timeconfig">TimeConfig</a></i>
@@ -599,7 +582,6 @@ time:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>sysctls</code>  <i>map[string]string</i>
@@ -624,7 +606,6 @@ sysctls:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>registries</code>  <i><a href="#registriesconfig">RegistriesConfig</a></i>
@@ -677,7 +658,6 @@ registries:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>systemDiskEncryption</code>  <i><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a></i>
@@ -720,7 +700,6 @@ systemDiskEncryption:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>features</code>  <i><a href="#featuresconfig">FeaturesConfig</a></i>
@@ -747,13 +726,10 @@ features:
 
 
 
-
-
 ## ClusterConfig
 ClusterConfig represents the cluster-wide config values.
 
 Appears in:
-
 
 - <code><a href="#config">Config</a>.cluster</code>
 
@@ -804,7 +780,6 @@ controlPlane:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>clusterName</code>  <i>string</i>
@@ -817,7 +792,6 @@ Configures the cluster's name.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>network</code>  <i><a href="#clusternetworkconfig">ClusterNetworkConfig</a></i>
@@ -850,7 +824,6 @@ network:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>token</code>  <i>string</i>
@@ -873,7 +846,6 @@ token: wlzjyw.bei2zfylhs2by0wd
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>aescbcEncryptionSecret</code>  <i>string</i>
@@ -896,7 +868,6 @@ aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
@@ -921,7 +892,6 @@ ca:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>aggregatorCA</code>  <i>PEMEncodedCertificateAndKey</i>
@@ -948,7 +918,6 @@ aggregatorCA:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>serviceAccount</code>  <i>PEMEncodedKey</i>
@@ -972,7 +941,6 @@ serviceAccount:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>apiServer</code>  <i><a href="#apiserverconfig">APIServerConfig</a></i>
@@ -1004,7 +972,6 @@ apiServer:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>controllerManager</code>  <i><a href="#controllermanagerconfig">ControllerManagerConfig</a></i>
@@ -1031,7 +998,6 @@ controllerManager:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>proxy</code>  <i><a href="#proxyconfig">ProxyConfig</a></i>
@@ -1059,7 +1025,6 @@ proxy:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>scheduler</code>  <i><a href="#schedulerconfig">SchedulerConfig</a></i>
@@ -1086,7 +1051,6 @@ scheduler:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>etcd</code>  <i><a href="#etcdconfig">EtcdConfig</a></i>
@@ -1117,7 +1081,6 @@ etcd:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>coreDNS</code>  <i><a href="#coredns">CoreDNS</a></i>
@@ -1141,7 +1104,6 @@ coreDNS:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>externalCloudProvider</code>  <i><a href="#externalcloudproviderconfig">ExternalCloudProviderConfig</a></i>
@@ -1169,7 +1131,6 @@ externalCloudProvider:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraManifests</code>  <i>[]string</i>
@@ -1195,7 +1156,6 @@ extraManifests:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraManifestHeaders</code>  <i>map[string]string</i>
@@ -1220,7 +1180,6 @@ extraManifestHeaders:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>inlineManifests</code>  <i>ClusterInlineManifests</i>
@@ -1250,7 +1209,6 @@ inlineManifests:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>adminKubeconfig</code>  <i><a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a></i>
@@ -1275,7 +1233,6 @@ adminKubeconfig:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>allowSchedulingOnMasters</code>  <i>bool</i>
@@ -1302,13 +1259,10 @@ Valid values:
 
 
 
-
-
 ## ExtraMount
 ExtraMount wraps OCI Mount specification.
 
 Appears in:
-
 
 - <code><a href="#kubeletconfig">KubeletConfig</a>.extraMounts</code>
 
@@ -1324,11 +1278,11 @@ Appears in:
 
 
 
+
 ## KubeletConfig
 KubeletConfig represents the kubelet config values.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.kubelet</code>
 
@@ -1378,7 +1332,6 @@ image: ghcr.io/talos-systems/kubelet:v1.22.0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>clusterDNS</code>  <i>[]string</i>
@@ -1403,7 +1356,6 @@ clusterDNS:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -1427,7 +1379,6 @@ extraArgs:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraMounts</code>  <i>[]<a href="#extramount">ExtraMount</a></i>
@@ -1456,7 +1407,6 @@ extraMounts:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>registerWithFQDN</code>  <i>bool</i>
@@ -1484,13 +1434,10 @@ Valid values:
 
 
 
-
-
 ## NetworkConfig
 NetworkConfig represents the machine's networking config values.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.network</code>
 
@@ -1580,7 +1527,6 @@ Used to statically set the hostname for the machine.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>interfaces</code>  <i>[]<a href="#device">Device</a></i>
@@ -1658,7 +1604,6 @@ interfaces:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>nameservers</code>  <i>[]string</i>
@@ -1684,7 +1629,6 @@ nameservers:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraHostEntries</code>  <i>[]<a href="#extrahost">ExtraHost</a></i>
@@ -1715,13 +1659,10 @@ extraHostEntries:
 
 
 
-
-
 ## InstallConfig
 InstallConfig represents the installation options for preparing a node.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.install</code>
 
@@ -1736,7 +1677,7 @@ image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image u
 bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if the installation disk should be wiped at installation time.
 
-# # Look up disk using disk characteristics like model, size, serial and others.
+# # Look up disk using disk attributes like model, size, serial and others.
 # diskSelector:
 #     size: 4GB # Disk size.
 #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
@@ -1770,7 +1711,6 @@ disk: /dev/nvme0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>diskSelector</code>  <i><a href="#installdiskselector">InstallDiskSelector</a></i>
@@ -1778,7 +1718,7 @@ disk: /dev/nvme0
 </div>
 <div class="dt">
 
-Look up disk using disk characteristics like model, size, serial and others.
+Look up disk using disk attributes like model, size, serial and others.
 Always has priority over `disk`.
 
 
@@ -1796,7 +1736,6 @@ diskSelector:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraKernelArgs</code>  <i>[]string</i>
@@ -1821,7 +1760,6 @@ extraKernelArgs:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -1846,7 +1784,6 @@ image: ghcr.io/talos-systems/installer:latest
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>bootloader</code>  <i>bool</i>
@@ -1870,7 +1807,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>wipe</code>  <i>bool</i>
@@ -1895,7 +1831,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>legacyBIOSSupport</code>  <i>bool</i>
@@ -1912,34 +1847,10 @@ Should be enabled only for the systems with legacy BIOS that doesn't support GPT
 
 
 
-
-
-## InstallDiskSizeMatcher
-InstallDiskSizeMatcher disk size condition parser.
-
-Appears in:
-
-
-- <code><a href="#installdiskselector">InstallDiskSelector</a>.size</code>
-
-
-``` yaml
-4GB
-```
-``` yaml
-'> 1TB'
-```
-``` yaml
-<= 2TB
-```
-
-
-
 ## InstallDiskSelector
 InstallDiskSelector represents a disk query parameters for the install disk lookup.
 
 Appears in:
-
 
 - <code><a href="#installconfig">InstallConfig</a>.diskSelector</code>
 
@@ -1953,7 +1864,7 @@ model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 
 <div class="dd">
 
-<code>size</code>  <i><a href="#installdisksizematcher">InstallDiskSizeMatcher</a></i>
+<code>size</code>  <i>InstallDiskSizeMatcher</i>
 
 </div>
 <div class="dt">
@@ -1981,7 +1892,6 @@ size: <= 2TB
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>name</code>  <i>string</i>
@@ -1994,7 +1904,6 @@ Disk name `/sys/block/<dev>/device/name`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>model</code>  <i>string</i>
@@ -2007,7 +1916,6 @@ Disk model `/sys/block/<dev>/device/model`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>serial</code>  <i>string</i>
@@ -2020,7 +1928,6 @@ Disk serial number `/sys/block/<dev>/serial`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>modalias</code>  <i>string</i>
@@ -2033,7 +1940,6 @@ Disk modalias `/sys/block/<dev>/device/modalias`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>uuid</code>  <i>string</i>
@@ -2046,7 +1952,6 @@ Disk UUID `/sys/block/<dev>/uuid`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>wwid</code>  <i>string</i>
@@ -2059,7 +1964,6 @@ Disk WWID `/sys/block/<dev>/wwid`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>type</code>  <i>InstallDiskType</i>
@@ -2086,13 +1990,10 @@ Valid values:
 
 
 
-
-
 ## TimeConfig
 TimeConfig represents the options for configuring time on a machine.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.time</code>
 
@@ -2119,7 +2020,6 @@ Defaults to `false`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>servers</code>  <i>[]string</i>
@@ -2139,13 +2039,10 @@ Defaults to `pool.ntp.org`
 
 
 
-
-
 ## RegistriesConfig
 RegistriesConfig represents the image pull options.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.registries</code>
 
@@ -2207,7 +2104,6 @@ mirrors:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>config</code>  <i>map[string]<a href="#registryconfig">RegistryConfig</a></i>
@@ -2251,8 +2147,6 @@ config:
 
 
 
-
-
 ## PodCheckpointer
 PodCheckpointer represents the pod-checkpointer config values.
 
@@ -2276,13 +2170,10 @@ The `image` field is an override to the default pod-checkpointer image.
 
 
 
-
-
 ## CoreDNS
 CoreDNS represents the CoreDNS config values.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.coreDNS</code>
 
@@ -2305,7 +2196,6 @@ Disable coredns deployment on cluster bootstrap.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -2321,13 +2211,10 @@ The `image` field is an override to the default coredns image.
 
 
 
-
-
 ## Endpoint
 Endpoint represents the endpoint URL parsed out of the machine config.
 
 Appears in:
-
 
 - <code><a href="#controlplaneconfig">ControlPlaneConfig</a>.endpoint</code>
 
@@ -2341,11 +2228,11 @@ https://cluster1.internal:6443
 
 
 
+
 ## ControlPlaneConfig
 ControlPlaneConfig represents the control plane configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.controlPlane</code>
 
@@ -2384,7 +2271,6 @@ endpoint: https://cluster1.internal:6443
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>localAPIServerPort</code>  <i>int</i>
@@ -2402,13 +2288,10 @@ The default is `6443`.
 
 
 
-
-
 ## APIServerConfig
 APIServerConfig represents the kube apiserver configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.apiServer</code>
 
@@ -2449,7 +2332,6 @@ image: k8s.gcr.io/kube-apiserver:v1.22.0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -2462,7 +2344,6 @@ Extra arguments to supply to the API server.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
@@ -2475,7 +2356,6 @@ Extra volumes to mount to the API server static pod.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>certSANs</code>  <i>[]string</i>
@@ -2488,7 +2368,6 @@ Extra certificate subject alternative names for the API server's certificate.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>disablePodSecurityPolicy</code>  <i>bool</i>
@@ -2504,13 +2383,10 @@ Disable PodSecurityPolicy in the API server and default manifests.
 
 
 
-
-
 ## ControllerManagerConfig
 ControllerManagerConfig represents the kube controller manager configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.controllerManager</code>
 
@@ -2546,7 +2422,6 @@ image: k8s.gcr.io/kube-controller-manager:v1.22.0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -2559,7 +2434,6 @@ Extra arguments to supply to the controller manager.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
@@ -2575,13 +2449,10 @@ Extra volumes to mount to the controller manager static pod.
 
 
 
-
-
 ## ProxyConfig
 ProxyConfig represents the kube proxy configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.proxy</code>
 
@@ -2618,7 +2489,6 @@ disabled: false
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>image</code>  <i>string</i>
@@ -2641,7 +2511,6 @@ image: k8s.gcr.io/kube-proxy:v1.22.0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>mode</code>  <i>string</i>
@@ -2655,7 +2524,6 @@ The default is 'iptables'.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -2671,13 +2539,10 @@ Extra arguments to supply to kube-proxy.
 
 
 
-
-
 ## SchedulerConfig
 SchedulerConfig represents the kube scheduler configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.scheduler</code>
 
@@ -2713,7 +2578,6 @@ image: k8s.gcr.io/kube-scheduler:v1.22.0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -2726,7 +2590,6 @@ Extra arguments to supply to the scheduler.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
@@ -2742,13 +2605,10 @@ Extra volumes to mount to the scheduler static pod.
 
 
 
-
-
 ## EtcdConfig
 EtcdConfig represents the etcd configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.etcd</code>
 
@@ -2788,7 +2648,6 @@ image: gcr.io/etcd-development/etcd:v3.4.16
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
@@ -2814,7 +2673,6 @@ ca:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>extraArgs</code>  <i>map[string]string</i>
@@ -2844,13 +2702,10 @@ Note that the following args are not allowed:
 
 
 
-
-
 ## ClusterNetworkConfig
 ClusterNetworkConfig represents kube networking configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.network</code>
 
@@ -2901,7 +2756,6 @@ cni:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>dnsDomain</code>  <i>string</i>
@@ -2925,7 +2779,6 @@ dnsDomain: cluser.local
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>podSubnets</code>  <i>[]string</i>
@@ -2949,7 +2802,6 @@ podSubnets:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>serviceSubnets</code>  <i>[]string</i>
@@ -2976,13 +2828,10 @@ serviceSubnets:
 
 
 
-
-
 ## CNIConfig
 CNIConfig represents the CNI configuration options.
 
 Appears in:
-
 
 - <code><a href="#clusternetworkconfig">ClusterNetworkConfig</a>.cni</code>
 
@@ -3017,7 +2866,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>urls</code>  <i>[]string</i>
@@ -3034,13 +2882,10 @@ Should be present for "custom", must be empty for "flannel" and "none".
 
 
 
-
-
 ## ExternalCloudProviderConfig
 ExternalCloudProviderConfig contains external cloud provider configuration.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.externalCloudProvider</code>
 
@@ -3078,7 +2923,6 @@ Valid values:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>manifests</code>  <i>[]string</i>
@@ -3107,13 +2951,10 @@ manifests:
 
 
 
-
-
 ## AdminKubeconfigConfig
 AdminKubeconfigConfig contains admin kubeconfig settings.
 
 Appears in:
-
 
 - <code><a href="#clusterconfig">ClusterConfig</a>.adminKubeconfig</code>
 
@@ -3140,15 +2981,12 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 
 
 
-
-
 ## MachineDisk
 MachineDisk represents the options available for partitioning, formatting, and
 mounting extra disks.
 
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.disks</code>
 
@@ -3181,7 +3019,6 @@ The name of the disk to use.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>partitions</code>  <i>[]<a href="#diskpartition">DiskPartition</a></i>
@@ -3197,13 +3034,10 @@ A list of partitions to create on the disk.
 
 
 
-
-
 ## DiskPartition
 DiskPartition represents the options for a disk partition.
 
 Appears in:
-
 
 - <code><a href="#machinedisk">MachineDisk</a>.partitions</code>
 
@@ -3237,7 +3071,6 @@ size: 1073741824
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>mountpoint</code>  <i>string</i>
@@ -3253,16 +3086,12 @@ Where to mount the partition.
 
 
 
-
-
 ## EncryptionConfig
 EncryptionConfig represents partition encryption settings.
 
 Appears in:
 
-
 - <code><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a>.state</code>
-
 - <code><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a>.ephemeral</code>
 
 
@@ -3291,7 +3120,6 @@ provider: luks2
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>keys</code>  <i>[]<a href="#encryptionkey">EncryptionKey</a></i>
@@ -3304,7 +3132,6 @@ Defines the encryption keys generation and storage method.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>cipher</code>  <i>string</i>
@@ -3336,7 +3163,6 @@ cipher: aes-xts-plain64
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>keySize</code>  <i>uint</i>
@@ -3349,7 +3175,6 @@ Defines the encryption key length.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>blockSize</code>  <i>uint64</i>
@@ -3372,7 +3197,6 @@ blockSize: 4096
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>options</code>  <i>[]string</i>
@@ -3409,13 +3233,10 @@ options:
 
 
 
-
-
 ## EncryptionKey
 EncryptionKey represents configuration for disk encryption key.
 
 Appears in:
-
 
 - <code><a href="#encryptionconfig">EncryptionConfig</a>.keys</code>
 
@@ -3435,7 +3256,6 @@ Key which value is stored in the configuration file.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>nodeID</code>  <i><a href="#encryptionkeynodeid">EncryptionKeyNodeID</a></i>
@@ -3448,7 +3268,6 @@ Deterministically generated key from the node UUID and PartitionLabel.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>slot</code>  <i>int</i>
@@ -3464,13 +3283,10 @@ Key slot number for LUKS2 encryption.
 
 
 
-
-
 ## EncryptionKeyStatic
 EncryptionKeyStatic represents throw away key type.
 
 Appears in:
-
 
 - <code><a href="#encryptionkey">EncryptionKey</a>.static</code>
 
@@ -3493,15 +3309,13 @@ Defines the static passphrase value.
 
 
 
-
-
 ## EncryptionKeyNodeID
 EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
 
 Appears in:
 
-
 - <code><a href="#encryptionkey">EncryptionKey</a>.nodeID</code>
+
 
 
 
@@ -3511,7 +3325,6 @@ Appears in:
 MachineFile represents a file to write to disk.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.files</code>
 
@@ -3537,7 +3350,6 @@ The contents of the file.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>permissions</code>  <i>FileMode</i>
@@ -3550,7 +3362,6 @@ The file's permissions in octal.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>path</code>  <i>string</i>
@@ -3563,7 +3374,6 @@ The path of the file.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>op</code>  <i>string</i>
@@ -3588,13 +3398,10 @@ Valid values:
 
 
 
-
-
 ## ExtraHost
 ExtraHost represents a host entry in /etc/hosts.
 
 Appears in:
-
 
 - <code><a href="#networkconfig">NetworkConfig</a>.extraHostEntries</code>
 
@@ -3621,7 +3428,6 @@ The IP of the host.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>aliases</code>  <i>[]string</i>
@@ -3637,13 +3443,10 @@ The host alias.
 
 
 
-
-
 ## Device
 Device represents a network interface.
 
 Appears in:
-
 
 - <code><a href="#networkconfig">NetworkConfig</a>.interfaces</code>
 
@@ -3728,7 +3531,6 @@ interface: eth0
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>cidr</code>  <i>string</i>
@@ -3752,7 +3554,6 @@ cidr: 10.5.0.0/16
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>routes</code>  <i>[]<a href="#route">Route</a></i>
@@ -3780,7 +3581,6 @@ routes:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>bond</code>  <i><a href="#bond">Bond</a></i>
@@ -3809,7 +3609,6 @@ bond:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>vlans</code>  <i>[]<a href="#vlan">Vlan</a></i>
@@ -3822,7 +3621,6 @@ VLAN specific options.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>mtu</code>  <i>int</i>
@@ -3836,7 +3634,6 @@ If used in combination with DHCP, this will override any MTU settings returned f
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>dhcp</code>  <i>bool</i>
@@ -3865,7 +3662,6 @@ dhcp: true
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ignore</code>  <i>bool</i>
@@ -3878,7 +3674,6 @@ Indicates if the interface should be ignored (skips configuration).
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>dummy</code>  <i>bool</i>
@@ -3892,7 +3687,6 @@ Indicates if the interface is a dummy interface.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>dhcpOptions</code>  <i><a href="#dhcpoptions">DHCPOptions</a></i>
@@ -3917,7 +3711,6 @@ dhcpOptions:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>wireguard</code>  <i><a href="#devicewireguardconfig">DeviceWireguardConfig</a></i>
@@ -3963,7 +3756,6 @@ wireguard:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>vip</code>  <i><a href="#devicevipconfig">DeviceVIPConfig</a></i>
@@ -3990,13 +3782,10 @@ vip:
 
 
 
-
-
 ## DHCPOptions
 DHCPOptions contains options for configuring the DHCP settings for a given interface.
 
 Appears in:
-
 
 - <code><a href="#device">Device</a>.dhcpOptions</code>
 
@@ -4019,7 +3808,6 @@ The priority of all routes received via DHCP.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ipv4</code>  <i>bool</i>
@@ -4032,7 +3820,6 @@ Enables DHCPv4 protocol for the interface (default is enabled).
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ipv6</code>  <i>bool</i>
@@ -4048,13 +3835,10 @@ Enables DHCPv6 protocol for the interface (default is disabled).
 
 
 
-
-
 ## DeviceWireguardConfig
 DeviceWireguardConfig contains settings for configuring Wireguard network interface.
 
 Appears in:
-
 
 - <code><a href="#device">Device</a>.wireguard</code>
 
@@ -4097,7 +3881,6 @@ Can be generated by `wg genkey`.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>listenPort</code>  <i>int</i>
@@ -4110,7 +3893,6 @@ Specifies a device's listening port.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>firewallMark</code>  <i>int</i>
@@ -4123,7 +3905,6 @@ Specifies a device's firewall mark.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>peers</code>  <i>[]<a href="#devicewireguardpeer">DeviceWireguardPeer</a></i>
@@ -4139,13 +3920,10 @@ Specifies a list of peer configurations to apply to a device.
 
 
 
-
-
 ## DeviceWireguardPeer
 DeviceWireguardPeer a WireGuard device peer configuration.
 
 Appears in:
-
 
 - <code><a href="#devicewireguardconfig">DeviceWireguardConfig</a>.peers</code>
 
@@ -4166,7 +3944,6 @@ Can be extracted from private key by running `wg pubkey < private.key > public.k
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>endpoint</code>  <i>string</i>
@@ -4179,7 +3956,6 @@ Specifies the endpoint of this peer entry.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>persistentKeepaliveInterval</code>  <i>Duration</i>
@@ -4193,7 +3969,6 @@ Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for t
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>allowedIPs</code>  <i>[]string</i>
@@ -4209,13 +3984,10 @@ AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this pe
 
 
 
-
-
 ## DeviceVIPConfig
 DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.
 
 Appears in:
-
 
 - <code><a href="#device">Device</a>.vip</code>
 
@@ -4241,13 +4013,10 @@ Specifies the IP address to be used.
 
 
 
-
-
 ## Bond
 Bond contains the various options for configuring a bonded interface.
 
 Appears in:
-
 
 - <code><a href="#device">Device</a>.bond</code>
 
@@ -4275,7 +4044,6 @@ The interfaces that make up the bond.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>arpIPTarget</code>  <i>[]string</i>
@@ -4290,7 +4058,6 @@ Not supported at the moment.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>mode</code>  <i>string</i>
@@ -4304,7 +4071,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>xmitHashPolicy</code>  <i>string</i>
@@ -4318,7 +4084,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>lacpRate</code>  <i>string</i>
@@ -4332,7 +4097,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>adActorSystem</code>  <i>string</i>
@@ -4347,7 +4111,6 @@ Not supported at the moment.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>arpValidate</code>  <i>string</i>
@@ -4361,7 +4124,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>arpAllTargets</code>  <i>string</i>
@@ -4375,7 +4137,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>primary</code>  <i>string</i>
@@ -4389,7 +4150,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>primaryReselect</code>  <i>string</i>
@@ -4403,7 +4163,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>failOverMac</code>  <i>string</i>
@@ -4417,7 +4176,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>adSelect</code>  <i>string</i>
@@ -4431,7 +4189,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>miimon</code>  <i>uint32</i>
@@ -4445,7 +4202,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>updelay</code>  <i>uint32</i>
@@ -4459,7 +4215,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>downdelay</code>  <i>uint32</i>
@@ -4473,7 +4228,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>arpInterval</code>  <i>uint32</i>
@@ -4487,7 +4241,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>resendIgmp</code>  <i>uint32</i>
@@ -4501,7 +4254,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>minLinks</code>  <i>uint32</i>
@@ -4515,7 +4267,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>lpInterval</code>  <i>uint32</i>
@@ -4529,7 +4280,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>packetsPerSlave</code>  <i>uint32</i>
@@ -4543,7 +4293,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>numPeerNotif</code>  <i>uint8</i>
@@ -4557,7 +4306,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>tlbDynamicLb</code>  <i>uint8</i>
@@ -4571,7 +4319,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>allSlavesActive</code>  <i>uint8</i>
@@ -4585,7 +4332,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>useCarrier</code>  <i>bool</i>
@@ -4599,7 +4345,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>adActorSysPrio</code>  <i>uint16</i>
@@ -4613,7 +4358,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>adUserPortKey</code>  <i>uint16</i>
@@ -4627,7 +4371,6 @@ Please see the official kernel documentation.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>peerNotifyDelay</code>  <i>uint32</i>
@@ -4644,13 +4387,10 @@ Please see the official kernel documentation.
 
 
 
-
-
 ## Vlan
 Vlan represents vlan settings for a device.
 
 Appears in:
-
 
 - <code><a href="#device">Device</a>.vlans</code>
 
@@ -4670,7 +4410,6 @@ The CIDR to use.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>routes</code>  <i>[]<a href="#route">Route</a></i>
@@ -4683,7 +4422,6 @@ A list of routes associated with the VLAN.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>dhcp</code>  <i>bool</i>
@@ -4696,7 +4434,6 @@ Indicates if DHCP should be used.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>vlanId</code>  <i>uint16</i>
@@ -4712,16 +4449,12 @@ The VLAN's ID.
 
 
 
-
-
 ## Route
 Route represents a network route.
 
 Appears in:
 
-
 - <code><a href="#device">Device</a>.routes</code>
-
 - <code><a href="#vlan">Vlan</a>.routes</code>
 
 
@@ -4746,7 +4479,6 @@ The route's network.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>gateway</code>  <i>string</i>
@@ -4759,7 +4491,6 @@ The route's gateway.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>metric</code>  <i>uint32</i>
@@ -4775,13 +4506,10 @@ The optional metric for the route.
 
 
 
-
-
 ## RegistryMirrorConfig
 RegistryMirrorConfig represents mirror configuration for a registry.
 
 Appears in:
-
 
 - <code><a href="#registriesconfig">RegistriesConfig</a>.mirrors</code>
 
@@ -4813,13 +4541,10 @@ port and path (if path is not set, it defaults to `/v2`).
 
 
 
-
-
 ## RegistryConfig
 RegistryConfig specifies auth & TLS config per registry.
 
 Appears in:
-
 
 - <code><a href="#registriesconfig">RegistriesConfig</a>.config</code>
 
@@ -4879,7 +4604,6 @@ tls:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>auth</code>  <i><a href="#registryauthconfig">RegistryAuthConfig</a></i>
@@ -4907,13 +4631,10 @@ auth:
 
 
 
-
-
 ## RegistryAuthConfig
 RegistryAuthConfig specifies authentication configuration for a registry.
 
 Appears in:
-
 
 - <code><a href="#registryconfig">RegistryConfig</a>.auth</code>
 
@@ -4938,7 +4659,6 @@ The meaning of each field is the same with the corresponding field in .docker/co
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>password</code>  <i>string</i>
@@ -4952,7 +4672,6 @@ The meaning of each field is the same with the corresponding field in .docker/co
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>auth</code>  <i>string</i>
@@ -4966,7 +4685,6 @@ The meaning of each field is the same with the corresponding field in .docker/co
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>identityToken</code>  <i>string</i>
@@ -4983,13 +4701,10 @@ The meaning of each field is the same with the corresponding field in .docker/co
 
 
 
-
-
 ## RegistryTLSConfig
 RegistryTLSConfig specifies TLS config for HTTPS registries.
 
 Appears in:
-
 
 - <code><a href="#registryconfig">RegistryConfig</a>.tls</code>
 
@@ -5036,7 +4751,6 @@ clientIdentity:
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ca</code>  <i>Base64Bytes</i>
@@ -5050,7 +4764,6 @@ Certificate should be base64-encoded.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>insecureSkipVerify</code>  <i>bool</i>
@@ -5066,13 +4779,10 @@ Skip TLS server certificate verification (not recommended).
 
 
 
-
-
 ## SystemDiskEncryptionConfig
 SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.systemDiskEncryption</code>
 
@@ -5113,7 +4823,6 @@ State partition encryption.
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>ephemeral</code>  <i><a href="#encryptionconfig">EncryptionConfig</a></i>
@@ -5129,13 +4838,10 @@ Ephemeral partition encryption.
 
 
 
-
-
 ## FeaturesConfig
 FeaturesConfig describe individual Talos features that can be switched on or off.
 
 Appears in:
-
 
 - <code><a href="#machineconfig">MachineConfig</a>.features</code>
 
@@ -5161,18 +4867,13 @@ Enable role-based access control (RBAC).
 
 
 
-
-
 ## VolumeMountConfig
 VolumeMountConfig struct describes extra volume mount for the static pods.
 
 Appears in:
 
-
 - <code><a href="#apiserverconfig">APIServerConfig</a>.extraVolumes</code>
-
 - <code><a href="#controllermanagerconfig">ControllerManagerConfig</a>.extraVolumes</code>
-
 - <code><a href="#schedulerconfig">SchedulerConfig</a>.extraVolumes</code>
 
 
@@ -5201,7 +4902,6 @@ hostPath: /var/lib/auth
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>mountPath</code>  <i>string</i>
@@ -5224,7 +4924,6 @@ mountPath: /etc/kubernetes/auth
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>readonly</code>  <i>bool</i>
@@ -5247,8 +4946,6 @@ readonly: true
 </div>
 
 <hr />
-
-
 
 
 
@@ -5283,7 +4980,6 @@ name: csi
 </div>
 
 <hr />
-
 <div class="dd">
 
 <code>contents</code>  <i>string</i>
@@ -5306,7 +5002,5 @@ contents: /etc/kubernetes/auth
 </div>
 
 <hr />
-
-
 
 

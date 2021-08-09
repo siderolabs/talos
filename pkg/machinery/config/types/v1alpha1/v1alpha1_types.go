@@ -847,7 +847,7 @@ type InstallConfig struct {
 	//     - value: '"/dev/nvme0"'
 	InstallDisk string `yaml:"disk,omitempty"`
 	//   description: |
-	//     Look up disk using disk characteristics like model, size, serial and others.
+	//     Look up disk using disk attributes like model, size, serial and others.
 	//     Always has priority over `disk`.
 	//   examples:
 	//     - value: machineInstallDiskSelectorExample
@@ -888,10 +888,9 @@ type InstallConfig struct {
 }
 
 // InstallDiskSizeMatcher disk size condition parser.
+// docgen:nodoc
 type InstallDiskSizeMatcher struct {
-	// docgen:nodoc
-	Matcher disk.Matcher
-	// docgen:nodoc
+	Matcher   disk.Matcher
 	condition string
 }
 

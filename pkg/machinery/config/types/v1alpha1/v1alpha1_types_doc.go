@@ -18,7 +18,6 @@ var (
 	KubeletConfigDoc               encoder.Doc
 	NetworkConfigDoc               encoder.Doc
 	InstallConfigDoc               encoder.Doc
-	InstallDiskSizeMatcherDoc      encoder.Doc
 	InstallDiskSelectorDoc         encoder.Doc
 	TimeConfigDoc                  encoder.Doc
 	RegistriesConfigDoc            encoder.Doc
@@ -532,8 +531,8 @@ func init() {
 	InstallConfigDoc.Fields[1].Name = "diskSelector"
 	InstallConfigDoc.Fields[1].Type = "InstallDiskSelector"
 	InstallConfigDoc.Fields[1].Note = ""
-	InstallConfigDoc.Fields[1].Description = "Look up disk using disk characteristics like model, size, serial and others.\nAlways has priority over `disk`."
-	InstallConfigDoc.Fields[1].Comments[encoder.LineComment] = "Look up disk using disk characteristics like model, size, serial and others."
+	InstallConfigDoc.Fields[1].Description = "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`."
+	InstallConfigDoc.Fields[1].Comments[encoder.LineComment] = "Look up disk using disk attributes like model, size, serial and others."
 
 	InstallConfigDoc.Fields[1].AddExample("", machineInstallDiskSelectorExample)
 	InstallConfigDoc.Fields[2].Name = "extraKernelArgs"
@@ -577,23 +576,6 @@ func init() {
 	InstallConfigDoc.Fields[6].Note = ""
 	InstallConfigDoc.Fields[6].Description = "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme."
 	InstallConfigDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if MBR partition should be marked as bootable (active)."
-
-	InstallDiskSizeMatcherDoc.Type = "InstallDiskSizeMatcher"
-	InstallDiskSizeMatcherDoc.Comments[encoder.LineComment] = "InstallDiskSizeMatcher disk size condition parser."
-	InstallDiskSizeMatcherDoc.Description = "InstallDiskSizeMatcher disk size condition parser."
-
-	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is equal to 4GB.", machineInstallDiskSizeMatcherExamples[0])
-
-	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is greater than 1TB.", machineInstallDiskSizeMatcherExamples[1])
-
-	InstallDiskSizeMatcherDoc.AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples[2])
-	InstallDiskSizeMatcherDoc.AppearsIn = []encoder.Appearance{
-		{
-			TypeName:  "InstallDiskSelector",
-			FieldName: "size",
-		},
-	}
-	InstallDiskSizeMatcherDoc.Fields = make([]encoder.Doc, 0)
 
 	InstallDiskSelectorDoc.Type = "InstallDiskSelector"
 	InstallDiskSelectorDoc.Comments[encoder.LineComment] = "InstallDiskSelector represents a disk query parameters for the install disk lookup."
@@ -1955,10 +1937,6 @@ func (_ InstallConfig) Doc() *encoder.Doc {
 	return &InstallConfigDoc
 }
 
-func (_ InstallDiskSizeMatcher) Doc() *encoder.Doc {
-	return &InstallDiskSizeMatcherDoc
-}
-
 func (_ InstallDiskSelector) Doc() *encoder.Doc {
 	return &InstallDiskSelectorDoc
 }
@@ -2132,7 +2110,6 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&KubeletConfigDoc,
 			&NetworkConfigDoc,
 			&InstallConfigDoc,
-			&InstallDiskSizeMatcherDoc,
 			&InstallDiskSelectorDoc,
 			&TimeConfigDoc,
 			&RegistriesConfigDoc,

@@ -62,7 +62,7 @@ func init() {
 	}
 	{{ end -}}
 	{{ $docVar }}.Fields = make([]encoder.Doc,{{ len $struct.Fields }})
-	{{ range $index, $field := $struct.Fields -}}
+	{{ range $index, $field := $struct.Fields }}{{ if $field.Tag -}}
 	{{ $docVar }}.Fields[{{ $index }}].Name = "{{ $field.Tag }}"
 	{{ $docVar }}.Fields[{{ $index }}].Type = "{{ $field.Type }}"
 	{{ $docVar }}.Fields[{{ $index }}].Note = "{{ $field.Note }}"
@@ -81,6 +81,7 @@ func init() {
 	}
 	{{ end -}}
 	{{ end -}}
+	{{- end }}
 	{{ end }}
 }
 
@@ -177,7 +178,7 @@ func collectStructs(node ast.Node) []*structType {
 
 		if g.Doc != nil {
 			for _, comment := range g.Doc.List {
-				if strings.Contains(comment.Text, "docgen: nodoc") {
+				if strings.Contains(comment.Text, "docgen:nodoc") {
 					return true
 				}
 			}
@@ -234,7 +235,7 @@ func parseComment(comment []byte) *Text {
 		// take only the first line from the Description for the comment
 		text.Comment = strings.Split(text.Description, "\n")[0]
 
-		// try to parse the everything except for the first line as yaml
+		// try to parse everything except for the first line as yaml
 		if err = yaml.Unmarshal([]byte(strings.Join(strings.Split(text.Description, "\n")[1:], "\n")), text); err == nil {
 			// if parsed, remove it from the description
 			text.Description = text.Comment
@@ -320,6 +321,8 @@ func collectFields(s *structType) (fields []*Field) {
 		}
 
 		if strings.Contains(f.Doc.Text(), "docgen:nodoc") {
+			fields = append(fields, &Field{Type: "unknown"})
+
 			continue
 		}
 
