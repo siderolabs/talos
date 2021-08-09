@@ -441,7 +441,14 @@ local creds_env_vars = {
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
 };
 
-local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
+local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={
+  "IMAGE_REGISTRY": local_registry,
+  "SHORT_INTEGRATION_TEST": "yes",
+
+  # See https://github.com/talos-systems/talos/issues/4046
+  "K8S_VERSION": "1.21.3",
+  "INTEGRATION_TEST_RUN": "XXX",
+});
 local e2e_capi = Step("e2e-capi", depends_on=[capi_docker], environment=creds_env_vars);
 local e2e_aws = Step("e2e-aws", depends_on=[e2e_capi], environment=creds_env_vars);
 local e2e_azure = Step("e2e-azure", depends_on=[e2e_capi], environment=creds_env_vars);
