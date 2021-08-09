@@ -142,13 +142,12 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-//nolint:dupl
 func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runtime, routes []network.RouteSpecSpec) ([]resource.ID, error) {
 	ids := make([]string, 0, len(routes))
 
 	for _, route := range routes {
 		route := route
-		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Destination, route.Gateway))
+		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Table, route.Family, route.Destination, route.Gateway, route.Priority))
 
 		if err := r.Modify(
 			ctx,

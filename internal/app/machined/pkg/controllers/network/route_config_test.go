@@ -106,7 +106,7 @@ func (suite *RouteConfigSuite) TestCmdline() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"cmdline/172.20.0.1/",
+				"cmdline/inet4/172.20.0.1//1024",
 			}, func(r *network.RouteSpec) error {
 				suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
 				suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
@@ -195,20 +195,20 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"configuration/2001:470:6d:30e:8ed2:b60c:9d2f:803b/",
-				"configuration/10.0.3.1/10.0.3.0/24",
-				"configuration/192.168.0.25/192.168.0.0/18",
+				"configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
+				"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
+				"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
-				case "configuration/2001:470:6d:30e:8ed2:b60c:9d2f:803b/":
+				case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
 					suite.Assert().Equal("eth2", r.TypedSpec().OutLinkName)
 					suite.Assert().Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
 					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-				case "configuration/10.0.3.1/10.0.3.0/24":
+				case "configuration/inet4/10.0.3.1/10.0.3.0/24/1024":
 					suite.Assert().Equal("eth0.24", r.TypedSpec().OutLinkName)
 					suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-				case "configuration/192.168.0.25/192.168.0.0/18":
+				case "configuration/inet4/192.168.0.25/192.168.0.0/18/25":
 					suite.Assert().Equal("eth3", r.TypedSpec().OutLinkName)
 					suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 					suite.Assert().EqualValues(25, r.TypedSpec().Priority)

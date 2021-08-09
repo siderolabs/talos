@@ -10,6 +10,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // NamespaceName contains resources related to networking.
@@ -31,11 +33,17 @@ func LinkID(linkName string) string {
 }
 
 // RouteID builds ID (primary key) for the route.
-func RouteID(destination netaddr.IPPrefix, gateway netaddr.IP) string {
+func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destination netaddr.IPPrefix, gateway netaddr.IP, priority uint32) string {
 	dst, _ := destination.MarshalText() //nolint:errcheck
 	gw, _ := gateway.MarshalText()      //nolint:errcheck
 
-	return fmt.Sprintf("%s/%s", string(gw), string(dst))
+	tablePrefix := ""
+
+	if table != nethelpers.TableMain {
+		tablePrefix = fmt.Sprintf("%s/", table)
+	}
+
+	return fmt.Sprintf("%s%s/%s/%s/%d", tablePrefix, family, string(gw), string(dst), priority)
 }
 
 // OperatorID builds ID (primary key) for the operators.

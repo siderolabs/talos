@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Package network provides controllers which manage network resources.
-//
-//nolint:dupl
 package network
 
 import (
@@ -75,7 +73,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 
 		for _, res := range list.Items {
 			route := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
-			id := network.RouteID(route.TypedSpec().Destination, route.TypedSpec().Gateway)
+			id := network.RouteID(route.TypedSpec().Table, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Priority)
 
 			existing, ok := routes[id]
 			if ok && existing.TypedSpec().ConfigLayer > route.TypedSpec().ConfigLayer {
