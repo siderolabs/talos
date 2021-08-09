@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/proto"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // EventsOptionFunc defines the options for the Events API.

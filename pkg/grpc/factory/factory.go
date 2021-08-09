@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
+	_ "github.com/talos-systems/talos/pkg/machinery/proto" //nolint:gci // register codec
 )
 
 // Registrator describes the set of methods required in order for a concrete

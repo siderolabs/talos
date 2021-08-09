@@ -15,11 +15,11 @@ import (
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
