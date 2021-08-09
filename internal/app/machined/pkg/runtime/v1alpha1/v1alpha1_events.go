@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/rs/xid"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // Events represents the runtime event stream.

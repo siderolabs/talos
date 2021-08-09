@@ -11,9 +11,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/talos-systems/crypto/x509"
-	"google.golang.org/protobuf/proto"
 
 	secretspb "github.com/talos-systems/talos/pkg/machinery/api/resource/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // APIType is type of API resource.

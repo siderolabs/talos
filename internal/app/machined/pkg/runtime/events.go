@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/rs/xid"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // Event is what is sent on the wire.
