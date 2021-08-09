@@ -64,19 +64,20 @@ function create_cluster {
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
-    --provisioner "${PROVISIONER}" \
-    --name "${CLUSTER_NAME}" \
+    --provisioner="${PROVISIONER}" \
+    --name="${CLUSTER_NAME}" \
+    --kubernetes-version=${K8S_VERSION} \
     --masters=3 \
     --workers="${QEMU_WORKERS:-1}" \
-    --mtu 1450 \
-    --memory 2048 \
-    --cpus "${QEMU_CPUS:-2}" \
-    --cidr 172.20.1.0/24 \
-    --user-disk /var/lib/extra:100MB \
-    --user-disk /var/lib/p1:100MB:/var/lib/p2:100MB \
-    --install-image ${INSTALLER_IMAGE} \
+    --mtu=1450 \
+    --memory=2048 \
+    --cpus="${QEMU_CPUS:-2}" \
+    --cidr=172.20.1.0/24 \
+    --user-disk=/var/lib/extra:100MB \
+    --user-disk=/var/lib/p1:100MB:/var/lib/p2:100MB \
+    --install-image=${INSTALLER_IMAGE} \
     --with-init-node=false \
-    --cni-bundle-url ${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
+    --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
     --crashdump \
     ${DISK_IMAGE_FLAG} \
     ${DISK_ENCRYPTION_FLAG} \

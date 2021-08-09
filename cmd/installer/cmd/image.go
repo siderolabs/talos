@@ -178,18 +178,7 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 }
 
 func tar(filename, src, dir string) error {
-	if _, err := cmd.Run("tar",
-		"--sort=name",
-		"--mtime=1970-01-01 00:00Z",
-		"--owner=0",
-		"--group=0",
-		"--numeric-owner",
-		"--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime",
-		"-C", dir,
-		"-czvf",
-		filepath.Join(outputArg, filename),
-		src,
-	); err != nil {
+	if _, err := cmd.Run("tar", "-czvf", filepath.Join(outputArg, filename), src, "-C", dir); err != nil {
 		return err
 	}
 

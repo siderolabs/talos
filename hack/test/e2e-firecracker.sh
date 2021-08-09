@@ -35,14 +35,15 @@ function create_cluster {
   build_registry_mirrors
 
   "${TALOSCTL}" cluster create \
-    --provisioner "${PROVISIONER}" \
-    --name "${CLUSTER_NAME}" \
+    --provisioner="${PROVISIONER}" \
+    --name="${CLUSTER_NAME}" \
+    --kubernetes-version=${K8S_VERSION} \
     --masters=3 \
-    --mtu 1450 \
-    --memory 2048 \
-    --cpus 2.0 \
-    --cidr 172.20.0.0/24 \
-    --install-image ${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
+    --mtu=1450 \
+    --memory=2048 \
+    --cpus=2.0 \
+    --cidr=172.20.0.0/24 \
+    --install-image=${REGISTRY:-ghcr.io}/talos-systems/installer:${INSTALLER_TAG} \
     --with-init-node=false \
     --crashdump \
     ${REGISTRY_MIRROR_FLAGS} \
