@@ -133,7 +133,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 				NetworkInterfaces: []*v1alpha1.Device{
 					{
 						DeviceInterface: "eth3",
-						DeviceCIDR:      "192.168.0.24/28",
+						DeviceAddresses: []string{"192.168.0.24/28"},
 						DeviceRoutes: []*v1alpha1.Route{
 							{
 								RouteNetwork: "192.168.0.0/18",
@@ -145,7 +145,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 					{
 						DeviceIgnore:    true,
 						DeviceInterface: "eth4",
-						DeviceCIDR:      "192.168.0.24/28",
+						DeviceAddresses: []string{"192.168.0.24/28"},
 						DeviceRoutes: []*v1alpha1.Route{
 							{
 								RouteNetwork: "192.168.0.0/18",
@@ -156,7 +156,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 					},
 					{
 						DeviceInterface: "eth2",
-						DeviceCIDR:      "2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
+						DeviceAddresses: []string{"2001:470:6d:30e:8ed2:b60c:9d2f:803a/64"},
 						DeviceRoutes: []*v1alpha1.Route{
 							{
 								RouteGateway: "2001:470:6d:30e:8ed2:b60c:9d2f:803b",
@@ -167,8 +167,10 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 						DeviceInterface: "eth0",
 						DeviceVlans: []*v1alpha1.Vlan{
 							{
-								VlanID:   24,
-								VlanCIDR: "10.0.0.1/8",
+								VlanID: 24,
+								VlanAddresses: []string{
+									"10.0.0.1/8",
+								},
 								VlanRoutes: []*v1alpha1.Route{
 									{
 										RouteNetwork: "10.0.3.0/24",

@@ -13,6 +13,7 @@ import (
 
 	"github.com/talos-systems/go-procfs/procfs"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
@@ -154,56 +155,53 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 		bondName = iface.Bond
 	}
 
-	// create multiple bond devices and add them to device list.
-	// they will all get merged by networkd to configure the bond.
-	packetDevices := []*v1alpha1.Device{}
+	bondDev := v1alpha1.Device{
+		DeviceInterface: bondName,
+		DeviceDHCP:      false,
+		DeviceBond: &v1alpha1.Bond{
+			BondMode:       bondMode.String(),
+			BondDownDelay:  200,
+			BondMIIMon:     100,
+			BondUpDelay:    200,
+			BondHashPolicy: "layer3+4",
+			BondInterfaces: devicesInBond,
+		},
+	}
 
 	for _, addr := range unmarshalledMetadataConfig.Network.Addresses {
-		bondDev := v1alpha1.Device{
-			DeviceInterface: bondName,
-			DeviceDHCP:      false,
-			DeviceCIDR:      fmt.Sprintf("%s/%d", addr.Address, addr.CIDR),
-			DeviceBond: &v1alpha1.Bond{
-				BondMode:       bondMode.String(),
-				BondDownDelay:  200,
-				BondMIIMon:     100,
-				BondUpDelay:    200,
-				BondHashPolicy: "layer3+4",
-				BondInterfaces: devicesInBond,
-			},
-		}
+		bondDev.DeviceAddresses = append(bondDev.DeviceAddresses,
+			fmt.Sprintf("%s/%d", addr.Address, addr.CIDR),
+		)
 
-		// "Public" interfaces get the default route
 		if addr.Public {
-			// TODO: suporrt ipv6 default route when we support them in networkd.
-			if addr.Family == 4 {
-				nw := "0.0.0.0/0"
-
-				bondDev.DeviceRoutes = []*v1alpha1.Route{
-					{
-						RouteNetwork: nw,
-						RouteGateway: addr.Gateway,
-					},
-				}
+			// for "Public" address add the default route
+			switch addr.Family {
+			case 4:
+				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
+					RouteNetwork: "0.0.0.0/0",
+					RouteGateway: addr.Gateway,
+				})
+			case 6:
+				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
+					RouteNetwork: "::/0",
+					RouteGateway: addr.Gateway,
+					RouteMetric:  2 * network.DefaultRouteMetric,
+				})
 			}
 		} else {
-			// for "Private" interfaces, we add a route that goes out the gateway for the private subnets.
+			// for "Private" addresses, we add a route that goes out the gateway for the private subnets.
 			for _, privSubnet := range unmarshalledMetadataConfig.PrivateSubnets {
-				privRoute := &v1alpha1.Route{
+				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
 					RouteNetwork: privSubnet,
 					RouteGateway: addr.Gateway,
-				}
-
-				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, privRoute)
+				})
 			}
 		}
-
-		packetDevices = append(packetDevices, &bondDev)
 	}
 
 	machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(
 		machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces,
-		packetDevices...,
+		&bondDev,
 	)
 
 	return confProvider.Bytes()

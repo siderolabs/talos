@@ -74,7 +74,7 @@ func NewWireguardConfigBundle(ips []net.IP, wireguardCidr string, listenPort, ma
 
 		device := &v1alpha1.Device{
 			DeviceInterface:       "wg0",
-			DeviceCIDR:            fmt.Sprintf("%s/%s", wgIP.String(), networkNumber),
+			DeviceAddresses:       []string{fmt.Sprintf("%s/%s", wgIP.String(), networkNumber)},
 			DeviceWireguardConfig: config,
 			DeviceMTU:             1500,
 		}

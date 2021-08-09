@@ -4,7 +4,7 @@ title: "Advanced Networking"
 
 ## Static Addressing
 
-Static addressing is comprised of specifying `cidr`, `routes` ( remember to add your default gateway ), and `interface`.
+Static addressing is comprised of specifying `addresses`, `routes` ( remember to add your default gateway ), and `interface`.
 Most likely you'll also want to define the `nameservers` so you have properly functioning DNS.
 
 ```yaml
@@ -15,7 +15,8 @@ machine:
       - 10.0.0.1
     interfaces:
       - interface: eth0
-        cidr: 10.0.0.201/8
+        addresses:
+          - 10.0.0.201/8
         mtu: 8765
         routes:
           - network: 0.0.0.0/0
@@ -36,10 +37,10 @@ In the following example, we set two additional addresses on the loopback interf
 machine:
   network:
     interfaces:
-      - interface: lo0
-        cidr: 192.168.0.21/24
-      - interface: lo0
-        cidr: 10.2.2.2/24
+      - interface: lo
+        addresses:
+          - 192.168.0.21/24
+          - 10.2.2.2/24
 ```
 
 ## Bonding
@@ -77,7 +78,8 @@ machine:
         dhcp: false
         vlans:
           - vlanId: 100
-            cidr: "192.168.2.10/28"
+            addresses:
+              - "192.168.2.10/28"
             routes:
               - network: 0.0.0.0/0
                 gateway: 192.168.2.1

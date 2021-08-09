@@ -491,9 +491,16 @@ func (d *Device) Interface() string {
 	return d.DeviceInterface
 }
 
-// CIDR implements the MachineNetwork interface.
-func (d *Device) CIDR() string {
-	return d.DeviceCIDR
+// Addresses implements the MachineNetwork interface.
+func (d *Device) Addresses() []string {
+	switch {
+	case len(d.DeviceAddresses) > 0:
+		return append([]string(nil), d.DeviceAddresses...)
+	case d.DeviceCIDR != "":
+		return []string{d.DeviceCIDR}
+	default:
+		return nil
+	}
 }
 
 // Routes implements the MachineNetwork interface.
@@ -813,9 +820,16 @@ func (b *Bond) PeerNotifyDelay() uint32 {
 	return b.BondPeerNotifyDelay
 }
 
-// CIDR implements the MachineNetwork interface.
-func (v *Vlan) CIDR() string {
-	return v.VlanCIDR
+// Addresses implements the MachineNetwork interface.
+func (v *Vlan) Addresses() []string {
+	switch {
+	case len(v.VlanAddresses) > 0:
+		return append([]string(nil), v.VlanAddresses...)
+	case v.VlanCIDR != "":
+		return []string{v.VlanCIDR}
+	default:
+		return nil
+	}
 }
 
 // Routes implements the MachineNetwork interface.

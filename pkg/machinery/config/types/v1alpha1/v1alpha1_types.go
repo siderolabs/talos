@@ -148,7 +148,7 @@ var (
 		NetworkInterfaces: []*Device{
 			{
 				DeviceInterface: "eth0",
-				DeviceCIDR:      "192.168.2.0/24",
+				DeviceAddresses: []string{"192.168.2.0/24"},
 				DeviceMTU:       1500,
 				DeviceRoutes: []*Route{
 					{
@@ -1502,10 +1502,12 @@ type Device struct {
 	//     - value: '"eth0"'
 	DeviceInterface string `yaml:"interface"`
 	//   description: |
-	//     Assigns a static IP address to the interface.
-	//     This should be in proper CIDR notation.
+	//     Assigns static IP addresses to the interface.
+	//     An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).
 	//   examples:
-	//     - value: '"10.5.0.0/16"'
+	//     - value: '[]string{"10.5.0.0/16", "192.168.3.7"}'
+	DeviceAddresses []string `yaml:"addresses,omitempty"`
+	// docgen:nodoc
 	DeviceCIDR string `yaml:"cidr,omitempty"`
 	//   description: |
 	//     A list of routes associated with the interface.
@@ -1723,8 +1725,10 @@ type Bond struct {
 
 // Vlan represents vlan settings for a device.
 type Vlan struct {
-	//   description: The CIDR to use.
-	VlanCIDR string `yaml:"cidr"`
+	//   description: The addresses in CIDR notation or as plain IPs to use.
+	VlanAddresses []string `yaml:"addresses,omitempty"`
+	// docgen:nodoc
+	VlanCIDR string `yaml:"cidr,omitempty"`
 	//   description: A list of routes associated with the VLAN.
 	VlanRoutes []*Route `yaml:"routes"`
 	//   description: Indicates if DHCP should be used.

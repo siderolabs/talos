@@ -328,7 +328,9 @@ network:
     # `interfaces` is used to define the network interface configuration.
     interfaces:
         - interface: eth0 # The interface name.
-          cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+          # Assigns static IP addresses to the interface.
+          addresses:
+            - 192.168.2.0/24
           # A list of routes associated with the interface.
           routes:
             - network: 0.0.0.0/0 # The route's network.
@@ -1447,7 +1449,9 @@ hostname: worker-1 # Used to statically set the hostname for the machine.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
     - interface: eth0 # The interface name.
-      cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+      # Assigns static IP addresses to the interface.
+      addresses:
+        - 192.168.2.0/24
       # A list of routes associated with the interface.
       routes:
         - network: 0.0.0.0/0 # The route's network.
@@ -1546,7 +1550,9 @@ Examples:
 ``` yaml
 interfaces:
     - interface: eth0 # The interface name.
-      cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+      # Assigns static IP addresses to the interface.
+      addresses:
+        - 192.168.2.0/24
       # A list of routes associated with the interface.
       routes:
         - network: 0.0.0.0/0 # The route's network.
@@ -3453,7 +3459,9 @@ Appears in:
 
 ``` yaml
 - interface: eth0 # The interface name.
-  cidr: 192.168.2.0/24 # Assigns a static IP address to the interface.
+  # Assigns static IP addresses to the interface.
+  addresses:
+    - 192.168.2.0/24
   # A list of routes associated with the interface.
   routes:
     - network: 0.0.0.0/0 # The route's network.
@@ -3533,13 +3541,13 @@ interface: eth0
 <hr />
 <div class="dd">
 
-<code>cidr</code>  <i>string</i>
+<code>addresses</code>  <i>[]string</i>
 
 </div>
 <div class="dt">
 
-Assigns a static IP address to the interface.
-This should be in proper CIDR notation.
+Assigns static IP addresses to the interface.
+An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).
 
 
 
@@ -3547,7 +3555,9 @@ Examples:
 
 
 ``` yaml
-cidr: 10.5.0.0/16
+addresses:
+    - 10.5.0.0/16
+    - 192.168.3.7
 ```
 
 
@@ -4400,12 +4410,12 @@ Appears in:
 
 <div class="dd">
 
-<code>cidr</code>  <i>string</i>
+<code>addresses</code>  <i>[]string</i>
 
 </div>
 <div class="dt">
 
-The CIDR to use.
+The addresses in CIDR notation or as plain IPs to use.
 
 </div>
 
