@@ -1,3 +1,61 @@
+## [Talos 0.11.5](https://github.com/talos-systems/talos/releases/tag/v0.11.5) (2021-08-09)
+
+Welcome to the v0.11.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### BIOS Boot
+
+Fix issues with PMBR partition settings which affects BIOS boot on some Dell servers.
+
+
+### Component Updates
+
+* GRUB was updated to 2.06
+
+
+### Contributors
+
+* Andrey Smirnov
+* Andrew Rynhard
+* Andrey Smirnov
+
+### Changes
+<details><summary>3 commits</summary>
+<p>
+
+* [`6b64939b`](https://github.com/talos-systems/talos/commit/6b64939bdede209dc68f1f79f30173bd8b160589) feat: update grub to 2.06, bump max CPUs to 512
+* [`052b3751`](https://github.com/talos-systems/talos/commit/052b375158047d46ed2c02bed01da20a4d4da13f) chore: workaround GitHub new release notes limit
+* [`218f24a1`](https://github.com/talos-systems/talos/commit/218f24a1b2af4fd1dcbb93c6b83240f5c5c5ddfa) fix: update go-blockdevice
+</p>
+</details>
+
+### Changes from talos-systems/go-blockdevice
+<details><summary>1 commit</summary>
+<p>
+
+* [`fe24303`](https://github.com/talos-systems/go-blockdevice/commit/fe2430349e9d734ce6dbf4e7b2e0f8a37bb22679) fix: perform correct PMBR partition calculations
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`4253991`](https://github.com/talos-systems/pkgs/commit/4253991090bf87ee292407a511d8afa1de4ba062) feat: update grub to 2.06, bump max CPUs to 512
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/go-blockdevice**  v0.2.2 -> v0.2.3
+* **github.com/talos-systems/pkgs**            v0.6.0-4-g752c90e -> v0.6.0-5-g4253991
+
+Previous release can be found at [v0.11.4](https://github.com/talos-systems/talos/releases/tag/v0.11.4)
+
 ## [Talos 0.11.4](https://github.com/talos-systems/talos/releases/tag/v0.11.4) (2021-08-05)
 
 Welcome to the v0.11.4 release of Talos!
