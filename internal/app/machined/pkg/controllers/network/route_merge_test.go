@@ -114,29 +114,31 @@ func (suite *RouteMergeSuite) assertNoRoute(id string) error {
 }
 
 func (suite *RouteMergeSuite) TestMerge() {
-	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline//10.5.0.3")
+	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//10.5.0.3/50")
 	*cmdline.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
 		OutLinkName: "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
-		Priority:    1024,
+		Table:       nethelpers.TableMain,
+		Priority:    50,
 		ConfigLayer: network.ConfigCmdline,
 	}
 
-	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp//10.5.0.3")
+	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//10.5.0.3/50")
 	*dhcp.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
 		OutLinkName: "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
 		Priority:    50,
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/10.0.0.35/32/10.0.0.34")
+	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4/10.0.0.35/32/10.0.0.34/1024")
 	*static.TypedSpec() = network.RouteSpecSpec{
 		Destination: netaddr.MustParseIPPrefix("10.0.0.35/32"),
 		Gateway:     netaddr.MustParseIP("10.0.0.34"),
@@ -144,6 +146,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
 		Priority:    1024,
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
@@ -155,15 +158,15 @@ func (suite *RouteMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"10.5.0.3/",
-				"10.0.0.34/10.0.0.35/32",
+				"inet4/10.5.0.3//50",
+				"inet4/10.0.0.34/10.0.0.35/32/1024",
 			}, func(r *network.RouteSpec) error {
 				suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
 
 				switch r.Metadata().ID() {
-				case "10.5.0.3/":
+				case "inet4/10.5.0.3//50":
 					suite.Assert().Equal(*dhcp.TypedSpec(), *r.TypedSpec())
-				case "10.0.0.34/10.0.0.35/32":
+				case "inet4/10.0.0.34/10.0.0.35/32/1024":
 					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
@@ -176,18 +179,18 @@ func (suite *RouteMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"10.5.0.3/",
-				"10.0.0.34/10.0.0.35/32",
+				"inet4/10.5.0.3//50",
+				"inet4/10.0.0.34/10.0.0.35/32/1024",
 			}, func(r *network.RouteSpec) error {
 				suite.Assert().Equal(resource.PhaseRunning, r.Metadata().Phase())
 
 				switch r.Metadata().ID() {
-				case "10.5.0.3/":
+				case "inet4/10.5.0.3//50":
 					if *cmdline.TypedSpec() != *r.TypedSpec() {
 						// using retry here, as it might not be reconciled immediately
 						return retry.ExpectedError(fmt.Errorf("not equal yet"))
 					}
-				case "10.0.0.34/10.0.0.35/32":
+				case "inet4/10.0.0.34/10.0.0.35/32/1024":
 					suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 				}
 
@@ -199,31 +202,33 @@ func (suite *RouteMergeSuite) TestMerge() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			return suite.assertNoRoute("10.0.0.34/10.0.0.35/32")
+			return suite.assertNoRoute("inet4/10.0.0.34/10.0.0.35/32/1024")
 		}))
 }
 
 //nolint:gocyclo
 func (suite *RouteMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting default route definitions which are getting removed/added constantly
-	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline//10.5.0.3")
+	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//10.5.0.3/50")
 	*cmdline.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
 		OutLinkName: "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
-		Priority:    1024,
+		Table:       nethelpers.TableMain,
+		Priority:    50,
 		ConfigLayer: network.ConfigCmdline,
 	}
 
-	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp//10.5.0.3")
+	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//10.5.0.3/50")
 	*dhcp.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netaddr.MustParseIP("10.5.0.3"),
-		OutLinkName: "eth0",
+		OutLinkName: "eth1",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
 		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
 		Priority:    50,
 		ConfigLayer: network.ConfigOperator,
 	}
@@ -255,7 +260,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 	eg.Go(func() error {
 		// add/remove finalizer to the merged resource
 		for i := 0; i < 1000; i++ {
-			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "10.5.0.3/", resource.VersionUndefined), "foo"); err != nil {
+			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "inet4/10.5.0.3//50", resource.VersionUndefined), "foo"); err != nil {
 				if !state.IsNotFoundError(err) {
 					return err
 				}
@@ -267,7 +272,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 
 			time.Sleep(10 * time.Millisecond)
 
-			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "10.5.0.3/", resource.VersionUndefined), "foo"); err != nil {
+			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "inet4/10.5.0.3//50", resource.VersionUndefined), "foo"); err != nil {
 				if err != nil && !state.IsNotFoundError(err) {
 					return err
 				}
@@ -282,7 +287,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRoutes([]string{
-				"10.5.0.3/",
+				"inet4/10.5.0.3//50",
 			}, func(r *network.RouteSpec) error {
 				if r.Metadata().Phase() != resource.PhaseRunning {
 					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())

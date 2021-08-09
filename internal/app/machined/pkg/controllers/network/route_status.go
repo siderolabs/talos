@@ -105,7 +105,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			srcAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Src)
 			srcPrefix := netaddr.IPPrefixFrom(srcAddr, route.SrcLength)
 			gatewayAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Gateway)
-			id := network.RouteID(dstPrefix, gatewayAddr)
+			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority)
 
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
 				status := r.(*network.RouteStatus).TypedSpec()
