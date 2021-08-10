@@ -29,6 +29,9 @@ const reconciliationInterval = time.Minute
 type RulesManager struct {
 	db *PeerDB
 
+	// publicKey is the public key of this node, so that it can be filtered from the routing.
+	publicKey string
+
 	// externalMark is the firewall mark used by Wireguard to indicate packets which should not be routed through the Wireguard interface because they are the Wireguard interface's _own_ packets.
 	externalMark uint32
 
@@ -123,6 +126,15 @@ func (m *RulesManager) collectTargets() (*netaddr.IPSet, error) {
 	for _, pp := range m.db.List() {
 		if pp == nil {
 			continue
+		}
+
+		// NOTE: it may be more reliable to pull our own entry from the database first and blacklist our AllowedPrefixes instead.
+		if pp.PublicKey() == m.publicKey {
+			continue // skip our own
+		}
+
+		if !pp.peerUp {
+			//continue // don't include down peers
 		}
 
 		routeSet, err := pp.AllowedPrefixes()
