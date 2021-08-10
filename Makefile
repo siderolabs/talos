@@ -2,6 +2,7 @@ REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]*)
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
 IMAGE_REGISTRY ?= $(REGISTRY)
 IMAGE_TAG ?= $(TAG)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
@@ -11,7 +12,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.7.0-alpha.0-2-g7172a5d
-PKGS ?= v0.7.0-alpha.0-13-g12856ce
+PKGS ?= v0.7.0-alpha.0-14-g875c7ec
 EXTRAS ?= v0.5.0-alpha.0-1-g4957f3c
 GO_VERSION ?= 1.16
 GOFUMPT_VERSION ?= v0.1.0
@@ -84,6 +85,7 @@ COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
 COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
+COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
 COMMON_ARGS += --build-arg=IMPORTVET=$(IMPORTVET)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
@@ -230,7 +232,7 @@ iso: ## Builds the ISO and outputs it to the artifact directory.
 	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
-		docker run --rm -i $(REGISTRY_AND_USERNAME)/installer:$(TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
+		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/installer:$(TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
 	done
 
 .PHONY: boot

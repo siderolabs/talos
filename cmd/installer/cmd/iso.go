@@ -100,6 +100,10 @@ func runISOCmd() error {
 		return err
 	}
 
+	if err := pkg.TouchFiles("/mnt"); err != nil {
+		return err
+	}
+
 	log.Println("creating ISO")
 
 	out := fmt.Sprintf("/tmp/talos-%s.iso", options.Arch)
