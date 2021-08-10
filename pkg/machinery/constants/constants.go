@@ -133,9 +133,6 @@ const (
 	// KubernetesCACert is the path to the root CA certificate.
 	KubernetesCACert = DefaultCertificatesDir + "/" + "ca.crt"
 
-	// KubernetesCAKey is the path to the root CA private key.
-	KubernetesCAKey = DefaultCertificatesDir + "/" + "ca.key"
-
 	// KubernetesEtcdCACert is the path to the etcd CA certificate.
 	KubernetesEtcdCACert = EtcdPKIPath + "/" + "ca.crt"
 
@@ -270,7 +267,7 @@ const (
 	EtcdImage = "gcr.io/etcd-development/etcd"
 
 	// EtcdPKIPath is the path to the etcd PKI directory.
-	EtcdPKIPath = DefaultCertificatesDir + "/etcd"
+	EtcdPKIPath = "/system/secrets/etcd"
 
 	// EtcdDataPath is the path where etcd stores its' data.
 	EtcdDataPath = "/var/lib/etcd"
