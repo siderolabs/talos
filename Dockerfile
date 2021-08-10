@@ -126,7 +126,8 @@ ARG CGO_ENABLED
 ENV CGO_ENABLED ${CGO_ENABLED}
 ENV GOCACHE /.cache/go-build
 ENV GOMODCACHE /.cache/mod
-ENV SOURCE_DATE_EPOCH=0
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 WORKDIR /src
 
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
