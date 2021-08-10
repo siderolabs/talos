@@ -117,10 +117,14 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-func findRoutes(routes []rtnetlink.RouteMessage, destination netaddr.IPPrefix, gateway netaddr.IP, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
+func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, destination netaddr.IPPrefix, gateway netaddr.IP, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
 	for i, route := range routes {
+		if route.Family != uint8(family) {
+			continue
+		}
+
 		if route.DstLength != destination.Bits() {
 			continue
 		}
@@ -165,7 +169,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 	switch route.Metadata().Phase() {
 	case resource.PhaseTearingDown:
-		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
 			// delete route
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
@@ -191,7 +195,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 		matchFound := false
 
-		for _, existing := range findRoutes(routes, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
+		for _, existing := range findRoutes(routes, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
 			// check if existing route matches the spec: if it does, skip update
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
