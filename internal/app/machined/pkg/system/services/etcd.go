@@ -142,7 +142,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	mounts := []specs.Mount{
-		{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: constants.EtcdPKIPath, Source: constants.EtcdPKIPath, Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: constants.EtcdDataPath, Source: constants.EtcdDataPath, Options: []string{"rbind", "rw"}},
 	}
 
@@ -203,6 +203,12 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 
 //nolint:gocyclo
 func generatePKI(r runtime.Runtime) (err error) {
+	// remove legacy etcd PKI directory to handle upgrades with `--preserve` to Talos 0.12
+	// TODO: remove me in Talos 0.13
+	if err = os.RemoveAll("/etc/kubernetes/pki/etcd"); err != nil {
+		return err
+	}
+
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 		return err
 	}
