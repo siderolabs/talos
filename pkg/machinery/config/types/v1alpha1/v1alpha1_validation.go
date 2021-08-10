@@ -142,6 +142,10 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 				result = multierror.Append(result, err)
 			}
 		}
+
+		if err := ValidateKubespan(c); err != nil {
+			result = multierror.Append(result, err)
+		}
 	}
 
 	if c.MachineConfig.MachineDisks != nil {
@@ -559,4 +563,45 @@ func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) error {
 	}
 
 	return result.ErrorOrNil()
+}
+
+// ValidateKubespan validates Kubespan-related requirements.
+func ValidateKubespan(c *Config) error {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil || c.MachineConfig.MachineNetwork.NetworkInterfaces == nil {
+		return nil // no network interface config at all
+	}
+
+	var enabled int
+
+	for _, d := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+		if d.DeviceWireguardConfig == nil {
+			continue
+		}
+
+		if d.DeviceWireguardConfig.WireguardEnableKubeSpan {
+			enabled++
+		}
+	}
+
+	if enabled == 0 {
+		return nil // KubeSpan not enabled
+	}
+
+	if enabled > 1 {
+		return fmt.Errorf("kubespan may only be enabled on a single interface")
+	}
+
+	if c.ClusterConfig == nil {
+		return fmt.Errorf("cluster config must not be empty if KubeSpan is enabled")
+	}
+
+	if c.ClusterConfig.ClusterID == "" {
+		return fmt.Errorf("clusterID must be set if KubeSpan is enabled")
+	}
+
+	if c.ClusterConfig.ClusterSecret == "" {
+		return fmt.Errorf("clusterSecret must be set if KubeSpan is enabled")
+	}
+
+	return nil
 }
