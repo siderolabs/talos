@@ -6,7 +6,8 @@ package pkg
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
 const (
@@ -18,18 +19,11 @@ const (
 func CreateRawDisk() (img string, err error) {
 	img = "/tmp/disk.raw"
 
-	var f *os.File
+	seek := fmt.Sprintf("seek=%d", RAWDiskSize)
 
-	f, err = os.Create(img)
-	if err != nil {
+	if _, err = cmd.Run("dd", "if=/dev/zero", "of="+img, "bs=1M", "count=0", seek); err != nil {
 		return "", fmt.Errorf("failed to create RAW disk: %w", err)
 	}
 
-	if err = f.Truncate(RAWDiskSize * 1048576); err != nil {
-		return "", fmt.Errorf("failed to truncate RAW disk: %w", err)
-	}
-
-	err = f.Close()
-
-	return img, err
+	return img, nil
 }
