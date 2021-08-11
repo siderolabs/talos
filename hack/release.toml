@@ -45,6 +45,48 @@ which makes it possible to apply `.machine.sysctls` in immediate mode (without a
 the default values overwritten by Talos.
 """
 
+    [notes.networking]
+        title = "Networking"
+        description = """\
+* multiple static addresses can be specified for the interface with new `.addresses` field (old `.cidr` field is deprecated now)
+* static addresses can be set on interfaces configured with DHCP
+"""
+
+    [notes.updates]
+        title = "Component Updates"
+        description = """\
+* Linux: 5.10.52
+* Kubernetes: 1.22.0
+* containerd: 1.5.5
+* runc: 1.0.1
+* GRUB: 2.06
+* Talos is built with Go 1.16.6
+"""
+
+    [notes.capi]
+        title = "Cluster API v0.3.x"
+        description = """\
+Cluster API v0.3.x (v1alpha3) is not compatible with Kubernetes 1.22 used by default in Talos 0.12.
+Talos can be configued to use Kubernetes 1.21 or CAPI v0.4.x components can be used instead.
+"""
+
+    [notes.performance]
+        title = "Performance"
+        description = """\
+* machined uses less memory and CPU time
+* more disk encryption options are exposed via the machine configuration
+* disk partitions are now aligned properly with minimum I/O size
+* Talos system processes are moved under proper cgroups, resource metrics are now available via the kubelet
+* OOM score is set on the system processes making sure they are killed last under memory pressure
+"""
+
+    [notes.security]
+        title = "Security"
+        description = """\
+* etcd PKI moved to `/system/secrets`
+* kubelet bootstrap CSR auto-signing scoped to kubelet bootstrap tokens only
+"""
+
 [make_deps]
 
     [make_deps.tools]
