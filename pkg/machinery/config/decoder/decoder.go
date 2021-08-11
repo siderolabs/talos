@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 )
 
 var (
@@ -95,7 +96,7 @@ func parse(source []byte) (decoded []interface{}, err error) {
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func decode(manifest *yaml.Node) (target interface{}, err error) {
 	var (
 		version string
@@ -136,6 +137,10 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 				return nil, fmt.Errorf("deprecated decode: %w", err)
 			}
 
+			if err = validate(target, manifest); err != nil {
+				return nil, err
+			}
+
 			return target, nil
 		}
 	}
@@ -164,5 +169,96 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 		return nil, fmt.Errorf("spec decode: %w", err)
 	}
 
+	if err = validate(target, spec); err != nil {
+		return nil, err
+	}
+
 	return target, nil
+}
+
+//nolint:gocyclo
+func validate(target interface{}, spec *yaml.Node) error {
+	node, err := encoder.NewEncoder(target).Marshal()
+	if err != nil {
+		return err
+	}
+
+	src := map[string]interface{}{}
+	dst := map[string]interface{}{}
+
+	err = spec.Decode(src)
+	if err != nil {
+		return err
+	}
+
+	err = node.Decode(dst)
+	if err != nil {
+		return err
+	}
+
+	var checkUnknown func(interface{}, interface{}) interface{}
+
+	checkUnknown = func(left interface{}, right interface{}) interface{} {
+		switch v := left.(type) {
+		case map[string]interface{}:
+			r, ok := right.(map[string]interface{})
+			if !ok {
+				return "type mismatch"
+			}
+
+			unknownKeys := map[string]interface{}{}
+
+			for key, value := range v {
+				if _, ok := r[key]; !ok {
+					unknownKeys[key] = value
+
+					continue
+				}
+
+				if d := checkUnknown(value, r[key]); d != nil {
+					unknownKeys[key] = d
+				}
+			}
+
+			if len(unknownKeys) > 0 {
+				return unknownKeys
+			}
+		case []interface{}:
+			r, ok := right.([]interface{})
+			if !ok {
+				return "type mismatch"
+			}
+
+			if len(v) != len(r) {
+				return "slice length differs"
+			}
+
+			var unknownItems []interface{}
+
+			for i, item := range v {
+				if d := checkUnknown(item, r[i]); d != nil {
+					unknownItems = append(unknownItems, d)
+				}
+			}
+
+			if len(unknownItems) > 0 {
+				return unknownItems
+			}
+		}
+
+		return nil
+	}
+
+	diff := checkUnknown(src, dst)
+	if diff != nil {
+		var data []byte
+
+		if data, err = yaml.Marshal(diff); err != nil {
+			return fmt.Errorf("failed to marshal error summary %w", err)
+		}
+
+		return fmt.Errorf("unknown keys found during decoding:\n%s", string(data))
+	}
+
+	return nil
 }

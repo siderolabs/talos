@@ -17,8 +17,17 @@ type Mock struct {
 	Test bool `yaml:"test"`
 }
 
+type MockV2 struct {
+	Slice []Mock          `yaml:"slice"`
+	Map   map[string]Mock `yaml:"map"`
+}
+
 func init() {
-	config.Register("mock", func(string) interface{} {
+	config.Register("mock", func(version string) interface{} {
+		if version == "v1alpha2" {
+			return &MockV2{}
+		}
+
 		return &Mock{}
 	})
 }
@@ -136,6 +145,85 @@ spec:
 			},
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "extra field",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha1
+spec:
+  test: true
+  extra: fail
+`),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "extra fields in map",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha2
+spec:
+  map:
+    first:
+      test: true
+      extra: me
+`),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "extra fields in slice",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha2
+spec:
+  slice:
+    - test: true
+      not: working
+      more: extra
+      fields: here
+`),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "valid nested",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha2
+spec:
+  slice:
+    - test: true
+  map:
+    first:
+      test: true
+    second:
+      test: false
+`),
+			},
+			want: []interface{}{
+				&MockV2{
+					Map: map[string]Mock{
+						"first": {
+							Test: true,
+						},
+						"second": {
+							Test: false,
+						},
+					},
+					Slice: []Mock{
+						{Test: true},
+					},
+				},
+			},
 		},
 	}
 

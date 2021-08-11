@@ -101,6 +101,13 @@ Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `e
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 """
 
+    [notes.configuration]
+        title = "Machine Config Validation"
+        description = """\
+Unknown keys in the machine config now make the config invalid, 
+so any attempt to apply/edit the configuration with the unknown keys will lead into an error.
+"""
+
 [make_deps]
 
     [make_deps.tools]
