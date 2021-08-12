@@ -452,6 +452,12 @@ const (
 
 	// DefaultSecondaryResolver is the default secondary DNS server.
 	DefaultSecondaryResolver = "8.8.8.8"
+
+	// DefaultClusterIDSize is the default size in bytes for the cluster ID token.
+	DefaultClusterIDSize = 32
+
+	// DefaultClusterSecretSize is the default size in bytes for the cluster secret.
+	DefaultClusterSecretSize = 32
 )
 
 // See https://linux.die.net/man/3/klogctl

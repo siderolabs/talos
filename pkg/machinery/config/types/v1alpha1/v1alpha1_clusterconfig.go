@@ -68,7 +68,7 @@ func (c *ClusterConfig) Endpoint() *url.URL {
 
 // Token implements the config.ClusterConfig interface.
 func (c *ClusterConfig) Token() config.Token {
-	return c
+	return clusterToken(c.BootstrapToken)
 }
 
 // CertSANs implements the config.ClusterConfig interface.
@@ -177,24 +177,14 @@ func (c *ClusterConfig) ScheduleOnMasters() bool {
 	return c.AllowSchedulingOnMasters
 }
 
-// ID implements the config.Token interface.
+// ID returns the unique identifier for the cluster.
 func (c *ClusterConfig) ID() string {
-	parts := strings.Split(c.BootstrapToken, ".")
-	if len(parts) != 2 {
-		return ""
-	}
-
-	return parts[0]
+	return c.ClusterID
 }
 
-// Secret implements the config.Token interface.
+// Secret returns the cluster secret.
 func (c *ClusterConfig) Secret() string {
-	parts := strings.Split(c.BootstrapToken, ".")
-	if len(parts) != 2 {
-		return ""
-	}
-
-	return parts[1]
+	return c.ClusterSecret
 }
 
 // CNI implements the config.ClusterNetwork interface.
@@ -263,4 +253,26 @@ func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
 	}
 
 	return talosnet.NthIPInCIDRSet(serviceCIDRs, 10)
+}
+
+type clusterToken string
+
+// ID implements the config.Token interface.
+func (t clusterToken) ID() string {
+	parts := strings.Split(string(t), ".")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	return parts[0]
+}
+
+// Secret implements the config.Token interface.
+func (t clusterToken) Secret() string {
+	parts := strings.Split(string(t), ".")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	return parts[1]
 }

@@ -760,6 +760,31 @@ network:
 
 <div class="dd">
 
+<code>id</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Globally unique identifier for this cluster.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>secret</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Shared secret of cluster.
+This secret is shared among cluster members but should never be sent over the network.
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>controlPlane</code>  <i><a href="#controlplaneconfig">ControlPlaneConfig</a></i>
 
 </div>

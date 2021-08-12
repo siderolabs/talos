@@ -66,7 +66,9 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterName: in.ClusterName,
+		ClusterID:     in.ClusterID,
+		ClusterName:   in.ClusterName,
+		ClusterSecret: in.ClusterSecret,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},

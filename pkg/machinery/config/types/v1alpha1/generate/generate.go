@@ -7,8 +7,10 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"time"
@@ -56,7 +58,9 @@ type Input struct {
 	AdditionalSubjectAltNames []string
 	AdditionalMachineCertSANs []string
 
+	ClusterID         string
 	ClusterName       string
+	ClusterSecret     string
 	ServiceDomain     string
 	PodNet            []string
 	ServiceNet        []string
@@ -128,6 +132,12 @@ type Certs struct {
 	OS                *x509.PEMEncodedCertificateAndKey
 }
 
+// Cluster holds Talos cluster-wide secrets.
+type Cluster struct {
+	ID     string
+	Secret string
+}
+
 // Secrets holds the sensitive kubeadm data.
 type Secrets struct {
 	BootstrapToken         string
@@ -142,6 +152,7 @@ type TrustdInfo struct {
 // SecretsBundle holds trustd, kubeadm and certs information.
 type SecretsBundle struct {
 	Clock      Clock
+	Cluster    *Cluster
 	Secrets    *Secrets
 	TrustdInfo *TrustdInfo
 	Certs      *Certs
@@ -249,7 +260,21 @@ func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 		return nil, err
 	}
 
+	clusterID, err := randBytes(constants.DefaultClusterIDSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate cluster ID: %w", err)
+	}
+
+	clusterSecret, err := randBytes(constants.DefaultClusterSecretSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate cluster secret: %w", err)
+	}
+
 	result := &SecretsBundle{
+		Cluster: &Cluster{
+			ID:     base64.URLEncoding.EncodeToString(clusterID),
+			Secret: base64.StdEncoding.EncodeToString(clusterSecret),
+		},
 		Clock:      clock,
 		Secrets:    kubeadmTokens,
 		TrustdInfo: trustdInfo,
@@ -295,6 +320,11 @@ func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 		OS:                c.Machine().Security().CA(),
 	}
 
+	cluster := &Cluster{
+		ID:     c.Cluster().ID(),
+		Secret: c.Cluster().Secret(),
+	}
+
 	trustd := &TrustdInfo{
 		Token: c.Machine().Security().Token(),
 	}
@@ -312,6 +342,7 @@ func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 
 	return &SecretsBundle{
 		Clock:      clock,
+		Cluster:    cluster,
 		Secrets:    secrets,
 		TrustdInfo: trustd,
 		Certs:      certs,
@@ -446,7 +477,9 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		PodNet:                     []string{podNet},
 		ServiceNet:                 []string{serviceNet},
 		ServiceDomain:              options.DNSDomain,
+		ClusterID:                  secrets.Cluster.ID,
 		ClusterName:                clustername,
+		ClusterSecret:              secrets.Cluster.Secret,
 		KubernetesVersion:          kubernetesVersion,
 		Secrets:                    secrets.Secrets,
 		TrustdInfo:                 secrets.TrustdInfo,
@@ -469,9 +502,9 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 	return input, nil
 }
 
-// randBytes returns a random string consisting of the characters in
+// randBootstrapTokenString returns a random string consisting of the characters in
 // validBootstrapTokenChars, with the length customized by the parameter.
-func randBytes(length int) (string, error) {
+func randBootstrapTokenString(length int) (string, error) {
 	// validBootstrapTokenChars defines the characters a bootstrap token can consist of
 	const validBootstrapTokenChars = "0123456789abcdefghijklmnopqrstuvwxyz"
 
@@ -512,12 +545,12 @@ func genToken(lenFirst, lenSecond int) (string, error) {
 
 	tokenTemp := make([]string, 2)
 
-	tokenTemp[0], err = randBytes(lenFirst)
+	tokenTemp[0], err = randBootstrapTokenString(lenFirst)
 	if err != nil {
 		return "", err
 	}
 
-	tokenTemp[1], err = randBytes(lenSecond)
+	tokenTemp[1], err = randBootstrapTokenString(lenSecond)
 	if err != nil {
 		return "", err
 	}
@@ -532,4 +565,19 @@ func emptyIf(str, check string) string {
 	}
 
 	return str
+}
+
+func randBytes(size int) ([]byte, error) {
+	buf := make([]byte, size)
+
+	n, err := io.ReadFull(rand.Reader, buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from random generator: %w", err)
+	}
+
+	if n != size {
+		return nil, fmt.Errorf("failed to generate sufficient number of random bytes (%d != %d)", n, size)
+	}
+
+	return buf, nil
 }

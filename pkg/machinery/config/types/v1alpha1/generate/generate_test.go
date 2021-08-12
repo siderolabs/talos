@@ -6,6 +6,7 @@ package generate_test
 
 import (
 	"crypto/x509"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -66,7 +67,7 @@ func (suite *GenerateSuite) SetupSuite() {
 	var err error
 	secrets, err := genv1alpha1.NewSecretsBundle(genv1alpha1.NewClock(), suite.genOptions...)
 	suite.Require().NoError(err)
-	suite.input, err = genv1alpha1.NewInput("test", "10.0.1.5", constants.DefaultKubernetesVersion, secrets, suite.genOptions...)
+	suite.input, err = genv1alpha1.NewInput("test", "https://10.0.1.5", constants.DefaultKubernetesVersion, secrets, suite.genOptions...)
 	suite.Require().NoError(err)
 
 	var opts genv1alpha1.GenOptions
@@ -92,6 +93,9 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	cfg, err := genv1alpha1.Config(machine.TypeControlPlane, suite.input)
+	suite.Require().NoError(err)
+
+	_, err = cfg.Validate(runtimeMode{false})
 	suite.Require().NoError(err)
 
 	if suite.versionContract.SupportsRBACFeature() {
@@ -127,4 +131,16 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	suite.Require().NoError(err)
 
 	suite.Equal([]string{string(role.Admin)}, cert.Subject.Organization)
+}
+
+type runtimeMode struct {
+	requiresInstall bool
+}
+
+func (m runtimeMode) String() string {
+	return fmt.Sprintf("runtimeMode(%v)", m.requiresInstall)
+}
+
+func (m runtimeMode) RequiresInstall() bool {
+	return m.requiresInstall
 }

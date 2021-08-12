@@ -633,6 +633,13 @@ type MachineConfig struct {
 //     - value: clusterConfigExample
 type ClusterConfig struct {
 	//   description: |
+	//     Globally unique identifier for this cluster.
+	ClusterID string `yaml:"id,omitempty"`
+	//   description: |
+	//     Shared secret of cluster.
+	//     This secret is shared among cluster members but should never be sent over the network.
+	ClusterSecret string `yaml:"secret,omitempty"`
+	//   description: |
 	//     Provides control plane specific configuration options.
 	//   examples:
 	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.

@@ -227,7 +227,8 @@ type GenOptions struct {
 // DefaultGenOptions returns default options.
 func DefaultGenOptions() GenOptions {
 	return GenOptions{
-		Persist: true,
-		Roles:   role.MakeSet(role.Admin),
+		DNSDomain: "cluster.local",
+		Persist:   true,
+		Roles:     role.MakeSet(role.Admin),
 	}
 }
