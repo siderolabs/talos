@@ -92,6 +92,7 @@ Talos can be configued to use Kubernetes 1.21 or CAPI v0.4.x components can be u
         description = """\
 * etcd PKI moved to `/system/secrets`
 * kubelet bootstrap CSR auto-signing scoped to kubelet bootstrap tokens only
+* enforce default seccomp profile on all system containers
 """
 
     [notes.equinixmetal]

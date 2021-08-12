@@ -15,6 +15,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -275,6 +276,8 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		oci.WithEnv(c.opts.Env),
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
+		oci.WithNoNewPrivileges,
+		seccomp.WithDefaultProfile(),
 	)
 
 	specOpts = append(specOpts,
