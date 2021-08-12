@@ -779,6 +779,8 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 				Modified:     fi.FileInfo.ModTime().Unix(),
 				IsDir:        fi.FileInfo.IsDir(),
 				Link:         fi.Link,
+				Uid:          fi.FileInfo.Sys().(*syscall.Stat_t).Uid,
+				Gid:          fi.FileInfo.Sys().(*syscall.Stat_t).Gid,
 			})
 		}
 

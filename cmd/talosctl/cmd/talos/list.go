@@ -127,7 +127,7 @@ var lsCmd = &cobra.Command{
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tMODE\tSIZE(B)\tLASTMOD\tNAME")
+			fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tNAME")
 			for {
 				info, err := stream.Recv()
 				if err != nil {
@@ -179,9 +179,11 @@ var lsCmd = &cobra.Command{
 					}
 				}
 
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\n",
 					node,
 					os.FileMode(info.Mode).String(),
+					info.Uid,
+					info.Gid,
 					size,
 					timestampFormatted,
 					display,

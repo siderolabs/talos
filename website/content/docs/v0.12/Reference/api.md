@@ -1230,6 +1230,8 @@ TODO: unix timestamp or include proto's Date type |
 | error | [string](#string) |  | Error describes any error encountered while trying to read the file information. |
 | link | [string](#string) |  | Link is filled with symlink target |
 | relative_name | [string](#string) |  | RelativeName is the name of the file or directory relative to the RootPath |
+| uid | [uint32](#uint32) |  | Owner uid |
+| gid | [uint32](#uint32) |  | Owner gid |
 
 
 

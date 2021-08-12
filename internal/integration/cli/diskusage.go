@@ -85,7 +85,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 
 			parts := splitLine(lines[1])
 			var err error
-			folderSize, err = strconv.ParseInt(parts[2], 10, 64)
+			folderSize, err = strconv.ParseInt(parts[4], 10, 64)
 			if err != nil {
 				return err
 			}

@@ -363,6 +363,10 @@ message FileInfo {
   string link = 8;
   // RelativeName is the name of the file or directory relative to the RootPath
   string relative_name = 9;
+  // Owner uid
+  uint32 uid = 10;
+  // Owner gid
+  uint32 gid = 11;
 }
 
 // DiskUsageInfo describes a file or directory's information for du command
