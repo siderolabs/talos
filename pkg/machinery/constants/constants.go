@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.10.52-talos"
+	DefaultKernelVersion = "5.10.57-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
