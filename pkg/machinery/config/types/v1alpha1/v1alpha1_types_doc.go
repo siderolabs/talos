@@ -1711,7 +1711,7 @@ func init() {
 			FieldName: "routes",
 		},
 	}
-	RouteDoc.Fields = make([]encoder.Doc, 3)
+	RouteDoc.Fields = make([]encoder.Doc, 4)
 	RouteDoc.Fields[0].Name = "network"
 	RouteDoc.Fields[0].Type = "string"
 	RouteDoc.Fields[0].Note = ""
@@ -1722,11 +1722,16 @@ func init() {
 	RouteDoc.Fields[1].Note = ""
 	RouteDoc.Fields[1].Description = "The route's gateway."
 	RouteDoc.Fields[1].Comments[encoder.LineComment] = "The route's gateway."
-	RouteDoc.Fields[2].Name = "metric"
-	RouteDoc.Fields[2].Type = "uint32"
+	RouteDoc.Fields[2].Name = "source"
+	RouteDoc.Fields[2].Type = "string"
 	RouteDoc.Fields[2].Note = ""
-	RouteDoc.Fields[2].Description = "The optional metric for the route."
-	RouteDoc.Fields[2].Comments[encoder.LineComment] = "The optional metric for the route."
+	RouteDoc.Fields[2].Description = "The route's source address (optional)."
+	RouteDoc.Fields[2].Comments[encoder.LineComment] = "The route's source address (optional)."
+	RouteDoc.Fields[3].Name = "metric"
+	RouteDoc.Fields[3].Type = "uint32"
+	RouteDoc.Fields[3].Note = ""
+	RouteDoc.Fields[3].Description = "The optional metric for the route."
+	RouteDoc.Fields[3].Comments[encoder.LineComment] = "The optional metric for the route."
 
 	RegistryMirrorConfigDoc.Type = "RegistryMirrorConfig"
 	RegistryMirrorConfigDoc.Comments[encoder.LineComment] = "RegistryMirrorConfig represents mirror configuration for a registry."

@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
+	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -180,6 +181,16 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 							},
 						},
 					},
+					{
+						DeviceInterface: "eth1",
+						DeviceRoutes: []*v1alpha1.Route{
+							{
+								RouteNetwork: "192.244.0.0/24",
+								RouteGateway: "192.244.0.1",
+								RouteSource:  "192.244.0.10",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -200,6 +211,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 				"configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
 				"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
 				"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
+				"configuration/inet4/192.244.0.1/192.244.0.0/24/1024",
 			}, func(r *network.RouteSpec) error {
 				switch r.Metadata().ID() {
 				case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
@@ -214,6 +226,11 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 					suite.Assert().Equal("eth3", r.TypedSpec().OutLinkName)
 					suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 					suite.Assert().EqualValues(25, r.TypedSpec().Priority)
+				case "configuration/inet4/192.244.0.1/192.244.0.0/24/1024":
+					suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
+					suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+					suite.Assert().EqualValues(netaddr.MustParseIP("192.244.0.10"), r.TypedSpec().Source)
 				}
 
 				suite.Assert().Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)

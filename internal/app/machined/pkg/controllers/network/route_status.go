@@ -103,7 +103,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			dstAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Dst)
 			dstPrefix := netaddr.IPPrefixFrom(dstAddr, route.DstLength)
 			srcAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Src)
-			srcPrefix := netaddr.IPPrefixFrom(srcAddr, route.SrcLength)
 			gatewayAddr, _ := netaddr.FromStdIPRaw(route.Attributes.Gateway)
 			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority)
 
@@ -112,7 +111,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 
 				status.Family = nethelpers.Family(route.Family)
 				status.Destination = dstPrefix
-				status.Source = srcPrefix
+				status.Source = srcAddr
 				status.Gateway = gatewayAddr
 				status.OutLinkIndex = route.Attributes.OutIface
 				status.OutLinkName = linkLookup[route.Attributes.OutIface]

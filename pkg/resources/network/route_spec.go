@@ -27,7 +27,7 @@ type RouteSpec struct {
 type RouteSpecSpec struct {
 	Family      nethelpers.Family        `yaml:"family"`
 	Destination netaddr.IPPrefix         `yaml:"dst"`
-	Source      netaddr.IPPrefix         `yaml:"src"`
+	Source      netaddr.IP               `yaml:"src"`
 	Gateway     netaddr.IP               `yaml:"gateway"`
 	OutLinkName string                   `yaml:"outLinkName,omitempty"`
 	Table       nethelpers.RoutingTable  `yaml:"table"`
@@ -45,8 +45,6 @@ var (
 )
 
 // Normalize converts 0.0.0.0 to zero value.
-//
-//nolint:gocyclo
 func (route *RouteSpecSpec) Normalize() {
 	if route.Destination.Bits() == 0 && (route.Destination.IP().Compare(zero4) == 0 || route.Destination.IP().Compare(zero16) == 0) {
 		// clear destination to be zero value to support "0.0.0.0/0" routes
@@ -57,8 +55,8 @@ func (route *RouteSpecSpec) Normalize() {
 		route.Gateway = netaddr.IP{}
 	}
 
-	if route.Source.Bits() == 0 && (route.Source.IP().Compare(zero4) == 0 || route.Source.IP().Compare(zero16) == 0) {
-		route.Source = netaddr.IPPrefix{}
+	if route.Source.Compare(zero4) == 0 || route.Source.Compare(zero16) == 0 {
+		route.Source = netaddr.IP{}
 	}
 
 	switch {

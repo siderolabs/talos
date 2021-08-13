@@ -672,6 +672,58 @@ func TestValidate(t *testing.T) {
 			expectedError: "3 errors occurred:\n\t* public key invalid: wrong key \"\" length: 0\n\t* public key invalid: wrong key \"4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==\" length: 31\n" +
 				"\t* peer allowed IP \"10.2.0\" is invalid: invalid CIDR address: 10.2.0\n\n",
 		},
+		{
+			name: "StaticRoutes",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceRoutes: []*v1alpha1.Route{
+									{
+										RouteGateway: "172.0.0.1",
+									},
+									{
+										RouteNetwork: "10.0.0.0/24",
+										RouteGateway: "10.0.0.1",
+									},
+									{
+										RouteNetwork: "10.0.0.0/24",
+										RouteGateway: "10.0.0.1",
+										RouteSource:  "10.0.0.5",
+									},
+									{
+										RouteGateway: "172.0.0.x",
+									},
+									{
+										RouteNetwork: "10.0.0.0",
+										RouteGateway: "10.0.0.1",
+									},
+									{
+										RouteNetwork: "10.0.0.0/24",
+										RouteGateway: "10.0.0.1",
+										RouteSource:  "10.0.0.3/32",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "3 errors occurred:\n\t* [networking.os.device.route[3].gateway] \"172.0.0.x\": invalid network address\n" +
+				"\t* [networking.os.device.route[4].network] \"10.0.0.0\": invalid network address\n" +
+				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n\n",
+		},
 	} {
 		test := test
 

@@ -592,12 +592,18 @@ func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) ([]string,
 	for idx, route := range d.DeviceRoutes {
 		if route.Network() != "" {
 			if _, _, err := net.ParseCIDR(route.Network()); err != nil {
-				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Network", route.Network(), ErrInvalidAddress))
+				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].network", route.Network(), ErrInvalidAddress))
 			}
 		}
 
 		if ip := net.ParseIP(route.Gateway()); ip == nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].Gateway", route.Gateway(), ErrInvalidAddress))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].gateway", route.Gateway(), ErrInvalidAddress))
+		}
+
+		if route.Source() != "" {
+			if ip := net.ParseIP(route.Source()); ip == nil {
+				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].source", route.Source(), ErrInvalidAddress))
+			}
 		}
 	}
 

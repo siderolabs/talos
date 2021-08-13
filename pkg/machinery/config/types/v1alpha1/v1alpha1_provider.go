@@ -682,6 +682,11 @@ func (r *Route) Gateway() string {
 	return r.RouteGateway
 }
 
+// Source implements the MachineNetwork interface.
+func (r *Route) Source() string {
+	return r.RouteSource
+}
+
 // Metric implements the MachineNetwork interface.
 func (r *Route) Metric() uint32 {
 	return r.RouteMetric

@@ -1758,6 +1758,8 @@ type Route struct {
 	RouteNetwork string `yaml:"network"`
 	//   description: The route's gateway.
 	RouteGateway string `yaml:"gateway"`
+	//   description: The route's source address (optional).
+	RouteSource string `yaml:"source,omitempty"`
 	//   description: The optional metric for the route.
 	RouteMetric uint32 `yaml:"metric,omitempty"`
 }

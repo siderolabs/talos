@@ -201,7 +201,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
 				(route.TypedSpec().Source.IsZero() ||
-					existing.Attributes.Src.Equal(route.TypedSpec().Source.IP().IPAddr().IP)) {
+					existing.Attributes.Src.Equal(route.TypedSpec().Source.IPAddr().IP)) {
 				matchFound = true
 
 				continue
@@ -240,14 +240,14 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		msg := &rtnetlink.RouteMessage{
 			Family:    uint8(route.TypedSpec().Family),
 			DstLength: route.TypedSpec().Destination.Bits(),
-			SrcLength: route.TypedSpec().Source.Bits(),
+			SrcLength: 0,
 			Protocol:  uint8(route.TypedSpec().Protocol),
 			Scope:     uint8(route.TypedSpec().Scope),
 			Type:      uint8(route.TypedSpec().Type),
 			Flags:     uint32(route.TypedSpec().Flags),
 			Attributes: rtnetlink.RouteAttributes{
 				Dst:      route.TypedSpec().Destination.IP().IPAddr().IP,
-				Src:      route.TypedSpec().Source.IP().IPAddr().IP,
+				Src:      route.TypedSpec().Source.IPAddr().IP,
 				Gateway:  route.TypedSpec().Gateway.IPAddr().IP,
 				OutIface: linkIndex,
 				Priority: route.TypedSpec().Priority,

@@ -4566,6 +4566,18 @@ The route's gateway.
 <hr />
 <div class="dd">
 
+<code>source</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+The route's source address (optional).
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>metric</code>  <i>uint32</i>
 
 </div>

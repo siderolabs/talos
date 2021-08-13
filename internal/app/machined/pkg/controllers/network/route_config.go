@@ -219,6 +219,13 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 			return route, fmt.Errorf("error parsing route gateway: %w", err)
 		}
 
+		if in.Source() != "" {
+			route.Source, err = netaddr.ParseIP(in.Source())
+			if err != nil {
+				return route, fmt.Errorf("error parsing route source: %w", err)
+			}
+		}
+
 		route.Normalize()
 
 		route.Priority = in.Metric()

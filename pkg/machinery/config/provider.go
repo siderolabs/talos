@@ -203,6 +203,7 @@ type Vlan interface {
 type Route interface {
 	Network() string
 	Gateway() string
+	Source() string
 	Metric() uint32
 }
 

@@ -27,7 +27,7 @@ type RouteStatus struct {
 type RouteStatusSpec struct {
 	Family       nethelpers.Family        `yaml:"family"`
 	Destination  netaddr.IPPrefix         `yaml:"dst"`
-	Source       netaddr.IPPrefix         `yaml:"src"`
+	Source       netaddr.IP               `yaml:"src"`
 	Gateway      netaddr.IP               `yaml:"gateway"`
 	OutLinkIndex uint32                   `yaml:"outLinkIndex,omitempty"`
 	OutLinkName  string                   `yaml:"outLinkName,omitempty"`
