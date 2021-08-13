@@ -65,13 +65,6 @@ const (
 	// KernelParamPanic is the kernel parameter name for specifying the time to wait until rebooting after kernel panic (0 disables reboot).
 	KernelParamPanic = "panic"
 
-	// KernelCurrentRoot is the kernel parameter name for specifying the
-	// current root partition.
-	//
-	// Deprecated: Talos now expects to use an entire disk; this constant will be removed in 0.12
-	// (https://github.com/talos-systems/talos/issues/3909).
-	KernelCurrentRoot = "talos.root"
-
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
