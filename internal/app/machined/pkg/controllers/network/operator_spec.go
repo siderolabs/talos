@@ -396,10 +396,10 @@ func (ctrl *OperatorSpecController) newOperator(ctx context.Context, r controlle
 		logger = logger.With(zap.String("operator", "vip"))
 
 		return operator.NewVIP(logger, spec.LinkName, spec.VIP, ctrl.State)
-	case network.OperatorWgLAN:
-		logger = logger.With(zap.String("operator", "wglan"))
+	case network.OperatorKubeSpan:
+		logger = logger.With(zap.String("operator", "kubespan"))
 
-		return operator.NewWgLAN(logger, ctrl.NodenameFunc(ctx, r, logger), spec.LinkName, spec.WgLAN)
+		return operator.NewKubeSpan(logger, ctrl.NodenameFunc(ctx, r, logger), spec.LinkName, spec.KubeSpan)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
 	}

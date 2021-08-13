@@ -275,9 +275,9 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 }
 
 func (suite *LinkMergeSuite) TestMergeWireguard() {
-	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/wglan0")
+	static := network.NewLinkSpec(network.ConfigNamespaceName, "configuration/kubespan")
 	*static.TypedSpec() = network.LinkSpecSpec{
-		Name: "wglan0",
+		Name: "kubespan",
 		Wireguard: network.WireguardSpec{
 			ListenPort: 1234,
 			Peers: []network.WireguardPeer{
@@ -290,9 +290,9 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
-	wglanOperator := network.NewLinkSpec(network.ConfigNamespaceName, "wglan/wglan0")
-	*wglanOperator.TypedSpec() = network.LinkSpecSpec{
-		Name: "wglan0",
+	kubespanOperator := network.NewLinkSpec(network.ConfigNamespaceName, "kubespan/kubespan")
+	*kubespanOperator.TypedSpec() = network.LinkSpecSpec{
+		Name: "kubespan",
 		Wireguard: network.WireguardSpec{
 			PrivateKey: "IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=",
 			ListenPort: 3456,
@@ -306,14 +306,14 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	for _, res := range []resource.Resource{static, wglanOperator} {
+	for _, res := range []resource.Resource{static, kubespanOperator} {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertLinks([]string{
-				"wglan0",
+				"kubespan",
 			}, func(r *network.LinkSpec) error {
 				suite.Assert().Equal("IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=", r.TypedSpec().Wireguard.PrivateKey)
 				suite.Assert().Equal(1234, r.TypedSpec().Wireguard.ListenPort)
@@ -339,11 +339,11 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 			})
 		}))
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, wglanOperator.Metadata()))
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, kubespanOperator.Metadata()))
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			return suite.assertNoLinks("wglan0")
+			return suite.assertNoLinks("kubespan")
 		}))
 }
 

@@ -27,10 +27,10 @@ type OperatorSpecSpec struct {
 	LinkName  string   `yaml:"linkName"`
 	RequireUp bool     `yaml:"requireUp"`
 
-	DHCP4 DHCP4OperatorSpec `yaml:"dhcp4,omitempty"`
-	DHCP6 DHCP6OperatorSpec `yaml:"dhcp6,omitempty"`
-	VIP   VIPOperatorSpec   `yaml:"vip,omitempty"`
-	WgLAN WgLANOperatorSpec `yaml:"wglan,omitempty"`
+	DHCP4    DHCP4OperatorSpec    `yaml:"dhcp4,omitempty"`
+	DHCP6    DHCP6OperatorSpec    `yaml:"dhcp6,omitempty"`
+	VIP      VIPOperatorSpec      `yaml:"vip,omitempty"`
+	KubeSpan KubeSpanOperatorSpec `yaml:"kubespan,omitempty"`
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.
@@ -58,8 +58,8 @@ type VIPEquinixMetalSpec struct {
 	APIToken  string `yaml:"apiToken"`
 }
 
-// WgLANOperatorSpec describes Wireguard LAN operator options.
-type WgLANOperatorSpec struct {
+// KubeSpanOperatorSpec describes Wireguard LAN operator options.
+type KubeSpanOperatorSpec struct {
 	ClusterID     string           `yaml:"clusterID"`
 	ClusterSecret string           `yaml:"clusterSecret"`
 	DiscoveryURL  string           `yaml:"discoveryURL,omitempty"`

@@ -467,8 +467,7 @@ const (
 	WireguardDefaultRoutingTable = 180
 
 	// WireguardDefaultFirewallMark is the default firewall mark to use for Wireguard encrypted egress packets.
-	// This default will not be applied unless it is required (for example, using WgLAN (WireguardAutoNodes)).
-	// The next consecutive mark will be used by WgLAN to mark packets which should be forced into the Wireguard interface.
+	// This default will not be applied unless it is required (for example, using KubeSpan ).
 	// Normal Wireguard configurations will NOT use this firewall mark.
 	WireguardDefaultFirewallMark = 0x51820
 

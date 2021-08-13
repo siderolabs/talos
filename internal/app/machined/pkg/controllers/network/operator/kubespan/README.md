@@ -1,4 +1,4 @@
-# Wiregaurd LAN
+# KubeSpan
 
 ## Routing
 
@@ -31,12 +31,12 @@ The newer NFTables replacement for IPTables, though, allows users to
 independently hook into various points of XTables, keeping all such rules and
 sets independent.
 This means that regardless of what CNIs or other user-side routing rules may do,
-our WgLAN setup will not be messed up.
+our KubeSpan setup will not be messed up.
 
 Therefore, we utilise NFTables (which natively supports IP sets and owner
 grouping) instead, to mark matching traffic which should be sent to the
 Wireguard interface.
-This way, we can keep all our WgLAN set logic in one place, allowing us to
+This way, we can keep all our KubeSpan set logic in one place, allowing us to
 simply use a single `ip rule` match:
 for our fwmark, and sending those matched packets to a separate routing table
 with one rule: default to the wireguard interface.
@@ -58,13 +58,13 @@ The routing table (number 180 by default) is simple, containing a single route f
 ## NFTables
 
 The logic inside NFTables is fairly simple.
-First, everything is compiled into a single table:  `talos_wglan`.
+First, everything is compiled into a single table:  `talos_kubespan`.
 
-Next, two chains are set up:  one for the `prerouting` hook (`wglan_prerouting`)
-and the other for the `outgoing` hook (`wglan_outgoing`).
+Next, two chains are set up:  one for the `prerouting` hook (`kubespan_prerouting`)
+and the other for the `outgoing` hook (`kubespan_outgoing`).
 
-We define two sets of target IP prefixes:  one for IPv6 (`wglan_targets_ipv6`)
-and the other for IPv4 (`wglan_targets_ipv4`).
+We define two sets of target IP prefixes:  one for IPv6 (`kubespan_targets_ipv6`)
+and the other for IPv4 (`kubespan_targets_ipv4`).
 
 Last, we add rules to each chain which basically specify:
 

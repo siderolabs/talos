@@ -17,28 +17,28 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/wglan"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
-// WgLAN implements a network operator for controlling the Wireguard LAN system.
-type WgLAN struct {
-	Config *wglan.Config
+// KubeSpan implements a network operator for controlling the KubeSpan system.
+type KubeSpan struct {
+	Config *kubespan.Config
 
 	privateKey string
 
 	fwMark     int
 	listenPort uint16
 
-	db *wglan.PeerDB
+	db *kubespan.PeerDB
 
 	logger *zap.Logger
 }
 
-// NewWgLAN creates a Wireguard LAN operator.
-func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName string, spec network.WgLANOperatorSpec) *WgLAN {
+// NewKubeSpan creates a KubeSpan operator.
+func NewKubeSpan(logger *zap.Logger, nodenameFunc kubespan.NodenameFunc, linkName string, spec network.KubeSpanOperatorSpec) *KubeSpan {
 	if spec.DiscoveryURL == "" {
 		spec.DiscoveryURL = constants.WireguardDefaultNATDiscoveryService
 	}
@@ -57,7 +57,7 @@ func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName stri
 
 	pubKey := privKey.PublicKey().String()
 
-	cfg := &wglan.Config{
+	cfg := &kubespan.Config{
 		ClusterID:     spec.ClusterID,
 		ClusterSecret: spec.ClusterSecret,
 		DiscoveryURL:  spec.DiscoveryURL,
@@ -69,31 +69,31 @@ func NewWgLAN(logger *zap.Logger, nodenameFunc wglan.NodenameFunc, linkName stri
 		Subnet:        spec.Prefix,
 	}
 
-	return &WgLAN{
+	return &KubeSpan{
 		Config:     cfg,
 		logger:     logger,
 		fwMark:     constants.WireguardDefaultFirewallMark,
 		privateKey: spec.PrivateKey,
 		listenPort: constants.WireguardDefaultPort,
-		db:         new(wglan.PeerDB),
+		db:         new(kubespan.PeerDB),
 	}
 }
 
 // Prefix returns unique operator prefix which gets prepended to each spec.
-func (o *WgLAN) Prefix() string {
-	return fmt.Sprintf("wglan/%s", o.Config.LinkName)
+func (o *KubeSpan) Prefix() string {
+	return fmt.Sprintf("kubespan/%s", o.Config.LinkName)
 }
 
 // Run the operator loop.
-func (o *WgLAN) Run(ctx context.Context, notifyCh chan<- struct{}) {
-	var rulesManager *wglan.RulesManager
+func (o *KubeSpan) Run(ctx context.Context, notifyCh chan<- struct{}) {
+	var rulesManager *kubespan.RulesManager
 
-	var peerManager *wglan.PeerManager
+	var peerManager *kubespan.PeerManager
 
 	for ctx.Err() == nil {
 		time.Sleep(time.Second)
 
-		rulesManager = new(wglan.RulesManager)
+		rulesManager = new(kubespan.RulesManager)
 
 		if err := rulesManager.Run(ctx, o.logger, o.db); err != nil {
 			o.logger.Warn("failed to start rules manager", zap.Error(err))
@@ -101,7 +101,7 @@ func (o *WgLAN) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			continue
 		}
 
-		peerManager = wglan.NewPeerManager(o.Config, o.db)
+		peerManager = kubespan.NewPeerManager(o.Config, o.db)
 
 		if err := peerManager.Run(ctx, o.logger, notifyCh); err != nil {
 			o.logger.Warn("failed to start peer manager", zap.Error(err))
@@ -110,7 +110,7 @@ func (o *WgLAN) Run(ctx context.Context, notifyCh chan<- struct{}) {
 }
 
 // AddressSpecs implements Operator interface.
-func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
+func (o *KubeSpan) AddressSpecs() []network.AddressSpecSpec {
 	if o == nil || o.Config == nil {
 		return nil
 	}
@@ -129,7 +129,7 @@ func (o *WgLAN) AddressSpecs() []network.AddressSpecSpec {
 }
 
 // LinkSpecs implements Operator interface.
-func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
+func (o *KubeSpan) LinkSpecs() []network.LinkSpecSpec {
 	if o == nil || o.Config == nil {
 		return nil
 	}
@@ -157,7 +157,7 @@ func (o *WgLAN) LinkSpecs() []network.LinkSpecSpec {
 }
 
 // RouteSpecs implements Operator interface.
-func (o *WgLAN) RouteSpecs() []network.RouteSpecSpec {
+func (o *KubeSpan) RouteSpecs() []network.RouteSpecSpec {
 	if o == nil || o.Config == nil {
 		return nil
 	}
@@ -195,21 +195,21 @@ func (o *WgLAN) RouteSpecs() []network.RouteSpecSpec {
 }
 
 // HostnameSpecs implements Operator interface.
-func (o *WgLAN) HostnameSpecs() []network.HostnameSpecSpec {
+func (o *KubeSpan) HostnameSpecs() []network.HostnameSpecSpec {
 	return nil
 }
 
 // ResolverSpecs implements Operator interface.
-func (o *WgLAN) ResolverSpecs() []network.ResolverSpecSpec {
+func (o *KubeSpan) ResolverSpecs() []network.ResolverSpecSpec {
 	return nil
 }
 
 // TimeServerSpecs implements Operator interface.
-func (o *WgLAN) TimeServerSpecs() []network.TimeServerSpecSpec {
+func (o *KubeSpan) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return nil
 }
 
-func (o *WgLAN) getPeers(defaultPort uint16, psk string) (out []network.WireguardPeer) {
+func (o *KubeSpan) getPeers(defaultPort uint16, psk string) (out []network.WireguardPeer) {
 	for _, pp := range o.db.List() {
 		pc, err := pp.PeerConfig(defaultPort, psk)
 		if err != nil {
@@ -227,7 +227,7 @@ func (o *WgLAN) getPeers(defaultPort uint16, psk string) (out []network.Wireguar
 	}
 
 	if len(out) == 0 {
-		o.logger.Info("no peers found in local WgLAN database")
+		o.logger.Info("no peers found in local KubeSpan database")
 	}
 
 	return out

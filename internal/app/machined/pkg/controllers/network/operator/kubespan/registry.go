@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package wglan
+package kubespan
 
 import (
 	"context"
@@ -86,7 +86,7 @@ func (r *RegistryExternal) Name() string {
 type RegistryKubernetes struct{}
 
 func (r *RegistryKubernetes) secretName(nodeName string) string {
-	return fmt.Sprintf("%s-wglan-node", nodeName)
+	return fmt.Sprintf("%s-kubespan-node", nodeName)
 }
 
 // Add implements registry.Add.

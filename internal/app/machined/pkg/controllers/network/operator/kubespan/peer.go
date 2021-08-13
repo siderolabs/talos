@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package wglan
+package kubespan
 
 import (
 	"context"
@@ -28,10 +28,10 @@ const peerDownTimeout = (25 + 5 + 90) * time.Second
 
 const endpointRotationInterval = 5 * time.Second
 
-// MinimumReconcileInterval is the minimum cycle time for WgLAN reconciliation.
+// MinimumReconcileInterval is the minimum cycle time for KubeSpan reconciliation.
 const MinimumReconcileInterval = 5 * time.Second
 
-// MaximumReconcileInterval is the maximum cycle time for WgLAN reconciliation.
+// MaximumReconcileInterval is the maximum cycle time for KubeSpan reconciliation.
 const MaximumReconcileInterval = 5 * time.Minute
 
 const reconciliationTimeout = 30 * time.Second
@@ -39,7 +39,7 @@ const reconciliationTimeout = 30 * time.Second
 // NodenameFunc is a function which should return the Kubernetes Nodename, when it is available.
 type NodenameFunc func() string
 
-// PeerManager maintains the database of WgLAN Peers.
+// PeerManager maintains the database of KubeSpan Peers.
 type PeerManager struct {
 	Config *Config
 
@@ -262,7 +262,7 @@ func (p *Peer) PeerConfig(defaultPort uint16, psk string) (pc network.WireguardP
 	return pc, nil
 }
 
-// NewPeerManager returns a WgLAN Peer manager, which maintains the list of available Peers in the given database.
+// NewPeerManager returns a KubeSpan Peer manager, which maintains the list of available Peers in the given database.
 func NewPeerManager(cfg *Config, db *PeerDB) *PeerManager {
 	return &PeerManager{
 		Config: cfg,
@@ -448,7 +448,7 @@ func (m *PeerManager) Run(ctx context.Context, logger *zap.Logger, notifyCh chan
 		if err = m.Reconcile(ctx); err != nil {
 			cycleInterval = MinimumReconcileInterval
 
-			logger.Sugar().Infof("failed to reconcile peer configuration for wglan %q: %s", m.Config.LinkName, err.Error())
+			logger.Sugar().Infof("failed to reconcile peer configuration for kubespan %q: %s", m.Config.LinkName, err.Error())
 		}
 
 		notifyCh <- struct{}{}

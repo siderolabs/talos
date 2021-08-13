@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package wglan
+package kubespan
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,21 +11,21 @@ import (
 var (
 	metricPeerCount = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "network",
-		Subsystem: "wglan",
+		Subsystem: "kubespan",
 		Name:      "peers",
 		Help:      "Total known peer count.",
 	})
 
 	metricPeerUpCount = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "network",
-		Subsystem: "wglan",
+		Subsystem: "kubespan",
 		Name:      "peers_up",
 		Help:      "Total connected peer count.",
 	})
 
 	metricRouteCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: "network",
-		Subsystem: "wglan",
+		Subsystem: "kubespan",
 		Name:      "routes",
 		Help:      "Total number of routes to Wireguard peers.",
 	}, []string{"family"})

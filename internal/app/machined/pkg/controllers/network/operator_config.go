@@ -228,10 +228,10 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					}
 
 					specs = append(specs, network.OperatorSpecSpec{
-						Operator:  network.OperatorWgLAN,
+						Operator:  network.OperatorKubeSpan,
 						LinkName:  device.Interface(),
 						RequireUp: true,
-						WgLAN: network.WgLANOperatorSpec{
+						KubeSpan: network.KubeSpanOperatorSpec{
 							ClusterID:     clusterID,
 							ClusterSecret: clusterSecret,
 							DiscoveryURL:  device.WireguardConfig().KubeSpanDiscoveryService(),

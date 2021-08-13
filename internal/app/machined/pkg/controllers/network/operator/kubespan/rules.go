@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package wglan
+package kubespan
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 
 const reconciliationInterval = time.Minute
 
-// RulesManager maintains the NFTables, Route Rules, and Routing Table for WgLAN.
+// RulesManager maintains the NFTables, Route Rules, and Routing Table for KubeSpan.
 type RulesManager struct {
 	db *PeerDB
 
@@ -44,7 +44,7 @@ type RulesManager struct {
 	// currentSet records the current set of IP Prefixes which are stored in the NFTables set
 	currentSet *netaddr.IPSet
 
-	// nfTable is a handle for the WgLAN root table
+	// nfTable is a handle for the KubeSpan root table
 	nfTable *nftables.Table
 
 	// targetSet4 is a handle for the IPv4 target IP nftables set
@@ -207,12 +207,12 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 	// Basic boilerplate; create a table & chain.
 	table := &nftables.Table{
 		Family: nftables.TableFamilyINet,
-		Name:   "talos_wglan",
+		Name:   "talos_kubespan",
 	}
 	table = c.AddTable(table)
 
 	preChain := c.AddChain(&nftables.Chain{
-		Name:     "wglan_prerouting",
+		Name:     "kubespan_prerouting",
 		Table:    table,
 		Type:     nftables.ChainTypeFilter,
 		Hooknum:  nftables.ChainHookPrerouting,
@@ -220,7 +220,7 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 	})
 
 	outChain := c.AddChain(&nftables.Chain{
-		Name:     "wglan_outgoing",
+		Name:     "kubespan_outgoing",
 		Table:    table,
 		Type:     nftables.ChainTypeRoute,
 		Hooknum:  nftables.ChainHookOutput,
@@ -228,7 +228,7 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 	})
 
 	targetSetV4 := &nftables.Set{
-		Name:     "wglan_targets_ipv4",
+		Name:     "kubespan_targets_ipv4",
 		Table:    table,
 		Interval: true,
 		KeyType:  nftables.TypeIPAddr,  // prefix
@@ -236,7 +236,7 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 	}
 
 	targetSetV6 := &nftables.Set{
-		Name:     "wglan_targets_ipv6",
+		Name:     "kubespan_targets_ipv6",
 		Table:    table,
 		Interval: true,
 		KeyType:  nftables.TypeIP6Addr,
@@ -252,7 +252,7 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 		return fmt.Errorf("failed to add IPv6 set: %w", err)
 	}
 
-	// match fwmark of Wireguard interface (not wglan mark)
+	// match fwmark of Wireguard interface (not kubespan mark)
 	// accept and return without modifying the table or mark
 	c.AddRule(&nftables.Rule{
 		Table: table,
@@ -273,7 +273,7 @@ func (m *RulesManager) setNFTable(ips *netaddr.IPSet) error {
 		},
 	})
 
-	// match fwmark of Wireguard interface (not wglan mark)
+	// match fwmark of Wireguard interface (not kubespan mark)
 	// accept and return without modifying the table or mark
 	c.AddRule(&nftables.Rule{
 		Table: table,

@@ -11,12 +11,12 @@ func _() {
 	_ = x[OperatorDHCP4-0]
 	_ = x[OperatorDHCP6-1]
 	_ = x[OperatorVIP-2]
-	_ = x[OperatorWgLAN-3]
+	_ = x[OperatorKubeSpan-3]
 }
 
-const _Operator_name = "dhcp4dhcp6vipwglan"
+const _Operator_name = "dhcp4dhcp6vipkubespan"
 
-var _Operator_index = [...]uint8{0, 5, 10, 13, 18}
+var _Operator_index = [...]uint8{0, 5, 10, 13, 21}
 
 func (i Operator) String() string {
 	if i < 0 || i >= Operator(len(_Operator_index)-1) {
