@@ -268,6 +268,9 @@ const (
 	// EtcdRecoverySnapshotPath is the path where etcd snapshot is uploaded for recovery.
 	EtcdRecoverySnapshotPath = "/var/lib/etcd.snapshot"
 
+	// EtcdUserID is the user ID for the etcd process.
+	EtcdUserID = 60
+
 	// ConfigPath is the path to the downloaded config.
 	ConfigPath = StateMountPoint + "/config.yaml"
 

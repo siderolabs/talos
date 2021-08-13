@@ -71,6 +71,8 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//
+//nolint:gocyclo
 func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
 		return err
@@ -78,6 +80,11 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 	// Data path might exist after upgrade from previous version of Talos.
 	if err = os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
+		return err
+	}
+
+	// Make sure etcd user can access files in the data directory.
+	if err = chownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
 		return err
 	}
 
@@ -188,13 +195,13 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerImage(r.Config().Machine().Kubelet().Image()),
 		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
+			oci.WithUser(fmt.Sprintf("%d:%d", constants.EtcdUserID, constants.EtcdUserID)),
 		),
 		runner.WithOOMScoreAdj(-998),
 	),
@@ -299,7 +306,7 @@ func generatePKI(r runtime.Runtime) (err error) {
 		}
 	}
 
-	return nil
+	return chownRecursive(constants.EtcdPKIPath, constants.EtcdUserID, constants.EtcdUserID)
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
@@ -615,7 +622,7 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 		return fmt.Errorf("error deleting snapshot: %w", err)
 	}
 
-	return nil
+	return chownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID)
 }
 
 func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {
