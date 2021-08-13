@@ -5,7 +5,6 @@
 package v1alpha1
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -460,13 +459,13 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 	}
 
 	if b.WireguardPrivateKey != "" {
-		if err := CheckWireguardKey(b.WireguardPrivateKey); err != nil {
+		if err := nethelpers.CheckWireguardKey(b.WireguardPrivateKey); err != nil {
 			result = multierror.Append(result, fmt.Errorf("private key %q is invalid: %w", b.WireguardPrivateKey, err))
 		}
 	}
 
 	for _, peer := range b.WireguardPeers {
-		if err := CheckWireguardKey(peer.WireguardPublicKey); err != nil {
+		if err := nethelpers.CheckWireguardKey(peer.WireguardPublicKey); err != nil {
 			result = multierror.Append(result, fmt.Errorf("public key invalid: %w", err))
 		}
 
@@ -534,20 +533,6 @@ func validateIPOrCIDR(address string) error {
 
 	if ip := net.ParseIP(address); ip == nil {
 		return fmt.Errorf("failed to parse IP address %q", address)
-	}
-
-	return nil
-}
-
-// CheckWireguardKey is implemented to avoid pulling in wgctrl code to keep machinery dependencies slim.
-func CheckWireguardKey(key string) error {
-	raw, err := base64.StdEncoding.DecodeString(key)
-	if err != nil {
-		return err
-	}
-
-	if len(raw) != 32 {
-		return fmt.Errorf("wrong key %q length: %d", key, len(raw))
 	}
 
 	return nil
@@ -631,6 +616,7 @@ func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) ([]string,
 }
 
 // ValidateKubespan validates Kubespan-related requirements.
+//nolint:gocyclo
 func ValidateKubespan(c *Config) error {
 	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil || c.MachineConfig.MachineNetwork.NetworkInterfaces == nil {
 		return nil // no network interface config at all

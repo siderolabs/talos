@@ -103,7 +103,7 @@ func (r *RegistryKubernetes) Add(ctx context.Context, clusterID string, n *types
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
-	defer kc.Close() // nolint: errcheck
+	defer kc.Close() //nolint: errcheck
 
 	node, err = kc.CoreV1().Nodes().Get(ctx, n.Name, metav1.GetOptions{})
 	if err != nil {
@@ -199,7 +199,7 @@ func (r *RegistryKubernetes) List(ctx context.Context, clusterID string) ([]*Pee
 		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
-	defer kc.Close() // nolint: errcheck
+	defer kc.Close() //nolint: errcheck
 
 	resp, err := kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {

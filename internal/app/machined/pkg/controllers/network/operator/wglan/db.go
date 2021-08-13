@@ -116,6 +116,4 @@ func (d *PeerDB) ExpireBefore(when time.Time) {
 	}
 
 	d.mu.Unlock()
-
-	return
 }

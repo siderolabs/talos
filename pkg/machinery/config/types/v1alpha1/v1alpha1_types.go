@@ -640,11 +640,6 @@ type ClusterConfig struct {
 	//     This secret is shared among cluster members but should never be sent over the network.
 	ClusterSecret string `yaml:"secret,omitempty"`
 	//   description: |
-	//     Shared secret of cluster.
-	//     This secret is shared among cluster members but should never be sent over the network.
-	//     This secret should be a valid Wireguard Key (32-byte secret encoded to Base64).
-	ClusterSecret string `yaml:"secret"`
-	//   description: |
 	//     Provides control plane specific configuration options.
 	//   examples:
 	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.

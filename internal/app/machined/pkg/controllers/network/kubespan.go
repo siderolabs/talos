@@ -11,8 +11,9 @@ import (
 	"path"
 	"sync"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (

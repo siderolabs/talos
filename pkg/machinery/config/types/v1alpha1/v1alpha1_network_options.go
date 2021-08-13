@@ -5,9 +5,6 @@
 package v1alpha1
 
 import (
-	"crypto/rand"
-	"fmt"
-
 	"github.com/AlekSi/pointer"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -136,33 +133,4 @@ func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 
 		return nil
 	}
-}
-
-func GenerateWireguardPrivateKey() ([]byte, error) {
-	privateKey, err := GenerateWireguardKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate random key: %w", err)
-	}
-
-	// Modify random bytes using algorithm described at:
-	// https://cr.yp.to/ecdh.html.
-	privateKey[0] &= 248
-	privateKey[31] &= 127
-	privateKey[31] |= 64
-
-	return privateKey, nil
-}
-
-// GenerateWireguardKey generates a random Wireguard private key.
-func GenerateWireguardKey() ([]byte, error) {
-	const WireguardKeyLen = 32
-
-	// NB:  procedure stolen from wgctrl-go to avoid importing entire package:
-	// https://github.com/WireGuard/wgctrl-go/blob/92e472f520a5/wgtypes/types.go#L89.
-	k := make([]byte, WireguardKeyLen)
-	if _, err := rand.Read(k); err != nil {
-		return nil, fmt.Errorf("failed to read random bytes to generate wireguard key: %v", err)
-	}
-
-	return k, nil
 }

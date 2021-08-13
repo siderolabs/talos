@@ -406,7 +406,9 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 			}
 
 			if peer.PresharedKey != "" {
-				presharedKey, err := wgtypes.ParseKey(peer.PresharedKey)
+				var presharedKey wgtypes.Key
+
+				presharedKey, err = wgtypes.ParseKey(peer.PresharedKey)
 				if err != nil {
 					return fmt.Errorf("preshared key for peer %s is invalid: %w", peer.PublicKey, err)
 				}

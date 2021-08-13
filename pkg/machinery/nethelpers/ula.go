@@ -15,13 +15,13 @@ type ULAPurpose byte
 
 const (
 	// ULAUnknown indicates an unknown ULA Purpose.
-	ULAUnknown   = 0x00
+	ULAUnknown = 0x00
 
-	// ULABoostrap is the Unique Local Addressing space key for the Talos Self-Bootstrapping protocol.
+	// ULABootstrap is the Unique Local Addressing space key for the Talos Self-Bootstrapping protocol.
 	ULABootstrap = 0x01
 
 	// ULAKubeSpan is the Unique Local Addressing space key for the Talos KubeSpan feature.
-	ULAKubeSpan  = 0x02
+	ULAKubeSpan = 0x02
 )
 
 // ULAPrefix calculates and returns a Talos-specific Unique Local Address prefix for the given purpose.

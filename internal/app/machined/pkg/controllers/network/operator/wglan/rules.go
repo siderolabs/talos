@@ -133,8 +133,8 @@ func (m *RulesManager) collectTargets() (*netaddr.IPSet, error) {
 			continue // skip our own
 		}
 
-		if !pp.peerUp {
-			//continue // don't include down peers
+		if !pp.Up() {
+			continue
 		}
 
 		routeSet, err := pp.AllowedPrefixes()

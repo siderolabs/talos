@@ -99,7 +99,12 @@ type Peer struct {
 
 	added time.Time
 
-	peerUp bool
+	lastHandshakeTime time.Time
+}
+
+// Up indicates whether the peer was up at last check.
+func (p *Peer) Up() bool {
+	return peerIsUp(p.lastHandshakeTime)
 }
 
 // PublicKey returns the PublicKey of the Peer.
@@ -192,7 +197,7 @@ func (p *Peer) SelectEndpoint(defaultPort uint16) error {
 		return fmt.Errorf("peer is nil")
 	}
 
-	if p.peerUp {
+	if p.Up() {
 		return nil
 	}
 
@@ -241,7 +246,7 @@ func (p *Peer) PeerConfig(defaultPort uint16, psk string) (pc network.WireguardP
 
 	pc = network.WireguardPeer{
 		PublicKey:                   p.PublicKey(),
-		PresharedKey: psk,
+		PresharedKey:                psk,
 		AllowedIPs:                  allowed.Prefixes(),
 		PersistentKeepaliveInterval: keepAlive,
 	}
@@ -395,7 +400,30 @@ func (m *PeerManager) updatePeers(ctx context.Context) error {
 
 	m.db.ExpireBefore(now)
 
+	if err := m.updatePeerStatus(); err != nil {
+		merr = multierror.Append(merr, fmt.Errorf("failed to update peer up/down status: %w", err))
+	}
+
 	return merr.ErrorOrNil()
+}
+
+func (m *PeerManager) updatePeerStatus() error {
+	wgPeers, err := m.getWGPeers()
+	if err != nil {
+		return fmt.Errorf("failed to fetch Wireguard peers from interface: %w", err)
+	}
+
+	for _, p := range m.db.List() {
+		for _, wgPeer := range wgPeers {
+			if wgPeer.PublicKey.String() == p.PublicKey() {
+				p.lastHandshakeTime = wgPeer.LastHandshakeTime
+
+				continue
+			}
+		}
+	}
+
+	return nil
 }
 
 // Run starts the PeerMananager, keeping the database of Peers up to date.
@@ -442,58 +470,14 @@ func (m *PeerManager) getWGPeers() ([]wgtypes.Peer, error) {
 	return d.Peers, nil
 }
 
-func endpointFromWGPeer(wgPeer wgtypes.Peer) (ep netaddr.IPPort, err error) {
-	if wgPeer.Endpoint != nil {
-		var ok bool
-
-		ep, ok = netaddr.FromStdAddr(wgPeer.Endpoint.IP, wgPeer.Endpoint.Port, wgPeer.Endpoint.Zone)
-		if !ok {
-			return ep, fmt.Errorf("failed to parse wireguard endpoint %q", wgPeer.Endpoint.String())
-		}
-	}
-
-	return ep, err
-}
-
-func peerIsUp(p wgtypes.Peer) bool {
-	if p.LastHandshakeTime.IsZero() {
+func peerIsUp(lastHandshakeTime time.Time) bool {
+	if lastHandshakeTime.IsZero() {
 		return false
 	}
 
-	if time.Since(p.LastHandshakeTime) > peerDownTimeout {
+	if time.Since(lastHandshakeTime) > peerDownTimeout {
 		return false
 	}
 
 	return true
-}
-
-// mergeExistingPeers merges a set of existing Peers from Wireguard into the set of Peers
-// if and only if the Peer of the existing Peer already exists in the database.
-func mergeExistingPeers(db *PeerDB, peers []wgtypes.Peer) error {
-	var err error
-
-	var merr *multierror.Error
-
-	var peerCount, peerUpCount float64
-
-	for _, p := range peers {
-		if pp := db.Get(p.PublicKey); pp != nil {
-			pp.currentEndpoint, err = endpointFromWGPeer(p)
-			if err != nil {
-				merr = multierror.Append(merr, fmt.Errorf("failed to convert endpoint from existing wireguard peer %q: %w", p.PublicKey.String(), err))
-			}
-
-			peerCount++
-
-			if pp.peerUp = peerIsUp(p); pp.peerUp {
-				peerUpCount++
-			}
-		}
-	}
-
-	metricPeerCount.Set(peerCount)
-
-	metricPeerUpCount.Set(peerUpCount)
-
-	return merr.ErrorOrNil()
 }

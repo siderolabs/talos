@@ -663,7 +663,7 @@ func (wc *DeviceWireguardConfig) KubeSpanPrefix() (netaddr.IPPrefix, error) {
 	return netaddr.ParseIPPrefix(wc.WireguardKubeSpanPrefix)
 }
 
-// WireguardKubeSpanDiscoveryService implements the WireguardConfig interface.
+// KubeSpanDiscoveryService implements the WireguardConfig interface.
 func (wc *DeviceWireguardConfig) KubeSpanDiscoveryService() string {
 	if wc.WireguardKubeSpanDiscoveryService != "" {
 		return wc.WireguardKubeSpanDiscoveryService
