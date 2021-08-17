@@ -14,33 +14,61 @@ To see a live demo of this writeup, see the video below:
 
 ## Automated Kubernetes Upgrade
 
-To upgrade from Kubernetes v1.20.1 to v1.20.4 run:
+To check what is going to be upgraded you can run `talosctl upgrade-k8s` with `--dry-run` flag:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --from 1.20.1 --to 1.20.4
-discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
-updating "kube-apiserver" to version "1.20.4"
- > updating node "172.20.0.2"
-2021/03/09 19:55:01 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.3"
-2021/03/09 19:55:05 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.4"
-2021/03/09 19:55:07 retrying error: config version mismatch: got "2", expected "3"
-updating "kube-controller-manager" to version "1.20.4"
- > updating node "172.20.0.2"
-2021/03/09 19:55:27 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.3"
-2021/03/09 19:55:47 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.4"
-2021/03/09 19:56:07 retrying error: config version mismatch: got "2", expected "3"
-updating "kube-scheduler" to version "1.20.4"
- > updating node "172.20.0.2"
-2021/03/09 19:56:27 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.3"
-2021/03/09 19:56:47 retrying error: config version mismatch: got "2", expected "3"
- > updating node "172.20.0.4"
-2021/03/09 19:57:08 retrying error: config version mismatch: got "2", expected "3"
-updating daemonset "kube-proxy" to version "1.20.4"
+$ talosctl --nodes <master node> upgrade-k8s --from 1.21.3 --to 1.22.0 --dry-run
+checking for resource APIs to be deprecated in version 1.22.0
+WARNING: found resources which are going to be deprecated/migrated in the version 1.22.0
+RESOURCE                                                               COUNT
+validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io   4
+mutatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io     3
+customresourcedefinitions.v1beta1.apiextensions.k8s.io                 25
+apiservices.v1beta1.apiregistration.k8s.io                             54
+leases.v1beta1.coordination.k8s.io                                     4
+
+discovered master nodes ["10.5.0.2"]
+updating "kube-apiserver" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-apiserver: v1.21.3 -> 1.22.0
+ > skipped in dry-run
+updating "kube-controller-manager" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-controller-manager: v1.21.3 -> 1.22.0
+ > skipped in dry-run
+updating "kube-scheduler" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-scheduler: v1.21.3 -> 1.22.0
+ > skipped in dry-run
+updating daemonset "kube-proxy" to version "1.22.0"
+skipped in dry-run
+```
+
+To upgrade Kubernetes from v1.21.3 to v1.22.0 run:
+
+```bash
+$ talosctl --nodes <master node> upgrade-k8s --from 1.21.3 --to 1.22.0
+checking for resource APIs to be deprecated in version 1.22.0
+discovered master nodes ["10.5.0.2"]
+updating "kube-apiserver" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-apiserver: v1.21.3 -> 1.22.0
+ > "10.5.0.2": machine configuration patched
+ > "10.5.0.2": waiting for API server state pod update
+ < "10.5.0.2": successfully updated
+updating "kube-controller-manager" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-controller-manager: v1.21.3 -> 1.22.0
+ > "10.5.0.2": machine configuration patched
+ > "10.5.0.2": waiting for API server state pod update
+ < "10.5.0.2": successfully updated
+updating "kube-scheduler" to version "1.22.0"
+ > "10.5.0.2": starting update
+ > update kube-scheduler: v1.21.3 -> 1.22.0
+ > "10.5.0.2": machine configuration patched
+ > "10.5.0.2": waiting for API server state pod update
+ < "10.5.0.2": successfully updated
+updating daemonset "kube-proxy" to version "1.22.0"
 ```
 
 Script runs in two phases:

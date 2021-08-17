@@ -90,6 +90,12 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 func upgradeDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds string, options UpgradeOptions) error {
 	options.Log("updating daemonset %q to version %q", ds, options.ToVersion)
 
+	if options.DryRun {
+		options.Log("skipped in dry-run")
+
+		return nil
+	}
+
 	return updateDaemonset(ctx, clientset, ds, func(daemonset *appsv1.DaemonSet) error {
 		if len(daemonset.Spec.Template.Spec.Containers) != 1 {
 			return fmt.Errorf("unexpected number of containers: %d", len(daemonset.Spec.Template.Spec.Containers))
