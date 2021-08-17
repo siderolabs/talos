@@ -209,7 +209,7 @@ az vm availability-set create \
   -g $GROUP
 
 # Create the controlplane nodes
-for i in $( seq 1 3 ); do
+for i in $( seq 0 1 2 ); do
   az vm create \
     --name talos-controlplane-$i \
     --image talos \
