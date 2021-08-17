@@ -8,3 +8,9 @@ import "errors"
 
 // ErrNoConfigSource indicates that the platform does not have a configured source for the configuration.
 var ErrNoConfigSource = errors.New("no configuration source")
+
+// ErrNoHostname indicates that the meta server does not have a instance hostname.
+var ErrNoHostname = errors.New("failed to fetch hostname from metadata service")
+
+// ErrNoExternalIPs indicates that the meta server does not have a external addresses.
+var ErrNoExternalIPs = errors.New("failed to fetch external addresses from metadata service")

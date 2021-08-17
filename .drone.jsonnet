@@ -528,6 +528,8 @@ local release = {
       '_out/digital-ocean-arm64.tar.gz',
       '_out/gcp-amd64.tar.gz',
       '_out/gcp-arm64.tar.gz',
+      '_out/hcloud-amd64.raw.xz',
+      '_out/hcloud-arm64.raw.xz',
       '_out/initramfs-amd64.xz',
       '_out/initramfs-arm64.xz',
       '_out/metal-amd64.tar.gz',

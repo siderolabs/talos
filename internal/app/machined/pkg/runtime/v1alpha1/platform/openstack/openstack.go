@@ -20,13 +20,13 @@ import (
 )
 
 const (
-	// OpenstackExternalIPEndpoint is the local EC2 endpoint for the external IP.
+	// OpenstackExternalIPEndpoint is the local Openstack endpoint for the external IP.
 	OpenstackExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
 
-	// OpenstackHostnameEndpoint is the local EC2 endpoint for the hostname.
+	// OpenstackHostnameEndpoint is the local Openstack endpoint for the hostname.
 	OpenstackHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
 
-	// OpenstackUserDataEndpoint is the local EC2 endpoint for the config.
+	// OpenstackUserDataEndpoint is the local Openstack endpoint for the config.
 	OpenstackUserDataEndpoint = "http://169.254.169.254/latest/user-data"
 )
 

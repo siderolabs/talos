@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/digitalocean"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/gcp"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
@@ -48,6 +49,7 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 	return newPlatform(platform)
 }
 
+//nolint:gocyclo
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":
@@ -60,6 +62,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &digitalocean.DigitalOcean{}
 	case "gcp":
 		p = &gcp.GCP{}
+	case "hcloud":
+		p = &hcloud.Hcloud{}
 	case "metal":
 		p = &metal.Metal{}
 	case "openstack":
