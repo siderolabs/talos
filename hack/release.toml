@@ -31,7 +31,7 @@ Talos 0.12 completely removes support for self-hosted Kubernetes control plane (
 Talos 0.9 introduced support for Talos-managed control plane and provided migration path to convert self-hosted control plane
 to Talos-managed static pods.
 Automated and manual conversion process is available in Talos from 0.9.x to 0.11.x.
-For clusters bootstrapped with bootkube (Talos <= 0.8), please make sure control plane is converted to Talos-managed before
+For clusters bootstrapped with bootkube (Talos <= 0.8), please make sure control plane is converted to Talos-managed
 before upgrading to Talos 0.12.
 Current control plane status can be checked with `talosctl get bootstrapstatus` before performing upgrade to Talos 0.12.
 """
