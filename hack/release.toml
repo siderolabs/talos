@@ -110,6 +110,14 @@ Unknown keys in the machine config now make the config invalid,
 so any attempt to apply/edit the configuration with the unknown keys will lead into an error.
 """
 
+    [notes.upgrade]
+        title = "Kubernetes Upgrade"
+        description = """\
+`talosctl upgrade-k8s` now checks if cluster has any resources which are going to be removed or migrated to the new version after upgrade
+and shows that as a warning before the upgrade.
+Additionally, `upgrade-k8s` command now has `--dry-run` flag that only prints out warnings and upgrade summary.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -2008,6 +2008,7 @@ talosctl upgrade-k8s [flags]
 ### Options
 
 ```
+      --dry-run           skip the actual upgrade and show the upgrade plan instead
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s

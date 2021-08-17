@@ -28,6 +28,7 @@ type UpgradeOptions struct {
 
 	ControlPlaneEndpoint string
 	LogOutput            io.Writer
+	DryRun               bool
 
 	extraUpdaters []daemonsetUpdater
 	masterNodes   []string
