@@ -200,12 +200,10 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
-RUN --mount=type=cache,target=/.cache go list -mod=readonly all >/dev/null
-RUN --mount=type=cache,target=/.cache ! go mod tidy -v 2>&1 | grep .
+RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go mod download
-RUN --mount=type=cache,target=/.cache go list -mod=readonly all >/dev/null
-RUN --mount=type=cache,target=/.cache ! go mod tidy -v 2>&1 | grep .
+RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src
 
 # The init target builds the init binary.
