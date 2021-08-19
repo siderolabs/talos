@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type Mock struct {
@@ -29,6 +30,10 @@ func init() {
 		}
 
 		return &Mock{}
+	})
+
+	config.Register("kubelet", func(string) interface{} {
+		return &v1alpha1.KubeletConfig{}
 	})
 }
 
@@ -225,6 +230,23 @@ spec:
 				},
 			},
 		},
+		{
+			name: "kubelet config",
+			fields: fields{
+				source: []byte(`---
+kind: kubelet
+version: v1alpha1
+spec:
+  extraMounts:
+   - destination: /var/local
+     options:
+       - rbind
+       - rshared
+       - rw
+     source: /var/local
+`),
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -236,8 +258,10 @@ spec:
 
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Decoder.Decode() = %v, want %v", got, tt.want)
+			if tt.want != nil {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Decoder.Decode() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
