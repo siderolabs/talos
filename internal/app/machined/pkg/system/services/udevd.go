@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Udevd implements the Service interface. It serves as the concrete type with
@@ -78,6 +79,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(env),
+		runner.WithCgroupPath(constants.CgroupRuntime),
 	),
 		restart.WithType(restart.Forever),
 	), nil

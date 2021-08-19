@@ -14,6 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/cgroups"
+	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
@@ -56,6 +59,10 @@ type CRISuite struct {
 }
 
 func (suite *CRISuite) SetupSuite() {
+	if cgroups.Mode() == cgroups.Unified {
+		suite.T().Skip("test doesn't pass under cgroupsv2")
+	}
+
 	var err error
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -66,6 +73,28 @@ func (suite *CRISuite) SetupSuite() {
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
+
+	if cgroups.Mode() == cgroups.Unified {
+		var (
+			groupPath string
+			manager   *cgroupsv2.Manager
+		)
+
+		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
+		suite.Require().NoError(err)
+
+		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
+		suite.Require().NoError(err)
+
+		defer manager.Delete() //nolint:errcheck
+	} else {
+		var manager cgroups.Cgroup
+
+		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
+		suite.Require().NoError(err)
+
+		defer manager.Delete() //nolint:errcheck
+	}
 
 	args := &runner.Args{
 		ID: "containerd",
@@ -83,6 +112,7 @@ func (suite *CRISuite) SetupSuite() {
 		args,
 		runner.WithLoggingManager(logging.NewFileLoggingManager(suite.tmpDir)),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)

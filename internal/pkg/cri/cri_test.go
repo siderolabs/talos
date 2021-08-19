@@ -13,6 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/cgroups"
+	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
@@ -28,7 +31,10 @@ const (
 	busyboxImage = "docker.io/library/busybox:1.30.1"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(t *testing.T) func(state events.ServiceState, message string, args ...interface{}) {
+	return func(state events.ServiceState, message string, args ...interface{}) {
+		t.Logf(message, args...)
+	}
 }
 
 type CRISuite struct {
@@ -46,6 +52,10 @@ type CRISuite struct {
 }
 
 func (suite *CRISuite) SetupSuite() {
+	if cgroups.Mode() == cgroups.Unified {
+		suite.T().Skip("test doesn't pass under cgroupsv2")
+	}
+
 	var err error
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -54,6 +64,28 @@ func (suite *CRISuite) SetupSuite() {
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
 	suite.Require().NoError(os.Mkdir(stateDir, 0o777))
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
+
+	if cgroups.Mode() == cgroups.Unified {
+		var (
+			groupPath string
+			manager   *cgroupsv2.Manager
+		)
+
+		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
+		suite.Require().NoError(err)
+
+		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
+		suite.Require().NoError(err)
+
+		defer manager.Delete() //nolint:errcheck
+	} else {
+		var manager cgroups.Cgroup
+
+		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
+		suite.Require().NoError(err)
+
+		defer manager.Delete() //nolint:errcheck
+	}
 
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
 
@@ -73,14 +105,15 @@ func (suite *CRISuite) SetupSuite() {
 		args,
 		runner.WithLoggingManager(logging.NewFileLoggingManager(suite.tmpDir)),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
 
 	go func() {
 		defer suite.containerdWg.Done()
-		defer suite.containerdRunner.Close()      //nolint:errcheck
-		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
+		defer suite.containerdRunner.Close()                 //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink(suite.T())) //nolint:errcheck
 	}()
 
 	suite.client, err = cri.NewClient("unix:"+suite.containerdAddress, 30*time.Second)

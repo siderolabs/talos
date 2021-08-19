@@ -107,7 +107,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	return cmd, w, nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *processRunner) run(eventSink events.Recorder) error {
 	cmd, logCloser, err := p.build()
 	if err != nil {
@@ -123,6 +123,34 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		defer reaper.Stop(notifyCh)
 	}
 
+	var (
+		cgv1 cgroups.Cgroup
+		cgv2 *cgroupsv2.Manager
+	)
+
+	// load the cgroup before starting the process, as once process is started,
+	// it's not easy to fail (as the process has to be cleaned up)
+	if p.opts.CgroupPath != "" {
+		if cgroups.Mode() == cgroups.Unified {
+			var groupPath string
+
+			groupPath, err = cgroupsv2.NestedGroupPath(p.opts.CgroupPath)
+			if err != nil {
+				return fmt.Errorf("failed to compute group path: %w", err)
+			}
+
+			cgv2, err = cgroupsv2.LoadManager(p.opts.CgroupPath, groupPath)
+			if err != nil {
+				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
+			}
+		} else {
+			cgv1, err = cgroups.Load(cgroups.V1, cgroups.NestedPath(p.opts.CgroupPath))
+			if err != nil {
+				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
+			}
+		}
+	}
+
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("error starting process: %w", err)
 	}
@@ -133,29 +161,18 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		}
 	}
 
-	if cgroups.Mode() == cgroups.Unified {
-		var cg *cgroupsv2.Manager
-
-		cg, err = cgroupsv2.LoadManager(constants.CgroupMountPath, constants.CgroupRuntime)
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s", constants.CgroupRuntime)
-		}
-
-		if err = cg.AddProc(uint64(cmd.Process.Pid)); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
-			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
-		}
-	} else {
-		var cg cgroups.Cgroup
-
-		cg, err = cgroups.Load(cgroups.V1, cgroups.StaticPath(constants.CgroupRuntime))
-		if err != nil {
-			return fmt.Errorf("failed to load cgroup %s", constants.CgroupRuntime)
-		}
-
-		if err = cg.Add(cgroups.Process{
-			Pid: cmd.Process.Pid,
-		}); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
-			return fmt.Errorf("failed to move process %s to cgroup: %w", p, err)
+	if p.opts.CgroupPath != "" {
+		// put the process into the cgroup and record failure (if any)
+		if cgroups.Mode() == cgroups.Unified {
+			if err = cgv2.AddProc(uint64(cmd.Process.Pid)); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
+				eventSink(events.StateRunning, "Failed to move process %s to cgroup: %s", p, err)
+			}
+		} else {
+			if err = cgv1.Add(cgroups.Process{
+				Pid: cmd.Process.Pid,
+			}); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
+				eventSink(events.StateRunning, "Failed to move process %s to cgroup: %s", p, err)
+			}
 		}
 	}
 
