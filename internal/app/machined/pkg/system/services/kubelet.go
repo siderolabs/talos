@@ -202,6 +202,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
+			oci.WithCgroup(constants.CgroupKubelet),
 			oci.WithMounts(mounts),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithHostNamespace(specs.PIDNamespace),
@@ -295,7 +296,13 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		FailSwapOn:          &f,
 		CgroupRoot:          "/",
 		SystemCgroups:       constants.CgroupSystem,
-		KubeletCgroups:      constants.CgroupSystem + "/kubelet",
+		SystemReserved: map[string]string{
+			"cpu":               constants.KubeletSystemReservedCPU,
+			"memory":            constants.KubeletSystemReservedMemory,
+			"pid":               constants.KubeletSystemReservedPid,
+			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
+		},
+		KubeletCgroups: constants.CgroupKubelet,
 	}
 }
 

@@ -258,6 +258,18 @@ const (
 	// KubeletKubeconfig is the generated kubeconfig for kubelet.
 	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
 
+	// KubeletSystemReservedCPU cpu system reservation value for kubelet kubeconfig.
+	KubeletSystemReservedCPU = "50m"
+
+	// KubeletSystemReservedMemory memory system reservation value for kubelet kubeconfig.
+	KubeletSystemReservedMemory = "128Mi"
+
+	// KubeletSystemReservedPid pid system reservation value for kubelet kubeconfig.
+	KubeletSystemReservedPid = "100"
+
+	// KubeletSystemReservedEphemeralStorage ephemeral-storage system reservation value for kubelet kubeconfig.
+	KubeletSystemReservedEphemeralStorage = "256Mi"
+
 	// DefaultEtcdVersion is the default target version of etcd.
 	DefaultEtcdVersion = "v3.5.1"
 
@@ -411,6 +423,12 @@ const (
 
 	// CgroupRuntime is the cgroup name for containerd runtime processes.
 	CgroupRuntime = CgroupSystem + "/runtime"
+
+	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
+	CgroupPodRuntime = "/podruntime/runtime"
+
+	// CgroupKubelet is the cgroup name for kubelet process.
+	CgroupKubelet = "/podruntime/kubelet"
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
