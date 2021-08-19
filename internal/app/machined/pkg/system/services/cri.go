@@ -78,6 +78,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(env),
 		runner.WithOOMScoreAdj(-100),
+		runner.WithCgroupPath(constants.CgroupRuntime),
 	),
 		restart.WithType(restart.Forever),
 	), nil

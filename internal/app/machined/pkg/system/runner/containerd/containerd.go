@@ -280,6 +280,12 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		seccomp.WithDefaultProfile(),
 	)
 
+	if c.opts.CgroupPath != "" {
+		specOpts = append(specOpts,
+			oci.WithCgroup(c.opts.CgroupPath),
+		)
+	}
+
 	specOpts = append(specOpts,
 		c.opts.OCISpecOpts...,
 	)

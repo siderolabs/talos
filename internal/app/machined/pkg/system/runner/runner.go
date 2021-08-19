@@ -58,6 +58,8 @@ type Options struct {
 	Stdin io.ReadSeeker
 	// Specify an oom_score_adj for the process.
 	OOMScoreAdj int
+	// CgroupPath (optional) sets the cgroup path to use
+	CgroupPath string
 }
 
 // Option is the functional option func.
@@ -143,5 +145,12 @@ func WithStdin(stdin io.ReadSeeker) Option {
 func WithOOMScoreAdj(score int) Option {
 	return func(args *Options) {
 		args.OOMScoreAdj = score
+	}
+}
+
+// WithCgroupPath sets the cgroup path.
+func WithCgroupPath(path string) Option {
+	return func(args *Options) {
+		args.CgroupPath = path
 	}
 }
