@@ -155,6 +155,8 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 		groups := []string{
 			constants.CgroupInit,
 			constants.CgroupRuntime,
+			constants.CgroupPodRuntime,
+			constants.CgroupKubelet,
 		}
 
 		for _, c := range groups {

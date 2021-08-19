@@ -295,7 +295,8 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		FailSwapOn:          &f,
 		CgroupRoot:          "/",
 		SystemCgroups:       constants.CgroupSystem,
-		KubeletCgroups:      constants.CgroupSystem + "/kubelet",
+		SystemReserved:      map[string]string{"cpu": "50m", "memory": "128Mi", "ephemeral-storage": "256Mi", "pid": "100"},
+		KubeletCgroups:      constants.CgroupKubelet,
 	}
 }
 

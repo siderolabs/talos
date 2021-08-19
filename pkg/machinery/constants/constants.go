@@ -408,6 +408,12 @@ const (
 	// CgroupRuntime is the cgroup name for containerd runtime processes.
 	CgroupRuntime = CgroupSystem + "/runtime"
 
+	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
+	CgroupPodRuntime = "/podruntime/runtime"
+
+	// CgroupKubelet is the cgroup name for kubelet process.
+	CgroupKubelet = "/podruntime/kubelet"
+
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
 
