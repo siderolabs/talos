@@ -55,8 +55,8 @@ the default values overwritten by Talos.
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 5.10.57
-* Kubernetes: 1.22.0
+* Linux: 5.10.58
+* Kubernetes: 1.22.1
 * containerd: 1.5.5
 * runc: 1.0.1
 * GRUB: 2.06
