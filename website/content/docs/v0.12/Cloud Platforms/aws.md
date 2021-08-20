@@ -3,6 +3,17 @@ title: "AWS"
 description: "Creating a cluster via the AWS CLI."
 ---
 
+## Official AMI Images
+
+Official AMI image ID can be found in the `cloud-images.json` file attached to the Talos release:
+
+```bash
+curl -sL https://github.com/talos-systems/talos/releases/download/v0.12.0/cloud-images.json | \
+    jq -r '.[] | select(.region == "us-east-1") | select (.arch == "amd64") | .id'
+```
+
+Replace `us-east-1` and `amd64` in the line above with the desired region and architecture.
+
 ## Creating a Cluster via the AWS CLI
 
 In this guide we will create an HA Kubernetes cluster with 3 worker nodes.
