@@ -107,7 +107,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	return cmd, w, nil
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (p *processRunner) run(eventSink events.Recorder) error {
 	cmd, logCloser, err := p.build()
 	if err != nil {
@@ -132,19 +132,12 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	// it's not easy to fail (as the process has to be cleaned up)
 	if p.opts.CgroupPath != "" {
 		if cgroups.Mode() == cgroups.Unified {
-			var groupPath string
-
-			groupPath, err = cgroupsv2.NestedGroupPath(p.opts.CgroupPath)
-			if err != nil {
-				return fmt.Errorf("failed to compute group path: %w", err)
-			}
-
-			cgv2, err = cgroupsv2.LoadManager(p.opts.CgroupPath, groupPath)
+			cgv2, err = cgroupsv2.LoadManager(constants.CgroupMountPath, p.opts.CgroupPath)
 			if err != nil {
 				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
 			}
 		} else {
-			cgv1, err = cgroups.Load(cgroups.V1, cgroups.NestedPath(p.opts.CgroupPath))
+			cgv1, err = cgroups.Load(cgroups.V1, cgroups.StaticPath(p.opts.CgroupPath))
 			if err != nil {
 				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
 			}
