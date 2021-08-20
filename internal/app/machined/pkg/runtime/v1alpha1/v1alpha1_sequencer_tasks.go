@@ -109,11 +109,11 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if err = kspp.EnforceKSPPKernelParameters(); err != nil {
+		if err = resourceruntime.NewKernelParamsSetCondition(r.State().V1Alpha2().Resources(), kspp.GetKernelParams()...).Wait(ctx); err != nil {
 			return err
 		}
 
-		return resourceruntime.NewKernelParamsSetCondition(r.State().V1Alpha2().Resources(), kspp.GetKernelParams()...).Wait(ctx)
+		return kspp.EnforceKSPPKernelParameters()
 	}, "enforceKSPPRequirements"
 }
 

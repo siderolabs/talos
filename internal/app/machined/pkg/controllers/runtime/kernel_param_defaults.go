@@ -48,12 +48,12 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 	case <-ctx.Done():
 		return nil
 	case <-r.EventCh():
-		kernels := append(
-			kspp.GetKernelParams(),
-			ctrl.getKernelParams()...,
-		)
+		kernelParams := ctrl.getKernelParams()
+		if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
+			kernelParams = append(kernelParams, kspp.GetKernelParams()...)
+		}
 
-		for _, prop := range kernels {
+		for _, prop := range kernelParams {
 			value := prop.Value
 			item := runtime.NewKernelParamSpec(runtime.NamespaceName, prop.Key)
 
