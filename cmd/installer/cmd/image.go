@@ -84,7 +84,7 @@ func runImageCmd() (err error) {
 
 	if options.ConfigSource == "" {
 		switch p.Name() {
-		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "upcloud":
+		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "scaleway", "upcloud":
 			options.ConfigSource = constants.ConfigNone
 		case "vmware":
 			options.ConfigSource = constants.ConfigGuestInfo
@@ -154,6 +154,19 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 		}
 	case "openstack":
 		if err = tar(fmt.Sprintf("openstack-%s.tar.gz", arch), file, dir); err != nil {
+			return err
+		}
+	case "scaleway":
+		file = filepath.Join(outputArg, fmt.Sprintf("scaleway-%s.raw", arch))
+
+		err = os.Rename(img, file)
+		if err != nil {
+			return err
+		}
+
+		log.Println("compressing image")
+
+		if err = xz(file); err != nil {
 			return err
 		}
 	case "upcloud":

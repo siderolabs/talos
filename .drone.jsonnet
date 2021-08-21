@@ -542,6 +542,8 @@ local release = {
       '_out/metal-libretech_all_h3_cc_h5-arm64.img.xz',
       '_out/openstack-amd64.tar.gz',
       '_out/openstack-arm64.tar.gz',
+      '_out/scaleway-amd64.raw.xz',
+      '_out/scaleway-arm64.raw.xz',
       '_out/talos-amd64.iso',
       '_out/talos-arm64.iso',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
