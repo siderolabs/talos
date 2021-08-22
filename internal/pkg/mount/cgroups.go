@@ -13,7 +13,7 @@ import (
 // CGroupMountPoints returns the cgroup mount points.
 func CGroupMountPoints() (mountpoints *Points, err error) {
 	cgroups := NewMountPoints()
-	cgroups.Set("cgroup2", NewMountPoint("cgroup", constants.CgroupMountPath, "cgroup2", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, "nsdelegate,memory_recursiveprot"))
+	cgroups.Set("cgroup2", NewMountPoint("cgroup", constants.CgroupMountPath, "cgroup2", unix.MS_NOSUID|unix.MS_NODEV|unix.MS_NOEXEC|unix.MS_RELATIME, "nsdelegate"))
 
 	return cgroups, nil
 }
