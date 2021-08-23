@@ -86,13 +86,14 @@ This can be done with `talosctl edit machineconfig` or via config patches during
 ```yaml
 ...
 extraMounts:
-  - destination: /var/local
-    type: bind
-    source: /var/local
-    options:
-    - rbind
-    - rshared
-    - rw
+  - mount:
+      destination: /var/local
+      type: bind
+      source: /var/local
+      options:
+      - rbind
+      - rshared
+      - rw
 ...
 ```
 
