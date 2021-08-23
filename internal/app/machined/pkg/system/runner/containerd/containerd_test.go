@@ -17,8 +17,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -74,28 +72,6 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(os.Mkdir(stateDir, 0o777))
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
-	if cgroups.Mode() == cgroups.Unified {
-		var (
-			groupPath string
-			manager   *cgroupsv2.Manager
-		)
-
-		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
-		suite.Require().NoError(err)
-
-		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
-		suite.Require().NoError(err)
-
-		defer manager.Delete() //nolint:errcheck
-	} else {
-		var manager cgroups.Cgroup
-
-		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
-		suite.Require().NoError(err)
-
-		defer manager.Delete() //nolint:errcheck
-	}
-
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
 
 	args := &runner.Args{
@@ -114,7 +90,6 @@ func (suite *ContainerdSuite) SetupSuite() {
 		args,
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
-		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
@@ -359,10 +334,6 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 }
 
 func (suite *ContainerdSuite) TestStopSigKill() {
-	if cgroups.Mode() == cgroups.Unified {
-		suite.T().Skip("test doesn't pass under cgroupsv2")
-	}
-
 	r := containerdrunner.NewRunner(false, &runner.Args{
 		ID:          suite.containerID,
 		ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do :; done"},

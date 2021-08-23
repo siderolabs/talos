@@ -13,13 +13,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/google/uuid"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -63,10 +60,6 @@ type ContainerdSuite struct {
 }
 
 func (suite *ContainerdSuite) SetupSuite() {
-	if cgroups.Mode() == cgroups.Unified {
-		suite.T().Skip("test doesn't pass under cgroupsv2")
-	}
-
 	var err error
 
 	suite.tmpDir, err = ioutil.TempDir("", "talos")
@@ -79,28 +72,6 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	suite.containerdAddress = filepath.Join(suite.tmpDir, "run.sock")
-
-	if cgroups.Mode() == cgroups.Unified {
-		var (
-			groupPath string
-			manager   *cgroupsv2.Manager
-		)
-
-		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
-		suite.Require().NoError(err)
-
-		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
-		suite.Require().NoError(err)
-
-		defer manager.Delete() //nolint:errcheck
-	} else {
-		var manager cgroups.Cgroup
-
-		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
-		suite.Require().NoError(err)
-
-		defer manager.Delete() //nolint:errcheck
-	}
 
 	args := &runner.Args{
 		ID: "containerd",
@@ -118,7 +89,6 @@ func (suite *ContainerdSuite) SetupSuite() {
 		args,
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
-		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
 	suite.containerdWg.Add(1)
