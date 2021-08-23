@@ -238,12 +238,13 @@ kind: kubelet
 version: v1alpha1
 spec:
   extraMounts:
-   - destination: /var/local
-     options:
-       - rbind
-       - rshared
-       - rw
-     source: /var/local
+	- mount:
+	    destination: /var/local
+      options:
+        - rbind
+        - rshared
+        - rw
+      source: /var/local
 `),
 			},
 		},

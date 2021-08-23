@@ -296,12 +296,13 @@ kubelet:
 
     # # The `extraMounts` field is used to add additional mounts to the kubelet container.
     # extraMounts:
-    #     - destination: /var/lib/example
-    #       type: bind
-    #       source: /var/lib/example
-    #       options:
-    #         - rshared
-    #         - rw
+    #     - mount:
+    #         destination: /var/lib/example
+    #         type: bind
+    #         source: /var/lib/example
+    #         options:
+    #           - rshared
+    #           - rw
 ```
 
 
@@ -1295,12 +1296,13 @@ Appears in:
 
 
 ``` yaml
-- destination: /var/lib/example
-  type: bind
-  source: /var/lib/example
-  options:
-    - rshared
-    - rw
+- mount:
+    destination: /var/lib/example
+    type: bind
+    source: /var/lib/example
+    options:
+      - rshared
+      - rw
 ```
 
 
@@ -1327,12 +1329,13 @@ extraArgs:
 
 # # The `extraMounts` field is used to add additional mounts to the kubelet container.
 # extraMounts:
-#     - destination: /var/lib/example
-#       type: bind
-#       source: /var/lib/example
-#       options:
-#         - rshared
-#         - rw
+#     - mount:
+#         destination: /var/lib/example
+#         type: bind
+#         source: /var/lib/example
+#         options:
+#           - rshared
+#           - rw
 ```
 
 <hr />
@@ -1422,12 +1425,13 @@ Examples:
 
 ``` yaml
 extraMounts:
-    - destination: /var/lib/example
-      type: bind
-      source: /var/lib/example
-      options:
-        - rshared
-        - rw
+    - mount:
+        destination: /var/lib/example
+        type: bind
+        source: /var/lib/example
+        options:
+          - rshared
+          - rw
 ```
 
 
