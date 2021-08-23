@@ -5,7 +5,7 @@ policies:
       gpg: true
       spellcheck:
         locale: US
-      maximumOfOneCommit: true
+      maximumOfOneCommit: false
       header:
         length: 89
         imperative: true
