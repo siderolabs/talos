@@ -18,18 +18,17 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.4.1
-	github.com/aws/aws-sdk-go v1.40.2 // indirect
 	github.com/beevik/ntp v0.3.0
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.5
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.0.2
 	github.com/containerd/typeurl v1.0.2
-	github.com/containernetworking/cni v0.8.1
-	github.com/containernetworking/plugins v0.9.1
+	github.com/containernetworking/cni v0.8.1 // see https://github.com/containernetworking/cni/issues/856
+	github.com/containernetworking/plugins v0.9.1 // see https://github.com/containernetworking/cni/issues/856
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20210707150857-25f235cd0682
+	github.com/cosi-project/runtime v0.0.0-20210714141157-57b048cd66b0
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -40,7 +39,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/fatih/color v1.12.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.0
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/gizak/termui/v3 v3.1.0
@@ -51,7 +50,7 @@ require (
 	github.com/hashicorp/go-getter v1.5.7
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/insomniacslk/dhcp v0.0.0-20210621130208-1cac67f12b1e
+	github.com/insomniacslk/dhcp v0.0.0-20210817203519-d82598001386
 	github.com/jsimonetti/rtnetlink v0.0.0-20210614053835-9c52e516c709
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
@@ -62,7 +61,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.19.0
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/prometheus/procfs v0.7.2
+	github.com/prometheus/procfs v0.7.3
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
@@ -82,19 +81,17 @@ require (
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
-	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
-	github.com/vmware-tanzu/sonobuoy v0.53.1
-	github.com/vmware/govmomi v0.26.0
+	github.com/vmware-tanzu/sonobuoy v0.53.2
+	github.com/vmware/govmomi v0.26.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.19.0
-	golang.org/x/net v0.0.0-20210716203947-853a461950ff
-	golang.org/x/oauth2 v0.0.0-20210622215436-a8dc77f794b6 // indirect
+	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
