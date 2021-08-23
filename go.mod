@@ -62,7 +62,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.19.0
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/prometheus/procfs v0.7.2
+	github.com/prometheus/procfs v0.7.3
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
