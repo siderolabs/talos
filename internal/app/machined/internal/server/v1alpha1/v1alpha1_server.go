@@ -324,6 +324,10 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, status.Error(codes.FailedPrecondition, "time is not in sync yet")
 	}
 
+	if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
+		return nil, status.Error(codes.AlreadyExists, "etcd data directory is not empty")
+	}
+
 	go func() {
 		if err := s.Controller.Run(context.Background(), runtime.SequenceBootstrap, in); err != nil {
 			log.Println("bootstrap failed:", err)
