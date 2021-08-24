@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/upcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -70,6 +71,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &openstack.Openstack{}
 	case "packet":
 		p = &packet.Packet{}
+	case "upcloud":
+		p = &upcloud.UpCloud{}
 	case "vmware":
 		p = &vmware.VMware{}
 	default:

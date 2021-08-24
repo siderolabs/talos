@@ -552,6 +552,8 @@ local release = {
       '_out/talosctl-linux-arm64',
       '_out/talosctl-linux-armv7',
       '_out/talosctl-windows-amd64.exe',
+      '_out/upcloud-amd64.raw.xz',
+      '_out/upcloud-arm64.raw.xz',
       '_out/vmware-amd64.ova',
       '_out/vmware-arm64.ova',
       '_out/vmlinuz-amd64',
