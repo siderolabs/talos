@@ -1606,8 +1606,6 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 }
 
 // BootstrapEtcd represents the task for bootstrapping etcd.
-//
-//nolint:gocyclo
 func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		req, ok := data.(*machineapi.BootstrapRequest)
@@ -1629,41 +1627,8 @@ func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutio
 			}
 		}
 
-		if err = func() error {
-			// Since etcd has already attempted to start, we must delete the data. If
-			// we don't, then an initial cluster state of "new" will fail.
-			var dir *os.File
-
-			dir, err = os.Open(constants.EtcdDataPath)
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil
-				}
-
-				return err
-			}
-
-			//nolint:errcheck
-			defer dir.Close()
-
-			var files []os.FileInfo
-
-			files, err = dir.Readdir(0)
-			if err != nil {
-				return err
-			}
-
-			for _, file := range files {
-				fullPath := filepath.Join(constants.EtcdDataPath, file.Name())
-
-				if err = os.RemoveAll(fullPath); err != nil {
-					return fmt.Errorf("failed to remove %q: %w", file.Name(), err)
-				}
-			}
-
-			return nil
-		}(); err != nil {
-			return err
+		if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
+			return fmt.Errorf("etcd data directory is not empty")
 		}
 
 		svc := &services.Etcd{

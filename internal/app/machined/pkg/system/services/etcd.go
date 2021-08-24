@@ -351,7 +351,10 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 }
 
 func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, learnerMemberID uint64, err error) {
-	var id uint64
+	var (
+		id      uint64
+		lastNag time.Time
+	)
 
 	err = retry.Constant(10*time.Minute,
 		retry.WithUnits(3*time.Second),
@@ -362,6 +365,12 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
 			resp      *clientv3.MemberListResponse
 		)
+
+		if time.Since(lastNag) > 30*time.Second {
+			log.Printf("etcd is waiting to join the cluster, if this node is the first node in the cluster, please run `talosctl bootstrap`")
+
+			lastNag = time.Now()
+		}
 
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer attemptCtxCancel()
