@@ -87,6 +87,7 @@ func NewState() (*State, error) {
 		&k8s.SecretsStatus{},
 		&network.AddressStatus{},
 		&network.AddressSpec{},
+		&network.HardwareAddr{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},
 		&network.LinkRefresh{},

@@ -27,6 +27,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&network.AddressStatus{},
 		&network.AddressSpec{},
+		&network.HardwareAddr{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},
 		&network.LinkRefresh{},

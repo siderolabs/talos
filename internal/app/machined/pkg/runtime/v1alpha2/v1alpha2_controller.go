@@ -96,6 +96,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
 		&network.EtcFileController{},
+		&network.HardwareAddrController{},
 		&network.HostnameConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
