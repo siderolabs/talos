@@ -106,6 +106,7 @@ func NewState() (*State, error) {
 		&perf.Memory{},
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamStatus{},
+		&runtime.MountStatus{},
 		&secrets.API{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},

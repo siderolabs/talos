@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
@@ -19,6 +20,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	runtimeres "github.com/talos-systems/talos/pkg/resources/runtime"
+	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
 )
 
 var (
@@ -203,6 +206,16 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return err
 	}
 
+	// record mount as the resources
+	mountStatus := runtimeres.NewMountStatus(v1alpha1.NamespaceName, label)
+	mountStatus.TypedSpec().Source = mountpoint.Source()
+	mountStatus.TypedSpec().Target = mountpoint.Target()
+	mountStatus.TypedSpec().FilesystemType = mountpoint.Fstype()
+
+	if err = r.State().V1Alpha2().Resources().Create(context.Background(), mountStatus); err != nil {
+		return fmt.Errorf("error creating mount status resource: %w", err)
+	}
+
 	mountpointsMutex.Lock()
 	defer mountpointsMutex.Unlock()
 
@@ -224,6 +237,10 @@ func SystemPartitionUnmount(r runtime.Runtime, label string) (err error) {
 	err = mountpoint.Unmount()
 	if err != nil {
 		return err
+	}
+
+	if err = r.State().V1Alpha2().Resources().Destroy(context.Background(), runtimeres.NewMountStatus(v1alpha1.NamespaceName, label).Metadata()); err != nil {
+		return fmt.Errorf("error destroying mount status resource: %w", err)
 	}
 
 	mountpointsMutex.Lock()
