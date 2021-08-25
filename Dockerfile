@@ -303,6 +303,15 @@ FROM scratch AS talosctl-darwin
 COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
 COPY --from=talosctl-darwin-arm64-build /talosctl-darwin-arm64 /talosctl-darwin-arm64
 
+FROM base AS talosctl-windows-amd64-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
+
+FROM scratch AS talosctl-windows
+COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
+
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
