@@ -118,7 +118,7 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	}
 
 	if *option == constants.ConfigGuestInfo {
-		log.Printf("fetching machine config from VMWare extraConfig or OVF env")
+		log.Printf("fetching machine config from VMware extraConfig or OVF env")
 
 		ok, err := vmcheck.IsVirtualWorld()
 		if err != nil {

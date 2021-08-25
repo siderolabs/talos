@@ -13,7 +13,7 @@ weight: 6
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, OpenStack                               |
 | - bare metal                                                                                                   | x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image                |
-| - virtualized                                                                                                  | VMWare, Hyper-V, KVM, Proxmox, Xen                                      |
+| - virtualized                                                                                                  | VMware, Hyper-V, KVM, Proxmox, Xen                                      |
 | - SBCs                                                                                                         | Raspberry Pi4, Banana Pi M64, Pine64, and other                         |
 | - local                                                                                                        | Docker, QEMU                                                            |
 | **Cluster API**                                                                                                |                                    |                                    |
