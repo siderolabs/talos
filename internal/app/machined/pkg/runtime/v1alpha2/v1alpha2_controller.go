@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -74,6 +75,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&time.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&cluster.NodeIdentityController{},
 		&config.MachineTypeController{},
 		&config.K8sControlPlaneController{},
 		&files.EtcFileController{

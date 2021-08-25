@@ -52,6 +52,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210817203519-d82598001386
 	github.com/jsimonetti/rtnetlink v0.0.0-20210614053835-9c52e516c709
+	github.com/jxskiss/base62 v0.0.0-20191017122030-4f11678b909b
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43

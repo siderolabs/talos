@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/resources/cluster"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/files"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -57,6 +58,7 @@ func NewState() (*State, error) {
 		description string
 	}{
 		{v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."},
+		{cluster.NamespaceName, "Cluster configuration and discovery resources."},
 		{config.NamespaceName, "Talos node configuration."},
 		{files.NamespaceName, "Files and file-like resources."},
 		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
@@ -73,6 +75,7 @@ func NewState() (*State, error) {
 	// register Talos resources
 	for _, r := range []resource.Resource{
 		&v1alpha1.Service{},
+		&cluster.Identity{},
 		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},

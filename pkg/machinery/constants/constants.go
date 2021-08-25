@@ -458,6 +458,12 @@ const (
 
 	// DefaultClusterSecretSize is the default size in bytes for the cluster secret.
 	DefaultClusterSecretSize = 32
+
+	// DefaultNodeIdentitySize is the default size in bytes for the node ID.
+	DefaultNodeIdentitySize = 32
+
+	// NodeIdentityFilename is the filename to cache node identity across reboots.
+	NodeIdentityFilename = "node-identity.yaml"
 )
 
 // See https://linux.die.net/man/3/klogctl
