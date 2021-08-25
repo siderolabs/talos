@@ -28,7 +28,7 @@ func NewEncoder(value interface{}, opts ...Option) *Encoder {
 
 // Marshal converts value to YAML-serializable value (suitable for MarshalYAML).
 func (e *Encoder) Marshal() (*yaml.Node, error) {
-	node, err := toYamlNode(e.value, e.options.Comments)
+	node, err := toYamlNode(e.value, e.options)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,10 @@ func isNil(value reflect.Value) bool {
 }
 
 //nolint:gocyclo,cyclop
-func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
+func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 	node := &yaml.Node{}
+
+	flags := options.Comments
 
 	// do not wrap yaml.Node into yaml.Node
 	if n, ok := in.(*yaml.Node); ok {
@@ -118,7 +120,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 
 	// if input implements yaml.Marshaler we should use that marshaller instead
 	// same way as regular yaml marshal does
-	if m, ok := in.(yaml.Marshaler); ok {
+	if m, ok := in.(yaml.Marshaler); ok && !isNil(reflect.ValueOf(in)) {
 		res, err := m.MarshalYAML()
 		if err != nil {
 			return nil, err
@@ -181,7 +183,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			)
 
 			for _, part := range parts {
-				if part == "omitempty" && empty {
+				if part == "omitempty" && empty && options.OmitEmpty {
 					skip = true
 				}
 
@@ -218,7 +220,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			if empty && flags.enabled(CommentsExamples) && fieldDoc != nil {
 				if skip {
 					// render example to be appended to the end of the rendered struct
-					example := renderExample(fieldName, fieldDoc, flags)
+					example := renderExample(fieldName, fieldDoc, options)
 
 					if example != "" {
 						examples = append(examples, example)
@@ -228,7 +230,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 					fieldDocCopy := *fieldDoc
 					fieldDocCopy.Comments = [3]string{}
 
-					inlineExample = renderExample("", &fieldDocCopy, flags)
+					inlineExample = renderExample("", &fieldDocCopy, options)
 				}
 			}
 
@@ -242,7 +244,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			}
 
 			if inline {
-				child, err := toYamlNode(value, flags)
+				child, err := toYamlNode(value, options)
 				if err != nil {
 					return nil, err
 				}
@@ -250,7 +252,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 				if child.Kind == yaml.MappingNode || child.Kind == yaml.SequenceNode {
 					appendNodes(node, child.Content...)
 				}
-			} else if err := addToMap(node, fieldDoc, fieldName, value, style, flags); err != nil {
+			} else if err := addToMap(node, fieldDoc, fieldName, value, style, options); err != nil {
 				return nil, err
 			}
 
@@ -287,7 +289,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 			element := v.MapIndex(k)
 			value := element.Interface()
 
-			if err := addToMap(node, nil, k.Interface(), value, 0, flags); err != nil {
+			if err := addToMap(node, nil, k.Interface(), value, 0, options); err != nil {
 				return nil, err
 			}
 		}
@@ -300,7 +302,7 @@ func toYamlNode(in interface{}, flags CommentsFlags) (*yaml.Node, error) {
 
 			var err error
 
-			nodes[i], err = toYamlNode(element.Interface(), flags)
+			nodes[i], err = toYamlNode(element.Interface(), options)
 			if err != nil {
 				return nil, err
 			}
@@ -323,20 +325,20 @@ func appendNodes(dest *yaml.Node, nodes ...*yaml.Node) {
 	dest.Content = append(dest.Content, nodes...)
 }
 
-func addToMap(dest *yaml.Node, doc *Doc, fieldName, in interface{}, style yaml.Style, flags CommentsFlags) error {
-	key, err := toYamlNode(fieldName, flags)
+func addToMap(dest *yaml.Node, doc *Doc, fieldName, in interface{}, style yaml.Style, options *Options) error {
+	key, err := toYamlNode(fieldName, options)
 	if err != nil {
 		return err
 	}
 
-	value, err := toYamlNode(in, flags)
+	value, err := toYamlNode(in, options)
 	if err != nil {
 		return err
 	}
 
 	value.Style = style
 
-	if flags.enabled(CommentsDocs) {
+	if options.Comments.enabled(CommentsDocs) {
 		addComments(key, doc, HeadComment, FootComment)
 		addComments(value, doc, LineComment)
 	}

@@ -23,10 +23,17 @@ type MockV2 struct {
 	Map   map[string]Mock `yaml:"map"`
 }
 
+type MockV3 struct {
+	Omit bool `yaml:"omit,omitempty"`
+}
+
 func init() {
 	config.Register("mock", func(version string) interface{} {
-		if version == "v1alpha2" {
+		switch version {
+		case "v1alpha2":
 			return &MockV2{}
+		case "v1alpha3":
+			return &MockV3{}
 		}
 
 		return &Mock{}
@@ -199,6 +206,22 @@ spec:
 			wantErr: true,
 		},
 		{
+			name: "extra zero fields in map",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha2
+spec:
+  map:
+    second:
+      a:
+        b: {}
+`),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
 			name: "valid nested",
 			fields: fields{
 				source: []byte(`---
@@ -244,6 +267,17 @@ spec:
        - rshared
        - rw
      source: /var/local
+`),
+			},
+		},
+		{
+			name: "omit empty test",
+			fields: fields{
+				source: []byte(`---
+kind: mock
+version: v1alpha3
+spec:
+  omit: false
 `),
 			},
 		},

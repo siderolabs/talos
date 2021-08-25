@@ -24,12 +24,14 @@ const (
 
 // Options defines encoder config.
 type Options struct {
-	Comments CommentsFlags
+	Comments  CommentsFlags
+	OmitEmpty bool
 }
 
 func newOptions(opts ...Option) *Options {
 	res := &Options{
-		Comments: CommentsAll,
+		Comments:  CommentsAll,
+		OmitEmpty: true,
 	}
 
 	for _, o := range opts {
@@ -46,5 +48,12 @@ type Option func(*Options)
 func WithComments(flags CommentsFlags) Option {
 	return func(o *Options) {
 		o.Comments = flags
+	}
+}
+
+// WithOmitEmpty toggles omitempty handling.
+func WithOmitEmpty(value bool) Option {
+	return func(o *Options) {
+		o.OmitEmpty = value
 	}
 }
