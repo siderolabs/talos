@@ -84,7 +84,7 @@ func runImageCmd() (err error) {
 
 	if options.ConfigSource == "" {
 		switch p.Name() {
-		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "scaleway", "upcloud":
+		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "scaleway", "upcloud", "vultr":
 			options.ConfigSource = constants.ConfigNone
 		case "vmware":
 			options.ConfigSource = constants.ConfigGuestInfo
@@ -184,6 +184,19 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 		}
 	case "vmware":
 		if err = ova.CreateOVAFromRAW(name, img, outputArg, arch); err != nil {
+			return err
+		}
+	case "vultr":
+		file = filepath.Join(outputArg, fmt.Sprintf("vultr-%s.raw", arch))
+
+		err = os.Rename(img, file)
+		if err != nil {
+			return err
+		}
+
+		log.Println("compressing image")
+
+		if err = xz(file); err != nil {
 			return err
 		}
 	case "metal":

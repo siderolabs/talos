@@ -560,6 +560,8 @@ local release = {
       '_out/vmware-arm64.ova',
       '_out/vmlinuz-amd64',
       '_out/vmlinuz-arm64',
+      '_out/vultr-amd64.raw.xz',
+      '_out/vultr-arm64.raw.xz',
     ],
     checksum: ['sha256', 'sha512'],
   },

@@ -1194,6 +1194,8 @@ github.com/vmware/govmomi v0.26.1/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e h1:In34xdQmxmPpV5YWm3D9ovtyUtkasFWYDfc3UGPdkeo=
 github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e/go.mod h1:/3jxIXT64LBNFMdpUk5XfFWYK40Z9+HwGH1sjilaV8Y=
+github.com/vultr/metadata v1.0.3 h1:sM2KjASP7A49Kltf/fRzAgpCfxV8/HLsgZJB9QXeU1A=
+github.com/vultr/metadata v1.0.3/go.mod h1:9W0P2cGZYdhwzzfeOPGSoa2jqWiBpl333rEF9ml9E4A=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=

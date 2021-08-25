@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/scaleway"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/upcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vultr"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -78,6 +79,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &upcloud.UpCloud{}
 	case "vmware":
 		p = &vmware.VMware{}
+	case "vultr":
+		p = &vultr.Vultr{}
 	default:
 		return nil, fmt.Errorf("unknown platform: %q", platform)
 	}
