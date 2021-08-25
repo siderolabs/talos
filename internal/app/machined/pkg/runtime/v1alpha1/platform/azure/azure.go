@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/CyCoreSystems/netdiscover/discover"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
@@ -122,6 +123,7 @@ func (a *Azure) Mode() runtime.Mode {
 }
 
 // ExternalIPs implements the runtime.Platform interface.
+//nolint:gocyclo
 func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	var (
 		body []byte
@@ -173,12 +175,33 @@ func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 
 	for _, iface := range interfaceAddresses {
 		for _, ipv4addr := range iface.IPv4.IPAddresses {
-			addrs = append(addrs, net.ParseIP(ipv4addr.PublicIPAddress))
+			if ip := net.ParseIP(ipv4addr.PublicIPAddress); ip != nil {
+				addrs = append(addrs, ip)
+			}
 		}
 
 		for _, ipv6addr := range iface.IPv6.IPAddresses {
-			addrs = append(addrs, net.ParseIP(ipv6addr.PublicIPAddress))
+			if ip := net.ParseIP(ipv6addr.PublicIPAddress); ip != nil {
+				addrs = append(addrs, ip)
+			}
 		}
+	}
+
+	// Standard SKU IP addresses do not show up in the instance metadata, so if we didn't get any IPs, fall back to non-cloud discovery.
+	if len(addrs) == 0 {
+		disc := discover.NewDiscoverer()
+
+		if ip, discErr := disc.PublicIPv4(); discErr == nil {
+			addrs = append(addrs, ip)
+		}
+
+		if ip, discErr := disc.PublicIPv6(); discErr == nil {
+			addrs = append(addrs, ip)
+		}
+	}
+
+	if len(addrs) == 0 {
+		return addrs, fmt.Errorf("no external IP addresses found")
 	}
 
 	return addrs, err
