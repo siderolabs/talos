@@ -178,7 +178,7 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 
 //nolint:gocyclo
 func validate(target interface{}, spec *yaml.Node) error {
-	node, err := encoder.NewEncoder(target).Marshal()
+	node, err := encoder.NewEncoder(target, encoder.WithOmitEmpty(false)).Marshal()
 	if err != nil {
 		return err
 	}

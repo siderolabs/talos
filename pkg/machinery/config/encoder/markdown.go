@@ -180,7 +180,7 @@ func encodeYaml(in interface{}, name string) string {
 		}
 	}
 
-	node, err := toYamlNode(in, CommentsAll)
+	node, err := toYamlNode(in, newOptions(WithComments(CommentsAll)))
 	if err != nil {
 		return fmt.Sprintf("yaml encoding failed %s", err)
 	}
