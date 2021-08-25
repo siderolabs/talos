@@ -202,7 +202,9 @@ func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		return
 	}
 
-	addrs = append(addrs, net.ParseIP(string(body)))
+	if addr := net.ParseIP(string(body)); addr != nil {
+		addrs = append(addrs, addr)
+	}
 
 	return addrs, err
 }
