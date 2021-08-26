@@ -14,7 +14,7 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )

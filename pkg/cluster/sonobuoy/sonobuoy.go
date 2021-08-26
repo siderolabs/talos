@@ -22,7 +22,7 @@ import (
 	"github.com/vmware-tanzu/sonobuoy/pkg/client"
 	"github.com/vmware-tanzu/sonobuoy/pkg/config"
 	sonodynamic "github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/constants"

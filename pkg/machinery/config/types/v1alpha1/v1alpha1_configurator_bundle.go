@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"

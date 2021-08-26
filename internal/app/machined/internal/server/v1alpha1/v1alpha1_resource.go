@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"

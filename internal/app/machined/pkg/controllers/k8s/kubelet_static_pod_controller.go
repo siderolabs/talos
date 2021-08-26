@@ -19,7 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/constants"

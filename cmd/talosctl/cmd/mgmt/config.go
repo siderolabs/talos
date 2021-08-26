@@ -15,7 +15,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	talosnet "github.com/talos-systems/net"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"

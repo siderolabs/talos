@@ -17,7 +17,7 @@ import (
 	"strings"
 	"text/template"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 	"mvdan.cc/gofumpt/format"
 )
 
