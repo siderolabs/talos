@@ -100,7 +100,9 @@ func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 
 	for _, networkInterface := range m {
 		for _, accessConfig := range networkInterface.AccessConfigs {
-			addrs = append(addrs, net.ParseIP(accessConfig.ExternalIP))
+			if addr := net.ParseIP(accessConfig.ExternalIP); addr != nil {
+				addrs = append(addrs, addr)
+			}
 		}
 	}
 
