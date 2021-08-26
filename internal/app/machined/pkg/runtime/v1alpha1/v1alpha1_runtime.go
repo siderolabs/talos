@@ -115,7 +115,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
-		diff := cmp.Diff(currentConfig, newConfig)
+		diff := cmp.Diff(currentConfig, newConfig, cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
 
 		return fmt.Errorf("this config change can't be applied in immediate mode\ndiff: %s", diff)
 	}
