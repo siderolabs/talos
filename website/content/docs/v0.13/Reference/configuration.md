@@ -394,6 +394,10 @@ network:
     #       aliases:
     #         - example
     #         - example.domain.tld
+
+    # # Configures KubeSpan feature.
+    # kubespan:
+    #     enabled: true # Enable the KubeSpan feature.
 ```
 
 
@@ -1080,6 +1084,36 @@ scheduler:
 <hr />
 <div class="dd">
 
+<code>discovery</code>  <i><a href="#clusterdiscoveryconfig">ClusterDiscoveryConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configures cluster member discovery.
+
+
+
+Examples:
+
+
+``` yaml
+discovery:
+    enabled: true # Enable the cluster membership discovery feature.
+    # Configure registries used for cluster member discovery.
+    registries:
+        # Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
+        kubernetes: {}
+        # Service registry is using an external service to push and pull information about cluster members.
+        service:
+            endpoint: https://discovery.talos.dev/ # External service endpoint.
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>etcd</code>  <i><a href="#etcdconfig">EtcdConfig</a></i>
 
 </div>
@@ -1540,6 +1574,10 @@ nameservers:
 #       aliases:
 #         - example
 #         - example.domain.tld
+
+# # Configures KubeSpan feature.
+# kubespan:
+#     enabled: true # Enable the KubeSpan feature.
 ```
 
 <hr />
@@ -1681,6 +1719,29 @@ extraHostEntries:
       aliases:
         - example
         - example.domain.tld
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>kubespan</code>  <i><a href="#networkkubespan">NetworkKubeSpan</a></i>
+
+</div>
+<div class="dt">
+
+Configures KubeSpan feature.
+
+
+
+Examples:
+
+
+``` yaml
+kubespan:
+    enabled: true # Enable the KubeSpan feature.
 ```
 
 
@@ -5083,6 +5144,190 @@ Examples:
 contents: /etc/kubernetes/auth
 ```
 
+
+</div>
+
+<hr />
+
+
+
+## NetworkKubeSpan
+NetworkKubeSpan struct describes KubeSpan configuration.
+
+Appears in:
+
+- <code><a href="#networkconfig">NetworkConfig</a>.kubespan</code>
+
+
+``` yaml
+enabled: true # Enable the KubeSpan feature.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>enabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enable the KubeSpan feature.
+Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
+
+</div>
+
+<hr />
+
+
+
+## ClusterDiscoveryConfig
+ClusterDiscoveryConfig struct configures cluster membership discovery.
+
+Appears in:
+
+- <code><a href="#clusterconfig">ClusterConfig</a>.discovery</code>
+
+
+``` yaml
+enabled: true # Enable the cluster membership discovery feature.
+# Configure registries used for cluster member discovery.
+registries:
+    # Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
+    kubernetes: {}
+    # Service registry is using an external service to push and pull information about cluster members.
+    service:
+        endpoint: https://discovery.talos.dev/ # External service endpoint.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>enabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Enable the cluster membership discovery feature.
+Cluster discovery is based on individual registries which are configured under the registries field.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>registries</code>  <i><a href="#discoveryregistriesconfig">DiscoveryRegistriesConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configure registries used for cluster member discovery.
+
+</div>
+
+<hr />
+
+
+
+## DiscoveryRegistriesConfig
+DiscoveryRegistriesConfig struct configures cluster membership discovery.
+
+Appears in:
+
+- <code><a href="#clusterdiscoveryconfig">ClusterDiscoveryConfig</a>.registries</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>kubernetes</code>  <i><a href="#registrykubernetesconfig">RegistryKubernetesConfig</a></i>
+
+</div>
+<div class="dt">
+
+Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
+as annotations on the Node resources.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>service</code>  <i><a href="#registryserviceconfig">RegistryServiceConfig</a></i>
+
+</div>
+<div class="dt">
+
+Service registry is using an external service to push and pull information about cluster members.
+
+</div>
+
+<hr />
+
+
+
+## RegistryKubernetesConfig
+RegistryKubernetesConfig struct configures Kubernetes discovery registry.
+
+Appears in:
+
+- <code><a href="#discoveryregistriesconfig">DiscoveryRegistriesConfig</a>.kubernetes</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable Kubernetes discovery registry.
+
+</div>
+
+<hr />
+
+
+
+## RegistryServiceConfig
+RegistryServiceConfig struct configures Kubernetes discovery registry.
+
+Appears in:
+
+- <code><a href="#discoveryregistriesconfig">DiscoveryRegistriesConfig</a>.service</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable external service discovery registry.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>endpoint</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+External service endpoint.
+examples:
+  - value: 'constants.DefaultDiscoveryServiceEndpoint'
 
 </div>
 

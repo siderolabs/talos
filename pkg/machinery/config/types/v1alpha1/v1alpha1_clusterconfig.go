@@ -255,6 +255,11 @@ func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
 	return talosnet.NthIPInCIDRSet(serviceCIDRs, 10)
 }
 
+// Discovery implements the config.Cluster interface.
+func (c *ClusterConfig) Discovery() config.Discovery {
+	return c.ClusterDiscoveryConfig
+}
+
 type clusterToken string
 
 // ID implements the config.Token interface.

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -175,6 +176,10 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
+	if c.Machine().Network().KubeSpan().Enabled() && !c.Cluster().Discovery().Enabled() {
+		result = multierror.Append(result, fmt.Errorf(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))
@@ -210,7 +215,7 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, ecp.Validate())
 	}
 
-	result = multierror.Append(result, c.ClusterInlineManifests.Validate())
+	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate())
 
 	return result.ErrorOrNil()
 }
@@ -285,6 +290,20 @@ func (manifests ClusterInlineManifests) Validate() error {
 		}
 
 		manifestNames[manifest.InlineManifestName] = struct{}{}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// Validate the discovery config.
+func (c ClusterDiscoveryConfig) Validate() error {
+	var result *multierror.Error
+
+	if c.Registries().Service().Enabled() {
+		_, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
+		}
 	}
 
 	return result.ErrorOrNil()

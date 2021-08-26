@@ -101,6 +101,7 @@ type MachineNetwork interface {
 	Resolvers() []string
 	Devices() []Device
 	ExtraHosts() []ExtraHost
+	KubeSpan() KubeSpan
 }
 
 // ExtraHost represents a host entry in /etc/hosts.
@@ -207,6 +208,11 @@ type Route interface {
 	Metric() uint32
 }
 
+// KubeSpan configures KubeSpan feature.
+type KubeSpan interface {
+	Enabled() bool
+}
+
 // Time defines the requirements for a config that pertains to time related
 // options.
 type Time interface {
@@ -288,6 +294,7 @@ type ClusterConfig interface {
 	InlineManifests() []InlineManifest
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnMasters() bool
+	Discovery() Discovery
 }
 
 // ClusterNetwork defines the requirements for a config that pertains to cluster
@@ -431,4 +438,27 @@ type VolumeMount interface {
 type InlineManifest interface {
 	Name() string
 	Contents() string
+}
+
+// Discovery describes cluster membership discovery.
+type Discovery interface {
+	Enabled() bool
+	Registries() DiscoveryRegistries
+}
+
+// DiscoveryRegistries describes discovery methods.
+type DiscoveryRegistries interface {
+	Kubernetes() KubernetesRegistry
+	Service() ServiceRegistry
+}
+
+// KubernetesRegistry describes Kubernetes discovery registry.
+type KubernetesRegistry interface {
+	Enabled() bool
+}
+
+// ServiceRegistry describes external service discovery registry.
+type ServiceRegistry interface {
+	Enabled() bool
+	Endpoint() string
 }

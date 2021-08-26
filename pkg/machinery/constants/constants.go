@@ -464,6 +464,9 @@ const (
 
 	// NodeIdentityFilename is the filename to cache node identity across reboots.
 	NodeIdentityFilename = "node-identity.yaml"
+
+	// DefaultDiscoveryServiceEndpoint is the default endpoint for Talos discovery service.
+	DefaultDiscoveryServiceEndpoint = "https://discovery.talos.dev/"
 )
 
 // See https://linux.die.net/man/3/klogctl

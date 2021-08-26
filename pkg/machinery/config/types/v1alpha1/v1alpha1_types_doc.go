@@ -59,6 +59,11 @@ var (
 	FeaturesConfigDoc              encoder.Doc
 	VolumeMountConfigDoc           encoder.Doc
 	ClusterInlineManifestDoc       encoder.Doc
+	NetworkKubeSpanDoc             encoder.Doc
+	ClusterDiscoveryConfigDoc      encoder.Doc
+	DiscoveryRegistriesConfigDoc   encoder.Doc
+	RegistryKubernetesConfigDoc    encoder.Doc
+	RegistryServiceConfigDoc       encoder.Doc
 )
 
 func init() {
@@ -252,7 +257,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 22)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 23)
 	ClusterConfigDoc.Fields[0].Name = "id"
 	ClusterConfigDoc.Fields[0].Type = "string"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -345,67 +350,74 @@ func init() {
 	ClusterConfigDoc.Fields[13].Comments[encoder.LineComment] = "Scheduler server specific configuration options."
 
 	ClusterConfigDoc.Fields[13].AddExample("", clusterSchedulerExample)
-	ClusterConfigDoc.Fields[14].Name = "etcd"
-	ClusterConfigDoc.Fields[14].Type = "EtcdConfig"
+	ClusterConfigDoc.Fields[14].Name = "discovery"
+	ClusterConfigDoc.Fields[14].Type = "ClusterDiscoveryConfig"
 	ClusterConfigDoc.Fields[14].Note = ""
-	ClusterConfigDoc.Fields[14].Description = "Etcd specific configuration options."
-	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "Etcd specific configuration options."
+	ClusterConfigDoc.Fields[14].Description = "Configures cluster member discovery."
+	ClusterConfigDoc.Fields[14].Comments[encoder.LineComment] = "Configures cluster member discovery."
 
-	ClusterConfigDoc.Fields[14].AddExample("", clusterEtcdExample)
-	ClusterConfigDoc.Fields[15].Name = "coreDNS"
-	ClusterConfigDoc.Fields[15].Type = "CoreDNS"
+	ClusterConfigDoc.Fields[14].AddExample("", clusterDiscoveryExample)
+	ClusterConfigDoc.Fields[15].Name = "etcd"
+	ClusterConfigDoc.Fields[15].Type = "EtcdConfig"
 	ClusterConfigDoc.Fields[15].Note = ""
-	ClusterConfigDoc.Fields[15].Description = "Core DNS specific configuration options."
-	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[15].Description = "Etcd specific configuration options."
+	ClusterConfigDoc.Fields[15].Comments[encoder.LineComment] = "Etcd specific configuration options."
 
-	ClusterConfigDoc.Fields[15].AddExample("", clusterCoreDNSExample)
-	ClusterConfigDoc.Fields[16].Name = "externalCloudProvider"
-	ClusterConfigDoc.Fields[16].Type = "ExternalCloudProviderConfig"
+	ClusterConfigDoc.Fields[15].AddExample("", clusterEtcdExample)
+	ClusterConfigDoc.Fields[16].Name = "coreDNS"
+	ClusterConfigDoc.Fields[16].Type = "CoreDNS"
 	ClusterConfigDoc.Fields[16].Note = ""
-	ClusterConfigDoc.Fields[16].Description = "External cloud provider configuration."
-	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "External cloud provider configuration."
+	ClusterConfigDoc.Fields[16].Description = "Core DNS specific configuration options."
+	ClusterConfigDoc.Fields[16].Comments[encoder.LineComment] = "Core DNS specific configuration options."
 
-	ClusterConfigDoc.Fields[16].AddExample("", clusterExternalCloudProviderConfigExample)
-	ClusterConfigDoc.Fields[17].Name = "extraManifests"
-	ClusterConfigDoc.Fields[17].Type = "[]string"
+	ClusterConfigDoc.Fields[16].AddExample("", clusterCoreDNSExample)
+	ClusterConfigDoc.Fields[17].Name = "externalCloudProvider"
+	ClusterConfigDoc.Fields[17].Type = "ExternalCloudProviderConfig"
 	ClusterConfigDoc.Fields[17].Note = ""
-	ClusterConfigDoc.Fields[17].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
-	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+	ClusterConfigDoc.Fields[17].Description = "External cloud provider configuration."
+	ClusterConfigDoc.Fields[17].Comments[encoder.LineComment] = "External cloud provider configuration."
 
-	ClusterConfigDoc.Fields[17].AddExample("", []string{
+	ClusterConfigDoc.Fields[17].AddExample("", clusterExternalCloudProviderConfigExample)
+	ClusterConfigDoc.Fields[18].Name = "extraManifests"
+	ClusterConfigDoc.Fields[18].Type = "[]string"
+	ClusterConfigDoc.Fields[18].Note = ""
+	ClusterConfigDoc.Fields[18].Description = "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "A list of urls that point to additional manifests."
+
+	ClusterConfigDoc.Fields[18].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
 		"https://www.example.com/manifest2.yaml",
 	})
-	ClusterConfigDoc.Fields[18].Name = "extraManifestHeaders"
-	ClusterConfigDoc.Fields[18].Type = "map[string]string"
-	ClusterConfigDoc.Fields[18].Note = ""
-	ClusterConfigDoc.Fields[18].Description = "A map of key value pairs that will be added while fetching the extraManifests."
-	ClusterConfigDoc.Fields[18].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the extraManifests."
+	ClusterConfigDoc.Fields[19].Name = "extraManifestHeaders"
+	ClusterConfigDoc.Fields[19].Type = "map[string]string"
+	ClusterConfigDoc.Fields[19].Note = ""
+	ClusterConfigDoc.Fields[19].Description = "A map of key value pairs that will be added while fetching the extraManifests."
+	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "A map of key value pairs that will be added while fetching the extraManifests."
 
-	ClusterConfigDoc.Fields[18].AddExample("", map[string]string{
+	ClusterConfigDoc.Fields[19].AddExample("", map[string]string{
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	ClusterConfigDoc.Fields[19].Name = "inlineManifests"
-	ClusterConfigDoc.Fields[19].Type = "ClusterInlineManifests"
-	ClusterConfigDoc.Fields[19].Note = ""
-	ClusterConfigDoc.Fields[19].Description = "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
-	ClusterConfigDoc.Fields[19].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
-
-	ClusterConfigDoc.Fields[19].AddExample("", clusterInlineManifestsExample)
-	ClusterConfigDoc.Fields[20].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[20].Type = "AdminKubeconfigConfig"
+	ClusterConfigDoc.Fields[20].Name = "inlineManifests"
+	ClusterConfigDoc.Fields[20].Type = "ClusterInlineManifests"
 	ClusterConfigDoc.Fields[20].Note = ""
-	ClusterConfigDoc.Fields[20].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[20].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+	ClusterConfigDoc.Fields[20].Description = "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
+	ClusterConfigDoc.Fields[20].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
 
-	ClusterConfigDoc.Fields[20].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[21].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[21].Type = "bool"
+	ClusterConfigDoc.Fields[20].AddExample("", clusterInlineManifestsExample)
+	ClusterConfigDoc.Fields[21].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[21].Type = "AdminKubeconfigConfig"
 	ClusterConfigDoc.Fields[21].Note = ""
-	ClusterConfigDoc.Fields[21].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[21].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[21].Values = []string{
+	ClusterConfigDoc.Fields[21].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[21].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+
+	ClusterConfigDoc.Fields[21].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[22].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[22].Type = "bool"
+	ClusterConfigDoc.Fields[22].Note = ""
+	ClusterConfigDoc.Fields[22].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[22].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[22].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -490,7 +502,7 @@ func init() {
 			FieldName: "network",
 		},
 	}
-	NetworkConfigDoc.Fields = make([]encoder.Doc, 4)
+	NetworkConfigDoc.Fields = make([]encoder.Doc, 5)
 	NetworkConfigDoc.Fields[0].Name = "hostname"
 	NetworkConfigDoc.Fields[0].Type = "string"
 	NetworkConfigDoc.Fields[0].Note = ""
@@ -517,6 +529,13 @@ func init() {
 	NetworkConfigDoc.Fields[3].Comments[encoder.LineComment] = "Allows for extra entries to be added to the `/etc/hosts` file"
 
 	NetworkConfigDoc.Fields[3].AddExample("", networkConfigExtraHostsExample)
+	NetworkConfigDoc.Fields[4].Name = "kubespan"
+	NetworkConfigDoc.Fields[4].Type = "NetworkKubeSpan"
+	NetworkConfigDoc.Fields[4].Note = ""
+	NetworkConfigDoc.Fields[4].Description = "Configures KubeSpan feature."
+	NetworkConfigDoc.Fields[4].Comments[encoder.LineComment] = "Configures KubeSpan feature."
+
+	NetworkConfigDoc.Fields[4].AddExample("", networkKubeSpanExample)
 
 	InstallConfigDoc.Type = "InstallConfig"
 	InstallConfigDoc.Comments[encoder.LineComment] = "InstallConfig represents the installation options for preparing a node."
@@ -1944,6 +1963,105 @@ func init() {
 	ClusterInlineManifestDoc.Fields[1].Comments[encoder.LineComment] = "Manifest contents as a string."
 
 	ClusterInlineManifestDoc.Fields[1].AddExample("", "/etc/kubernetes/auth")
+
+	NetworkKubeSpanDoc.Type = "NetworkKubeSpan"
+	NetworkKubeSpanDoc.Comments[encoder.LineComment] = "NetworkKubeSpan struct describes KubeSpan configuration."
+	NetworkKubeSpanDoc.Description = "NetworkKubeSpan struct describes KubeSpan configuration."
+
+	NetworkKubeSpanDoc.AddExample("", networkKubeSpanExample)
+	NetworkKubeSpanDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "NetworkConfig",
+			FieldName: "kubespan",
+		},
+	}
+	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 1)
+	NetworkKubeSpanDoc.Fields[0].Name = "enabled"
+	NetworkKubeSpanDoc.Fields[0].Type = "bool"
+	NetworkKubeSpanDoc.Fields[0].Note = ""
+	NetworkKubeSpanDoc.Fields[0].Description = "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled."
+	NetworkKubeSpanDoc.Fields[0].Comments[encoder.LineComment] = "Enable the KubeSpan feature."
+
+	ClusterDiscoveryConfigDoc.Type = "ClusterDiscoveryConfig"
+	ClusterDiscoveryConfigDoc.Comments[encoder.LineComment] = "ClusterDiscoveryConfig struct configures cluster membership discovery."
+	ClusterDiscoveryConfigDoc.Description = "ClusterDiscoveryConfig struct configures cluster membership discovery."
+
+	ClusterDiscoveryConfigDoc.AddExample("", clusterDiscoveryExample)
+	ClusterDiscoveryConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "discovery",
+		},
+	}
+	ClusterDiscoveryConfigDoc.Fields = make([]encoder.Doc, 2)
+	ClusterDiscoveryConfigDoc.Fields[0].Name = "enabled"
+	ClusterDiscoveryConfigDoc.Fields[0].Type = "bool"
+	ClusterDiscoveryConfigDoc.Fields[0].Note = ""
+	ClusterDiscoveryConfigDoc.Fields[0].Description = "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field."
+	ClusterDiscoveryConfigDoc.Fields[0].Comments[encoder.LineComment] = "Enable the cluster membership discovery feature."
+	ClusterDiscoveryConfigDoc.Fields[1].Name = "registries"
+	ClusterDiscoveryConfigDoc.Fields[1].Type = "DiscoveryRegistriesConfig"
+	ClusterDiscoveryConfigDoc.Fields[1].Note = ""
+	ClusterDiscoveryConfigDoc.Fields[1].Description = "Configure registries used for cluster member discovery."
+	ClusterDiscoveryConfigDoc.Fields[1].Comments[encoder.LineComment] = "Configure registries used for cluster member discovery."
+
+	DiscoveryRegistriesConfigDoc.Type = "DiscoveryRegistriesConfig"
+	DiscoveryRegistriesConfigDoc.Comments[encoder.LineComment] = "DiscoveryRegistriesConfig struct configures cluster membership discovery."
+	DiscoveryRegistriesConfigDoc.Description = "DiscoveryRegistriesConfig struct configures cluster membership discovery."
+	DiscoveryRegistriesConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterDiscoveryConfig",
+			FieldName: "registries",
+		},
+	}
+	DiscoveryRegistriesConfigDoc.Fields = make([]encoder.Doc, 2)
+	DiscoveryRegistriesConfigDoc.Fields[0].Name = "kubernetes"
+	DiscoveryRegistriesConfigDoc.Fields[0].Type = "RegistryKubernetesConfig"
+	DiscoveryRegistriesConfigDoc.Fields[0].Note = ""
+	DiscoveryRegistriesConfigDoc.Fields[0].Description = "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources."
+	DiscoveryRegistriesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information"
+	DiscoveryRegistriesConfigDoc.Fields[1].Name = "service"
+	DiscoveryRegistriesConfigDoc.Fields[1].Type = "RegistryServiceConfig"
+	DiscoveryRegistriesConfigDoc.Fields[1].Note = ""
+	DiscoveryRegistriesConfigDoc.Fields[1].Description = "Service registry is using an external service to push and pull information about cluster members."
+	DiscoveryRegistriesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Service registry is using an external service to push and pull information about cluster members."
+
+	RegistryKubernetesConfigDoc.Type = "RegistryKubernetesConfig"
+	RegistryKubernetesConfigDoc.Comments[encoder.LineComment] = "RegistryKubernetesConfig struct configures Kubernetes discovery registry."
+	RegistryKubernetesConfigDoc.Description = "RegistryKubernetesConfig struct configures Kubernetes discovery registry."
+	RegistryKubernetesConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "DiscoveryRegistriesConfig",
+			FieldName: "kubernetes",
+		},
+	}
+	RegistryKubernetesConfigDoc.Fields = make([]encoder.Doc, 1)
+	RegistryKubernetesConfigDoc.Fields[0].Name = "disabled"
+	RegistryKubernetesConfigDoc.Fields[0].Type = "bool"
+	RegistryKubernetesConfigDoc.Fields[0].Note = ""
+	RegistryKubernetesConfigDoc.Fields[0].Description = "Disable Kubernetes discovery registry."
+	RegistryKubernetesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable Kubernetes discovery registry."
+
+	RegistryServiceConfigDoc.Type = "RegistryServiceConfig"
+	RegistryServiceConfigDoc.Comments[encoder.LineComment] = "RegistryServiceConfig struct configures Kubernetes discovery registry."
+	RegistryServiceConfigDoc.Description = "RegistryServiceConfig struct configures Kubernetes discovery registry."
+	RegistryServiceConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "DiscoveryRegistriesConfig",
+			FieldName: "service",
+		},
+	}
+	RegistryServiceConfigDoc.Fields = make([]encoder.Doc, 2)
+	RegistryServiceConfigDoc.Fields[0].Name = "disabled"
+	RegistryServiceConfigDoc.Fields[0].Type = "bool"
+	RegistryServiceConfigDoc.Fields[0].Note = ""
+	RegistryServiceConfigDoc.Fields[0].Description = "Disable external service discovery registry."
+	RegistryServiceConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable external service discovery registry."
+	RegistryServiceConfigDoc.Fields[1].Name = "endpoint"
+	RegistryServiceConfigDoc.Fields[1].Type = "string"
+	RegistryServiceConfigDoc.Fields[1].Note = ""
+	RegistryServiceConfigDoc.Fields[1].Description = "External service endpoint.\nexamples:\n  - value: 'constants.DefaultDiscoveryServiceEndpoint'"
+	RegistryServiceConfigDoc.Fields[1].Comments[encoder.LineComment] = "External service endpoint."
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -2138,6 +2256,26 @@ func (_ ClusterInlineManifest) Doc() *encoder.Doc {
 	return &ClusterInlineManifestDoc
 }
 
+func (_ NetworkKubeSpan) Doc() *encoder.Doc {
+	return &NetworkKubeSpanDoc
+}
+
+func (_ ClusterDiscoveryConfig) Doc() *encoder.Doc {
+	return &ClusterDiscoveryConfigDoc
+}
+
+func (_ DiscoveryRegistriesConfig) Doc() *encoder.Doc {
+	return &DiscoveryRegistriesConfigDoc
+}
+
+func (_ RegistryKubernetesConfig) Doc() *encoder.Doc {
+	return &RegistryKubernetesConfigDoc
+}
+
+func (_ RegistryServiceConfig) Doc() *encoder.Doc {
+	return &RegistryServiceConfigDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -2192,6 +2330,11 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&FeaturesConfigDoc,
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
+			&NetworkKubeSpanDoc,
+			&ClusterDiscoveryConfigDoc,
+			&DiscoveryRegistriesConfigDoc,
+			&RegistryKubernetesConfigDoc,
+			&RegistryServiceConfigDoc,
 		},
 	}
 }

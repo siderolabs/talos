@@ -724,6 +724,53 @@ func TestValidate(t *testing.T) {
 				"\t* [networking.os.device.route[4].network] \"10.0.0.0\": invalid network address\n" +
 				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n\n",
 		},
+		{
+			name: "KubeSpanNoDiscovery",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: true,
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n\n",
+		},
+		{
+			name: "DiscoveryServiceEndpoint",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: true,
+						DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{
+							RegistryService: v1alpha1.RegistryServiceConfig{
+								RegistryEndpoint: "foo",
+							},
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* cluster discovery service registry endpoint is invalid: parse \"foo\": invalid URI for request\n\n",
+		},
 	} {
 		test := test
 

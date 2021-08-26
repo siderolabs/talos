@@ -476,6 +476,11 @@ func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
 	return hosts
 }
 
+// KubeSpan implements the config.Provider interface.
+func (n *NetworkConfig) KubeSpan() config.KubeSpan {
+	return n.NetworkKubeSpan
+}
+
 // IP implements the MachineNetwork interface.
 func (e *ExtraHost) IP() string {
 	return e.HostIP
@@ -870,6 +875,11 @@ func (v *Vlan) DHCP() bool {
 // ID implements the MachineNetwork interface.
 func (v *Vlan) ID() uint16 {
 	return v.VlanID
+}
+
+// Enabled implements KubeSpan interface.
+func (k NetworkKubeSpan) Enabled() bool {
+	return k.KubeSpanEnabled
 }
 
 // Disabled implements the config.Provider interface.

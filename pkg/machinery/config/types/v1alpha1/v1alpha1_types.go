@@ -443,6 +443,19 @@ metadata:
 `),
 		},
 	}
+
+	networkKubeSpanExample = NetworkKubeSpan{
+		KubeSpanEnabled: true,
+	}
+
+	clusterDiscoveryExample = ClusterDiscoveryConfig{
+		DiscoveryEnabled: true,
+		DiscoveryRegistries: DiscoveryRegistriesConfig{
+			RegistryService: RegistryServiceConfig{
+				RegistryEndpoint: constants.DefaultDiscoveryServiceEndpoint,
+			},
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -707,6 +720,11 @@ type ClusterConfig struct {
 	//     - value: clusterSchedulerExample
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
 	//   description: |
+	//     Configures cluster member discovery.
+	//   examples:
+	//     - value: clusterDiscoveryExample
+	ClusterDiscoveryConfig ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
+	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
 	//     - value: clusterEtcdExample
@@ -843,6 +861,11 @@ type NetworkConfig struct {
 	//   examples:
 	//     - value: networkConfigExtraHostsExample
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
+	//   description: |
+	//     Configures KubeSpan feature.
+	//   examples:
+	//     - value: networkKubeSpanExample
+	NetworkKubeSpan NetworkKubeSpan `yaml:"kubespan,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.
@@ -1876,4 +1899,53 @@ type ClusterInlineManifest struct {
 	//   examples:
 	//     - value: '"/etc/kubernetes/auth"'
 	InlineManifestContents string `yaml:"contents"`
+}
+
+// NetworkKubeSpan struct describes KubeSpan configuration.
+type NetworkKubeSpan struct {
+	// description: |
+	//   Enable the KubeSpan feature.
+	//   Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
+	KubeSpanEnabled bool `yaml:"enabled"`
+}
+
+// ClusterDiscoveryConfig struct configures cluster membership discovery.
+type ClusterDiscoveryConfig struct {
+	// description: |
+	//   Enable the cluster membership discovery feature.
+	//   Cluster discovery is based on individual registries which are configured under the registries field.
+	DiscoveryEnabled bool `yaml:"enabled"`
+	// description: |
+	//   Configure registries used for cluster member discovery.
+	DiscoveryRegistries DiscoveryRegistriesConfig `yaml:"registries"`
+}
+
+// DiscoveryRegistriesConfig struct configures cluster membership discovery.
+type DiscoveryRegistriesConfig struct {
+	// description: |
+	//   Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
+	//   as annotations on the Node resources.
+	RegistryKubernetes RegistryKubernetesConfig `yaml:"kubernetes"`
+	// description: |
+	//   Service registry is using an external service to push and pull information about cluster members.
+	RegistryService RegistryServiceConfig `yaml:"service"`
+}
+
+// RegistryKubernetesConfig struct configures Kubernetes discovery registry.
+type RegistryKubernetesConfig struct {
+	// description: |
+	//   Disable Kubernetes discovery registry.
+	RegistryDisabled bool `yaml:"disabled,omitempty"`
+}
+
+// RegistryServiceConfig struct configures Kubernetes discovery registry.
+type RegistryServiceConfig struct {
+	// description: |
+	//   Disable external service discovery registry.
+	RegistryDisabled bool `yaml:"disabled,omitempty"`
+	// description: |
+	//   External service endpoint.
+	//   examples:
+	//     - value: 'constants.DefaultDiscoveryServiceEndpoint'
+	RegistryEndpoint string `yaml:"endpoint,omitempty"`
 }
