@@ -23,16 +23,21 @@ func TestSuite(t *testing.T) {
 func (suite *Suite) SetupSuite() {}
 
 func (suite *Suite) TestNew() {
-	for _, t := range []struct {
+	for _, tt := range []struct {
 		source      []byte
-		errExpected bool
-	}{} {
-		_, err := newConfig(t.source)
+		expectedErr string
+	}{
+		{
+			source:      []byte(":   \xea"),
+			expectedErr: "recovered: internal error: attempted to parse unknown event (please report): none",
+		},
+	} {
+		_, err := newConfig(tt.source)
 
-		if t.errExpected {
-			suite.Require().Error(err)
-		} else {
+		if tt.expectedErr == "" {
 			suite.Require().NoError(err)
+		} else {
+			suite.Require().EqualError(err, tt.expectedErr)
 		}
 	}
 }

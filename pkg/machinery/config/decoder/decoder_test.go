@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:scopelint
 package decoder_test
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
@@ -44,138 +44,117 @@ func init() {
 	})
 }
 
-func TestDecoder_Decode(t *testing.T) {
-	type fields struct {
-		source []byte
-	}
+func TestDecoder(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
-		name    string
-		fields  fields
-		want    []interface{}
-		wantErr bool
+		name        string
+		source      []byte
+		expected    []interface{}
+		expectedErr string
 	}{
 		{
 			name: "valid",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha1
 spec:
   test: true
 `),
-			},
-			want: []interface{}{
+			expected: []interface{}{
 				&Mock{
 					Test: true,
 				},
 			},
-			wantErr: false,
+			expectedErr: "",
 		},
 		{
 			name: "missing kind",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 version: v1alpha1
 spec:
   test: true
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing kind",
 		},
 		{
 			name: "empty kind",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind:
 version: v1alpha1
 spec:
   test: true
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing kind",
 		},
 		{
 			name: "missing version",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 spec:
   test: true
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing version",
 		},
 		{
 			name: "empty version",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version:
 spec:
   test: true
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing version",
 		},
 		{
 			name: "missing spec",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha1
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing spec",
 		},
 		{
 			name: "empty spec",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha1
 spec:
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "missing spec content",
 		},
 		{
 			name: "tab instead of spaces",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha1
 spec:
 	test: true
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "decode error: yaml: line 5: found character that cannot start any token",
 		},
 		{
 			name: "extra field",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha1
 spec:
   test: true
   extra: fail
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "unknown keys found during decoding:\nextra: fail\n",
 		},
 		{
 			name: "extra fields in map",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha2
 spec:
@@ -184,14 +163,12 @@ spec:
       test: true
       extra: me
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "unknown keys found during decoding:\nmap:\n    first:\n        extra: me\n",
 		},
 		{
 			name: "extra fields in slice",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha2
 spec:
@@ -201,14 +178,12 @@ spec:
       more: extra
       fields: here
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "unknown keys found during decoding:\nslice:\n    - fields: here\n      more: extra\n      not: working\n",
 		},
 		{
 			name: "extra zero fields in map",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha2
 spec:
@@ -217,14 +192,12 @@ spec:
       a:
         b: {}
 `),
-			},
-			want:    nil,
-			wantErr: true,
+			expected:    nil,
+			expectedErr: "unknown keys found during decoding:\nmap:\n    second:\n        a:\n            b: {}\n",
 		},
 		{
 			name: "valid nested",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha2
 spec:
@@ -236,8 +209,7 @@ spec:
     second:
       test: false
 `),
-			},
-			want: []interface{}{
+			expected: []interface{}{
 				&MockV2{
 					Map: map[string]Mock{
 						"first": {
@@ -252,11 +224,11 @@ spec:
 					},
 				},
 			},
+			expectedErr: "",
 		},
 		{
 			name: "kubelet config",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: kubelet
 version: v1alpha1
 spec:
@@ -268,34 +240,43 @@ spec:
        - rw
      source: /var/local
 `),
-			},
+			expected:    nil,
+			expectedErr: "",
 		},
 		{
 			name: "omit empty test",
-			fields: fields{
-				source: []byte(`---
+			source: []byte(`---
 kind: mock
 version: v1alpha3
 spec:
   omit: false
 `),
-			},
+			expected:    nil,
+			expectedErr: "",
+		},
+		{
+			name:        "internal error",
+			source:      []byte(":   \xea"),
+			expected:    nil,
+			expectedErr: "recovered: internal error: attempted to parse unknown event (please report): none",
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := decoder.NewDecoder(tt.fields.source)
-			got, err := d.Decode()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Decoder.Decode() error = %v, wantErr %v", err, tt.wantErr)
+		tt := tt
 
-				return
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			d := decoder.NewDecoder(tt.source)
+			actual, err := d.Decode()
+			if tt.expected != nil {
+				assert.Equal(t, tt.expected, actual)
 			}
-			if tt.want != nil {
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("Decoder.Decode() = %v, want %v", got, tt.want)
-				}
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tt.expectedErr)
 			}
 		})
 	}

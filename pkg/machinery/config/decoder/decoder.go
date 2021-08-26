@@ -60,6 +60,13 @@ func (d *Decoder) decode() ([]interface{}, error) {
 }
 
 func parse(source []byte) (decoded []interface{}, err error) {
+	// Recover from yaml.v3 panics because we rely on machine configuration loading _a lot_.
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("recovered: %v", p)
+		}
+	}()
+
 	decoded = []interface{}{}
 
 	r := bytes.NewReader(source)
