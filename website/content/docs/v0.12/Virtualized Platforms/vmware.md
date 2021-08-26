@@ -90,50 +90,18 @@ In the following example, we'll setup a HA control plane with two worker nodes.
 govc import.ova -name talos-$TALOS_VERSION /path/to/downloaded/talos.ova
 ```
 
-#### Create the Bootstrap Node
-
-We'll clone the OVA to create the bootstrap node (our first control plane node).
-
-```bash
-govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-1
-```
+#### Create the Control Plane Nodes
 
 Talos makes use of the `guestinfo` facility of VMware to provide the machine/cluster configuration.
 This can be set using the `govc vm.change` command.
 To facilitate persistent storage using the vSphere cloud provider integration with Kubernetes, `disk.enableUUID=1` is used.
 
 ```bash
+govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-1
 govc vm.change \
-  -e "guestinfo.talos.config=$(cat controlplane.yaml | base64)" \
+  -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
   -e "disk.enableUUID=1" \
   -vm /ha-datacenter/vm/control-plane-1
-```
-
-#### Update Hardware Resources for the Bootstrap Node
-
-- `-c` is used to configure the number of cpus
-- `-m` is used to configure the amount of memory (in MB)
-
-```bash
-govc vm.change \
-  -c 2 \
-  -m 4096 \
-  -vm /ha-datacenter/vm/control-plane-1
-```
-
-The following can be used to adjust the ephemeral disk size.
-
-```bash
-govc vm.disk.change -vm control-plane-1 -disk.name disk-1000-0 -size 10G
-```
-
-```bash
-govc vm.power -on control-plane-1
-```
-
-#### Create the Remaining Control Plane Nodes
-
-```bash
 govc vm.clone -on=false -vm talos-$TALOS_VERSION control-plane-2
 govc vm.change \
   -e "guestinfo.talos.config=$(base64 controlplane.yaml)" \
@@ -150,6 +118,10 @@ govc vm.change \
 govc vm.change \
   -c 2 \
   -m 4096 \
+  -vm /ha-datacenter/vm/control-plane-1
+govc vm.change \
+  -c 2 \
+  -m 4096 \
   -vm /ha-datacenter/vm/control-plane-2
 govc vm.change \
   -c 2 \
@@ -158,11 +130,13 @@ govc vm.change \
 ```
 
 ```bash
+govc vm.disk.change -vm control-plane-1 -disk.name disk-1000-0 -size 10G
 govc vm.disk.change -vm control-plane-2 -disk.name disk-1000-0 -size 10G
 govc vm.disk.change -vm control-plane-3 -disk.name disk-1000-0 -size 10G
 ```
 
 ```bash
+govc vm.power -on control-plane-1
 govc vm.power -on control-plane-2
 govc vm.power -on control-plane-3
 ```
@@ -201,6 +175,21 @@ govc vm.disk.change -vm worker-2 -disk.name disk-1000-0 -size 50G
 ```bash
 govc vm.power -on worker-1
 govc vm.power -on worker-2
+```
+
+### Bootstrap Etcd
+
+Set the `endpoints` and `nodes`:
+
+```bash
+talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>,<control plane 2 IP>,<control plane 3 IP>
+talosctl --talosconfig talosconfig config node <control plane 1 IP>
+```
+
+Bootstrap `etcd`:
+
+```bash
+talosctl --talosconfig talosconfig bootstrap
 ```
 
 ### Retrieve the `kubeconfig`
