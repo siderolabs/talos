@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
@@ -75,7 +76,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&time.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
-		&cluster.NodeIdentityController{},
+		&cluster.NodeIdentityController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&config.MachineTypeController{},
 		&config.K8sControlPlaneController{},
 		&files.EtcFileController{
@@ -90,6 +93,8 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.ManifestApplyController{},
 		&k8s.NodenameController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&kubespan.ConfigController{},
+		&kubespan.IdentityController{},
 		&network.AddressConfigController{
 			Cmdline:      procfs.ProcCmdline(),
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

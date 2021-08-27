@@ -77,6 +77,9 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			ServiceSubnet: in.ServiceNet,
 			CNI:           in.CNIConfig,
 		},
+		ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
+			DiscoveryEnabled: in.DiscoveryEnabled,
+		},
 	}
 
 	config.MachineConfig = machine

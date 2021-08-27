@@ -120,3 +120,12 @@ func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
 		return nil
 	}
 }
+
+// WithKubeSpan configures a KubeSpan interface.
+func WithKubeSpan() NetworkConfigOption {
+	return func(_ machine.Type, cfg *NetworkConfig) error {
+		cfg.NetworkKubeSpan.KubeSpanEnabled = true
+
+		return nil
+	}
+}

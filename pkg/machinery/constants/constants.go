@@ -467,6 +467,9 @@ const (
 
 	// DefaultDiscoveryServiceEndpoint is the default endpoint for Talos discovery service.
 	DefaultDiscoveryServiceEndpoint = "https://discovery.talos.dev/"
+
+	// KubeSpanIdentityFilename is the filename to cache KubeSpan identity across reboots.
+	KubeSpanIdentityFilename = "kubespan-identity.yaml"
 )
 
 // See https://linux.die.net/man/3/klogctl

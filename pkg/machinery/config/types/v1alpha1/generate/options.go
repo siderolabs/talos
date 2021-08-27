@@ -203,6 +203,15 @@ func WithRoles(roles role.Set) GenOption {
 	}
 }
 
+// WithClusterDiscovery enables cluster discovery feature.
+func WithClusterDiscovery() GenOption {
+	return func(o *GenOptions) error {
+		o.DiscoveryEnabled = true
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList               []string
@@ -222,6 +231,7 @@ type GenOptions struct {
 	VersionContract            *config.VersionContract
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 	Roles                      role.Set
+	DiscoveryEnabled           bool
 }
 
 // DefaultGenOptions returns default options.

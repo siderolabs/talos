@@ -85,6 +85,7 @@ type Input struct {
 	Debug                    bool
 	Persist                  bool
 	AllowSchedulingOnMasters bool
+	DiscoveryEnabled         bool
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint.
@@ -497,6 +498,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		AllowSchedulingOnMasters:   options.AllowSchedulingOnMasters,
 		MachineDisks:               options.MachineDisks,
 		SystemDiskEncryptionConfig: options.SystemDiskEncryptionConfig,
+		DiscoveryEnabled:           options.DiscoveryEnabled,
 	}
 
 	return input, nil

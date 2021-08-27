@@ -744,7 +744,9 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "1 error occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n\n",
+			expectedError: "3 errors occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n" +
+				"\t* .cluster.id should be set when .machine.network.kubespan is enabled\n" +
+				"\t* .cluster.secret should be set when .machine.network.kubespan is enabled\n\n",
 		},
 		{
 			name: "DiscoveryServiceEndpoint",
@@ -754,6 +756,8 @@ func TestValidate(t *testing.T) {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterID:     "foo",
+					ClusterSecret: "bar",
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							endpointURL,
@@ -770,6 +774,26 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* cluster discovery service registry endpoint is invalid: parse \"foo\": invalid URI for request\n\n",
+		},
+		{
+			name: "DiscoveryServiceClusterIDSecret",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: true,
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* cluster discovery service requires .cluster.id\n\t* cluster discovery service requires .cluster.secret\n\n",
 		},
 	} {
 		test := test

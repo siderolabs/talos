@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/files"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/perf"
 	"github.com/talos-systems/talos/pkg/resources/runtime"
@@ -62,6 +63,7 @@ func NewState() (*State, error) {
 		{config.NamespaceName, "Talos node configuration."},
 		{files.NamespaceName, "Files and file-like resources."},
 		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
+		{kubespan.NamespaceName, "KubeSpan resources."},
 		{network.NamespaceName, "Networking resources."},
 		{network.ConfigNamespaceName, "Networking configuration resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
@@ -88,6 +90,8 @@ func NewState() (*State, error) {
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
+		&kubespan.Config{},
+		&kubespan.Identity{},
 		&network.AddressStatus{},
 		&network.AddressSpec{},
 		&network.HardwareAddr{},

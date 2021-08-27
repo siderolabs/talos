@@ -7,17 +7,15 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
-	"reflect"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
@@ -60,53 +58,6 @@ func (ctrl *NodeIdentityController) Outputs() []controller.Output {
 	}
 }
 
-func loadOrNewFromState(statePath, path string, empty interface{}, generate func(interface{}) error) error {
-	fullPath := filepath.Join(statePath, path)
-
-	f, err := os.OpenFile(fullPath, os.O_RDONLY, 0)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error reading state file: %w", err)
-	}
-
-	// file doesn't exist yet, generate new value and save it
-	if f == nil {
-		if err = generate(empty); err != nil {
-			return err
-		}
-
-		f, err = os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
-		if err != nil {
-			return fmt.Errorf("error creating state file: %w", err)
-		}
-
-		defer f.Close() //nolint:errcheck
-
-		encoder := yaml.NewEncoder(f)
-		if err = encoder.Encode(empty); err != nil {
-			return fmt.Errorf("error marshaling: %w", err)
-		}
-
-		if err = encoder.Close(); err != nil {
-			return err
-		}
-
-		return f.Close()
-	}
-
-	// read existing cached value
-	defer f.Close() //nolint:errcheck
-
-	if err = yaml.NewDecoder(f).Decode(empty); err != nil {
-		return fmt.Errorf("error unmarshaling: %w", err)
-	}
-
-	if reflect.ValueOf(empty).Elem().IsZero() {
-		return fmt.Errorf("value is still zero after unmarshaling")
-	}
-
-	return f.Close()
-}
-
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
@@ -136,7 +87,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 
 		var localIdentity cluster.IdentitySpec
 
-		if err := loadOrNewFromState(ctrl.StatePath, constants.NodeIdentityFilename, &localIdentity, func(v interface{}) error {
+		if err := controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.NodeIdentityFilename), &localIdentity, func(v interface{}) error {
 			return v.(*cluster.IdentitySpec).Generate()
 		}); err != nil {
 			return fmt.Errorf("error caching node identity: %w", err)

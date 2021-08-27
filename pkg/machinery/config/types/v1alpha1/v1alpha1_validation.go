@@ -176,8 +176,18 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
-	if c.Machine().Network().KubeSpan().Enabled() && !c.Cluster().Discovery().Enabled() {
-		result = multierror.Append(result, fmt.Errorf(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
+	if c.Machine().Network().KubeSpan().Enabled() {
+		if !c.Cluster().Discovery().Enabled() {
+			result = multierror.Append(result, fmt.Errorf(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
+		}
+
+		if c.Cluster().ID() == "" {
+			result = multierror.Append(result, fmt.Errorf(".cluster.id should be set when .machine.network.kubespan is enabled"))
+		}
+
+		if c.Cluster().Secret() == "" {
+			result = multierror.Append(result, fmt.Errorf(".cluster.secret should be set when .machine.network.kubespan is enabled"))
+		}
 	}
 
 	if opts.Strict {
@@ -215,7 +225,7 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, ecp.Validate())
 	}
 
-	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate())
+	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate(c))
 
 	return result.ErrorOrNil()
 }
@@ -296,13 +306,25 @@ func (manifests ClusterInlineManifests) Validate() error {
 }
 
 // Validate the discovery config.
-func (c ClusterDiscoveryConfig) Validate() error {
+func (c ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 	var result *multierror.Error
+
+	if !c.Enabled() {
+		return nil
+	}
 
 	if c.Registries().Service().Enabled() {
 		_, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
+		}
+
+		if clusterCfg.ID() == "" {
+			result = multierror.Append(result, fmt.Errorf("cluster discovery service requires .cluster.id"))
+		}
+
+		if clusterCfg.Secret() == "" {
+			result = multierror.Append(result, fmt.Errorf("cluster discovery service requires .cluster.secret"))
 		}
 	}
 

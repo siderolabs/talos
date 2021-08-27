@@ -101,6 +101,9 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 		ExtraManifests:                []string{},
 		ClusterInlineManifests:        v1alpha1.ClusterInlineManifests{},
+		ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
+			DiscoveryEnabled: in.DiscoveryEnabled,
+		},
 	}
 
 	config.MachineConfig = machine
