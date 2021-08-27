@@ -330,6 +330,8 @@ var (
 
 	clusterEtcdImageExample = (&EtcdConfig{}).Image()
 
+	clusterEtcdSubnetExample = (&EtcdConfig{EtcdSubnet: "10.0.0.0/8"}).Subnet()
+
 	clusterCoreDNSExample = &CoreDNS{
 		CoreDNSImage: (&CoreDNS{}).Image(),
 	}
@@ -1278,6 +1280,12 @@ type EtcdConfig struct {
 	//           "advertise-client-urls": "https://1.2.3.4:2379",
 	//         }
 	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     The subnet from which the advertise URL should be.
+	//
+	//   examples:
+	//     - value: clusterEtcdSubnetExample
+	EtcdSubnet string `yaml:"subnet,omitempty"`
 }
 
 // ClusterNetworkConfig represents kube networking configuration options.

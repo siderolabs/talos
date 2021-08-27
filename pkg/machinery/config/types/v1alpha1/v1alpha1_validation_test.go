@@ -795,6 +795,46 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "2 errors occurred:\n\t* cluster discovery service requires .cluster.id\n\t* cluster discovery service requires .cluster.secret\n\n",
 		},
+		{
+			name: "GoodEtcdSubnet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					EtcdConfig: &v1alpha1.EtcdConfig{
+						EtcdSubnet: "10.0.0.0/8",
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "BadEtcdSubnet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					EtcdConfig: &v1alpha1.EtcdConfig{
+						EtcdSubnet: "10.0.0.0",
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"10.0.0.0\" is not a valid subnet\n\n",
+		},
 	} {
 		test := test
 

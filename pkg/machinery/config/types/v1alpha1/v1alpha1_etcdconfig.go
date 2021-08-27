@@ -42,3 +42,8 @@ func (e *EtcdConfig) ExtraArgs() map[string]string {
 
 	return e.EtcdExtraArgs
 }
+
+// Subnet implements the config.Etcd interface.
+func (e *EtcdConfig) Subnet() string {
+	return e.EtcdSubnet
+}

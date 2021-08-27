@@ -945,7 +945,7 @@ func init() {
 			FieldName: "etcd",
 		},
 	}
-	EtcdConfigDoc.Fields = make([]encoder.Doc, 3)
+	EtcdConfigDoc.Fields = make([]encoder.Doc, 4)
 	EtcdConfigDoc.Fields[0].Name = "image"
 	EtcdConfigDoc.Fields[0].Type = "string"
 	EtcdConfigDoc.Fields[0].Note = ""
@@ -965,6 +965,14 @@ func init() {
 	EtcdConfigDoc.Fields[2].Note = ""
 	EtcdConfigDoc.Fields[2].Description = "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`"
 	EtcdConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to etcd."
+
+	EtcdConfigDoc.Fields[3].Name = "subnet"
+	EtcdConfigDoc.Fields[3].Type = "string"
+	EtcdConfigDoc.Fields[3].Note = ""
+	EtcdConfigDoc.Fields[3].Description = "The subnet from which the advertise URL should be."
+	EtcdConfigDoc.Fields[3].Comments[encoder.LineComment] = "The subnet from which the advertise URL should be."
+
+	EtcdConfigDoc.Fields[3].AddExample("", clusterEtcdSubnetExample)
 
 	ClusterNetworkConfigDoc.Type = "ClusterNetworkConfig"
 	ClusterNetworkConfigDoc.Comments[encoder.LineComment] = "ClusterNetworkConfig represents kube networking configuration options."

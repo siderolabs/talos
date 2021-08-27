@@ -1136,6 +1136,9 @@ etcd:
     # Extra arguments to supply to etcd.
     extraArgs:
         election-timeout: "5000"
+
+    # # The subnet from which the advertise URL should be.
+    # subnet: 10.0.0.0/8
 ```
 
 
@@ -2714,6 +2717,9 @@ ca:
 # Extra arguments to supply to etcd.
 extraArgs:
     election-timeout: "5000"
+
+# # The subnet from which the advertise URL should be.
+# subnet: 10.0.0.0/8
 ```
 
 <hr />
@@ -2787,6 +2793,28 @@ Note that the following args are not allowed:
 - `peer-cert-file`
 - `peer-trusted-ca-file`
 - `peer-key-file`
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>subnet</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+The subnet from which the advertise URL should be.
+
+
+
+Examples:
+
+
+``` yaml
+subnet: 10.0.0.0/8
+```
+
 
 </div>
 

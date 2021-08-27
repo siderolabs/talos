@@ -437,7 +437,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		_, upgraded = meta.LegacyADV.ReadTag(adv.Upgrade)
 	}
 
-	primaryAddr, listenAddress, err := primaryAndListenAddresses()
+	primaryAddr, listenAddress, err := primaryAndListenAddresses(r.Config().Cluster().Etcd().Subnet())
 	if err != nil {
 		return fmt.Errorf("failed to calculate etcd addresses: %w", err)
 	}
@@ -521,7 +521,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 	// extraArgs (which may contain special overrides from the user.
 	// This needs to be refactored to allow greater binding flexibility.
 	// Issue #2121.
-	primaryAddr, listenAddress, err := primaryAndListenAddresses()
+	primaryAddr, listenAddress, err := primaryAndListenAddresses(r.Config().Cluster().Etcd().Subnet())
 	if err != nil {
 		return fmt.Errorf("failed to calculate etcd addresses: %w", err)
 	}
@@ -673,7 +673,7 @@ func IsDirEmpty(name string) (bool, error) {
 }
 
 // primaryAndListenAddresses calculates the primary (advertised) and listen (bind) addresses for etcd.
-func primaryAndListenAddresses() (primary, listen string, err error) {
+func primaryAndListenAddresses(subnet string) (primary, listen string, err error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return "", "", fmt.Errorf("failed to discover interface IP addresses: %w", err)
@@ -683,10 +683,26 @@ func primaryAndListenAddresses() (primary, listen string, err error) {
 		return "", "", errors.New("no valid unicast IP addresses on any interface")
 	}
 
-	// NOTE: we will later likely want to expose the primary IP selection to the
-	// user or build it with greater flexibility.  For now, this maintains
-	// previous behavior.
-	primary = ips[0].String()
+	if subnet == "" {
+		primary = ips[0].String()
+	} else {
+		network, err := net.ParseCIDR(subnet)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to parse subnet: %w", err)
+		}
+
+		for _, ip := range ips {
+			if network.Contains(ip) {
+				primary = ip.String()
+
+				break
+			}
+		}
+
+		if primary == "" {
+			return "", "", errors.New("no address matched the provided subnet")
+		}
+	}
 
 	// Regardless of primary selected IP, we should be liberal with our listen
 	// address, for maximum compatibility.  Again, this should probably be

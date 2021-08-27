@@ -202,6 +202,8 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 }
 
 // Validate validates the config.
+//
+//nolint:gocyclo
 func (c *ClusterConfig) Validate() error {
 	var result *multierror.Error
 
@@ -223,6 +225,12 @@ func (c *ClusterConfig) Validate() error {
 
 	if ecp := c.ExternalCloudProviderConfig; ecp != nil {
 		result = multierror.Append(result, ecp.Validate())
+	}
+
+	if c.EtcdConfig != nil && c.EtcdConfig.EtcdSubnet != "" {
+		if _, _, err := net.ParseCIDR(c.EtcdConfig.EtcdSubnet); err != nil {
+			result = multierror.Append(result, fmt.Errorf("%q is not a valid subnet", c.EtcdConfig.EtcdSubnet))
+		}
 	}
 
 	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate(c))
