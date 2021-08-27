@@ -39,6 +39,11 @@ func (ctrl *NodeAddressController) Inputs() []controller.Input {
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.NodeAddressFilterType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -83,6 +88,12 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}
 		}
 
+		// fetch list of filters
+		filters, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressFilterType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing address filters: %w", err)
+		}
+
 		addresses, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing links: %w", err)
@@ -124,6 +135,8 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		// sort current addresses
 		sort.Slice(current, func(i, j int) bool { return current[i].Compare(current[j]) < 0 })
 
+		touchedIDs := make(map[resource.ID]struct{})
+
 		// update output resources
 		if !defaultAddress.IsZero() {
 			if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID), func(r resource.Resource) error {
@@ -141,42 +154,135 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}); err != nil {
 				return fmt.Errorf("error updating output resource: %w", err)
 			}
+
+			touchedIDs[network.NodeAddressDefaultID] = struct{}{}
 		}
 
-		if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressCurrentID), func(r resource.Resource) error {
-			spec := r.(*network.NodeAddress).TypedSpec()
-
-			spec.Addresses = current
-
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating output resource: %w", err)
+		if err = updateCurrentAddresses(ctx, r, network.NodeAddressCurrentID, current); err != nil {
+			return err
 		}
 
-		if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressAccumulativeID), func(r resource.Resource) error {
-			spec := r.(*network.NodeAddress).TypedSpec()
+		touchedIDs[network.NodeAddressCurrentID] = struct{}{}
 
-			for _, ip := range accumulative {
-				ip := ip
+		if err = updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative); err != nil {
+			return err
+		}
 
-				// find insert position using binary search
-				i := sort.Search(len(spec.Addresses), func(j int) bool {
-					return !spec.Addresses[j].Less(ip)
-				})
+		touchedIDs[network.NodeAddressAccumulativeID] = struct{}{}
 
-				if i < len(spec.Addresses) && spec.Addresses[i].Compare(ip) == 0 {
-					continue
-				}
+		// update filtered resources
+		for _, res := range filters.Items {
+			filterID := res.Metadata().ID()
+			filter := res.(*network.NodeAddressFilter).TypedSpec()
 
-				// insert at position i
-				spec.Addresses = append(spec.Addresses, netaddr.IP{})
-				copy(spec.Addresses[i+1:], spec.Addresses[i:])
-				spec.Addresses[i] = ip
+			filteredCurrent := filterIPs(current, filter.IncludeSubnets, filter.ExcludeSubnets)
+			filteredAccumulative := filterIPs(accumulative, filter.IncludeSubnets, filter.ExcludeSubnets)
+
+			if err = updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID), filteredCurrent); err != nil {
+				return err
 			}
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating output resource: %w", err)
+			if err = updateAccumulativeAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID), filteredAccumulative); err != nil {
+				return err
+			}
+
+			touchedIDs[network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID)] = struct{}{}
+			touchedIDs[network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID)] = struct{}{}
+		}
+
+		// list keys for cleanup
+		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing resources: %w", err)
+		}
+
+		for _, res := range list.Items {
+			if res.Metadata().Owner() != ctrl.Name() {
+				continue
+			}
+
+			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
+				if err = r.Destroy(ctx, res.Metadata()); err != nil {
+					return fmt.Errorf("error cleaning up specs: %w", err)
+				}
+			}
 		}
 	}
+}
+
+func filterIPs(addrs []netaddr.IP, includeSubnets, excludeSubnets []netaddr.IPPrefix) []netaddr.IP {
+	result := make([]netaddr.IP, 0, len(addrs))
+
+outer:
+	for _, ip := range addrs {
+		if len(includeSubnets) > 0 {
+			matchesAny := false
+
+			for _, subnet := range includeSubnets {
+				if subnet.Contains(ip) {
+					matchesAny = true
+
+					break
+				}
+			}
+
+			if !matchesAny {
+				continue outer
+			}
+		}
+
+		for _, subnet := range excludeSubnets {
+			if subnet.Contains(ip) {
+				continue outer
+			}
+		}
+
+		result = append(result, ip)
+	}
+
+	return result
+}
+
+func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netaddr.IP) error {
+	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
+		spec := r.(*network.NodeAddress).TypedSpec()
+
+		spec.Addresses = current
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating output resource: %w", err)
+	}
+
+	return nil
+}
+
+func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netaddr.IP) error {
+	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
+		spec := r.(*network.NodeAddress).TypedSpec()
+
+		for _, ip := range accumulative {
+			ip := ip
+
+			// find insert position using binary search
+			i := sort.Search(len(spec.Addresses), func(j int) bool {
+				return !spec.Addresses[j].Less(ip)
+			})
+
+			if i < len(spec.Addresses) && spec.Addresses[i].Compare(ip) == 0 {
+				continue
+			}
+
+			// insert at position i
+			spec.Addresses = append(spec.Addresses, netaddr.IP{})
+			copy(spec.Addresses[i+1:], spec.Addresses[i:])
+			spec.Addresses[i] = ip
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating output resource: %w", err)
+	}
+
+	return nil
 }

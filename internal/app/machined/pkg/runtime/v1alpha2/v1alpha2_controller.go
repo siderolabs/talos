@@ -80,6 +80,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&config.MachineTypeController{},
+		&config.K8sAddressFilterController{},
 		&config.K8sControlPlaneController{},
 		&files.EtcFileController{
 			EtcPath:    "/etc",

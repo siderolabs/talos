@@ -9,3 +9,9 @@ import "github.com/cosi-project/runtime/pkg/resource"
 
 // ControlPlaneNamespaceName contains resources supporting Kubernetes control plane.
 const ControlPlaneNamespaceName resource.Namespace = "controlplane"
+
+// NodeAddressFilterOnlyK8s is the ID for the node address filter which leaves only Kubernetes IPs.
+const NodeAddressFilterOnlyK8s = "only-k8s"
+
+// NodeAddressFilterNoK8s is the ID for the node address filter which removes any Kubernetes IPs.
+const NodeAddressFilterNoK8s = "no-k8s"

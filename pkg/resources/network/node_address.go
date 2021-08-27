@@ -97,3 +97,8 @@ func (r *NodeAddress) ResourceDefinition() meta.ResourceDefinitionSpec {
 func (r *NodeAddress) TypedSpec() *NodeAddressSpec {
 	return &r.spec
 }
+
+// FilteredNodeAddressID returns resource ID for node addresses with filter applied.
+func FilteredNodeAddressID(kind resource.ID, filterID string) resource.ID {
+	return fmt.Sprintf("%s-%s", kind, filterID)
+}

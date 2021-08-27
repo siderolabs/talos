@@ -142,7 +142,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.ToString(network.NodeAddressAccumulativeID),
+			ID:        pointer.ToString(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -240,7 +240,8 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
 
-		addressesResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressAccumulativeID, resource.VersionUndefined))
+		addressesResource, err := r.Get(ctx,
+			resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue

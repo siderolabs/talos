@@ -9,7 +9,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -21,9 +23,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
@@ -49,8 +53,6 @@ func (suite *NodeAddressSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressStatusController{}))
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkStatusController{}))
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.NodeAddressController{}))
 
 	suite.startRuntime()
@@ -99,7 +101,10 @@ func (suite *NodeAddressSuite) assertAddresses(requiredIDs []string, check func(
 }
 
 func (suite *NodeAddressSuite) TestDefaults() {
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressStatusController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkStatusController{}))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertAddresses([]string{
 				network.NodeAddressDefaultID,
@@ -115,9 +120,100 @@ func (suite *NodeAddressSuite) TestDefaults() {
 				}), "addresses %s", addrs)
 
 				if r.Metadata().ID() == network.NodeAddressDefaultID {
-					suite.Assert().Len(addrs, 1)
+					if len(addrs) != 1 {
+						return fmt.Errorf("there should be only one default address")
+					}
 				} else {
-					suite.Assert().GreaterOrEqual(len(addrs), 1)
+					if len(addrs) == 0 {
+						return fmt.Errorf("there should be some addresses")
+					}
+				}
+
+				return nil
+			})
+		}))
+}
+
+//nolint:gocyclo
+func (suite *NodeAddressSuite) TestFilters() {
+	linkUp := network.NewLinkStatus(network.NamespaceName, "eth0")
+	linkUp.TypedSpec().Type = nethelpers.LinkEther
+	linkUp.TypedSpec().LinkState = true
+	linkUp.TypedSpec().Index = 1
+	suite.Require().NoError(suite.state.Create(suite.ctx, linkUp))
+
+	linkDown := network.NewLinkStatus(network.NamespaceName, "eth1")
+	linkDown.TypedSpec().Type = nethelpers.LinkEther
+	linkDown.TypedSpec().LinkState = false
+	linkDown.TypedSpec().Index = 2
+	suite.Require().NoError(suite.state.Create(suite.ctx, linkDown))
+
+	newAddress := func(addr netaddr.IPPrefix, link *network.LinkStatus) {
+		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID(link.Metadata().ID(), addr))
+		addressStatus.TypedSpec().Address = addr
+		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
+		addressStatus.TypedSpec().LinkIndex = link.TypedSpec().Index
+		suite.Require().NoError(suite.state.Create(suite.ctx, addressStatus))
+	}
+
+	for _, addr := range []string{"10.0.0.1/8", "25.3.7.9/32", "2001:470:6d:30e:4a62:b3ba:180b:b5b8/64", "127.0.0.1/8"} {
+		newAddress(netaddr.MustParseIPPrefix(addr), linkUp)
+	}
+
+	for _, addr := range []string{"10.0.0.2/8", "192.168.3.7/24"} {
+		newAddress(netaddr.MustParseIPPrefix(addr), linkDown)
+	}
+
+	filter1 := network.NewNodeAddressFilter(network.NamespaceName, "no-k8s")
+	filter1.TypedSpec().ExcludeSubnets = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.0.0.0/8")}
+	suite.Require().NoError(suite.state.Create(suite.ctx, filter1))
+
+	filter2 := network.NewNodeAddressFilter(network.NamespaceName, "only-k8s")
+	filter2.TypedSpec().IncludeSubnets = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.0.0.0/8"), netaddr.MustParseIPPrefix("192.168.0.0/16")}
+	suite.Require().NoError(suite.state.Create(suite.ctx, filter2))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertAddresses([]string{
+				network.NodeAddressDefaultID,
+				network.NodeAddressCurrentID,
+				network.NodeAddressAccumulativeID,
+				network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()),
+				network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()),
+				network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()),
+				network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter2.Metadata().ID()),
+			}, func(r *network.NodeAddress) error {
+				addrs := r.TypedSpec().Addresses
+
+				switch r.Metadata().ID() {
+				case network.NodeAddressDefaultID:
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.NodeAddressCurrentID:
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 25.3.7.9 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.NodeAddressAccumulativeID:
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 10.0.0.2 25.3.7.9 192.168.3.7 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()):
+					if !reflect.DeepEqual(addrs, ipList("25.3.7.9 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()):
+					if !reflect.DeepEqual(addrs, ipList("25.3.7.9 192.168.3.7 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()):
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
+				case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter2.Metadata().ID()):
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 10.0.0.2 192.168.3.7")) {
+						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+					}
 				}
 
 				return nil
@@ -139,4 +235,14 @@ func (suite *NodeAddressSuite) TearDownTest() {
 
 func TestNodeAddressSuite(t *testing.T) {
 	suite.Run(t, new(NodeAddressSuite))
+}
+
+func ipList(ips string) []netaddr.IP {
+	var result []netaddr.IP //nolint:prealloc
+
+	for _, ip := range strings.Split(ips, " ") {
+		result = append(result, netaddr.MustParseIP(ip))
+	}
+
+	return result
 }
