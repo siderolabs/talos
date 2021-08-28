@@ -19,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/gcp"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/scaleway"
@@ -71,6 +72,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &metal.Metal{}
 	case "openstack":
 		p = &openstack.Openstack{}
+	case "nocloud":
+		p = &nocloud.Nocloud{}
 	case "packet":
 		p = &packet.Packet{}
 	case "scaleway":
