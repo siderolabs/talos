@@ -22,3 +22,18 @@ weight: 6
 | [Sidero](https://www.sidero.dev/)                                                                              | >= 0.3.0                           | >= 0.3.0                           |
 | **UI**                                                                                                         |                                    |                                    |
 | [Theila](https://github.com/talos-systems/theila)                                                              | ✓                                  | ✓                                  |
+
+## Platform Tiers
+
+Tier 1: Automated tests, high-priority fixes.
+Tier 2: Tested from time to time, medium-priority bugfixes.
+Tier 3: Not tested by core Talos team, community tested.
+
+| Platform | Tier |
+|-----------------|
+| AWS      |   1  |
+| GCP      |   1  |
+| Metal    |   1  |
+| Azure    |   2  |
+| VMware   |   2  |
+
