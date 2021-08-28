@@ -84,7 +84,7 @@ func runImageCmd() (err error) {
 
 	if options.ConfigSource == "" {
 		switch p.Name() {
-		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "scaleway", "upcloud", "vultr":
+		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "nocloud", "scaleway", "upcloud", "vultr":
 			options.ConfigSource = constants.ConfigNone
 		case "vmware":
 			options.ConfigSource = constants.ConfigGuestInfo
@@ -141,6 +141,19 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 		}
 	case "hcloud":
 		file = filepath.Join(outputArg, fmt.Sprintf("hcloud-%s.raw", arch))
+
+		err = os.Rename(img, file)
+		if err != nil {
+			return err
+		}
+
+		log.Println("compressing image")
+
+		if err = xz(file); err != nil {
+			return err
+		}
+	case "nocloud":
+		file = filepath.Join(outputArg, fmt.Sprintf("nocloud-%s.raw", arch))
 
 		err = os.Rename(img, file)
 		if err != nil {
