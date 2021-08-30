@@ -30,13 +30,13 @@ module.exports = {
       {
         version: "v0.12",
         url: "/docs/v0.12/",
-        latest: false,
-        prerelease: true,
+        latest: true,
+        prerelease: false,
       },
       {
         version: "v0.11",
         url: "/docs/v0.11/",
-        latest: true,
+        latest: false,
         prerelease: false,
       },
       {

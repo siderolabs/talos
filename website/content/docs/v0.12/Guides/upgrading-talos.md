@@ -12,21 +12,15 @@ To see a live demo of this writeup, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-## Upgrading from Talos 0.9
+## Upgrading from Talos 0.11
 
-TBD
-
-### After Upgrade to 0.10
-
-TBD
-
-### After Upgrade to 0.11
-
-TBD
+Only for clusters bootstrapped with Talos <= 0.8: please make sure control plane was converted to use static pods
+(first introduced in Talos 0.9), as Talos 0.12 drops support for self-hosted control plane.
 
 ### After Upgrade to 0.12
 
-TBD
+There are no special items to follow after the upgrade to Talos 0.12, please see section on machine configuration changes
+below.
 
 ## `talosctl` Upgrade
 
@@ -68,4 +62,28 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+There are two new machine configuration fields introduced in Talos 0.12 which are not being used in Talos 0.12 yet,
+but they will be used to support additional features in Talos 0.13:
+
+* `.cluster.id`: 32 random bytes, base64 encoded
+* `.cluster.secret`: 32 random bytes, base64 encoded
+
+Values of these fields should be kept in sync across all nodes of the cluster (control plane and worker nodes).
+
+These fields can be added to the machine configuration of the running Talos cluster upgraded to Talos 0.12 with the following commands
+(doesn't require a reboot):
+
+```bash
+$ CLUSTER_ID=`dd if=/dev/urandom of=/dev/stdout bs=1 count=32 | base64`
+32+0 records in
+32+0 records out
+32 bytes copied, 0,000180749 s, 177 kB/s
+$ CLUSTER_SECRET=`dd if=/dev/urandom of=/dev/stdout bs=1 count=32 | base64`
+32+0 records in
+32+0 records out
+32 bytes copied, 0,000180749 s, 177 kB/s
+$ talosctl -n <IP> patch mc --immediate --patch "[{\"op\": \"add\", \"path\": \"/cluster/id\", \"value\": \"$CLUSTER_ID\"},{\"op\": \"add\", \"path\": \"/cluster/secret\", \"value\": \"$CLUSTER_SECRET\"}]"
+patched mc at the node <IP>
+```
+
+Repeat the last command for every node of the cluster.

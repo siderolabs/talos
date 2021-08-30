@@ -48,7 +48,7 @@ the default values overwritten by Talos.
 
 ### Equinix Metal
 
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 
 ### Support for Self-hosted Control Plane Dropped

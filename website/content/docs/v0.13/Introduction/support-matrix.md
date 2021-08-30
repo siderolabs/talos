@@ -5,7 +5,7 @@ weight: 6
 
 | Talos Version                                                                                                  | 0.13                               | 0.12                               |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2021-10-15 (TBD)                   | 2021-08-30 (0.12.0)                |
+| Release Date                                                                                                   | 2021-10-15 (TBD)                   | 2021-08-31 (0.12.0)                |
 | End of Community Support                                                                                       | 0.14.0 release (2021-12-15, TBD)   | 2021-10-15                         |
 | Enterprise Support                                                                                             | [offered by Talos Systems Inc.](https://www.talos-systems.com/support/) |
 | Kubernetes                                                                                                     | 1.22, 1.21, 1.20                   | 1.22, 1.21, 1.20                    |
