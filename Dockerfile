@@ -478,7 +478,7 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.14.1 AS unicode-pf2
+FROM alpine:3.14.2 AS unicode-pf2
 RUN apk add --no-cache --update grub
 
 FROM scratch AS install-artifacts-amd64
@@ -628,7 +628,7 @@ RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/to
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:16.7.0-alpine AS lint-markdown
+FROM node:16.8.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
