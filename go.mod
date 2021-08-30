@@ -39,7 +39,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/fatih/color v1.12.0
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
-	github.com/fsnotify/fsnotify v1.5.0
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/gizak/termui/v3 v3.1.0
