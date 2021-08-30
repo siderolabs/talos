@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"golang.org/x/sys/unix"
@@ -206,13 +207,14 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return err
 	}
 
-	// record mount as the resources
+	// record mount as the resource
 	mountStatus := runtimeres.NewMountStatus(v1alpha1.NamespaceName, label)
 	mountStatus.TypedSpec().Source = mountpoint.Source()
 	mountStatus.TypedSpec().Target = mountpoint.Target()
 	mountStatus.TypedSpec().FilesystemType = mountpoint.Fstype()
 
-	if err = r.State().V1Alpha2().Resources().Create(context.Background(), mountStatus); err != nil {
+	// ignore the error if the MountStatus already exists, as many mounts are silently skipped with the flag SkipIfMounted
+	if err = r.State().V1Alpha2().Resources().Create(context.Background(), mountStatus); err != nil && !state.IsConflictError(err) {
 		return fmt.Errorf("error creating mount status resource: %w", err)
 	}
 
