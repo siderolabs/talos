@@ -8,7 +8,7 @@ match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 # previous release
 previous = "v0.11.0"
 
-pre_release = true
+pre_release = false
 
 preface = """\
 """
@@ -99,7 +99,7 @@ Talos can be configued to use Kubernetes 1.21 or CAPI v0.4.x components can be u
     [notes.equinixmetal]
         title = "Equinix Metal"
         description = """\
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 """
 

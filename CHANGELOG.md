@@ -1,3 +1,382 @@
+## [Talos 0.12.0](https://github.com/talos-systems/talos/releases/tag/v0.12.0) (2021-08-31)
+
+Welcome to the v0.12.0 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Support for Self-hosted Control Plane Dropped
+
+> **Note**: This item only applies to clusters bootstrapped with Talos <= 0.8.
+
+Talos 0.12 completely removes support for self-hosted Kubernetes control plane (bootkube-based).
+Talos 0.9 introduced support for Talos-managed control plane and provided migration path to convert self-hosted control plane
+to Talos-managed static pods.
+Automated and manual conversion process is available in Talos from 0.9.x to 0.11.x.
+For clusters bootstrapped with bootkube (Talos <= 0.8), please make sure control plane is converted to Talos-managed
+before upgrading to Talos 0.12.
+Current control plane status can be checked with `talosctl get bootstrapstatus` before performing upgrade to Talos 0.12.
+
+
+### Cluster API v0.3.x
+
+Cluster API v0.3.x (v1alpha3) is not compatible with Kubernetes 1.22 used by default in Talos 0.12.
+Talos can be configued to use Kubernetes 1.21 or CAPI v0.4.x components can be used instead.
+
+
+### Machine Config Validation
+
+Unknown keys in the machine config now make the config invalid,
+so any attempt to apply/edit the configuration with the unknown keys will lead into an error.
+
+
+### Sysctl Configuration
+
+Sysctl Kernel Params configuration was completely rewritten to be based on controllers and resources,
+which makes it possible to apply `.machine.sysctls` in immediate mode (without a reboot).
+`talosctl get kernelparams` returns merged list of KSPP, Kubernetes and user defined params along with
+the default values overwritten by Talos.
+
+
+### Equinix Metal
+
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
+Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
+
+
+### etcd
+
+New etcd cluster members are now joined in [learner mode](https://etcd.io/docs/v3.4/learning/design-learner/), which improves cluster resiliency
+to member join issues.
+
+
+### Join Node Type
+
+Node type `join` was renamed to `worker` for clarity. The old value is still accepted in the machine configuration but deprecated.
+`talosctl gen config` now generates `worker.yaml` instead of `join.yaml`.
+
+
+### Networking
+
+* multiple static addresses can be specified for the interface with new `.addresses` field (old `.cidr` field is deprecated now)
+* static addresses can be set on interfaces configured with DHCP
+
+
+### Performance
+
+* machined uses less memory and CPU time
+* more disk encryption options are exposed via the machine configuration
+* disk partitions are now aligned properly with minimum I/O size
+* Talos system processes are moved under proper cgroups, resource metrics are now available via the kubelet
+* OOM score is set on the system processes making sure they are killed last under memory pressure
+
+
+### Security
+
+* etcd PKI moved to `/system/secrets`
+* kubelet bootstrap CSR auto-signing scoped to kubelet bootstrap tokens only
+* enforce default seccomp profile on all system containers
+* run system services apid, trustd, and etcd as non-root users
+
+
+### Component Updates
+
+* Linux: 5.10.58
+* Kubernetes: 1.22.1
+* containerd: 1.5.5
+* runc: 1.0.1
+* GRUB: 2.06
+* Talos is built with Go 1.16.7
+
+
+### Kubernetes Upgrade
+
+`talosctl upgrade-k8s` now checks if cluster has any resources which are going to be removed or migrated to the new version after upgrade
+and shows that as a warning before the upgrade.
+Additionally, `upgrade-k8s` command now has `--dry-run` flag that only prints out warnings and upgrade summary.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Andrey Smirnov
+* Alexey Palazhchenko
+* Serge Logvinov
+* Artem Chernyshev
+* Artem Chernyshev
+* Spencer Smith
+* Alexey Palazhchenko
+* dependabot[bot]
+* Andrew Rynhard
+* Noel Georgi
+* Rui Lopes
+* Caleb Woodbine
+* Seán C McCord
+
+### Changes
+<details><summary>135 commits</summary>
+<p>
+
+* [`75ce68d9`](https://github.com/talos-systems/talos/commit/75ce68d909309e019c4a37ce5e7bcb6eda8aa1e4) release(v0.12.0-beta.2): prepare release
+* [`87c25809`](https://github.com/talos-systems/talos/commit/87c258093a17dd5725b84377a3f42270c977df63) fix: allow updating diskSelector option
+* [`eba00723`](https://github.com/talos-systems/talos/commit/eba00723d3df0d8be30c9d3931421117ea74deea) fix: don't extract nil IPs in the GCP platform
+* [`3a38f0de`](https://github.com/talos-systems/talos/commit/3a38f0deda18906b785b1ad76872a78b689eb171) fix: properly handle omitempty fields in the validator
+* [`2e220cb6`](https://github.com/talos-systems/talos/commit/2e220cb65876e5ee0153afe67e1929beacd27152) fix: validate IP address returned as HTTP response in platform code
+* [`b63a2ea0`](https://github.com/talos-systems/talos/commit/b63a2ea0e230046fca327c420250b25d722febf5) fix: don't allow bootstrap if etcd data directory is not empty
+* [`cd053284`](https://github.com/talos-systems/talos/commit/cd0532848f80625c67ff98947d206c7faf4d27c7) fix: cgroup delegate
+* [`e22301e7`](https://github.com/talos-systems/talos/commit/e22301e762e6f112d64d9fb3a91cb9b4db877b4e) chore: fix arm64 reproducibility issues
+* [`30e1ff61`](https://github.com/talos-systems/talos/commit/30e1ff614220c4531e135cef89bd1519fd2b1e27) release(v0.12.0-beta.1): prepare release
+* [`7630d998`](https://github.com/talos-systems/talos/commit/7630d998fbbbd0be011ebab1173d09411653ad5a) chore: don't require single commit per PR
+* [`208ac9ac`](https://github.com/talos-systems/talos/commit/208ac9ac450c615b561fb4be0d398edc738d10d9) feat: update Kubernetes to 1.22.1
+* [`e84e2902`](https://github.com/talos-systems/talos/commit/e84e2902c1b832c270af362a0ae0870c38ecec41) fix: don't support cgroups nesting in process runner
+* [`2cf53fb3`](https://github.com/talos-systems/talos/commit/2cf53fb3408d244f76d67da164387be75afdfc77) fix: do not set KSPP kernel params in container mode
+* [`1908f57c`](https://github.com/talos-systems/talos/commit/1908f57c6b6aadc1b558d672917f9dceb24301bb) test: adapt tests to the cgroupsv2
+* [`4bb84ea0`](https://github.com/talos-systems/talos/commit/4bb84ea0c6d63abe2020d2b9530b19ce2ad9f71d) fix: extramount should have `yaml:",inline"` tag
+* [`e948560b`](https://github.com/talos-systems/talos/commit/e948560be1b0c479fad72ba734cf66fe987ba0ee) fix: don't panic if the machine config doesn't have network (EM)
+* [`a5726f2e`](https://github.com/talos-systems/talos/commit/a5726f2e690d0c84f83a6dfb900306e0a9e818c2) chore: do not check that go mod tidy gives empty output
+* [`67494923`](https://github.com/talos-systems/talos/commit/67494923be54c308adca1ccae490a14fec906894) fix: make sure file mode is same (reproducibility issue)
+* [`65292880`](https://github.com/talos-systems/talos/commit/65292880a0496b55bb87b6fbd13a10679e6c990b) feat: check if cluster has deprecated resources versions
+* [`7a0eb5fa`](https://github.com/talos-systems/talos/commit/7a0eb5fa25e5baae9b9fa897bba6b6dd238a91a8) release(v0.12.0-beta.0): prepare release
+* [`c601dc73`](https://github.com/talos-systems/talos/commit/c601dc73f6d08c031afaf4193c2fe5740b9f29c5) chore: update versions to final release tags
+* [`82731124`](https://github.com/talos-systems/talos/commit/82731124b2c7ce08e740fbcd350abaceeb08b103) chore: run e2e-qemu test against Talos with race-detector enabled
+* [`37ea2c9c`](https://github.com/talos-systems/talos/commit/37ea2c9ca240c92f93c61ca640e9b4bb27bf91ec) feat: support for route source addresses in the configuration
+* [`0ef8f83a`](https://github.com/talos-systems/talos/commit/0ef8f83acfa509700b241e86ebdaf79b5b9a517d) chore: bump dependencies via dependabot
+* [`2108fd7b`](https://github.com/talos-systems/talos/commit/2108fd7b6c90c4266518a0c28398f9b74a53968b) feat: update Linux to 5.10.58 and many pkgs updates
+* [`6ee690d9`](https://github.com/talos-systems/talos/commit/6ee690d9a778c559b5cc528147bb0db5e808914e) release(v0.12.0-alpha.1): prepare release
+* [`1ed5e545`](https://github.com/talos-systems/talos/commit/1ed5e545385e160fe3b61e6dbbcaa8a701437b62) feat: add ClusterID and ClusterSecret
+* [`228b3761`](https://github.com/talos-systems/talos/commit/228b376163597cd825e4a142e6b4bdea0f870365) chore: run etcd as non-root user
+* [`3518219b`](https://github.com/talos-systems/talos/commit/3518219bff44f71a60ad8e448e518844d1b933fd) chore: drop deprecated `--no-reboot` param and KernelCurrentRoot const
+* [`33d1c3e4`](https://github.com/talos-systems/talos/commit/33d1c3e42582649f25a44fc3c86007bcebbc80b3) chore: run apid and trustd services as non-root user
+* [`dadaa65d`](https://github.com/talos-systems/talos/commit/dadaa65d542171d25317840fcf35fa3979cf0632) feat: print uid/gid for the files in `ls -l`
+* [`e6fa401b`](https://github.com/talos-systems/talos/commit/e6fa401b663d0ebd4374c9e47a7ca6150a4756cd) fix: enable seccomp default profile by default
+* [`8ddbcc96`](https://github.com/talos-systems/talos/commit/8ddbcc9643113c15de538fc070b7053d1c6efdfc) feat: validate if extra fields present in the decoder
+* [`5b57a980`](https://github.com/talos-systems/talos/commit/5b57a98008c64d7cb07729fd9b31a0e3493c289c) chore: update Go to 1.16.7, Linux to 5.10.57
+* [`eefe1c21`](https://github.com/talos-systems/talos/commit/eefe1c21c30fa2cd281fc5524b2e88553f6fdfcc) feat: add new etcd members in learner mode
+* [`b1c66fba`](https://github.com/talos-systems/talos/commit/b1c66fbad113400729cf4db806e30192bf7e0462) feat: implement Equinix Metal support for virtual (shared) IP
+* [`62242f97`](https://github.com/talos-systems/talos/commit/62242f979e1921ed8abfa06a26564ea0bf8a5fb3) chore: require GPG signatures
+* [`faecae44`](https://github.com/talos-systems/talos/commit/faecae44fde60fc626ccb01da3b221519a9d41d7) feat: make ISO builds reproducible
+* [`887c2326`](https://github.com/talos-systems/talos/commit/887c2326a4f81c846e3aa3bd1787bc840877e494) release(v0.12.0-alpha.0): prepare release
+* [`a15f0184`](https://github.com/talos-systems/talos/commit/a15f01844fdaf0d3e2dad2750d9353d03e18dea2) fix: move etcd PKI under /system/secrets
+* [`eb02afe1`](https://github.com/talos-systems/talos/commit/eb02afe18be63bf483a0467f655611561aef10f6) fix: match correctly routes on the address family
+* [`cb948acc`](https://github.com/talos-systems/talos/commit/cb948accfeca13c57b3b512dc8a06425989294f9) feat: allow multiple addresses per interface
+* [`e030b2e8`](https://github.com/talos-systems/talos/commit/e030b2e8bb0a65abf4e1f7b5f27348631210ebc4) chore: use k8s 1.21.3 in CAPI tests for now
+* [`e08b4f8f`](https://github.com/talos-systems/talos/commit/e08b4f8f9e72f8db1116b4bbe395d49b4bccb460) feat: implement sysctl controllers
+* [`fdf6b243`](https://github.com/talos-systems/talos/commit/fdf6b2433c40613bcb039852a96196dbe9b7b5e2) chore: revert "improve artifacts generation reproducibility"
+* [`b68ed1eb`](https://github.com/talos-systems/talos/commit/b68ed1eb896039ec1319db2e3d6d364034c86863) fix: make route resources ID match closer routing table primary key
+* [`585f6337`](https://github.com/talos-systems/talos/commit/585f633710abb7a6d863b54c37aa65c50a3c7312) fix: correctly handle nodoc for struct fields
+* [`f2d394dc`](https://github.com/talos-systems/talos/commit/f2d394dc42f9ec704050db0a8a928a889483ce3e) docs: add AMIs for v0.11.5
+* [`d0970cbf`](https://github.com/talos-systems/talos/commit/d0970cbfd696b28b201b232a03da2119f664afbd) feat: bootstrap token limit
+* [`5285a46d`](https://github.com/talos-systems/talos/commit/5285a46d78ef2fc76594aad4ad4acb75312bc0a7) fix: maintenance mode reason message
+* [`009d15e8`](https://github.com/talos-systems/talos/commit/009d15e8dc6e75eca6b5963dddf8063941099f14) chore: use etcd client TryLock function on upgrade
+* [`4dae9ea5`](https://github.com/talos-systems/talos/commit/4dae9ea55c087c28a9d7a8d241e0ec3a7a1b8ca3) chore: use vtprotobuf compiled marshaling in Talos API
+* [`7ca5749a`](https://github.com/talos-systems/talos/commit/7ca5749ad4267701ce639d0f0d91c10a7f9c1d3d) chore: bump dependencies via dependabot
+* [`b2507b41`](https://github.com/talos-systems/talos/commit/b2507b41d250b989b9c13ad23e16202cd53a18d2) chore: improve artifacts generation reproducibility
+* [`1f7dad23`](https://github.com/talos-systems/talos/commit/1f7dad234b480c7a5e3484ccf10180747c979036) chore: update PKGS version (512 cpus, new ca-certficates)
+* [`1a2e78a2`](https://github.com/talos-systems/talos/commit/1a2e78a24e997241c4cd18dfac3c2d971ba78116) fix: update go-blockdevice
+* [`6d6ed117`](https://github.com/talos-systems/talos/commit/6d6ed1170f3f28e7f559ccdf64e7c34dfee022a0) chore: use parallel xz with higher compression level
+* [`571f7db1`](https://github.com/talos-systems/talos/commit/571f7db1bb44a0dcb5e373f9c37396d50eb0e8f4) chore: workaround GitHub new release notes limit
+* [`09d70b7e`](https://github.com/talos-systems/talos/commit/09d70b7eafb18343eb4ca57d7f8b84e4ccd2fcfb) feat: update Kubernetes to v1.22.0
+* [`f25f10e7`](https://github.com/talos-systems/talos/commit/f25f10e73ec534acd7cc483f254d612d8a7c1858) feat: add an option to disable PSP
+* [`7c6e4cf2`](https://github.com/talos-systems/talos/commit/7c6e4cf230ba1f30da664374c41c934d1e6620bc) feat: allow both DHCP and static addressing for the interface
+* [`3c566dbc`](https://github.com/talos-systems/talos/commit/3c566dbc30595467a3789707c6e993aa92f36df6) fix: remove admission plugins enabled by default from the list
+* [`69ead373`](https://github.com/talos-systems/talos/commit/69ead37353b7e3aa7f089c70073037a6eba37767) fix: preserve PMBR bootable flag correctly
+* [`dee63051`](https://github.com/talos-systems/talos/commit/dee63051702d49f495bfb28b4be74ed8b39143ad) fix: align partitions with minimal I/O size
+* [`62890229`](https://github.com/talos-systems/talos/commit/628902297d2efe93e6388377b2ea6d4beda83095) feat: update GRUB to 2.06
+* [`b9d04928`](https://github.com/talos-systems/talos/commit/b9d04928d960f9d576671c6f3511cf242ff31cb7) feat: move system processes to cgroups
+* [`0b8681b4`](https://github.com/talos-systems/talos/commit/0b8681b4b49ab109b8863792d48c2f551d1ceeb5) fix: resolve several issues with Wireguard link specs
+* [`f8f4bf3b`](https://github.com/talos-systems/talos/commit/f8f4bf3baef31d4ac957ec68cd869adea1e931cd) docs: add disk encryptions examples
+* [`79b8fa64`](https://github.com/talos-systems/talos/commit/79b8fa64b9453917860faae3df5d14647186b9ba) feat: update containerd to 1.5.5
+* [`539f4209`](https://github.com/talos-systems/talos/commit/539f42090e436921a23087296cde6eaf7e495b5e) chore: bump dependencies via dependabot
+* [`0c7ce1cd`](https://github.com/talos-systems/talos/commit/0c7ce1cd814354213a1a6c7a9251b166ee58c493) feat: remove remnants of bootkube support
+* [`d4f9804f`](https://github.com/talos-systems/talos/commit/d4f9804f8659562f6152ae73cb1788f6f6d6ad89) chore: fix typos
+* [`5f027615`](https://github.com/talos-systems/talos/commit/5f027615ffac68e0a484a5da4827a6589bae3880) feat: expose more encryption options to the machine config
+* [`585152a0`](https://github.com/talos-systems/talos/commit/585152a0be051accd4cb8b7c2f130c5a92dfd32d) chore: bump dependencies
+* [`fc66ec59`](https://github.com/talos-systems/talos/commit/fc66ec59691fb1b9d00b27e1f7b34c870a09d717) feat: set oom score for main processes
+* [`df54584a`](https://github.com/talos-systems/talos/commit/df54584a33d88de13deadcb87a5cfa9c1f9b3961) fix: drop linux capabilities
+* [`f65d0b73`](https://github.com/talos-systems/talos/commit/f65d0b739bd36a57979f9bf26c3092ac544e607c) docs: add 0.11.3 AMIs
+* [`7332d636`](https://github.com/talos-systems/talos/commit/7332d63695074dd5eef35ad545d48aff857fbde8) fix: bump pkgs for new kernel 5.10.52
+* [`70d2505b`](https://github.com/talos-systems/talos/commit/70d2505b7c8807cb5d4f8a017f9f6200757e13e0) fix: do not require ToVersion to be set when detecting version
+* [`0953b199`](https://github.com/talos-systems/talos/commit/0953b1998579f855adffff4b83db917f26687a7b) chore: update extras to bring a new CNI bundle
+* [`b6c47f86`](https://github.com/talos-systems/talos/commit/b6c47f866a57bafb60f85fb1ce10428ed3f52c4a) fix: set the /etc/os-release HOME_URL parameter
+* [`c780821d`](https://github.com/talos-systems/talos/commit/c780821d0b8fda0b3ef6d33b63b595e40970a897) feat: update containerd to 1.5.3, runc to 1.0.1
+* [`f8f1c83a`](https://github.com/talos-systems/talos/commit/f8f1c83a757f5a729896174f95f83c6d804d4858) feat: detect the lowest Kubernetes version in upgrade-k8s CLI command
+* [`55e17ccd`](https://github.com/talos-systems/talos/commit/55e17ccdd1df789466ccfb0c9cfe55a62b437f77) chore: bump dependencies
+* [`da6f786c`](https://github.com/talos-systems/talos/commit/da6f786cab80cbacb886d34b7c5e0ed957cc24c9) fix: kuberentes => kubernetes typo
+* [`2e463348`](https://github.com/talos-systems/talos/commit/2e463348b26fb8b36657b8cb6871e4bce8030b0b) fix: pass all logs through the options.Log method
+* [`4e9c5afb`](https://github.com/talos-systems/talos/commit/4e9c5afb6dd6bdedb4032b7cf4a24b6f1bf88144) fix: make ethtool optional in link status controller
+* [`bf61c2cc`](https://github.com/talos-systems/talos/commit/bf61c2cc4a51d290fe98aaeb80224bdd52bb7ac5) fix: write upgrade logs only to the LogOutput if it's defined
+* [`9c73257c`](https://github.com/talos-systems/talos/commit/9c73257cb128a76459b7d4442b56a50feed089d6) feat: update Go to 1.16.6
+* [`23ef1d40`](https://github.com/talos-systems/talos/commit/23ef1d40af44b873d60337d691f878e2cfe0fe8d) chore: add ability to redirect talos upgrade module logs to io.Writer
+* [`33e9d6c9`](https://github.com/talos-systems/talos/commit/33e9d6c984f82af24ad79e002758841935e60a6a) chore: bump github.com/aws/aws-sdk-go in /hack/cloud-image-uploader
+* [`604434c4`](https://github.com/talos-systems/talos/commit/604434c43eb63aa760cd2176aa1041b653c9bd75) chore: bump github.com/prometheus/procfs from 0.6.0 to 0.7.0
+* [`2ea28f62`](https://github.com/talos-systems/talos/commit/2ea28f62d8dcac3280d7a133ae6532f3ca5709cc) chore: bump node from 16.3.0-alpine to 16.4.2-alpine
+* [`b358a189`](https://github.com/talos-systems/talos/commit/b358a189bcbaa480d1bb3fbcc58eecd1b61f447d) fix: correctly pick route scope for link-local destination
+* [`6848d431`](https://github.com/talos-systems/talos/commit/6848d431427636e415436cdda95543a9a0da5676) feat: can change clusterdns ip lists
+* [`72b76abf`](https://github.com/talos-systems/talos/commit/72b76abfd43d04aa7a9283669925bd49498dc05f) fix: workaround issues when IPv6 is fully or partially disabled
+* [`679b08f4`](https://github.com/talos-systems/talos/commit/679b08f4fabd098311786551e75e38c2a027bd31) docs: update docs for 0.12
+* [`6fbec9e0`](https://github.com/talos-systems/talos/commit/6fbec9e0cb656f411cceb986560473b1a40b6a45) fix: cache etcd client used for healthchecks
+* [`eea750de`](https://github.com/talos-systems/talos/commit/eea750de2c11a9883f343c65a36e30712b987f89) chore: rename "join" type to "worker"
+* [`951493ac`](https://github.com/talos-systems/talos/commit/951493ac8356a414ff85fce25e30e4bd808b412c) docs: update what's new for Talos 0.11
+* [`b47d1098`](https://github.com/talos-systems/talos/commit/b47d1098b1f1cbd21c501266ffc4a38711ed213f) docs: promote 0.11 docs to be the latest
+* [`d930a265`](https://github.com/talos-systems/talos/commit/d930a26502759cebccb05d9b78741e1fc147b30b) chore: implement DeepCopy for machine configuration
+* [`fe4ed3c7`](https://github.com/talos-systems/talos/commit/fe4ed3c734e5713b2fa1d639bd80bffc7888d7e7) chore: ignore tags which don't look like semantic version
+* [`b969e772`](https://github.com/talos-systems/talos/commit/b969e7720ebcb0103e94494533d819a91dba59f5) chore: update references to old protobuf package
+* [`2ba8ac9a`](https://github.com/talos-systems/talos/commit/2ba8ac9ab4b24572512c2a877acd26b912b5423a) docs: add documentation directory for 0.12
+* [`011e2885`](https://github.com/talos-systems/talos/commit/011e2885e7f88a3a92f3f495fdc1d3be6ed0c877) fix: validate bond slaves addressing
+* [`10c28758`](https://github.com/talos-systems/talos/commit/10c28758a4fc50a5e5a29097769b4a3a92ed249a) fix: ignore DeadlineExceeded error correctly on bootstrap
+* [`77fabace`](https://github.com/talos-systems/talos/commit/77fabaceca242f89949d4bf231e9754b4d04eb5e) chore: ignore future pkg/machinery/vX.Y.Z tags
+* [`6b661114`](https://github.com/talos-systems/talos/commit/6b661114d03a7cd1ddd8939ea323d4fe2ce9976c) fix: make COSI runtime history depth smaller
+* [`9bf899bd`](https://github.com/talos-systems/talos/commit/9bf899bdd852befbb4aa5ac4f3ceecb3c33502c8) fix: make forfeit leadership connect to the right node
+* [`4708beae`](https://github.com/talos-systems/talos/commit/4708beaee53e3aacbeec07c38cdd2c7316d16a4c) feat: implement `talosctl config info` command
+* [`6d13d2cf`](https://github.com/talos-systems/talos/commit/6d13d2cf9243adce739673f1982cbc1f12252ef1) fix: close Kubernetes API client
+* [`aaa36f3b`](https://github.com/talos-systems/talos/commit/aaa36f3b4fb250d2921f35c09bcb01b6c31ad423) fix: ignore 'not a leader' error on forfeit leadership
+* [`22a41936`](https://github.com/talos-systems/talos/commit/22a4193678d2245b4c24b7e173d4cfd5fa876e95) fix: workaround 'Unauthorized' errors when accessing Kubernetes API
+* [`71c6f700`](https://github.com/talos-systems/talos/commit/71c6f7004e28c8a72410652d7d38f770bcf8a5f8) chore: bump go.mod dependencies
+* [`915cd8fe`](https://github.com/talos-systems/talos/commit/915cd8fe20c55112cc1fa7776c115ac85c7f3da9) docs: add guide for RBAC
+* [`f5721050`](https://github.com/talos-systems/talos/commit/f5721050deffe61f892a9fca2d20b3fccb5021a6) fix: controlplane keyusage
+* [`3d772661`](https://github.com/talos-systems/talos/commit/3d7726613ca5c5e6b14b4854564d71ee3644d32e) fix: fill uuid argument correctly in the config download URL
+* [`d8602025`](https://github.com/talos-systems/talos/commit/d8602025c828189fa15350a15bf3ccefe39bd0ce) chore: update containerd config version 2
+* [`5949ec4e`](https://github.com/talos-systems/talos/commit/5949ec4e6e05ada904d69a24c9d21e20cc7dea85) docs: describe the new network configuration subsystem
+* [`444d72b4`](https://github.com/talos-systems/talos/commit/444d72b4d7cff7b38c8e3a483bbe10c74251448a) feat: update pkgs version
+* [`e883c12b`](https://github.com/talos-systems/talos/commit/e883c12b31e2ddc3860abc04e7c0867701f46026) fix: make output of `upgrade-k8s` command less scary
+* [`7f8e50de`](https://github.com/talos-systems/talos/commit/7f8e50de4d9a36dae9de7783d71a981fb6a72854) fix: restart the merge controllers on conflict
+* [`60d73609`](https://github.com/talos-systems/talos/commit/60d7360944ff6fc1e75f98e37a754f3bb2962144) fix: ignore deadline exceeded errors on bootstrap
+* [`ee06dd69`](https://github.com/talos-systems/talos/commit/ee06dd69fc39d5df720a88991caaf3646c6fa349) fix: don't print git sha of the release twice in the dashboard
+* [`07fb61e5`](https://github.com/talos-systems/talos/commit/07fb61e5d22da86b434d30f12b84b845ac1a4df7) fix: issue worker apid certs properly on renewal
+* [`84817f73`](https://github.com/talos-systems/talos/commit/84817f733458cbd35549eebc72df6a5df202b299) chore: bump Talos version in upgrade tests
+* [`2fa54107`](https://github.com/talos-systems/talos/commit/2fa54107b2c84cabe948ace5d70836dd4be95799) chore: fix tests for disabled RBAC
+* [`78583ba9`](https://github.com/talos-systems/talos/commit/78583ba985fa2b90ec610d148b2cbeb0b92d646b) fix: don't set bond delay options if miimon is not enabled
+* [`bbf1c091`](https://github.com/talos-systems/talos/commit/bbf1c091d4cea0b4610bce7165a98c7572423b01) feat: add RBAC to `talosctl version` output
+* [`5f6ec3ef`](https://github.com/talos-systems/talos/commit/5f6ec3ef66c8bf2cb334e02b5aa9869330c985d8) fix: handle cases when merged resource re-appears before being destroyed
+* [`1e9a0e74`](https://github.com/talos-systems/talos/commit/1e9a0e745db73bd45ec0881aa19e43d7badb5914) fix: documentation typos
+* [`f228af40`](https://github.com/talos-systems/talos/commit/f228af4061e2025531c953fdb7f8bf83de4bf8b0) chore: bump go.mod dependencies
+* [`2060ceaa`](https://github.com/talos-systems/talos/commit/2060ceaa0b16be04a61a00e0085e25889ffe613a) chore: add CAPI version to CI setup
+* [`ad047a7d`](https://github.com/talos-systems/talos/commit/ad047a7dee4c0ac26c01862bdaa923fab93cc2e1) chore: small RBAC improvements
+</p>
+</details>
+
+### Changes since v0.12.0-beta.2
+<details><summary>0 commit</summary>
+<p>
+
+</p>
+</details>
+
+### Changes from talos-systems/crypto
+<details><summary>1 commit</summary>
+<p>
+
+* [`deec8d4`](https://github.com/talos-systems/crypto/commit/deec8d47700e10e3ea813bdce01377bd93c83367) chore: implement DeepCopy methods for PEMEncoded* types
+</p>
+</details>
+
+### Changes from talos-systems/extras
+<details><summary>4 commits</summary>
+<p>
+
+* [`bdd1767`](https://github.com/talos-systems/extras/commit/bdd17675f34426dbbc1a732cf39e0f68a756161b) chore: update tools and pkgs to final 0.7.0
+* [`8ce17e5`](https://github.com/talos-systems/extras/commit/8ce17e5e5d60dce7b46cf87555400f7951fe9fda) chore: bump tools and packages for Go 1.16.7
+* [`4957f3c`](https://github.com/talos-systems/extras/commit/4957f3c64bc5fd1574fe3d3f251f52e914e78e41) chore: update pkgs to use CNI plugins v0.9.1
+* [`233716a`](https://github.com/talos-systems/extras/commit/233716a04f1e4e1762101b279308630caa46d17d) feat: update Go to 1.16.6
+</p>
+</details>
+
+### Changes from talos-systems/go-blockdevice
+<details><summary>4 commits</summary>
+<p>
+
+* [`fe24303`](https://github.com/talos-systems/go-blockdevice/commit/fe2430349e9d734ce6dbf4e7b2e0f8a37bb22679) fix: perform correct PMBR partition calculations
+* [`2ec0c3c`](https://github.com/talos-systems/go-blockdevice/commit/2ec0c3cc0ff5ff705ed5c910ca1bcd5d93c7b102) fix: preserve the PMBR bootable flag when opening GPT partition
+* [`87816a8`](https://github.com/talos-systems/go-blockdevice/commit/87816a81cefc728cfe3cb221b476d8ed4b609fd8) feat: align partition to minimum I/O size
+* [`c34b59f`](https://github.com/talos-systems/go-blockdevice/commit/c34b59fb33a7ad8be18bb19bc8c8d8294b4b3a78) feat: expose more encryption options in the LUKS module
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>26 commits</summary>
+<p>
+
+* [`818761f`](https://github.com/talos-systems/pkgs/commit/818761ff02ea4663b50968d298486b5c7d091165) chore: update tools to 0.7.0
+* [`35b7e68`](https://github.com/talos-systems/pkgs/commit/35b7e6808511f9ecd9bd5e5fef4288492786b53a) feat: bump u-boot to 2021.07
+* [`c68b090`](https://github.com/talos-systems/pkgs/commit/c68b090c5cb1471957d1b1e37078863b8910b106) feat: bump raspberrypi-firmware to 1.20210805
+* [`f64023c`](https://github.com/talos-systems/pkgs/commit/f64023cc552b0b971fd0a0fe201bd8e66ddbf950) feat: bump util-linux to 2.37
+* [`c0ef725`](https://github.com/talos-systems/pkgs/commit/c0ef7256b2003dd78b2028f007cd7bc5d11ca6a8) feat: update LibreSSL to 3.2.5
+* [`0d12460`](https://github.com/talos-systems/pkgs/commit/0d124606b93c2067b9091b8047d292e814e4f63e) feat: update linux-firmware to 20210716
+* [`7a29722`](https://github.com/talos-systems/pkgs/commit/7a297223c02a504040cd7c9bc7766984565cc4ba) fix: set iPXE version properly
+* [`958023c`](https://github.com/talos-systems/pkgs/commit/958023ccdecd93ae260c0683b94a6689b8a52814) feat: update eudev to 3.2.10
+* [`dc1008d`](https://github.com/talos-systems/pkgs/commit/dc1008d9a7e142f4b217ce801a042fbf7e7f8958) feat: update Linux to 5.10.58
+* [`da4ac04`](https://github.com/talos-systems/pkgs/commit/da4ac04969924256df4ebc66d3bf435a52e30cb7) chore: bump tools for Go 1.16.7
+* [`10275fb`](https://github.com/talos-systems/pkgs/commit/10275fbf737aaa0ac41cc7220d824f5d68d3b0fa) feat: update Linux to 5.10.57
+* [`875c7ec`](https://github.com/talos-systems/pkgs/commit/875c7ecaacc9e999416a2ba17bea3130261120eb) chore: patch grub with support for reproducible ISO builds
+* [`12856ce`](https://github.com/talos-systems/pkgs/commit/12856ce15d6d72814a2f40bbaf3f8ab6efb849f9) feat: increase number of CPUs supported by the kernel to 512
+* [`cbfabac`](https://github.com/talos-systems/pkgs/commit/cbfabaca6a3faf20914aae5c535e44a393a4f422) chore: update ca-certificates to 2021-07-05
+* [`0c011c0`](https://github.com/talos-systems/pkgs/commit/0c011c088068e5fdb55066008b526ca3ef69f218) feat: update GRUB to 2.06
+* [`5090d14`](https://github.com/talos-systems/pkgs/commit/5090d149a669f7eb3cc922196b7e82869c152dae) chore: update containerd to v1.5.5
+* [`6653902`](https://github.com/talos-systems/pkgs/commit/66539021daf1037782b1c4009dd96544057628d3) feat: add kernel drivers for fusion and scsi-isci
+* [`9b4041f`](https://github.com/talos-systems/pkgs/commit/9b4041fb79d9c5d8e18391f1e2f4843a88d26c19) chore: update containerd to v1.5.4
+* [`7b6cc05`](https://github.com/talos-systems/pkgs/commit/7b6cc05ceee8c24e746afa7ed105f9f55fef589b) feat: update kernel to latest 5.10.52
+* [`65159fb`](https://github.com/talos-systems/pkgs/commit/65159fb19c3138ec612cdca507e5cc795b657a7d) chore: update runc and CNI plugins
+* [`514ba34`](https://github.com/talos-systems/pkgs/commit/514ba3420a0773ac7305d00e8b582858f9685953) feat: disable aufs, devmapper, zfs
+* [`6bc118f`](https://github.com/talos-systems/pkgs/commit/6bc118f37cfd018183952b9feb009c54f1a3c215) chore: update runc and containerd
+* [`b6fca88`](https://github.com/talos-systems/pkgs/commit/b6fca88d22436a0fb78b8a4e06792b7af1a22ef5) feat: update Go to 1.16.6
+* [`fd56852`](https://github.com/talos-systems/pkgs/commit/fd568520e8c77bd8d96f96efb47dd2bdd2f36c1a) chore: update `open-isns` and `open-iscsi`
+* [`d779204`](https://github.com/talos-systems/pkgs/commit/d779204c0d9e9c8e90f32b1f68eb9ff4b030b83c) chore: update dosfstools to v4.2
+* [`bc7c0d7`](https://github.com/talos-systems/pkgs/commit/bc7c0d7c6afaec8226c2a52299981ac519b5e595) feat: add support for hotplug of PCIE devices
+</p>
+</details>
+
+### Changes from talos-systems/tools
+<details><summary>6 commits</summary>
+<p>
+
+* [`a33ccc1`](https://github.com/talos-systems/tools/commit/a33ccc101541175dc27d305a4112dbe75d523cfb) chore: bump toolchain for binutils multiarch
+* [`2368154`](https://github.com/talos-systems/tools/commit/23681542fc7e29ede59b3775e04089c5b1a0f666) feat: update Go and protoc-gen-go tools
+* [`7172a5d`](https://github.com/talos-systems/tools/commit/7172a5db9d361527aa7bd9c7af407b9d578e2e02) feat: update Go to 1.16.6
+* [`1de34d7`](https://github.com/talos-systems/tools/commit/1de34d7961c7ac86f369217dea4ce69cdde04122) chore: update musl
+* [`76979a1`](https://github.com/talos-systems/tools/commit/76979a1c194c74c25db22c9ec90ec36f97179e3f) chore: update protobuf deps
+* [`0846c64`](https://github.com/talos-systems/tools/commit/0846c6493316b5d00ecc241b7051ced1bac1cf7e) chore: update expat
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/BurntSushi/toml**               v0.3.1 -> v0.4.1
+* **github.com/aws/aws-sdk-go**                v1.38.66 -> v1.40.2
+* **github.com/containerd/containerd**         v1.5.2 -> v1.5.5
+* **github.com/cosi-project/runtime**          93ead370bf57 -> 25f235cd0682
+* **github.com/docker/docker**                 v20.10.7 -> v20.10.8
+* **github.com/google/uuid**                   v1.2.0 -> v1.3.0
+* **github.com/hashicorp/go-getter**           v1.5.4 -> v1.5.7
+* **github.com/opencontainers/runtime-spec**   e6143ca7d51d -> 1c3f411f0417
+* **github.com/packethost/packngo**            v0.19.0 **_new_**
+* **github.com/prometheus/procfs**             v0.6.0 -> v0.7.2
+* **github.com/rivo/tview**                    d4fb0348227b -> 29d673af0ce2
+* **github.com/spf13/cobra**                   v1.1.3 -> v1.2.1
+* **github.com/talos-systems/crypto**          v0.3.1 -> v0.3.2
+* **github.com/talos-systems/extras**          v0.4.0 -> v0.5.0
+* **github.com/talos-systems/go-blockdevice**  v0.2.1 -> v0.2.3
+* **github.com/talos-systems/pkgs**            v0.6.0-1-g7b2e126 -> v0.7.0
+* **github.com/talos-systems/tools**           v0.6.0 -> v0.7.0-1-ga33ccc1
+* **github.com/vmware-tanzu/sonobuoy**         v0.52.0 -> v0.53.1
+* **go.uber.org/zap**                          v1.17.0 -> v1.19.0
+* **golang.org/x/net**                         04defd469f4e -> 853a461950ff
+* **golang.org/x/sys**                         59db8d763f22 -> 0f9fa26af87c
+* **golang.org/x/time**                        38a9dc6acbc6 -> 1f47c861a9ac
+* **google.golang.org/grpc**                   v1.38.0 -> v1.40.0
+* **google.golang.org/protobuf**               v1.26.0 -> v1.27.1
+* **inet.af/netaddr**                          bf05d8b52dda -> ce7a8ad02cc1
+* **k8s.io/api**                               v0.21.2 -> v0.22.1
+* **k8s.io/apimachinery**                      v0.21.2 -> v0.22.1
+* **k8s.io/apiserver**                         v0.21.2 -> v0.22.1
+* **k8s.io/client-go**                         v0.21.2 -> v0.22.1
+* **k8s.io/cri-api**                           v0.21.2 -> v0.22.1
+* **k8s.io/kubectl**                           v0.21.2 -> v0.22.1
+* **k8s.io/kubelet**                           v0.21.2 -> v0.22.1
+
+Previous release can be found at [v0.11.0](https://github.com/talos-systems/talos/releases/tag/v0.11.0)
+
 ## [Talos 0.12.0-beta.2](https://github.com/talos-systems/talos/releases/tag/v0.12.0-beta.2) (2021-08-27)
 
 Welcome to the v0.12.0-beta.2 release of Talos!  
@@ -43,7 +422,7 @@ the default values overwritten by Talos.
 
 ### Equinix Metal
 
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 
 
@@ -429,7 +808,7 @@ the default values overwritten by Talos.
 
 ### Equinix Metal
 
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 
 
@@ -809,7 +1188,7 @@ the default values overwritten by Talos.
 
 ### Equinix Metal
 
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 
 
@@ -1166,7 +1545,7 @@ the default values overwritten by Talos.
 
 ### Equinix Metal
 
-Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equnixMetal` under `vip` in the machine configuration).
+Added support for Equinix Metal IPs for the Talos virtual (shared) IP (option `equinixMetal` under `vip` in the machine configuration).
 Talos automatically re-assigns IP using the Equinix Metal API when leadership changes.
 
 
