@@ -475,7 +475,7 @@ func init() {
 	KubeletConfigDoc.Fields[3].Name = "extraMounts"
 	KubeletConfigDoc.Fields[3].Type = "[]ExtraMount"
 	KubeletConfigDoc.Fields[3].Note = ""
-	KubeletConfigDoc.Fields[3].Description = "The `extraMounts` field is used to add additional mounts to the kubelet container."
+	KubeletConfigDoc.Fields[3].Description = "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`."
 	KubeletConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
 
 	KubeletConfigDoc.Fields[3].AddExample("", kubeletExtraMountsExample)

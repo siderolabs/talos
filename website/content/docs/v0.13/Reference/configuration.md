@@ -300,6 +300,7 @@ kubelet:
     #       type: bind
     #       source: /var/lib/example
     #       options:
+    #         - bind
     #         - rshared
     #         - rw
 ```
@@ -1336,6 +1337,7 @@ Appears in:
   type: bind
   source: /var/lib/example
   options:
+    - bind
     - rshared
     - rw
 ```
@@ -1368,6 +1370,7 @@ extraArgs:
 #       type: bind
 #       source: /var/lib/example
 #       options:
+#         - bind
 #         - rshared
 #         - rw
 ```
@@ -1451,6 +1454,7 @@ extraArgs:
 <div class="dt">
 
 The `extraMounts` field is used to add additional mounts to the kubelet container.
+Note that either `bind` or `rbind` are required in the `options`.
 
 
 
@@ -1463,6 +1467,7 @@ extraMounts:
       type: bind
       source: /var/lib/example
       options:
+        - bind
         - rshared
         - rw
 ```

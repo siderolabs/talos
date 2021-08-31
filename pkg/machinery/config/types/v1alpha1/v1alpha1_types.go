@@ -363,6 +363,7 @@ var (
 				Destination: "/var/lib/example",
 				Type:        "bind",
 				Options: []string{
+					"bind",
 					"rshared",
 					"rw",
 				},
@@ -828,6 +829,7 @@ type KubeletConfig struct {
 	KubeletExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
+	//     Note that either `bind` or `rbind` are required in the `options`.
 	//   examples:
 	//     - value: kubeletExtraMountsExample
 	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
