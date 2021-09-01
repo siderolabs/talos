@@ -354,14 +354,16 @@ var (
 		mustParseURL("https://cluster1.internal:6443"),
 	}
 
-	kubeletExtraMountsExample = []specs.Mount{
+	kubeletExtraMountsExample = []ExtraMount{
 		{
-			Source:      "/var/lib/example",
-			Destination: "/var/lib/example",
-			Type:        "bind",
-			Options: []string{
-				"rshared",
-				"rw",
+			specs.Mount{
+				Source:      "/var/lib/example",
+				Destination: "/var/lib/example",
+				Type:        "bind",
+				Options: []string{
+					"rshared",
+					"rw",
+				},
 			},
 		},
 	}
