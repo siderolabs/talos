@@ -91,7 +91,7 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	})
 
 	suite.defaultAddress = network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
-	suite.defaultAddress.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("33.11.22.44")}
+	suite.defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
 
 	suite.hostnameStatus = network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	suite.hostnameStatus.TypedSpec().Hostname = "foo"

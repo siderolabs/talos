@@ -39,7 +39,7 @@ const (
 
 // NodeAddressSpec describes a set of node addresses.
 type NodeAddressSpec struct {
-	Addresses []netaddr.IP `yaml:"addresses"`
+	Addresses []netaddr.IPPrefix `yaml:"addresses"`
 }
 
 // NewNodeAddress initializes a NodeAddress resource.
@@ -73,7 +73,7 @@ func (r *NodeAddress) DeepCopy() resource.Resource {
 	return &NodeAddress{
 		md: r.md,
 		spec: NodeAddressSpec{
-			Addresses: append([]netaddr.IP(nil), r.spec.Addresses...),
+			Addresses: append([]netaddr.IPPrefix(nil), r.spec.Addresses...),
 		},
 	}
 }
@@ -96,6 +96,17 @@ func (r *NodeAddress) ResourceDefinition() meta.ResourceDefinitionSpec {
 // TypedSpec allows to access the Spec with the proper type.
 func (r *NodeAddress) TypedSpec() *NodeAddressSpec {
 	return &r.spec
+}
+
+// IPs returns IP without prefix.
+func (spec *NodeAddressSpec) IPs() []netaddr.IP {
+	result := make([]netaddr.IP, len(spec.Addresses))
+
+	for i := range spec.Addresses {
+		result[i] = spec.Addresses[i].IP()
+	}
+
+	return result
 }
 
 // FilteredNodeAddressID returns resource ID for node addresses with filter applied.

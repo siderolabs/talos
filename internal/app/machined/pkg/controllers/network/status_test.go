@@ -90,7 +90,7 @@ func (suite *StatusSuite) TestNone() {
 
 func (suite *StatusSuite) TestAddresses() {
 	nodeAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressCurrentID)
-	nodeAddress.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("10.0.0.1")}
+	nodeAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.0.0.1/24")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddress))
 

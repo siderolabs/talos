@@ -127,7 +127,7 @@ func (suite *KubernetesSuite) TestReconcile() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
 
 	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("10.2.1.3"), netaddr.MustParseIP("172.16.0.1")}
+	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.2.1.3/24"), netaddr.MustParseIPPrefix("172.16.0.1/32")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddresses))
 
 	timeSync := timeresource.NewStatus()

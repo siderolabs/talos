@@ -116,7 +116,7 @@ func (suite *NodeAddressSuite) TestDefaults() {
 				suite.T().Logf("id %q val %s", r.Metadata().ID(), addrs)
 
 				suite.Assert().True(sort.SliceIsSorted(addrs, func(i, j int) bool {
-					return addrs[i].Compare(addrs[j]) < 0
+					return addrs[i].IP().Compare(addrs[j].IP()) < 0
 				}), "addresses %s", addrs)
 
 				if r.Metadata().ID() == network.NodeAddressDefaultID {
@@ -187,31 +187,31 @@ func (suite *NodeAddressSuite) TestFilters() {
 
 				switch r.Metadata().ID() {
 				case network.NodeAddressDefaultID:
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1")) {
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.NodeAddressCurrentID:
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 25.3.7.9 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.NodeAddressAccumulativeID:
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 10.0.0.2 25.3.7.9 192.168.3.7 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8 10.0.0.2/8 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("25.3.7.9 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+					if !reflect.DeepEqual(addrs, ipList("25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("25.3.7.9 192.168.3.7 2001:470:6d:30e:4a62:b3ba:180b:b5b8")) {
+					if !reflect.DeepEqual(addrs, ipList("25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1")) {
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter2.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1 10.0.0.2 192.168.3.7")) {
+					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8 10.0.0.2/8 192.168.3.7/24")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				}
@@ -237,11 +237,11 @@ func TestNodeAddressSuite(t *testing.T) {
 	suite.Run(t, new(NodeAddressSuite))
 }
 
-func ipList(ips string) []netaddr.IP {
-	var result []netaddr.IP //nolint:prealloc
+func ipList(ips string) []netaddr.IPPrefix {
+	var result []netaddr.IPPrefix //nolint:prealloc
 
 	for _, ip := range strings.Split(ips, " ") {
-		result = append(result, netaddr.MustParseIP(ip))
+		result = append(result, netaddr.MustParseIPPrefix(ip))
 	}
 
 	return result

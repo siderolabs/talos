@@ -470,6 +470,9 @@ const (
 
 	// KubeSpanIdentityFilename is the filename to cache KubeSpan identity across reboots.
 	KubeSpanIdentityFilename = "kubespan-identity.yaml"
+
+	// KubeSpanDefaultPort is the default Wireguard listening port for incoming connections.
+	KubeSpanDefaultPort = 51820
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -77,6 +77,8 @@ func NewState() (*State, error) {
 	// register Talos resources
 	for _, r := range []resource.Resource{
 		&v1alpha1.Service{},
+		&cluster.Affiliate{},
+		&cluster.Config{},
 		&cluster.Identity{},
 		&config.MachineConfig{},
 		&config.MachineType{},

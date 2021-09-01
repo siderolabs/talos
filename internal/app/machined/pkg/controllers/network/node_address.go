@@ -100,10 +100,10 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		var (
-			defaultAddress      netaddr.IP
+			defaultAddress      netaddr.IPPrefix
 			defaultAddrLinkName string
-			current             []netaddr.IP
-			accumulative        []netaddr.IP
+			current             []netaddr.IPPrefix
+			accumulative        []netaddr.IPPrefix
 		)
 
 		for _, r := range addresses.Items {
@@ -113,14 +113,14 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				continue
 			}
 
-			ip := addr.TypedSpec().Address.IP()
+			ip := addr.TypedSpec().Address
 
-			if ip.IsLoopback() || ip.IsMulticast() || ip.IsLinkLocalUnicast() {
+			if ip.IP().IsLoopback() || ip.IP().IsMulticast() || ip.IP().IsLinkLocalUnicast() {
 				continue
 			}
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
-			if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Compare(defaultAddress) < 0) {
+			if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.IP().Compare(defaultAddress.IP()) < 0) {
 				defaultAddress = ip
 				defaultAddrLinkName = addr.TypedSpec().LinkName
 			}
@@ -133,7 +133,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// sort current addresses
-		sort.Slice(current, func(i, j int) bool { return current[i].Compare(current[j]) < 0 })
+		sort.Slice(current, func(i, j int) bool { return current[i].IP().Compare(current[j].IP()) < 0 })
 
 		touchedIDs := make(map[resource.ID]struct{})
 
@@ -148,7 +148,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 					return nil
 				}
 
-				spec.Addresses = []netaddr.IP{defaultAddress}
+				spec.Addresses = []netaddr.IPPrefix{defaultAddress}
 
 				return nil
 			}); err != nil {
@@ -210,8 +210,8 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func filterIPs(addrs []netaddr.IP, includeSubnets, excludeSubnets []netaddr.IPPrefix) []netaddr.IP {
-	result := make([]netaddr.IP, 0, len(addrs))
+func filterIPs(addrs []netaddr.IPPrefix, includeSubnets, excludeSubnets []netaddr.IPPrefix) []netaddr.IPPrefix {
+	result := make([]netaddr.IPPrefix, 0, len(addrs))
 
 outer:
 	for _, ip := range addrs {
@@ -219,7 +219,7 @@ outer:
 			matchesAny := false
 
 			for _, subnet := range includeSubnets {
-				if subnet.Contains(ip) {
+				if subnet.Overlaps(ip) {
 					matchesAny = true
 
 					break
@@ -232,7 +232,7 @@ outer:
 		}
 
 		for _, subnet := range excludeSubnets {
-			if subnet.Contains(ip) {
+			if subnet.Overlaps(ip) {
 				continue outer
 			}
 		}
@@ -243,7 +243,7 @@ outer:
 	return result
 }
 
-func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netaddr.IP) error {
+func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netaddr.IPPrefix) error {
 	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
 		spec := r.(*network.NodeAddress).TypedSpec()
 
@@ -257,7 +257,7 @@ func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resour
 	return nil
 }
 
-func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netaddr.IP) error {
+func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netaddr.IPPrefix) error {
 	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
 		spec := r.(*network.NodeAddress).TypedSpec()
 
@@ -266,15 +266,15 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 
 			// find insert position using binary search
 			i := sort.Search(len(spec.Addresses), func(j int) bool {
-				return !spec.Addresses[j].Less(ip)
+				return !spec.Addresses[j].IP().Less(ip.IP())
 			})
 
-			if i < len(spec.Addresses) && spec.Addresses[i].Compare(ip) == 0 {
+			if i < len(spec.Addresses) && spec.Addresses[i].IP().Compare(ip.IP()) == 0 {
 				continue
 			}
 
 			// insert at position i
-			spec.Addresses = append(spec.Addresses, netaddr.IP{})
+			spec.Addresses = append(spec.Addresses, netaddr.IPPrefix{})
 			copy(spec.Addresses[i+1:], spec.Addresses[i:])
 			spec.Addresses[i] = ip
 		}

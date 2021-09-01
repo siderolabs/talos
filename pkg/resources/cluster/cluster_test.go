@@ -25,6 +25,8 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
+		&cluster.Affiliate{},
+		&cluster.Config{},
 		&cluster.Identity{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))

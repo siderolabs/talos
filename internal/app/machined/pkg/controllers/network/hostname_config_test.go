@@ -118,7 +118,7 @@ func (suite *HostnameConfigSuite) TestDefaults() {
 	suite.startRuntime()
 
 	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
-	defaultAddress.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("33.11.22.44")}
+	defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
 

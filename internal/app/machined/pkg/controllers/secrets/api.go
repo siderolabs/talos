@@ -279,7 +279,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		var altNames AltNames
 
-		for _, ip := range append(rootSpec.CertSANIPs, nodeAddresses.Addresses...) {
+		for _, ip := range append(rootSpec.CertSANIPs, nodeAddresses.IPs()...) {
 			altNames.AppendIPs(ip.IPAddr().IP)
 		}
 

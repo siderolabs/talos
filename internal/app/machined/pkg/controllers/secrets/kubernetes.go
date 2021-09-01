@@ -219,7 +219,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesS
 
 	altNames.AppendIPs(k8sRoot.APIServerIPs...)
 
-	for _, addr := range nodeAddresses.Addresses {
+	for _, addr := range nodeAddresses.IPs() {
 		altNames.AppendIPs(addr.IPAddr().IP)
 	}
 

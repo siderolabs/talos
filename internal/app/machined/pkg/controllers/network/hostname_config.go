@@ -177,7 +177,7 @@ func (ctrl *HostnameConfigController) getDefault(defaultAddr *network.NodeAddres
 		return
 	}
 
-	spec.Hostname = fmt.Sprintf("talos-%s", strings.ReplaceAll(strings.ReplaceAll(defaultAddr.TypedSpec().Addresses[0].String(), ":", ""), ".", "-"))
+	spec.Hostname = fmt.Sprintf("talos-%s", strings.ReplaceAll(strings.ReplaceAll(defaultAddr.TypedSpec().Addresses[0].IP().String(), ":", ""), ".", "-"))
 	spec.ConfigLayer = network.ConfigDefault
 
 	return spec

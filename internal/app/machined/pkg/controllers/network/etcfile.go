@@ -200,7 +200,7 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 		Alias      string
 		ExtraHosts []talosconfig.ExtraHost
 	}{
-		IP:         nodeAddressStatus.Addresses[0].String(),
+		IP:         nodeAddressStatus.Addresses[0].IP().String(),
 		Hostname:   hostnameStatus.FQDN(),
 		Alias:      hostnameStatus.Hostname,
 		ExtraHosts: extraHosts,

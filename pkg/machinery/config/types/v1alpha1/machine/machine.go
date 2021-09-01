@@ -49,3 +49,17 @@ func ParseType(s string) (Type, error) {
 		return TypeUnknown, fmt.Errorf("invalid machine type: %q", s)
 	}
 }
+
+// MarshalText implements encoding.TextMarshaler.
+func (t Type) MarshalText() (text []byte, err error) {
+	return []byte(t.String()), nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (t *Type) UnmarshalText(text []byte) error {
+	var err error
+
+	*t, err = ParseType(string(text))
+
+	return err
+}

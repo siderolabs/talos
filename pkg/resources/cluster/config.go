@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package kubespan
+package cluster
 
 import (
 	"fmt"
@@ -14,10 +14,10 @@ import (
 )
 
 // ConfigType is type of Config resource.
-const ConfigType = resource.Type("KubeSpanConfigs.kubespan.talos.dev")
+const ConfigType = resource.Type("DiscoveryConfigs.cluster.talos.dev")
 
 // ConfigID the singleton config resource ID.
-const ConfigID = resource.ID("kubespan")
+const ConfigID = resource.ID("cluster")
 
 // Config resource holds KubeSpan configuration.
 type Config struct {
@@ -27,8 +27,7 @@ type Config struct {
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
-	Enabled   bool   `yaml:"enabled"`
-	ClusterID string `yaml:"clusterId"`
+	DiscoveryEnabled bool `yaml:"discoveryEnabled"`
 }
 
 // NewConfig initializes a Config resource.
@@ -54,7 +53,7 @@ func (r *Config) Spec() interface{} {
 }
 
 func (r *Config) String() string {
-	return fmt.Sprintf("kubespan.Config(%q)", r.md.ID())
+	return fmt.Sprintf("cluster.Config(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
