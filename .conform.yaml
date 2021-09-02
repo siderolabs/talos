@@ -2,7 +2,10 @@ policies:
   - type: commit
     spec:
       dco: true
-      gpg: true
+      gpg:
+        required: true
+        identity:
+          gitHubOrganization: talos-systems
       spellcheck:
         locale: US
       maximumOfOneCommit: true
