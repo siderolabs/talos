@@ -76,8 +76,12 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&time.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&cluster.AffiliateMergeController{},
 		&cluster.ConfigController{},
 		&cluster.LocalAffiliateController{},
+		&cluster.MemberController{},
+		&cluster.KubernetesPullController{},
+		&cluster.KubernetesPushController{},
 		&cluster.NodeIdentityController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

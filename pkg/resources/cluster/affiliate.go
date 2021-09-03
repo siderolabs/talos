@@ -27,10 +27,11 @@ type Affiliate struct {
 
 // AffiliateSpec describes Affiliate state.
 type AffiliateSpec struct {
+	NodeID      string                `yaml:"nodeId"`
 	Addresses   []netaddr.IP          `yaml:"addresses"`
 	Hostname    string                `yaml:"hostname"`
 	Nodename    string                `yaml:"nodename,omitempty"`
-	MachineType machine.Type          `yaml:"machineType,omitempty"`
+	MachineType machine.Type          `yaml:"machineType"`
 	KubeSpan    KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
 }
 
@@ -73,6 +74,7 @@ func (r *Affiliate) DeepCopy() resource.Resource {
 	return &Affiliate{
 		md: r.md,
 		spec: AffiliateSpec{
+			NodeID:      r.spec.NodeID,
 			Addresses:   append([]netaddr.IP(nil), r.spec.Addresses...),
 			Hostname:    r.spec.Hostname,
 			Nodename:    r.spec.Nodename,
@@ -99,6 +101,10 @@ func (r *Affiliate) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.hostname}`,
 			},
 			{
+				Name:     "Machine Type",
+				JSONPath: `{.machineType}`,
+			},
+			{
 				Name:     "Addresses",
 				JSONPath: `{.addresses}`,
 			},
@@ -109,4 +115,77 @@ func (r *Affiliate) ResourceDefinition() meta.ResourceDefinitionSpec {
 // TypedSpec allows to access the Spec with the proper type.
 func (r *Affiliate) TypedSpec() *AffiliateSpec {
 	return &r.spec
+}
+
+// Merge two AffiliateSpecs.
+//
+//nolint:gocyclo
+func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
+	for _, addr := range other.Addresses {
+		found := false
+
+		for _, specAddr := range spec.Addresses {
+			if addr == specAddr {
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			spec.Addresses = append(spec.Addresses, addr)
+		}
+	}
+
+	if other.Hostname != "" {
+		spec.Hostname = other.Hostname
+	}
+
+	if other.Nodename != "" {
+		spec.Nodename = other.Nodename
+	}
+
+	if other.MachineType != machine.TypeUnknown {
+		spec.MachineType = other.MachineType
+	}
+
+	if other.KubeSpan.PublicKey != "" {
+		spec.KubeSpan.PublicKey = other.KubeSpan.PublicKey
+	}
+
+	if !other.KubeSpan.Address.IsZero() {
+		spec.KubeSpan.Address = other.KubeSpan.Address
+	}
+
+	for _, addr := range other.KubeSpan.AdditionalAddresses {
+		found := false
+
+		for _, specAddr := range spec.KubeSpan.AdditionalAddresses {
+			if addr == specAddr {
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			spec.KubeSpan.AdditionalAddresses = append(spec.KubeSpan.AdditionalAddresses, addr)
+		}
+	}
+
+	for _, addr := range other.KubeSpan.Endpoints {
+		found := false
+
+		for _, specAddr := range spec.KubeSpan.Endpoints {
+			if addr == specAddr {
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			spec.KubeSpan.Endpoints = append(spec.KubeSpan.Endpoints, addr)
+		}
+	}
 }

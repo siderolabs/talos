@@ -28,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},
+		&cluster.Member{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

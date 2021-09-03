@@ -473,6 +473,24 @@ const (
 
 	// KubeSpanDefaultPort is the default Wireguard listening port for incoming connections.
 	KubeSpanDefaultPort = 51820
+
+	// NetworkSelfIPsAnnotation is the node annotation used to list the (comma-separated) IP addresses of the host, as discovered by Talos tooling.
+	NetworkSelfIPsAnnotation = "networking.talos.dev/self-ips"
+
+	// ClusterNodeIDAnnotation is the node annotation used to represent node ID.
+	ClusterNodeIDAnnotation = "cluster.talos.dev/node-id"
+
+	// KubeSpanIPAnnotation is the node annotation to be used for indicating the Wireguard IP of the node.
+	KubeSpanIPAnnotation = "networking.talos.dev/kubespan-ip"
+
+	// KubeSpanPublicKeyAnnotation is the node annotation to be used for indicating the Wireguard Public Key of the node.
+	KubeSpanPublicKeyAnnotation = "networking.talos.dev/kubespan-public-key"
+
+	// KubeSpanAssignedPrefixesAnnotation is the node annotation use to list the (comma-separated) set of IP prefixes for which the annotated node should be responsible.
+	KubeSpanAssignedPrefixesAnnotation = "networking.talos.dev/assigned-prefixes"
+
+	// KubeSpanKnownEndpointsAnnotation is the node annotation used to list the (comma-separated) known-good Wireguard endpoints for the node, as seen by other peers.
+	KubeSpanKnownEndpointsAnnotation = "networking.talos.dev/kubespan-endpoints"
 )
 
 // See https://linux.die.net/man/3/klogctl

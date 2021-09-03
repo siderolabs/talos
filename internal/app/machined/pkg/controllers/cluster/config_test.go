@@ -46,6 +46,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				spec := res.(*cluster.Config).TypedSpec()
 
 				suite.Assert().True(spec.DiscoveryEnabled)
+				suite.Assert().True(spec.RegistryKubernetesEnabled)
 
 				return nil
 			},
@@ -75,6 +76,7 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 				spec := res.(*cluster.Config).TypedSpec()
 
 				suite.Assert().False(spec.DiscoveryEnabled)
+				suite.Assert().False(spec.RegistryKubernetesEnabled)
 
 				return nil
 			},

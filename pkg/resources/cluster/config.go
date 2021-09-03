@@ -27,7 +27,8 @@ type Config struct {
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
-	DiscoveryEnabled bool `yaml:"discoveryEnabled"`
+	DiscoveryEnabled          bool `yaml:"discoveryEnabled"`
+	RegistryKubernetesEnabled bool `yaml:"registryKubernetesEnabled"`
 }
 
 // NewConfig initializes a Config resource.

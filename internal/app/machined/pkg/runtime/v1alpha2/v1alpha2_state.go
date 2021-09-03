@@ -60,6 +60,7 @@ func NewState() (*State, error) {
 	}{
 		{v1alpha1.NamespaceName, "Talos v1alpha1 subsystems glue resources."},
 		{cluster.NamespaceName, "Cluster configuration and discovery resources."},
+		{cluster.RawNamespaceName, "Cluster unmerged raw resources."},
 		{config.NamespaceName, "Talos node configuration."},
 		{files.NamespaceName, "Files and file-like resources."},
 		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
@@ -80,6 +81,7 @@ func NewState() (*State, error) {
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},
+		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},

@@ -124,8 +124,6 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 
 	r.QueueReconcile()
 
-	rateLimitedEventCh := RateLimitEvents(ctx, r.EventCh(), time.Minute)
-
 	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
 	defer refreshTicker.Stop()
 
@@ -133,7 +131,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-rateLimitedEventCh:
+		case <-r.EventCh():
 		case <-refreshTicker.C:
 		}
 

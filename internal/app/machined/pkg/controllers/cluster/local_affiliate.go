@@ -173,6 +173,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				if err = r.Modify(ctx, cluster.NewAffiliate(cluster.NamespaceName, localID), func(res resource.Resource) error {
 					spec := res.(*cluster.Affiliate).TypedSpec()
 
+					spec.NodeID = localID
 					spec.Addresses = append([]netaddr.IP(nil), addresses.(*network.NodeAddress).TypedSpec().IPs()...)
 					spec.Hostname = hostname.(*network.HostnameStatus).TypedSpec().FQDN()
 					spec.Nodename = nodename.(*k8s.Nodename).TypedSpec().Nodename

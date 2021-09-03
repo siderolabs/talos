@@ -72,6 +72,10 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 				if err = r.Modify(ctx, cluster.NewConfig(config.NamespaceName, cluster.ConfigID), func(res resource.Resource) error {
 					res.(*cluster.Config).TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
 
+					if c.Cluster().Discovery().Enabled() {
+						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
+					}
+
 					return nil
 				}); err != nil {
 					return err
