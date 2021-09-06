@@ -51,6 +51,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		},
 		MachineDisks:                in.MachineDisks,
 		MachineSystemDiskEncryption: in.SystemDiskEncryptionConfig,
+		MachineSysctls:              in.Sysctls,
 		MachineFeatures:             &v1alpha1.FeaturesConfig{},
 	}
 

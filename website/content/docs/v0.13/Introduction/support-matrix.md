@@ -11,7 +11,7 @@ weight: 6
 | Kubernetes                                                                                                     | 1.22, 1.21, 1.20                   | 1.22, 1.21, 1.20                    |
 | Architecture                                                                                                   | amd64, arm64                                                            |
 | **Platforms**                                                                                                  |                                    |                                    |
-| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, OpenStack                               |
+| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud |  AWS, GCP, Azure, Digital Ocean, OpenStack |
 | - bare metal                                                                                                   | x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image                |
 | - virtualized                                                                                                  | VMware, Hyper-V, KVM, Proxmox, Xen                                      |
 | - SBCs                                                                                                         | Raspberry Pi4, Banana Pi M64, Pine64, and other                         |

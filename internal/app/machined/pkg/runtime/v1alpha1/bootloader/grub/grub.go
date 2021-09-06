@@ -5,6 +5,7 @@
 package grub
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -107,6 +108,83 @@ func (g *Grub) Labels() (current, next string, err error) {
 	}
 
 	return current, next, err
+}
+
+// BootEntry describes GRUB boot entry.
+type BootEntry struct {
+	// Paths to kernel and initramfs image.
+	Linux, Initrd string
+	// Cmdline for the kernel.
+	Cmdline string
+}
+
+// GetCurrentEntry fetches current boot entry, vmlinuz/initrd path, boot args.
+//
+//nolint:gocyclo
+func (g *Grub) GetCurrentEntry() (*BootEntry, error) {
+	f, err := os.Open(GrubConfig)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	scanner := bufio.NewScanner(f)
+
+	entry := &BootEntry{}
+
+	var (
+		defaultEntry string
+		currentEntry string
+	)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		switch {
+		case strings.HasPrefix(line, "set default"):
+			matches := regexp.MustCompile(`set default="(.*)"`).FindStringSubmatch(line)
+			if len(matches) != 2 {
+				return nil, fmt.Errorf("malformed default entry: %q", line)
+			}
+
+			defaultEntry = matches[1]
+		case strings.HasPrefix(line, "menuentry"):
+			matches := regexp.MustCompile(`menuentry "(.*)"`).FindStringSubmatch(line)
+			if len(matches) != 2 {
+				return nil, fmt.Errorf("malformed menuentry: %q", line)
+			}
+
+			currentEntry = matches[1]
+		case strings.HasPrefix(line, "  linux "):
+			if currentEntry != defaultEntry {
+				continue
+			}
+
+			parts := strings.SplitN(line[8:], " ", 2)
+
+			entry.Linux = parts[0]
+			if len(parts) == 2 {
+				entry.Cmdline = parts[1]
+			}
+		case strings.HasPrefix(line, "  initrd "):
+			if currentEntry != defaultEntry {
+				continue
+			}
+
+			entry.Initrd = line[9:]
+		}
+	}
+
+	if entry.Linux == "" || entry.Initrd == "" {
+		return nil, scanner.Err()
+	}
+
+	return entry, scanner.Err()
 }
 
 // Install implements the Bootloader interface. It sets up grub with the

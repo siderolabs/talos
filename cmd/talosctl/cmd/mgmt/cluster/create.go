@@ -392,6 +392,15 @@ func create(ctx context.Context) (err error) {
 			)
 		}
 
+		if !bootloaderEnabled {
+			// disable kexec, as this would effectively use the bootloader
+			genOptions = append(genOptions,
+				generate.WithSysctls(map[string]string{
+					"kernel.kexec_load_disabled": "1",
+				}),
+			)
+		}
+
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {

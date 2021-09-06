@@ -16,13 +16,29 @@ preface = """\
 [notes]
 
     [notes.clouds]
-        title = "Hetzner, Scaleway and Upcloud"
+        title = "Hetzner, Scaleway, Upcloud and Vultr"
         description = """\
 Talos now natively supports three new cloud platforms:
 
 * [Hetzner](https://www.hetzner.com/)
 * [Scaleway](https://www.scaleway.com/en/)
 * [Upcloud](https://upcloud.com/)
+* [Vultr](https://www.vultr.com/)
+"""
+
+    [notes.kexec]
+        title = "Reboots via kexec"
+        description = """\
+Talos now reboots by default via kexec syscall which means BIOS POST process is skipped.
+On bare-metal hardware BIOS POST process might take 10-15 minutes, so Talos reboots 10-15 minutes faster on bare-metal.
+
+Kexec support can be disabled with the following change to the machine configuration:
+
+```
+machine:
+  sysctls:
+    kernel.kexec_load_disabled: "1"
+```
 """
 
     [notes.kubespan]

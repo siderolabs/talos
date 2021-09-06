@@ -35,6 +35,8 @@ type MachineState interface {
 	IsInstallStaged() bool
 	StagedInstallImageRef() string
 	StagedInstallOptions() []byte
+	KexecPrepared(bool)
+	IsKexecPrepared() bool
 }
 
 // ClusterState defines the cluster state.

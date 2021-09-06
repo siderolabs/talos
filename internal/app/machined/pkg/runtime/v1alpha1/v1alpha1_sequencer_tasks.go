@@ -1424,11 +1424,17 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 // Reboot represents the Reboot task.
 func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
+
+		if r.State().Machine().IsKexecPrepared() {
+			rebootCmd = unix.LINUX_REBOOT_CMD_KEXEC
+		}
+
 		r.Events().Publish(&machineapi.RestartEvent{
-			Cmd: unix.LINUX_REBOOT_CMD_RESTART,
+			Cmd: int64(rebootCmd),
 		})
 
-		return runtime.RebootError{Cmd: unix.LINUX_REBOOT_CMD_RESTART}
+		return runtime.RebootError{Cmd: rebootCmd}
 	}, "reboot"
 }
 
@@ -1709,4 +1715,71 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		return nil
 	}, "activateLogicalVolumes"
+}
+
+// KexecPrepare loads next boot kernel via kexec_file_load.
+func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if r.Config() == nil {
+			return nil
+		}
+
+		disk, err := r.Config().Machine().Install().Disk()
+		if err != nil {
+			return err
+		}
+
+		grub := &grub.Grub{
+			BootDisk: disk,
+		}
+
+		entry, err := grub.GetCurrentEntry()
+		if err != nil {
+			return err
+		}
+
+		if entry == nil {
+			return nil
+		}
+
+		kernelPath := filepath.Join(constants.BootMountPoint, entry.Linux)
+		initrdPath := filepath.Join(constants.BootMountPoint, entry.Initrd)
+
+		kernel, err := os.Open(kernelPath)
+		if err != nil {
+			return err
+		}
+
+		defer kernel.Close() //nolint:errcheck
+
+		initrd, err := os.Open(initrdPath)
+		if err != nil {
+			return err
+		}
+
+		defer initrd.Close() //nolint:errcheck
+
+		cmdline := strings.TrimSpace(entry.Cmdline)
+
+		if err = unix.KexecFileLoad(int(kernel.Fd()), int(initrd.Fd()), cmdline, 0); err != nil {
+			switch {
+			case errors.Is(err, unix.ENOSYS):
+				log.Printf("kexec support is disabled in the kernel")
+
+				return nil
+			case errors.Is(err, unix.EPERM):
+				log.Printf("kexec support is disabled via sysctl")
+
+				return nil
+			default:
+				return fmt.Errorf("error loading kernel for kexec: %w", err)
+			}
+		}
+
+		log.Printf("prepared kexec environment kernel=%q initrd=%q cmdline=%q", kernelPath, initrdPath, cmdline)
+
+		r.State().Machine().KexecPrepared(true)
+
+		return nil
+	}, "kexecPrepare"
 }

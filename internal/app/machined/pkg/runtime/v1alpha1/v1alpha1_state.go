@@ -37,6 +37,8 @@ type MachineState struct {
 	stagedInstall         bool
 	stagedInstallImageRef string
 	stagedInstallOptions  []byte
+
+	kexecPrepared bool
 }
 
 // ClusterState represents the cluster's state.
@@ -182,13 +184,15 @@ func (s *MachineState) Disk(options ...disk.Option) *probe.ProbedBlockDevice {
 func (s *MachineState) Close() error {
 	var result *multierror.Error
 
-	for _, disk := range s.disks {
+	for label, disk := range s.disks {
 		if err := disk.Close(); err != nil {
 			e := multierror.Append(result, err)
 			if e != nil {
 				return e
 			}
 		}
+
+		delete(s.disks, label)
 	}
 
 	return result.ErrorOrNil()
@@ -214,4 +218,14 @@ func (s *MachineState) StagedInstallImageRef() string {
 // StagedInstallOptions implements the machine state interface.
 func (s *MachineState) StagedInstallOptions() []byte {
 	return s.stagedInstallOptions
+}
+
+// KexecPrepared implements the machine state interface.
+func (s *MachineState) KexecPrepared(prepared bool) {
+	s.kexecPrepared = prepared
+}
+
+// IsKexecPrepared implements the machine state interface.
+func (s *MachineState) IsKexecPrepared() bool {
+	return s.kexecPrepared
 }

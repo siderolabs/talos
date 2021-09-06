@@ -81,6 +81,7 @@ type Input struct {
 	RegistryConfig             map[string]*v1alpha1.RegistryConfig
 	MachineDisks               []*v1alpha1.MachineDisk
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
+	Sysctls                    map[string]string
 
 	Debug                    bool
 	Persist                  bool
@@ -488,6 +489,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		CNIConfig:                  options.CNIConfig,
 		RegistryMirrors:            options.RegistryMirrors,
 		RegistryConfig:             options.RegistryConfig,
+		Sysctls:                    options.Sysctls,
 		Debug:                      options.Debug,
 		Persist:                    options.Persist,
 		AllowSchedulingOnMasters:   options.AllowSchedulingOnMasters,
