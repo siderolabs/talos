@@ -37,6 +37,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
 	"github.com/talos-systems/talos/internal/app/machined/internal/install"
@@ -235,6 +236,51 @@ func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 		// TODO(andrewrynhard): Should we read limit from /proc/sys/fs/nr_open?
 		return unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576})
 	}, "setRLimit"
+}
+
+// DropCapabilities drops some capabilities so that they can't be restored by child processes.
+func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		// Disallow raising ambient capabilities (ever).
+		secbits := cap.GetSecbits()
+		secbits |=
+			cap.SecbitNoCapAmbientRaise | cap.SecbitNoCapAmbientRaiseLocked
+
+		if err := secbits.Set(); err != nil {
+			return fmt.Errorf("error setting secbits: %w", err)
+		}
+
+		// Set PR_SET_NO_NEW_PRIVS to limit setuid and similar privilege raising techniques.
+		// See https://www.kernel.org/doc/html/v5.10/userspace-api/no_new_privs.html.
+		if _, _, err := syscall.AllThreadsSyscall6(syscall.SYS_PRCTL, unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0, 0); err != 0 {
+			if errors.Is(err, syscall.EOPNOTSUPP) {
+				logger.Printf("no_new_privs skipped, as Talos is built with CGo")
+			} else {
+				return fmt.Errorf("error setting no new privs: %w", err)
+			}
+		}
+
+		// Drop capabilities from the bounding set effectively disabling it for all forked processes,
+		// but keep them for PID 1.
+		droppedCapabilities := []cap.Value{
+			cap.SYS_BOOT,
+			cap.SYS_MODULE,
+		}
+
+		iab := cap.IABGetProc()
+
+		for _, val := range droppedCapabilities {
+			if err := iab.SetVector(cap.Bound, true, val); err != nil {
+				return fmt.Errorf("error removing %s from the bounding set: %w", val, err)
+			}
+		}
+
+		if err := iab.SetProc(); err != nil {
+			return fmt.Errorf("error applying caps: %w", err)
+		}
+
+		return nil
+	}, "dropCapabilities"
 }
 
 // See https://www.kernel.org/doc/Documentation/ABI/testing/ima_policy

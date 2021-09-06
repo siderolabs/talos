@@ -277,7 +277,6 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
 		oci.WithNoNewPrivileges,
-		seccomp.WithDefaultProfile(),
 	)
 
 	if c.opts.CgroupPath != "" {
@@ -288,6 +287,10 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 
 	specOpts = append(specOpts,
 		c.opts.OCISpecOpts...,
+	)
+
+	specOpts = append(specOpts,
+		seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities
 	)
 
 	return specOpts

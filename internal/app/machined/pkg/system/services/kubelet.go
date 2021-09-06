@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/talos-systems/talos/internal/pkg/capability"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
@@ -200,8 +201,14 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithHostNamespace(specs.PIDNamespace),
 			oci.WithParentCgroupDevices,
-			oci.WithPrivileged,
+			oci.WithMaskedPaths(nil),
+			oci.WithReadonlyPaths(nil),
+			oci.WithWriteableSysfs,
+			oci.WithWriteableCgroupfs,
+			oci.WithSelinuxLabel(""),
+			oci.WithApparmorProfile(""),
 			oci.WithAllDevicesAllowed,
+			oci.WithCapabilities(capability.AllGrantableCapabilities()), // TODO: kubelet doesn't need all of these, we should consider limiting capabilities
 		),
 	),
 		restart.WithType(restart.Forever),

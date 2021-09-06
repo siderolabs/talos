@@ -24,6 +24,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/talos-systems/talos/internal/pkg/capability"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -113,7 +114,14 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 		oci.WithHostHostsFile,
 		oci.WithHostResolvconf,
 		oci.WithParentCgroupDevices,
-		oci.WithPrivileged,
+		oci.WithCapabilities(capability.AllGrantableCapabilities()),
+		oci.WithMaskedPaths(nil),
+		oci.WithReadonlyPaths(nil),
+		oci.WithWriteableSysfs,
+		oci.WithWriteableCgroupfs,
+		oci.WithSelinuxLabel(""),
+		oci.WithApparmorProfile(""),
+		oci.WithSeccompUnconfined,
 		oci.WithAllDevicesAllowed,
 	}
 
