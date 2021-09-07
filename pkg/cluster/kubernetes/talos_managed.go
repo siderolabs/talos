@@ -332,11 +332,11 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node,
 		ready := false
 
 		for _, condition := range pod.Status.Conditions {
-			if condition.Type != "Ready" {
+			if condition.Type != v1.PodReady {
 				continue
 			}
 
-			if condition.Status == "True" {
+			if condition.Status == v1.ConditionTrue {
 				ready = true
 
 				break
