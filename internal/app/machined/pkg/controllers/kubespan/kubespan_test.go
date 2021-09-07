@@ -7,6 +7,8 @@ package kubespan_test
 import (
 	"context"
 	"log"
+	"reflect"
+	"sort"
 	"sync"
 	"time"
 
@@ -56,6 +58,44 @@ func (suite *KubeSpanSuite) startRuntime() {
 
 		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
 	}()
+}
+
+func (suite *KubeSpanSuite) assertResourceIDs(md resource.Metadata, expectedIDs []resource.ID) func() error {
+	return func() error {
+		l, err := suite.state.List(suite.ctx, md)
+		if err != nil {
+			return err
+		}
+
+		actualIDs := make([]resource.ID, 0, len(l.Items))
+
+		for _, r := range l.Items {
+			actualIDs = append(actualIDs, r.Metadata().ID())
+		}
+
+		sort.Strings(expectedIDs)
+
+		if !reflect.DeepEqual(actualIDs, expectedIDs) {
+			return retry.ExpectedErrorf("ids do no match expected %v != actual %v", expectedIDs, actualIDs)
+		}
+
+		return nil
+	}
+}
+
+func (suite *KubeSpanSuite) assertNoResource(md resource.Metadata) func() error {
+	return func() error {
+		_, err := suite.state.Get(suite.ctx, md)
+		if err == nil {
+			return retry.ExpectedErrorf("resource %s still exists", md)
+		}
+
+		if state.IsNotFoundError(err) {
+			return nil
+		}
+
+		return err
+	}
 }
 
 func (suite *KubeSpanSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {

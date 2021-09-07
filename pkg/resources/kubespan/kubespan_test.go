@@ -27,6 +27,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&kubespan.Config{},
 		&kubespan.Identity{},
+		&kubespan.PeerSpec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
