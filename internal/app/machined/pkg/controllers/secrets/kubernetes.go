@@ -22,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
@@ -107,15 +106,9 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: network.NamespaceName,
-			Type:      network.HostnameStatusType,
-			ID:        pointer.ToString(network.HostnameID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.NodeAddressType,
-			ID:        pointer.ToString(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.CertSANType,
+			ID:        pointer.ToString(secrets.CertSANKubernetesID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -164,7 +157,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			continue
 		}
 
-		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		certSANResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANKubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -173,22 +166,10 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			return err
 		}
 
-		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
-
-		addressesResource, err := r.Get(ctx,
-			resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
-		}
-
-		nodeAddresses := addressesResource.(*network.NodeAddress).TypedSpec()
+		certSANs := certSANResource.(*secrets.CertSAN).TypedSpec()
 
 		if err = r.Modify(ctx, secrets.NewKubernetes(), func(r resource.Resource) error {
-			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).Certs(), hostnameStatus, nodeAddresses)
+			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).Certs(), certSANs)
 		}); err != nil {
 			return err
 		}
@@ -196,39 +177,15 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 }
 
 func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesSpec, k8sSecrets *secrets.KubernetesCertsSpec,
-	hostnameStatus *network.HostnameStatusSpec, nodeAddresses *network.NodeAddressSpec) error {
-	var altNames AltNames
-
-	altNames.Append(k8sRoot.Endpoint.Hostname())
-	altNames.Append(k8sRoot.CertSANs...)
-
-	altNames.AppendDNSNames(
-		"kubernetes",
-		"kubernetes.default",
-		"kubernetes.default.svc",
-		"kubernetes.default.svc."+k8sRoot.DNSDomain,
-		"localhost",
-	)
-
-	altNames.Append(
-		hostnameStatus.Hostname,
-		hostnameStatus.FQDN(),
-	)
-
-	altNames.AppendIPs(k8sRoot.APIServerIPs...)
-
-	for _, addr := range nodeAddresses.IPs() {
-		altNames.AppendIPs(addr.IPAddr().IP)
-	}
-
+	certSANs *secrets.CertSANSpec) error {
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.CA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
 
 	apiServer, err := x509.NewKeyPair(ca,
-		x509.IPAddresses(altNames.IPs),
-		x509.DNSNames(altNames.DNSNames),
+		x509.IPAddresses(certSANs.StdIPs()),
+		x509.DNSNames(certSANs.DNSNames),
 		x509.CommonName("kube-apiserver"),
 		x509.Organization("kube-master"),
 		x509.NotAfter(time.Now().Add(KubernetesCertificateValidityDuration)),

@@ -121,6 +121,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamStatus{},
 		&runtime.MountStatus{},
 		&secrets.API{},
+		&secrets.CertSAN{},
 		&secrets.Etcd{},
 		&secrets.Kubernetes{},
 		&secrets.Root{},

@@ -160,8 +160,10 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		},
 		&runtimecontrollers.KernelParamSpecController{},
 		&secrets.APIController{},
+		&secrets.APICertSANsController{},
 		&secrets.EtcdController{},
 		&secrets.KubernetesController{},
+		&secrets.KubernetesCertSANsController{},
 		&secrets.RootController{},
 	} {
 		if err := ctrl.controllerRuntime.RegisterController(c); err != nil {

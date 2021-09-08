@@ -8,6 +8,7 @@ package secrets_test
 import (
 	"context"
 	stdlibx509 "crypto/x509"
+	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 	"k8s.io/client-go/tools/clientcmd"
 
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
@@ -31,7 +31,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/resources/time"
@@ -121,14 +120,22 @@ func (suite *KubernetesSuite) TestReconcile() {
 	networkStatus.TypedSpec().HostnameReady = true
 	suite.Require().NoError(suite.state.Create(suite.ctx, networkStatus))
 
-	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
-	hostnameStatus.TypedSpec().Hostname = "foo"
-	hostnameStatus.TypedSpec().Domainname = "example.com"
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
-
-	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.2.1.3/24"), netaddr.MustParseIPPrefix("172.16.0.1/32")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddresses))
+	certSANs := secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANKubernetesID)
+	certSANs.TypedSpec().Append(
+		"example.com",
+		"foo",
+		"foo.example.com",
+		"kubernetes",
+		"kubernetes.default",
+		"kubernetes.default.svc",
+		"kubernetes.default.svc.cluster.remote",
+		"localhost",
+		"some.url",
+		"10.2.1.3",
+		"10.4.3.2",
+		"172.16.0.1",
+	)
+	suite.Require().NoError(suite.state.Create(suite.ctx, certSANs))
 
 	timeSync := timeresource.NewStatus()
 	timeSync.SetStatus(timeresource.StatusSpec{
@@ -154,17 +161,17 @@ func (suite *KubernetesSuite) TestReconcile() {
 
 			suite.Assert().Equal(
 				[]string{
-					"some.url",
 					"example.com",
+					"foo",
+					"foo.example.com",
 					"kubernetes",
 					"kubernetes.default",
 					"kubernetes.default.svc",
 					"kubernetes.default.svc.cluster.remote",
 					"localhost",
-					"foo",
-					"foo.example.com",
+					"some.url",
 				}, apiCert.DNSNames)
-			suite.Assert().Equal([]net.IP{net.ParseIP("10.4.3.2").To4(), net.ParseIP("10.2.1.3").To4(), net.ParseIP("172.16.0.1").To4()}, apiCert.IPAddresses)
+			suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", apiCert.IPAddresses))
 
 			suite.Assert().Equal("kube-apiserver", apiCert.Subject.CommonName)
 			suite.Assert().Equal([]string{"kube-master"}, apiCert.Subject.Organization)

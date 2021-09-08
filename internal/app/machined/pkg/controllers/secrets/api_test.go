@@ -8,8 +8,8 @@ package secrets_test
 import (
 	"context"
 	stdlibx509 "crypto/x509"
+	"fmt"
 	"log"
-	"net"
 	"sync"
 	"testing"
 	"time"
@@ -29,7 +29,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/network"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
 )
@@ -97,14 +96,19 @@ func (suite *APISuite) TestReconcileControlPlane() {
 	networkStatus.TypedSpec().HostnameReady = true
 	suite.Require().NoError(suite.state.Create(suite.ctx, networkStatus))
 
-	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
-	hostnameStatus.TypedSpec().Hostname = "foo"
-	hostnameStatus.TypedSpec().Domainname = "example.com"
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
+	certSANs := secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANAPIID)
+	certSANs.TypedSpec().Append(
+		"example.com",
+		"foo",
+		"foo.example.com",
+		"10.2.1.3",
+		"10.4.3.2",
+		"172.16.0.1",
+	)
 
-	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.2.1.3/24"), netaddr.MustParseIPPrefix("172.16.0.1/32")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddresses))
+	certSANs.TypedSpec().FQDN = "foo.example.com"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, certSANs))
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
@@ -126,7 +130,7 @@ func (suite *APISuite) TestReconcileControlPlane() {
 			suite.Require().NoError(err)
 
 			suite.Assert().Equal([]string{"example.com", "foo", "foo.example.com"}, serverCert.DNSNames)
-			suite.Assert().Equal([]net.IP{net.ParseIP("10.4.3.2").To4(), net.ParseIP("10.2.1.3").To4(), net.ParseIP("172.16.0.1").To4()}, serverCert.IPAddresses)
+			suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
 
 			suite.Assert().Equal("foo.example.com", serverCert.Subject.CommonName)
 			suite.Assert().Empty(serverCert.Subject.Organization)

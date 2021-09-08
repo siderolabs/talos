@@ -121,6 +121,11 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 		if err = ctrl.teardownAll(ctx, r); err != nil {
 			return err
 		}
+
+		// reset inputs back to what they were initially
+		if err = r.UpdateInputs(ctrl.Inputs()); err != nil {
+			return err
+		}
 	}
 }
 
@@ -134,15 +139,9 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: network.NamespaceName,
-			Type:      network.HostnameStatusType,
-			ID:        pointer.ToString(network.HostnameID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.NodeAddressType,
-			ID:        pointer.ToString(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.CertSANType,
+			ID:        pointer.ToString(secrets.CertSANAPIID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -229,28 +228,16 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		rootSpec := rootResource.(*secrets.Root).OSSpec()
 
-		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		certSANResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANAPIID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
 			}
 
-			return err
+			return fmt.Errorf("error getting certSANs: %w", err)
 		}
 
-		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
-
-		addressesResource, err := r.Get(ctx,
-			resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
-		}
-
-		nodeAddresses := addressesResource.(*network.NodeAddress).TypedSpec()
+		certSANs := certSANResource.(*secrets.CertSAN).TypedSpec()
 
 		var endpointsStr []string
 
@@ -277,37 +264,28 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			}
 		}
 
-		var altNames AltNames
-
-		for _, ip := range append(rootSpec.CertSANIPs, nodeAddresses.IPs()...) {
-			altNames.AppendIPs(ip.IPAddr().IP)
-		}
-
-		altNames.AppendDNSNames(rootSpec.CertSANDNSNames...)
-		altNames.AppendDNSNames(hostnameStatus.Hostname, hostnameStatus.FQDN())
-
 		if isControlplane {
-			if err := ctrl.generateControlPlane(ctx, r, logger, rootSpec, altNames, hostnameStatus.FQDN()); err != nil {
+			if err := ctrl.generateControlPlane(ctx, r, logger, rootSpec, certSANs); err != nil {
 				return err
 			}
 		} else {
-			if err := ctrl.generateJoin(ctx, r, logger, rootSpec, endpointsStr, altNames, hostnameStatus.FQDN()); err != nil {
+			if err := ctrl.generateJoin(ctx, r, logger, rootSpec, endpointsStr, certSANs); err != nil {
 				return err
 			}
 		}
 	}
 }
 
-func (ctrl *APIController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.RootOSSpec, altNames AltNames, fqdn string) error {
+func (ctrl *APIController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.RootOSSpec, certSANs *secrets.CertSANSpec) error {
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.CA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
 
 	serverCert, err := x509.NewKeyPair(ca,
-		x509.IPAddresses(altNames.IPs),
-		x509.DNSNames(altNames.DNSNames),
-		x509.CommonName(fqdn),
+		x509.IPAddresses(certSANs.StdIPs()),
+		x509.DNSNames(certSANs.DNSNames),
+		x509.CommonName(certSANs.FQDN),
 		x509.NotAfter(time.Now().Add(x509.DefaultCertificateValidityDuration)),
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
@@ -319,7 +297,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 	}
 
 	clientCert, err := x509.NewKeyPair(ca,
-		x509.CommonName(fqdn),
+		x509.CommonName(certSANs.FQDN),
 		x509.Organization(string(role.Impersonator)),
 		x509.NotAfter(time.Now().Add(x509.DefaultCertificateValidityDuration)),
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
@@ -358,7 +336,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 }
 
 func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	rootSpec *secrets.RootOSSpec, endpointsStr []string, altNames AltNames, fqdn string) error {
+	rootSpec *secrets.RootOSSpec, endpointsStr []string, certSANs *secrets.CertSANSpec) error {
 	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)
@@ -367,9 +345,9 @@ func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtim
 	defer remoteGen.Close() //nolint:errcheck
 
 	serverCSR, serverCert, err := x509.NewEd25519CSRAndIdentity(
-		x509.IPAddresses(altNames.IPs),
-		x509.DNSNames(altNames.DNSNames),
-		x509.CommonName(fqdn),
+		x509.IPAddresses(certSANs.StdIPs()),
+		x509.DNSNames(certSANs.DNSNames),
+		x509.CommonName(certSANs.FQDN),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to generate API server CSR: %w", err)
@@ -383,7 +361,7 @@ func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtim
 	}
 
 	clientCSR, clientCert, err := x509.NewEd25519CSRAndIdentity(
-		x509.CommonName(fqdn),
+		x509.CommonName(certSANs.FQDN),
 		x509.Organization(string(role.Impersonator)),
 	)
 	if err != nil {
