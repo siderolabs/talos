@@ -36,7 +36,8 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID: "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
+			ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
+			ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
 		},
 	})
 
@@ -52,6 +53,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 
 				suite.Assert().True(spec.Enabled)
 				suite.Assert().Equal("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", spec.ClusterID)
+				suite.Assert().Equal("I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=", spec.SharedSecret)
 
 				return nil
 			},

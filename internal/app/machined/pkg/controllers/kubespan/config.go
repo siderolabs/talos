@@ -72,6 +72,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 				if err = r.Modify(ctx, kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID), func(res resource.Resource) error {
 					res.(*kubespan.Config).TypedSpec().Enabled = c.Machine().Network().KubeSpan().Enabled()
 					res.(*kubespan.Config).TypedSpec().ClusterID = c.Cluster().ID()
+					res.(*kubespan.Config).TypedSpec().SharedSecret = c.Cluster().Secret()
 
 					return nil
 				}); err != nil {

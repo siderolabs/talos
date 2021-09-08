@@ -474,6 +474,24 @@ const (
 	// KubeSpanDefaultPort is the default Wireguard listening port for incoming connections.
 	KubeSpanDefaultPort = 51820
 
+	// KubeSpanDefaultRoutingTable is the default routing table for KubeSpan LAN targets.
+	//
+	// This specifies the routing table which will be used for Wireguard-available destinations.
+	KubeSpanDefaultRoutingTable = 180
+
+	// KubeSpanDefaultFirewallMark is the default firewall mark to use for Wireguard encrypted egress packets.
+	//
+	// Normal Wireguard configurations will NOT use this firewall mark.
+	KubeSpanDefaultFirewallMark = 0x51820
+
+	// KubeSpanDefaultForceFirewallMark is the default firewall mark to use for packets destined to IPs serviced by KubeSpan.
+	//
+	// It is used to signal that matching packets should be forced into the Wireguard interface.
+	KubeSpanDefaultForceFirewallMark = 0x51821
+
+	// KubeSpanDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
+	KubeSpanDefaultPeerKeepalive = 25 * time.Second
+
 	// NetworkSelfIPsAnnotation is the node annotation used to list the (comma-separated) IP addresses of the host, as discovered by Talos tooling.
 	NetworkSelfIPsAnnotation = "networking.talos.dev/self-ips"
 
@@ -491,6 +509,9 @@ const (
 
 	// KubeSpanKnownEndpointsAnnotation is the node annotation used to list the (comma-separated) known-good Wireguard endpoints for the node, as seen by other peers.
 	KubeSpanKnownEndpointsAnnotation = "networking.talos.dev/kubespan-endpoints"
+
+	// KubeSpanLinkName is the link name for the KubeSpan Wireguard interface.
+	KubeSpanLinkName = "kubespan"
 )
 
 // See https://linux.die.net/man/3/klogctl

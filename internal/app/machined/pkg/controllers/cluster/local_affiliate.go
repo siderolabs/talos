@@ -179,6 +179,8 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.Nodename = nodename.(*k8s.Nodename).TypedSpec().Nodename
 					spec.MachineType = machineType.(*config.MachineType).MachineType()
 
+					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
+
 					if kubespanIdentity != nil {
 						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.IP()
 						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey

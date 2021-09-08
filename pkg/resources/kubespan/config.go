@@ -27,8 +27,9 @@ type Config struct {
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
-	Enabled   bool   `yaml:"enabled"`
-	ClusterID string `yaml:"clusterId"`
+	Enabled      bool   `yaml:"enabled"`
+	ClusterID    string `yaml:"clusterId"`
+	SharedSecret string `yaml:"sharedSecret"`
 }
 
 // NewConfig initializes a Config resource.
@@ -72,6 +73,7 @@ func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: config.NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

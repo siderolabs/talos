@@ -28,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 		&kubespan.Config{},
 		&kubespan.Identity{},
 		&kubespan.PeerSpec{},
+		&kubespan.PeerStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

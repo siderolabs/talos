@@ -97,6 +97,7 @@ func NewState() (*State, error) {
 		&kubespan.Config{},
 		&kubespan.Identity{},
 		&kubespan.PeerSpec{},
+		&kubespan.PeerStatus{},
 		&network.AddressStatus{},
 		&network.AddressSpec{},
 		&network.HardwareAddr{},

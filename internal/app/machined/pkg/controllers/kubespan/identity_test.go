@@ -82,7 +82,7 @@ func (suite *IdentitySuite) TestGenerate() {
 }
 
 func (suite *IdentitySuite) TestLoad() {
-	// using verbatim data here to make sure nodeId representation is supported in future version fo Talos
+	// using verbatim data here to make sure nodeId representation is supported in future version of Talos
 	const identityYaml = `address: ""
 subnet: ""
 privateKey: sF45u5ePau58WeeCUY3T8D9foEKaQ8Opx4cGC8g4XE4=

@@ -102,6 +102,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.RenderSecretsStaticPodController{},
 		&kubespan.ConfigController{},
 		&kubespan.IdentityController{},
+		&kubespan.ManagerController{},
 		&kubespan.PeerSpecController{},
 		&network.AddressConfigController{
 			Cmdline:      procfs.ProcCmdline(),
