@@ -7,7 +7,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -146,7 +145,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
 			EtcdServers:              []string{"https://127.0.0.1:2379"},
 			LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
-			ServiceCIDR:              cfgProvider.Cluster().Network().ServiceCIDR(),
+			ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
 			ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
 			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
@@ -166,8 +165,8 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
 			Image:         cfgProvider.Cluster().ControllerManager().Image(),
 			CloudProvider: cloudProvider,
-			PodCIDR:       cfgProvider.Cluster().Network().PodCIDR(),
-			ServiceCIDR:   cfgProvider.Cluster().Network().ServiceCIDR(),
+			PodCIDRs:      cfgProvider.Cluster().Network().PodCIDRs(),
+			ServiceCIDRs:  cfgProvider.Cluster().Network().ServiceCIDRs(),
 			ExtraArgs:     cfgProvider.Cluster().ControllerManager().ExtraArgs(),
 			ExtraVolumes:  convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
 		})
@@ -218,8 +217,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			Server:        cfgProvider.Cluster().Endpoint().String(),
 			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
 
-			PodCIDRs:     cfgProvider.Cluster().Network().PodCIDR(),
-			FirstPodCIDR: strings.Split(cfgProvider.Cluster().Network().PodCIDR(), ",")[0],
+			PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
 
 			ProxyEnabled:   cfgProvider.Cluster().Proxy().Enabled(),
 			ProxyImage:     cfgProvider.Cluster().Proxy().Image(),

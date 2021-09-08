@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/AlekSi/pointer"
@@ -225,6 +226,7 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 		tmpl, err := template.New(defaultManifests[i].name).
 			Funcs(template.FuncMap{
 				"json": jsonify,
+				"join": strings.Join,
 			}).
 			Parse(string(defaultManifests[i].template))
 		if err != nil {

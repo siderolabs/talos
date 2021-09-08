@@ -202,28 +202,28 @@ func (c *ClusterConfig) CNI() config.CNI {
 	return c.ClusterNetwork.CNI
 }
 
-// PodCIDR implements the config.ClusterNetwork interface.
-func (c *ClusterConfig) PodCIDR() string {
+// PodCIDRs implements the config.ClusterNetwork interface.
+func (c *ClusterConfig) PodCIDRs() []string {
 	switch {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.PodSubnet) == 0:
-		return constants.DefaultIPv4PodNet
+		return []string{constants.DefaultIPv4PodNet}
 	}
 
-	return strings.Join(c.ClusterNetwork.PodSubnet, ",")
+	return c.ClusterNetwork.PodSubnet
 }
 
-// ServiceCIDR implements the config.ClusterNetwork interface.
-func (c *ClusterConfig) ServiceCIDR() string {
+// ServiceCIDRs implements the config.ClusterNetwork interface.
+func (c *ClusterConfig) ServiceCIDRs() []string {
 	switch {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.ServiceSubnet) == 0:
-		return constants.DefaultIPv4ServiceNet
+		return []string{constants.DefaultIPv4ServiceNet}
 	}
 
-	return strings.Join(c.ClusterNetwork.ServiceSubnet, ",")
+	return c.ClusterNetwork.ServiceSubnet
 }
 
 // DNSDomain implements the config.ClusterNetwork interface.
@@ -237,7 +237,7 @@ func (c *ClusterConfig) DNSDomain() string {
 
 // APIServerIPs implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
+	serviceCIDRs, err := talosnet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
 	}
@@ -247,7 +247,7 @@ func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
 
 // DNSServiceIPs implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(c.ServiceCIDR())
+	serviceCIDRs, err := talosnet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
 	}

@@ -301,8 +301,8 @@ type ClusterConfig interface {
 // network options.
 type ClusterNetwork interface {
 	CNI() CNI
-	PodCIDR() string
-	ServiceCIDR() string
+	PodCIDRs() []string
+	ServiceCIDRs() []string
 	DNSDomain() string
 	// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
 	APIServerIPs() ([]net.IP, error)

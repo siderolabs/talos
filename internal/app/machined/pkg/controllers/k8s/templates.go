@@ -138,7 +138,7 @@ spec:
         image: {{ .ProxyImage }}
         command:
         - /usr/local/bin/kube-proxy
-        - --cluster-cidr={{ .PodCIDRs }}
+        - --cluster-cidr={{ join .PodCIDRs "," }}
         - --hostname-override=$(NODE_NAME)
         - --kubeconfig=/etc/kubernetes/kubeconfig
         - --proxy-mode={{ .ProxyMode }}
@@ -546,7 +546,7 @@ data:
     }
   net-conf.json: |
     {
-      "Network": "{{ .FirstPodCIDR }}",
+      "Network": "{{ index .PodCIDRs 0 }}",
       "Backend": {
         "Type": "vxlan",
         "Port": 4789

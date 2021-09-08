@@ -91,8 +91,7 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 	Server:        "127.0.0.1",
 	ClusterDomain: "cluster.",
 
-	PodCIDRs:     constants.DefaultIPv4PodNet,
-	FirstPodCIDR: constants.DefaultIPv4PodNet,
+	PodCIDRs: []string{constants.DefaultIPv4PodNet},
 
 	ProxyEnabled: true,
 	ProxyImage:   "foo/bar",

@@ -71,22 +71,34 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 		if cfg != nil {
 			cfgProvider := cfg.(*config.MachineConfig).Config()
 
-			var podCIDR, serviceCIDR netaddr.IPPrefix
+			var podCIDRs, serviceCIDRs []netaddr.IPPrefix
 
-			podCIDR, err = netaddr.ParseIPPrefix(cfgProvider.Cluster().Network().PodCIDR())
-			if err != nil {
-				return fmt.Errorf("error parsing podCIDR: %w", err)
+			for _, cidr := range cfgProvider.Cluster().Network().PodCIDRs() {
+				var ipPrefix netaddr.IPPrefix
+
+				ipPrefix, err = netaddr.ParseIPPrefix(cidr)
+				if err != nil {
+					return fmt.Errorf("error parsing podCIDR: %w", err)
+				}
+
+				podCIDRs = append(podCIDRs, ipPrefix)
 			}
 
-			serviceCIDR, err = netaddr.ParseIPPrefix(cfgProvider.Cluster().Network().ServiceCIDR())
-			if err != nil {
-				return fmt.Errorf("error parsing serviceCIDR: %w", err)
+			for _, cidr := range cfgProvider.Cluster().Network().ServiceCIDRs() {
+				var ipPrefix netaddr.IPPrefix
+
+				ipPrefix, err = netaddr.ParseIPPrefix(cidr)
+				if err != nil {
+					return fmt.Errorf("error parsing serviceCIDR: %w", err)
+				}
+
+				serviceCIDRs = append(serviceCIDRs, ipPrefix)
 			}
 
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.ExcludeSubnets = []netaddr.IPPrefix{podCIDR, serviceCIDR}
+				spec.ExcludeSubnets = append(append([]netaddr.IPPrefix(nil), podCIDRs...), serviceCIDRs...)
 
 				return nil
 			}); err != nil {
@@ -98,7 +110,7 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.IncludeSubnets = []netaddr.IPPrefix{podCIDR, serviceCIDR}
+				spec.IncludeSubnets = append(append([]netaddr.IPPrefix(nil), podCIDRs...), serviceCIDRs...)
 
 				return nil
 			}); err != nil {

@@ -51,7 +51,7 @@ type K8sControlPlaneAPIServerSpec struct {
 	ControlPlaneEndpoint     string            `yaml:"controlPlaneEndpoint"`
 	EtcdServers              []string          `yaml:"etcdServers"`
 	LocalPort                int               `yaml:"localPort"`
-	ServiceCIDR              string            `yaml:"serviceCIDR"`
+	ServiceCIDRs             []string          `yaml:"serviceCIDR"`
 	ExtraArgs                map[string]string `yaml:"extraArgs"`
 	ExtraVolumes             []K8sExtraVolume  `yaml:"extraVolumes"`
 	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
@@ -61,8 +61,8 @@ type K8sControlPlaneAPIServerSpec struct {
 type K8sControlPlaneControllerManagerSpec struct {
 	Image         string            `yaml:"image"`
 	CloudProvider string            `yaml:"cloudProvider"`
-	PodCIDR       string            `yaml:"podCIDR"`
-	ServiceCIDR   string            `yaml:"serviceCIDR"`
+	PodCIDRs      []string          `yaml:"podCIDRs"`
+	ServiceCIDRs  []string          `yaml:"serviceCIDRs"`
 	ExtraArgs     map[string]string `yaml:"extraArgs"`
 	ExtraVolumes  []K8sExtraVolume  `yaml:"extraVolumes"`
 }
@@ -81,8 +81,7 @@ type K8sManifestsSpec struct {
 	Server        string `yaml:"string"`
 	ClusterDomain string `yaml:"clusterDomain"`
 
-	PodCIDRs     string `yaml:"podCIDRs"`
-	FirstPodCIDR string `yaml:"firstPodCIDR"`
+	PodCIDRs []string `yaml:"podCIDRs"`
 
 	ProxyEnabled   bool              `yaml:"proxyEnabled"`
 	ProxyImage     string            `yaml:"proxyImage"`

@@ -97,10 +97,12 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 			},
 			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 				ServiceSubnet: []string{
-					"10.96.0.0/12",
+					"10.200.0.0/22",
+					"fd40:10:200::/112",
 				},
 				PodSubnet: []string{
-					"10.244.0.0/12",
+					"10.32.0.0/12",
+					"fd00:10:32::/102",
 				},
 			},
 		},
@@ -113,7 +115,7 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 			func(res resource.Resource) error {
 				spec := res.(*network.NodeAddressFilter).TypedSpec()
 
-				suite.Assert().Equal("[10.244.0.0/12 10.96.0.0/12]", fmt.Sprintf("%s", spec.IncludeSubnets))
+				suite.Assert().Equal("[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]", fmt.Sprintf("%s", spec.IncludeSubnets))
 				suite.Assert().Empty(spec.ExcludeSubnets)
 
 				return nil
@@ -128,7 +130,7 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 				spec := res.(*network.NodeAddressFilter).TypedSpec()
 
 				suite.Assert().Empty(spec.IncludeSubnets)
-				suite.Assert().Equal("[10.244.0.0/12 10.96.0.0/12]", fmt.Sprintf("%s", spec.ExcludeSubnets))
+				suite.Assert().Equal("[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]", fmt.Sprintf("%s", spec.ExcludeSubnets))
 
 				return nil
 			},
