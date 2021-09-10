@@ -101,8 +101,6 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
-		logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
-
 		if err = conditions.WaitForFileToExist(constants.KubeletKubeconfig).Wait(ctx); err != nil {
 			return err
 		}

@@ -263,18 +263,27 @@ type WireguardSpec struct {
 // WireguardPeer describes a single peer.
 type WireguardPeer struct {
 	PublicKey                   string             `yaml:"publicKey"`
+	PresharedKey                string             `yaml:"presharedKey"`
 	Endpoint                    string             `yaml:"endpoint"`
-	PersistentKeepaliveInterval time.Duration      `yaml:"persistenKeepaliveInterval"`
+	PersistentKeepaliveInterval time.Duration      `yaml:"persistentKeepaliveInterval"`
 	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs"`
 }
 
 // Equal checks two WireguardPeer structs for equality.
+//
+// `spec` is considered to be the result of getting current Wireguard configuration,
+// while `other` is the new (updated configuration).
 func (peer *WireguardPeer) Equal(other *WireguardPeer) bool {
 	if peer.PublicKey != other.PublicKey {
 		return false
 	}
 
-	if peer.Endpoint != other.Endpoint {
+	if peer.PresharedKey != other.PresharedKey {
+		return false
+	}
+
+	// if the Endpoint is not set in `other`, don't consider this to be a change
+	if other.Endpoint != "" && peer.Endpoint != other.Endpoint {
 		return false
 	}
 
@@ -307,6 +316,9 @@ func (spec *WireguardSpec) IsZero() bool {
 // Equal checks two WireguardSpecs for equality.
 //
 // Both specs should be sorted before calling this method.
+//
+// `spec` is considered to be the result of getting current Wireguard configuration,
+// while `other` is the new (updated configuration).
 func (spec *WireguardSpec) Equal(other *WireguardSpec) bool {
 	if spec.PrivateKey != other.PrivateKey {
 		return false
@@ -397,6 +409,19 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 				return err
 			}
 
+			var presharedKey *wgtypes.Key
+
+			if peer.PresharedKey != "" {
+				var parsedKey wgtypes.Key
+
+				parsedKey, err = wgtypes.ParseKey(peer.PresharedKey)
+				if err != nil {
+					return err
+				}
+
+				presharedKey = &parsedKey
+			}
+
 			var endpoint *net.UDPAddr
 
 			if peer.Endpoint != "" {
@@ -415,7 +440,9 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 			cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
 				PublicKey:                   pubKey,
 				Endpoint:                    endpoint,
+				PresharedKey:                presharedKey,
 				PersistentKeepaliveInterval: &peer.PersistentKeepaliveInterval,
+				ReplaceAllowedIPs:           true,
 				AllowedIPs:                  allowedIPs,
 			})
 
@@ -492,6 +519,12 @@ func (spec *WireguardSpec) Decode(dev *wgtypes.Device) {
 
 		if dev.Peers[i].Endpoint != nil {
 			spec.Peers[i].Endpoint = dev.Peers[i].Endpoint.String()
+		}
+
+		var zeroKey wgtypes.Key
+
+		if dev.Peers[i].PresharedKey != zeroKey {
+			spec.Peers[i].PresharedKey = dev.Peers[i].PresharedKey.String()
 		}
 
 		spec.Peers[i].PersistentKeepaliveInterval = dev.Peers[i].PersistentKeepaliveInterval

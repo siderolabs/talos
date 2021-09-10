@@ -185,10 +185,15 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 						spec.KubeSpan.AdditionalAddresses = append([]netaddr.IPPrefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
 
 						nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
-						endpoints := make([]netaddr.IPPort, len(nodeIPs))
+						endpoints := make([]netaddr.IPPort, 0, len(nodeIPs))
 
 						for i := range nodeIPs {
-							endpoints[i] = netaddr.IPPortFrom(nodeIPs[i], constants.KubeSpanDefaultPort)
+							if nodeIPs[i] == spec.KubeSpan.Address {
+								// skip kubespan local address
+								continue
+							}
+
+							endpoints = append(endpoints, netaddr.IPPortFrom(nodeIPs[i], constants.KubeSpanDefaultPort))
 						}
 
 						spec.KubeSpan.Endpoints = endpoints

@@ -80,6 +80,12 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(ksIdentity.TypedSpec().UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksIdentity))
 
+	// add KS address to the list of node addresses, it should be ignored in the endpoints
+	oldVersion := nonK8sAddresses.Metadata().Version()
+	nonK8sAddresses.TypedSpec().Addresses = append(nonK8sAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
+	nonK8sAddresses.Metadata().BumpVersion()
+	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, nonK8sAddresses))
+
 	onlyK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
 	onlyK8sAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.1.0/24")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, onlyK8sAddresses))
@@ -88,7 +94,11 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
-			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("172.20.0.2"), netaddr.MustParseIP("10.5.0.1")}, spec.Addresses)
+			if len(spec.Addresses) < 3 {
+				return retry.ExpectedErrorf("not reconciled yet")
+			}
+
+			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("172.20.0.2"), netaddr.MustParseIP("10.5.0.1"), ksIdentity.TypedSpec().Address.IP()}, spec.Addresses)
 			suite.Assert().Equal("example1", spec.Hostname)
 			suite.Assert().Equal("example1.com", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
@@ -111,7 +121,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	))
 
 	// disable discovery, local affiliate should be removed
-	oldVersion := discoveryConfig.Metadata().Version()
+	oldVersion = discoveryConfig.Metadata().Version()
 	discoveryConfig.TypedSpec().DiscoveryEnabled = false
 	discoveryConfig.Metadata().BumpVersion()
 	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, discoveryConfig))

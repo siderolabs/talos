@@ -25,10 +25,10 @@ type PeerSpec struct {
 
 // PeerSpecSpec describes PeerSpec state.
 type PeerSpecSpec struct {
-	Address             netaddr.IP         `yaml:"address"`
-	AdditionalAddresses []netaddr.IPPrefix `yaml:"additionalAddresses"`
-	Endpoints           []netaddr.IPPort   `yaml:"endpoints"`
-	Label               string             `yaml:"label"`
+	Address    netaddr.IP         `yaml:"address"`
+	AllowedIPs []netaddr.IPPrefix `yaml:"allowedIPs"`
+	Endpoints  []netaddr.IPPort   `yaml:"endpoints"`
+	Label      string             `yaml:"label"`
 }
 
 // NewPeerSpec initializes a PeerSpec resource.
@@ -62,10 +62,10 @@ func (r *PeerSpec) DeepCopy() resource.Resource {
 	return &PeerSpec{
 		md: r.md,
 		spec: PeerSpecSpec{
-			Address:             r.spec.Address,
-			AdditionalAddresses: append([]netaddr.IPPrefix(nil), r.spec.AdditionalAddresses...),
-			Endpoints:           append([]netaddr.IPPort(nil), r.spec.Endpoints...),
-			Label:               r.spec.Label,
+			Address:    r.spec.Address,
+			AllowedIPs: append([]netaddr.IPPrefix(nil), r.spec.AllowedIPs...),
+			Endpoints:  append([]netaddr.IPPort(nil), r.spec.Endpoints...),
+			Label:      r.spec.Label,
 		},
 	}
 }

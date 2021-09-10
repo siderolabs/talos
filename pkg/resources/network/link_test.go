@@ -89,9 +89,19 @@ func TestWireguardPeer(t *testing.T) {
 		},
 	}
 
+	peer1_2 := network.WireguardPeer{
+		PublicKey:                   key1.PublicKey().String(),
+		PersistentKeepaliveInterval: 10 * time.Second,
+		AllowedIPs: []netaddr.IPPrefix{
+			netaddr.MustParseIPPrefix("10.2.0.0/16"),
+			netaddr.MustParseIPPrefix("10.2.0.0/24"),
+		},
+	}
+
 	assert.True(t, peer1.Equal(&peer1))
 	assert.False(t, peer1.Equal(&peer2))
 	assert.False(t, peer1.Equal(&peer1_1))
+	assert.True(t, peer1.Equal(&peer1_2))
 }
 
 func TestWireguardSpecZero(t *testing.T) {
@@ -118,7 +128,8 @@ func TestWireguardSpecDecode(t *testing.T) {
 		FirewallMark: 1,
 		Peers: []wgtypes.Peer{
 			{
-				PublicKey: pub1.PublicKey(),
+				PublicKey:    pub1.PublicKey(),
+				PresharedKey: priv,
 				Endpoint: &net.UDPAddr{
 					IP:   net.ParseIP("10.2.0.3"),
 					Port: 20000,
@@ -148,8 +159,9 @@ func TestWireguardSpecDecode(t *testing.T) {
 		FirewallMark: 1,
 		Peers: []network.WireguardPeer{
 			{
-				PublicKey: pub1.PublicKey().String(),
-				Endpoint:  "10.2.0.3:20000",
+				PublicKey:    pub1.PublicKey().String(),
+				PresharedKey: priv.String(),
+				Endpoint:     "10.2.0.3:20000",
 				AllowedIPs: []netaddr.IPPrefix{
 					netaddr.MustParseIPPrefix("172.24.0.0/16"),
 				},
@@ -239,6 +251,7 @@ func TestWireguardSpecEncode(t *testing.T) {
 					Port: 20000,
 				},
 				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{
 						IP:   net.ParseIP("172.24.0.0").To4(),
@@ -249,6 +262,7 @@ func TestWireguardSpecEncode(t *testing.T) {
 			{
 				PublicKey:                   pub2.PublicKey(),
 				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{
 						IP:   net.ParseIP("172.25.0.0").To4(),
@@ -300,7 +314,8 @@ func TestWireguardSpecEncode(t *testing.T) {
 		FirewallMark: 2,
 		Peers: []network.WireguardPeer{
 			{
-				PublicKey: pub1.PublicKey().String(),
+				PublicKey:    pub1.PublicKey().String(),
+				PresharedKey: priv.String(),
 				AllowedIPs: []netaddr.IPPrefix{
 					netaddr.MustParseIPPrefix("172.24.0.0/16"),
 				},
@@ -316,7 +331,9 @@ func TestWireguardSpecEncode(t *testing.T) {
 		Peers: []wgtypes.PeerConfig{
 			{
 				PublicKey:                   pub1.PublicKey(),
+				PresharedKey:                &priv,
 				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{
 						IP:   net.ParseIP("172.24.0.0").To4(),

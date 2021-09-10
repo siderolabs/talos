@@ -158,6 +158,7 @@ func (r *LinkSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

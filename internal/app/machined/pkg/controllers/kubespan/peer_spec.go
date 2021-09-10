@@ -90,6 +90,9 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			if cfg != nil && localIdentity != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
 				localAffiliateID := localIdentity.(*cluster.Identity).TypedSpec().NodeID
 
+				peerIPSets := make(map[string]*netaddr.IPSet, len(affiliates.Items))
+
+			affiliateLoop:
 				for _, affiliate := range affiliates.Items {
 					if affiliate.Metadata().ID() == localAffiliateID {
 						// skip local affiliate, it's not a peer
@@ -103,12 +106,39 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						continue
 					}
 
+					var builder netaddr.IPSetBuilder
+
+					for _, ipPrefix := range spec.KubeSpan.AdditionalAddresses {
+						builder.AddPrefix(ipPrefix)
+					}
+
+					builder.Add(spec.KubeSpan.Address)
+
+					var ipSet *netaddr.IPSet
+
+					ipSet, err = builder.IPSet()
+					if err != nil {
+						logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
+
+						continue
+					}
+
+					for otherPublicKey, otherIPSet := range peerIPSets {
+						if otherIPSet.Overlaps(ipSet) {
+							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
+
+							continue affiliateLoop
+						}
+					}
+
+					peerIPSets[spec.KubeSpan.PublicKey] = ipSet
+
 					if err = r.Modify(ctx, kubespan.NewPeerSpec(kubespan.NamespaceName, spec.KubeSpan.PublicKey), func(res resource.Resource) error {
 						*res.(*kubespan.PeerSpec).TypedSpec() = kubespan.PeerSpecSpec{
-							Address:             spec.KubeSpan.Address,
-							AdditionalAddresses: append([]netaddr.IPPrefix(nil), spec.KubeSpan.AdditionalAddresses...),
-							Endpoints:           append([]netaddr.IPPort(nil), spec.KubeSpan.Endpoints...),
-							Label:               spec.Nodename,
+							Address:    spec.KubeSpan.Address,
+							AllowedIPs: ipSet.Prefixes(),
+							Endpoints:  append([]netaddr.IPPort(nil), spec.KubeSpan.Endpoints...),
+							Label:      spec.Nodename,
 						}
 
 						return nil
