@@ -248,7 +248,14 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 			return fmt.Errorf("no result reader")
 		}
 
-		tarR := tar.NewReader(resultR)
+		gzipR, err := gzip.NewReader(resultR)
+		if err != nil {
+			return err
+		}
+
+		defer gzipR.Close() //nolint:errcheck
+
+		tarR := tar.NewReader(gzipR)
 
 		for {
 			var header *tar.Header
@@ -262,22 +269,22 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 				return err
 			}
 
-			matched, _ := filepath.Match("tmp/sonobuoy/*_sonobuoy_*.tar.gz", header.Name) //nolint:errcheck
+			matched, _ := filepath.Match("*_sonobuoy_*.tar.gz", header.Name) //nolint:errcheck
 
 			if !matched {
 				continue
 			}
 
-			var gzipR *gzip.Reader
+			var innerGzipR *gzip.Reader
 
-			gzipR, err = gzip.NewReader(tarR)
+			innerGzipR, err = gzip.NewReader(tarR)
 			if err != nil {
 				return err
 			}
 
-			defer gzipR.Close() //nolint:errcheck
+			defer innerGzipR.Close() //nolint:errcheck
 
-			innnerTarR := tar.NewReader(gzipR)
+			innnerTarR := tar.NewReader(innerGzipR)
 
 			for {
 				header, err = innnerTarR.Next()
@@ -315,7 +322,9 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 
 		select {
 		case err = <-errCh:
-			return err
+			if err != nil {
+				return err
+			}
 		default:
 		}
 
