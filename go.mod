@@ -110,5 +110,5 @@ require (
 	k8s.io/cri-api v0.22.1
 	k8s.io/kubectl v0.22.1
 	k8s.io/kubelet v0.22.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.56
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.57
 )
