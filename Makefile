@@ -1,7 +1,7 @@
 REGISTRY ?= ghcr.io
 USERNAME ?= talos-systems
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
-TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]*)
+TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\*)
 TAG_SUFFIX ?=
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
 IMAGE_REGISTRY ?= $(REGISTRY)
@@ -12,12 +12,12 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v0.8.0-alpha.0-2-g5b9d214
-PKGS ?= v0.8.0-alpha.0
+TOOLS ?= ghcr.io/talos-systems/tools:v0.8.0-alpha.0-3-g2790b55
+PKGS ?= v0.8.0-alpha.0-3-gdb90f93
 EXTRAS ?= v0.6.0-alpha.0
-GO_VERSION ?= 1.16
+GO_VERSION ?= 1.17
 GOFUMPT_VERSION ?= v0.1.0
-STRINGER_VERSION ?= v0.1.3
+STRINGER_VERSION ?= v0.1.5
 DEEPCOPY_GEN_VERSION ?= v0.21.3
 VTPROTOBUF_VERSION ?= 81d623a9a700ede8ef765e5ab08b3aa1f5b4d5a8
 IMPORTVET ?= autonomy/importvet:f6b07d9

@@ -174,8 +174,10 @@ FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
+RUN gofumports -w -local github.com/talos-systems/talos ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...
+RUN gofumports -w -local github.com/talos-systems/talos ./
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
