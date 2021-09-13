@@ -119,11 +119,11 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider,
 	for _, member := range resp.Members {
 		// If the member is not started, the name will be an empty string.
 		if len(member.Name) == 0 {
-			return fmt.Errorf("etcd member %d is not started, all members must be running to perform an upgrade", member.ID)
+			return fmt.Errorf("etcd member %016x is not started, all members must be running to perform an upgrade", member.ID)
 		}
 
 		if err = validateMemberHealth(ctx, member.GetClientURLs()); err != nil {
-			return fmt.Errorf("etcd member %d is not healthy; all members must be healthy to perform an upgrade: %w", member.ID, err)
+			return fmt.Errorf("etcd member %016x is not healthy; all members must be healthy to perform an upgrade: %w", member.ID, err)
 		}
 	}
 
