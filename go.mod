@@ -28,7 +28,7 @@ require (
 	github.com/containernetworking/plugins v0.9.1 // see https://github.com/containernetworking/cni/issues/856
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20210714141157-57b048cd66b0
+	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -41,19 +41,19 @@ require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
-	github.com/gdamore/tcell/v2 v2.4.0
+	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-getter v1.5.7
+	github.com/hashicorp/go-getter v1.5.8
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/insomniacslk/dhcp v0.0.0-20210817203519-d82598001386
-	github.com/jsimonetti/rtnetlink v0.0.0-20210614053835-9c52e516c709
+	github.com/insomniacslk/dhcp v0.0.0-20210827173440-b95caade3eac
+	github.com/jsimonetti/rtnetlink v0.0.0-20210721205614-4cc3c1489576
 	github.com/jxskiss/base62 v0.0.0-20191017122030-4f11678b909b
-	github.com/mattn/go-isatty v0.0.13
+	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/mdlayher/genetlink v1.0.0
@@ -61,10 +61,10 @@ require (
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.19.0
+	github.com/packethost/packngo v0.19.1
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.3
-	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
+	github.com/rivo/tview v0.0.0-20210909154944-f7430b878d17
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
@@ -91,18 +91,18 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
-	go.uber.org/zap v1.19.0
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+	go.uber.org/zap v1.19.1
+	golang.org/x/net v0.0.0-20210908191846-a5e095526f91
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
+	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210506160403-92e472f520a5
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210803171230-4253848d036c
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	inet.af/netaddr v0.0.0-20210721214506-ce7a8ad02cc1
+	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1
 	k8s.io/apiserver v0.22.1 // indirect; use the same version as other k8s deps
@@ -110,5 +110,5 @@ require (
 	k8s.io/cri-api v0.22.1
 	k8s.io/kubectl v0.22.1
 	k8s.io/kubelet v0.22.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.56
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.57
 )

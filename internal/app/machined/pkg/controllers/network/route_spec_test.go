@@ -281,7 +281,7 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 		PrefixLength: 32,
 		Scope:        unix.RT_SCOPE_UNIVERSE,
 		Index:        uint32(iface.Index),
-		Attributes: rtnetlink.AddressAttributes{
+		Attributes: &rtnetlink.AddressAttributes{
 			Address: localIP,
 			Local:   localIP,
 		},
@@ -403,7 +403,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 		PrefixLength: 24,
 		Scope:        unix.RT_SCOPE_UNIVERSE,
 		Index:        uint32(iface.Index),
-		Attributes: rtnetlink.AddressAttributes{
+		Attributes: &rtnetlink.AddressAttributes{
 			Address: localIP,
 			Local:   localIP,
 		},

@@ -214,7 +214,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 			Flags:        uint8(address.TypedSpec().Flags),
 			Scope:        uint8(address.TypedSpec().Scope),
 			Index:        linkIndex,
-			Attributes: rtnetlink.AddressAttributes{
+			Attributes: &rtnetlink.AddressAttributes{
 				Address:   address.TypedSpec().Address.IP().IPAddr().IP,
 				Local:     address.TypedSpec().Address.IP().IPAddr().IP,
 				Broadcast: broadcastAddr(address.TypedSpec().Address),
