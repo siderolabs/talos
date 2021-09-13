@@ -61,7 +61,7 @@ require (
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.19.0
+	github.com/packethost/packngo v0.19.1
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.3
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
