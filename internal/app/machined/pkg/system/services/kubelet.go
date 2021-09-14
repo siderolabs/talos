@@ -98,7 +98,7 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0o500); err != nil {
+	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0o400); err != nil {
 		return err
 	}
 
