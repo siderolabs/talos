@@ -176,7 +176,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		for _, staticPod := range staticPods.Items {
 			switch staticPod.Metadata().Phase() {
 			case resource.PhaseRunning:
-				if err = ctrl.writePod(ctx, r, logger, staticPod); err != nil {
+				if err = ctrl.writePod(logger, staticPod); err != nil {
 					return fmt.Errorf("error running pod: %w", err)
 				}
 			case resource.PhaseTearingDown:
@@ -207,13 +207,7 @@ func (ctrl *KubeletStaticPodController) podFilename(staticPod resource.Resource)
 	return fmt.Sprintf("%s%s.yaml", constants.TalosManifestPrefix, staticPod.Metadata().ID())
 }
 
-func (ctrl *KubeletStaticPodController) writePod(ctx context.Context, r controller.Runtime, logger *zap.Logger, staticPod resource.Resource) error {
-	staticPodStatus := k8s.NewStaticPodStatus(staticPod.Metadata().Namespace(), staticPod.Metadata().ID())
-
-	if err := r.AddFinalizer(ctx, staticPod.Metadata(), staticPodStatus.String()); err != nil {
-		return err
-	}
-
+func (ctrl *KubeletStaticPodController) writePod(logger *zap.Logger, staticPod resource.Resource) error {
 	renderedPod, err := yaml.Marshal(staticPod.Spec())
 	if err != nil {
 		return err

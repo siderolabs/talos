@@ -116,6 +116,24 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 			)
 		},
 	))
+
+	// tear down etcd service
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, v1alpha1.NewService("etcd").Metadata()))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+			if err != nil {
+				return err
+			}
+
+			if len(list.Items) > 0 {
+				return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
+			}
+
+			return nil
+		},
+	))
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {

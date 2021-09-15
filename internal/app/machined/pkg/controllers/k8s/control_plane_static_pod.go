@@ -82,6 +82,10 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
+				if err = ctrl.teardownAll(ctx, r); err != nil {
+					return fmt.Errorf("error tearing down: %w", err)
+				}
+
 				continue
 			}
 
