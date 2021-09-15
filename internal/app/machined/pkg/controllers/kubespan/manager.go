@@ -35,6 +35,8 @@ const DefaultPeerReconcileInterval = 30 * time.Second
 // ManagerController sets up Wireguard networking based on KubeSpan configuration, watches and updates peer statuses.
 type ManagerController struct {
 	WireguardClientFactory WireguardClientFactory
+	RulesManagerFactory    RulesManagerFactory
+	NfTablesManagerFactory NfTablesManagerFactory
 	PeerReconcileInterval  time.Duration
 }
 
@@ -51,6 +53,12 @@ type WireguardClient interface {
 	Device(string) (*wgtypes.Device, error)
 	Close() error
 }
+
+// RulesManagerFactory allows mocking RulesManager.
+type RulesManagerFactory func(targetTable, internalMark int) RulesManager
+
+// NfTablesManagerFactory allows mocking NfTablesManager.
+type NfTablesManagerFactory func(externalMark, internalMark uint32) NfTablesManager
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ManagerController) Inputs() []controller.Input {
@@ -112,6 +120,24 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 	}
 
+	if ctrl.RulesManagerFactory == nil {
+		ctrl.RulesManagerFactory = func(targetTable, internalMark int) RulesManager {
+			return &rulesManager{
+				TargetTable:  targetTable,
+				InternalMark: internalMark,
+			}
+		}
+	}
+
+	if ctrl.NfTablesManagerFactory == nil {
+		ctrl.NfTablesManagerFactory = func(extrnalMark, internalMark uint32) NfTablesManager {
+			return &nfTablesManager{
+				ExternalMark: extrnalMark,
+				InternalMark: internalMark,
+			}
+		}
+	}
+
 	if ctrl.PeerReconcileInterval == 0 {
 		ctrl.PeerReconcileInterval = DefaultPeerReconcileInterval
 	}
@@ -122,6 +148,26 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 
 	defer wgClient.Close() //nolint:errcheck
+
+	var rulesMgr RulesManager
+
+	defer func() {
+		if rulesMgr != nil {
+			if err := rulesMgr.Cleanup(); err != nil {
+				logger.Error("failed cleaning up routing rules", zap.Error(err))
+			}
+		}
+	}()
+
+	var nfTablesMgr NfTablesManager
+
+	defer func() {
+		if nfTablesMgr != nil {
+			if err := nfTablesMgr.Cleanup(); err != nil {
+				logger.Error("failed cleaning up nftables rules", zap.Error(err))
+			}
+		}
+	}()
 
 	for {
 		var updateSpecs bool
@@ -151,12 +197,40 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				return err
 			}
 
+			if rulesMgr != nil {
+				if err = rulesMgr.Cleanup(); err != nil {
+					logger.Error("failed cleaning up routing rules", zap.Error(err))
+				}
+
+				rulesMgr = nil
+			}
+
+			if nfTablesMgr != nil {
+				if err = nfTablesMgr.Cleanup(); err != nil {
+					logger.Error("failed cleaning up nftables rules", zap.Error(err))
+				}
+
+				nfTablesMgr = nil
+			}
+
 			continue
 		}
 
 		if ticker == nil {
 			ticker = time.NewTicker(ctrl.PeerReconcileInterval)
 			tickerC = ticker.C
+		}
+
+		if rulesMgr == nil {
+			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark)
+
+			if err = rulesMgr.Install(); err != nil {
+				return fmt.Errorf("failed setting up routing rules: %w", err)
+			}
+		}
+
+		if nfTablesMgr == nil {
+			nfTablesMgr = ctrl.NfTablesManagerFactory(constants.KubeSpanDefaultFirewallMark, constants.KubeSpanDefaultForceFirewallMark)
 		}
 
 		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
@@ -272,6 +346,20 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			})
 		}
 
+		// build full allowedIPs set
+		var allowedIPsBuilder netaddr.IPSetBuilder
+
+		for _, peerSpec := range peerSpecs {
+			for _, prefix := range peerSpec.AllowedIPs {
+				allowedIPsBuilder.AddPrefix(prefix)
+			}
+		}
+
+		allowedIPsSet, err := allowedIPsBuilder.IPSet()
+		if err != nil {
+			return fmt.Errorf("failed building allowed IPs set: %w", err)
+		}
+
 		// update peer statuses
 		for pubKey, peerStatus := range peerStatuses {
 			peerStatus := peerStatus
@@ -317,6 +405,53 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error modifying address: %w", err)
 		}
 
+		for _, spec := range []network.RouteSpecSpec{
+			{
+				Family:      nethelpers.FamilyInet4,
+				Destination: netaddr.IPPrefix{},
+				Source:      netaddr.IP{},
+				Gateway:     netaddr.IP{},
+				OutLinkName: constants.KubeSpanLinkName,
+				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
+				Priority:    1,
+				Scope:       nethelpers.ScopeGlobal,
+				Type:        nethelpers.TypeUnicast,
+				Flags:       0,
+				Protocol:    nethelpers.ProtocolStatic,
+				ConfigLayer: network.ConfigOperator,
+			},
+			{
+				Family:      nethelpers.FamilyInet6,
+				Destination: netaddr.IPPrefix{},
+				Source:      netaddr.IP{},
+				Gateway:     netaddr.IP{},
+				OutLinkName: constants.KubeSpanLinkName,
+				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
+				Priority:    1,
+				Scope:       nethelpers.ScopeGlobal,
+				Type:        nethelpers.TypeUnicast,
+				Flags:       0,
+				Protocol:    nethelpers.ProtocolStatic,
+				ConfigLayer: network.ConfigOperator,
+			},
+		} {
+			spec := spec
+
+			if err = r.Modify(ctx,
+				network.NewRouteSpec(
+					network.ConfigNamespaceName,
+					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority)),
+				),
+				func(r resource.Resource) error {
+					*r.(*network.RouteSpec).TypedSpec() = spec
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("error modifying route spec: %w", err)
+			}
+		}
+
 		if err = r.Modify(ctx,
 			network.NewLinkSpec(
 				network.ConfigNamespaceName,
@@ -344,6 +479,10 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			},
 		); err != nil {
 			return fmt.Errorf("error modifying link spec: %w", err)
+		}
+
+		if err = nfTablesMgr.Update(allowedIPsSet); err != nil {
+			return fmt.Errorf("failed updating nftables: %w", err)
 		}
 	}
 }

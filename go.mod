@@ -45,6 +45,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/nftables v0.0.0-20210818072602-d553cd2d411d
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.8
@@ -84,6 +85,7 @@ require (
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
+	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vmware-tanzu/sonobuoy v0.53.2
 	github.com/vmware/govmomi v0.26.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
@@ -198,6 +200,7 @@ require (
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
+	github.com/koneu/natend v0.0.0-20150829182554-ec0926ea948d // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
@@ -248,7 +251,6 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/u-root/uio v0.0.0-20210528114334-82958018845c // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
-	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852 // indirect
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
