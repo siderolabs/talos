@@ -14,7 +14,6 @@ const (
 	OperatorDHCP4 Operator = iota // dhcp4
 	OperatorDHCP6                 // dhcp6
 	OperatorVIP                   // vip
-	OperatorWgLAN                 // wglan
 )
 
 // MarshalYAML implements yaml.Marshaler.

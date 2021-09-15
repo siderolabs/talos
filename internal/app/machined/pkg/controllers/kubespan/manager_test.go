@@ -4,6 +4,7 @@
 package kubespan_test
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"sync"
@@ -72,12 +73,54 @@ func (mock *mockWireguardClient) Close() error {
 	return nil
 }
 
+type mockRulesManager struct{}
+
+func (mock mockRulesManager) Install() error {
+	return nil
+}
+
+func (mock mockRulesManager) Cleanup() error {
+	return nil
+}
+
+type mockNftablesManager struct {
+	mu    sync.Mutex
+	ipSet *netaddr.IPSet
+}
+
+func (mock *mockNftablesManager) Update(ipSet *netaddr.IPSet) error {
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	mock.ipSet = ipSet
+
+	return nil
+}
+
+func (mock *mockNftablesManager) Cleanup() error {
+	return nil
+}
+
+func (mock *mockNftablesManager) IPSet() *netaddr.IPSet {
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	return mock.ipSet
+}
+
 func (suite *ManagerSuite) TestReconcile() {
 	mockWireguard := &mockWireguardClient{}
+	mockNfTables := &mockNftablesManager{}
 
 	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.ManagerController{
 		WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
 			return mockWireguard, nil
+		},
+		RulesManagerFactory: func(_, _ int) kubespanctrl.RulesManager {
+			return mockRulesManager{}
+		},
+		NfTablesManagerFactory: func(_, _ uint32) kubespanctrl.NfTablesManager {
+			return mockNfTables
 		},
 		PeerReconcileInterval: time.Second,
 	}))
@@ -146,6 +189,21 @@ func (suite *ManagerSuite) TestReconcile() {
 				suite.Assert().Equal(nethelpers.ScopeGlobal, spec.Scope)
 
 				return nil
+			},
+		),
+	))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResourceIDs(
+			resource.NewMetadata(
+				network.ConfigNamespaceName,
+				network.RouteSpecType,
+				"",
+				resource.VersionUndefined,
+			),
+			[]resource.ID{
+				network.LayeredID(network.ConfigOperator, network.RouteID(constants.KubeSpanDefaultRoutingTable, nethelpers.FamilyInet4, netaddr.IPPrefix{}, netaddr.IP{}, 1)),
+				network.LayeredID(network.ConfigOperator, network.RouteID(constants.KubeSpanDefaultRoutingTable, nethelpers.FamilyInet6, netaddr.IPPrefix{}, netaddr.IP{}, 1)),
 			},
 		),
 	))
@@ -232,6 +290,25 @@ func (suite *ManagerSuite) TestReconcile() {
 			),
 		))
 	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			ipSet := mockNfTables.IPSet()
+
+			if ipSet == nil {
+				return retry.ExpectedErrorf("ipset is nil")
+			}
+
+			ranges := fmt.Sprintf("%v", ipSet.Ranges())
+			expected := "[10.244.1.0-10.244.2.255]"
+
+			if ranges != expected {
+				return retry.ExpectedErrorf("ranges %s != expected %s", ranges, expected)
+			}
+
+			return nil
+		},
+	))
 
 	// report up status via wireguard mock
 	mockWireguard.update(&wgtypes.Device{
