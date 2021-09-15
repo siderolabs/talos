@@ -54,11 +54,13 @@ or 'notepad' for Windows.`,
 			var lastError string
 
 			editFn := func(parentCtx context.Context, msg client.ResourceResponse) error {
-				if msg.Resource == nil {
+				if msg.Definition != nil {
 					if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
 						return fmt.Errorf("only the machineconfig resource can be edited")
 					}
+				}
 
+				if msg.Resource == nil {
 					return nil
 				}
 
