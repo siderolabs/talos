@@ -85,7 +85,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 
 		logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
 
-		if err = conditions.WaitForFileToExist(constants.KubeletKubeconfig).Wait(ctx); err != nil {
+		if err = conditions.WaitForKubeconfigReady(constants.KubeletKubeconfig).Wait(ctx); err != nil {
 			return err
 		}
 

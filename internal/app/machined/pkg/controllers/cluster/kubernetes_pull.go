@@ -101,7 +101,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
-		if err = conditions.WaitForFileToExist(constants.KubeletKubeconfig).Wait(ctx); err != nil {
+		if err = conditions.WaitForKubeconfigReady(constants.KubeletKubeconfig).Wait(ctx); err != nil {
 			return err
 		}
 

@@ -14,6 +14,9 @@ import (
 type file string
 
 func (filename file) Wait(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
 	for {
 		_, err := os.Stat(string(filename))
 		if err == nil {
@@ -27,7 +30,7 @@ func (filename file) Wait(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(1 * time.Second):
+		case <-ticker.C:
 		}
 	}
 }
