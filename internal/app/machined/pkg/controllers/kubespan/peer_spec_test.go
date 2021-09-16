@@ -122,7 +122,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 				spec := res.(*kubespan.PeerSpec).TypedSpec()
 
 				suite.Assert().Equal("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0", spec.Address.String())
-				suite.Assert().Equal("[10.244.3.0/24 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
+				suite.Assert().Equal("[10.244.3.0/24 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
 				suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")}, spec.Endpoints)
 				suite.Assert().Equal("bar", spec.Label)
 
@@ -138,7 +138,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 				spec := res.(*kubespan.PeerSpec).TypedSpec()
 
 				suite.Assert().Equal("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67", spec.Address.String())
-				suite.Assert().Equal("[10.244.4.0/24 fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67/128]", fmt.Sprintf("%v", spec.AllowedIPs))
+				suite.Assert().Equal("[10.244.4.0/24 192.168.3.6/32 fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67/128]", fmt.Sprintf("%v", spec.AllowedIPs))
 				suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.6:51820")}, spec.Endpoints)
 				suite.Assert().Equal("worker-2", spec.Label)
 

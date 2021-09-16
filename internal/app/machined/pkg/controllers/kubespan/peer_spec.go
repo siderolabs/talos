@@ -112,6 +112,10 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						builder.AddPrefix(ipPrefix)
 					}
 
+					for _, ip := range spec.Addresses {
+						builder.Add(ip)
+					}
+
 					builder.Add(spec.KubeSpan.Address)
 
 					var ipSet *netaddr.IPSet
