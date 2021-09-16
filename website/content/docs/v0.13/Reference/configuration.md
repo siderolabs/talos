@@ -583,6 +583,7 @@ time:
     # Specifies time (NTP) servers to use for setting the system time.
     servers:
         - time.cloudflare.com
+    bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
 ```
 
 
@@ -2103,6 +2104,7 @@ disabled: false # Indicates if the time service is disabled for the machine.
 # Specifies time (NTP) servers to use for setting the system time.
 servers:
     - time.cloudflare.com
+bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
 ```
 
 <hr />
@@ -2130,8 +2132,19 @@ Defaults to `false`.
 Specifies time (NTP) servers to use for setting the system time.
 Defaults to `pool.ntp.org`
 
+</div>
 
-> This parameter only supports a single time server.
+<hr />
+<div class="dd">
+
+<code>bootTimeout</code>  <i>Duration</i>
+
+</div>
+<div class="dt">
+
+Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
+NTP sync will be still running in the background.
+Defaults to "infinity" (waiting forever for time sync)
 
 </div>
 

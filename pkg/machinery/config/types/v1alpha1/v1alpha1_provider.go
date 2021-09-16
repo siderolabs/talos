@@ -892,6 +892,11 @@ func (t *TimeConfig) Servers() []string {
 	return t.TimeServers
 }
 
+// BootTimeout implements the config.Provider interface.
+func (t *TimeConfig) BootTimeout() time.Duration {
+	return t.TimeBootTimeout
+}
+
 // Image implements the config.Provider interface.
 func (i *InstallConfig) Image() string {
 	return i.InstallImage

@@ -218,6 +218,7 @@ type KubeSpan interface {
 type Time interface {
 	Disabled() bool
 	Servers() []string
+	BootTimeout() time.Duration
 }
 
 // Kubelet defines the requirements for a config that pertains to kubelet

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	stdtime "time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -26,6 +27,8 @@ import (
 type SyncController struct {
 	V1Alpha1Mode v1alpha1runtime.Mode
 	NewNTPSyncer NewNTPSyncerFunc
+
+	bootTime stdtime.Time
 }
 
 // Name implements controller.Controller interface.
@@ -75,6 +78,10 @@ type NewNTPSyncerFunc func(*zap.Logger, []string) NTPSyncer
 //
 //nolint:gocyclo,cyclop
 func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.bootTime.IsZero() {
+		ctrl.bootTime = stdtime.Now()
+	}
+
 	if ctrl.NewNTPSyncer == nil {
 		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string) NTPSyncer {
 			return ntp.NewSyncer(logger, timeServers)
@@ -92,6 +99,9 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		timeSynced bool
 		epoch      int
+
+		timeSyncTimeoutTimer *stdtime.Timer
+		timeSyncTimeoutCh    <-chan stdtime.Time
 	)
 
 	defer func() {
@@ -99,6 +109,10 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncCtxCancel()
 
 			syncWg.Wait()
+		}
+
+		if timeSyncTimeoutTimer != nil {
+			timeSyncTimeoutTimer.Stop()
 		}
 	}()
 
@@ -112,6 +126,9 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSynced = true
 		case <-epochCh:
 			epoch++
+		case <-timeSyncTimeoutCh:
+			timeSynced = true
+			timeSyncTimeoutTimer = nil
 		}
 
 		timeServersStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, network.TimeServerID, resource.VersionUndefined))
@@ -133,6 +150,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			}
 		}
 
+		var syncTimeout stdtime.Duration
+
 		syncDisabled := false
 
 		if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
@@ -141,6 +160,33 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		if cfg != nil && cfg.(*config.MachineConfig).Config().Machine().Time().Disabled() {
 			syncDisabled = true
+		}
+
+		if cfg != nil {
+			syncTimeout = cfg.(*config.MachineConfig).Config().Machine().Time().BootTimeout()
+		}
+
+		if !timeSynced {
+			sinceBoot := stdtime.Since(ctrl.bootTime)
+
+			switch {
+			case syncTimeout == 0:
+				// disable sync timeout
+				if timeSyncTimeoutTimer != nil {
+					timeSyncTimeoutTimer.Stop()
+				}
+
+				timeSyncTimeoutCh = nil
+			case sinceBoot > syncTimeout:
+				// over sync timeout already, so in sync
+				timeSynced = true
+			default:
+				// make sure timer fires in whatever time is left till the timeout
+				if timeSyncTimeoutTimer == nil || !timeSyncTimeoutTimer.Reset(syncTimeout-sinceBoot) {
+					timeSyncTimeoutTimer = stdtime.NewTimer(syncTimeout - sinceBoot)
+					timeSyncTimeoutCh = timeSyncTimeoutTimer.C
+				}
+			}
 		}
 
 		switch {

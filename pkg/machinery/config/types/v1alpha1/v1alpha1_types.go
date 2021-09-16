@@ -225,7 +225,8 @@ var (
 	}
 
 	machineTimeExample = &TimeConfig{
-		TimeServers: []string{"time.cloudflare.com"},
+		TimeServers:     []string{"time.cloudflare.com"},
+		TimeBootTimeout: 2 * time.Minute,
 	}
 
 	machineSysctlsExample = map[string]string{
@@ -1065,7 +1066,12 @@ type TimeConfig struct {
 	//   description: |
 	//     Specifies time (NTP) servers to use for setting the system time.
 	//     Defaults to `pool.ntp.org`
-	TimeServers []string `yaml:"servers,omitempty"` // This parameter only supports a single time server.
+	TimeServers []string `yaml:"servers,omitempty"`
+	//   description: |
+	//     Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
+	//     NTP sync will be still running in the background.
+	//     Defaults to "infinity" (waiting forever for time sync)
+	TimeBootTimeout time.Duration `yaml:"bootTimeout,omitempty"`
 }
 
 // RegistriesConfig represents the image pull options.

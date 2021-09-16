@@ -683,7 +683,7 @@ func init() {
 			FieldName: "time",
 		},
 	}
-	TimeConfigDoc.Fields = make([]encoder.Doc, 2)
+	TimeConfigDoc.Fields = make([]encoder.Doc, 3)
 	TimeConfigDoc.Fields[0].Name = "disabled"
 	TimeConfigDoc.Fields[0].Type = "bool"
 	TimeConfigDoc.Fields[0].Note = ""
@@ -691,9 +691,14 @@ func init() {
 	TimeConfigDoc.Fields[0].Comments[encoder.LineComment] = "Indicates if the time service is disabled for the machine."
 	TimeConfigDoc.Fields[1].Name = "servers"
 	TimeConfigDoc.Fields[1].Type = "[]string"
-	TimeConfigDoc.Fields[1].Note = "This parameter only supports a single time server.\n"
+	TimeConfigDoc.Fields[1].Note = ""
 	TimeConfigDoc.Fields[1].Description = "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `pool.ntp.org`"
 	TimeConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies time (NTP) servers to use for setting the system time."
+	TimeConfigDoc.Fields[2].Name = "bootTimeout"
+	TimeConfigDoc.Fields[2].Type = "Duration"
+	TimeConfigDoc.Fields[2].Note = ""
+	TimeConfigDoc.Fields[2].Description = "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)"
+	TimeConfigDoc.Fields[2].Comments[encoder.LineComment] = "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence."
 
 	RegistriesConfigDoc.Type = "RegistriesConfig"
 	RegistriesConfigDoc.Comments[encoder.LineComment] = "RegistriesConfig represents the image pull options."
