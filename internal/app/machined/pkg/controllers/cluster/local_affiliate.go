@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // LocalAffiliateController builds Affiliate resource for the local node.
@@ -178,6 +179,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.Hostname = hostname.(*network.HostnameStatus).TypedSpec().FQDN()
 					spec.Nodename = nodename.(*k8s.Nodename).TypedSpec().Nodename
 					spec.MachineType = machineType.(*config.MachineType).MachineType()
+					spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
 
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 

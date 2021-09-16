@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package cluster_test
 
 import (
@@ -30,11 +29,12 @@ func (suite *MemberSuite) TestReconcileDefault() {
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
 	*affiliate1.TypedSpec() = cluster.AffiliateSpec{
-		NodeID:      "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
-		Hostname:    "foo.com",
-		Nodename:    "bar",
-		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		NodeID:          "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		Hostname:        "foo.com",
+		Nodename:        "bar",
+		MachineType:     machine.TypeControlPlane,
+		OperatingSystem: "Talos (v1.0.0)",
+		Addresses:       []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
 			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
@@ -72,6 +72,7 @@ func (suite *MemberSuite) TestReconcileDefault() {
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.4")}, spec.Addresses)
 			suite.Assert().Equal("foo.com", spec.Hostname)
 			suite.Assert().Equal(machine.TypeControlPlane, spec.MachineType)
+			suite.Assert().Equal("Talos (v1.0.0)", spec.OperatingSystem)
 
 			return nil
 		}),

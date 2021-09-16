@@ -27,10 +27,11 @@ type Member struct {
 
 // MemberSpec describes Member state.
 type MemberSpec struct {
-	NodeID      string       `yaml:"nodeId"`
-	Addresses   []netaddr.IP `yaml:"addresses"`
-	Hostname    string       `yaml:"hostname"`
-	MachineType machine.Type `yaml:"machineType"`
+	NodeID          string       `yaml:"nodeId"`
+	Addresses       []netaddr.IP `yaml:"addresses"`
+	Hostname        string       `yaml:"hostname"`
+	MachineType     machine.Type `yaml:"machineType"`
+	OperatingSystem string       `yaml:"operatingSystem"`
 }
 
 // NewMember initializes a Member resource.
@@ -64,10 +65,11 @@ func (r *Member) DeepCopy() resource.Resource {
 	return &Member{
 		md: r.md,
 		spec: MemberSpec{
-			NodeID:      r.spec.NodeID,
-			Addresses:   append([]netaddr.IP(nil), r.spec.Addresses...),
-			Hostname:    r.spec.Hostname,
-			MachineType: r.spec.MachineType,
+			NodeID:          r.spec.NodeID,
+			Addresses:       append([]netaddr.IP(nil), r.spec.Addresses...),
+			Hostname:        r.spec.Hostname,
+			MachineType:     r.spec.MachineType,
+			OperatingSystem: r.spec.OperatingSystem,
 		},
 	}
 }
@@ -86,6 +88,10 @@ func (r *Member) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "Machine Type",
 				JSONPath: `{.machineType}`,
+			},
+			{
+				Name:     "OS",
+				JSONPath: `{.operatingSystem}`,
 			},
 			{
 				Name:     "Addresses",

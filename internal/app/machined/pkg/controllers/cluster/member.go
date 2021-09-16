@@ -76,6 +76,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 				spec.Addresses = append([]netaddr.IP(nil), affiliateSpec.Addresses...)
 				spec.Hostname = affiliateSpec.Hostname
 				spec.MachineType = affiliateSpec.MachineType
+				spec.OperatingSystem = affiliateSpec.OperatingSystem
 				spec.NodeID = affiliateSpec.NodeID
 
 				return nil

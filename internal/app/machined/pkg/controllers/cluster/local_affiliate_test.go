@@ -65,6 +65,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			suite.Assert().Equal("example1", spec.Hostname)
 			suite.Assert().Equal("example1.com", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
+			suite.Assert().Equal(" ()", spec.OperatingSystem) // build tags are not set for unit-tests
 			suite.Assert().Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 
 			return nil

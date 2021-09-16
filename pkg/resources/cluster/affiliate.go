@@ -27,12 +27,13 @@ type Affiliate struct {
 
 // AffiliateSpec describes Affiliate state.
 type AffiliateSpec struct {
-	NodeID      string                `yaml:"nodeId"`
-	Addresses   []netaddr.IP          `yaml:"addresses"`
-	Hostname    string                `yaml:"hostname"`
-	Nodename    string                `yaml:"nodename,omitempty"`
-	MachineType machine.Type          `yaml:"machineType"`
-	KubeSpan    KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
+	NodeID          string                `yaml:"nodeId"`
+	Addresses       []netaddr.IP          `yaml:"addresses"`
+	Hostname        string                `yaml:"hostname"`
+	Nodename        string                `yaml:"nodename,omitempty"`
+	OperatingSystem string                `yaml:"operatingSystem"`
+	MachineType     machine.Type          `yaml:"machineType"`
+	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
 }
 
 // KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
@@ -74,11 +75,12 @@ func (r *Affiliate) DeepCopy() resource.Resource {
 	return &Affiliate{
 		md: r.md,
 		spec: AffiliateSpec{
-			NodeID:      r.spec.NodeID,
-			Addresses:   append([]netaddr.IP(nil), r.spec.Addresses...),
-			Hostname:    r.spec.Hostname,
-			Nodename:    r.spec.Nodename,
-			MachineType: r.spec.MachineType,
+			NodeID:          r.spec.NodeID,
+			Addresses:       append([]netaddr.IP(nil), r.spec.Addresses...),
+			Hostname:        r.spec.Hostname,
+			Nodename:        r.spec.Nodename,
+			OperatingSystem: r.spec.OperatingSystem,
+			MachineType:     r.spec.MachineType,
 			KubeSpan: KubeSpanAffiliateSpec{
 				PublicKey:           r.spec.KubeSpan.PublicKey,
 				Address:             r.spec.KubeSpan.Address,

@@ -113,14 +113,18 @@ func TestAffiliateFromNode(t *testing.T) {
 							Address: "foo.com",
 						},
 					},
+					NodeInfo: v1.NodeSystemInfo{
+						OSImage: "Talos (v1.0.0)",
+					},
 				},
 			},
 			expected: &cluster.AffiliateSpec{
-				NodeID:      "29QQTc97U5ZyFTIX33Dp9NqtwxqQI8QI13scCLzffrZ",
-				Hostname:    "foo.com",
-				Nodename:    "bar",
-				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("10.0.0.2"), netaddr.MustParseIP("192.168.3.4")},
+				NodeID:          "29QQTc97U5ZyFTIX33Dp9NqtwxqQI8QI13scCLzffrZ",
+				Hostname:        "foo.com",
+				Nodename:        "bar",
+				MachineType:     machine.TypeControlPlane,
+				Addresses:       []netaddr.IP{netaddr.MustParseIP("10.0.0.2"), netaddr.MustParseIP("192.168.3.4")},
+				OperatingSystem: "Talos (v1.0.0)",
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
 					Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),

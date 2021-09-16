@@ -102,6 +102,8 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 		affiliate.MachineType = machine.TypeControlPlane
 	}
 
+	affiliate.OperatingSystem = node.Status.NodeInfo.OSImage
+
 	// Every other field is pulled from node annotations.
 	if publicKey, ok := node.Annotations[constants.KubeSpanPublicKeyAnnotation]; ok {
 		affiliate.KubeSpan.PublicKey = publicKey
