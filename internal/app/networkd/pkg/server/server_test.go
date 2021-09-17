@@ -51,7 +51,7 @@ func (suite *NetworkSuite) TestRoutes() {
 	suite.Assert().NoError(err)
 
 	nClient := networkapi.NewNetworkServiceClient(conn)
-	resp, err := nClient.Routes(context.Background(), &emptypb.Empty{})
+	resp, err := nClient.Routes(context.Background(), &emptypb.Empty{}) //nolint:staticcheck
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Messages[0].Routes), 0)
 }
@@ -76,7 +76,7 @@ func (suite *NetworkSuite) TestInterfaces() {
 	suite.Assert().NoError(err)
 
 	nClient := networkapi.NewNetworkServiceClient(conn)
-	resp, err := nClient.Interfaces(context.Background(), &emptypb.Empty{})
+	resp, err := nClient.Interfaces(context.Background(), &emptypb.Empty{}) //nolint:staticcheck
 	suite.Assert().NoError(err)
 	suite.Assert().Greater(len(resp.Messages[0].Interfaces), 0)
 }

@@ -570,6 +570,8 @@ func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (r
 }
 
 // Routes implements the networkdproto.NetworkClient interface.
+//
+// Deprecated: Do not use.
 func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.RoutesResponse, err error) {
 	resp, err = c.NetworkClient.Routes(
 		ctx,
@@ -585,6 +587,8 @@ func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (re
 }
 
 // Interfaces implements the proto.MachineServiceClient interface.
+//
+// Deprecated: Do not use.
 func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.InterfacesResponse, err error) {
 	resp, err = c.NetworkClient.Interfaces(
 		ctx,

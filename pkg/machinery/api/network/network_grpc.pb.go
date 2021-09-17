@@ -24,7 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkServiceClient interface {
+	// Deprecated: Do not use.
 	Routes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RoutesResponse, error)
+	// Deprecated: Do not use.
 	Interfaces(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InterfacesResponse, error)
 }
 
@@ -36,6 +38,7 @@ func NewNetworkServiceClient(cc grpc.ClientConnInterface) NetworkServiceClient {
 	return &networkServiceClient{cc}
 }
 
+// Deprecated: Do not use.
 func (c *networkServiceClient) Routes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RoutesResponse, error) {
 	out := new(RoutesResponse)
 	err := c.cc.Invoke(ctx, "/network.NetworkService/Routes", in, out, opts...)
@@ -45,6 +48,7 @@ func (c *networkServiceClient) Routes(ctx context.Context, in *emptypb.Empty, op
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *networkServiceClient) Interfaces(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InterfacesResponse, error) {
 	out := new(InterfacesResponse)
 	err := c.cc.Invoke(ctx, "/network.NetworkService/Interfaces", in, out, opts...)
@@ -58,7 +62,9 @@ func (c *networkServiceClient) Interfaces(ctx context.Context, in *emptypb.Empty
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
+	// Deprecated: Do not use.
 	Routes(context.Context, *emptypb.Empty) (*RoutesResponse, error)
+	// Deprecated: Do not use.
 	Interfaces(context.Context, *emptypb.Empty) (*InterfacesResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }

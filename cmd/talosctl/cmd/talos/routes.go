@@ -7,15 +7,9 @@ package talos
 import (
 	"context"
 	"fmt"
-	"os"
-	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/pkg/cli"
-	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -26,41 +20,12 @@ var routesCmd = &cobra.Command{
 	Short:   "List network routes",
 	Long:    ``,
 	Args:    cobra.NoArgs,
+	Hidden:  true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var remotePeer peer.Peer
-			resp, err := c.Routes(ctx, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting routes: %w", err)
-				}
-				cli.Warning("%s", err)
-			}
-
-			return routesRender(&remotePeer, resp)
+			return fmt.Errorf("`talosctl routes` is deprecated, please use `talosctl get routes` instead")
 		})
 	},
-}
-
-func routesRender(remotePeer *peer.Peer, resp *networkapi.RoutesResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tINTERFACE\tDESTINATION\tGATEWAY\tMETRIC")
-
-	defaultNode := client.AddrFromPeer(remotePeer)
-
-	for _, msg := range resp.Messages {
-		node := defaultNode
-
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
-		}
-
-		for _, route := range msg.Routes {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", node, route.Interface, route.Destination, route.Gateway, route.Metric)
-		}
-	}
-
-	return w.Flush()
 }
 
 func init() {

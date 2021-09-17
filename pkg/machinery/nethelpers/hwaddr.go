@@ -13,3 +13,7 @@ type HardwareAddr net.HardwareAddr
 func (addr HardwareAddr) MarshalYAML() (interface{}, error) {
 	return net.HardwareAddr(addr).String(), nil
 }
+
+func (addr HardwareAddr) String() string {
+	return net.HardwareAddr(addr).String()
+}

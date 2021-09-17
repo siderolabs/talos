@@ -2,25 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//go:build linux
+
 // Package network provides resources which describe networking subsystem state.
 package network
 
 import (
 	"fmt"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
-
-// NamespaceName contains resources related to networking.
-const NamespaceName resource.Namespace = "network"
-
-// ConfigNamespaceName contains umerged resources related to networking generate from the configuration.
-//
-// Resources in the ConfigNamespaceName namespace are merged to produce final versions in the NamespaceName namespace.
-const ConfigNamespaceName resource.Namespace = "network-config"
 
 // AddressID builds ID (primary key) for the address.
 func AddressID(linkName string, addr netaddr.IPPrefix) string {

@@ -7,63 +7,24 @@ package talos
 import (
 	"context"
 	"fmt"
-	"os"
-	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/pkg/cli"
-	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 // interfacesCmd represents the net interfaces command.
 var interfacesCmd = &cobra.Command{
-	Use:   "interfaces",
-	Short: "List network interfaces",
-	Long:  ``,
-	Args:  cobra.NoArgs,
+	Use:    "interfaces",
+	Short:  "List network interfaces",
+	Long:   ``,
+	Args:   cobra.NoArgs,
+	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var remotePeer peer.Peer
-
-			resp, err := c.Interfaces(ctx, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting interfaces: %s", err)
-				}
-
-				cli.Warning("%s", err)
-			}
-
-			return intersRender(&remotePeer, resp)
+			return fmt.Errorf("`talosctl interfaces` is deprecated, please use `talosctl get addresses` and `talosctl get links` instead")
 		})
 	},
-}
-
-func intersRender(remotePeer *peer.Peer, resp *networkapi.InterfacesResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tINDEX\tNAME\tMAC\tMTU\tADDRESS")
-
-	defaultNode := client.AddrFromPeer(remotePeer)
-
-	for _, msg := range resp.Messages {
-		node := defaultNode
-
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
-		}
-
-		for _, netif := range msg.Interfaces {
-			for _, addr := range netif.Ipaddress {
-				fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%d\t%s\n", node, netif.Index, netif.Name, netif.Hardwareaddr, netif.Mtu, addr)
-			}
-		}
-	}
-
-	return w.Flush()
 }
 
 func init() {

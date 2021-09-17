@@ -6,13 +6,17 @@ package installer
 
 import (
 	"context"
+	"io"
+	"net"
 
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
 // Connection unifies clients for bootstrap node and the node which is being configured.
@@ -62,9 +66,83 @@ func (c *Connection) Disks(callOptions ...grpc.CallOption) (*storage.DisksRespon
 	return c.nodeClient.Disks(c.nodeCtx, callOptions...)
 }
 
-// Interfaces get list of network interfaces.
-func (c *Connection) Interfaces(callOptions ...grpc.CallOption) (*network.InterfacesResponse, error) {
-	return c.nodeClient.Interfaces(c.nodeCtx, callOptions...)
+// Link a subset of fields from LinkStatus resource.
+type Link struct {
+	Name         string
+	Physical     bool
+	Up           bool
+	HardwareAddr net.HardwareAddr
+	MTU          int
+}
+
+// Links gets a list of network interfaces.
+//
+//nolint:gocyclo
+func (c *Connection) Links(callOptions ...grpc.CallOption) ([]Link, error) {
+	client, err := c.nodeClient.Resources.List(c.nodeCtx, network.NamespaceName, network.LinkStatusType, callOptions...)
+	if err != nil {
+		return nil, err
+	}
+
+	var links []Link
+
+	for {
+		msg, err := client.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+
+		if msg.Resource == nil {
+			continue
+		}
+
+		var link Link
+
+		// this is a hack until we get proper encoding for resources in the API (protobuf!)
+		// plus our resources are Linux-specific and don't build on OS X (we need to solve this as well!)
+
+		link.Name = msg.Resource.Metadata().ID()
+
+		b, err := yaml.Marshal(msg.Resource.Spec())
+		if err != nil {
+			return nil, err
+		}
+
+		var raw map[string]interface{}
+
+		if err = yaml.Unmarshal(b, &raw); err != nil {
+			return nil, err
+		}
+
+		kind := raw["kind"].(string) //nolint:errcheck,forcetypeassert
+
+		linkType := raw["type"].(string) //nolint:errcheck,forcetypeassert
+
+		link.Physical = kind == "" && linkType == "ether"
+		link.MTU = raw["mtu"].(int) //nolint:errcheck,forcetypeassert
+
+		switch raw["operationalState"].(string) {
+		case nethelpers.OperStateUnknown.String():
+			link.Up = true
+		case nethelpers.OperStateUp.String():
+			link.Up = true
+		default:
+			link.Up = false
+		}
+
+		mac, err := net.ParseMAC(raw["hardwareAddr"].(string))
+		if err == nil {
+			link.HardwareAddr = mac
+		}
+
+		links = append(links, link)
+	}
+
+	return links, nil
 }
 
 // ExpandingCluster check if bootstrap node is set.

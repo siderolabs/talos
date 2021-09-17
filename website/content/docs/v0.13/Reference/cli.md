@@ -1438,33 +1438,6 @@ Inspect internals of Talos
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl inspect dependencies](#talosctl-inspect-dependencies)	 - Inspect controller-resource dependencies as graphviz graph.
 
-## talosctl interfaces
-
-List network interfaces
-
-```
-talosctl interfaces [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for interfaces
-```
-
-### Options inherited from parent commands
-
-```
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl kubeconfig
 
 Download the admin kubeconfig from the node
@@ -1821,33 +1794,6 @@ talosctl rollback [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl routes
-
-List network routes
-
-```
-talosctl routes [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for routes
-```
-
-### Options inherited from parent commands
-
-```
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl service
 
 Retrieve the state of a service (or all services), control service state
@@ -2156,7 +2102,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl images](#talosctl-images)	 - List the default images used by Talos
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
-* [talosctl interfaces](#talosctl-interfaces)	 - List network interfaces
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing
 * [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
@@ -2169,7 +2114,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation
-* [talosctl routes](#talosctl-routes)	 - List network routes
 * [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
 * [talosctl stats](#talosctl-stats)	 - Get container stats

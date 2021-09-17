@@ -18,6 +18,8 @@ import (
 	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 )
 
+// TODO: deprecated, to be removed in 0.14.
+
 // NetworkServer implements NetworkService API.
 type NetworkServer struct {
 	networkapi.UnimplementedNetworkServiceServer

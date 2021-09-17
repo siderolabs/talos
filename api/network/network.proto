@@ -9,8 +9,12 @@ import "common/common.proto";
 
 // The network service definition.
 service NetworkService {
-  rpc Routes(google.protobuf.Empty) returns (RoutesResponse);
-  rpc Interfaces(google.protobuf.Empty) returns (InterfacesResponse);
+  rpc Routes(google.protobuf.Empty) returns (RoutesResponse) {
+    option deprecated = true;
+  };
+  rpc Interfaces(google.protobuf.Empty) returns (InterfacesResponse) {
+    option deprecated = true;
+  };
 }
 
 enum AddressFamily {
