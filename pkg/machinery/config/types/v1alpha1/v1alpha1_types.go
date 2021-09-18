@@ -1659,12 +1659,20 @@ type DeviceVIPConfig struct {
 	SharedIP string `yaml:"ip,omitempty"`
 	// description: Specifies the Equinix Metal API settings to assign VIP to the node.
 	EquinixMetalConfig *VIPEquinixMetalConfig `yaml:"equinixMetal,omitempty"`
+	// description: Specifies the Hetzner Cloud API settings to assign VIP to the node.
+	HCloudConfig *VIPHCloudConfig `yaml:"hcloud,omitempty"`
 }
 
 // VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
 type VIPEquinixMetalConfig struct {
 	// description: Specifies the Equinix Metal API Token.
 	EquinixMetalAPIToken string `yaml:"apiToken"`
+}
+
+// VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
+type VIPHCloudConfig struct {
+	// description: Specifies the Hetzner Cloud API Token.
+	HCloudAPIToken string `yaml:"apiToken"`
 }
 
 // Bond contains the various options for configuring a bonded interface.

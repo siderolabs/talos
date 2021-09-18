@@ -49,6 +49,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.8
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hetznercloud/hcloud-go v1.32.0
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210827173440-b95caade3eac
 	github.com/jsimonetti/rtnetlink v0.0.0-20210721205614-4cc3c1489576

@@ -599,6 +599,20 @@ func (v *VIPEquinixMetalConfig) APIToken() string {
 	return v.EquinixMetalAPIToken
 }
 
+// HCloud implements the config.VIPConfig interface.
+func (d *DeviceVIPConfig) HCloud() config.VIPHCloud {
+	if d.HCloudConfig == nil {
+		return nil
+	}
+
+	return d.HCloudConfig
+}
+
+// APIToken implements the config.VIPHCloud interface.
+func (v *VIPHCloudConfig) APIToken() string {
+	return v.HCloudAPIToken
+}
+
 // WireguardConfig implements the MachineNetwork interface.
 func (d *Device) WireguardConfig() config.WireguardConfig {
 	if d.DeviceWireguardConfig == nil {
