@@ -188,6 +188,16 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							} else {
 								specs = append(specs, spec)
 							}
+						// Hetzner Cloud VIP
+						case device.VIPConfig().HCloud() != nil:
+							spec.VIP.GratuitousARP = false
+							spec.VIP.HCloud.APIToken = device.VIPConfig().HCloud().APIToken()
+
+							if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP); err != nil {
+								specErrors = multierror.Append(specErrors, err)
+							} else {
+								specs = append(specs, spec)
+							}
 						// Regular layer 2 VIP
 						default:
 							specs = append(specs, spec)

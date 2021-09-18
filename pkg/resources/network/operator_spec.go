@@ -48,12 +48,20 @@ type VIPOperatorSpec struct {
 	GratuitousARP bool       `yaml:"gratuitousARP"`
 
 	EquinixMetal VIPEquinixMetalSpec `yaml:"equinixMetal,omitempty"`
+	HCloud       VIPHCloudSpec       `yaml:"hcloud,omitempty"`
 }
 
 // VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.
 type VIPEquinixMetalSpec struct {
 	ProjectID string `yaml:"projectID"`
 	DeviceID  string `yaml:"deviceID"`
+	APIToken  string `yaml:"apiToken"`
+}
+
+// VIPHCloudSpec describes virtual (elastic) IP settings for Hetzner Cloud.
+type VIPHCloudSpec struct {
+	DeviceID  int    `yaml:"deviceID"`
+	NetworkID int    `yaml:"networkID"`
 	APIToken  string `yaml:"apiToken"`
 }
 

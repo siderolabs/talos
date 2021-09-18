@@ -48,6 +48,7 @@ var (
 	DeviceWireguardPeerDoc         encoder.Doc
 	DeviceVIPConfigDoc             encoder.Doc
 	VIPEquinixMetalConfigDoc       encoder.Doc
+	VIPHCloudConfigDoc             encoder.Doc
 	BondDoc                        encoder.Doc
 	VlanDoc                        encoder.Doc
 	RouteDoc                       encoder.Doc
@@ -1521,7 +1522,7 @@ func init() {
 			FieldName: "vip",
 		},
 	}
-	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 2)
+	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 3)
 	DeviceVIPConfigDoc.Fields[0].Name = "ip"
 	DeviceVIPConfigDoc.Fields[0].Type = "string"
 	DeviceVIPConfigDoc.Fields[0].Note = ""
@@ -1532,6 +1533,11 @@ func init() {
 	DeviceVIPConfigDoc.Fields[1].Note = ""
 	DeviceVIPConfigDoc.Fields[1].Description = "Specifies the Equinix Metal API settings to assign VIP to the node."
 	DeviceVIPConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies the Equinix Metal API settings to assign VIP to the node."
+	DeviceVIPConfigDoc.Fields[2].Name = "hcloud"
+	DeviceVIPConfigDoc.Fields[2].Type = "VIPHCloudConfig"
+	DeviceVIPConfigDoc.Fields[2].Note = ""
+	DeviceVIPConfigDoc.Fields[2].Description = "Specifies the Hetzner Cloud API settings to assign VIP to the node."
+	DeviceVIPConfigDoc.Fields[2].Comments[encoder.LineComment] = "Specifies the Hetzner Cloud API settings to assign VIP to the node."
 
 	VIPEquinixMetalConfigDoc.Type = "VIPEquinixMetalConfig"
 	VIPEquinixMetalConfigDoc.Comments[encoder.LineComment] = "VIPEquinixMetalConfig contains settings for Equinix Metal VIP management."
@@ -1548,6 +1554,22 @@ func init() {
 	VIPEquinixMetalConfigDoc.Fields[0].Note = ""
 	VIPEquinixMetalConfigDoc.Fields[0].Description = "Specifies the Equinix Metal API Token."
 	VIPEquinixMetalConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies the Equinix Metal API Token."
+
+	VIPHCloudConfigDoc.Type = "VIPHCloudConfig"
+	VIPHCloudConfigDoc.Comments[encoder.LineComment] = "VIPHCloudConfig contains settings for Hetzner Cloud VIP management."
+	VIPHCloudConfigDoc.Description = "VIPHCloudConfig contains settings for Hetzner Cloud VIP management."
+	VIPHCloudConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "DeviceVIPConfig",
+			FieldName: "hcloud",
+		},
+	}
+	VIPHCloudConfigDoc.Fields = make([]encoder.Doc, 1)
+	VIPHCloudConfigDoc.Fields[0].Name = "apiToken"
+	VIPHCloudConfigDoc.Fields[0].Type = "string"
+	VIPHCloudConfigDoc.Fields[0].Note = ""
+	VIPHCloudConfigDoc.Fields[0].Description = "Specifies the Hetzner Cloud API Token."
+	VIPHCloudConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies the Hetzner Cloud API Token."
 
 	BondDoc.Type = "Bond"
 	BondDoc.Comments[encoder.LineComment] = "Bond contains the various options for configuring a bonded interface."
@@ -2225,6 +2247,10 @@ func (_ VIPEquinixMetalConfig) Doc() *encoder.Doc {
 	return &VIPEquinixMetalConfigDoc
 }
 
+func (_ VIPHCloudConfig) Doc() *encoder.Doc {
+	return &VIPHCloudConfigDoc
+}
+
 func (_ Bond) Doc() *encoder.Doc {
 	return &BondDoc
 }
@@ -2332,6 +2358,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&DeviceWireguardPeerDoc,
 			&DeviceVIPConfigDoc,
 			&VIPEquinixMetalConfigDoc,
+			&VIPHCloudConfigDoc,
 			&BondDoc,
 			&VlanDoc,
 			&RouteDoc,

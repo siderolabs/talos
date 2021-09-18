@@ -137,10 +137,16 @@ type DHCPOptions interface {
 type VIPConfig interface {
 	IP() string
 	EquinixMetal() VIPEquinixMetal
+	HCloud() VIPHCloud
 }
 
 // VIPEquinixMetal contains Equinix Metal API VIP settings.
 type VIPEquinixMetal interface {
+	APIToken() string
+}
+
+// VIPHCloud contains Hetzner Cloud API VIP settings.
+type VIPHCloud interface {
 	APIToken() string
 }
 

@@ -53,6 +53,8 @@ func NewVIP(logger *zap.Logger, linkName string, spec network.VIPOperatorSpec, s
 	switch {
 	case spec.EquinixMetal != network.VIPEquinixMetalSpec{}:
 		handler = vip.NewEquinixMetalHandler(logger, spec.IP.String(), spec.EquinixMetal)
+	case spec.HCloud != network.VIPHCloudSpec{}:
+		handler = vip.NewHCloudHandler(logger, spec.IP.String(), spec.HCloud)
 	default:
 		handler = vip.NopHandler{}
 	}

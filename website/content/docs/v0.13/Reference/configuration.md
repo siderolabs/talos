@@ -4164,6 +4164,18 @@ Specifies the Equinix Metal API settings to assign VIP to the node.
 </div>
 
 <hr />
+<div class="dd">
+
+<code>hcloud</code>  <i><a href="#viphcloudconfig">VIPHCloudConfig</a></i>
+
+</div>
+<div class="dt">
+
+Specifies the Hetzner Cloud API settings to assign VIP to the node.
+
+</div>
+
+<hr />
 
 
 
@@ -4186,6 +4198,32 @@ Appears in:
 <div class="dt">
 
 Specifies the Equinix Metal API Token.
+
+</div>
+
+<hr />
+
+
+
+## VIPHCloudConfig
+VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
+
+Appears in:
+
+- <code><a href="#devicevipconfig">DeviceVIPConfig</a>.hcloud</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>apiToken</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Specifies the Hetzner Cloud API Token.
 
 </div>
 
