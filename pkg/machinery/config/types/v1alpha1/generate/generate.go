@@ -151,7 +151,7 @@ type TrustdInfo struct {
 
 // SecretsBundle holds trustd, kubeadm and certs information.
 type SecretsBundle struct {
-	Clock      Clock
+	Clock      Clock `yaml:"-" json:"-"`
 	Cluster    *Cluster
 	Secrets    *Secrets
 	TrustdInfo *TrustdInfo
