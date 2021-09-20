@@ -113,7 +113,7 @@ require (
 	k8s.io/cri-api v0.22.1
 	k8s.io/kubectl v0.22.1
 	k8s.io/kubelet v0.22.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.57
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.58
 )
 
 require (
@@ -292,7 +292,7 @@ require (
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.57 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.58 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
