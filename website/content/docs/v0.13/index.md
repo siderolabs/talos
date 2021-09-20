@@ -2,6 +2,15 @@
 title: Welcome
 ---
 
+## Welcome
+
+Welcome to the Talos documentation.  
+If you are just getting familiar with Talos, we recommend starting here:
+
+- [What is Talos](introduction/what-is-talos/): a quick description of Talos
+- [Quickstart](introduction/quickstart/): the fastest way to get a Talos cluster up and running
+- [Getting Started](introduction/getting-started/): a long-form, guided tour of getting a full Talos cluster deployed
+
 ## Open Source
 
 ### Community
