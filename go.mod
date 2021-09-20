@@ -22,9 +22,9 @@ require (
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.5
 	github.com/containerd/cri v1.19.0
-	github.com/containerd/go-cni v1.0.2
+	github.com/containerd/go-cni v1.1.0
 	github.com/containerd/typeurl v1.0.2
-	github.com/containernetworking/cni v0.8.1 // see https://github.com/containernetworking/cni/issues/856
+	github.com/containernetworking/cni v1.0.1 // see https://github.com/containernetworking/cni/issues/856
 	github.com/containernetworking/plugins v0.9.1 // see https://github.com/containernetworking/cni/issues/856
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
