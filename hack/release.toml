@@ -44,9 +44,20 @@ machine:
     [notes.kubespan]
         title = "Cluster Discovery and KubeSpan"
         description = """\
-This release of Talos provides some initial support for cluster membership discovery and [KubeSpan](https://www.talos-systems.com/kubespan/).
+This release of Talos provides initial support for cluster membership discovery and [KubeSpan](https://www.talos-systems.com/kubespan/).
 
-These new features are not enabled by default.
+These new features are not enabled by default, to enable them please make following changes to the machine configuration:
+
+```yaml
+machine:
+  network:
+    kubespan:
+      enabled: true
+cluster:
+  discovery:
+    enabled: true
+```
+
 """
 
     [notes.etcd]
