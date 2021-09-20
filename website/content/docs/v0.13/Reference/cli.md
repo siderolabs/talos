@@ -158,7 +158,7 @@ talosctl cluster create [flags]
 
 ### SEE ALSO
 
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
 ## talosctl cluster destroy
 
@@ -188,7 +188,7 @@ talosctl cluster destroy [flags]
 
 ### SEE ALSO
 
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
 ## talosctl cluster show
 
@@ -218,11 +218,11 @@ talosctl cluster show [flags]
 
 ### SEE ALSO
 
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
 ## talosctl cluster
 
-A collection of commands for managing local docker-based or firecracker-based clusters
+A collection of commands for managing local docker-based or QEMU-based clusters
 
 ### Options
 
@@ -2137,7 +2137,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 
 * [talosctl apply-config](#talosctl-apply-config)	 - Apply a new configuration to a node
 * [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
-* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or firecracker-based clusters
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests

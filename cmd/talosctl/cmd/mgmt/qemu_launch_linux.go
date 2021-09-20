@@ -16,7 +16,7 @@ import (
 // qemuLaunchCmd represents the qemu-launch command.
 var qemuLaunchCmd = &cobra.Command{
 	Use:    "qemu-launch",
-	Short:  "Internal command used by Firecracker provisioner",
+	Short:  "Internal command used by QEMU provisioner",
 	Long:   ``,
 	Args:   cobra.NoArgs,
 	Hidden: true,

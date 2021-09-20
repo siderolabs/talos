@@ -22,10 +22,10 @@ require (
 	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.5
 	github.com/containerd/cri v1.19.0
-	github.com/containerd/go-cni v1.0.2
+	github.com/containerd/go-cni v1.1.0
 	github.com/containerd/typeurl v1.0.2
-	github.com/containernetworking/cni v0.8.1 // see https://github.com/containernetworking/cni/issues/856
-	github.com/containernetworking/plugins v0.9.1 // see https://github.com/containernetworking/cni/issues/856
+	github.com/containernetworking/cni v1.0.1
+	github.com/containernetworking/plugins v1.0.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
@@ -38,14 +38,13 @@ require (
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/fatih/color v1.12.0
-	github.com/firecracker-microvm/firecracker-go-sdk v0.22.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/nftables v0.0.0-20210818072602-d553cd2d411d
+	github.com/google/nftables v0.0.0-20210916140115-16a134723a96
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.8
@@ -85,7 +84,7 @@ require (
 	github.com/talos-systems/net v0.3.0
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
-	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
+	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/vmware-tanzu/sonobuoy v0.53.2
 	github.com/vmware/govmomi v0.26.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
@@ -95,25 +94,25 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20210908191846-a5e095526f91
+	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
-	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
+	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
+	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210803171230-4253848d036c
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210913210325-91d1988e44de
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e
-	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.22.1
-	k8s.io/apiserver v0.22.1 // indirect; use the same version as other k8s deps
-	k8s.io/client-go v0.22.1
-	k8s.io/cri-api v0.22.1
-	k8s.io/kubectl v0.22.1
-	k8s.io/kubelet v0.22.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.57
+	k8s.io/api v0.22.2
+	k8s.io/apimachinery v0.22.2
+	k8s.io/apiserver v0.22.2 // indirect; use the same version as other k8s deps
+	k8s.io/client-go v0.22.2
+	k8s.io/cri-api v0.22.2
+	k8s.io/kubectl v0.22.2
+	k8s.io/kubelet v0.22.2
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.58
 )
 
 require (
@@ -128,7 +127,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
-	github.com/Microsoft/hcsshim v0.8.18 // indirect
+	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
@@ -161,19 +160,10 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
-	github.com/go-openapi/analysis v0.19.10 // indirect
-	github.com/go-openapi/errors v0.19.7 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
-	github.com/go-openapi/loads v0.19.5 // indirect
-	github.com/go-openapi/runtime v0.19.22 // indirect
-	github.com/go-openapi/spec v0.19.8 // indirect
-	github.com/go-openapi/strfmt v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
-	github.com/go-openapi/validate v0.19.11 // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
-	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -251,7 +241,7 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/u-root/uio v0.0.0-20210528114334-82958018845c // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
-	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae // indirect
+	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
@@ -259,7 +249,6 @@ require (
 	go.etcd.io/etcd/pkg/v3 v3.5.0 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.0 // indirect
 	go.etcd.io/etcd/server/v3 v3.5.0 // indirect
-	go.mongodb.org/mongo-driver v1.3.4 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/contrib v0.20.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0 // indirect
@@ -286,13 +275,13 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
-	k8s.io/cli-runtime v0.22.1 // indirect
-	k8s.io/component-base v0.22.1 // indirect
+	k8s.io/cli-runtime v0.22.2 // indirect
+	k8s.io/component-base v0.22.2 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
-	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.57 // indirect
+	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.58 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect

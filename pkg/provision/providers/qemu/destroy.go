@@ -31,7 +31,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	state, ok := cluster.(*vm.State)
 	if !ok {
-		return fmt.Errorf("error inspecting firecracker state, %#+v", cluster)
+		return fmt.Errorf("error inspecting QEMU state, %#+v", cluster)
 	}
 
 	fmt.Fprintln(options.LogWriter, "removing dhcpd")

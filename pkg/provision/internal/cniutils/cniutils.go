@@ -8,7 +8,7 @@ package cniutils
 import (
 	"fmt"
 
-	"github.com/containernetworking/cni/pkg/types/current"
+	types100 "github.com/containernetworking/cni/pkg/types/100"
 )
 
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -27,7 +27,7 @@ import (
 // FilterBySandbox returns scans the provided list of interfaces and returns two lists: the first
 // are a list of interfaces with the provided sandboxID, the second are the other interfaces not
 // in that sandboxID.
-func FilterBySandbox(sandbox string, ifaces ...*current.Interface) (in, out []*current.Interface) {
+func FilterBySandbox(sandbox string, ifaces ...*types100.Interface) (in, out []*types100.Interface) {
 	for _, iface := range ifaces {
 		if iface.Sandbox == sandbox {
 			in = append(in, iface)
@@ -40,8 +40,8 @@ func FilterBySandbox(sandbox string, ifaces ...*current.Interface) (in, out []*c
 }
 
 // IfacesWithName scans the provided list of ifaces and returns the ones with the provided name.
-func IfacesWithName(name string, ifaces ...*current.Interface) []*current.Interface {
-	var foundIfaces []*current.Interface
+func IfacesWithName(name string, ifaces ...*types100.Interface) []*types100.Interface {
+	var foundIfaces []*types100.Interface
 
 	for _, iface := range ifaces {
 		if iface.Name == name {
@@ -55,7 +55,7 @@ func IfacesWithName(name string, ifaces ...*current.Interface) []*current.Interf
 // VMTapPair takes a CNI result and returns the vm iface and the tap iface corresponding
 // to the provided vmID. See the vmconf package docs for details on the expected
 // vm and tap iface configurations.
-func VMTapPair(result *current.Result, vmID string) (vmIface, tapIface *current.Interface, err error) {
+func VMTapPair(result *types100.Result, vmID string) (vmIface, tapIface *types100.Interface, err error) {
 	vmIfaces, otherIfaces := FilterBySandbox(vmID, result.Interfaces...)
 	if len(vmIfaces) > 1 {
 		return nil, nil, fmt.Errorf(

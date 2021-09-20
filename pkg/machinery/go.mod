@@ -9,8 +9,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb3
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
-	github.com/containerd/go-cni v1.0.2
-	github.com/containernetworking/cni v0.8.1 // indirect; security fix in 0.8.1; see also https://github.com/containernetworking/cni/issues/856
+	github.com/containerd/go-cni v1.1.0
 	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v4.11.0+incompatible
@@ -31,6 +30,7 @@ require (
 )
 
 require (
+	github.com/containernetworking/cni v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
@@ -44,5 +44,5 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/text v0.3.6 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

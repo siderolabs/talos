@@ -16,7 +16,7 @@ import (
 // Cmd represents the cluster command.
 var Cmd = &cobra.Command{
 	Use:   "cluster",
-	Short: "A collection of commands for managing local docker-based or firecracker-based clusters",
+	Short: "A collection of commands for managing local docker-based or QEMU-based clusters",
 	Long:  ``,
 }
 

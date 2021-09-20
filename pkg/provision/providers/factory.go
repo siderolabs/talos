@@ -17,8 +17,6 @@ func Factory(ctx context.Context, name string) (provision.Provisioner, error) {
 	switch name {
 	case "docker":
 		return docker.NewProvisioner(ctx)
-	case "firecracker":
-		return newFirecracker(ctx)
 	case "qemu":
 		return newQemu(ctx)
 	default:

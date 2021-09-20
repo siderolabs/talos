@@ -22,7 +22,7 @@ var loadbalancerLaunchCmdFlags struct {
 // loadbalancerLaunchCmd represents the loadbalancer-launch command.
 var loadbalancerLaunchCmd = &cobra.Command{
 	Use:    "loadbalancer-launch",
-	Short:  "Internal command used by Firecracker provisioner",
+	Short:  "Internal command used by QEMU provisioner",
 	Long:   ``,
 	Args:   cobra.NoArgs,
 	Hidden: true,

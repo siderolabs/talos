@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/containernetworking/cni/libcni"
-	"github.com/containernetworking/cni/pkg/types/current"
+	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
@@ -142,7 +142,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		}
 	}()
 
-	currentResult, err := current.NewResultFromResult(res)
+	currentResult, err := types100.NewResultFromResult(res)
 	if err != nil {
 		return fmt.Errorf("failed to parse cni result: %w", err)
 	}
