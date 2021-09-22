@@ -374,7 +374,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			var existingSpec network.WireguardSpec
 
-			existingSpec.Decode(wgDev)
+			existingSpec.Decode(wgDev, false)
 			existingSpec.Sort()
 
 			link.TypedSpec().Wireguard.Sort()

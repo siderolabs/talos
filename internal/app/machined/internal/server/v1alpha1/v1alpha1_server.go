@@ -50,6 +50,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	networkserver "github.com/talos-systems/talos/internal/app/networkd/pkg/server"
+	"github.com/talos-systems/talos/internal/app/resources"
 	storaged "github.com/talos-systems/talos/internal/app/storaged"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/internal/pkg/containers"
@@ -116,7 +117,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	machine.RegisterMachineServiceServer(obj, s)
 	cluster.RegisterClusterServiceServer(obj, s)
-	resource.RegisterResourceServiceServer(obj, &ResourceServer{server: s})
+	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: s.Controller.Runtime().State().V1Alpha2().Resources()})
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})

@@ -6,7 +6,6 @@ package talos
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"os"
 	"strings"
@@ -29,16 +28,7 @@ var disksCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if disksCmdFlags.insecure {
-			ctx := context.Background()
-
-			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
-				InsecureSkipVerify: true,
-			}), client.WithEndpoints(Nodes...))
-			if err != nil {
-				return err
-			}
-
-			return printDisks(ctx, c)
+			return WithClientMaintenance(nil, printDisks)
 		}
 
 		return WithClient(printDisks)

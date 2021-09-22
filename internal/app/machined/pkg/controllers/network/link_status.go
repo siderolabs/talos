@@ -228,7 +228,7 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 				if err != nil {
 					logger.Warn("failure getting wireguard attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				} else {
-					status.Wireguard.Decode(wgDev)
+					status.Wireguard.Decode(wgDev, true)
 				}
 			}
 

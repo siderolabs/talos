@@ -6,9 +6,11 @@ package talos
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -76,6 +78,40 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 		}
 
 		ctx = client.WithNodes(ctx, Nodes...)
+
+		return action(ctx, c)
+	})
+}
+
+// WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
+func WithClientMaintenance(enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
+	return cli.WithContext(context.Background(), func(ctx context.Context) error {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		if len(enforceFingerprints) > 0 {
+			fingerprints := make([]x509.Fingerprint, len(enforceFingerprints))
+
+			for i, stringFingerprint := range enforceFingerprints {
+				var err error
+
+				fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
+				if err != nil {
+					return fmt.Errorf("error parsing certificate fingerprint %q: %v", stringFingerprint, err)
+				}
+			}
+
+			tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
+		}
+
+		c, err := client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(Nodes...))
+		if err != nil {
+			return err
+		}
+
+		//nolint:errcheck
+		defer c.Close()
 
 		return action(ctx, c)
 	})

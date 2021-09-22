@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+// Package resources implements resources API server.
+package resources
 
 import (
 	"context"
@@ -22,11 +23,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
-// ResourceServer implements ResourceService API.
-type ResourceServer struct {
+// Server implements ResourceService API.
+type Server struct {
 	resourceapi.UnimplementedResourceServiceServer
 
-	server *Server
+	Resources state.State
 }
 
 func marshalResource(r resource.Resource) (*resourceapi.Resource, error) {
@@ -68,9 +69,8 @@ type resourceKind struct {
 }
 
 //nolint:gocyclo
-func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resourceKind) (*meta.ResourceDefinition, error) {
-	registeredResources, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().
-		List(ctx, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
+func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*meta.ResourceDefinition, error) {
+	registeredResources, err := s.Resources.List(ctx, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (s *ResourceServer) resolveResourceKind(ctx context.Context, kind *resource
 	}
 }
 
-func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind, rd *meta.ResourceDefinition) error {
+func (s *Server) checkReadAccess(ctx context.Context, kind *resourceKind, rd *meta.ResourceDefinition) error {
 	roles := authz.GetRoles(ctx)
 	spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
 
@@ -137,7 +137,7 @@ func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind
 		return fmt.Errorf("unexpected sensitivity %q", spec.Sensitivity)
 	}
 
-	registeredNamespaces, err := s.server.Controller.Runtime().State().V1Alpha2().Resources().List(ctx, resource.NewMetadata(meta.NamespaceName, meta.NamespaceType, "", resource.VersionUndefined))
+	registeredNamespaces, err := s.Resources.List(ctx, resource.NewMetadata(meta.NamespaceName, meta.NamespaceType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (s *ResourceServer) checkReadAccess(ctx context.Context, kind *resourceKind
 }
 
 // Get implements resource.ResourceServiceServer interface.
-func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*resourceapi.GetResponse, error) {
+func (s *Server) Get(ctx context.Context, in *resourceapi.GetRequest) (*resourceapi.GetResponse, error) {
 	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
@@ -167,9 +167,7 @@ func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*
 		return nil, err
 	}
 
-	resources := s.server.Controller.Runtime().State().V1Alpha2().Resources()
-
-	r, err := resources.Get(ctx, resource.NewMetadata(kind.Namespace, kind.Type, in.GetId(), resource.VersionUndefined))
+	r, err := s.Resources.Get(ctx, resource.NewMetadata(kind.Namespace, kind.Type, in.GetId(), resource.VersionUndefined))
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil, status.Error(codes.NotFound, err.Error())
@@ -199,7 +197,7 @@ func (s *ResourceServer) Get(ctx context.Context, in *resourceapi.GetRequest) (*
 }
 
 // List implements resource.ResourceServiceServer interface.
-func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.ResourceService_ListServer) error {
+func (s *Server) List(in *resourceapi.ListRequest, srv resourceapi.ResourceService_ListServer) error {
 	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
@@ -214,9 +212,7 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 		return err
 	}
 
-	resources := s.server.Controller.Runtime().State().V1Alpha2().Resources()
-
-	list, err := resources.List(srv.Context(), resource.NewMetadata(kind.Namespace, kind.Type, "", resource.VersionUndefined))
+	list, err := s.Resources.List(srv.Context(), resource.NewMetadata(kind.Namespace, kind.Type, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -251,7 +247,7 @@ func (s *ResourceServer) List(in *resourceapi.ListRequest, srv resourceapi.Resou
 // Watch implements resource.ResourceServiceServer interface.
 //
 //nolint:gocyclo
-func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceService_WatchServer) error {
+func (s *Server) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceService_WatchServer) error {
 	kind := &resourceKind{
 		Namespace: in.GetNamespace(),
 		Type:      in.GetType(),
@@ -265,8 +261,6 @@ func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.Res
 	if err = s.checkReadAccess(srv.Context(), kind, rd); err != nil {
 		return err
 	}
-
-	resources := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
 	protoD, err := marshalResource(rd)
 	if err != nil {
@@ -295,7 +289,7 @@ func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.Res
 			opts = append(opts, state.WithBootstrapContents(true))
 		}
 
-		err = resources.WatchKind(ctx, md, eventCh, opts...)
+		err = s.Resources.WatchKind(ctx, md, eventCh, opts...)
 	} else {
 		opts := []state.WatchOption{}
 
@@ -303,7 +297,7 @@ func (s *ResourceServer) Watch(in *resourceapi.WatchRequest, srv resourceapi.Res
 			opts = append(opts, state.WithTailEvents(int(in.TailEvents)))
 		}
 
-		err = resources.Watch(ctx, md, eventCh, opts...)
+		err = s.Resources.Watch(ctx, md, eventCh, opts...)
 	}
 
 	if err != nil {

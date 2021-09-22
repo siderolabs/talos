@@ -122,6 +122,7 @@ func TestWireguardSpecDecode(t *testing.T) {
 
 	var spec network.WireguardSpec
 
+	// decode in spec mode
 	spec.Decode(&wgtypes.Device{
 		PrivateKey:   priv,
 		ListenPort:   30000,
@@ -151,7 +152,7 @@ func TestWireguardSpecDecode(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, false)
 
 	expected := network.WireguardSpec{
 		PrivateKey:   priv.String(),
@@ -190,6 +191,30 @@ func TestWireguardSpecDecode(t *testing.T) {
 	var zeroSpec network.WireguardSpec
 
 	assert.False(t, zeroSpec.Equal(&spec))
+}
+
+func TestWireguardSpecDecodeStatus(t *testing.T) {
+	priv, err := wgtypes.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	var spec network.WireguardSpec
+
+	// decode in status mode
+	spec.Decode(&wgtypes.Device{
+		PrivateKey:   priv,
+		PublicKey:    priv.PublicKey(),
+		ListenPort:   30000,
+		FirewallMark: 1,
+	}, true)
+
+	expected := network.WireguardSpec{
+		PublicKey:    priv.PublicKey().String(),
+		ListenPort:   30000,
+		FirewallMark: 1,
+		Peers:        []network.WireguardPeer{},
+	}
+
+	assert.Equal(t, expected, spec)
 }
 
 func TestWireguardSpecEncode(t *testing.T) {
@@ -232,7 +257,7 @@ func TestWireguardSpecEncode(t *testing.T) {
 
 	var zero network.WireguardSpec
 
-	zero.Decode(&wgtypes.Device{})
+	zero.Decode(&wgtypes.Device{}, false)
 	zero.Sort()
 
 	// from zero (empty) config to config with two peers

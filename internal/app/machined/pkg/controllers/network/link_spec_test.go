@@ -587,7 +587,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
 				suite.Assert().Equal("wireguard", r.TypedSpec().Kind)
 
-				if r.TypedSpec().Wireguard.PrivateKey != priv.String() {
+				if r.TypedSpec().Wireguard.PublicKey != priv.PublicKey().String() {
 					return retry.ExpectedErrorf("private key not set")
 				}
 
@@ -617,7 +617,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertInterfaces([]string{wgInterface}, func(r *network.LinkStatus) error {
-				if r.TypedSpec().Wireguard.PrivateKey != priv2.String() {
+				if r.TypedSpec().Wireguard.PublicKey != priv2.PublicKey().String() {
 					return retry.ExpectedErrorf("private key was not updated")
 				}
 

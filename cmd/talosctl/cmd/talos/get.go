@@ -19,11 +19,11 @@ import (
 )
 
 var getCmdFlags struct {
+	insecure bool
+
 	namespace string
-
-	output string
-
-	watch bool
+	output    string
+	watch     bool
 }
 
 // getCmd represents the get (resources) command.
@@ -34,71 +34,58 @@ var getCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			out, err := output.NewWriter(getCmdFlags.output)
+		if getCmdFlags.insecure {
+			return WithClientMaintenance(nil, getResources(args))
+		}
+
+		return WithClient(getResources(args))
+	},
+}
+
+//nolint:gocyclo,cyclop
+func getResources(args []string) func(ctx context.Context, c *client.Client) error {
+	return func(ctx context.Context, c *client.Client) error {
+		out, err := output.NewWriter(getCmdFlags.output)
+		if err != nil {
+			return err
+		}
+
+		resourceType := args[0]
+
+		var resourceID string
+
+		if len(args) == 2 {
+			resourceID = args[1]
+		}
+
+		defer out.Flush() //nolint:errcheck
+
+		var headerWritten bool
+
+		if getCmdFlags.watch { // get -w <type> OR get -w <type> <id>
+			watchClient, err := c.Resources.Watch(ctx, getCmdFlags.namespace, resourceType, resourceID)
 			if err != nil {
 				return err
 			}
 
-			resourceType := args[0]
-
-			var resourceID string
-
-			if len(args) == 2 {
-				resourceID = args[1]
-			}
-
-			defer out.Flush() //nolint:errcheck
-
-			var headerWritten bool
-
-			if getCmdFlags.watch { // get -w <type> OR get -w <type> <id>
-				watchClient, err := c.Resources.Watch(ctx, getCmdFlags.namespace, resourceType, resourceID)
+			for {
+				msg, err := watchClient.Recv()
 				if err != nil {
+					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+						return nil
+					}
+
 					return err
 				}
 
-				for {
-					msg, err := watchClient.Recv()
-					if err != nil {
-						if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-							return nil
-						}
+				if msg.Metadata.GetError() != "" {
+					fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
 
-						return err
-					}
-
-					if msg.Metadata.GetError() != "" {
-						fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-
-						continue
-					}
-
-					if msg.Definition != nil && !headerWritten {
-						if e := out.WriteHeader(msg.Definition, true); e != nil {
-							return e
-						}
-
-						headerWritten = true
-					}
-
-					if msg.Resource != nil {
-						if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, msg.EventType); err != nil {
-							return err
-						}
-
-						if err := out.Flush(); err != nil {
-							return err
-						}
-					}
+					continue
 				}
-			}
 
-			// get <type>
-			// get <type> <id>
-			printOut := func(parentCtx context.Context, msg client.ResourceResponse) error {
 				if msg.Definition != nil && !headerWritten {
-					if e := out.WriteHeader(msg.Definition, false); e != nil {
+					if e := out.WriteHeader(msg.Definition, true); e != nil {
 						return e
 					}
 
@@ -106,22 +93,45 @@ var getCmd = &cobra.Command{
 				}
 
 				if msg.Resource != nil {
-					if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); err != nil {
+					if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, msg.EventType); err != nil {
+						return err
+					}
+
+					if err := out.Flush(); err != nil {
 						return err
 					}
 				}
+			}
+		}
 
-				return nil
+		// get <type>
+		// get <type> <id>
+		printOut := func(parentCtx context.Context, msg client.ResourceResponse) error {
+			if msg.Definition != nil && !headerWritten {
+				if e := out.WriteHeader(msg.Definition, false); e != nil {
+					return e
+				}
+
+				headerWritten = true
 			}
 
-			return helpers.ForEachResource(ctx, c, printOut, getCmdFlags.namespace, args...)
-		})
-	},
+			if msg.Resource != nil {
+				if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+
+		return helpers.ForEachResource(ctx, c, printOut, getCmdFlags.namespace, args...)
+	}
 }
 
 func init() {
 	getCmd.Flags().StringVar(&getCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	getCmd.Flags().StringVarP(&getCmdFlags.output, "output", "o", "table", "output mode (table, yaml)")
 	getCmd.Flags().BoolVarP(&getCmdFlags.watch, "watch", "w", false, "watch resource changes")
+	getCmd.Flags().BoolVarP(&getCmdFlags.insecure, "insecure", "i", false, "get resources using the insecure (encrypted with no auth) maintenance service")
 	addCommand(getCmd)
 }

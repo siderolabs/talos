@@ -110,7 +110,7 @@ func (r *LinkStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.linkState}`,
 			},
 		},
-		Sensitivity: meta.Sensitive,
+		Sensitivity: meta.NonSensitive,
 	}
 }
 

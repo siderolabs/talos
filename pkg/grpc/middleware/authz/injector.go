@@ -23,6 +23,9 @@ const (
 	// Disabled is used when RBAC is disabled in the machine configuration. All roles are assumed.
 	Disabled InjectorMode = iota
 
+	// ReadOnly is used to inject only Reader role.
+	ReadOnly
+
 	// MetadataOnly is used internally. Checks only metadata.
 	MetadataOnly
 
@@ -47,6 +50,8 @@ func (i *Injector) logf(format string, v ...interface{}) {
 
 // extractRoles returns roles extracted from the user's certificate (in case of the first apid instance),
 // or from gRPC metadata (in case of subsequent apid instances, machined, or user with impersonator role).
+//
+//nolint:gocyclo
 func (i *Injector) extractRoles(ctx context.Context) role.Set {
 	// sanity check
 	if _, ok := getFromContext(ctx); ok {
@@ -58,6 +63,9 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 		i.logf("RBAC is disabled, injecting all roles")
 
 		return role.All
+
+	case ReadOnly:
+		return role.MakeSet(role.Reader)
 
 	case MetadataOnly:
 		roles, _ := getFromMetadata(ctx, i.logf)

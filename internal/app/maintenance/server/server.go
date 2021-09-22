@@ -15,10 +15,12 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	networkserver "github.com/talos-systems/talos/internal/app/networkd/pkg/server"
+	"github.com/talos-systems/talos/internal/app/resources"
 	storaged "github.com/talos-systems/talos/internal/app/storaged"
 	"github.com/talos-systems/talos/internal/pkg/configuration"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/api/network"
+	"github.com/talos-systems/talos/pkg/machinery/api/resource"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -50,6 +52,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	machine.RegisterMachineServiceServer(obj, s)
 	network.RegisterNetworkServiceServer(obj, &networkserver.NetworkServer{})
+	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: s.runtime.State().V1Alpha2().Resources()})
 }
 
 // ApplyConfiguration implements machine.MachineService.

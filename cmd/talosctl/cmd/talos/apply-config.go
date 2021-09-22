@@ -6,15 +6,12 @@ package talos
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/crypto/x509"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
 	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -70,45 +67,7 @@ var applyConfigCmd = &cobra.Command{
 
 		withClient := func(f func(context.Context, *client.Client) error) error {
 			if applyConfigCmdFlags.insecure {
-				ctx := context.Background()
-
-				if err := helpers.FailIfMultiNodes(ctx, "apply-config"); err != nil {
-					return err
-				}
-
-				c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
-					InsecureSkipVerify: true,
-				}), client.WithEndpoints(Nodes...))
-				if err != nil {
-					return err
-				}
-
-				//nolint:errcheck
-				defer c.Close()
-
-				tlsConfig := &tls.Config{
-					InsecureSkipVerify: true,
-				}
-
-				if len(applyConfigCmdFlags.certFingerprints) > 0 {
-					fingerprints := make([]x509.Fingerprint, len(applyConfigCmdFlags.certFingerprints))
-
-					for i, stringFingerprint := range applyConfigCmdFlags.certFingerprints {
-						fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
-						if err != nil {
-							return fmt.Errorf("error parsing certificate fingerprint %q: %v", stringFingerprint, err)
-						}
-					}
-
-					tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
-				}
-
-				c, err = client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(Nodes...))
-				if err != nil {
-					return err
-				}
-
-				return f(ctx, c)
+				return WithClientMaintenance(applyConfigCmdFlags.certFingerprints, f)
 			}
 
 			return WithClient(f)

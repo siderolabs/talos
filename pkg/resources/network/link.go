@@ -254,7 +254,10 @@ func (bond *BondMasterSpec) Decode(data []byte) error {
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
 type WireguardSpec struct {
-	PrivateKey   string          `yaml:"privateKey"`
+	// PrivateKey is used to configure the link, present only in the LinkSpec.
+	PrivateKey string `yaml:"privateKey,omitempty"`
+	// PublicKey is only used in LinkStatus to show the link status.
+	PublicKey    string          `yaml:"publicKey,omitempty"`
 	ListenPort   int             `yaml:"listenPort"`
 	FirewallMark int             `yaml:"firewallMark"`
 	Peers        []WireguardPeer `yaml:"peers"`
@@ -507,8 +510,13 @@ func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, err
 }
 
 // Decode spec from the device state.
-func (spec *WireguardSpec) Decode(dev *wgtypes.Device) {
-	spec.PrivateKey = dev.PrivateKey.String()
+func (spec *WireguardSpec) Decode(dev *wgtypes.Device, isStatus bool) {
+	if isStatus {
+		spec.PublicKey = dev.PublicKey.String()
+	} else {
+		spec.PrivateKey = dev.PrivateKey.String()
+	}
+
 	spec.ListenPort = dev.ListenPort
 	spec.FirewallMark = dev.FirewallMark
 
