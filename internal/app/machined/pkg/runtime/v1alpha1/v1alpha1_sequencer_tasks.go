@@ -1235,7 +1235,16 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 // ResetSystemDisk represents the task to reset the system disk.
 func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return r.State().Machine().Disk().BlockDevice.Reset()
+		var dev *blockdevice.BlockDevice
+
+		dev, err = blockdevice.Open(r.State().Machine().Disk().Device().Name())
+		if err != nil {
+			return err
+		}
+
+		defer dev.Close() //nolint:errcheck
+
+		return dev.Reset()
 	}, "resetSystemDisk"
 }
 

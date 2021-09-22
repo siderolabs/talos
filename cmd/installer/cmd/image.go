@@ -68,7 +68,7 @@ func runImageCmd() (err error) {
 		return err
 	}
 
-	log.Print("attaching loopback device ")
+	log.Print("attaching loopback device")
 
 	if options.Disk, err = pkg.Loattach(img); err != nil {
 		return err
