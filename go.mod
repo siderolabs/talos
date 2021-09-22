@@ -3,6 +3,7 @@ module github.com/talos-systems/talos
 go 1.17
 
 replace (
+	github.com/talos-systems/go-blockdevice => github.com/Unix4ever/go-blockdevice v0.1.1-0.20210922122752-e367f9dc7fa9
 	// Use nested module.
 	github.com/talos-systems/talos/pkg/machinery => ./pkg/machinery
 
