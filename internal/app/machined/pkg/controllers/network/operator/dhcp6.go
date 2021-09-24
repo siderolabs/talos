@@ -177,7 +177,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
 		d.resolvers = nil
 	}
 
-	if len(reply.Options.FQDN().DomainName.Labels) > 0 {
+	if reply.Options.FQDN() != nil && len(reply.Options.FQDN().DomainName.Labels) > 0 {
 		d.hostname = []network.HostnameSpecSpec{
 			{
 				Hostname:    reply.Options.FQDN().DomainName.Labels[0],
