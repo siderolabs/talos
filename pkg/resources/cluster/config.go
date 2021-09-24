@@ -27,8 +27,12 @@ type Config struct {
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
-	DiscoveryEnabled          bool `yaml:"discoveryEnabled"`
-	RegistryKubernetesEnabled bool `yaml:"registryKubernetesEnabled"`
+	DiscoveryEnabled          bool   `yaml:"discoveryEnabled"`
+	RegistryKubernetesEnabled bool   `yaml:"registryKubernetesEnabled"`
+	RegistryServiceEnabled    bool   `yaml:"registryServiceEnabled"`
+	ServiceEndpoint           string `yaml:"serviceEndpoint"`
+	ServiceEncryptionKey      []byte `yaml:"serviceEncryptionKey"`
+	ServiceClusterID          string `yaml:"serviceClusterID"`
 }
 
 // NewConfig initializes a Config resource.
@@ -72,6 +76,7 @@ func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: config.NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

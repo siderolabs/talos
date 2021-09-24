@@ -6,7 +6,10 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"net"
+	"net/url"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -74,6 +77,39 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 
 					if c.Cluster().Discovery().Enabled() {
 						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
+						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
+
+						if c.Cluster().Discovery().Registries().Service().Enabled() {
+							var u *url.URL
+
+							u, err = url.ParseRequestURI(c.Cluster().Discovery().Registries().Service().Endpoint())
+							if err != nil {
+								return err
+							}
+
+							host := u.Hostname()
+							port := u.Port()
+
+							if port == "" {
+								port = "443" // use default https port
+							}
+
+							res.(*cluster.Config).TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
+
+							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
+							if err != nil {
+								return err
+							}
+
+							res.(*cluster.Config).TypedSpec().ServiceClusterID = c.Cluster().ID()
+						} else {
+							res.(*cluster.Config).TypedSpec().ServiceEndpoint = ""
+							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey = nil
+							res.(*cluster.Config).TypedSpec().ServiceClusterID = ""
+						}
+					} else {
+						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = false
+						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
 					}
 
 					return nil

@@ -78,6 +78,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		},
 		&cluster.AffiliateMergeController{},
 		&cluster.ConfigController{},
+		&cluster.DiscoveryServiceController{},
 		&cluster.LocalAffiliateController{},
 		&cluster.MemberController{},
 		&cluster.KubernetesPullController{},

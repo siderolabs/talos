@@ -1042,6 +1042,8 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/talos-systems/crypto v0.3.2 h1:I+MC9ql6K29EMlbPzdSeHZInSRWdze1FX1qGGrlom8Q=
 github.com/talos-systems/crypto v0.3.2/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
+github.com/talos-systems/discovery-service v0.0.3-0.20210928170742-e9d5dfa15e92 h1:Z381kVGNLIZyvmCN6yhJSA0k5ArrTApVXwxB6u6gZXM=
+github.com/talos-systems/discovery-service v0.0.3-0.20210928170742-e9d5dfa15e92/go.mod h1:+9VWFbTcUChtlE0qc2fQ3Lyj1kj2AakFQ/ITnaB8Pd0=
 github.com/talos-systems/go-blockdevice v0.2.3/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-blockdevice v0.2.4-0.20210925062844-70d28650b398 h1:4NH2IPnswmMfhU0Jb39vtik8xa7J3eObB1rbxhKzpO4=
 github.com/talos-systems/go-blockdevice v0.2.4-0.20210925062844-70d28650b398/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=

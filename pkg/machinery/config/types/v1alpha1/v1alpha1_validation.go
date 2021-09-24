@@ -325,9 +325,17 @@ func (c ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 	}
 
 	if c.Registries().Service().Enabled() {
-		_, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
+		url, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
+		} else {
+			if url.Scheme != "https" {
+				result = multierror.Append(result, fmt.Errorf("cluster discovery service should use TLS"))
+			}
+
+			if url.Path != "" && url.Path != "/" {
+				result = multierror.Append(result, fmt.Errorf("cluster discovery service path should be empty"))
+			}
 		}
 
 		if clusterCfg.ID() == "" {

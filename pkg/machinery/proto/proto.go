@@ -11,6 +11,11 @@ import (
 // Message is the main interface for protobuf API v2 messages.
 type Message = proto.Message
 
+// Equal reports whether two messages are equal.
+func Equal(a, b Message) bool {
+	return proto.Equal(a, b)
+}
+
 // vtprotoMessage is the interface for vtproto additions.
 //
 // We use only a subset of that interface but include additional methods
