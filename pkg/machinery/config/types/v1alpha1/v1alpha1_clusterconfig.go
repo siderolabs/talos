@@ -73,6 +73,10 @@ func (c *ClusterConfig) Token() config.Token {
 
 // CertSANs implements the config.ClusterConfig interface.
 func (c *ClusterConfig) CertSANs() []string {
+	if c.APIServerConfig == nil {
+		return nil
+	}
+
 	return c.APIServerConfig.CertSANs
 }
 
@@ -117,7 +121,7 @@ func (c *ClusterConfig) Network() config.ClusterNetwork {
 
 // LocalAPIServerPort implements the config.ClusterConfig interface.
 func (c *ClusterConfig) LocalAPIServerPort() int {
-	if c.ControlPlane.LocalAPIServerPort == 0 {
+	if c.ControlPlane == nil || c.ControlPlane.LocalAPIServerPort == 0 {
 		return constants.DefaultControlPlanePort
 	}
 
