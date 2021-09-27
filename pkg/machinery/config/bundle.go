@@ -14,8 +14,5 @@ type ProviderBundle interface {
 	Init() Provider
 	ControlPlane() Provider
 	Worker() Provider
-	// Deprecated: use Worker instead; this method will be removed in 0.13
-	// (https://github.com/talos-systems/talos/issues/3910).
-	Join() Provider
 	TalosConfig() *clientconfig.Config
 }

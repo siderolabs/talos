@@ -92,15 +92,3 @@ func WithJSONPatchWorker(patch jsonpatch.Patch) Option {
 		return nil
 	}
 }
-
-// WithJSONPatchJoin is WithJSONPatchWorker.
-//
-// Deprecated: use WithJSONPatchWorker instead; this function will be removed in 0.13
-// (https://github.com/talos-systems/talos/issues/3910).
-func WithJSONPatchJoin(patch jsonpatch.Patch) Option {
-	return func(o *Options) error {
-		o.JSONPatchWorker = append(o.JSONPatchWorker, patch...)
-
-		return nil
-	}
-}

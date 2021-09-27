@@ -19,7 +19,6 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
@@ -42,7 +41,6 @@ var genConfigCmdFlags struct {
 	configPatch             string
 	configPatchControlPlane string
 	configPatchWorker       string
-	configPatchJoin         string
 	registryMirrors         []string
 	persistConfig           bool
 	withExamples            bool
@@ -59,14 +57,6 @@ this is the port that the API server binds to on every control plane node. For a
 setup, usually involving a load balancer, use the IP and port of the load balancer.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if genConfigCmdFlags.configPatchJoin != "" {
-			if genConfigCmdFlags.configPatchWorker != "" {
-				return fmt.Errorf("both --config-patch-join and --config-patch-worker are passed")
-			}
-
-			genConfigCmdFlags.configPatchWorker = genConfigCmdFlags.configPatchJoin
-		}
-
 		// Validate url input to ensure it has https:// scheme before we attempt to gen
 		u, err := url.Parse(args[1])
 		if err != nil {
@@ -283,10 +273,6 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
-
-	// remove in 0.13: https://github.com/talos-systems/talos/issues/3910
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchJoin, "config-patch-join", "", "")
-	cli.Should(genConfigCmd.Flags().MarkDeprecated("config-patch-join", "use --config-patch-worker instead"))
 
 	gen.Cmd.AddCommand(genConfigCmd)
 }

@@ -108,7 +108,6 @@ var (
 	configPatch               string
 	configPatchControlPlane   string
 	configPatchWorker         string
-	configPatchJoin           string
 	badRTC                    bool
 )
 
@@ -125,14 +124,6 @@ var createCmd = &cobra.Command{
 
 //nolint:gocyclo,cyclop
 func create(ctx context.Context) (err error) {
-	if configPatchJoin != "" {
-		if configPatchWorker != "" {
-			return fmt.Errorf("both --config-patch-join and --config-patch-worker are passed")
-		}
-
-		configPatchWorker = configPatchJoin
-	}
-
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
 	}
@@ -844,10 +835,6 @@ func init() {
 	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	createCmd.Flags().StringVar(&configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
-
-	// remove in 0.13: https://github.com/talos-systems/talos/issues/3910
-	createCmd.Flags().StringVar(&configPatchJoin, "config-patch-join", "", "")
-	cli.Should(createCmd.Flags().MarkDeprecated("config-patch-join", "use --config-patch-worker instead"))
 
 	Cmd.AddCommand(createCmd)
 }

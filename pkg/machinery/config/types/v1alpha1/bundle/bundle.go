@@ -50,13 +50,15 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 				return bundle, err
 			}
 
-			switch configType { //nolint:exhaustive
+			switch configType {
 			case machine.TypeInit:
 				bundle.InitCfg = unmarshalledConfig
 			case machine.TypeControlPlane:
 				bundle.ControlPlaneCfg = unmarshalledConfig
 			case machine.TypeWorker:
 				bundle.WorkerCfg = unmarshalledConfig
+			case machine.TypeUnknown:
+				fallthrough
 			default:
 				panic("unreachable")
 			}
@@ -116,13 +118,15 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 			return bundle, err
 		}
 
-		switch configType { //nolint:exhaustive
+		switch configType {
 		case machine.TypeInit:
 			bundle.InitCfg = generatedConfig
 		case machine.TypeControlPlane:
 			bundle.ControlPlaneCfg = generatedConfig
 		case machine.TypeWorker:
 			bundle.WorkerCfg = generatedConfig
+		case machine.TypeUnknown:
+			fallthrough
 		default:
 			panic("unreachable")
 		}

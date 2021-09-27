@@ -105,7 +105,7 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		warnings = append(warnings, fmt.Sprintf("use %q instead of %q for machine type", t.String(), c.MachineConfig.MachineType))
 	}
 
-	switch c.Machine().Type() { //nolint:exhaustive
+	switch c.Machine().Type() {
 	case machine.TypeInit, machine.TypeControlPlane:
 		warn, err := ValidateCNI(c.Cluster().Network().CNI())
 		warnings = append(warnings, warn...)
@@ -117,6 +117,9 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 				result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
 			}
 		}
+
+	case machine.TypeUnknown:
+		fallthrough
 
 	default:
 		result = multierror.Append(result, fmt.Errorf("unknown machine type %q", c.MachineConfig.MachineType))

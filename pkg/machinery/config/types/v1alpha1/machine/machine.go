@@ -28,12 +28,6 @@ const (
 	// TypeWorker designates the node as a worker node.
 	// This means it will be an available compute node for scheduling workloads.
 	TypeWorker // worker
-
-	// TypeJoin is the same as TypeWorker.
-	//
-	// Deprecated: use TypeWorker instead; this constant will be removed in 0.13
-	// (https://github.com/talos-systems/talos/issues/3910).
-	TypeJoin = TypeWorker
 )
 
 // ParseType parses string constant as Type.
