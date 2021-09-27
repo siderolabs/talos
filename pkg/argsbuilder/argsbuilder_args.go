@@ -4,7 +4,10 @@
 
 package argsbuilder
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Key represents an arg key.
 type Key = string
@@ -15,13 +18,59 @@ type Value = string
 // Args represents a set of args.
 type Args map[Key]Value
 
+// MustMerge implements the ArgsBuilder interface.
+func (a Args) MustMerge(args Args, setters ...MergeOption) {
+	if err := a.Merge(args, setters...); err != nil {
+		panic(err)
+	}
+}
+
 // Merge implements the ArgsBuilder interface.
-func (a Args) Merge(args Args) ArgsBuilder {
-	for key, val := range args {
-		a[key] = val
+//nolint:gocyclo
+func (a Args) Merge(args Args, setters ...MergeOption) error {
+	var opts MergeOptions
+
+	for _, s := range setters {
+		s(&opts)
 	}
 
-	return a
+	policies := opts.Policies
+	if policies == nil {
+		policies = MergePolicies{}
+	}
+
+	for key, val := range args {
+		policy := policies[key]
+
+		switch policy {
+		case MergeDenied:
+			return NewDenylistError(key)
+		case MergeAdditive:
+			values := strings.Split(a[key], ",")
+			definedValues := map[string]struct{}{}
+
+			for i, v := range values {
+				definedValues[strings.TrimSpace(v)] = struct{}{}
+
+				if v == "" {
+					values = append(values[:i], values[i+1:]...)
+				}
+			}
+
+			for _, v := range strings.Split(val, ",") {
+				v = strings.TrimSpace(v)
+				if _, defined := definedValues[v]; !defined {
+					values = append(values, v)
+				}
+			}
+
+			a[key] = strings.Join(values, ",")
+		case MergeOverwrite:
+			a[key] = val
+		}
+	}
+
+	return nil
 }
 
 // Set implements the ArgsBuilder interface.

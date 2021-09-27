@@ -313,13 +313,11 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
-	for k := range denyListArgs {
-		if extraArgs.Contains(k) {
-			return nil, argsbuilder.NewDenylistError(k)
-		}
+	if err = denyListArgs.Merge(extraArgs, argsbuilder.WithDenyList(denyListArgs)); err != nil {
+		return nil, err
 	}
 
-	return denyListArgs.Merge(extraArgs).Args(), nil
+	return denyListArgs.Args(), nil
 }
 
 func writeKubeletConfig(r runtime.Runtime) error {

@@ -7,6 +7,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -15,6 +16,7 @@ import (
 	talosnet "github.com/talos-systems/net"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/images"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -213,16 +215,20 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 	return r.Modify(ctx, config.NewK8sManifests(), func(r resource.Resource) error {
 		images := images.List(cfgProvider)
 
+		proxyArgs, err := getProxyArgs(cfgProvider)
+		if err != nil {
+			return err
+		}
+
 		r.(*config.K8sControlPlane).SetManifests(config.K8sManifestsSpec{
 			Server:        cfgProvider.Cluster().Endpoint().String(),
 			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
 
 			PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
 
-			ProxyEnabled:   cfgProvider.Cluster().Proxy().Enabled(),
-			ProxyImage:     cfgProvider.Cluster().Proxy().Image(),
-			ProxyMode:      cfgProvider.Cluster().Proxy().Mode(),
-			ProxyExtraArgs: cfgProvider.Cluster().Proxy().ExtraArgs(),
+			ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
+			ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
+			ProxyArgs:    proxyArgs,
 
 			CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
 			CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
@@ -286,4 +292,28 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 
 func (ctrl *K8sControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	return nil
+}
+
+func getProxyArgs(cfgProvider talosconfig.Provider) ([]string, error) {
+	clusterCidr := strings.Join(cfgProvider.Cluster().Network().PodCIDRs(), ",")
+
+	builder := argsbuilder.Args{
+		"cluster-cidr":           clusterCidr,
+		"hostname-override":      "$(NODE_NAME)",
+		"kubeconfig":             "/etc/kubernetes/kubeconfig",
+		"proxy-mode":             cfgProvider.Cluster().Proxy().Mode(),
+		"conntrack-max-per-core": "0",
+	}
+
+	policies := argsbuilder.MergePolicies{
+		"cluster-cidr": argsbuilder.MergeAdditive,
+
+		"kubeconfig": argsbuilder.MergeDenied,
+	}
+
+	if err := builder.Merge(cfgProvider.Cluster().Proxy().ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
+		return nil, err
+	}
+
+	return builder.Args(), nil
 }
