@@ -37,7 +37,7 @@ require (
 	github.com/emicklei/dot v0.16.0
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.11.0+incompatible
-	github.com/fatih/color v1.12.0
+	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
@@ -51,7 +51,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210827173440-b95caade3eac
-	github.com/jsimonetti/rtnetlink v0.0.0-20210721205614-4cc3c1489576
+	github.com/jsimonetti/rtnetlink v0.0.0-20210922080037-435639c8e6a8
 	github.com/jxskiss/base62 v0.0.0-20191017122030-4f11678b909b
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
@@ -64,7 +64,7 @@ require (
 	github.com/packethost/packngo v0.19.1
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.3
-	github.com/rivo/tview v0.0.0-20210909154944-f7430b878d17
+	github.com/rivo/tview v0.0.0-20210926181611-ee97a7ab3975
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
@@ -94,13 +94,13 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
+	golang.org/x/net v0.0.0-20210924151903-3ad01bbaa167
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678
+	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210913210325-91d1988e44de
-	google.golang.org/grpc v1.40.0
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210927125730-0a2f4901cba6
+	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
@@ -112,7 +112,7 @@ require (
 	k8s.io/cri-api v0.22.2
 	k8s.io/kubectl v0.22.2
 	k8s.io/kubelet v0.22.2
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.58
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.59
 )
 
 require (
@@ -195,7 +195,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-colorable v0.1.9 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
@@ -270,7 +270,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20210427022245-097af6e1351b // indirect
 	google.golang.org/api v0.44.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20210909211513-a8c4777a87af // indirect
+	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -281,7 +281,7 @@ require (
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.58 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.59 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect

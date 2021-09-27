@@ -15,16 +15,16 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v0.0.0-20210721205614-4cc3c1489576
+	github.com/jsimonetti/rtnetlink v0.0.0-20210922080037-435639c8e6a8
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.2
 	github.com/talos-systems/go-blockdevice v0.2.3
 	github.com/talos-systems/net v0.3.0
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
-	google.golang.org/genproto v0.0.0-20210909211513-a8c4777a87af
-	google.golang.org/grpc v1.40.0
+	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
+	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
+	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
