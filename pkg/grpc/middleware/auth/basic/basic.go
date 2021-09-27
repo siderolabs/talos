@@ -6,7 +6,9 @@ package basic
 
 import (
 	"crypto/tls"
+	stdx509 "crypto/x509"
 
+	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -20,17 +22,20 @@ type Credentials interface {
 
 // NewConnection initializes a grpc.ClientConn configured for basic
 // authentication.
-func NewConnection(address string, creds credentials.PerRPCCredentials) (conn *grpc.ClientConn, err error) {
-	grpcOpts := []grpc.DialOption{}
+func NewConnection(address string, creds credentials.PerRPCCredentials, ca *x509.PEMEncodedCertificateAndKey) (conn *grpc.ClientConn, err error) {
+	tlsConfig := &tls.Config{}
 
-	grpcOpts = append(
-		grpcOpts,
-		grpc.WithTransportCredentials(
-			credentials.NewTLS(&tls.Config{
-				InsecureSkipVerify: true,
-			})),
+	if ca == nil {
+		tlsConfig.InsecureSkipVerify = true
+	} else {
+		tlsConfig.RootCAs = stdx509.NewCertPool()
+		tlsConfig.RootCAs.AppendCertsFromPEM(ca.Crt)
+	}
+
+	grpcOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(creds),
-	)
+	}
 
 	conn, err = grpc.Dial(address, grpcOpts...)
 	if err != nil {
