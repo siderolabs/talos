@@ -83,10 +83,9 @@ type K8sManifestsSpec struct {
 
 	PodCIDRs []string `yaml:"podCIDRs"`
 
-	ProxyEnabled   bool              `yaml:"proxyEnabled"`
-	ProxyImage     string            `yaml:"proxyImage"`
-	ProxyMode      string            `yaml:"proxyMode"`
-	ProxyExtraArgs map[string]string `yaml:"proxyExtraArgs"`
+	ProxyEnabled bool     `yaml:"proxyEnabled"`
+	ProxyImage   string   `yaml:"proxyImage"`
+	ProxyArgs    []string `yaml:"proxyArgs"`
 
 	CoreDNSEnabled bool   `yaml:"coreDNSEnabled"`
 	CoreDNSImage   string `yaml:"coreDNSImage"`

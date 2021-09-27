@@ -460,11 +460,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
 
-	for k := range denyListArgs {
-		if extraArgs.Contains(k) {
-			return argsbuilder.NewDenylistError(k)
-		}
-	}
+	denyList := argsbuilder.WithDenyList(denyListArgs)
 
 	if !extraArgs.Contains("initial-cluster-state") {
 		denyListArgs.Set("initial-cluster-state", "new")
@@ -504,7 +500,11 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
-	e.args = denyListArgs.Merge(extraArgs).Args()
+	if err := denyListArgs.Merge(extraArgs, denyList); err != nil {
+		return err
+	}
+
+	e.args = denyListArgs.Args()
 
 	return nil
 }
@@ -543,11 +543,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
 
-	for k := range denyListArgs {
-		if extraArgs.Contains(k) {
-			return argsbuilder.NewDenylistError(k)
-		}
-	}
+	denyList := argsbuilder.WithDenyList(denyListArgs)
 
 	if e.RecoverFromSnapshot {
 		if err = e.recoverFromSnapshot(hostname, primaryAddr); err != nil {
@@ -595,7 +591,11 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
 	}
 
-	e.args = denyListArgs.Merge(extraArgs).Args()
+	if err = denyListArgs.Merge(extraArgs, denyList); err != nil {
+		return err
+	}
+
+	e.args = denyListArgs.Args()
 
 	return nil
 }
