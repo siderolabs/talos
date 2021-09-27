@@ -4,7 +4,9 @@
 
 package argsbuilder
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Key represents an arg key.
 type Key = string

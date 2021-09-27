@@ -7,6 +7,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -15,6 +16,7 @@ import (
 	talosnet "github.com/talos-systems/net"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/images"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -219,10 +221,9 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 
 			PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
 
-			ProxyEnabled:   cfgProvider.Cluster().Proxy().Enabled(),
-			ProxyImage:     cfgProvider.Cluster().Proxy().Image(),
-			ProxyMode:      cfgProvider.Cluster().Proxy().Mode(),
-			ProxyExtraArgs: cfgProvider.Cluster().Proxy().ExtraArgs(),
+			ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
+			ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
+			ProxyArgs:    proxyArgs(cfgProvider),
 
 			CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
 			CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
@@ -286,4 +287,18 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 
 func (ctrl *K8sControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	return nil
+}
+
+func proxyArgs(cfgProvider talosconfig.Provider) []string {
+	clusterCidr := strings.Join(cfgProvider.Cluster().Network().PodCIDRs(), ",")
+
+	builder := argsbuilder.Args{
+		"cluster-cidr":           clusterCidr,
+		"hostname-override":      "$(NODE_NAME)",
+		"kubeconfig":             "/etc/kubernetes/kubeconfig",
+		"proxy-mode":             cfgProvider.Cluster().Proxy().Mode(),
+		"conntrack-max-per-core": "0",
+	}
+
+	return builder.Merge(cfgProvider.Cluster().Proxy().ExtraArgs()).Args()
 }

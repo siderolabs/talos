@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/AlekSi/pointer"
@@ -20,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -203,52 +205,53 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args := []string{
 		"/usr/local/bin/kube-apiserver",
-		fmt.Sprintf("--enable-admission-plugins=%s", strings.Join(enabledAdmissionPlugins, ",")),
-		"--advertise-address=$(POD_IP)",
-		"--allow-privileged=true",
-		fmt.Sprintf("--api-audiences=%s", cfg.ControlPlaneEndpoint),
-		"--authorization-mode=Node,RBAC",
-		"--bind-address=0.0.0.0",
-		fmt.Sprintf("--client-ca-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt")),
-		fmt.Sprintf("--requestheader-client-ca-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt")),
-		"--requestheader-allowed-names=front-proxy-client",
-		"--requestheader-extra-headers-prefix=X-Remote-Extra-",
-		"--requestheader-group-headers=X-Remote-Group",
-		"--requestheader-username-headers=X-Remote-User",
-		fmt.Sprintf("--proxy-client-cert-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt")),
-		fmt.Sprintf("--proxy-client-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key")),
-		"--enable-bootstrap-token-auth=true",
-		"--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
-		fmt.Sprintf("--encryption-provider-config=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml")),
-		fmt.Sprintf("--audit-policy-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml")),
-		"--audit-log-path=-",
-		"--audit-log-maxage=30",
-		"--audit-log-maxbackup=3",
-		"--audit-log-maxsize=50",
-		"--profiling=false",
-		fmt.Sprintf("--etcd-cafile=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt")),
-		fmt.Sprintf("--etcd-certfile=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt")),
-		fmt.Sprintf("--etcd-keyfile=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key")),
-		fmt.Sprintf("--etcd-servers=%s", strings.Join(cfg.EtcdServers, ",")),
-		fmt.Sprintf("--kubelet-client-certificate=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt")),
-		fmt.Sprintf("--kubelet-client-key=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key")),
-		fmt.Sprintf("--secure-port=%d", cfg.LocalPort),
-		fmt.Sprintf("--service-account-issuer=%s", cfg.ControlPlaneEndpoint),
-		fmt.Sprintf("--service-account-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub")),
-		fmt.Sprintf("--service-account-signing-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key")),
-		fmt.Sprintf("--service-cluster-ip-range=%s", strings.Join(cfg.ServiceCIDRs, ",")),
-		fmt.Sprintf("--tls-cert-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")),
-		fmt.Sprintf("--tls-private-key-file=%s", filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")),
-		"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+	}
+
+	builder := argsbuilder.Args{
+		"enable-admission-plugins":           strings.Join(enabledAdmissionPlugins, ","),
+		"advertise-address":                  "$(POD_IP)",
+		"allow-privileged":                   "true",
+		"api-audiences":                      cfg.ControlPlaneEndpoint,
+		"authorization-mode":                 "Node,RBAC",
+		"bind-address":                       "0.0.0.0",
+		"client-ca-file":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt"),
+		"requestheader-client-ca-file":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt"),
+		"requestheader-allowed-names":        "front-proxy-client",
+		"requestheader-extra-headers-prefix": "X-Remote-Extra-",
+		"requestheader-group-headers":        "X-Remote-Group",
+		"requestheader-username-headers":     "X-Remote-User",
+		"proxy-client-cert-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt"),
+		"proxy-client-key-file":              filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key"),
+		"enable-bootstrap-token-auth":        "true",
+		"tls-cipher-suites":                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
+		"encryption-provider-config":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml"),
+		"audit-policy-file":                  filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml"),
+		"audit-log-path":                     "-",
+		"audit-log-maxage":                   "30",
+		"audit-log-maxbackup":                "3",
+		"audit-log-maxsize":                  "50",
+		"profiling":                          "false",
+		"etcd-cafile":                        filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt"),
+		"etcd-certfile":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt"),
+		"etcd-keyfile":                       filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key"),
+		"etcd-servers":                       strings.Join(cfg.EtcdServers, ","),
+		"kubelet-client-certificate":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":                 filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key"),
+		"secure-port":                        strconv.FormatInt(int64(cfg.LocalPort), 10),
+		"service-account-issuer":             cfg.ControlPlaneEndpoint,
+		"service-account-key-file":           filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub"),
+		"service-account-signing-key-file":   filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key"),
+		"service-cluster-ip-range":           strings.Join(cfg.ServiceCIDRs, ","),
+		"tls-cert-file":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt"),
+		"tls-private-key-file":               filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key"),
+		"kubelet-preferred-address-types":    "InternalIP,ExternalIP,Hostname",
 	}
 
 	if cfg.CloudProvider != "" {
-		args = append(args, fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider))
+		builder.Set("cloud-provider", cfg.CloudProvider)
 	}
 
-	for k, v := range cfg.ExtraArgs {
-		args = append(args, fmt.Sprintf("--%s=%s", k, v))
-	}
+	args = append(args, builder.Merge(cfg.ExtraArgs).Args()...)
 
 	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver", nil), func(r resource.Resource) error {
 		r.(*k8s.StaticPod).SetPod(&v1.Pod{
@@ -328,32 +331,33 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 
 	args := []string{
 		"/usr/local/bin/kube-controller-manager",
-		"--allocate-node-cidrs=true",
-		"--bind-address=127.0.0.1",
-		"--port=0",
-		fmt.Sprintf("--cluster-cidr=%s", strings.Join(cfg.PodCIDRs, ",")),
-		fmt.Sprintf("--service-cluster-ip-range=%s", strings.Join(cfg.ServiceCIDRs, ",")),
-		fmt.Sprintf("--cluster-signing-cert-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
-		fmt.Sprintf("--cluster-signing-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key")),
-		"--controllers=*,tokencleaner",
-		"--configure-cloud-routes=false",
-		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
-		fmt.Sprintf("--authentication-kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
-		fmt.Sprintf("--authorization-kubeconfig=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")),
-		"--leader-elect=true",
-		fmt.Sprintf("--root-ca-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")),
-		fmt.Sprintf("--service-account-private-key-file=%s", filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")),
-		"--profiling=false",
 		"--use-service-account-credentials",
 	}
 
-	if cfg.CloudProvider != "" {
-		args = append(args, fmt.Sprintf("--cloud-provider=%s", cfg.CloudProvider))
+	builder := argsbuilder.Args{
+		"allocate-node-cidrs":              "true",
+		"bind-address":                     "127.0.0.1",
+		"port":                             "0",
+		"cluster-cidr":                     strings.Join(cfg.PodCIDRs, ","),
+		"service-cluster-ip-range":         strings.Join(cfg.ServiceCIDRs, ","),
+		"cluster-signing-cert-file":        filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
+		"cluster-signing-key-file":         filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key"),
+		"controllers":                      "*,tokencleaner",
+		"configure-cloud-routes":           "false",
+		"kubeconfig":                       filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
+		"authentication-kubeconfig":        filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
+		"authorization-kubeconfig":         filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
+		"leader-elect":                     "true",
+		"root-ca-file":                     filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
+		"service-account-private-key-file": filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key"),
+		"profiling":                        "false",
 	}
 
-	for k, v := range cfg.ExtraArgs {
-		args = append(args, fmt.Sprintf("--%s=%s", k, v))
+	if cfg.CloudProvider != "" {
+		builder.Set("cloud-provider", cfg.CloudProvider)
 	}
+
+	args = append(args, builder.Merge(cfg.ExtraArgs).Args()...)
 
 	//nolint:dupl
 	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager", nil), func(r resource.Resource) error {
@@ -436,19 +440,20 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 
 	args := []string{
 		"/usr/local/bin/kube-scheduler",
-		fmt.Sprintf("--kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
-		"--authentication-tolerate-lookup-failure=false",
-		fmt.Sprintf("--authentication-kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
-		fmt.Sprintf("--authorization-kubeconfig=%s", filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")),
-		"--bind-address=127.0.0.1",
-		"--port=0",
-		"--leader-elect=true",
-		"--profiling=false",
 	}
 
-	for k, v := range cfg.ExtraArgs {
-		args = append(args, fmt.Sprintf("--%s=%s", k, v))
+	builder := argsbuilder.Args{
+		"kubeconfig":                             filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
+		"authentication-tolerate-lookup-failure": "false",
+		"authentication-kubeconfig":              filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
+		"authorization-kubeconfig":               filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
+		"bind-address":                           "127.0.0.1",
+		"port":                                   "0",
+		"leader-elect":                           "true",
+		"profiling":                              "false",
 	}
+
+	args = append(args, builder.Merge(cfg.ExtraArgs).Args()...)
 
 	//nolint:dupl
 	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler", nil), func(r resource.Resource) error {

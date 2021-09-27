@@ -95,6 +95,13 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 
 	ProxyEnabled: true,
 	ProxyImage:   "foo/bar",
+	ProxyArgs: []string{
+		fmt.Sprintf("--cluster-cidr=%s", constants.DefaultIPv4PodNet),
+		"--hostname-override=$(NODE_NAME)",
+		"--kubeconfig=/etc/kubernetes/kubeconfig",
+		"--proxy-mode=iptables",
+		"--conntrack-max-per-core=0",
+	},
 
 	CoreDNSEnabled: true,
 	CoreDNSImage:   "foo/bar",
@@ -171,9 +178,7 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
 	manifestConfig := config.NewK8sManifests()
 	spec := defaultManifestSpec
-	spec.ProxyExtraArgs = map[string]string{
-		"bind-address": "\"::\"",
-	}
+	spec.ProxyArgs = append(spec.ProxyArgs, "--bind-address=\"::\"")
 	manifestConfig.SetManifests(spec)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
