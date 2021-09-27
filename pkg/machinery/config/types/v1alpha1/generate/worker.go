@@ -39,6 +39,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		MachineNetwork: networkConfig,
+		MachineCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Certs.OS.Crt},
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.InstallDisk,
 			InstallImage:           in.InstallImage,
