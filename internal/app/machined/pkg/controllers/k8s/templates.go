@@ -138,13 +138,8 @@ spec:
         image: {{ .ProxyImage }}
         command:
         - /usr/local/bin/kube-proxy
-        - --cluster-cidr={{ join .PodCIDRs "," }}
-        - --hostname-override=$(NODE_NAME)
-        - --kubeconfig=/etc/kubernetes/kubeconfig
-        - --proxy-mode={{ .ProxyMode }}
-        - --conntrack-max-per-core=0
-        {{- range $k, $v := .ProxyExtraArgs }}
-        - {{ printf "--%s=%s" $k $v | json }}
+        {{- range $arg := .ProxyArgs }}
+        - {{ $arg }}
         {{- end }}
         env:
           - name: NODE_NAME
