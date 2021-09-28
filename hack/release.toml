@@ -20,10 +20,12 @@ preface = """\
         description = """\
 Talos now natively supports three new cloud platforms:
 
-* [Hetzner](https://www.hetzner.com/)
+* [Hetzner](https://www.hetzner.com/), including VIP support
 * [Scaleway](https://www.scaleway.com/en/)
 * [Upcloud](https://upcloud.com/)
 * [Vultr](https://www.vultr.com/)
+
+Also generic `cloud-init` `nocloud` platform is supported in both networking and storage-based modes.
 """
 
     [notes.kexec]
