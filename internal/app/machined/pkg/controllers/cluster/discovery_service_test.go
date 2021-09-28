@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/aes"
+	"log"
 	"net"
 	"testing"
 	"time"
@@ -23,11 +24,11 @@ import (
 	"github.com/talos-systems/discovery-service/pkg/client"
 	"github.com/talos-systems/discovery-service/pkg/server"
 	"github.com/talos-systems/go-retry/retry"
-	"go.uber.org/zap/zaptest"
 	"google.golang.org/grpc"
 	"inet.af/netaddr"
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
@@ -44,7 +45,7 @@ func setupServer(t *testing.T) (address string) {
 	lis, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)
 
-	logger := zaptest.NewLogger(t)
+	logger := logging.Wrap(log.Writer())
 
 	serverOptions := []grpc.ServerOption{
 		grpc_middleware.WithUnaryServerChain(
@@ -128,7 +129,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	defer cliCtxCancel()
 
 	go func() {
-		errCh <- cli.Run(cliCtx, zaptest.NewLogger(suite.T()), notifyCh)
+		errCh <- cli.Run(cliCtx, logging.Wrap(log.Writer()), notifyCh)
 	}()
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
