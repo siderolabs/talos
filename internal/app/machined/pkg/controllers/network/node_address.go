@@ -61,6 +61,10 @@ func (ctrl *NodeAddressController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	var addressStatusController AddressStatusController
+
+	addressStatusControllerName := addressStatusController.Name()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -120,12 +124,16 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
-			if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.IP().Compare(defaultAddress.IP()) < 0) {
-				defaultAddress = ip
-				defaultAddrLinkName = addr.TypedSpec().LinkName
+			// ignore address which are not assigned from the physical links
+			if addr.Metadata().Owner() == addressStatusControllerName {
+				if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.IP().Compare(defaultAddress.IP()) < 0) {
+					defaultAddress = ip
+					defaultAddrLinkName = addr.TypedSpec().LinkName
+				}
 			}
 
-			if _, up := linksUp[addr.TypedSpec().LinkIndex]; up {
+			// assume addresses from external IPs to be always up
+			if _, up := linksUp[addr.TypedSpec().LinkIndex]; up || addr.TypedSpec().LinkName == externalLink {
 				current = append(current, ip)
 			}
 
@@ -134,6 +142,9 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 		// sort current addresses
 		sort.Slice(current, func(i, j int) bool { return current[i].IP().Compare(current[j].IP()) < 0 })
+
+		// remove duplicates from current addresses
+		current = deduplicateIPPrefixes(current)
 
 		touchedIDs := make(map[resource.ID]struct{})
 
@@ -208,6 +219,24 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}
 		}
 	}
+}
+
+func deduplicateIPPrefixes(current []netaddr.IPPrefix) []netaddr.IPPrefix {
+	// assumes that current is sorted
+	n := 0
+
+	var prev netaddr.IPPrefix
+
+	for _, x := range current {
+		if prev != x {
+			current[n] = x
+			n++
+		}
+
+		prev = x
+	}
+
+	return current[:n]
 }
 
 func filterIPs(addrs []netaddr.IPPrefix, includeSubnets, excludeSubnets []netaddr.IPPrefix) []netaddr.IPPrefix {

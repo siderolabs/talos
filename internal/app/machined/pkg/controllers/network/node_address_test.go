@@ -136,6 +136,11 @@ func (suite *NodeAddressSuite) TestDefaults() {
 
 //nolint:gocyclo
 func (suite *NodeAddressSuite) TestFilters() {
+	var (
+		addressStatusController  netctrl.AddressStatusController
+		platformConfigController netctrl.PlatformConfigController
+	)
+
 	linkUp := network.NewLinkStatus(network.NamespaceName, "eth0")
 	linkUp.TypedSpec().Type = nethelpers.LinkEther
 	linkUp.TypedSpec().LinkState = true
@@ -153,7 +158,14 @@ func (suite *NodeAddressSuite) TestFilters() {
 		addressStatus.TypedSpec().Address = addr
 		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
 		addressStatus.TypedSpec().LinkIndex = link.TypedSpec().Index
-		suite.Require().NoError(suite.state.Create(suite.ctx, addressStatus))
+		suite.Require().NoError(suite.state.Create(suite.ctx, addressStatus, state.WithCreateOwner(addressStatusController.Name())))
+	}
+
+	newExternalAddress := func(addr netaddr.IPPrefix) {
+		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID("external", addr))
+		addressStatus.TypedSpec().Address = addr
+		addressStatus.TypedSpec().LinkName = "external"
+		suite.Require().NoError(suite.state.Create(suite.ctx, addressStatus, state.WithCreateOwner(platformConfigController.Name())))
 	}
 
 	for _, addr := range []string{"10.0.0.1/8", "25.3.7.9/32", "2001:470:6d:30e:4a62:b3ba:180b:b5b8/64", "127.0.0.1/8"} {
@@ -162,6 +174,10 @@ func (suite *NodeAddressSuite) TestFilters() {
 
 	for _, addr := range []string{"10.0.0.2/8", "192.168.3.7/24"} {
 		newAddress(netaddr.MustParseIPPrefix(addr), linkDown)
+	}
+
+	for _, addr := range []string{"1.2.3.4/32", "25.3.7.9/32"} { // duplicate with link address: 25.3.7.9
+		newExternalAddress(netaddr.MustParseIPPrefix(addr))
 	}
 
 	filter1 := network.NewNodeAddressFilter(network.NamespaceName, "no-k8s")
@@ -191,19 +207,19 @@ func (suite *NodeAddressSuite) TestFilters() {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.NodeAddressCurrentID:
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
+					if !reflect.DeepEqual(addrs, ipList("1.2.3.4/32 10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.NodeAddressAccumulativeID:
-					if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8 10.0.0.2/8 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
+					if !reflect.DeepEqual(addrs, ipList("1.2.3.4/32 10.0.0.1/8 10.0.0.2/8 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
+					if !reflect.DeepEqual(addrs, ipList("1.2.3.4/32 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()):
-					if !reflect.DeepEqual(addrs, ipList("25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
+					if !reflect.DeepEqual(addrs, ipList("1.2.3.4/32 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64")) {
 						return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 					}
 				case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()):

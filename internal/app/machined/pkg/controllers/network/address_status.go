@@ -38,7 +38,7 @@ func (ctrl *AddressStatusController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: network.AddressStatusType,
-			Kind: controller.OutputExclusive,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -80,17 +80,7 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			linkLookup[link.Index] = link.Attributes.Name
 		}
 
-		// list resources for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		itemsToDelete := map[resource.ID]struct{}{}
-
-		for _, r := range list.Items {
-			itemsToDelete[r.Metadata().ID()] = struct{}{}
-		}
+		touchedIDs := map[resource.ID]struct{}{}
 
 		addrs, err := conn.Address.List()
 		if err != nil {
@@ -130,12 +120,26 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error modifying resource: %w", err)
 			}
 
-			delete(itemsToDelete, id)
+			touchedIDs[id] = struct{}{}
 		}
 
-		for id := range itemsToDelete {
-			if err = r.Destroy(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, id, resource.VersionUndefined)); err != nil {
-				return fmt.Errorf("error deleting address status %q: %w", id, err)
+		// list resources for cleanup
+		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing resources: %w", err)
+		}
+
+		for _, res := range list.Items {
+			if res.Metadata().Owner() != ctrl.Name() {
+				continue
+			}
+
+			if _, ok := touchedIDs[res.Metadata().ID()]; ok {
+				continue
+			}
+
+			if err = r.Destroy(ctx, res.Metadata()); err != nil {
+				return fmt.Errorf("error deleting address status %s: %w", res, err)
 			}
 		}
 	}

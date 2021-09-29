@@ -11,12 +11,17 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
+	"inet.af/netaddr"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
-// PlatformConfigController manages network.HostnameSpec based on machine configuration, kernel cmdline.
+// Virtual link name for external IPs.
+const externalLink = "external"
+
+// PlatformConfigController manages updates hostnames and addressstatuses based on platform information.
 type PlatformConfigController struct {
 	V1alpha1Platform v1alpha1runtime.Platform
 }
@@ -38,10 +43,16 @@ func (ctrl *PlatformConfigController) Outputs() []controller.Output {
 			Type: network.HostnameSpecType,
 			Kind: controller.OutputShared,
 		},
+		{
+			Type: network.AddressStatusType,
+			Kind: controller.OutputShared,
+		},
 	}
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	select {
 	case <-ctx.Done():
@@ -60,19 +71,77 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 		return fmt.Errorf("error getting hostname: %w", err)
 	}
 
-	if len(hostname) == 0 {
-		return nil
+	if len(hostname) > 0 {
+		id := network.LayeredID(network.ConfigPlatform, network.HostnameID)
+
+		if err = r.Modify(
+			ctx,
+			network.NewHostnameSpec(network.ConfigNamespaceName, id),
+			func(r resource.Resource) error {
+				r.(*network.HostnameSpec).TypedSpec().ConfigLayer = network.ConfigPlatform
+
+				return r.(*network.HostnameSpec).TypedSpec().ParseFQDN(string(hostname))
+			},
+		); err != nil {
+			return fmt.Errorf("error modifying hostname resource: %w", err)
+		}
 	}
 
-	id := network.LayeredID(network.ConfigPlatform, network.HostnameID)
+	externalIPs, err := ctrl.V1alpha1Platform.ExternalIPs(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting external IPs: %w", err)
+	}
 
-	return r.Modify(
-		ctx,
-		network.NewHostnameSpec(network.ConfigNamespaceName, id),
-		func(r resource.Resource) error {
-			r.(*network.HostnameSpec).TypedSpec().ConfigLayer = network.ConfigPlatform
+	touchedIDs := make(map[resource.ID]struct{})
 
-			return r.(*network.HostnameSpec).TypedSpec().ParseFQDN(string(hostname))
-		},
-	)
+	for _, addr := range externalIPs {
+		addr := addr
+
+		ipAddr, _ := netaddr.FromStdIP(addr)
+		ipPrefix := netaddr.IPPrefixFrom(ipAddr, ipAddr.BitLen())
+		id := network.AddressID(externalLink, ipPrefix)
+
+		if err = r.Modify(ctx, network.NewAddressStatus(network.NamespaceName, id), func(r resource.Resource) error {
+			status := r.(*network.AddressStatus).TypedSpec()
+
+			status.Address = ipPrefix
+			status.LinkName = externalLink
+
+			if ipAddr.Is4() {
+				status.Family = nethelpers.FamilyInet4
+			} else {
+				status.Family = nethelpers.FamilyInet6
+			}
+
+			status.Scope = nethelpers.ScopeGlobal
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error modifying resource: %w", err)
+		}
+
+		touchedIDs[id] = struct{}{}
+	}
+
+	// list resources for cleanup
+	list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	if err != nil {
+		return fmt.Errorf("error listing resources: %w", err)
+	}
+
+	for _, res := range list.Items {
+		if res.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
+		if _, ok := touchedIDs[res.Metadata().ID()]; ok {
+			continue
+		}
+
+		if err = r.Destroy(ctx, res.Metadata()); err != nil {
+			return fmt.Errorf("error deleting address status %s: %w", res, err)
+		}
+	}
+
+	return nil
 }

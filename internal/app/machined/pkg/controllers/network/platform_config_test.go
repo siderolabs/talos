@@ -26,6 +26,7 @@ import (
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
@@ -109,6 +110,38 @@ func (suite *PlatformConfigSuite) assertNoHostname(id string) error {
 	return nil
 }
 
+func (suite *PlatformConfigSuite) assertAddresses(requiredIDs []string, check func(*network.AddressStatus) error) error {
+	missingIDs := make(map[string]struct{}, len(requiredIDs))
+
+	for _, id := range requiredIDs {
+		missingIDs[id] = struct{}{}
+	}
+
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	if err != nil {
+		return err
+	}
+
+	for _, res := range resources.Items {
+		_, required := missingIDs[res.Metadata().ID()]
+		if !required {
+			continue
+		}
+
+		delete(missingIDs, res.Metadata().ID())
+
+		if err = check(res.(*network.AddressStatus)); err != nil {
+			return retry.ExpectedError(err)
+		}
+	}
+
+	if len(missingIDs) > 0 {
+		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+	}
+
+	return nil
+}
+
 func (suite *PlatformConfigSuite) TestNoPlatform() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.PlatformConfigController{}))
 
@@ -162,6 +195,33 @@ func (suite *PlatformConfigSuite) TestPlatformMockNoDomain() {
 		}))
 }
 
+func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.PlatformConfigController{
+		V1alpha1Platform: &platformMock{ipAddresses: []net.IP{net.ParseIP("10.3.4.5"), net.ParseIP("2001:470:6d:30e:96f4:4219:5733:b860")}},
+	}))
+
+	suite.startRuntime()
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertAddresses([]string{
+				"external/10.3.4.5/32",
+				"external/2001:470:6d:30e:96f4:4219:5733:b860/128",
+			}, func(r *network.AddressStatus) error {
+				suite.Assert().Equal("external", r.TypedSpec().LinkName)
+				suite.Assert().Equal(nethelpers.ScopeGlobal, r.TypedSpec().Scope)
+
+				if r.Metadata().ID() == "external/10.3.4.5/32" {
+					suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				} else {
+					suite.Assert().Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
+				}
+
+				return nil
+			})
+		}))
+}
+
 func (suite *PlatformConfigSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
@@ -175,7 +235,8 @@ func TestPlatformConfigSuite(t *testing.T) {
 }
 
 type platformMock struct {
-	hostname []byte
+	hostname    []byte
+	ipAddresses []net.IP
 }
 
 func (mock *platformMock) Name() string {
@@ -195,7 +256,7 @@ func (mock *platformMock) Mode() v1alpha1runtime.Mode {
 }
 
 func (mock *platformMock) ExternalIPs(context.Context) ([]net.IP, error) {
-	return nil, nil
+	return mock.ipAddresses, nil
 }
 
 func (mock *platformMock) KernelArgs() procfs.Parameters {
