@@ -30,6 +30,8 @@ type ConfigSpec struct {
 	Enabled      bool   `yaml:"enabled"`
 	ClusterID    string `yaml:"clusterId"`
 	SharedSecret string `yaml:"sharedSecret"`
+	// Force routing via KubeSpan even if the peer connection is not up.
+	ForceRouting bool `yaml:"forceRouting"`
 }
 
 // NewConfig initializes a Config resource.

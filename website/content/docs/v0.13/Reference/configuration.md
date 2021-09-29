@@ -5262,6 +5262,21 @@ Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan
 </div>
 
 <hr />
+<div class="dd">
+
+<code>allowDownPeerBypass</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Skip sending traffic via KubeSpan if the peer connection state is not up.
+This provides configurable choice between connectivity and security: either traffic is always
+forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
+to the peer if Wireguard connection can't be established.
+
+</div>
+
+<hr />
 
 
 

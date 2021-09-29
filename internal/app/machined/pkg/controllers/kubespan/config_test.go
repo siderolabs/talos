@@ -54,6 +54,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				suite.Assert().True(spec.Enabled)
 				suite.Assert().Equal("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", spec.ClusterID)
 				suite.Assert().Equal("I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=", spec.SharedSecret)
+				suite.Assert().True(spec.ForceRouting)
 
 				return nil
 			},

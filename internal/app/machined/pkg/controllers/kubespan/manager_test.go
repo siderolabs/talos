@@ -108,6 +108,7 @@ func (mock *mockNftablesManager) IPSet() *netaddr.IPSet {
 	return mock.ipSet
 }
 
+//nolint:gocyclo
 func (suite *ManagerSuite) TestReconcile() {
 	mockWireguard := &mockWireguardClient{}
 	mockNfTables := &mockNftablesManager{}
@@ -130,6 +131,7 @@ func (suite *ManagerSuite) TestReconcile() {
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().SharedSecret = "TPbGXrYlvuXgAl8dERpwjlA5tnEMoihPDPxlovcLtVg="
+	cfg.TypedSpec().ForceRouting = true
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")
@@ -310,6 +312,28 @@ func (suite *ManagerSuite) TestReconcile() {
 		},
 	))
 
+	// update config and disable force routing, nothing should be routed
+	oldVersion := cfg.Metadata().Version()
+	cfg.TypedSpec().ForceRouting = false
+	cfg.Metadata().BumpVersion()
+	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			ipSet := mockNfTables.IPSet()
+
+			if ipSet == nil {
+				return retry.ExpectedErrorf("ipset is nil")
+			}
+
+			if len(ipSet.Prefixes()) != 0 {
+				return retry.ExpectedErrorf("expected empty ipset: %v", ipSet.Ranges())
+			}
+
+			return nil
+		},
+	))
+
 	// report up status via wireguard mock
 	mockWireguard.update(&wgtypes.Device{
 		Peers: []wgtypes.Peer{
@@ -345,8 +369,28 @@ func (suite *ManagerSuite) TestReconcile() {
 		))
 	}
 
+	// as the peers are now up, all traffic should be routed via KubeSpan
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			ipSet := mockNfTables.IPSet()
+
+			if ipSet == nil {
+				return retry.ExpectedErrorf("ipset is nil")
+			}
+
+			ranges := fmt.Sprintf("%v", ipSet.Ranges())
+			expected := "[10.244.1.0-10.244.2.255]"
+
+			if ranges != expected {
+				return retry.ExpectedErrorf("ranges %s != expected %s", ranges, expected)
+			}
+
+			return nil
+		},
+	))
+
 	// update config and disable wireguard, everything should be cleaned up
-	oldVersion := cfg.Metadata().Version()
+	oldVersion = cfg.Metadata().Version()
 	cfg.TypedSpec().Enabled = false
 	cfg.Metadata().BumpVersion()
 	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))

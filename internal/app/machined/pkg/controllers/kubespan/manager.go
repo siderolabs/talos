@@ -339,9 +339,16 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		// build full allowedIPs set
 		var allowedIPsBuilder netaddr.IPSetBuilder
 
-		for _, peerSpec := range peerSpecs {
-			for _, prefix := range peerSpec.AllowedIPs {
-				allowedIPsBuilder.AddPrefix(prefix)
+		for pubKey, peerSpec := range peerSpecs {
+			// list of statuses and specs should be in sync at this point
+			peerStatus := peerStatuses[pubKey]
+
+			// add allowedIPs to the nftables set if either routing is forced (for any peer state)
+			// or if the peer connection state is up.
+			if cfgSpec.ForceRouting || peerStatus.State == kubespan.PeerStateUp {
+				for _, prefix := range peerSpec.AllowedIPs {
+					allowedIPsBuilder.AddPrefix(prefix)
+				}
 			}
 		}
 

@@ -217,6 +217,7 @@ type Route interface {
 // KubeSpan configures KubeSpan feature.
 type KubeSpan interface {
 	Enabled() bool
+	ForceRouting() bool
 }
 
 // Time defines the requirements for a config that pertains to time related
