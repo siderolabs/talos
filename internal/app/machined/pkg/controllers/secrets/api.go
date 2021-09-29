@@ -76,6 +76,11 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-r.EventCh():
 		}
 
+		// reset inputs back to what they were initially
+		if err := r.UpdateInputs(ctrl.Inputs()); err != nil {
+			return err
+		}
+
 		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -119,11 +124,6 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		if err = ctrl.teardownAll(ctx, r); err != nil {
-			return err
-		}
-
-		// reset inputs back to what they were initially
-		if err = r.UpdateInputs(ctrl.Inputs()); err != nil {
 			return err
 		}
 	}
