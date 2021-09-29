@@ -904,6 +904,11 @@ func (k NetworkKubeSpan) Enabled() bool {
 	return k.KubeSpanEnabled
 }
 
+// ForceRouting implements KubeSpan interface.
+func (k NetworkKubeSpan) ForceRouting() bool {
+	return !k.KubeSpanSkipDownPeers
+}
+
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
 	return t.TimeDisabled

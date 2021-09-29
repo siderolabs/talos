@@ -1122,6 +1122,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --version string                      the desired machine config version to generate (default "v1alpha1")
       --with-docs                           renders all machine configs adding the documentation for each field (default true)
       --with-examples                       renders all machine configs with the commented examples (default true)
+      --with-kubespan                       enable KubeSpan feature
 ```
 
 ### Options inherited from parent commands

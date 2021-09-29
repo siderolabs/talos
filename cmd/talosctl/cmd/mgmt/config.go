@@ -45,6 +45,7 @@ var genConfigCmdFlags struct {
 	persistConfig           bool
 	withExamples            bool
 	withDocs                bool
+	withKubeSpan            bool
 }
 
 // genConfigCmd represents the `gen config` command.
@@ -208,6 +209,15 @@ func writeV1Alpha1Config(args []string) error {
 		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 	}
 
+	if genConfigCmdFlags.withKubeSpan {
+		genOptions = append(genOptions,
+			generate.WithNetworkOptions(
+				v1alpha1.WithKubeSpan(),
+			),
+			generate.WithClusterDiscovery(),
+		)
+	}
+
 	genOptions = append(genOptions,
 		generate.WithInstallDisk(genConfigCmdFlags.installDisk),
 		generate.WithInstallImage(genConfigCmdFlags.installImage),
@@ -273,6 +283,7 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
+	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
 
 	gen.Cmd.AddCommand(genConfigCmd)
 }

@@ -2010,12 +2010,17 @@ func init() {
 			FieldName: "kubespan",
 		},
 	}
-	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 1)
+	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 2)
 	NetworkKubeSpanDoc.Fields[0].Name = "enabled"
 	NetworkKubeSpanDoc.Fields[0].Type = "bool"
 	NetworkKubeSpanDoc.Fields[0].Note = ""
 	NetworkKubeSpanDoc.Fields[0].Description = "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled."
 	NetworkKubeSpanDoc.Fields[0].Comments[encoder.LineComment] = "Enable the KubeSpan feature."
+	NetworkKubeSpanDoc.Fields[1].Name = "skipDownPeers"
+	NetworkKubeSpanDoc.Fields[1].Type = "bool"
+	NetworkKubeSpanDoc.Fields[1].Note = ""
+	NetworkKubeSpanDoc.Fields[1].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nif Wireguard connection can't be established."
+	NetworkKubeSpanDoc.Fields[1].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
 
 	ClusterDiscoveryConfigDoc.Type = "ClusterDiscoveryConfig"
 	ClusterDiscoveryConfigDoc.Comments[encoder.LineComment] = "ClusterDiscoveryConfig struct configures cluster membership discovery."

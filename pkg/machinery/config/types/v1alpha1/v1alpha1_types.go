@@ -1933,6 +1933,12 @@ type NetworkKubeSpan struct {
 	//   Enable the KubeSpan feature.
 	//   Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
 	KubeSpanEnabled bool `yaml:"enabled"`
+	// description: |
+	//   Skip sending traffic via KubeSpan if the peer connection state is not up.
+	//   This provides configurable choice between connectivity and security: either traffic is always
+	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
+	//   if Wireguard connection can't be established.
+	KubeSpanSkipDownPeers bool `yaml:"skipDownPeers,omitempty"`
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.
