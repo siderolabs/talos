@@ -25,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -55,6 +56,11 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
 			ID:        pointer.ToString(cluster.LocalIdentity),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: kubespan.NamespaceName,
+			Type:      kubespan.EndpointType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -94,6 +100,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 	var (
 		prevLocalData      *pb.Affiliate
 		prevLocalEndpoints []*pb.Endpoint
+		prevOtherEndpoints []discoveryclient.Endpoint
 	)
 
 	for {
@@ -134,6 +141,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 				prevLocalData = nil
 				prevLocalEndpoints = nil
+				prevOtherEndpoints = nil
 			}
 
 			continue
@@ -174,6 +182,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 				prevLocalData = nil
 				prevLocalEndpoints = nil
+				prevOtherEndpoints = nil
 			}
 		}
 
@@ -187,6 +196,11 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		}
 
 		affiliateSpec := affiliate.(*cluster.Affiliate).TypedSpec()
+
+		otherEndpointsList, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.EndpointType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing endpoints: %w", err)
+		}
 
 		if client == nil {
 			var cipher cipher.Block
@@ -220,19 +234,21 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 		localData := pbAffiliate(affiliateSpec)
 		localEndpoints := pbEndpoints(affiliateSpec)
+		otherEndpoints := pbOtherEndpoints(otherEndpointsList)
 
 		// don't send updates on localData if it hasn't changed: this introduces positive feedback loop,
 		// as the watch loop will notify on self update
-		if !proto.Equal(localData, prevLocalData) || !equalEndpoints(localEndpoints, prevLocalEndpoints) {
+		if !proto.Equal(localData, prevLocalData) || !equalEndpoints(localEndpoints, prevLocalEndpoints) || !equalOtherEndpoints(otherEndpoints, prevOtherEndpoints) {
 			if err = client.SetLocalData(&discoveryclient.Affiliate{
 				Affiliate: localData,
 				Endpoints: localEndpoints,
-			}, nil); err != nil {
+			}, otherEndpoints); err != nil {
 				return fmt.Errorf("error setting local affiliate data: %w", err) //nolint:govet
 			}
 
 			prevLocalData = localData
 			prevLocalEndpoints = localEndpoints
+			prevOtherEndpoints = otherEndpoints
 		}
 
 		touchedIDs := make(map[resource.ID]struct{})
@@ -331,7 +347,34 @@ func pbEndpoints(affiliate *cluster.AffiliateSpec) []*pb.Endpoint {
 	return result
 }
 
-func equalEndpoints(a []*pb.Endpoint, b []*pb.Endpoint) bool {
+func pbOtherEndpoints(otherEndpointsList resource.List) []discoveryclient.Endpoint {
+	if len(otherEndpointsList.Items) == 0 {
+		return nil
+	}
+
+	result := make([]discoveryclient.Endpoint, 0, len(otherEndpointsList.Items))
+
+	for _, res := range otherEndpointsList.Items {
+		endpoint := res.(*kubespan.Endpoint).TypedSpec()
+
+		encodedEndpoint := &pb.Endpoint{
+			Port: uint32(endpoint.Endpoint.Port()),
+		}
+
+		encodedEndpoint.Ip, _ = endpoint.Endpoint.IP().MarshalBinary() //nolint:errcheck // doesn't fail
+
+		result = append(result, discoveryclient.Endpoint{
+			AffiliateID: endpoint.AffiliateID,
+			Endpoints: []*pb.Endpoint{
+				encodedEndpoint,
+			},
+		})
+	}
+
+	return result
+}
+
+func equalEndpoints(a, b []*pb.Endpoint) bool {
 	if a == nil || b == nil {
 		return a == nil && b == nil
 	}
@@ -342,6 +385,28 @@ func equalEndpoints(a []*pb.Endpoint, b []*pb.Endpoint) bool {
 
 	for i := range a {
 		if !proto.Equal(a[i], b[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func equalOtherEndpoints(a, b []discoveryclient.Endpoint) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i].AffiliateID != b[i].AffiliateID {
+			return false
+		}
+
+		if !equalEndpoints(a[i].Endpoints, b[i].Endpoints) {
 			return false
 		}
 	}

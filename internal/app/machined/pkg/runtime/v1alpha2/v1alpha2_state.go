@@ -95,6 +95,7 @@ func NewState() (*State, error) {
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
 		&kubespan.Config{},
+		&kubespan.Endpoint{},
 		&kubespan.Identity{},
 		&kubespan.PeerSpec{},
 		&kubespan.PeerStatus{},

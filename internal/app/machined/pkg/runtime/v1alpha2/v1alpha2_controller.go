@@ -102,6 +102,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&k8s.NodenameController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&kubespan.ConfigController{},
+		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},
 		&kubespan.ManagerController{},
 		&kubespan.PeerSpecController{},

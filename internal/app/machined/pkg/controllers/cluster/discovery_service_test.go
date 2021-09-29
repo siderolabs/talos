@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/kubespan"
 )
 
 type DiscoveryServiceSuite struct {
@@ -116,7 +117,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 		Cipher:      cipher,
 		Endpoint:    address,
 		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
-		AffiliateID: "fake",
+		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
 		TTL:         5 * time.Minute,
 		Insecure:    true,
 	})
@@ -219,6 +220,31 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			suite.Assert().Equal("1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=", spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
 			suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
+
+			return nil
+		}),
+	))
+
+	// make controller inject additional endpoint via kubespan.Endpoint
+	endpoint := kubespan.NewEndpoint(kubespan.NamespaceName, "1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=")
+	*endpoint.TypedSpec() = kubespan.EndpointSpec{
+		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		Endpoint:    netaddr.MustParseIPPort("1.1.1.1:343"),
+	}
+	suite.Require().NoError(suite.state.Create(suite.ctx, endpoint))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
+			spec := r.(*cluster.Affiliate).TypedSpec()
+
+			if len(spec.KubeSpan.Endpoints) != 2 {
+				return retry.ExpectedErrorf("waiting for 2 endpoints, got %d", len(spec.KubeSpan.Endpoints))
+			}
+
+			suite.Assert().Equal([]netaddr.IPPort{
+				netaddr.MustParseIPPort("192.168.3.5:51820"),
+				netaddr.MustParseIPPort("1.1.1.1:343"),
+			}, spec.KubeSpan.Endpoints)
 
 			return nil
 		}),

@@ -26,6 +26,7 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, resource := range []resource.Resource{
 		&kubespan.Config{},
+		&kubespan.Endpoint{},
 		&kubespan.Identity{},
 		&kubespan.PeerSpec{},
 		&kubespan.PeerStatus{},
