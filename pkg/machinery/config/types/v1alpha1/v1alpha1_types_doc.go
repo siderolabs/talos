@@ -16,6 +16,7 @@ var (
 	ClusterConfigDoc               encoder.Doc
 	ExtraMountDoc                  encoder.Doc
 	KubeletConfigDoc               encoder.Doc
+	KubeletNodeIPConfigDoc         encoder.Doc
 	NetworkConfigDoc               encoder.Doc
 	InstallConfigDoc               encoder.Doc
 	InstallDiskSelectorDoc         encoder.Doc
@@ -449,7 +450,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 5)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 6)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -491,6 +492,31 @@ func init() {
 		"false",
 		"no",
 	}
+	KubeletConfigDoc.Fields[5].Name = "nodeIP"
+	KubeletConfigDoc.Fields[5].Type = "KubeletNodeIPConfig"
+	KubeletConfigDoc.Fields[5].Note = ""
+	KubeletConfigDoc.Fields[5].Description = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
+	KubeletConfigDoc.Fields[5].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
+
+	KubeletConfigDoc.Fields[5].AddExample("", kubeletNodeIPExample)
+
+	KubeletNodeIPConfigDoc.Type = "KubeletNodeIPConfig"
+	KubeletNodeIPConfigDoc.Comments[encoder.LineComment] = "KubeletNodeIPConfig represents the kubelet node IP configuration."
+	KubeletNodeIPConfigDoc.Description = "KubeletNodeIPConfig represents the kubelet node IP configuration."
+
+	KubeletNodeIPConfigDoc.AddExample("", kubeletNodeIPExample)
+	KubeletNodeIPConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "KubeletConfig",
+			FieldName: "nodeIP",
+		},
+	}
+	KubeletNodeIPConfigDoc.Fields = make([]encoder.Doc, 1)
+	KubeletNodeIPConfigDoc.Fields[0].Name = "validSubnets"
+	KubeletNodeIPConfigDoc.Fields[0].Type = "[]string"
+	KubeletNodeIPConfigDoc.Fields[0].Note = ""
+	KubeletNodeIPConfigDoc.Fields[0].Description = "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIf not specified, kubelet configures node IP automatically."
+	KubeletNodeIPConfigDoc.Fields[0].Comments[encoder.LineComment] = "The `validSubnets` field configures the networks to pick kubelet node IP from."
 
 	NetworkConfigDoc.Type = "NetworkConfig"
 	NetworkConfigDoc.Comments[encoder.LineComment] = "NetworkConfig represents the machine's networking config values."
@@ -2124,6 +2150,10 @@ func (_ KubeletConfig) Doc() *encoder.Doc {
 	return &KubeletConfigDoc
 }
 
+func (_ KubeletNodeIPConfig) Doc() *encoder.Doc {
+	return &KubeletNodeIPConfigDoc
+}
+
 func (_ NetworkConfig) Doc() *encoder.Doc {
 	return &NetworkConfigDoc
 }
@@ -2331,6 +2361,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&ClusterConfigDoc,
 			&ExtraMountDoc,
 			&KubeletConfigDoc,
+			&KubeletNodeIPConfigDoc,
 			&NetworkConfigDoc,
 			&InstallConfigDoc,
 			&InstallDiskSelectorDoc,
