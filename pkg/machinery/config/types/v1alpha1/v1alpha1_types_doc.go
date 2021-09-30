@@ -8,6 +8,7 @@ package v1alpha1
 
 import (
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var (
@@ -2126,8 +2127,10 @@ func init() {
 	RegistryServiceConfigDoc.Fields[1].Name = "endpoint"
 	RegistryServiceConfigDoc.Fields[1].Type = "string"
 	RegistryServiceConfigDoc.Fields[1].Note = ""
-	RegistryServiceConfigDoc.Fields[1].Description = "External service endpoint.\nexamples:\n  - value: 'constants.DefaultDiscoveryServiceEndpoint'"
+	RegistryServiceConfigDoc.Fields[1].Description = "External service endpoint."
 	RegistryServiceConfigDoc.Fields[1].Comments[encoder.LineComment] = "External service endpoint."
+
+	RegistryServiceConfigDoc.Fields[1].AddExample("", constants.DefaultDiscoveryServiceEndpoint)
 }
 
 func (_ Config) Doc() *encoder.Doc {

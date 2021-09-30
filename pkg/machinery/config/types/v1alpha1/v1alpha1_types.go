@@ -1999,7 +1999,7 @@ type RegistryServiceConfig struct {
 	RegistryDisabled bool `yaml:"disabled,omitempty"`
 	// description: |
 	//   External service endpoint.
-	//   examples:
-	//     - value: 'constants.DefaultDiscoveryServiceEndpoint'
+	// examples:
+	//   - value: constants.DefaultDiscoveryServiceEndpoint
 	RegistryEndpoint string `yaml:"endpoint,omitempty"`
 }

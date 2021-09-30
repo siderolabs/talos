@@ -5500,8 +5500,16 @@ Disable external service discovery registry.
 <div class="dt">
 
 External service endpoint.
-examples:
-  - value: 'constants.DefaultDiscoveryServiceEndpoint'
+
+
+
+Examples:
+
+
+``` yaml
+endpoint: https://discovery.talos.dev/
+```
+
 
 </div>
 

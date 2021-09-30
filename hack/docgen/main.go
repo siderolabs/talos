@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -388,8 +389,8 @@ func render(doc *Doc, dest string) {
 	}
 }
 
-func main() {
-	abs, err := in(os.Args[1])
+func processFile(inputFile, outputFile, typeName string) {
+	abs, err := in(inputFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -467,19 +468,29 @@ func main() {
 		}
 	}
 
-	if len(os.Args) != 4 {
-		log.Fatalf("expected 3 args, got %d", len(os.Args)-1)
-	}
-
 	if err == nil {
 		doc.Package = node.Name.Name
-		doc.Name = os.Args[3]
+		doc.Name = typeName
 
 		if node.Doc != nil {
 			doc.Header = escape(node.Doc.Text())
 		}
 	}
 
-	doc.File = os.Args[2]
-	render(doc, os.Args[2])
+	doc.File = outputFile
+	render(doc, outputFile)
+}
+
+func main() {
+	flag.Parse()
+
+	if flag.NArg() != 3 {
+		log.Fatalf("expected 3 args, got %d", flag.NArg())
+	}
+
+	inputFile := flag.Arg(0)
+	outputFile := flag.Arg(1)
+	typeName := flag.Arg(2)
+
+	processFile(inputFile, outputFile, typeName)
 }
