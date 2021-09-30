@@ -18,7 +18,7 @@ preface = """\
     [notes.clouds]
         title = "Hetzner, Scaleway, Upcloud and Vultr"
         description = """\
-Talos now natively supports three new cloud platforms:
+Talos now natively supports four new cloud platforms:
 
 * [Hetzner](https://www.hetzner.com/), including VIP support
 * [Scaleway](https://www.scaleway.com/en/)
@@ -68,10 +68,27 @@ cluster:
 The address advertised by etcd can now be controlled with new machine configuration option `machine.etcd.subnet`.
 """
 
+    [notes.kubelet]
+        title = "kubelet Node IP"
+        description = """\
+The addresses picked by kubelet can now be controlled with new machine configuration option `machine.kubelet.nodeIP.validSubnets`.
+"""
+
     [notes.windows]
         title = "Windows Suport"
         description = """\
 CLI tool talosctl is now built for Windows and published as part of the release.
+"""
+
+    [notes.components]
+        title = "Component Updates"
+        description = """\
+Linux: 5.10.69
+Kubernetes: 1.22.2
+containerd: 1.5.6
+runc: 1.0.2
+
+Talos is built with Go 1.17.1.
 """
 
 [make_deps]

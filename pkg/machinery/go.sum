@@ -156,8 +156,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/talos-systems/crypto v0.3.2 h1:I+MC9ql6K29EMlbPzdSeHZInSRWdze1FX1qGGrlom8Q=
 github.com/talos-systems/crypto v0.3.2/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
-github.com/talos-systems/go-blockdevice v0.2.3 h1:THqjUboZfTVth3R9+75vtBXYWollr5bVg3wLGpB4C6I=
-github.com/talos-systems/go-blockdevice v0.2.3/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
+github.com/talos-systems/go-blockdevice v0.2.4 h1:/E5I95byCxfdmQIiBEyWgdUo+6vPBbbOJQIF9+yeysU=
+github.com/talos-systems/go-blockdevice v0.2.4/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=
 github.com/talos-systems/go-debug v0.2.1 h1:VSN8P1zXWeHWgUBZn4cVT3keBcecCAJBG9Up+F6N2KM=
 github.com/talos-systems/go-debug v0.2.1/go.mod h1:pR4NjsZQNFqGx3n4qkD4MIj1F2CxyIF8DCiO1+05JO0=
