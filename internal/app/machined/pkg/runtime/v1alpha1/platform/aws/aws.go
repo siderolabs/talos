@@ -195,6 +195,11 @@ func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// nb: we "accept" NotFound because AWS metadata endpoints will return a 404
+		// when there is no public IP attached to the instance.
+		if resp.StatusCode == http.StatusNotFound {
+			return addrs, nil
+		}
 		return addrs, fmt.Errorf("failed to retrieve external addresses for instance")
 	}
 
