@@ -91,10 +91,15 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 							port := u.Port()
 
 							if port == "" {
-								port = "443" // use default https port
+								if u.Scheme == "http" {
+									port = "80"
+								} else {
+									port = "443" // use default https port for everything else
+								}
 							}
 
 							res.(*cluster.Config).TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
+							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
 
 							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
 							if err != nil {
@@ -104,6 +109,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 							res.(*cluster.Config).TypedSpec().ServiceClusterID = c.Cluster().ID()
 						} else {
 							res.(*cluster.Config).TypedSpec().ServiceEndpoint = ""
+							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = false
 							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey = nil
 							res.(*cluster.Config).TypedSpec().ServiceClusterID = ""
 						}

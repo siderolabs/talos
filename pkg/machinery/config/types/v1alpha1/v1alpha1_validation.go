@@ -16,6 +16,7 @@ import (
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/hashicorp/go-multierror"
+	"github.com/talos-systems/go-debug"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -329,8 +330,11 @@ func (c ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
 		} else {
-			if url.Scheme != "https" {
-				result = multierror.Append(result, fmt.Errorf("cluster discovery service should use TLS"))
+			// allow insecure discovery service for easier local development
+			if !debug.Enabled {
+				if url.Scheme != "https" {
+					result = multierror.Append(result, fmt.Errorf("cluster discovery service should use TLS"))
+				}
 			}
 
 			if url.Path != "" && url.Path != "/" {

@@ -21,6 +21,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.2
 	github.com/talos-systems/go-blockdevice v0.2.3
+	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.0
 	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
 	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0

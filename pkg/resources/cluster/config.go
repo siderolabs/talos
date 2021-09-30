@@ -31,6 +31,7 @@ type ConfigSpec struct {
 	RegistryKubernetesEnabled bool   `yaml:"registryKubernetesEnabled"`
 	RegistryServiceEnabled    bool   `yaml:"registryServiceEnabled"`
 	ServiceEndpoint           string `yaml:"serviceEndpoint"`
+	ServiceEndpointInsecure   bool   `yaml:"serviceEndpointInsecure,omitempty"`
 	ServiceEncryptionKey      []byte `yaml:"serviceEncryptionKey"`
 	ServiceClusterID          string `yaml:"serviceClusterID"`
 }

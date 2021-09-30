@@ -33,8 +33,6 @@ const defaultDiscoveryTTL = 30 * time.Minute
 
 // DiscoveryServiceController pushes Affiliate resource to the Kubernetes registry.
 type DiscoveryServiceController struct {
-	Insecure bool // only for testing
-
 	localAffiliateID resource.ID
 }
 
@@ -216,7 +214,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				ClusterID:     discoveryConfig.(*cluster.Config).TypedSpec().ServiceClusterID,
 				AffiliateID:   localAffiliateID,
 				TTL:           defaultDiscoveryTTL,
-				Insecure:      ctrl.Insecure,
+				Insecure:      discoveryConfig.(*cluster.Config).TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
 			})
 			if err != nil {

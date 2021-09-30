@@ -74,9 +74,7 @@ func setupServer(t *testing.T) (address string) {
 func (suite *DiscoveryServiceSuite) TestReconcile() {
 	suite.startRuntime()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.DiscoveryServiceController{
-		Insecure: true,
-	}))
+	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.DiscoveryServiceController{}))
 
 	address := setupServer(suite.T())
 
@@ -85,6 +83,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	discoveryConfig.TypedSpec().DiscoveryEnabled = true
 	discoveryConfig.TypedSpec().RegistryServiceEnabled = true
 	discoveryConfig.TypedSpec().ServiceEndpoint = address
+	discoveryConfig.TypedSpec().ServiceEndpointInsecure = true
 	discoveryConfig.TypedSpec().ServiceClusterID = "fake"
 	discoveryConfig.TypedSpec().ServiceEncryptionKey = bytes.Repeat([]byte{1}, 32)
 	suite.Require().NoError(suite.state.Create(suite.ctx, discoveryConfig))
