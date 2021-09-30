@@ -462,6 +462,13 @@ metadata:
 			},
 		},
 	}
+
+	kubeletNodeIPExample = KubeletNodeIPConfig{
+		KubeletNodeIPSubnets: []string{
+			"10.0.0.0/8",
+			"fdc7::/16",
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -843,6 +850,21 @@ type KubeletConfig struct {
 	//     - false
 	//     - no
 	KubeletRegisterWithFQDN bool `yaml:"registerWithFQDN,omitempty"`
+	//   description: |
+	//     The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
+	//     This is used when a node has multiple addresses to choose from.
+	//   examples:
+	//     - value: kubeletNodeIPExample
+	KubeletNodeIP KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
+}
+
+// KubeletNodeIPConfig represents the kubelet node IP configuration.
+type KubeletNodeIPConfig struct {
+	//  description: |
+	//    The `subnets` field configures the networks to pick kubelet node IP from.
+	//    For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.
+	//    If not specified, kubelet configures node IP automatically.
+	KubeletNodeIPSubnets []string `yaml:"subnets,omitempty"`
 }
 
 // NetworkConfig represents the machine's networking config values.

@@ -236,6 +236,12 @@ type Kubelet interface {
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
 	RegisterWithFQDN() bool
+	NodeIP() KubeletNodeIP
+}
+
+// KubeletNodeIP defines the way node IPs are selected for the kubelet.
+type KubeletNodeIP interface {
+	Subnets() []string
 }
 
 // Registries defines the configuration for image fetching.

@@ -158,6 +158,12 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
+	if c.MachineConfig.MachineKubelet != nil {
+		warn, err := c.MachineConfig.MachineKubelet.Validate()
+		warnings = append(warnings, warn...)
+		result = multierror.Append(result, err)
+	}
+
 	for _, label := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
 		encryptionConfig := c.MachineConfig.SystemDiskEncryption().Get(label)
 		if encryptionConfig != nil {
@@ -668,6 +674,19 @@ func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) ([]string,
 			if ip := net.ParseIP(route.Source()); ip == nil {
 				result = multierror.Append(result, fmt.Errorf("[%s] %q: %w", "networking.os.device.route["+strconv.Itoa(idx)+"].source", route.Source(), ErrInvalidAddress))
 			}
+		}
+	}
+
+	return nil, result.ErrorOrNil()
+}
+
+// Validate kubelet configuration.
+func (k *KubeletConfig) Validate() ([]string, error) {
+	var result *multierror.Error
+
+	for _, cidr := range k.KubeletNodeIP.KubeletNodeIPSubnets {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
 		}
 	}
 
