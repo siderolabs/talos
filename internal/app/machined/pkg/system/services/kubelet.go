@@ -10,9 +10,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	stdnet "net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/net"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -292,7 +295,7 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		return nil, err
 	}
 
-	denyListArgs := argsbuilder.Args{
+	args := argsbuilder.Args{
 		"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 		"kubeconfig":                 constants.KubeletKubeconfig,
 		"container-runtime":          "remote",
@@ -305,19 +308,43 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"hostname-override": nodename,
 	}
 
-	// Disallow --cloud-provider flag in extraArgs only if external cloud provider is enabled via our config
-	// for an easier transition from previous versions where it could be configured via extraArgs + extraManifests.
 	if r.Config().Cluster().ExternalCloudProvider().Enabled() {
-		denyListArgs["cloud-provider"] = "external"
+		args["cloud-provider"] = "external"
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
-	if err = denyListArgs.Merge(extraArgs, argsbuilder.WithDenyList(denyListArgs)); err != nil {
+	nodeIPs, err := pickNodeIPs(r.Config().Machine().Kubelet().NodeIP().ValidSubnets())
+	if err != nil {
 		return nil, err
 	}
 
-	return denyListArgs.Args(), nil
+	if len(nodeIPs) > 0 {
+		nodeIPsString := make([]string, len(nodeIPs))
+
+		for i := range nodeIPs {
+			nodeIPsString[i] = nodeIPs[i].String()
+		}
+
+		args["node-ip"] = strings.Join(nodeIPsString, ",")
+	}
+
+	if err = args.Merge(extraArgs, argsbuilder.WithMergePolicies(
+		argsbuilder.MergePolicies{
+			"bootstrap-kubeconfig":       argsbuilder.MergeDenied,
+			"kubeconfig":                 argsbuilder.MergeDenied,
+			"container-runtime":          argsbuilder.MergeDenied,
+			"container-runtime-endpoint": argsbuilder.MergeDenied,
+			"config":                     argsbuilder.MergeDenied,
+			"cert-dir":                   argsbuilder.MergeDenied,
+			"cni-conf-dir":               argsbuilder.MergeDenied,
+			"node-ip":                    argsbuilder.MergeAdditive,
+		},
+	)); err != nil {
+		return nil, err
+	}
+
+	return args.Args(), nil
 }
 
 func writeKubeletConfig(r runtime.Runtime) error {
@@ -357,4 +384,32 @@ func writeKubeletConfig(r runtime.Runtime) error {
 	}
 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
+	if len(cidrs) == 0 {
+		return nil, nil
+	}
+
+	ips, err := net.IPAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover interface IP addresses: %w", err)
+	}
+
+	var result []stdnet.IP
+
+	for _, subnet := range cidrs {
+		network, err := net.ParseCIDR(subnet)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse subnet: %w", err)
+		}
+
+		for _, ip := range ips {
+			if network.Contains(ip) {
+				result = append(result, ip)
+			}
+		}
+	}
+
+	return result, nil
 }

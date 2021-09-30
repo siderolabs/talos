@@ -333,6 +333,16 @@ func (k *KubeletConfig) RegisterWithFQDN() bool {
 	return k.KubeletRegisterWithFQDN
 }
 
+// NodeIP implements the config.Provider interface.
+func (k *KubeletConfig) NodeIP() config.KubeletNodeIP {
+	return k.KubeletNodeIP
+}
+
+// ValidSubnets implements the config.Provider interface.
+func (k KubeletNodeIPConfig) ValidSubnets() []string {
+	return k.KubeletNodeIPValidSubnets
+}
+
 // Mirrors implements the Registries interface.
 func (r *RegistriesConfig) Mirrors() map[string]config.RegistryMirrorConfig {
 	mirrors := make(map[string]config.RegistryMirrorConfig, len(r.RegistryMirrors))

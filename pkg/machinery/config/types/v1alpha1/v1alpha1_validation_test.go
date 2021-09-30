@@ -835,6 +835,54 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* \"10.0.0.0\" is not a valid subnet\n\n",
 		},
+		{
+			name: "GoodKubeletSubnet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
+							KubeletNodeIPValidSubnets: []string{
+								"10.0.0.0/8",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "BadKubeletSubnet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
+							KubeletNodeIPValidSubnets: []string{
+								"10.0.0.0",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* kubelet nodeIP subnet is not valid: \"10.0.0.0\"\n\n",
+		},
 	} {
 		test := test
 

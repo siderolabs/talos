@@ -303,6 +303,13 @@ kubelet:
     #         - bind
     #         - rshared
     #         - rw
+
+    # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
+    # nodeIP:
+    #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
+    #     validSubnets:
+    #         - 10.0.0.0/8
+    #         - fdc7::/16
 ```
 
 
@@ -1374,6 +1381,13 @@ extraArgs:
 #         - bind
 #         - rshared
 #         - rw
+
+# # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
+# nodeIP:
+#     # The `validSubnets` field configures the networks to pick kubelet node IP from.
+#     validSubnets:
+#         - 10.0.0.0/8
+#         - fdc7::/16
 ```
 
 <hr />
@@ -1498,6 +1512,67 @@ Valid values:
   - <code>false</code>
 
   - <code>no</code>
+</div>
+
+<hr />
+<div class="dd">
+
+<code>nodeIP</code>  <i><a href="#kubeletnodeipconfig">KubeletNodeIPConfig</a></i>
+
+</div>
+<div class="dt">
+
+The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
+This is used when a node has multiple addresses to choose from.
+
+
+
+Examples:
+
+
+``` yaml
+nodeIP:
+    # The `validSubnets` field configures the networks to pick kubelet node IP from.
+    validSubnets:
+        - 10.0.0.0/8
+        - fdc7::/16
+```
+
+
+</div>
+
+<hr />
+
+
+
+## KubeletNodeIPConfig
+KubeletNodeIPConfig represents the kubelet node IP configuration.
+
+Appears in:
+
+- <code><a href="#kubeletconfig">KubeletConfig</a>.nodeIP</code>
+
+
+``` yaml
+# The `validSubnets` field configures the networks to pick kubelet node IP from.
+validSubnets:
+    - 10.0.0.0/8
+    - fdc7::/16
+```
+
+<hr />
+
+<div class="dd">
+
+<code>validSubnets</code>  <i>[]string</i>
+
+</div>
+<div class="dt">
+
+The `validSubnets` field configures the networks to pick kubelet node IP from.
+For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.
+If not specified, kubelet configures node IP automatically.
+
 </div>
 
 <hr />
