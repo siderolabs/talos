@@ -127,8 +127,8 @@ func (s *Scaleway) Hostname(ctx context.Context) (hostname []byte, err error) {
 	log.Printf("fetching hostname from: %q", ScalewayMetadataEndpoint)
 
 	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+		download.WithErrorOnNotFound(errors.ErrNoHostname),
+		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
 	if err != nil {
 		return nil, err
 	}

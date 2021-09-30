@@ -194,8 +194,12 @@ func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 	//nolint:errcheck
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return addrs, fmt.Errorf("failed to retrieve external addresses for instance")
+		return addrs, fmt.Errorf("failed to retrieve external addresses for instance: %d", resp.StatusCode)
 	}
 
 	if body, err = ioutil.ReadAll(resp.Body); err != nil {

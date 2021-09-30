@@ -6,6 +6,7 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -14,6 +15,7 @@ import (
 	"inet.af/netaddr"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	platformerrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
 )
@@ -68,7 +70,9 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 	// platform is fetched only once (but controller might fail and restart if fetching platform fails)
 	hostname, err := ctrl.V1alpha1Platform.Hostname(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting hostname: %w", err)
+		if !errors.Is(err, platformerrors.ErrNoHostname) {
+			return fmt.Errorf("error getting hostname: %w", err)
+		}
 	}
 
 	if len(hostname) > 0 {
@@ -89,7 +93,9 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 	externalIPs, err := ctrl.V1alpha1Platform.ExternalIPs(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting external IPs: %w", err)
+		if !errors.Is(err, platformerrors.ErrNoExternalIPs) {
+			return fmt.Errorf("error getting external IPs: %w", err)
+		}
 	}
 
 	touchedIDs := make(map[resource.ID]struct{})
