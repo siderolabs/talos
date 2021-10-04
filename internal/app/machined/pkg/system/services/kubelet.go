@@ -7,6 +7,7 @@ package services
 import (
 	"bytes"
 	"context"
+	stdlibx509 "crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -23,6 +24,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	cni "github.com/containerd/go-cni"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/net"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -72,6 +74,7 @@ func (k *Kubelet) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//nolint:gocyclo
 func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	cfg := struct {
 		Server               string
@@ -103,6 +106,19 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	if err := ioutil.WriteFile(constants.KubernetesCACert, r.Config().Cluster().CA().Crt, 0o400); err != nil {
 		return err
+	}
+
+	if r.Config().Machine().Type() != machine.TypeWorker {
+		if _, err := os.Stat(constants.KubeletPKIDir); os.IsNotExist(err) {
+			if err := os.MkdirAll(constants.KubeletPKIDir, 0o700); err != nil {
+				return err
+			}
+		}
+
+		err := writeKubeletCerts(r)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := writeKubeletConfig(r); err != nil {
@@ -384,6 +400,100 @@ func writeKubeletConfig(r runtime.Runtime) error {
 	}
 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+//nolint:gocyclo
+func writeKubeletCerts(r runtime.Runtime) error {
+	nodename, err := r.NodeName()
+	if err != nil {
+		return err
+	}
+
+	var (
+		pkiLink string
+		pkiName string
+		pki     []byte
+	)
+
+	ts := time.Now().Format("2006-01-02-15-04-05")
+
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(r.Config().Cluster().CA())
+	if err != nil {
+		return fmt.Errorf("failed to parse CA certificate: %w", err)
+	}
+
+	kubeletClientKeyPair, err := x509.NewKeyPair(ca,
+		x509.CommonName(constants.KubernetesKubeletCommonNamePrefix+nodename),
+		x509.Organization(constants.KubernetesKubeletOrganization),
+		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageClientAuth,
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to generate kubelet client cert: %w", err)
+	}
+
+	pkiLink = constants.KubeletPKIDir + "/kubelet-client-current.pem"
+	pkiName = fmt.Sprintf("%s/kubelet-client-%s.pem", constants.KubeletPKIDir+pkiName, ts)
+	pki = kubeletClientKeyPair.CrtPEM
+	pki = append(pki, kubeletClientKeyPair.KeyPEM...)
+
+	if err = ioutil.WriteFile(pkiName, pki, 0o600); err != nil {
+		return err
+	}
+
+	if _, err = os.Stat(pkiLink); err == nil {
+		if err = os.Remove(pkiLink); err != nil {
+			return fmt.Errorf("unable to remove %q: %v", pkiLink, err)
+		}
+	}
+
+	if err = os.Symlink(pkiName, pkiLink); err != nil {
+		return fmt.Errorf("unable to create a symlink from %q to %q: %v", pkiName, pkiLink, err)
+	}
+
+	pkiLink = constants.KubeletPKIDir + "/kubelet-server-current.pem"
+
+	// Do not create new kubelet server cert if exists
+	if _, err = os.Stat(pkiLink); err == nil {
+		return nil
+	}
+
+	nodeIPs, err := pickNodeIPs(r.Config().Machine().Kubelet().NodeIP().ValidSubnets())
+	if err != nil {
+		return err
+	}
+
+	kubeletServerKeyPair, err := x509.NewKeyPair(ca,
+		x509.CommonName(constants.KubernetesKubeletCommonNamePrefix+nodename),
+		x509.Organization(constants.KubernetesKubeletOrganization),
+		x509.NotAfter(time.Now().Add(constants.KubernetesDefaultCertificateValidityDuration)),
+		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
+		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+			stdlibx509.ExtKeyUsageServerAuth,
+		}),
+		x509.DNSNames([]string{nodename}),
+		x509.IPAddresses(nodeIPs),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to generate kubelet server cert: %w", err)
+	}
+
+	pkiName = fmt.Sprintf("%s/kubelet-server-%s.pem", constants.KubeletPKIDir, ts)
+	pki = kubeletServerKeyPair.CrtPEM
+	pki = append(pki, kubeletServerKeyPair.KeyPEM...)
+
+	if err = ioutil.WriteFile(pkiName, pki, 0o600); err != nil {
+		return err
+	}
+
+	if err = os.Symlink(pkiName, pkiLink); err != nil {
+		return fmt.Errorf("unable to create a symlink from %q to %q: %v", pkiName, pkiLink, err)
+	}
+
+	return nil
 }
 
 func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
