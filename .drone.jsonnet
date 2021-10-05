@@ -136,6 +136,9 @@ local setup_ci = {
     'make ./_out/sonobuoy',
     'make ./_out/kubectl',
   ],
+  environment: {
+    "BUILDKIT_FLAVOR": "cross",
+  },
   volumes: volumes.ForStep(),
 };
 
