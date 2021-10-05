@@ -509,9 +509,8 @@ COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
 FROM alpine:3.14.1 AS installer
-RUN apk add --no-cache --update \
+RUN apk add --no-cache --update --no-scripts \
     bash \
-    ca-certificates \
     efibootmgr \
     mtools \
     qemu-img \
