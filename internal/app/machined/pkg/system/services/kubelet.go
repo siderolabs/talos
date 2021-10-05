@@ -386,6 +386,7 @@ func writeKubeletConfig(r runtime.Runtime) error {
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
 }
 
+//nolint:gocyclo
 func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 	if len(cidrs) == 0 {
 		return nil, nil
@@ -409,6 +410,33 @@ func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 				result = append(result, ip)
 			}
 		}
+	}
+
+	if len(result) > 1 {
+		var dualstack []stdnet.IP
+
+		ipv4 := false
+		ipv6 := false
+
+		for _, ip := range result {
+			if !ipv4 && ip.To4() != nil {
+				ipv4 = true
+
+				dualstack = append(dualstack, ip)
+
+				continue
+			}
+
+			if !ipv6 && ip.To4() == nil {
+				ipv6 = true
+
+				dualstack = append(dualstack, ip)
+
+				continue
+			}
+		}
+
+		return dualstack, nil
 	}
 
 	return result, nil
