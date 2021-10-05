@@ -103,7 +103,7 @@ local volumes = {
 // This provides the docker service.
 local docker = {
   name: 'docker',
-  image: 'docker:20.10-dind',
+  image: 'ghcr.io/smira/docker:20.10-dind-hacked',
   entrypoint: ['dockerd'],
   privileged: true,
   command: [
