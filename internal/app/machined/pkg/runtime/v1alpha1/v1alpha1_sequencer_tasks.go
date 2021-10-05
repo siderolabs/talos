@@ -241,6 +241,13 @@ func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 // DropCapabilities drops some capabilities so that they can't be restored by child processes.
 func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		prop, err := kernel.ReadParam(&kernel.Param{Key: "kernel.kexec_load_disabled"})
+		if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
+			logger.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
+
+			return nil
+		}
+
 		// Disallow raising ambient capabilities (ever).
 		secbits := cap.GetSecbits()
 		secbits |=

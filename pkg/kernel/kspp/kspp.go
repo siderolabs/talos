@@ -46,7 +46,7 @@ func EnforceKSPPKernelParameters() error {
 	return result.ErrorOrNil()
 }
 
-// GetKernelParams returns the list of KSPP kernels.
+// GetKernelParams returns the list of KSPP kernel parameters.
 func GetKernelParams() []*kernel.Param {
 	return []*kernel.Param{
 		{
@@ -61,11 +61,6 @@ func GetKernelParams() []*kernel.Param {
 			Key:   "kernel.perf_event_paranoid",
 			Value: "3",
 		},
-		// We can skip this kernel because CONFIG_KEXEC is not set.
-		// {
-		// 	Key:   "kernel.kexec_load_disabled",
-		// 	Value: "1",
-		// },
 		{
 			Key:   "kernel.yama.ptrace_scope",
 			Value: "1",

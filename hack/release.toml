@@ -36,11 +36,31 @@ On bare-metal hardware BIOS POST process might take 10-15 minutes, so Talos rebo
 
 Kexec support can be disabled with the following change to the machine configuration:
 
-```
+```yaml
 machine:
   sysctls:
     kernel.kexec_load_disabled: "1"
 ```
+"""
+
+    [notes.caps]
+        title = "Kexec and capabilities"
+        description = """\
+When kexec support is disabled (see `Reboots via kexec`),
+Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
+That is helpful for advanced use-cases like Docker-in-Docker.
+
+If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
+For example:
+
+```yaml
+install:
+  extraKernelArgs:
+    - kexec_load_disabled=1
+```
+
+Please note that capabilities are dropped before machine configuration is loaded,
+so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec`) will not be enough.
 """
 
     [notes.kubespan]
