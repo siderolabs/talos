@@ -257,16 +257,6 @@ func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			return fmt.Errorf("error setting secbits: %w", err)
 		}
 
-		// Set PR_SET_NO_NEW_PRIVS to limit setuid and similar privilege raising techniques.
-		// See https://www.kernel.org/doc/html/v5.10/userspace-api/no_new_privs.html.
-		if _, _, err := syscall.AllThreadsSyscall6(syscall.SYS_PRCTL, unix.PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0, 0); err != 0 {
-			if errors.Is(err, syscall.EOPNOTSUPP) {
-				logger.Printf("no_new_privs skipped, as Talos is built with CGo")
-			} else {
-				return fmt.Errorf("error setting no new privs: %w", err)
-			}
-		}
-
 		// Drop capabilities from the bounding set effectively disabling it for all forked processes,
 		// but keep them for PID 1.
 		droppedCapabilities := []cap.Value{
