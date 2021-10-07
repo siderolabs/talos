@@ -222,6 +222,22 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 				Protocol:    nethelpers.ProtocolBoot,
 				ConfigLayer: network.ConfigOperator,
 			})
+
+			if !addr.Contains(gw) {
+				// add an interface route for the gateway if it's not in the same network
+				d.routes = append(d.routes, network.RouteSpecSpec{
+					Family:      nethelpers.FamilyInet4,
+					Destination: netaddr.IPPrefixFrom(gw, gw.BitLen()),
+					Source:      addr.IP(),
+					OutLinkName: d.linkName,
+					Table:       nethelpers.TableMain,
+					Priority:    d.routeMetric,
+					Scope:       nethelpers.ScopeLink,
+					Type:        nethelpers.TypeUnicast,
+					Protocol:    nethelpers.ProtocolBoot,
+					ConfigLayer: network.ConfigOperator,
+				})
+			}
 		}
 	}
 
