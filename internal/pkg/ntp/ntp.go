@@ -20,6 +20,7 @@ import (
 	"github.com/beevik/ntp"
 	"github.com/u-root/u-root/pkg/rtc"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/talos-systems/talos/internal/pkg/timex"
 )
@@ -37,6 +38,8 @@ type Syncer struct {
 
 	restartSyncCh chan struct{}
 	epochChangeCh chan struct{}
+
+	firstSync bool
 
 	MinPoll, MaxPoll time.Duration
 
@@ -56,6 +59,8 @@ func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
 
 		restartSyncCh: make(chan struct{}, 1),
 		epochChangeCh: make(chan struct{}, 1),
+
+		firstSync: true,
 
 		MinPoll: MinAllowablePoll,
 		MaxPoll: MaxAllowablePoll,
@@ -318,15 +323,32 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		req.Status |= timex.STA_DEL
 	}
 
+	logLevel := zapcore.DebugLevel
+
+	if jump {
+		logLevel = zapcore.InfoLevel
+	}
+
 	state, err := syncer.AdjustTime(&req)
 
 	fmt.Fprintf(&buf, ", state %s, status %s", state, timex.Status(req.Status))
 
 	if err != nil {
+		logLevel = zapcore.WarnLevel
+
 		fmt.Println(&buf, ", error was %s", err)
 	}
 
-	syncer.logger.Info(buf.String())
+	if syncer.firstSync && logLevel == zapcore.DebugLevel {
+		// promote first sync to info level
+		syncer.firstSync = false
+
+		logLevel = zapcore.InfoLevel
+	}
+
+	if ce := syncer.logger.Check(logLevel, buf.String()); ce != nil {
+		ce.Write()
+	}
 
 	if err == nil {
 		if offset < -EpochLimit || offset > EpochLimit {
