@@ -1040,8 +1040,8 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/crypto v0.3.3 h1:MvYJY0Tg8+/QDfRj2JJ/m54INsi1ZXbwyc6H+7ea/v8=
-github.com/talos-systems/crypto v0.3.3/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
+github.com/talos-systems/crypto v0.3.2 h1:I+MC9ql6K29EMlbPzdSeHZInSRWdze1FX1qGGrlom8Q=
+github.com/talos-systems/crypto v0.3.2/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
 github.com/talos-systems/discovery-service v0.1.0 h1:mfFElRIetj6+rit+WnrKjSZMA0CTzUesSVJhqLSnddk=
 github.com/talos-systems/discovery-service v0.1.0/go.mod h1:+9VWFbTcUChtlE0qc2fQ3Lyj1kj2AakFQ/ITnaB8Pd0=
 github.com/talos-systems/go-blockdevice v0.2.4 h1:/E5I95byCxfdmQIiBEyWgdUo+6vPBbbOJQIF9+yeysU=
