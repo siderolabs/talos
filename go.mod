@@ -47,7 +47,7 @@ require (
 	github.com/google/nftables v0.0.0-20210916140115-16a134723a96
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-getter v1.5.8
+	github.com/hashicorp/go-getter v1.5.9
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go v1.32.0
 	github.com/imdario/mergo v0.3.12 // indirect
