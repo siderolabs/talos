@@ -6,6 +6,7 @@ package argsbuilder
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -87,10 +88,18 @@ func (a Args) Set(k, v Key) ArgsBuilder {
 
 // Args implements the ArgsBuilder interface.
 func (a Args) Args() []string {
+	keys := make([]string, 0, len(a))
+
+	for key := range a {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
 	args := []string{}
 
-	for key, val := range a {
-		args = append(args, fmt.Sprintf("--%s=%s", key, val))
+	for _, key := range keys {
+		args = append(args, fmt.Sprintf("--%s=%s", key, a[key]))
 	}
 
 	return args
