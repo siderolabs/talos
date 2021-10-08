@@ -212,18 +212,18 @@ func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 		err            error
 	)
 
-	etcd, err = NewEtcdCA(clock.Now(), !options.VersionContract.SupportsECDSAKeys())
+	etcd, err = NewEtcdCA(clock.Now(), options.VersionContract)
 	if err != nil {
 		return nil, err
 	}
 
-	kubernetesCA, err = NewKubernetesCA(clock.Now(), !options.VersionContract.SupportsECDSAKeys())
+	kubernetesCA, err = NewKubernetesCA(clock.Now(), options.VersionContract)
 	if err != nil {
 		return nil, err
 	}
 
 	if options.VersionContract.SupportsAggregatorCA() {
-		aggregatorCA, err = NewAggregatorCA(clock.Now())
+		aggregatorCA, err = NewAggregatorCA(clock.Now(), options.VersionContract)
 		if err != nil {
 			return nil, err
 		}
@@ -352,46 +352,60 @@ func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 }
 
 // NewEtcdCA generates a CA for the Etcd PKI.
-func NewEtcdCA(currentTime time.Time, useRSA bool) (ca *x509.CertificateAuthority, err error) {
+func NewEtcdCA(currentTime time.Time, contract *config.VersionContract) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.Organization("etcd"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
 	}
 
-	if useRSA {
+	if !contract.SupportsECDSAKeys() {
 		opts = append(opts, x509.RSA(true))
 	} else {
-		opts = append(opts, x509.ECDSA(true))
+		if contract.SupportsECDSASHA256() {
+			opts = append(opts, x509.ECDSA(true))
+		} else {
+			opts = append(opts, x509.ECDSASHA512(true))
+		}
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
 // NewKubernetesCA generates a CA for the Kubernetes PKI.
-func NewKubernetesCA(currentTime time.Time, useRSA bool) (ca *x509.CertificateAuthority, err error) {
+func NewKubernetesCA(currentTime time.Time, contract *config.VersionContract) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.Organization("kubernetes"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
 	}
 
-	if useRSA {
+	if !contract.SupportsECDSAKeys() {
 		opts = append(opts, x509.RSA(true))
 	} else {
-		opts = append(opts, x509.ECDSA(true))
+		if contract.SupportsECDSASHA256() {
+			opts = append(opts, x509.ECDSA(true))
+		} else {
+			opts = append(opts, x509.ECDSASHA512(true))
+		}
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
 // NewAggregatorCA generates a CA for the Kubernetes aggregator/front-proxy.
-func NewAggregatorCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error) {
+func NewAggregatorCA(currentTime time.Time, contract *config.VersionContract) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.ECDSA(true),
 		x509.CommonName("front-proxy"),
 		x509.NotAfter(currentTime.Add(87600 * time.Hour)),
 		x509.NotBefore(currentTime),
+	}
+
+	if contract.SupportsECDSASHA256() {
+		opts = append(opts, x509.ECDSA(true))
+	} else {
+		opts = append(opts, x509.ECDSASHA512(true))
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
