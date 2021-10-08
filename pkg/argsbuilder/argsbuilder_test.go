@@ -33,6 +33,7 @@ func (suite *ArgsbuilderSuite) TestMergeAdditive() {
 	)
 
 	suite.Require().Equal("value1,value2,value3,value10", args["param"])
+	suite.Assert().Equal([]string{"--param=value1,value2,value3,value10", "--param2="}, args.Args())
 
 	suite.Require().NoError(
 		args.Merge(argsbuilder.Args{
@@ -45,6 +46,7 @@ func (suite *ArgsbuilderSuite) TestMergeAdditive() {
 	)
 
 	suite.Require().Equal("value1,value5", args["param2"])
+	suite.Assert().Equal([]string{"--param=value1,value2,value3,value10", "--param2=value1,value5"}, args.Args())
 }
 
 func (suite *ArgsbuilderSuite) TestMergeOverwrite() {
@@ -63,6 +65,7 @@ func (suite *ArgsbuilderSuite) TestMergeOverwrite() {
 	)
 
 	suite.Require().Equal("value10", args["param"])
+	suite.Assert().Equal([]string{"--param=value10"}, args.Args())
 }
 
 func (suite *ArgsbuilderSuite) TestMergeDenied() {
