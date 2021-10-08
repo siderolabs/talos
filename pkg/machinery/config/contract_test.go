@@ -49,6 +49,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, config.TalosVersionCurrent.SupportsServiceAccount())
 	assert.True(t, config.TalosVersionCurrent.SupportsRBACFeature())
 	assert.True(t, config.TalosVersionCurrent.SupportsDynamicCertSANs())
+	assert.True(t, config.TalosVersionCurrent.SupportsECDSASHA256())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -57,6 +58,7 @@ func TestContract0_13(t *testing.T) {
 	assert.True(t, config.TalosVersion0_13.SupportsServiceAccount())
 	assert.True(t, config.TalosVersion0_13.SupportsRBACFeature())
 	assert.True(t, config.TalosVersion0_13.SupportsDynamicCertSANs())
+	assert.True(t, config.TalosVersion0_13.SupportsECDSASHA256())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -65,6 +67,7 @@ func TestContract0_12(t *testing.T) {
 	assert.True(t, config.TalosVersion0_12.SupportsServiceAccount())
 	assert.True(t, config.TalosVersion0_12.SupportsRBACFeature())
 	assert.False(t, config.TalosVersion0_12.SupportsDynamicCertSANs())
+	assert.False(t, config.TalosVersion0_12.SupportsECDSASHA256())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -73,6 +76,7 @@ func TestContract0_11(t *testing.T) {
 	assert.True(t, config.TalosVersion0_11.SupportsServiceAccount())
 	assert.True(t, config.TalosVersion0_11.SupportsRBACFeature())
 	assert.False(t, config.TalosVersion0_11.SupportsDynamicCertSANs())
+	assert.False(t, config.TalosVersion0_11.SupportsECDSASHA256())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -81,6 +85,7 @@ func TestContract0_10(t *testing.T) {
 	assert.True(t, config.TalosVersion0_10.SupportsServiceAccount())
 	assert.False(t, config.TalosVersion0_10.SupportsRBACFeature())
 	assert.False(t, config.TalosVersion0_10.SupportsDynamicCertSANs())
+	assert.False(t, config.TalosVersion0_10.SupportsECDSASHA256())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -89,6 +94,7 @@ func TestContract0_9(t *testing.T) {
 	assert.True(t, config.TalosVersion0_9.SupportsServiceAccount())
 	assert.False(t, config.TalosVersion0_9.SupportsRBACFeature())
 	assert.False(t, config.TalosVersion0_9.SupportsDynamicCertSANs())
+	assert.False(t, config.TalosVersion0_9.SupportsECDSASHA256())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -97,4 +103,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, config.TalosVersion0_8.SupportsServiceAccount())
 	assert.False(t, config.TalosVersion0_8.SupportsRBACFeature())
 	assert.False(t, config.TalosVersion0_8.SupportsDynamicCertSANs())
+	assert.False(t, config.TalosVersion0_8.SupportsECDSASHA256())
 }

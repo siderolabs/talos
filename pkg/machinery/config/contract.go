@@ -86,3 +86,8 @@ func (contract *VersionContract) SupportsRBACFeature() bool {
 func (contract *VersionContract) SupportsDynamicCertSANs() bool {
 	return contract.Greater(TalosVersion0_12)
 }
+
+// SupportsECDSASHA256 returns true if version of Talos supports ECDSA-SHA256 for Kubernetes certificates.
+func (contract *VersionContract) SupportsECDSASHA256() bool {
+	return contract.Greater(TalosVersion0_12)
+}
