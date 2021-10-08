@@ -353,7 +353,7 @@ local default_pipeline_steps = [
 
 local integration_qemu = Step("e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry});
 
-local build_race = Step("build-race", target="initramfs installer", depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry, "PUSH": true, "TAG_SUFFIX": "-race", "WITH_RACE": "1"});
+local build_race = Step("build-race", target="initramfs installer", depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry, "PUSH": true, "TAG_SUFFIX": "-race", "WITH_RACE": "1", "PLATFORM": "linux/amd64"});
 local integration_qemu_race = Step("e2e-qemu-race", target="e2e-qemu", privileged=true, depends_on=[build_race], environment={"IMAGE_REGISTRY": local_registry,  "TAG_SUFFIX": "-race"});
 
 local integration_provision_tests_prepare = Step("provision-tests-prepare", privileged=true, depends_on=[load_artifacts]);
