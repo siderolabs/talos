@@ -659,10 +659,10 @@ type MachineConfig struct {
 //     - value: clusterConfigExample
 type ClusterConfig struct {
 	//   description: |
-	//     Globally unique identifier for this cluster.
+	//     Globally unique identifier for this cluster (base64 encoded random 32 bytes).
 	ClusterID string `yaml:"id,omitempty"`
 	//   description: |
-	//     Shared secret of cluster.
+	//     Shared secret of cluster (base64 encoded random 32 bytes).
 	//     This secret is shared among cluster members but should never be sent over the network.
 	ClusterSecret string `yaml:"secret,omitempty"`
 	//   description: |
