@@ -73,7 +73,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.4
-	github.com/talos-systems/discovery-service v0.1.0
+	github.com/talos-systems/discovery-service v0.1.1
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
