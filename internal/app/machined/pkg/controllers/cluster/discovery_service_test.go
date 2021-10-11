@@ -60,7 +60,7 @@ func setupServer(t *testing.T) (address string) {
 	}
 
 	s := grpc.NewServer(serverOptions...)
-	serverpb.RegisterClusterServer(s, server.NewTestClusterServer())
+	serverpb.RegisterClusterServer(s, server.NewTestClusterServer(logger))
 
 	go func() {
 		require.NoError(t, s.Serve(lis))
