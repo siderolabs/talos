@@ -262,7 +262,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"proxy-client-cert-file":           argsbuilder.MergeDenied,
 		"proxy-client-key-file":            argsbuilder.MergeDenied,
 		"encryption-provider-config":       argsbuilder.MergeDenied,
-		"audit-policy-file":                argsbuilder.MergeDenied,
 		"etcd-cafile":                      argsbuilder.MergeDenied,
 		"etcd-certfile":                    argsbuilder.MergeDenied,
 		"etcd-keyfile":                     argsbuilder.MergeDenied,
