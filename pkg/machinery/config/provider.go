@@ -439,6 +439,7 @@ type SystemDiskEncryption interface {
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
 	RBACEnabled() bool
+	LoggingEnabled() bool
 }
 
 // VolumeMount describes extra volume mount for the static pods.

@@ -4,11 +4,22 @@
 
 package runtime
 
-import "io"
+import (
+	"context"
+	"fmt"
+	"io"
+	"time"
+
+	"go.uber.org/zap/zapcore"
+)
 
 // LoggingManager provides unified interface to publish and consume logs.
 type LoggingManager interface {
+	// ServiceLog privides a log handler for a given service (that may not exist).
 	ServiceLog(service string) LogHandler
+
+	// SetSender sets the log sender for all derived log handlers.
+	SetSender(sender LogSender)
 }
 
 // LogOptions for LogHandler.Reader.
@@ -38,8 +49,28 @@ func WithTailLines(lines int) LogOption {
 	}
 }
 
-// LogHandler provides interface to access particular log file.
+// LogHandler provides interface to access particular log source.
 type LogHandler interface {
 	Writer() (io.WriteCloser, error)
 	Reader(opt ...LogOption) (io.ReadCloser, error)
+}
+
+// LogEvent represents a log message to be send.
+type LogEvent struct {
+	Msg    string
+	Time   time.Time
+	Level  zapcore.Level
+	Fields map[string]interface{}
+}
+
+// ErrDontRetry indicates that log event should not be resent.
+var ErrDontRetry = fmt.Errorf("don't retry")
+
+// LogSender provides common interface for log senders.
+type LogSender interface {
+	// Send tries to send the log event once, exiting on success, error, or context cancelation.
+	// Returned error is nil on success, non-nil otherwise.
+	// As a special case, Send can return (possibly wrapped) ErrDontRetry if the log event should not be resent
+	// (if it is invalid, if it was sent partially, etc).
+	Send(ctx context.Context, e *LogEvent) error
 }

@@ -20,16 +20,19 @@ func NewNullLoggingManager() *NullLoggingManager {
 }
 
 // ServiceLog implements LoggingManager.
-func (manager *NullLoggingManager) ServiceLog(id string) runtime.LogHandler {
+func (*NullLoggingManager) ServiceLog(id string) runtime.LogHandler {
 	return &nullLogHandler{}
 }
 
+// SetSender implements runtime.LoggingManager interface (by doing nothing).
+func (*NullLoggingManager) SetSender(runtime.LogSender) {}
+
 type nullLogHandler struct{}
 
-func (handler *nullLogHandler) Writer() (io.WriteCloser, error) {
+func (*nullLogHandler) Writer() (io.WriteCloser, error) {
 	return os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 }
 
-func (handler *nullLogHandler) Reader(...runtime.LogOption) (io.ReadCloser, error) {
+func (*nullLogHandler) Reader(...runtime.LogOption) (io.ReadCloser, error) {
 	return os.OpenFile(os.DevNull, os.O_RDONLY, 0)
 }

@@ -5169,6 +5169,21 @@ Enable role-based access control (RBAC).
 </div>
 
 <hr />
+<div class="dd">
+
+<code>logging</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+FIXME(aleksi).
+
+
+> FIXME(aleksi)
+
+</div>
+
+<hr />
 
 
 

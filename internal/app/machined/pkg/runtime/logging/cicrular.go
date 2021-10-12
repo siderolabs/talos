@@ -5,9 +5,15 @@
 package logging
 
 import (
+	"bufio"
+	"context"
+	"errors"
 	"fmt"
 	"io"
+	"log"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/circular"
@@ -26,12 +32,22 @@ const (
 
 // CircularBufferLoggingManager implements logging to circular fixed size buffer.
 type CircularBufferLoggingManager struct {
+	fallbackLogger *log.Logger
+
 	buffers sync.Map
+
+	senderChanged chan struct{}
+
+	senderRW sync.RWMutex
+	sender   runtime.LogSender
 }
 
 // NewCircularBufferLoggingManager initializes new CircularBufferLoggingManager.
-func NewCircularBufferLoggingManager() *CircularBufferLoggingManager {
-	return &CircularBufferLoggingManager{}
+func NewCircularBufferLoggingManager(fallbackLogger *log.Logger) *CircularBufferLoggingManager {
+	return &CircularBufferLoggingManager{
+		fallbackLogger: fallbackLogger,
+		senderChanged:  make(chan struct{}, 1),
+	}
 }
 
 // ServiceLog implements runtime.LoggingManager interface.
@@ -39,7 +55,29 @@ func (manager *CircularBufferLoggingManager) ServiceLog(id string) runtime.LogHa
 	return &circularHandler{
 		manager: manager,
 		id:      id,
+		fields: map[string]interface{}{
+			"component": id,
+		},
 	}
+}
+
+// SetSender implements runtime.LoggingManager interface.
+func (manager *CircularBufferLoggingManager) SetSender(sender runtime.LogSender) {
+	manager.senderRW.Lock()
+	manager.sender = sender
+	manager.senderRW.Unlock()
+
+	select {
+	case manager.senderChanged <- struct{}{}:
+	default:
+	}
+}
+
+func (manager *CircularBufferLoggingManager) getSender() (runtime.LogSender, <-chan struct{}) {
+	manager.senderRW.RLock()
+	defer manager.senderRW.RUnlock()
+
+	return manager.sender, manager.senderChanged
 }
 
 func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (*circular.Buffer, error) {
@@ -66,6 +104,7 @@ func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (
 type circularHandler struct {
 	manager *CircularBufferLoggingManager
 	id      string
+	fields  map[string]interface{}
 
 	buf *circular.Buffer
 }
@@ -74,7 +113,7 @@ type nopCloser struct {
 	io.Writer
 }
 
-func (c nopCloser) Close() error {
+func (nopCloser) Close() error {
 	return nil
 }
 
@@ -84,10 +123,15 @@ func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 		var err error
 
 		handler.buf, err = handler.manager.getBuffer(handler.id, true)
-
 		if err != nil {
 			return nil, err
 		}
+
+		go func() {
+			if err := handler.runSender(); err != nil {
+				handler.manager.fallbackLogger.Printf("log sender stopped: %s", err)
+			}
+		}()
 	}
 
 	return nopCloser{handler.buf}, nil
@@ -139,4 +183,65 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 	}
 
 	return r, nil
+}
+
+func (handler *circularHandler) runSender() error {
+	r, err := handler.Reader(runtime.WithFollow())
+	if err != nil {
+		return err
+	}
+	defer r.Close() //nolint:errcheck
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		l := strings.TrimSpace(scanner.Text())
+		if l == "" {
+			continue
+		}
+
+		handler.resend(&runtime.LogEvent{
+			Msg:    l,
+			Fields: handler.fields,
+		})
+	}
+
+	return fmt.Errorf("scanner: %w", scanner.Err())
+}
+
+// resend sends and resends given event until success or ErrDontRetry error.
+func (handler *circularHandler) resend(e *runtime.LogEvent) {
+	for {
+		var sender runtime.LogSender
+
+		// wait for sender to be set
+		for {
+			var changed <-chan struct{}
+
+			sender, changed = handler.manager.getSender()
+			if sender != nil {
+				break
+			}
+
+			handler.manager.fallbackLogger.Printf("waiting for sender at %s", time.Now())
+			<-changed
+		}
+
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+
+		err := sender.Send(ctx, e)
+
+		cancel()
+
+		if err == nil {
+			return
+		}
+
+		handler.manager.fallbackLogger.Print(err)
+
+		if errors.Is(err, runtime.ErrDontRetry) {
+			return
+		}
+
+		time.Sleep(time.Second)
+	}
 }

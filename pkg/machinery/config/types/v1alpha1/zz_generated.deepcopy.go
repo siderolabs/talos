@@ -764,6 +764,11 @@ func (in *FeaturesConfig) DeepCopyInto(out *FeaturesConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Logging != nil {
+		in, out := &in.Logging, &out.Logging
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
