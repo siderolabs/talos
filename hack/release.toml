@@ -8,14 +8,14 @@ match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 # previous release
 previous = "v0.12.0"
 
-pre_release = true
+pre_release = false
 
 preface = """\
 """
 
 [notes]
 
-    [notes.clouds]
+    [notes.3clouds]
         title = "Hetzner, Scaleway, Upcloud and Vultr"
         description = """\
 Talos now natively supports four new cloud platforms:
@@ -28,7 +28,7 @@ Talos now natively supports four new cloud platforms:
 Also generic `cloud-init` `nocloud` platform is supported in both networking and storage-based modes.
 """
 
-    [notes.kexec]
+    [notes.2kexec]
         title = "Reboots via kexec"
         description = """\
 Talos now reboots by default via kexec syscall which means BIOS POST process is skipped.
@@ -43,10 +43,10 @@ machine:
 ```
 """
 
-    [notes.kubespan]
+    [notes.1kubespan]
         title = "Cluster Discovery and KubeSpan"
         description = """\
-This release of Talos provides initial support for cluster membership discovery and [KubeSpan](https://www.talos-systems.com/kubespan/).
+This release of Talos provides initial support for [cluster membership discovery](https://www.talos.dev/docs/v0.13/guides/discovery/) and [KubeSpan](https://www.talos.dev/docs/v0.13/guides/kubespan/).
 
 These new features are not enabled by default, to enable them please make following changes to the machine configuration:
 
@@ -62,25 +62,25 @@ cluster:
 
 """
 
-    [notes.etcd]
+    [notes.4etcd]
         title = "etcd Advertised Address"
         description = """\
 The address advertised by etcd can now be controlled with new machine configuration option `machine.etcd.subnet`.
 """
 
-    [notes.kubelet]
+    [notes.5kubelet]
         title = "kubelet Node IP"
         description = """\
 The addresses picked by kubelet can now be controlled with new machine configuration option `machine.kubelet.nodeIP.validSubnets`.
 """
 
-    [notes.windows]
+    [notes.6windows]
         title = "Windows Suport"
         description = """\
 CLI tool talosctl is now built for Windows and published as part of the release.
 """
 
-    [notes.components]
+    [notes.7components]
         title = "Component Updates"
         description = """\
 Linux: 5.10.69
