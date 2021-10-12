@@ -8,9 +8,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/talos-systems/talos/pkg/download"
 )
 
 // This should provide the bare minimum to trigger a node in ready condition to allow
@@ -20,38 +23,21 @@ func linuxAgent(ctx context.Context) (err error) {
 
 	gs, err = goalState(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to register with Azure and fetch GoalState XML: %w", err)
 	}
 
 	return reportHealth(ctx, gs.Incarnation, gs.Container.ContainerID, gs.Container.RoleInstanceList.RoleInstance.InstanceID)
 }
 
 func goalState(ctx context.Context) (gs *GoalState, err error) {
-	u, err := url.Parse(AzureInternalEndpoint + "/machine/?comp=goalstate")
+	body, err := download.Download(ctx, AzureInternalEndpoint+"/machine/?comp=goalstate",
+		download.WithHeaders(map[string]string{
+			"x-ms-agent-name": "WALinuxAgent",
+			"x-ms-version":    "2015-04-05",
+			"Content-Type":    "text/xml;charset=utf-8",
+		}))
 	if err != nil {
-		return gs, nil
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return gs, err
-	}
-
-	addHeaders(req)
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return gs, err
-	}
-
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return gs, err
+		return nil, err
 	}
 
 	gs = &GoalState{}

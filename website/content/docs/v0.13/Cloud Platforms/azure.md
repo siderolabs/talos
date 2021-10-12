@@ -201,6 +201,13 @@ talosctl gen config talos-k8s-azure-tutorial https://${LB_PUBLIC_IP}:6443
 ### Compute Creation
 
 We are now ready to create our azure nodes.
+Azure allows you to pass your own machineConfig to your virtual machine at bootstrap time.
+
+* user-data method
+* custom-data method
+
+Talos supports only custom-data method.
+Because custom-data is only made available to the VM during first boot/initial setup.
 
 ```bash
 # Create availability set
