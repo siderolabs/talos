@@ -13,33 +13,49 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 
+	"github.com/AlekSi/pointer"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 const (
-	// AzureUserDataEndpoint is the local endpoint for the config.
-	// By specifying format=text and drilling down to the actual key we care about
-	// we get a base64 encoded config response.
-	AzureUserDataEndpoint = "http://169.254.169.254/metadata/instance/compute/customData?api-version=2019-06-01&format=text"
-	// AzureHostnameEndpoint is the local endpoint for the hostname.
-	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2019-06-01&format=text"
 	// AzureInternalEndpoint is the Azure Internal Channel IP
 	// https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/
 	AzureInternalEndpoint = "http://168.63.129.16"
+	// AzureHostnameEndpoint is the local endpoint for the hostname.
+	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-05-01&format=text"
 	// AzureInterfacesEndpoint is the local endpoint to get external IPs.
-	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2019-06-01"
+	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-05-01"
 
 	mnt = "/mnt"
 )
+
+// NetworkConfig holds network interface meta config.
+type NetworkConfig struct {
+	IPv4 struct {
+		IPAddresses []IPAddresses `json:"ipAddress"`
+	} `json:"ipv4"`
+	IPv6 struct {
+		IPAddresses []IPAddresses `json:"ipAddress"`
+	} `json:"ipv6"`
+}
+
+// IPAddresses holds public/private IPs.
+type IPAddresses struct {
+	PrivateIPAddress string `json:"privateIpAddress"`
+	PublicIPAddress  string `json:"publicIpAddress"`
+}
 
 // Azure is the concrete type that implements the platform.Platform interface.
 type Azure struct{}
@@ -55,65 +71,89 @@ func (a *Azure) Name() string {
 	return "azure"
 }
 
-// Configuration implements the platform.Platform interface.
-func (a *Azure) Configuration(ctx context.Context) ([]byte, error) {
-	// TODO: support ErrNoConfigSource, requires handling of both CD-ROM & user-data sources
-	//       requires splitting `linuxAgent` into separate platform task which is called when node is up (or close to that)
-	// attempt to download from metadata endpoint
-	// disabled by default
-	log.Printf("fetching machine config from: %q", AzureUserDataEndpoint)
+// ConfigurationNetwork implements the network configuration interface.
+func (a *Azure) ConfigurationNetwork(metadataNetworkConfig []byte, confProvider config.Provider) (config.Provider, error) {
+	var machineConfig *v1alpha1.Config
 
-	config, err := download.Download(ctx, AzureUserDataEndpoint, download.WithHeaders(map[string]string{"Metadata": "true"}), download.WithFormat("base64"))
-	if err != nil {
-		fmt.Printf("metadata download failed, falling back to ovf-env.xml file. err: %s", err.Error())
+	machineConfig, ok := confProvider.(*v1alpha1.Config)
+	if !ok {
+		return nil, fmt.Errorf("unable to determine machine config type")
 	}
 
-	// fall back to cdrom read b/c we failed to pull userdata from metadata server
-	if len(config) == 0 {
-		log.Printf("fetching machine config from: ovf-env.xml")
-
-		config, err = a.configFromCD()
-		if err != nil {
-			return nil, err
-		}
+	if machineConfig.MachineConfig == nil {
+		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
 	}
 
-	if err := linuxAgent(ctx); err != nil {
+	if machineConfig.MachineConfig.MachineNetwork == nil {
+		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
+	}
+
+	var interfaceAddresses []NetworkConfig
+
+	if err := json.Unmarshal(metadataNetworkConfig, &interfaceAddresses); err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	if machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces == nil {
+		for idx, iface := range interfaceAddresses {
+			device := &v1alpha1.Device{
+				DeviceInterface:   fmt.Sprintf("eth%d", idx),
+				DeviceDHCP:        true,
+				DeviceDHCPOptions: &v1alpha1.DHCPOptions{DHCPIPv6: pointer.ToBool(true)},
+			}
+
+			ipv6 := false
+
+			for _, ipv6addr := range iface.IPv6.IPAddresses {
+				ipv6 = ipv6addr.PublicIPAddress != "" || ipv6addr.PrivateIPAddress != ""
+			}
+
+			if ipv6 {
+				machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces, device)
+			}
+		}
+	}
+
+	return confProvider, nil
 }
 
-// Hostname implements the platform.Platform interface.
-func (a *Azure) Hostname(ctx context.Context) (hostname []byte, err error) {
-	var (
-		req  *http.Request
-		resp *http.Response
-	)
+// Configuration implements the platform.Platform interface.
+func (a *Azure) Configuration(ctx context.Context) ([]byte, error) {
+	defer func() {
+		if err := linuxAgent(ctx); err != nil {
+			log.Printf("failed to update instance status, err: %s", err.Error())
+		}
+	}()
 
-	req, err = http.NewRequestWithContext(ctx, "GET", AzureHostnameEndpoint, nil)
+	log.Printf("fetching network config from %q", AzureInterfacesEndpoint)
+
+	metadataNetworkConfig, err := download.Download(ctx, AzureInterfacesEndpoint,
+		download.WithHeaders(map[string]string{"Metadata": "true"}))
 	if err != nil {
-		return
+		return nil, fmt.Errorf("failed to fetch network config from metadata service")
 	}
 
-	req.Header.Add("Metadata", "true")
+	log.Printf("fetching machine config from ovf-env.xml")
 
-	client := &http.Client{}
-
-	resp, err = client.Do(req)
+	// Custom data is not available in IMDS, so trying to find it on CDROM.
+	machineConfig, err := a.configFromCD()
 	if err != nil {
-		return
+		log.Printf("fetching machine config from cdrom failed, err: %s", err.Error())
+
+		return nil, err
 	}
 
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return hostname, fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
+	confProvider, err := configloader.NewFromBytes(machineConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing machine config: %w", err)
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	confProvider, err = a.ConfigurationNetwork(metadataNetworkConfig, confProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	return confProvider.Bytes()
 }
 
 // Mode implements the platform.Platform interface.
@@ -121,67 +161,39 @@ func (a *Azure) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
+// Hostname implements the platform.Platform interface.
+func (a *Azure) Hostname(ctx context.Context) (hostname []byte, err error) {
+	log.Printf("fetching hostname from: %q", AzureHostnameEndpoint)
+
+	host, err := download.Download(ctx, AzureHostnameEndpoint,
+		download.WithHeaders(map[string]string{"Metadata": "true"}),
+		download.WithErrorOnNotFound(errors.ErrNoHostname),
+		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
+	if err != nil {
+		return nil, err
+	}
+
+	return host, nil
+}
+
 // ExternalIPs implements the runtime.Platform interface.
 func (a *Azure) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	var (
-		body []byte
-		req  *http.Request
-		resp *http.Response
-	)
+	log.Printf("fetching externalIP from: %q", AzureInterfacesEndpoint)
 
-	if req, err = http.NewRequestWithContext(ctx, "GET", AzureInterfacesEndpoint, nil); err != nil {
-		return
+	metadataNetworkConfig, err := download.Download(ctx, AzureInterfacesEndpoint,
+		download.WithHeaders(map[string]string{"Metadata": "true"}),
+		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
+		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	if err != nil {
+		return nil, err
 	}
 
-	req.Header.Add("Metadata", "true")
-
-	client := &http.Client{}
-
-	if resp, err = client.Do(req); err != nil {
-		return
+	addrs, err = a.getPublicIPs(metadataNetworkConfig)
+	if err != nil {
+		return nil, err
 	}
 
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return addrs, fmt.Errorf("failed to retrieve external addresses for instance")
-	}
-
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return addrs, err
-	}
-
-	type IPAddress struct {
-		PrivateIPAddress string `json:"privateIpAddress"`
-		PublicIPAddress  string `json:"publicIpAddress"`
-	}
-
-	type interfaces []struct {
-		IPv4 struct {
-			IPAddresses []IPAddress `json:"ipAddress"`
-		} `json:"ipv4"`
-		IPv6 struct {
-			IPAddresses []IPAddress `json:"ipAddress"`
-		} `json:"ipv6"`
-	}
-
-	interfaceAddresses := interfaces{}
-	if err = json.Unmarshal(body, &interfaceAddresses); err != nil {
-		return addrs, err
-	}
-
-	for _, iface := range interfaceAddresses {
-		for _, ipv4addr := range iface.IPv4.IPAddresses {
-			addrs = append(addrs, net.ParseIP(ipv4addr.PublicIPAddress))
-		}
-
-		for _, ipv6addr := range iface.IPv6.IPAddresses {
-			addrs = append(addrs, net.ParseIP(ipv6addr.PublicIPAddress))
-		}
-	}
-
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.
@@ -193,7 +205,7 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 	}
 }
 
-// configFromCD handles looking for devices and trying to mount/fetch xml to get the userdata.
+// configFromCD handles looking for devices and trying to mount/fetch xml to get the custom data.
 func (a *Azure) configFromCD() ([]byte, error) {
 	devList, err := ioutil.ReadDir("/dev")
 	if err != nil {
@@ -244,5 +256,30 @@ func (a *Azure) configFromCD() ([]byte, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no devices seemed to contain ovf-env.xml for pulling machine config")
+	return nil, errors.ErrNoConfigSource
+}
+
+// getPublicIPs parced network metadata response.
+func (a *Azure) getPublicIPs(metadataNetworkConfig []byte) (addrs []net.IP, err error) {
+	var interfaceAddresses []NetworkConfig
+
+	if err = json.Unmarshal(metadataNetworkConfig, &interfaceAddresses); err != nil {
+		return nil, errors.ErrNoExternalIPs
+	}
+
+	for _, iface := range interfaceAddresses {
+		for _, ipv4addr := range iface.IPv4.IPAddresses {
+			if ip := net.ParseIP(ipv4addr.PublicIPAddress); ip != nil {
+				addrs = append(addrs, ip)
+			}
+		}
+
+		for _, ipv6addr := range iface.IPv6.IPAddresses {
+			if ip := net.ParseIP(ipv6addr.PublicIPAddress); ip != nil {
+				addrs = append(addrs, ip)
+			}
+		}
+	}
+
+	return addrs, nil
 }

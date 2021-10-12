@@ -182,6 +182,10 @@ for i in $( seq 0 1 2 ); do
     --lb-name talos-lb \
     --lb-address-pools talos-be-pool
 done
+
+# NOTES:
+# Talos can detect PublicIPs automatically if PublicIP SKU is Basic.
+# Use `--sku Basic` to set SKU to Basic.
 ```
 
 ### Cluster Configuration
@@ -201,6 +205,10 @@ talosctl gen config talos-k8s-azure-tutorial https://${LB_PUBLIC_IP}:6443
 ### Compute Creation
 
 We are now ready to create our azure nodes.
+Azure allows you to pass Talos machine configuration to the virtual machine at bootstrap time via
+`user-data` or `custom-data` methods.
+
+Talos supports only `custom-data` method, machine configuration is available to the VM only on the first boot.
 
 ```bash
 # Create availability set
