@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.12.0"
+previous = "v0.13.0"
 
 pre_release = true
 
@@ -15,101 +15,14 @@ preface = """\
 
 [notes]
 
-    [notes.clouds]
-        title = "Hetzner, Scaleway, Upcloud and Vultr"
-        description = """\
-Talos now natively supports four new cloud platforms:
+    [notes.upgrades]
+        title = "Kubernetes Upgrade Enhancements"
+        description="""\
+`talosctl upgrade-k8s` now syncs all Talos manifest resources generated from templates.
 
-* [Hetzner](https://www.hetzner.com/), including VIP support
-* [Scaleway](https://www.scaleway.com/en/)
-* [Upcloud](https://upcloud.com/)
-* [Vultr](https://www.vultr.com/)
-
-Also generic `cloud-init` `nocloud` platform is supported in both networking and storage-based modes.
+So there is no need to update CoreDNS, Flannel container manually after running `upgrade-k8s` anymore.
 """
-
-    [notes.kexec]
-        title = "Reboots via kexec"
-        description = """\
-Talos now reboots by default via kexec syscall which means BIOS POST process is skipped.
-On bare-metal hardware BIOS POST process might take 10-15 minutes, so Talos reboots 10-15 minutes faster on bare-metal.
-
-Kexec support can be disabled with the following change to the machine configuration:
-
-```yaml
-machine:
-  sysctls:
-    kernel.kexec_load_disabled: "1"
-```
-"""
-
-    [notes.caps]
-        title = "Kexec and capabilities"
-        description = """\
-When kexec support is disabled (see `Reboots via kexec`),
-Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
-That is helpful for advanced use-cases like Docker-in-Docker.
-
-If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
-For example:
-
-```yaml
-install:
-  extraKernelArgs:
-    - kexec_load_disabled=1
-```
-
-Please note that capabilities are dropped before machine configuration is loaded,
-so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec`) will not be enough.
-"""
-
-    [notes.kubespan]
-        title = "Cluster Discovery and KubeSpan"
-        description = """\
-This release of Talos provides initial support for cluster membership discovery and [KubeSpan](https://www.talos-systems.com/kubespan/).
-
-These new features are not enabled by default, to enable them please make following changes to the machine configuration:
-
-```yaml
-machine:
-  network:
-    kubespan:
-      enabled: true
-cluster:
-  discovery:
-    enabled: true
-```
-
-"""
-
-    [notes.etcd]
-        title = "etcd Advertised Address"
-        description = """\
-The address advertised by etcd can now be controlled with new machine configuration option `machine.etcd.subnet`.
-"""
-
-    [notes.kubelet]
-        title = "kubelet Node IP"
-        description = """\
-The addresses picked by kubelet can now be controlled with new machine configuration option `machine.kubelet.nodeIP.validSubnets`.
-"""
-
-    [notes.windows]
-        title = "Windows Suport"
-        description = """\
-CLI tool talosctl is now built for Windows and published as part of the release.
-"""
-
-    [notes.components]
-        title = "Component Updates"
-        description = """\
-Linux: 5.10.69
-Kubernetes: 1.22.2
-containerd: 1.5.6
-runc: 1.0.2
-
-Talos is built with Go 1.17.1.
-"""
+      
 
 [make_deps]
 
