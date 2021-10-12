@@ -14,7 +14,7 @@ To see a live demo of this writeup, see the video below:
 
 ### After Upgrade to 0.13
 
-TBD
+No actions required.
 
 ## `talosctl` Upgrade
 
@@ -56,4 +56,11 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+There are no required machine configuration changes when upgrading to Talos 0.13, but there are several new features
+which should be enabled explicitly:
+
+* [cluster membership discovery](../../guides/discovery/)
+* [KubeSpan](../../guides/kubespan/)
+
+These features require `.cluster.id` and `.cluster.secret` configuration fields to be set (introduced in Talos 0.12),
+please see the [v0.12 upgrade docs](../../../v0.12/guides/upgrading-talos/) for details.
