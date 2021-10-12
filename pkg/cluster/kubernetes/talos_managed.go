@@ -16,15 +16,21 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/talos-systems/go-retry/retry"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/kubernetes"
@@ -33,6 +39,7 @@ import (
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/resources/k8s"
 )
 
 // UpgradeProvider are the cluster interfaces required by upgrade process.
@@ -104,6 +111,14 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		} else {
 			return fmt.Errorf("error updating kube-proxy: %w", err)
 		}
+	}
+
+	if err := upgradeCoreDNS(ctx, cluster, options); err != nil {
+		if state.IsNotFoundError(err) {
+			return nil
+		}
+
+		return err
 	}
 
 	return nil
@@ -296,6 +311,159 @@ func upgradeConfigPatcher(options UpgradeOptions, service string, configResource
 
 		return nil
 	}
+}
+
+//nolint:gocyclo,cyclop
+func upgradeCoreDNS(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
+	config, err := cluster.K8sRestConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	dialer := kubernetes.NewDialer()
+	config.Dial = dialer.DialContext
+
+	defer dialer.CloseAll()
+
+	k8sClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	dc, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
+
+	talosclient, err := cluster.Client()
+	if err != nil {
+		return err
+	}
+
+	var resources []client.ResourceResponse
+
+	if resources, err = talosclient.Resources.Get(ctx, k8s.ControlPlaneNamespaceName, k8s.ManifestType, "11-core-dns"); err != nil {
+		return err
+	}
+
+	var res resource.Resource
+
+	for _, r := range resources {
+		if r.Resource == nil {
+			continue
+		}
+
+		res = r.Resource
+	}
+
+	if res == nil {
+		return fmt.Errorf("coredns manifest not found")
+	}
+
+	// TODO: that's a mess, but it's the only way for now
+	out, err := resource.MarshalYAML(res)
+	if err != nil {
+		return err
+	}
+
+	data, err := yaml.Marshal(out)
+	if err != nil {
+		return err
+	}
+
+	manifest := struct {
+		Objects []map[string]interface{} `yaml:"spec"`
+	}{}
+
+	if err = yaml.Unmarshal(data, &manifest); err != nil {
+		return err
+	}
+
+	objects := manifest.Objects
+
+	var (
+		resp    *unstructured.Unstructured
+		mapping *meta.RESTMapping
+		updated bool
+	)
+
+	options.Log("updating coreDNS")
+
+	for _, o := range objects {
+		obj := &unstructured.Unstructured{Object: o}
+
+		mapping, err = mapper.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
+		if err != nil {
+			return fmt.Errorf("error creating mapping for object %s: %w", obj.GetName(), err)
+		}
+
+		resp, err = k8sClient.Resource(mapping.Resource).Namespace(obj.GetNamespace()).Update(ctx, obj, metav1.UpdateOptions{
+			DryRun: []string{"All"},
+		})
+		if err != nil {
+			return err
+		}
+
+		var current *unstructured.Unstructured
+
+		current, err = k8sClient.Resource(mapping.Resource).Namespace(obj.GetNamespace()).Get(ctx, obj.GetName(), metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		diff := cmp.Diff(resp.Object, current.Object, cmpopts.IgnoreMapEntries(func(key string, value interface{}) bool {
+			return key == "metadata"
+		}))
+
+		options.Log(" > update %s %s", resp.GetKind(), resp.GetName())
+
+		if options.DryRun {
+			options.Log(" > upgrade skipped in dry-run, diff:\n %s", diff)
+
+			continue
+		}
+
+		if diff == "" {
+			options.Log(" > upgrade skipped: nothing to update")
+
+			continue
+		}
+
+		resp, err = k8sClient.Resource(mapping.Resource).Namespace(obj.GetNamespace()).Update(ctx, obj, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+
+		updated = true
+	}
+
+	if resp == nil || !updated {
+		return nil
+	}
+
+	clientset, err := cluster.K8sHelper(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer clientset.Close() //nolint:errcheck
+
+	return retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
+		deployment, err := clientset.AppsV1().Deployments(resp.GetNamespace()).Get(ctx, resp.GetName(), metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		if deployment.Status.ReadyReplicas != deployment.Status.Replicas || deployment.Status.UpdatedReplicas != deployment.Status.Replicas {
+			return retry.ExpectedErrorf("ready replicas %d != replicas %d", deployment.Status.ReadyReplicas, deployment.Status.Replicas)
+		}
+
+		options.Log(" > updated CoreDNS")
+
+		return nil
+	})
 }
 
 //nolint:gocyclo
