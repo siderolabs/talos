@@ -59,7 +59,7 @@ func NewController() (*Controller, error) {
 	// TODO: this should be streaming capacity and probably some constant
 	e := NewEvents(1000, 10)
 
-	l := logging.NewCircularBufferLoggingManager()
+	l := logging.NewCircularBufferLoggingManager(log.New(os.Stdout, "machined fallback logger: ", log.Flags()))
 
 	ctlr := &Controller{
 		r: NewRuntime(nil, s, e, l),

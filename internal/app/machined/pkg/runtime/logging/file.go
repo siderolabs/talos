@@ -37,6 +37,9 @@ func (manager *FileLoggingManager) ServiceLog(id string) runtime.LogHandler {
 	}
 }
 
+// SetSender implements runtime.LoggingManager interface (by doing nothing).
+func (manager *FileLoggingManager) SetSender(runtime.LogSender) {}
+
 type fileLogHandler struct {
 	path string
 

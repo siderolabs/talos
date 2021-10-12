@@ -10,8 +10,8 @@ import (
 	"sync"
 )
 
-// Buffer implements circular buffer which supports single writer and multiple
-// readers each with its own offset.
+// Buffer implements circular buffer with a thread-safe writer,
+// that supports multiple readers each with its own offset.
 type Buffer struct {
 	opt Options
 
@@ -55,11 +55,14 @@ func NewBuffer(opts ...OptionFunc) (*Buffer, error) {
 }
 
 // Write implements io.Writer interface.
-func (buf *Buffer) Write(p []byte) (n int, err error) {
+func (buf *Buffer) Write(p []byte) (int, error) {
+	l := len(p)
+	if l == 0 {
+		return 0, nil
+	}
+
 	buf.mu.Lock()
 	defer buf.mu.Unlock()
-
-	l := len(p)
 
 	if buf.off < int64(buf.opt.MaxCapacity) {
 		if buf.off+int64(l) > int64(cap(buf.data)) && cap(buf.data) < buf.opt.MaxCapacity {
@@ -79,6 +82,7 @@ func (buf *Buffer) Write(p []byte) (n int, err error) {
 		}
 	}
 
+	var n int
 	for n < l {
 		i := int(buf.off % int64(buf.opt.MaxCapacity))
 
@@ -94,11 +98,9 @@ func (buf *Buffer) Write(p []byte) (n int, err error) {
 		p = p[nn:]
 	}
 
-	if n > 0 {
-		buf.cond.Broadcast()
-	}
+	buf.cond.Broadcast()
 
-	return n, err
+	return n, nil
 }
 
 // Capacity returns number of bytes allocated for the buffer.

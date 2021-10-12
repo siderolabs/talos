@@ -27,7 +27,9 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	runtimelogging "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/talos-systems/talos/pkg/logging"
+	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	configresource "github.com/talos-systems/talos/pkg/resources/config"
 )
@@ -35,8 +37,10 @@ import (
 // Controller implements runtime.V1alpha2Controller.
 type Controller struct {
 	controllerRuntime *osruntime.Runtime
-	consoleLogLevel   zap.AtomicLevel
-	logger            *zap.Logger
+
+	loggingManager  runtime.LoggingManager
+	consoleLogLevel zap.AtomicLevel
+	logger          *zap.Logger
 
 	v1alpha1Runtime runtime.Runtime
 }
@@ -44,11 +48,12 @@ type Controller struct {
 // NewController creates Controller.
 func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 	ctrl := &Controller{
-		v1alpha1Runtime: v1alpha1Runtime,
 		consoleLogLevel: zap.NewAtomicLevel(),
+		loggingManager:  v1alpha1Runtime.Logging(),
+		v1alpha1Runtime: v1alpha1Runtime,
 	}
 
-	logWriter, err := v1alpha1Runtime.Logging().ServiceLog("controller-runtime").Writer()
+	logWriter, err := ctrl.loggingManager.ServiceLog("controller-runtime").Writer()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +71,7 @@ func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 // Run the controller runtime.
 func (ctrl *Controller) Run(ctx context.Context) error {
 	// adjust the log level based on machine configuration
-	go ctrl.watchMachineConfig(ctx, ctrl.logger)
+	go ctrl.watchMachineConfig(ctx)
 
 	for _, c := range []controller.Controller{
 		&v1alpha1.ServiceController{
@@ -182,7 +187,7 @@ func (ctrl *Controller) DependencyGraph() (*controller.DependencyGraph, error) {
 	return ctrl.controllerRuntime.GetDependencyGraph()
 }
 
-func (ctrl *Controller) watchMachineConfig(ctx context.Context, logger *zap.Logger) {
+func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 	watchCh := make(chan state.Event)
 
 	if err := ctrl.v1alpha1Runtime.State().V1Alpha2().Resources().Watch(
@@ -190,29 +195,47 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context, logger *zap.Logg
 		resource.NewMetadata(configresource.NamespaceName, configresource.MachineConfigType, configresource.V1Alpha1ID, resource.VersionUndefined),
 		watchCh,
 	); err != nil {
-		logger.Warn("error watching machine configuration", zap.Error(err))
+		ctrl.logger.Warn("error watching machine configuration", zap.Error(err))
 
 		return
 	}
 
-	for {
-		logLevel := zapcore.InfoLevel
+	var loggingEnabled bool
 
+	for {
+		var cfg talosconfig.Provider
 		select {
 		case event := <-watchCh:
-			if event.Type != state.Destroyed {
-				if event.Resource.(*configresource.MachineConfig).Config().Debug() {
-					logLevel = zapcore.DebugLevel
-				}
+			if event.Type == state.Destroyed {
+				continue
 			}
+
+			cfg = event.Resource.(*configresource.MachineConfig).Config()
+
 		case <-ctx.Done():
 			return
 		}
 
-		if ctrl.consoleLogLevel.Level() != logLevel {
-			ctrl.consoleLogLevel.SetLevel(logLevel)
+		newLogLevel := zapcore.InfoLevel
+		if cfg.Debug() {
+			newLogLevel = zapcore.DebugLevel
+		}
 
-			ctrl.logger.Info("setting console log level", zap.Stringer("level", logLevel))
+		if newLogLevel != ctrl.consoleLogLevel.Level() {
+			ctrl.logger.Info("setting console log level", zap.Stringer("level", newLogLevel))
+			ctrl.consoleLogLevel.SetLevel(newLogLevel)
+		}
+
+		if newLoggingEnabled := cfg.Machine().Features().LoggingEnabled(); newLoggingEnabled != loggingEnabled {
+			loggingEnabled = newLoggingEnabled
+
+			if newLoggingEnabled {
+				ctrl.logger.Info("enabling JSON logging")
+				ctrl.loggingManager.SetSender(runtimelogging.NewJSON())
+			} else {
+				ctrl.logger.Info("disabling JSON logging")
+				ctrl.loggingManager.SetSender(runtimelogging.NewNull())
+			}
 		}
 	}
 }

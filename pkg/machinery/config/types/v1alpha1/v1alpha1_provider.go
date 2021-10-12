@@ -103,6 +103,7 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 
 	addrs, err := dynamicProvider.ExternalIPs(ctx)
 	if err != nil {
+		// TODO: use passed logger instead of the global one
 		log.Printf("certificates will be created without external IPs: %v", err)
 	}
 

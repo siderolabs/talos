@@ -1910,6 +1910,9 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
 	RBAC *bool `yaml:"rbac,omitempty"`
+	//   description: |
+	//     FIXME(aleksi).
+	Logging *bool `yaml:"logging,omitempty"` // FIXME(aleksi)
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

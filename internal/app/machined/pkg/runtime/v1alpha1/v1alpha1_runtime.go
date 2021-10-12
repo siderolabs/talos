@@ -104,6 +104,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	// * .machine.network
 	// * .machine.certCANs
 	// * .machine.sysctls
+	// FIXME(aleksi): logging
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 

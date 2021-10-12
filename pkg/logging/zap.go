@@ -39,13 +39,13 @@ func (lw *LogWriter) Write(line []byte) (int, error) {
 	return len(line), nil
 }
 
-// LogWrapper wraps around standard logger.
-type LogWrapper struct {
+// logWrapper wraps around standard logger.
+type logWrapper struct {
 	log *log.Logger
 }
 
 // Write implements io.Writer interface.
-func (lw *LogWrapper) Write(line []byte) (int, error) {
+func (lw *logWrapper) Write(line []byte) (int, error) {
 	if lw.log == nil {
 		log.Print(string(line))
 	} else {
@@ -56,12 +56,12 @@ func (lw *LogWrapper) Write(line []byte) (int, error) {
 }
 
 // StdWriter creates a sync writer that writes all logs to the std logger.
-var StdWriter = &LogWrapper{nil}
+var StdWriter = &logWrapper{nil}
 
 // LogDestination defines logging destination Config.
 type LogDestination struct {
 	// Level log level.
-	Level  zapcore.LevelEnabler
+	level  zapcore.LevelEnabler
 	writer io.Writer
 	config zapcore.EncoderConfig
 }
@@ -101,7 +101,7 @@ func NewLogDestination(writer io.Writer, logLevel zapcore.LevelEnabler, options 
 	}
 
 	return &LogDestination{
-		Level:  logLevel,
+		level:  logLevel,
 		config: config,
 		writer: writer,
 	}
@@ -125,7 +125,7 @@ func ZapLogger(dests ...*LogDestination) *zap.Logger {
 	for _, dest := range dests {
 		consoleEncoder := zapcore.NewConsoleEncoder(dest.config)
 
-		cores = append(cores, zapcore.NewCore(consoleEncoder, zapcore.AddSync(dest.writer), dest.Level))
+		cores = append(cores, zapcore.NewCore(consoleEncoder, zapcore.AddSync(dest.writer), dest.level))
 	}
 
 	core := zapcore.NewTee(cores...)
