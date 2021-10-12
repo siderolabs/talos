@@ -19,8 +19,8 @@ require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/BurntSushi/toml v0.4.1
 	github.com/beevik/ntp v0.3.0
-	github.com/containerd/cgroups v1.0.1
-	github.com/containerd/containerd v1.5.5
+	github.com/containerd/cgroups v1.0.2
+	github.com/containerd/containerd v1.5.7
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/go-cni v1.1.0
 	github.com/containerd/typeurl v1.0.2
@@ -30,7 +30,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
 	github.com/docker/distribution v2.7.1+incompatible
-	github.com/docker/docker v20.10.8+incompatible
+	github.com/docker/docker v20.10.9+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e // indirect
@@ -47,12 +47,12 @@ require (
 	github.com/google/nftables v0.0.0-20210916140115-16a134723a96
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-getter v1.5.8
+	github.com/hashicorp/go-getter v1.5.9
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go v1.32.0
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210827173440-b95caade3eac
-	github.com/jsimonetti/rtnetlink v0.0.0-20210922080037-435639c8e6a8
+	github.com/jsimonetti/rtnetlink v0.0.0-20211011072024-e34540a94caa
 	github.com/jxskiss/base62 v0.0.0-20191017122030-4f11678b909b
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
@@ -87,21 +87,21 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
-	github.com/vmware-tanzu/sonobuoy v0.53.2
+	github.com/vmware-tanzu/sonobuoy v0.54.0
 	github.com/vmware/govmomi v0.26.1
-	github.com/vmware/vmw-guestinfo v0.0.0-20200218095840-687661b8bd8e
+	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
 	github.com/vultr/metadata v1.0.3
 	go.etcd.io/etcd/api/v3 v3.5.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20210924151903-3ad01bbaa167
+	golang.org/x/net v0.0.0-20211011170408-caeb26a5c8c0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
-	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20210927125730-0a2f4901cba6
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211011172912-d63ac011b8cf
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
@@ -129,7 +129,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
-	github.com/Microsoft/hcsshim v0.8.20 // indirect
+	github.com/Microsoft/hcsshim v0.8.21 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
@@ -144,7 +144,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
-	github.com/cilium/ebpf v0.6.2 // indirect
+	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.0.2 // indirect
@@ -217,7 +217,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v1.0.1 // indirect
+	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/opencontainers/selinux v1.8.2 // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -262,17 +262,17 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go4.org/intern v0.0.0-20210108033219-3eb7198706b2 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20201222180813-1025295fd063 // indirect
-	golang.org/x/crypto v0.0.0-20210503195802-e9a32991a82e // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	golang.zx2c4.com/wireguard v0.0.0-20210427022245-097af6e1351b // indirect
+	golang.zx2c4.com/wireguard v0.0.0-20210927201915-bb745b2ea326 // indirect
 	google.golang.org/api v0.44.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0 // indirect
+	google.golang.org/genproto v0.0.0-20211012143446-e1d23e1da178 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

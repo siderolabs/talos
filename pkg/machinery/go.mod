@@ -15,7 +15,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v0.0.0-20210922080037-435639c8e6a8
+	github.com/jsimonetti/rtnetlink v0.0.0-20211011072024-e34540a94caa
 	github.com/mdlayher/ethtool v0.0.0-20210210192532-2b88debcdd43
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/testify v1.7.0
@@ -23,8 +23,8 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.0
-	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
-	google.golang.org/genproto v0.0.0-20210924002016-3dee208752a0
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
+	google.golang.org/genproto v0.0.0-20211012143446-e1d23e1da178
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
