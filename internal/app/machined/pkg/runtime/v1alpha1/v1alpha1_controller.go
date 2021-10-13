@@ -27,8 +27,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 // Controller represents the controller responsible for managing the execution
@@ -44,7 +42,7 @@ type Controller struct {
 }
 
 // NewController intializes and returns a controller.
-func NewController(b []byte) (*Controller, error) {
+func NewController() (*Controller, error) {
 	// Wait for USB storage in the case that the install disk is supplied over
 	// USB. If we don't wait, there is the chance that we will fail to detect the
 	// install disk.
@@ -58,26 +56,17 @@ func NewController(b []byte) (*Controller, error) {
 		return nil, err
 	}
 
-	var cfg config.Provider
-
-	if b != nil {
-		cfg, err = configloader.NewFromBytes(b)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse config: %w", err)
-		}
-	}
-
 	// TODO: this should be streaming capacity and probably some constant
 	e := NewEvents(1000, 10)
 
 	l := logging.NewCircularBufferLoggingManager()
 
 	ctlr := &Controller{
-		r: NewRuntime(cfg, s, e, l),
+		r: NewRuntime(nil, s, e, l),
 		s: NewSequencer(),
 	}
 
-	ctlr.v2, err = v1alpha2.NewController(ctlr.r, l)
+	ctlr.v2, err = v1alpha2.NewController(ctlr.r)
 	if err != nil {
 		return nil, err
 	}

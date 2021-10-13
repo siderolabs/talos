@@ -42,13 +42,13 @@ type Controller struct {
 }
 
 // NewController creates Controller.
-func NewController(v1alpha1Runtime runtime.Runtime, loggingManager runtime.LoggingManager) (*Controller, error) {
+func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 	ctrl := &Controller{
 		v1alpha1Runtime: v1alpha1Runtime,
 		consoleLogLevel: zap.NewAtomicLevel(),
 	}
 
-	logWriter, err := loggingManager.ServiceLog("controller-runtime").Writer()
+	logWriter, err := v1alpha1Runtime.Logging().ServiceLog("controller-runtime").Writer()
 	if err != nil {
 		return nil, err
 	}

@@ -201,7 +201,7 @@ func run() error {
 	}
 
 	// Initialize the controller without a config.
-	c, err := v1alpha1runtime.NewController(nil)
+	c, err := v1alpha1runtime.NewController()
 	if err != nil {
 		return err
 	}
