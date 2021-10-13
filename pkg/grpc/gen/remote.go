@@ -62,12 +62,12 @@ func (g *RemoteGenerator) IdentityContext(ctx context.Context, csr *x509.Certifi
 		Csr: csr.X509CertificateRequestPEM,
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	err = retry.Exponential(5*time.Minute,
-		retry.WithAttemptTimeout(30*time.Second),
-		retry.WithUnits(5*time.Second),
+	err = retry.Exponential(time.Minute,
+		retry.WithAttemptTimeout(10*time.Second),
+		retry.WithUnits(time.Second),
 		retry.WithJitter(100*time.Millisecond),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
 		var resp *securityapi.CertificateResponse

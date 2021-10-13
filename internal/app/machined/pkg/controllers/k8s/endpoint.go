@@ -53,7 +53,7 @@ func (ctrl *EndpointController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: k8s.EndpointType,
-			Kind: controller.OutputExclusive,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -128,7 +128,7 @@ func (ctrl *EndpointController) watchEndpoints(ctx context.Context, r controller
 		sort.Slice(addrs, func(i, j int) bool { return addrs[i].Compare(addrs[j]) < 0 })
 
 		if err := r.Modify(ctx,
-			k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneEndpointsID),
+			k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneAPIServerEndpointsID),
 			func(r resource.Resource) error {
 				if !reflect.DeepEqual(r.(*k8s.Endpoint).TypedSpec().Addresses, addrs) {
 					logger.Debug("updated controlplane endpoints", zap.Any("endpoints", addrs))

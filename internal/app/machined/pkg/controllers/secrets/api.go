@@ -165,7 +165,6 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		inputs = append(inputs, controller.Input{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.EndpointType,
-			ID:        pointer.ToString(k8s.ControlPlaneEndpointsID),
 			Kind:      controller.InputWeak,
 		})
 	}
@@ -242,26 +241,23 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		var endpointsStr []string
 
 		if !isControlplane {
-			endpointResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, k8s.ControlPlaneEndpointsID, resource.VersionUndefined))
+			endpointResources, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
 			if err != nil {
-				if state.IsNotFoundError(err) {
-					continue
-				}
-
-				return fmt.Errorf("error getting endpoints resource: %w", err)
+				return fmt.Errorf("error getting endpoints resources: %w", err)
 			}
 
-			endpoints := endpointResource.(*k8s.Endpoint).TypedSpec()
+			var endpointAddrs k8s.EndpointList
 
-			if len(endpoints.Addresses) == 0 {
+			// merge all endpoints into a single list
+			for _, res := range endpointResources.Items {
+				endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
+			}
+
+			if len(endpointAddrs) == 0 {
 				continue
 			}
 
-			endpointsStr = make([]string, 0, len(endpoints.Addresses))
-
-			for _, ip := range endpoints.Addresses {
-				endpointsStr = append(endpointsStr, ip.String())
-			}
+			endpointsStr = endpointAddrs.Strings()
 		}
 
 		if isControlplane {
@@ -367,6 +363,8 @@ func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtim
 	if err != nil {
 		return fmt.Errorf("failed to generate API client CSR: %w", err)
 	}
+
+	logger.Debug("sending CSR", zap.Strings("endpoints", endpointsStr))
 
 	// TODO: add keyusage: trustd should accept key usage as additional params
 	_, clientCert.Crt, err = remoteGen.IdentityContext(ctx, clientCSR)
