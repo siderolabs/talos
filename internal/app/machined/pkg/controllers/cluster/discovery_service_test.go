@@ -5,31 +5,27 @@
 package cluster_test
 
 import (
-	"bytes"
 	"context"
 	"crypto/aes"
+	"crypto/rand"
+	"encoding/base64"
+	"io"
 	"log"
-	"net"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/discovery-service/api/v1alpha1/client/pb"
-	serverpb "github.com/talos-systems/discovery-service/api/v1alpha1/server/pb"
-	"github.com/talos-systems/discovery-service/pkg/client"
-	"github.com/talos-systems/discovery-service/pkg/server"
+	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
+	"github.com/talos-systems/discovery-client/pkg/client"
 	"github.com/talos-systems/go-retry/retry"
-	"google.golang.org/grpc"
 	"inet.af/netaddr"
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -40,52 +36,35 @@ type DiscoveryServiceSuite struct {
 	ClusterSuite
 }
 
-func setupServer(t *testing.T) (address string) {
-	t.Helper()
-
-	lis, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err)
-
-	logger := logging.Wrap(log.Writer())
-
-	serverOptions := []grpc.ServerOption{
-		grpc_middleware.WithUnaryServerChain(
-			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(server.FieldExtractor)),
-			grpc_zap.UnaryServerInterceptor(logger),
-		),
-		grpc_middleware.WithStreamServerChain(
-			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(server.FieldExtractor)),
-			grpc_zap.StreamServerInterceptor(logger),
-		),
-	}
-
-	s := grpc.NewServer(serverOptions...)
-	serverpb.RegisterClusterServer(s, server.NewTestClusterServer(logger))
-
-	go func() {
-		require.NoError(t, s.Serve(lis))
-	}()
-
-	t.Cleanup(s.Stop)
-
-	return lis.Addr().String()
-}
-
 func (suite *DiscoveryServiceSuite) TestReconcile() {
 	suite.startRuntime()
 
 	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.DiscoveryServiceController{}))
 
-	address := setupServer(suite.T())
+	serviceEndpoint, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+	suite.Require().NoError(err)
+
+	if serviceEndpoint.Port() == "" {
+		serviceEndpoint.Host += ":443"
+	}
+
+	clusterIDRaw := make([]byte, constants.DefaultClusterIDSize)
+	_, err = io.ReadFull(rand.Reader, clusterIDRaw)
+	suite.Require().NoError(err)
+
+	clusterID := base64.StdEncoding.EncodeToString(clusterIDRaw)
+
+	encryptionKey := make([]byte, constants.DefaultClusterSecretSize)
+	_, err = io.ReadFull(rand.Reader, encryptionKey)
+	suite.Require().NoError(err)
 
 	// regular discovery affiliate
 	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
 	discoveryConfig.TypedSpec().DiscoveryEnabled = true
 	discoveryConfig.TypedSpec().RegistryServiceEnabled = true
-	discoveryConfig.TypedSpec().ServiceEndpoint = address
-	discoveryConfig.TypedSpec().ServiceEndpointInsecure = true
-	discoveryConfig.TypedSpec().ServiceClusterID = "fake"
-	discoveryConfig.TypedSpec().ServiceEncryptionKey = bytes.Repeat([]byte{1}, 32)
+	discoveryConfig.TypedSpec().ServiceEndpoint = serviceEndpoint.Host
+	discoveryConfig.TypedSpec().ServiceClusterID = clusterID
+	discoveryConfig.TypedSpec().ServiceEncryptionKey = encryptionKey
 	suite.Require().NoError(suite.state.Create(suite.ctx, discoveryConfig))
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
@@ -114,11 +93,10 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 
 	cli, err := client.NewClient(client.Options{
 		Cipher:      cipher,
-		Endpoint:    address,
+		Endpoint:    serviceEndpoint.Host,
 		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
 		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
 		TTL:         5 * time.Minute,
-		Insecure:    true,
 	})
 	suite.Require().NoError(err)
 

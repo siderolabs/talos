@@ -16,8 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/discovery-service/api/v1alpha1/client/pb"
-	discoveryclient "github.com/talos-systems/discovery-service/pkg/client"
+	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
+	discoveryclient "github.com/talos-systems/discovery-client/pkg/client"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
