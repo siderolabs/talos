@@ -481,6 +481,12 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		additionalSubjectAltNames = append(additionalSubjectAltNames, options.EndpointList...)
 	}
 
+	discoveryEnabled := options.VersionContract.ClusterDiscoveryEnabled()
+
+	if options.DiscoveryEnabled != nil {
+		discoveryEnabled = *options.DiscoveryEnabled
+	}
+
 	input = &Input{
 		Certs:                      secrets.Certs,
 		VersionContract:            options.VersionContract,
@@ -509,7 +515,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		AllowSchedulingOnMasters:   options.AllowSchedulingOnMasters,
 		MachineDisks:               options.MachineDisks,
 		SystemDiskEncryptionConfig: options.SystemDiskEncryptionConfig,
-		DiscoveryEnabled:           options.DiscoveryEnabled,
+		DiscoveryEnabled:           discoveryEnabled,
 	}
 
 	return input, nil

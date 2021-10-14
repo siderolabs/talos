@@ -24,6 +24,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion0_14    = &VersionContract{0, 14}
 	TalosVersion0_13    = &VersionContract{0, 13}
 	TalosVersion0_12    = &VersionContract{0, 12}
 	TalosVersion0_11    = &VersionContract{0, 11}
@@ -90,4 +91,9 @@ func (contract *VersionContract) SupportsDynamicCertSANs() bool {
 // SupportsECDSASHA256 returns true if version of Talos supports ECDSA-SHA256 for Kubernetes certificates.
 func (contract *VersionContract) SupportsECDSASHA256() bool {
 	return contract.Greater(TalosVersion0_12)
+}
+
+// ClusterDiscoveryEnabled returns true if cluster discovery should be enabled by default.
+func (contract *VersionContract) ClusterDiscoveryEnabled() bool {
+	return contract.Greater(TalosVersion0_13)
 }

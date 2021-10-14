@@ -137,6 +137,7 @@ talosctl cluster create [flags]
       --wireguard-cidr string                   CIDR of the wireguard network
       --with-apply-config                       enable apply config when the VM is starting in maintenance mode
       --with-bootloader                         enable bootloader to load kernel and initramfs from disk image after install (default true)
+      --with-cluster-discovery                  enable cluster discovery (default true)
       --with-debug                              enable debug in Talos config to send service logs to the console
       --with-init-node                          create the cluster with an init node
       --with-kubespan                           enable KubeSpan system
@@ -1120,6 +1121,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --registry-mirror strings             list of registry mirrors to use in format: <registry host>=<mirror URL>
       --talos-version string                the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
       --version string                      the desired machine config version to generate (default "v1alpha1")
+      --with-cluster-discovery              enable cluster discovery feature (default true)
       --with-docs                           renders all machine configs adding the documentation for each field (default true)
       --with-examples                       renders all machine configs with the commented examples (default true)
       --with-kubespan                       enable KubeSpan feature

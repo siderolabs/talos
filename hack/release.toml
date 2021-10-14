@@ -22,7 +22,14 @@ preface = """\
 
 So there is no need to update CoreDNS, Flannel container manually after running `upgrade-k8s` anymore.
 """
-      
+
+    [notes.discovery]
+        title = "Cluster Discovery"
+        description="""\
+Cluster Discovery is enabled by default for Talos 0.14.
+Cluster Discovery can be disabled with `talosctl gen config --with-cluster-discovery=false`.
+"""
+
 
 [make_deps]
 

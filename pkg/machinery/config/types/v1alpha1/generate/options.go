@@ -5,6 +5,8 @@
 package generate
 
 import (
+	"github.com/AlekSi/pointer"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/role"
@@ -204,9 +206,9 @@ func WithRoles(roles role.Set) GenOption {
 }
 
 // WithClusterDiscovery enables cluster discovery feature.
-func WithClusterDiscovery() GenOption {
+func WithClusterDiscovery(enabled bool) GenOption {
 	return func(o *GenOptions) error {
-		o.DiscoveryEnabled = true
+		o.DiscoveryEnabled = pointer.ToBool(enabled)
 
 		return nil
 	}
@@ -247,7 +249,7 @@ type GenOptions struct {
 	VersionContract            *config.VersionContract
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 	Roles                      role.Set
-	DiscoveryEnabled           bool
+	DiscoveryEnabled           *bool
 }
 
 // DefaultGenOptions returns default options.

@@ -41,6 +41,18 @@ case "${WITH_VIRTUAL_IP:-false}" in
     ;;
 esac
 
+case "${WITH_CLUSTER_DISCOVERY:-true}" in
+  false)
+    QEMU_FLAGS="${QEMU_FLAGS} --with-cluster-discovery=false"
+    ;;
+esac
+
+case "${WITH_KUBESPAN:-false}" in
+  true)
+    QEMU_FLAGS="${QEMU_FLAGS} --with-kubespan"
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     DISK_IMAGE_FLAG=

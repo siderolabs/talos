@@ -45,6 +45,7 @@ var genConfigCmdFlags struct {
 	persistConfig           bool
 	withExamples            bool
 	withDocs                bool
+	withClusterDiscovery    bool
 	withKubeSpan            bool
 }
 
@@ -214,7 +215,6 @@ func writeV1Alpha1Config(args []string) error {
 			generate.WithNetworkOptions(
 				v1alpha1.WithKubeSpan(),
 			),
-			generate.WithClusterDiscovery(),
 		)
 	}
 
@@ -224,6 +224,7 @@ func writeV1Alpha1Config(args []string) error {
 		generate.WithAdditionalSubjectAltNames(genConfigCmdFlags.additionalSANs),
 		generate.WithDNSDomain(genConfigCmdFlags.dnsDomain),
 		generate.WithPersist(genConfigCmdFlags.persistConfig),
+		generate.WithClusterDiscovery(genConfigCmdFlags.withClusterDiscovery),
 	)
 
 	commentsFlags := encoder.CommentsDisabled
@@ -283,6 +284,7 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
+	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
 
 	gen.Cmd.AddCommand(genConfigCmd)
