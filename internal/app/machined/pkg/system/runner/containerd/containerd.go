@@ -125,7 +125,7 @@ func (c *containerdRunner) Close() error {
 
 // Run implements runner.Runner interface
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
@@ -134,6 +134,14 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 		logW io.WriteCloser
 		err  error
 	)
+
+	// attempt to clean up a task if it already exists
+	task, err = c.container.Task(c.ctx, nil)
+	if err == nil {
+		if _, err = task.Delete(c.ctx); err != nil {
+			return fmt.Errorf("failed to clean up task %q: %w", c.args.ID, err)
+		}
+	}
 
 	logW, err = c.opts.LoggingManager.ServiceLog(c.args.ID).Writer()
 	if err != nil {
