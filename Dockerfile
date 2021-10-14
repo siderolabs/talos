@@ -482,7 +482,7 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build $
 RUN chmod +x /installer
 
 FROM alpine:3.14.2 AS unicode-pf2
-RUN apk add --no-cache --update grub
+RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
@@ -691,9 +691,9 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.13/Reference/
-COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.13/Reference/
-COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.13/Reference/
+COPY --from=docs-build /tmp/configuration.md /website/content/docs/v0.14/Reference/
+COPY --from=docs-build /tmp/cli.md /website/content/docs/v0.14/Reference/
+COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v0.14/Reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 
