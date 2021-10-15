@@ -133,7 +133,6 @@ local setup_ci = {
 
   commands: [
     'setup-ci',
-    'make ./_out/sonobuoy',
     'make ./_out/kubectl',
   ],
   environment: {

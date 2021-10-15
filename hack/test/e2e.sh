@@ -8,7 +8,6 @@
 #  - TALOSCTL
 #  - INTEGRATION_TEST
 #  - KUBECTL
-#  - SONOBUOY
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
 #  - IMAGE
@@ -32,10 +31,6 @@ export TALOS_VERSION=v0.11
 
 export KUBECONFIG="${TMP}/kubeconfig"
 export K8S_VERSION=${K8S_VERSION:-1.22.2}
-
-# Sonobuoy
-
-export SONOBUOY_MODE=${SONOBUOY_MODE:-quick}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -174,20 +169,7 @@ function run_kubernetes_conformance_test {
 }
 
 function run_kubernetes_integration_test {
-  timeout=$(($(date +%s) + ${TIMEOUT}))
-  until ${SONOBUOY} run \
-    --kubeconfig ${KUBECONFIG} \
-    --wait \
-    --skip-preflight \
-    --plugin e2e \
-    --mode ${SONOBUOY_MODE}; do
-    [[ $(date +%s) -gt $timeout ]] && exit 1
-    echo "re-attempting to run sonobuoy"
-    ${SONOBUOY} delete --all --wait --kubeconfig ${KUBECONFIG}
-    sleep 10
-  done
-  ${SONOBUOY} status --kubeconfig ${KUBECONFIG} --json | jq . | tee ${TMP}/sonobuoy-status.json
-  if [ $(cat ${TMP}/sonobuoy-status.json | jq -r '.plugins[] | select(.plugin == "e2e") | ."result-status"') != 'passed' ]; then exit 1; fi
+  "${TALOSCTL}" health --run-e2e
 }
 
 function run_control_plane_cis_benchmark {

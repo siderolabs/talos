@@ -28,8 +28,6 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.22.2/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 CLUSTERCTL_VERSION ?= 0.4.3
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
-SONOBUOY_VERSION ?= 0.53.1
-SONOBUOY_URL ?= https://github.com/vmware-tanzu/sonobuoy/releases/download/v$(SONOBUOY_VERSION)/sonobuoy_$(SONOBUOY_VERSION)_$(OPERATING_SYSTEM)_amd64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
 RELEASES ?= v0.11.5 v0.12.1
 SHORT_INTEGRATION_TEST ?=
@@ -292,11 +290,6 @@ $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
-$(ARTIFACTS)/sonobuoy:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L -o /tmp/sonobuoy.tar.gz ${SONOBUOY_URL}
-	@tar -xf /tmp/sonobuoy.tar.gz -C $(ARTIFACTS)
-
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)
 	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
@@ -307,7 +300,7 @@ $(ARTIFACTS)/clusterctl:
 	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
 	@chmod +x $(ARTIFACTS)/clusterctl
 
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobuoy $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
@@ -321,7 +314,6 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/sonobu
 		SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
-		SONOBUOY=$(PWD)/$(ARTIFACTS)/sonobuoy \
 		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
