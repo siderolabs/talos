@@ -193,6 +193,9 @@ const (
 	// KubeletPort is the kubelet port for secure API.
 	KubeletPort = 10250
 
+	// KubeletOOMScoreAdj oom_score_adj config.
+	KubeletOOMScoreAdj = -450
+
 	// KubeletPKIDir is the path to the directory where kubelet stores issued certificates and keys.
 	KubeletPKIDir = "/var/lib/kubelet/pki"
 

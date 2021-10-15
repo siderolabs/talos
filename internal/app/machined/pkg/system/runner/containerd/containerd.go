@@ -19,7 +19,6 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/sys"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -125,7 +124,7 @@ func (c *containerdRunner) Close() error {
 
 // Run implements runner.Runner interface
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
@@ -178,21 +177,6 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 
 	if err = task.Start(c.ctx); err != nil {
 		return fmt.Errorf("failed to start task: %q: %w", c.args.ID, err)
-	}
-
-	if c.opts.OOMScoreAdj != 0 {
-		var processes []containerd.ProcessInfo
-
-		processes, err = task.Pids(c.ctx)
-		if err != nil {
-			eventSink(events.StateRunning, "Failed to get task %q childs: %w", c.args.ID, err)
-		}
-
-		for _, p := range processes {
-			if err = sys.AdjustOOMScore(int(p.Pid), c.opts.OOMScoreAdj); err != nil {
-				eventSink(events.StateRunning, "Failed to change OOMScoreAdj to process %s", p.Pid)
-			}
-		}
 	}
 
 	eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), task.Pid(), c.container.ID())
@@ -286,6 +270,12 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		oci.WithHostResolvconf,
 		oci.WithNoNewPrivileges,
 	)
+
+	if c.opts.OOMScoreAdj != 0 {
+		specOpts = append(specOpts,
+			WithOOMScoreAdj(c.opts.OOMScoreAdj),
+		)
+	}
 
 	if c.opts.CgroupPath != "" {
 		specOpts = append(specOpts,
