@@ -214,6 +214,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithAllDevicesAllowed,
 			oci.WithCapabilities(capability.AllGrantableCapabilities()), // TODO: kubelet doesn't need all of these, we should consider limiting capabilities
 		),
+		runner.WithOOMScoreAdj(-450),
 	),
 		restart.WithType(restart.Forever),
 	), nil
