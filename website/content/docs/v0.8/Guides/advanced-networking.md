@@ -54,8 +54,8 @@ machine:
         dhcp: true
         bond:
           mode: 802.3ad
-          lacprate: fast
-          hashpolicy: layer3+4
+          lacpRate: fast
+          xmitHashPolicy: layer3+4
           miimon: 100
           updelay: 200
           downdelay: 200
