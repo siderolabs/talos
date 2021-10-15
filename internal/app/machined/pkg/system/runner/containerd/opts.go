@@ -32,3 +32,12 @@ func WithRootfsPropagation(rp string) oci.SpecOpts {
 		return nil
 	}
 }
+
+// WithOOMScoreAdj sets the oom score.
+func WithOOMScoreAdj(score int) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
+		s.Process.OOMScoreAdj = &score
+
+		return nil
+	}
+}

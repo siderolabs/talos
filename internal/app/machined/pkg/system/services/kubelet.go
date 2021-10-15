@@ -214,6 +214,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithAllDevicesAllowed,
 			oci.WithCapabilities(capability.AllGrantableCapabilities()), // TODO: kubelet doesn't need all of these, we should consider limiting capabilities
 		),
+		runner.WithOOMScoreAdj(-450),
 	),
 		restart.WithType(restart.Forever),
 	), nil
@@ -255,6 +256,7 @@ func (k *Kubelet) HealthSettings(runtime.Runtime) *health.Settings {
 func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconfig.KubeletConfiguration {
 	f := false
 	t := true
+	oomScoreAdj := int32(-450)
 
 	return &kubeletconfig.KubeletConfiguration{
 		TypeMeta: metav1.TypeMeta{
@@ -264,6 +266,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		StaticPodPath:      constants.ManifestsDirectory,
 		Address:            "0.0.0.0",
 		Port:               constants.KubeletPort,
+		OOMScoreAdj:        &oomScoreAdj,
 		RotateCertificates: true,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
