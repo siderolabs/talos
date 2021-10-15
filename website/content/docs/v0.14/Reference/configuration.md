@@ -1137,7 +1137,7 @@ Examples:
 
 ``` yaml
 etcd:
-    image: gcr.io/etcd-development/etcd:v3.4.16 # The container image used to create the etcd service.
+    image: gcr.io/etcd-development/etcd:v3.5.1 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
         crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
@@ -2802,7 +2802,7 @@ Appears in:
 
 
 ``` yaml
-image: gcr.io/etcd-development/etcd:v3.4.16 # The container image used to create the etcd service.
+image: gcr.io/etcd-development/etcd:v3.5.1 # The container image used to create the etcd service.
 # The `ca` is the root certificate authority of the PKI.
 ca:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
@@ -2832,7 +2832,7 @@ Examples:
 
 
 ``` yaml
-image: gcr.io/etcd-development/etcd:v3.4.16
+image: gcr.io/etcd-development/etcd:v3.5.1
 ```
 
 
