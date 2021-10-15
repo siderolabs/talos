@@ -57,6 +57,9 @@ func (suite *EventsSuite) TestEventsWatch() {
 		suite.Assert().NoError(suite.Client.EventsWatch(watchCtx, func(ch <-chan client.Event) {
 			defer watchCtxCancel()
 
+			timer := time.NewTimer(500 * time.Millisecond)
+			defer timer.Stop()
+
 			for {
 				select {
 				case event, ok := <-ch:
@@ -65,7 +68,7 @@ func (suite *EventsSuite) TestEventsWatch() {
 					}
 
 					result = append(result, event)
-				case <-time.After(100 * time.Millisecond):
+				case <-timer.C:
 					return
 				}
 			}
