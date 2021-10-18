@@ -17,6 +17,12 @@ func NewNull() runtime.LogSender {
 	return nullSender{}
 }
 
+// Send implements LogSender interface (by doing nothing).
 func (nullSender) Send(context.Context, *runtime.LogEvent) error {
+	return nil
+}
+
+// Close implements LogSender interface (by doing nothing).
+func (nullSender) Close(context.Context) error {
 	return nil
 }

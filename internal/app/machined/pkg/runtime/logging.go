@@ -18,8 +18,11 @@ type LoggingManager interface {
 	// ServiceLog privides a log handler for a given service (that may not exist).
 	ServiceLog(service string) LogHandler
 
-	// SetSender sets the log sender for all derived log handlers.
-	SetSender(sender LogSender)
+	// SetSender sets the log sender for all derived log handlers
+	// and returns the previous one for closing.
+	//
+	// SetSender should be thread-safe.
+	SetSender(sender LogSender) LogSender
 }
 
 // LogOptions for LogHandler.Reader.
@@ -69,8 +72,16 @@ var ErrDontRetry = fmt.Errorf("don't retry")
 // LogSender provides common interface for log senders.
 type LogSender interface {
 	// Send tries to send the log event once, exiting on success, error, or context cancelation.
+	//
 	// Returned error is nil on success, non-nil otherwise.
 	// As a special case, Send can return (possibly wrapped) ErrDontRetry if the log event should not be resent
 	// (if it is invalid, if it was sent partially, etc).
+	//
+	// Send should be thread-safe.
 	Send(ctx context.Context, e *LogEvent) error
+
+	// Close stops the sender gracefully if possible, or forcefully on context cancelation.
+	//
+	// Close should be thread-safe.
+	Close(ctx context.Context) error
 }
