@@ -3,14 +3,16 @@ title: "Nocloud"
 description: "Creating a cluster via the CLI using qemu."
 ---
 
-Talos supports [nocloud](https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html) data source implementaation. There are two ways to configure your server:
+Talos supports [nocloud](https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html) data source implementation.
+There are two ways to configure your server:
 
 * SMBIOS “serial number” option
 * CDROM or USB-flash filesystem
 
 ### SMBIOS
 
-This method works only with network. DHCP and HTTP(s) server required.
+This method works only with network.
+DHCP and HTTP(s) server required.
 
 ```
 ds=nocloud-net;s=http://10.10.0.1/configs/;h=HOSTNAME
@@ -18,10 +20,12 @@ ds=nocloud-net;s=http://10.10.0.1/configs/;h=HOSTNAME
 
 After the network initialization is complete, Talos fetches:
 
-* the machineconfig from http://10.10.0.1/configs/user-data
-* the network config (if exists) from http://10.10.0.1/configs/network-config
+* the machine config from http://10.10.0.1/configs/user-data
+* the network config (if it exists) from http://10.10.0.1/configs/network-config
 
 #### QEMU
+
+Simply add the following flag when starting the VM.
 
 ```
 -smbios type=1,serial=ds=nocloud-net;s=http://10.10.0.1/configs/
@@ -37,17 +41,18 @@ smbios1: uuid=ceae4d10,serial=ZHM9bm9jbG91ZC1uZXQ7cz1odHRwOi8vMTAuMTAuMC4xL2Nvbm
 ...
 ```
 
-Where serial is base64 encode string ```ds=nocloud-net;s=http://10.10.0.1/configs/```. You can use Proxmox GUI to configure it.
+Where serial is a base64-encoded string of `ds=nocloud-net;s=http://10.10.0.1/configs/`.
+You can use also use the Proxmox GUI to configure this information.
 
 ### CDROM/USB
 
-Talos will get machineconfig from local storage without running a network services (DHCP/HTTP).
+Talos can also get machine config from local storage without running a network services (DHCP/HTTP).
 
 You can provide configs to the server via files on a vfat or iso9660 filesystem. The filesystem volume label must be ```cidata``` or ```CIDATA```.
 
 #### QEMU
 
-Create and prepare Talos machineconfig:
+Create and prepare Talos machine config:
 
 ```bash
 export CONTROL_PLANE_IP=192.168.1.10
@@ -55,7 +60,7 @@ export CONTROL_PLANE_IP=192.168.1.10
 talosctl gen config talos-nocloud https://$CONTROL_PLANE_IP:6443 --output-dir _out
 ```
 
-Prepate cloud-init configs:
+Prepare cloud-init configs:
 
 ```bash
 mkdir -p iso
@@ -92,7 +97,8 @@ qemu-system-x86_64 \
 
 #### Proxmox
 
-Proxmox can create cloud-init disk for you. The part of the config file
+Proxmox can create cloud-init disk for you.
+Edit the config file as follows, substituting your own infomation as necessary:
 
 ```config
 cicustom: user=local:snippets/master-1.yml
@@ -101,4 +107,6 @@ nameserver: 1.1.1.1
 searchdomain: local
 ```
 
-Where ```snippets/master-1.yml``` is Talos machineconfig. It usualy located here ```/var/lib/vz/snippets/master-1.yml```. You have to put it by youself. Proxmox does not support upload snippets through GUI.
+Where `snippets/master-1.yml` is Talos machine config.
+It usualy located at `/var/lib/vz/snippets/master-1.yml`.
+This file must be placed in the path manually, as Proxmox does not support uploading of snippets through GUI.
