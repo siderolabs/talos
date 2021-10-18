@@ -92,9 +92,9 @@ require (
 	github.com/vmware/govmomi v0.26.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
 	github.com/vultr/metadata v1.0.3
-	go.etcd.io/etcd/api/v3 v3.5.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.0
-	go.etcd.io/etcd/client/v3 v3.5.0
+	go.etcd.io/etcd/api/v3 v3.5.1
+	go.etcd.io/etcd/client/pkg/v3 v3.5.1
+	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/net v0.0.0-20211011170408-caeb26a5c8c0
@@ -116,6 +116,7 @@ require (
 	k8s.io/kubectl v0.22.2
 	k8s.io/kubelet v0.22.2
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.59
+	sigs.k8s.io/yaml v1.2.0
 )
 
 require (
@@ -288,5 +289,4 @@ require (
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
-	sigs.k8s.io/yaml v1.2.0 // indirect
 )
