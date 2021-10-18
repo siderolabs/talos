@@ -23,8 +23,8 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.0
-	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
-	google.golang.org/genproto v0.0.0-20211012143446-e1d23e1da178
+	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744
+	google.golang.org/genproto v0.0.0-20211016002631-37fc39342514
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

@@ -65,7 +65,7 @@ require (
 	github.com/packethost/packngo v0.19.1
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.3
-	github.com/rivo/tview v0.0.0-20210926181611-ee97a7ab3975
+	github.com/rivo/tview v0.0.0-20211001102648-5508f4b00266
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
@@ -89,7 +89,7 @@ require (
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/vmware-tanzu/sonobuoy v0.54.0
-	github.com/vmware/govmomi v0.26.1
+	github.com/vmware/govmomi v0.27.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
 	github.com/vultr/metadata v1.0.3
 	go.etcd.io/etcd/api/v3 v3.5.1
@@ -97,9 +97,9 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20211011170408-caeb26a5c8c0
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
+	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211011172912-d63ac011b8cf
@@ -116,7 +116,7 @@ require (
 	k8s.io/kubectl v0.22.2
 	k8s.io/kubelet v0.22.2
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.59
-	sigs.k8s.io/yaml v1.2.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -274,7 +274,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20210927201915-bb745b2ea326 // indirect
 	google.golang.org/api v0.44.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211012143446-e1d23e1da178 // indirect
+	google.golang.org/genproto v0.0.0-20211016002631-37fc39342514 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
