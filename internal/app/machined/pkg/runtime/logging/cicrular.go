@@ -61,16 +61,20 @@ func (manager *CircularBufferLoggingManager) ServiceLog(id string) runtime.LogHa
 }
 
 // SetSender implements runtime.LoggingManager interface.
-func (manager *CircularBufferLoggingManager) SetSender(sender runtime.LogSender) {
+func (manager *CircularBufferLoggingManager) SetSender(sender runtime.LogSender) runtime.LogSender {
 	manager.senderRW.Lock()
 
-	manager.sender = sender
-	prev := manager.senderChanged
+	prevChanged := manager.senderChanged
 	manager.senderChanged = make(chan struct{})
+
+	prevSender := manager.sender
+	manager.sender = sender
 
 	manager.senderRW.Unlock()
 
-	close(prev)
+	close(prevChanged)
+
+	return prevSender
 }
 
 func (manager *CircularBufferLoggingManager) getSender() (runtime.LogSender, <-chan struct{}) {
@@ -199,10 +203,13 @@ func (handler *circularHandler) runSender() error {
 			continue
 		}
 
-		handler.resend(&runtime.LogEvent{
+		// TODO(aleksi): extract fields from msg there or in jsonSender
+		e := &runtime.LogEvent{
 			Msg:    l,
 			Fields: handler.fields,
-		})
+		}
+
+		handler.resend(e)
 	}
 
 	return fmt.Errorf("scanner: %w", scanner.Err())
@@ -226,11 +233,11 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 			<-changed
 		}
 
-		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+		sendCtx, sendCancel := context.WithTimeout(context.TODO(), 5*time.Second)
 
-		err := sender.Send(ctx, e)
+		err := sender.Send(sendCtx, e)
 
-		cancel()
+		sendCancel()
 
 		if err == nil {
 			return

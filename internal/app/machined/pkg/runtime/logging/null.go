@@ -25,7 +25,9 @@ func (*NullLoggingManager) ServiceLog(id string) runtime.LogHandler {
 }
 
 // SetSender implements runtime.LoggingManager interface (by doing nothing).
-func (*NullLoggingManager) SetSender(runtime.LogSender) {}
+func (*NullLoggingManager) SetSender(runtime.LogSender) runtime.LogSender {
+	return nil
+}
 
 type nullLogHandler struct{}
 

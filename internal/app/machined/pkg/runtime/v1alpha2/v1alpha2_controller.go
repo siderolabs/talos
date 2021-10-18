@@ -6,6 +6,7 @@ package v1alpha2
 
 import (
 	"context"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
@@ -24,7 +25,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
+	timecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
@@ -78,7 +79,7 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			// V1Events
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
-		&time.SyncController{
+		&timecontrollers.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&cluster.AffiliateMergeController{},
@@ -217,26 +218,39 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 			return
 		}
 
-		newLogLevel := zapcore.InfoLevel
-		if cfg.Debug() {
-			newLogLevel = zapcore.DebugLevel
+		ctrl.updateLoggingConfig(ctx, cfg, &loggingEnabled)
+	}
+}
+
+func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Provider, prevLoggingEnabled *bool) {
+	newLogLevel := zapcore.InfoLevel
+	if cfg.Debug() {
+		newLogLevel = zapcore.DebugLevel
+	}
+
+	if newLogLevel != ctrl.consoleLogLevel.Level() {
+		ctrl.logger.Info("setting console log level", zap.Stringer("level", newLogLevel))
+		ctrl.consoleLogLevel.SetLevel(newLogLevel)
+	}
+
+	if newLoggingEnabled := cfg.Machine().Features().LoggingEnabled(); newLoggingEnabled != *prevLoggingEnabled {
+		*prevLoggingEnabled = newLoggingEnabled
+
+		var prev runtime.LogSender
+
+		if newLoggingEnabled {
+			ctrl.logger.Info("enabling JSON logging")
+			prev = ctrl.loggingManager.SetSender(runtimelogging.NewJSON("127.0.0.1:12345"))
+		} else {
+			ctrl.logger.Info("disabling JSON logging")
+			prev = ctrl.loggingManager.SetSender(runtimelogging.NewNull())
 		}
 
-		if newLogLevel != ctrl.consoleLogLevel.Level() {
-			ctrl.logger.Info("setting console log level", zap.Stringer("level", newLogLevel))
-			ctrl.consoleLogLevel.SetLevel(newLogLevel)
-		}
-
-		if newLoggingEnabled := cfg.Machine().Features().LoggingEnabled(); newLoggingEnabled != loggingEnabled {
-			loggingEnabled = newLoggingEnabled
-
-			if newLoggingEnabled {
-				ctrl.logger.Info("enabling JSON logging")
-				ctrl.loggingManager.SetSender(runtimelogging.NewJSON())
-			} else {
-				ctrl.logger.Info("disabling JSON logging")
-				ctrl.loggingManager.SetSender(runtimelogging.NewNull())
-			}
+		if prev != nil {
+			closeCtx, closeCancel := context.WithTimeout(ctx, 3*time.Second)
+			err := prev.Close(closeCtx)
+			ctrl.logger.Info("log sender closed", zap.Error(err))
+			closeCancel()
 		}
 	}
 }
