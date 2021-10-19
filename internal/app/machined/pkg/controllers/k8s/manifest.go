@@ -186,6 +186,14 @@ func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secret
 				{"11-core-dns-svc", coreDNSSvcTemplate},
 			}...,
 		)
+
+		if cfg.DNSServiceIPv6 != "" {
+			defaultManifests = append(defaultManifests,
+				[]manifestDesc{
+					{"11-core-dns-v6-svc", coreDNSv6SvcTemplate},
+				}...,
+			)
+		}
 	}
 
 	if cfg.FlannelEnabled {
