@@ -6,12 +6,12 @@ package logging
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
@@ -55,7 +55,8 @@ func (manager *CircularBufferLoggingManager) ServiceLog(id string) runtime.LogHa
 		manager: manager,
 		id:      id,
 		fields: map[string]interface{}{
-			"component": id,
+			// use field name that is not used by anything else
+			"talos-service": id,
 		},
 	}
 }
@@ -198,15 +199,18 @@ func (handler *circularHandler) runSender() error {
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		l := strings.TrimSpace(scanner.Text())
-		if l == "" {
+		l := bytes.TrimSpace(scanner.Bytes())
+		if len(l) == 0 {
 			continue
 		}
 
-		// TODO(aleksi): extract fields from msg there or in jsonSender
-		e := &runtime.LogEvent{
-			Msg:    l,
-			Fields: handler.fields,
+		e := parseLogLine(l, time.Now())
+		if e.Fields == nil {
+			e.Fields = handler.fields
+		} else {
+			for k, v := range handler.fields {
+				e.Fields[k] = v
+			}
 		}
 
 		handler.resend(e)
@@ -229,7 +233,6 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 				break
 			}
 
-			handler.manager.fallbackLogger.Printf("waiting for sender at %s", time.Now())
 			<-changed
 		}
 
@@ -243,6 +246,7 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 			return
 		}
 
+		// TODO(aleksi): remove or make less noisy
 		handler.manager.fallbackLogger.Print(err)
 
 		if errors.Is(err, runtime.ErrDontRetry) {
