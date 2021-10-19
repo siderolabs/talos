@@ -13,7 +13,7 @@
 #  - IMAGE
 #  - INSTALLER_IMAGE
 #
-# Some environment variables set in this file (e. g. TALOS_VERSION and K8S_VERSION)
+# Some environment variables set in this file (e. g. TALOS_VERSION and KUBERNETES_VERSION)
 # are referenced by https://github.com/talos-systems/cluster-api-templates.
 # See other e2e-*.sh scripts.
 
@@ -25,12 +25,12 @@ mkdir -p "${TMP}"
 # Talos
 
 export TALOSCONFIG="${TMP}/talosconfig"
-export TALOS_VERSION=v0.11
+export TALOS_VERSION=v0.14
 
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export K8S_VERSION=${K8S_VERSION:-1.22.2}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.22.2}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
