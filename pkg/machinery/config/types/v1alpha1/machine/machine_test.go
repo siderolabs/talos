@@ -36,6 +36,7 @@ func TestParseType(t *testing.T) {
 		{"worker", machine.TypeWorker},
 		{"join", machine.TypeWorker},
 		{"", machine.TypeWorker},
+		{"unknown", machine.TypeUnknown},
 	}
 
 	for _, tt := range validTests {
@@ -56,7 +57,6 @@ func TestParseType(t *testing.T) {
 
 	for _, s := range []string{
 		"foo",
-		machine.TypeUnknown.String(),
 	} {
 		s := s
 		t.Run(s, func(t *testing.T) {
