@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
@@ -47,21 +48,22 @@ func (j jsonSender) tryLock(ctx context.Context) (unlock func()) {
 	return
 }
 
-// Send implements LogSender interface.
-func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
+func (j *jsonSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
 	m := make(map[string]interface{}, len(e.Fields)+3)
-
-	// TODO(aleksi): extract fields from msg there or in circularHandler
-
-	m["msg"] = e.Msg
-	m["time"] = e.Time.Unix()
-	m["level"] = e.Level.String()
-
 	for k, v := range e.Fields {
 		m[k] = v
 	}
 
-	b, err := json.Marshal(m)
+	m["msg"] = e.Msg
+	m["talos-time"] = e.Time.Format(time.RFC3339Nano)
+	m["talos-level"] = e.Level.String()
+
+	return json.Marshal(m)
+}
+
+// Send implements LogSender interface.
+func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
+	b, err := j.marshalJSON(e)
 	if err != nil {
 		return fmt.Errorf("%w: %s", runtime.ErrDontRetry, err)
 	}

@@ -4,5 +4,9 @@ disabled_plugins = ["io.containerd.snapshotter.v1.aufs", "io.containerd.v1.zfs",
 
 imports = ["/var/cri/conf.d/*.toml"]
 
+[debug]
+level = "info"
+format = "json"
+
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
     runtime_type = "io.containerd.runc.v2"
