@@ -39,6 +39,8 @@ func ParseType(s string) (Type, error) {
 		return TypeControlPlane, nil
 	case "worker", "join", "":
 		return TypeWorker, nil
+	case "unknown":
+		return TypeUnknown, nil
 	default:
 		return TypeUnknown, fmt.Errorf("invalid machine type: %q", s)
 	}
