@@ -13,7 +13,7 @@ function create_cluster {
   "${TALOSCTL}" cluster create \
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
-    --kubernetes-version=${K8S_VERSION} \
+    --kubernetes-version=${KUBERNETES_VERSION} \
     --image="${IMAGE}" \
     --masters=1 \
     --workers=1 \
