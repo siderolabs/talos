@@ -7,11 +7,8 @@ package gcp
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -59,28 +56,14 @@ func (g *GCP) Mode() runtime.Mode {
 
 // ExternalIPs implements the runtime.Platform interface.
 func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	var (
-		body []byte
-		req  *http.Request
-		resp *http.Response
-	)
+	log.Printf("fetching externalIP from: %q", GCExternalIPEndpoint)
 
-	if req, err = http.NewRequestWithContext(ctx, "GET", GCExternalIPEndpoint, nil); err != nil {
-		return
-	}
-
-	req.Header.Add("Metadata-Flavor", "Google")
-
-	client := &http.Client{}
-	if resp, err = client.Do(req); err != nil {
-		return
-	}
-
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return addrs, fmt.Errorf("failed to retrieve external addresses for instance: %d", resp.StatusCode)
+	metadataNetworkConfig, err := download.Download(ctx, GCExternalIPEndpoint,
+		download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}),
+		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
+		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	if err != nil {
+		return nil, err
 	}
 
 	type metadata []struct {
@@ -89,13 +72,9 @@ func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		} `json:"accessConfigs"`
 	}
 
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
 	m := metadata{}
-	if err = json.Unmarshal(body, &m); err != nil {
-		return
+	if err = json.Unmarshal(metadataNetworkConfig, &m); err != nil {
+		return nil, err
 	}
 
 	for _, networkInterface := range m {
@@ -106,7 +85,7 @@ func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		}
 	}
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.
