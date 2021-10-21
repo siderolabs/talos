@@ -108,13 +108,13 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20210903134321-85fa6c94624e
-	k8s.io/api v0.22.2
-	k8s.io/apimachinery v0.22.2
-	k8s.io/apiserver v0.22.2 // indirect; use the same version as other k8s deps
-	k8s.io/client-go v0.22.2
-	k8s.io/cri-api v0.22.2
-	k8s.io/kubectl v0.22.2
-	k8s.io/kubelet v0.22.2
+	k8s.io/api v0.23.0-alpha.3
+	k8s.io/apimachinery v0.23.0-alpha.3
+	k8s.io/apiserver v0.23.0-alpha.3 // indirect; use the same version as other k8s deps
+	k8s.io/client-go v0.23.0-alpha.3
+	k8s.io/cri-api v0.23.0-alpha.3
+	k8s.io/kubectl v0.23.0-alpha.3
+	k8s.io/kubelet v0.23.0-alpha.3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.59
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -163,7 +163,7 @@ require (
 	github.com/gertd/go-pluralize v0.1.7 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/go-logr/logr v1.1.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
@@ -191,7 +191,7 @@ require (
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
-	github.com/json-iterator/go v1.1.11 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/koneu/natend v0.0.0-20150829182554-ec0926ea948d // indirect
@@ -214,7 +214,7 @@ require (
 	github.com/moby/sys/mountinfo v0.4.1 // indirect
 	github.com/moby/term v0.0.0-20210610120745-9d4ed1856297 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -227,7 +227,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.26.0 // indirect
+	github.com/prometheus/common v0.28.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
@@ -267,9 +267,9 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/text v0.3.6 // indirect
-	golang.org/x/tools v0.1.5 // indirect
+	golang.org/x/tools v0.1.6-0.20210820212750-d4cc65f0b2ff // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20210927201915-bb745b2ea326 // indirect
 	google.golang.org/api v0.44.0 // indirect
@@ -279,11 +279,11 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
-	k8s.io/cli-runtime v0.22.2 // indirect
-	k8s.io/component-base v0.22.2 // indirect
+	k8s.io/cli-runtime v0.23.0-alpha.3 // indirect
+	k8s.io/component-base v0.23.0-alpha.3 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.9.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
+	k8s.io/klog/v2 v2.20.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20210817084001-7fbd8d59e5b8 // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.59 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
