@@ -454,7 +454,7 @@ local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-
   "SHORT_INTEGRATION_TEST": "yes",
 
   # See https://github.com/talos-systems/talos/issues/4046
-  "K8S_VERSION": "1.21.3",
+  "KUBERNETES_VERSION": "1.21.3",
   "INTEGRATION_TEST_RUN": "XXX",
 });
 local e2e_capi = Step("e2e-capi", depends_on=[capi_docker], environment=creds_env_vars);

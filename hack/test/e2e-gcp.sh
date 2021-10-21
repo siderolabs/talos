@@ -16,26 +16,26 @@ function setup {
 
   ## Cluster-wide vars
   export CLUSTER_NAME=${NAME_PREFIX}
-  export PROJECT=talos-testbed
-  export REGION=us-central1
-  export NETWORK=default
+  export GCP_PROJECT=talos-testbed
+  export GCP_REGION=us-central1
+  export GCP_NETWORK=default
 
   ## Control plane vars
-  export CP_COUNT=3
-  export CP_INSTANCE_TYPE=n1-standard-4
-  export CP_VOL_SIZE=50
-  export CP_IMAGE_ID=projects/${PROJECT}/global/images/talos-e2e-${SHA}
+  export CONTROL_PLANE_MACHINE_COUNT=3
+  export GCP_CONTROL_PLANE_MACHINE_TYPE=n1-standard-4
+  export GCP_CONTROL_PLANE_VOL_SIZE=50
+  export GCP_CONTROL_PLANE_IMAGE_ID=projects/${GCP_PROJECT}/global/images/talos-e2e-${SHA}
 
   ## Worker vars
-  export WORKER_COUNT=3
-  export WORKER_INSTANCE_TYPE=n1-standard-4
-  export WORKER_VOL_SIZE=50
-  export WORKER_IMAGE_ID=projects/${PROJECT}/global/images/talos-e2e-${SHA}
+  export WORKER_MACHINE_COUNT=3
+  export GCP_NODE_MACHINE_TYPE=n1-standard-4
+  export GCP_NODE_VOL_SIZE=50
+  export GCP_NODE_IMAGE_ID=projects/${GCP_PROJECT}/global/images/talos-e2e-${SHA}
 
   ## TODO: update to talos-systems once merged
   ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/rsmitty/cluster-api-templates/blob/main/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
+    --from https://github.com/talos-systems/cluster-api-templates/blob/main/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
   
 }
 
