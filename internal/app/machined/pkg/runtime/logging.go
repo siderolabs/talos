@@ -18,11 +18,11 @@ type LoggingManager interface {
 	// ServiceLog privides a log handler for a given service (that may not exist).
 	ServiceLog(service string) LogHandler
 
-	// SetSender sets the log sender for all derived log handlers
-	// and returns the previous one for closing.
+	// SetSenders sets log senders for all derived log handlers
+	// and returns the previous ones for closing.
 	//
-	// SetSender should be thread-safe.
-	SetSender(sender LogSender) LogSender
+	// SetSenders should be thread-safe.
+	SetSenders(senders ...LogSender) []LogSender
 }
 
 // LogOptions for LogHandler.Reader.

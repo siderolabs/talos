@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/talos-systems/go-debug"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/pkg/circular"
 	"github.com/talos-systems/talos/pkg/tail"
@@ -36,16 +38,16 @@ type CircularBufferLoggingManager struct {
 
 	buffers sync.Map
 
-	senderRW      sync.RWMutex
-	sender        runtime.LogSender
-	senderChanged chan struct{}
+	sendersRW      sync.RWMutex
+	senders        []runtime.LogSender
+	sendersChanged chan struct{}
 }
 
 // NewCircularBufferLoggingManager initializes new CircularBufferLoggingManager.
 func NewCircularBufferLoggingManager(fallbackLogger *log.Logger) *CircularBufferLoggingManager {
 	return &CircularBufferLoggingManager{
 		fallbackLogger: fallbackLogger,
-		senderChanged:  make(chan struct{}),
+		sendersChanged: make(chan struct{}),
 	}
 }
 
@@ -61,28 +63,38 @@ func (manager *CircularBufferLoggingManager) ServiceLog(id string) runtime.LogHa
 	}
 }
 
-// SetSender implements runtime.LoggingManager interface.
-func (manager *CircularBufferLoggingManager) SetSender(sender runtime.LogSender) runtime.LogSender {
-	manager.senderRW.Lock()
+// SetSenders implements runtime.LoggingManager interface.
+func (manager *CircularBufferLoggingManager) SetSenders(senders ...runtime.LogSender) []runtime.LogSender {
+	manager.sendersRW.Lock()
 
-	prevChanged := manager.senderChanged
-	manager.senderChanged = make(chan struct{})
+	prevChanged := manager.sendersChanged
+	manager.sendersChanged = make(chan struct{})
 
-	prevSender := manager.sender
-	manager.sender = sender
+	prevSenders := manager.senders
+	manager.senders = senders
 
-	manager.senderRW.Unlock()
+	manager.sendersRW.Unlock()
 
 	close(prevChanged)
 
-	return prevSender
+	return prevSenders
 }
 
-func (manager *CircularBufferLoggingManager) getSender() (runtime.LogSender, <-chan struct{}) {
-	manager.senderRW.RLock()
-	defer manager.senderRW.RUnlock()
+// getSenders waits for senders to be set and returns them.
+func (manager *CircularBufferLoggingManager) getSenders() []runtime.LogSender {
+	for {
+		manager.sendersRW.RLock()
 
-	return manager.sender, manager.senderChanged
+		senders, changed := manager.senders, manager.sendersChanged
+
+		manager.sendersRW.RUnlock()
+
+		if len(senders) > 0 {
+			return senders
+		}
+
+		<-changed
+	}
 }
 
 func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (*circular.Buffer, error) {
@@ -133,8 +145,8 @@ func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 		}
 
 		go func() {
-			if err := handler.runSender(); err != nil {
-				handler.manager.fallbackLogger.Printf("log sender stopped: %s", err)
+			if err := handler.runSenders(); err != nil {
+				handler.manager.fallbackLogger.Printf("log senders stopped: %s", err)
 			}
 		}()
 	}
@@ -190,7 +202,7 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 	return r, nil
 }
 
-func (handler *circularHandler) runSender() error {
+func (handler *circularHandler) runSenders() error {
 	r, err := handler.Reader(runtime.WithFollow())
 	if err != nil {
 		return err
@@ -222,34 +234,43 @@ func (handler *circularHandler) runSender() error {
 // resend sends and resends given event until success or ErrDontRetry error.
 func (handler *circularHandler) resend(e *runtime.LogEvent) {
 	for {
-		var sender runtime.LogSender
-
-		// wait for sender to be set
-		for {
-			var changed <-chan struct{}
-
-			sender, changed = handler.manager.getSender()
-			if sender != nil {
-				break
-			}
-
-			<-changed
-		}
+		senders := handler.manager.getSenders()
 
 		sendCtx, sendCancel := context.WithTimeout(context.TODO(), 5*time.Second)
+		sendErrors := make(chan error, len(senders))
 
-		err := sender.Send(sendCtx, e)
+		for _, sender := range senders {
+			sender := sender
+
+			go func() {
+				sendErrors <- sender.Send(sendCtx, e)
+			}()
+		}
+
+		var dontRetry bool
+
+		for range senders {
+			err := <-sendErrors
+
+			// don't retry if at least one sender succeed to avoid implementing per-sender queue, etc
+			if err == nil {
+				dontRetry = true
+
+				continue
+			}
+
+			if debug.Enabled {
+				handler.manager.fallbackLogger.Print(err)
+			}
+
+			if errors.Is(err, runtime.ErrDontRetry) {
+				dontRetry = true
+			}
+		}
 
 		sendCancel()
 
-		if err == nil {
-			return
-		}
-
-		// TODO(aleksi): remove or make less noisy
-		handler.manager.fallbackLogger.Print(err)
-
-		if errors.Is(err, runtime.ErrDontRetry) {
+		if dontRetry {
 			return
 		}
 

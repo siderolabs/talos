@@ -50,6 +50,7 @@ type MachineConfig interface {
 	SystemDiskEncryption() SystemDiskEncryption
 	Features() Features
 	Udev() UdevConfig
+	Logging() Logging
 }
 
 // Disk represents the options available for partitioning, formatting, and
@@ -440,7 +441,6 @@ type SystemDiskEncryption interface {
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
 	RBACEnabled() bool
-	LoggingEnabled() bool
 }
 
 // VolumeMount describes extra volume mount for the static pods.
@@ -483,4 +483,15 @@ type ServiceRegistry interface {
 // UdevConfig describes configuration for udev.
 type UdevConfig interface {
 	Rules() []string
+}
+
+// Logging describes logging configuration.
+type Logging interface {
+	Destinations() []LoggingDestination
+}
+
+// LoggingDestination describes logging destination.
+type LoggingDestination interface {
+	Endpoint() *url.URL
+	Format() string
 }

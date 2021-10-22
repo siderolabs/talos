@@ -68,6 +68,8 @@ var (
 	RegistryKubernetesConfigDoc    encoder.Doc
 	RegistryServiceConfigDoc       encoder.Doc
 	UdevConfigDoc                  encoder.Doc
+	LoggingConfigDoc               encoder.Doc
+	LoggingDestinationDoc          encoder.Doc
 )
 
 func init() {
@@ -129,7 +131,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 16)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 17)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -256,6 +258,11 @@ func init() {
 	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Configures the udev system."
 
 	MachineConfigDoc.Fields[15].AddExample("", machineUdevExample)
+	MachineConfigDoc.Fields[16].Name = "logging"
+	MachineConfigDoc.Fields[16].Type = "LoggingConfig"
+	MachineConfigDoc.Fields[16].Note = ""
+	MachineConfigDoc.Fields[16].Description = "Configures the logging system."
+	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Configures the logging system."
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
@@ -803,9 +810,17 @@ func init() {
 	EndpointDoc.AddExample("", clusterEndpointExample1)
 
 	EndpointDoc.AddExample("", clusterEndpointExample2)
+
+	EndpointDoc.AddExample("", loggingEndpointExample1)
+
+	EndpointDoc.AddExample("", loggingEndpointExample2)
 	EndpointDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "ControlPlaneConfig",
+			FieldName: "endpoint",
+		},
+		{
+			TypeName:  "LoggingDestination",
 			FieldName: "endpoint",
 		},
 	}
@@ -1968,17 +1983,12 @@ func init() {
 			FieldName: "features",
 		},
 	}
-	FeaturesConfigDoc.Fields = make([]encoder.Doc, 2)
+	FeaturesConfigDoc.Fields = make([]encoder.Doc, 1)
 	FeaturesConfigDoc.Fields[0].Name = "rbac"
 	FeaturesConfigDoc.Fields[0].Type = "bool"
 	FeaturesConfigDoc.Fields[0].Note = ""
 	FeaturesConfigDoc.Fields[0].Description = "Enable role-based access control (RBAC)."
 	FeaturesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Enable role-based access control (RBAC)."
-	FeaturesConfigDoc.Fields[1].Name = "logging"
-	FeaturesConfigDoc.Fields[1].Type = "bool"
-	FeaturesConfigDoc.Fields[1].Note = "FIXME(aleksi)\n"
-	FeaturesConfigDoc.Fields[1].Description = "FIXME(aleksi)."
-	FeaturesConfigDoc.Fields[1].Comments[encoder.LineComment] = "FIXME(aleksi)."
 
 	VolumeMountConfigDoc.Type = "VolumeMountConfig"
 	VolumeMountConfigDoc.Comments[encoder.LineComment] = "VolumeMountConfig struct describes extra volume mount for the static pods."
@@ -2162,6 +2172,50 @@ func init() {
 	UdevConfigDoc.Fields[0].Note = ""
 	UdevConfigDoc.Fields[0].Description = "List of udev rules to apply to the udev system"
 	UdevConfigDoc.Fields[0].Comments[encoder.LineComment] = "List of udev rules to apply to the udev system"
+
+	LoggingConfigDoc.Type = "LoggingConfig"
+	LoggingConfigDoc.Comments[encoder.LineComment] = "LoggingConfig struct configures Talos logging."
+	LoggingConfigDoc.Description = "LoggingConfig struct configures Talos logging."
+	LoggingConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "logging",
+		},
+	}
+	LoggingConfigDoc.Fields = make([]encoder.Doc, 1)
+	LoggingConfigDoc.Fields[0].Name = "destinations"
+	LoggingConfigDoc.Fields[0].Type = "[]LoggingDestination"
+	LoggingConfigDoc.Fields[0].Note = ""
+	LoggingConfigDoc.Fields[0].Description = "Logging destination."
+	LoggingConfigDoc.Fields[0].Comments[encoder.LineComment] = "Logging destination."
+
+	LoggingDestinationDoc.Type = "LoggingDestination"
+	LoggingDestinationDoc.Comments[encoder.LineComment] = "LoggingDestination struct configures Talos logging destination."
+	LoggingDestinationDoc.Description = "LoggingDestination struct configures Talos logging destination."
+	LoggingDestinationDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "LoggingConfig",
+			FieldName: "destinations",
+		},
+	}
+	LoggingDestinationDoc.Fields = make([]encoder.Doc, 2)
+	LoggingDestinationDoc.Fields[0].Name = "endpoint"
+	LoggingDestinationDoc.Fields[0].Type = "Endpoint"
+	LoggingDestinationDoc.Fields[0].Note = ""
+	LoggingDestinationDoc.Fields[0].Description = "Where to send logs. Supported protocols are \"tcp\" and \"udp\"."
+	LoggingDestinationDoc.Fields[0].Comments[encoder.LineComment] = "Where to send logs. Supported protocols are \"tcp\" and \"udp\"."
+
+	LoggingDestinationDoc.Fields[0].AddExample("", loggingEndpointExample1)
+
+	LoggingDestinationDoc.Fields[0].AddExample("", loggingEndpointExample2)
+	LoggingDestinationDoc.Fields[1].Name = "format"
+	LoggingDestinationDoc.Fields[1].Type = "string"
+	LoggingDestinationDoc.Fields[1].Note = ""
+	LoggingDestinationDoc.Fields[1].Description = "Logs format."
+	LoggingDestinationDoc.Fields[1].Comments[encoder.LineComment] = "Logs format."
+	LoggingDestinationDoc.Fields[1].Values = []string{
+		"json_lines",
+	}
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -2388,6 +2442,14 @@ func (_ UdevConfig) Doc() *encoder.Doc {
 	return &UdevConfigDoc
 }
 
+func (_ LoggingConfig) Doc() *encoder.Doc {
+	return &LoggingConfigDoc
+}
+
+func (_ LoggingDestination) Doc() *encoder.Doc {
+	return &LoggingDestinationDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -2450,6 +2512,8 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryKubernetesConfigDoc,
 			&RegistryServiceConfigDoc,
 			&UdevConfigDoc,
+			&LoggingConfigDoc,
+			&LoggingDestinationDoc,
 		},
 	}
 }

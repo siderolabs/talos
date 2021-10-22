@@ -12,12 +12,3 @@ func (f *FeaturesConfig) RBACEnabled() bool {
 
 	return *f.RBAC
 }
-
-// LoggingEnabled implements config.Features interface.
-func (f *FeaturesConfig) LoggingEnabled() bool {
-	if f.Logging == nil {
-		return false // the current default value
-	}
-
-	return *f.Logging
-}

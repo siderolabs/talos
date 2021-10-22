@@ -294,6 +294,15 @@ func (m *MachineConfig) Udev() config.UdevConfig {
 	return m.MachineUdev
 }
 
+// Logging implements the config.MachineConfig interface.
+func (m *MachineConfig) Logging() config.Logging {
+	if m.MachineLogging == nil {
+		return &LoggingConfig{}
+	}
+
+	return m.MachineLogging
+}
+
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage

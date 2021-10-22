@@ -247,6 +247,8 @@ func parseComment(comment []byte) *Text {
 		text.Comment = strings.Split(text.Description, "\n")[0]
 	}
 
+	text.Comment = escape(text.Comment)
+
 	text.Description = escape(text.Description)
 	for _, example := range text.Examples {
 		example.Name = escape(example.Name)
@@ -299,11 +301,10 @@ func formatFieldType(p interface{}) string {
 }
 
 func escape(value string) string {
-	return strings.TrimSpace(strings.ReplaceAll(
-		strings.ReplaceAll(value, "\"", "\\\""),
-		"\n",
-		"\\n",
-	))
+	value = strings.ReplaceAll(value, `"`, `\"`)
+	value = strings.ReplaceAll(value, "\n", `\n`)
+
+	return strings.TrimSpace(value)
 }
 
 func collectFields(s *structType) (fields []*Field) {

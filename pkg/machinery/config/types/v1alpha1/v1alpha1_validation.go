@@ -200,6 +200,11 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
+	if c.MachineConfig.MachineLogging != nil {
+		err := c.MachineConfig.MachineLogging.Validate()
+		result = multierror.Append(result, err)
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))
