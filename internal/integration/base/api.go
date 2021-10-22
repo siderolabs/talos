@@ -8,6 +8,7 @@
 package base
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -16,6 +17,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/stretchr/testify/suite"
@@ -28,7 +30,10 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 )
@@ -321,6 +326,57 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
+}
+
+// ReadConfigFromNode reads machine configuration from the node.
+func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Provider, error) {
+	// Load the current node machine config
+	cfgData := new(bytes.Buffer)
+
+	reader, errCh, err := apiSuite.Client.Read(nodeCtx, constants.ConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("error creating reader: %w", err)
+	}
+	defer reader.Close() //nolint:errcheck
+
+	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
+		return nil, fmt.Errorf("error reading: %w", err)
+	}
+
+	provider, err := configloader.NewFromBytes(cfgData.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse: %w", err)
+	}
+
+	return provider, nil
+}
+
+func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) (err error) {
+	var wg sync.WaitGroup
+
+	var chanErr error
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		// StreamReader is only singly-buffered, so we need to process any errors as we get them.
+		for chanErr = range errCh {
+		}
+	}()
+
+	defer func() {
+		wg.Wait()
+
+		if err == nil {
+			err = chanErr
+		}
+	}()
+
+	_, err = io.Copy(out, in)
+
+	return err
 }
 
 // TearDownSuite closes Talos API client.

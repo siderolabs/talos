@@ -8,12 +8,8 @@
 package api
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
 	"sort"
-	"sync"
 	"testing"
 	"time"
 
@@ -23,7 +19,6 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -95,7 +90,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
-	provider, err := suite.readConfigFromNode(nodeCtx)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
 	cfg, ok := provider.(*v1alpha1.Config)
@@ -126,7 +121,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	var newProvider config.Provider
 
 	suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
-		newProvider, err = suite.readConfigFromNode(nodeCtx)
+		newProvider, err = suite.ReadConfigFromNode(nodeCtx)
 		if err != nil {
 			return retry.ExpectedError(err)
 		}
@@ -149,7 +144,7 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
-	provider, err := suite.readConfigFromNode(nodeCtx)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
 	cfg, ok := provider.(*v1alpha1.Config)
@@ -173,7 +168,7 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 	// Verify configuration change
 	var newProvider config.Provider
 
-	newProvider, err = suite.readConfigFromNode(nodeCtx)
+	newProvider, err = suite.ReadConfigFromNode(nodeCtx)
 
 	suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
 
@@ -208,7 +203,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
-	provider, err := suite.readConfigFromNode(nodeCtx)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
 
 	suite.Assert().NoError(err)
 
@@ -294,7 +289,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		var newProvider config.Provider
 
 		suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
-			newProvider, err = suite.readConfigFromNode(nodeCtx)
+			newProvider, err = suite.ReadConfigFromNode(nodeCtx)
 			if err != nil {
 				return retry.ExpectedError(err)
 			}
@@ -323,56 +318,6 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 		suite.WaitForBootDone(suite.ctx)
 	}
-}
-
-func (suite *ApplyConfigSuite) readConfigFromNode(nodeCtx context.Context) (config.Provider, error) {
-	// Load the current node machine config
-	cfgData := new(bytes.Buffer)
-
-	reader, errCh, err := suite.Client.Read(nodeCtx, constants.ConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("error creating reader: %w", err)
-	}
-	defer reader.Close() //nolint:errcheck
-
-	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
-		return nil, fmt.Errorf("error reading: %w", err)
-	}
-
-	provider, err := configloader.NewFromBytes(cfgData.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse: %w", err)
-	}
-
-	return provider, nil
-}
-
-func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) (err error) {
-	var wg sync.WaitGroup
-
-	var chanErr error
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		// StreamReader is only singly-buffered, so we need to process any errors as we get them.
-		for chanErr = range errCh {
-		}
-	}()
-
-	defer func() {
-		wg.Wait()
-
-		if err == nil {
-			err = chanErr
-		}
-	}()
-
-	_, err = io.Copy(out, in)
-
-	return err
 }
 
 func init() {

@@ -4,6 +4,8 @@
 
 package kubespan
 
+import "fmt"
+
 //go:generate stringer -type=PeerState -linecomment
 
 // PeerState is KubeSpan peer current state.
@@ -12,6 +14,22 @@ type PeerState int
 // MarshalText implements encoding.TextMarshaler.
 func (v PeerState) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (v *PeerState) UnmarshalText(b []byte) error {
+	switch string(b) {
+	case "unknown":
+		*v = PeerStateUnknown
+	case "up":
+		*v = PeerStateUp
+	case "down":
+		*v = PeerStateDown
+	default:
+		return fmt.Errorf("unsupported value for PeerState: %q", string(b))
+	}
+
+	return nil
 }
 
 // PeerState constants.

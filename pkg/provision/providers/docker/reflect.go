@@ -8,6 +8,7 @@ import (
 	"context"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/provision"
@@ -63,7 +64,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		res.clusterInfo.Nodes = append(res.clusterInfo.Nodes,
 			provision.NodeInfo{
 				ID:   node.ID,
-				Name: node.Names[0],
+				Name: strings.TrimLeft(node.Names[0], "/"),
 				Type: t,
 
 				IPs: []net.IP{net.ParseIP(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress)},
