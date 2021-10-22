@@ -518,6 +518,9 @@ const (
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = "/usr/etc/udev/rules.d/99-talos.rules"
+
+	// LoggingFormatJSONLines represents "JSON lines" logging format.
+	LoggingFormatJSONLines = "json_lines"
 )
 
 // See https://linux.die.net/man/3/klogctl

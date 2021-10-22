@@ -98,21 +98,22 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	}
 
 	// the config changes allowed to be applied immediately are:
-	// * cluster config
-	// * .machine.debug
+	// * .debug
+	// * .cluster
 	// * .machine.time
-	// * .machine.network
 	// * .machine.certCANs
+	// * .machine.network
 	// * .machine.sysctls
-	// FIXME(aleksi): logging
-	newConfig.ClusterConfig = currentConfig.ClusterConfig
+	// * .machine.logging
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
+	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
+		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {

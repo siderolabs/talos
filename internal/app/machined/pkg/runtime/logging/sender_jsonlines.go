@@ -9,35 +9,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 	"time"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
-type jsonSender struct {
-	net  string
-	addr string
+type jsonLinesSender struct {
+	endpoint *url.URL
 
 	sema chan struct{}
 	conn net.Conn
 }
 
-// NewJSON returns log sender that sends logs in JSON over UDP, one message per packet.
-func NewJSON(addr string) runtime.LogSender {
+// NewJSONLines returns log sender that sends logs in JSON over TCP (newline-delimited)
+// or UDP (one message per packet).
+func NewJSONLines(endpoint *url.URL) runtime.LogSender {
 	sema := make(chan struct{}, 1)
 	sema <- struct{}{}
 
-	// It should be easy to add TCP support of that's requested.
-	net := "udp"
-
-	return &jsonSender{
-		net:  net,
-		addr: addr,
-		sema: sema,
+	return &jsonLinesSender{
+		endpoint: endpoint,
+		sema:     sema,
 	}
 }
 
-func (j jsonSender) tryLock(ctx context.Context) (unlock func()) {
+func (j *jsonLinesSender) tryLock(ctx context.Context) (unlock func()) {
 	select {
 	case <-j.sema:
 		unlock = func() { j.sema <- struct{}{} }
@@ -48,7 +45,7 @@ func (j jsonSender) tryLock(ctx context.Context) (unlock func()) {
 	return
 }
 
-func (j *jsonSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
+func (j *jsonLinesSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
 	m := make(map[string]interface{}, len(e.Fields)+3)
 	for k, v := range e.Fields {
 		m[k] = v
@@ -62,10 +59,14 @@ func (j *jsonSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
 }
 
 // Send implements LogSender interface.
-func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
+func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 	b, err := j.marshalJSON(e)
 	if err != nil {
 		return fmt.Errorf("%w: %s", runtime.ErrDontRetry, err)
+	}
+
+	if j.endpoint.Scheme == "tcp" {
+		b = append(b, '\n')
 	}
 
 	unlock := j.tryLock(ctx)
@@ -77,7 +78,7 @@ func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 
 	// Connect (or "connect" for UDP) if no connection is established already.
 	if j.conn == nil {
-		conn, err := new(net.Dialer).DialContext(ctx, j.net, j.addr)
+		conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
 		if err != nil {
 			return err
 		}
@@ -93,6 +94,7 @@ func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 		j.conn.Close() //nolint:errcheck
 		j.conn = nil
 
+		// skip partially sent events to avoid partial duplicates in the receiver
 		if n > 0 {
 			err = fmt.Errorf("%w: %s", runtime.ErrDontRetry, err)
 		}
@@ -104,7 +106,7 @@ func (j *jsonSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 }
 
 // Close implements LogSender interface.
-func (j *jsonSender) Close(ctx context.Context) error {
+func (j *jsonLinesSender) Close(ctx context.Context) error {
 	unlock := j.tryLock(ctx)
 	if unlock == nil {
 		return ctx.Err()

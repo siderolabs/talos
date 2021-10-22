@@ -763,6 +763,18 @@ udev:
 </div>
 
 <hr />
+<div class="dd">
+
+<code>logging</code>  <i><a href="#loggingconfig">LoggingConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configures the logging system.
+
+</div>
+
+<hr />
 
 
 
@@ -2430,6 +2442,7 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 Appears in:
 
 - <code><a href="#controlplaneconfig">ControlPlaneConfig</a>.endpoint</code>
+- <code><a href="#loggingdestination">LoggingDestination</a>.endpoint</code>
 
 
 ``` yaml
@@ -2437,6 +2450,12 @@ https://1.2.3.4:6443
 ```
 ``` yaml
 https://cluster1.internal:6443
+```
+``` yaml
+udp://127.0.0.1:12345
+```
+``` yaml
+tcp://1.2.3.4:12345
 ```
 
 
@@ -5194,21 +5213,6 @@ Enable role-based access control (RBAC).
 </div>
 
 <hr />
-<div class="dd">
-
-<code>logging</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-FIXME(aleksi).
-
-
-> FIXME(aleksi)
-
-</div>
-
-<hr />
 
 
 
@@ -5582,6 +5586,89 @@ rules:
 
 List of udev rules to apply to the udev system
 
+</div>
+
+<hr />
+
+
+
+## LoggingConfig
+LoggingConfig struct configures Talos logging.
+
+Appears in:
+
+- <code><a href="#machineconfig">MachineConfig</a>.logging</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>destinations</code>  <i>[]<a href="#loggingdestination">LoggingDestination</a></i>
+
+</div>
+<div class="dt">
+
+Logging destination.
+
+</div>
+
+<hr />
+
+
+
+## LoggingDestination
+LoggingDestination struct configures Talos logging destination.
+
+Appears in:
+
+- <code><a href="#loggingconfig">LoggingConfig</a>.destinations</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>endpoint</code>  <i><a href="#endpoint">Endpoint</a></i>
+
+</div>
+<div class="dt">
+
+Where to send logs. Supported protocols are "tcp" and "udp".
+
+
+
+Examples:
+
+
+``` yaml
+endpoint: udp://127.0.0.1:12345
+```
+
+``` yaml
+endpoint: tcp://1.2.3.4:12345
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>format</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Logs format.
+
+
+Valid values:
+
+
+  - <code>json_lines</code>
 </div>
 
 <hr />

@@ -473,6 +473,14 @@ metadata:
 			"fdc7::/16",
 		},
 	}
+
+	loggingEndpointExample1 = &Endpoint{
+		mustParseURL("udp://127.0.0.1:12345"),
+	}
+
+	loggingEndpointExample2 = &Endpoint{
+		mustParseURL("tcp://1.2.3.4:12345"),
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -660,6 +668,9 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineUdevExample
 	MachineUdev *UdevConfig `yaml:"udev,omitempty"`
+	//   description: |
+	//     Configures the logging system.
+	MachineLogging *LoggingConfig `yaml:"logging"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -1919,9 +1930,6 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
 	RBAC *bool `yaml:"rbac,omitempty"`
-	//   description: |
-	//     FIXME(aleksi).
-	Logging *bool `yaml:"logging,omitempty"` // FIXME(aleksi)
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.
@@ -2021,4 +2029,26 @@ type UdevConfig struct {
 	//   description: |
 	//     List of udev rules to apply to the udev system
 	UdevRules []string `yaml:"rules,omitempty"`
+}
+
+// LoggingConfig struct configures Talos logging.
+type LoggingConfig struct {
+	// description: |
+	//   Logging destination.
+	LoggingDestinations []LoggingDestination `yaml:"destinations"`
+}
+
+// LoggingDestination struct configures Talos logging destination.
+type LoggingDestination struct {
+	// description: |
+	//   Where to send logs. Supported protocols are "tcp" and "udp".
+	// examples:
+	//   - value: loggingEndpointExample1
+	//   - value: loggingEndpointExample2
+	LoggingEndpoint *Endpoint `yaml:"endpoint"`
+	// description: |
+	//   Logs format.
+	// values:
+	//   - json_lines
+	LoggingFormat string `yaml:"format"`
 }

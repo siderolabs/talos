@@ -6,6 +6,9 @@ package v1alpha2
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"sync"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -202,7 +205,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 		return
 	}
 
-	var loggingEnabled bool
+	var loggingEndpoints []*url.URL
 
 	for {
 		var cfg talosconfig.Provider
@@ -218,11 +221,12 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 			return
 		}
 
-		ctrl.updateLoggingConfig(ctx, cfg, &loggingEnabled)
+		ctrl.updateConsoleLoggingConfig(cfg)
+		ctrl.updateLoggingConfig(ctx, cfg, &loggingEndpoints)
 	}
 }
 
-func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Provider, prevLoggingEnabled *bool) {
+func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Provider) {
 	newLogLevel := zapcore.InfoLevel
 	if cfg.Debug() {
 		newLogLevel = zapcore.DebugLevel
@@ -232,25 +236,71 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig
 		ctrl.logger.Info("setting console log level", zap.Stringer("level", newLogLevel))
 		ctrl.consoleLogLevel.SetLevel(newLogLevel)
 	}
+}
 
-	if newLoggingEnabled := cfg.Machine().Features().LoggingEnabled(); newLoggingEnabled != *prevLoggingEnabled {
-		*prevLoggingEnabled = newLoggingEnabled
+func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Provider, prevLoggingEndpoints *[]*url.URL) {
+	dests := cfg.Machine().Logging().Destinations()
+	loggingEndpoints := make([]*url.URL, len(dests))
 
-		var prev runtime.LogSender
-
-		if newLoggingEnabled {
-			ctrl.logger.Info("enabling JSON logging")
-			prev = ctrl.loggingManager.SetSender(runtimelogging.NewJSON("127.0.0.1:12345"))
-		} else {
-			ctrl.logger.Info("disabling JSON logging")
-			prev = ctrl.loggingManager.SetSender(runtimelogging.NewNull())
-		}
-
-		if prev != nil {
-			closeCtx, closeCancel := context.WithTimeout(ctx, 3*time.Second)
-			err := prev.Close(closeCtx)
-			ctrl.logger.Info("log sender closed", zap.Error(err))
-			closeCancel()
+	for i, dest := range dests {
+		switch f := dest.Format(); f {
+		case constants.LoggingFormatJSONLines:
+			loggingEndpoints[i] = dest.Endpoint()
+		default:
+			// should not be possible due to validation
+			panic(fmt.Sprintf("unhandled log destination format %q", f))
 		}
 	}
+
+	loggingChanged := len(*prevLoggingEndpoints) != len(loggingEndpoints)
+	if !loggingChanged {
+		for i, u := range *prevLoggingEndpoints {
+			if u.String() != loggingEndpoints[i].String() {
+				loggingChanged = true
+
+				break
+			}
+		}
+	}
+
+	if !loggingChanged {
+		return
+	}
+
+	*prevLoggingEndpoints = loggingEndpoints
+
+	var prevSenders []runtime.LogSender
+
+	if len(loggingEndpoints) > 0 {
+		senders := make([]runtime.LogSender, len(loggingEndpoints))
+		for i, u := range loggingEndpoints {
+			senders[i] = runtimelogging.NewJSONLines(u)
+		}
+
+		ctrl.logger.Info("enabling JSON logging")
+		prevSenders = ctrl.loggingManager.SetSenders(senders)
+	} else {
+		ctrl.logger.Info("disabling JSON logging")
+		prevSenders = ctrl.loggingManager.SetSenders(nil)
+	}
+
+	closeCtx, closeCancel := context.WithTimeout(ctx, 3*time.Second)
+	defer closeCancel()
+
+	var wg sync.WaitGroup
+
+	for _, sender := range prevSenders {
+		sender := sender
+
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			err := sender.Close(closeCtx)
+			ctrl.logger.Info("log sender closed", zap.Error(err))
+		}()
+	}
+
+	wg.Wait()
 }
