@@ -23,17 +23,18 @@ config:
 - mac_address: 96:00:00:1:2:3
   name: eth0
   subnets:
-  - dns_nameservers:
-    - 213.133.100.100
-    - 213.133.99.99
-    - 213.133.98.98
-    ipv4: true
+  - ipv4: true
     type: dhcp
   - address: 2a01:4f8:1:2::1/64
     gateway: fe80::1
     ipv6: true
     type: static
   type: physical
+- address:
+  - 185.12.64.2
+  - 185.12.64.1
+  interface: eth0
+  type: nameserver
 version: 1
 `)
 	p := &hcloud.Hcloud{}
@@ -70,21 +71,3 @@ version: 1
 func TestConfigSuite(t *testing.T) {
 	suite.Run(t, new(ConfigSuite))
 }
-
-// http://169.254.169.254/hetzner/v1/metadata/network-config
-// config:
-// - mac_address: 96:00:00:72:a3:19
-//   name: eth0
-//   subnets:
-//   - dns_nameservers:
-//     - 213.133.100.100
-//     - 213.133.99.99
-//     - 213.133.98.98
-//     ipv4: true
-//     type: dhcp
-//   - address: 2a01:4f8:1:2::1/64
-//     gateway: fe80::1
-//     ipv6: true
-//     type: static
-//   type: physical
-// version: 1

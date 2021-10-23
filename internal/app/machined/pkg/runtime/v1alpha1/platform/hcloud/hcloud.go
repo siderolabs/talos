@@ -90,6 +90,10 @@ func (h *Hcloud) ConfigurationNetwork(metadataNetworkConfig []byte, confProvider
 	}
 
 	for _, network := range unmarshalledNetworkConfig.Config {
+		if network.Type != "physical" {
+			continue
+		}
+
 		iface := v1alpha1.Device{
 			DeviceInterface: network.Interfaces,
 			DeviceDHCP:      false,
@@ -184,12 +188,14 @@ func (h *Hcloud) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
 		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
 		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
 	if err != nil {
-		return addrs, err
+		return nil, err
 	}
 
-	addrs = append(addrs, net.ParseIP(string(exIP)))
+	if ip := net.ParseIP(string(exIP)); ip != nil {
+		addrs = append(addrs, ip)
+	}
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.
