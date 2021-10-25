@@ -30,6 +30,45 @@ Cluster Discovery is enabled by default for Talos 0.14.
 Cluster Discovery can be disabled with `talosctl gen config --with-cluster-discovery=false`.
 """
 
+    [notes.logs]
+        title = "Log Shipping"
+        description="""\
+Talos can now ship system logs to the configured destination using either JSON-over-UDP or JSON-over-TCP:
+see `.machine.logging` machine configuration option.
+"""
+
+    [notes.updates]
+        title = "Component Updates"
+        description="""\
+* Linux: 5.10.75
+* etcd: 3.5.1
+* containerd: 1.5.7
+* Kubernetes: 1.23.0-alpha.0
+* CoreDNS: 1.8.6
+
+Talos is built with Go 1.17.2
+"""
+
+    [notes.caps]
+        title = "Kexec and capabilities"
+        description = """\
+When kexec support is disabled
+Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
+That is helpful for advanced use-cases like Docker-in-Docker.
+
+If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
+
+For example:
+
+```yaml
+install:
+  extraKernelArgs:
+    - kexec_load_disabled=1
+```
+
+Please note that capabilities are dropped before machine configuration is loaded,
+so disabling kexec via `machine.sysctls` will not be enough.
+"""
 
 [make_deps]
 
