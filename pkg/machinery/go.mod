@@ -7,7 +7,7 @@ go 1.17
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 
 require (
-	github.com/AlekSi/pointer v1.1.0
+	github.com/AlekSi/pointer v1.2.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/containerd/go-cni v1.1.0
 	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
@@ -23,8 +23,8 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.0
-	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744
-	google.golang.org/genproto v0.0.0-20211016002631-37fc39342514
+	golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70
+	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
