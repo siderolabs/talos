@@ -1,3 +1,67 @@
+## [Talos 0.13.1](https://github.com/talos-systems/talos/releases/tag/v0.13.1) (2021-10-25)
+
+Welcome to the v0.13.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Kexec and capabilities
+
+When kexec support is disabled Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
+That is helpful for advanced use-cases like Docker-in-Docker.
+
+If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
+For example:
+
+```yaml
+install:
+  extraKernelArgs:
+    - kexec_load_disabled=1
+```
+
+Please note that capabilities are dropped before machine configuration is loaded,
+so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec`) will not be enough.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Alexey Palazhchenko
+* Spencer Smith
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`39e9a6ab`](https://github.com/talos-systems/talos/commit/39e9a6ab4184de83d9dbdfe604bf3de9547aac69) test: update GCP e2e script to work with new templates
+* [`0a51dcb7`](https://github.com/talos-systems/talos/commit/0a51dcb797651388c9666e903cf6ecf010eb8ae6) test: update vars for AWS cluster
+* [`a770bbef`](https://github.com/talos-systems/talos/commit/a770bbef7d74cecff39195176db962e36b0d1cd7) fix: handle skipped mounts correctly
+* [`cdf9a5ee`](https://github.com/talos-systems/talos/commit/cdf9a5ee66738f886210ad828fa4e9a3a37e6172) fix: treat literal 'unknown' as a valid machine type
+* [`fc35c82f`](https://github.com/talos-systems/talos/commit/fc35c82f69263d6001b448b8360865f003be2b4c) feat: don't drop capabilities if kexec is disabled
+* [`4aa98850`](https://github.com/talos-systems/talos/commit/4aa98850778fa6987939cc4b04b9b08b945bee3b) fix: delete expired affiliates from the discovery service
+</p>
+</details>
+
+### Changes from talos-systems/discovery-service
+<details><summary>5 commits</summary>
+<p>
+
+* [`95593b8`](https://github.com/talos-systems/discovery-service/commit/95593b8685b3548d3ba6aa920b129ffc08665467) feat: implement landing page for the discovery service
+* [`b579076`](https://github.com/talos-systems/discovery-service/commit/b579076e4ef5d10156975855e6a362e3414db862) fix: update affiliate state correctly when they get deleted
+* [`49e53b1`](https://github.com/talos-systems/discovery-service/commit/49e53b1473d98cbfbb83e45554957c73bcd2e12c) fix: cluster with some subscriptions isn't empty
+* [`9b5eeae`](https://github.com/talos-systems/discovery-service/commit/9b5eeaed72970ab86ba1124fc0dbad7123debe66) chore: add go-debug
+* [`1655040`](https://github.com/talos-systems/discovery-service/commit/1655040813a0b5be55a6bee6fbf1ba167fb4274a) chore: improve state logging
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/discovery-service**  v0.1.0 -> v0.1.1
+
+Previous release can be found at [v0.13.0](https://github.com/talos-systems/talos/releases/tag/v0.13.0)
+
 ## [Talos 0.13.0](https://github.com/talos-systems/talos/releases/tag/v0.13.0) (2021-10-12)
 
 Welcome to the v0.13.0 release of Talos!
