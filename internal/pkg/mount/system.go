@@ -7,6 +7,7 @@ package mount
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 
@@ -178,7 +179,9 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 }
 
 // SystemPartitionMount mounts a system partition by the label.
-func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err error) {
+//
+//nolint:gocyclo
+func SystemPartitionMount(r runtime.Runtime, logger *log.Logger, label string, opts ...Option) (err error) {
 	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
 	if device == nil {
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
@@ -203,8 +206,18 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 		return fmt.Errorf("no mountpoints for label %q", label)
 	}
 
-	if err = mountMountpoint(mountpoint); err != nil {
+	var skipMount bool
+
+	if skipMount, err = mountMountpoint(mountpoint); err != nil {
 		return err
+	}
+
+	if skipMount {
+		if logger != nil {
+			logger.Printf("mount skipped")
+		}
+
+		return
 	}
 
 	// record mount as the resource
@@ -227,12 +240,16 @@ func SystemPartitionMount(r runtime.Runtime, label string, opts ...Option) (err 
 }
 
 // SystemPartitionUnmount unmounts a system partition by the label.
-func SystemPartitionUnmount(r runtime.Runtime, label string) (err error) {
+func SystemPartitionUnmount(r runtime.Runtime, logger *log.Logger, label string) (err error) {
 	mountpointsMutex.RLock()
 	mountpoint, ok := mountpoints[label]
 	mountpointsMutex.RUnlock()
 
 	if !ok {
+		if logger != nil {
+			logger.Printf("unmount skipped")
+		}
+
 		return nil
 	}
 

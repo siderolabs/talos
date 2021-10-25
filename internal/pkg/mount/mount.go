@@ -33,7 +33,7 @@ func Mount(mountpoints *Points) (err error) {
 	//  Mount the device(s).
 
 	for iter.Next() {
-		if err = mountMountpoint(iter.Value()); err != nil {
+		if _, err = mountMountpoint(iter.Value()); err != nil {
 			return fmt.Errorf("error mounting %q: %w", iter.Value().Source(), err)
 		}
 	}
@@ -46,20 +46,18 @@ func Mount(mountpoints *Points) (err error) {
 }
 
 //nolint:gocyclo
-func mountMountpoint(mountpoint *Point) (err error) {
-	var skipMount bool
-
+func mountMountpoint(mountpoint *Point) (skipMount bool, err error) {
 	// Repair the disk's partition table.
 	if mountpoint.MountFlags.Check(Resize) {
 		if _, err = mountpoint.ResizePartition(); err != nil {
-			return fmt.Errorf("error resizing %w", err)
+			return false, fmt.Errorf("error resizing %w", err)
 		}
 	}
 
 	if mountpoint.MountFlags.Check(SkipIfMounted) {
 		skipMount, err = mountpoint.IsMounted()
 		if err != nil {
-			return fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
+			return false, fmt.Errorf("mountpoint is set to skip if mounted, but the mount check failed: %w", err)
 		}
 	}
 
@@ -69,7 +67,7 @@ func mountMountpoint(mountpoint *Point) (err error) {
 
 	if !skipMount {
 		if err = mountpoint.Mount(); err != nil {
-			return fmt.Errorf("error mounting: %w", err)
+			return false, fmt.Errorf("error mounting: %w", err)
 		}
 	}
 
@@ -79,11 +77,11 @@ func mountMountpoint(mountpoint *Point) (err error) {
 	// when partition was resized, but growfs never got called.
 	if mountpoint.MountFlags.Check(Resize) {
 		if err = mountpoint.GrowFilesystem(); err != nil {
-			return fmt.Errorf("error resizing filesystem: %w", err)
+			return false, fmt.Errorf("error resizing filesystem: %w", err)
 		}
 	}
 
-	return nil
+	return skipMount, nil
 }
 
 // Unmount unmounts the device(s).
