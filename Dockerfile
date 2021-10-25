@@ -482,7 +482,7 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build $
 RUN chmod +x /installer
 
 FROM alpine:3.14.2 AS unicode-pf2
-RUN apk add --no-cache --update grub
+RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub

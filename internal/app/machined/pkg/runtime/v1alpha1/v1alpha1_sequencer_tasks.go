@@ -1500,28 +1500,28 @@ func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.
 // MountBootPartition mounts the boot partition.
 func MountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, constants.BootPartitionLabel)
+		return mount.SystemPartitionMount(r, logger, constants.BootPartitionLabel)
 	}, "mountBootPartition"
 }
 
 // UnmountBootPartition unmounts the boot partition.
 func UnmountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, constants.BootPartitionLabel)
+		return mount.SystemPartitionUnmount(r, logger, constants.BootPartitionLabel)
 	}, "unmountBootPartition"
 }
 
 // MountEFIPartition mounts the EFI partition.
 func MountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, constants.EFIPartitionLabel)
+		return mount.SystemPartitionMount(r, logger, constants.EFIPartitionLabel)
 	}, "mountEFIPartition"
 }
 
 // UnmountEFIPartition unmounts the EFI partition.
 func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, constants.EFIPartitionLabel)
+		return mount.SystemPartitionUnmount(r, logger, constants.EFIPartitionLabel)
 	}, "unmountEFIPartition"
 }
 
@@ -1568,28 +1568,28 @@ func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 			opts = append(opts, mount.WithEncryptionConfig(encryption))
 		}
 
-		return mount.SystemPartitionMount(r, constants.StatePartitionLabel, opts...)
+		return mount.SystemPartitionMount(r, logger, constants.StatePartitionLabel, opts...)
 	}, "mountStatePartition"
 }
 
 // UnmountStatePartition unmounts the system partition.
 func UnmountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, constants.StatePartitionLabel)
+		return mount.SystemPartitionUnmount(r, logger, constants.StatePartitionLabel)
 	}, "unmountStatePartition"
 }
 
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionMount(r, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
+		return mount.SystemPartitionMount(r, logger, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
 	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
 func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionUnmount(r, constants.EphemeralPartitionLabel)
+		return mount.SystemPartitionUnmount(r, logger, constants.EphemeralPartitionLabel)
 	}, "unmountEphemeralPartition"
 }
 
