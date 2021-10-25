@@ -772,6 +772,20 @@ udev:
 
 Configures the logging system.
 
+
+
+Examples:
+
+
+``` yaml
+logging:
+    # Logging destination.
+    destinations:
+        - endpoint: tcp://1.2.3.4:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
+          format: json_lines # Logs format.
+```
+
+
 </div>
 
 <hr />
@@ -5600,6 +5614,12 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.logging</code>
 
 
+``` yaml
+# Logging destination.
+destinations:
+    - endpoint: tcp://1.2.3.4:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
+      format: json_lines # Logs format.
+```
 
 <hr />
 

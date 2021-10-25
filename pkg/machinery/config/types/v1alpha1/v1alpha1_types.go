@@ -481,6 +481,15 @@ metadata:
 	loggingEndpointExample2 = &Endpoint{
 		mustParseURL("tcp://1.2.3.4:12345"),
 	}
+
+	machineLoggingExample = LoggingConfig{
+		LoggingDestinations: []LoggingDestination{
+			{
+				LoggingEndpoint: loggingEndpointExample2,
+				LoggingFormat:   constants.LoggingFormatJSONLines,
+			},
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -670,7 +679,9 @@ type MachineConfig struct {
 	MachineUdev *UdevConfig `yaml:"udev,omitempty"`
 	//   description: |
 	//     Configures the logging system.
-	MachineLogging *LoggingConfig `yaml:"logging"`
+	//   examples:
+	//     - value: machineLoggingExample
+	MachineLogging *LoggingConfig `yaml:"logging,omitempty"`
 }
 
 // ClusterConfig represents the cluster-wide config values.

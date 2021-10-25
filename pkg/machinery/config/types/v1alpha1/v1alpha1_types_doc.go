@@ -264,6 +264,8 @@ func init() {
 	MachineConfigDoc.Fields[16].Description = "Configures the logging system."
 	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Configures the logging system."
 
+	MachineConfigDoc.Fields[16].AddExample("", machineLoggingExample)
+
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
 	ClusterConfigDoc.Description = "ClusterConfig represents the cluster-wide config values."
@@ -2176,6 +2178,8 @@ func init() {
 	LoggingConfigDoc.Type = "LoggingConfig"
 	LoggingConfigDoc.Comments[encoder.LineComment] = "LoggingConfig struct configures Talos logging."
 	LoggingConfigDoc.Description = "LoggingConfig struct configures Talos logging."
+
+	LoggingConfigDoc.AddExample("", machineLoggingExample)
 	LoggingConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "MachineConfig",
