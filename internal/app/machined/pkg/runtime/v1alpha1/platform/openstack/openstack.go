@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -223,8 +224,16 @@ func (o *Openstack) ConfigurationNetwork(metadataNetworkConfig []byte, metadataC
 			}
 		}
 
-		for _, iface := range ifaces {
-			machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces, iface)
+		ifaceNames := make([]string, 0, len(ifaces))
+
+		for ifaceName := range ifaces {
+			ifaceNames = append(ifaceNames, ifaceName)
+		}
+
+		sort.Strings(ifaceNames)
+
+		for _, ifaceName := range ifaceNames {
+			machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces, ifaces[ifaceName])
 		}
 
 		if machineConfig.MachineConfig.MachineNetwork.NameServers == nil && len(nameServers) > 0 {
