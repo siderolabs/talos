@@ -248,15 +248,6 @@ func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			return nil
 		}
 
-		// Disallow raising ambient capabilities (ever).
-		secbits := cap.GetSecbits()
-		secbits |=
-			cap.SecbitNoCapAmbientRaise | cap.SecbitNoCapAmbientRaiseLocked
-
-		if err := secbits.Set(); err != nil {
-			return fmt.Errorf("error setting secbits: %w", err)
-		}
-
 		// Drop capabilities from the bounding set effectively disabling it for all forked processes,
 		// but keep them for PID 1.
 		droppedCapabilities := []cap.Value{
