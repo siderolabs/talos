@@ -1107,8 +1107,8 @@ github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f h1:p4VB7kIXpOQvV
 github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/vmware-tanzu/sonobuoy v0.54.0 h1:UcEZgVtvnAKkSGTofWs6m3qLIZJr9ISwVKd+nP1PRz0=
 github.com/vmware-tanzu/sonobuoy v0.54.0/go.mod h1:VN3+v6dc8g3rU25U+xgi28JATPSWQmNTfVRhg+Y2RBQ=
-github.com/vmware/govmomi v0.27.0 h1:KoQ8IsLAa7V78s5d7dgpZA8d039GBM83cVxgAq9uWuw=
-github.com/vmware/govmomi v0.27.0/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
+github.com/vmware/govmomi v0.27.1 h1:Rf3o1btFrkJa9be5KtgJ4CyOO8mbFnBxmNtAVHNyFes=
+github.com/vmware/govmomi v0.27.1/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c h1:2eYJLPxf68Bou/liHz0brefjeVzAjzIqc9k7dheXjKs=
 github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c/go.mod h1:CSBTxrhePCm0cmXNKDGeu+6bOQzpaEklfCqEpn89JWk=
