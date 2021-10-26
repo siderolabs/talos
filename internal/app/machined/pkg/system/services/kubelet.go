@@ -309,6 +309,8 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		"cni-conf-dir": cni.DefaultNetDir,
 
 		"hostname-override": nodename,
+
+		// TODO(aleksi) "logging-format": "json",
 	}
 
 	if r.Config().Cluster().ExternalCloudProvider().Enabled() {

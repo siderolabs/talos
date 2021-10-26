@@ -5,43 +5,54 @@
 package logging
 
 import (
+	"bytes"
 	"encoding/json"
+	"math"
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )
 
+var maxEpochTS = float64(time.Date(3000, 1, 1, 0, 0, 0, 0, time.UTC).Unix())
+
+//nolint:gocyclo
 func parseLogLine(l []byte, now time.Time) *runtime.LogEvent {
+	msg, m := parseJSONLogLine(l)
 	e := &runtime.LogEvent{
-		Msg:   string(l),
+		Msg:   msg,
 		Time:  now,
 		Level: zapcore.InfoLevel,
 	}
 
-	var m map[string]interface{}
-	if err := json.Unmarshal(l, &m); err != nil {
+	if m == nil {
 		return e
 	}
 
-	if msgS, ok := m["msg"].(string); ok {
-		e.Msg = strings.TrimSpace(msgS)
-
-		delete(m, "msg")
-	}
-
 	for _, k := range []string{"time", "ts"} {
-		if timeS, ok := m[k].(string); ok {
-			t, err := time.Parse(time.RFC3339Nano, timeS)
-			if err == nil {
-				e.Time = t
-
-				delete(m, k)
-
-				break
+		var t time.Time
+		switch ts := m[k].(type) {
+		case string:
+			t, _ = time.Parse(time.RFC3339Nano, ts) //nolint:errcheck
+		case float64:
+			// seconds or milliseconds since epoch
+			sec, fsec := math.Modf(ts)
+			if sec > maxEpochTS {
+				sec, fsec = math.Modf(ts / 1000)
 			}
+
+			t = time.Unix(int64(sec), int64(fsec*float64(time.Second)))
+		}
+
+		if !t.IsZero() {
+			e.Time = t.UTC()
+
+			delete(m, k)
+
+			break
 		}
 	}
 
@@ -61,7 +72,53 @@ func parseLogLine(l []byte, now time.Time) *runtime.LogEvent {
 		}
 	}
 
+	if msgS, ok := m["msg"].(string); ok {
+		// in case we have both message before JSON and "msg" JSON field
+		if e.Msg != "" {
+			e.Msg += " "
+		}
+
+		e.Msg += strings.TrimSpace(msgS)
+
+		delete(m, "msg")
+	}
+
+	if errS, ok := m["err"].(string); ok {
+		if e.Level < zap.WarnLevel {
+			e.Level = zap.WarnLevel
+		}
+
+		if e.Msg != "" {
+			e.Msg += ": "
+		}
+
+		e.Msg += strings.TrimSpace(errS)
+
+		delete(m, "err")
+	}
+
 	e.Fields = m
 
 	return e
+}
+
+func parseJSONLogLine(l []byte) (msg string, m map[string]interface{}) {
+	// the whole line is valid JSON
+	if err := json.Unmarshal(l, &m); err == nil {
+		return
+	}
+
+	// the line is a message followed by JSON
+	if i := bytes.Index(l, []byte("{")); i != -1 {
+		if err := json.Unmarshal(l[i:], &m); err == nil {
+			msg = string(bytes.TrimSpace(l[:i]))
+
+			return
+		}
+	}
+
+	// no JSON found
+	msg = string(l)
+
+	return
 }
