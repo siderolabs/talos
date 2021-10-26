@@ -314,7 +314,17 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 
 	extraArgs := argsbuilder.Args(r.Config().Machine().Kubelet().ExtraArgs())
 
-	nodeIPs, err := pickNodeIPs(r.Config().Machine().Kubelet().NodeIP().ValidSubnets())
+	validSubnets := r.Config().Machine().Kubelet().NodeIP().ValidSubnets()
+
+	// configure automatically valid subnets for IPv4/IPv6 based on service CIDRs
+	if len(validSubnets) == 0 {
+		validSubnets, err = ipSubnetsFromServiceCIDRs(r.Config().Cluster().Network().ServiceCIDRs())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	nodeIPs, err := pickNodeIPs(validSubnets)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +394,27 @@ func writeKubeletConfig(r runtime.Runtime) error {
 	}
 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+func ipSubnetsFromServiceCIDRs(serviceCIDRs []string) ([]string, error) {
+	// automatically configure valid IP subnets based on service CIDRs
+	// if the primary service CIDR is IPv4, primary kubelet node IP should be IPv4 as well, and so on
+	result := make([]string, 0, len(serviceCIDRs))
+
+	for _, cidr := range serviceCIDRs {
+		network, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse subnet: %w", err)
+		}
+
+		if network.IP.To4() == nil {
+			result = append(result, "::/0")
+		} else {
+			result = append(result, "0.0.0.0/0")
+		}
+	}
+
+	return result, nil
 }
 
 func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
