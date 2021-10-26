@@ -4,9 +4,7 @@
 
 package nethelpers
 
-import "golang.org/x/sys/unix"
-
-//go:generate stringer -type=Scope -linecomment -output scope_string_linux.go
+//go:generate stringer -type=Scope -linecomment
 
 // Scope is an address scope.
 type Scope uint8
@@ -18,9 +16,9 @@ func (scope Scope) MarshalYAML() (interface{}, error) {
 
 // Scope constants.
 const (
-	ScopeGlobal  Scope = unix.RT_SCOPE_UNIVERSE // global
-	ScopeSite    Scope = unix.RT_SCOPE_SITE     // site
-	ScopeLink    Scope = unix.RT_SCOPE_LINK     // link
-	ScopeHost    Scope = unix.RT_SCOPE_HOST     // host
-	ScopeNowhere Scope = unix.RT_SCOPE_NOWHERE  // nowhere
+	ScopeGlobal  Scope = 0   // global
+	ScopeSite    Scope = 200 // site
+	ScopeLink    Scope = 253 // link
+	ScopeHost    Scope = 254 // host
+	ScopeNowhere Scope = 255 // nowhere
 )

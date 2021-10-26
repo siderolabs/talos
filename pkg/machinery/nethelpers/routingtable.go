@@ -4,9 +4,7 @@
 
 package nethelpers
 
-import "golang.org/x/sys/unix"
-
-//go:generate stringer -type=RoutingTable -linecomment -output routingtable_string_linux.go
+//go:generate stringer -type=RoutingTable -linecomment
 
 // RoutingTable is a routing table ID.
 type RoutingTable uint32
@@ -18,8 +16,8 @@ func (table RoutingTable) MarshalYAML() (interface{}, error) {
 
 // RoutingTable constants.
 const (
-	TableUnspec  RoutingTable = unix.RT_TABLE_UNSPEC  // unspec
-	TableDefault RoutingTable = unix.RT_TABLE_DEFAULT // default
-	TableMain    RoutingTable = unix.RT_TABLE_MAIN    // main
-	TableLocal   RoutingTable = unix.RT_TABLE_LOCAL   // local
+	TableUnspec  RoutingTable = 0   // unspec
+	TableDefault RoutingTable = 253 // default
+	TableMain    RoutingTable = 254 // main
+	TableLocal   RoutingTable = 255 // local
 )

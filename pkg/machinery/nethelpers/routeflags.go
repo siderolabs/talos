@@ -4,12 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=RouteFlag -linecomment -output routeflag_string_linux.go
+//go:generate stringer -type=RouteFlag -linecomment
 
 import (
 	"strings"
-
-	"golang.org/x/sys/unix"
 )
 
 // RouteFlags is a bitmask of RouteFlag.
@@ -42,14 +40,14 @@ type RouteFlag uint32
 
 // RouteFlag constants.
 const (
-	RouteNotify      RouteFlag = unix.RTM_F_NOTIFY       // notify
-	RouteCloned      RouteFlag = unix.RTM_F_CLONED       // cloned
-	RouteEqualize    RouteFlag = unix.RTM_F_EQUALIZE     // equalize
-	RoutePrefix      RouteFlag = unix.RTM_F_PREFIX       // prefix
-	RouteLookupTable RouteFlag = unix.RTM_F_LOOKUP_TABLE // lookup_table
-	RouteFIBMatch    RouteFlag = unix.RTM_F_FIB_MATCH    // fib_match
-	RouteOffload     RouteFlag = unix.RTM_F_OFFLOAD      // offload
-	RouteTrap        RouteFlag = unix.RTM_F_TRAP         // trap
+	RouteNotify      RouteFlag = 256 << iota // notify
+	RouteCloned                              // cloned
+	RouteEqualize                            // equalize
+	RoutePrefix                              // prefix
+	RouteLookupTable                         // lookup_table
+	RouteFIBMatch                            // fib_match
+	RouteOffload                             // offload
+	RouteTrap                                // trap
 )
 
 // RouteFlagsMask is a supported set of flags to manage.
