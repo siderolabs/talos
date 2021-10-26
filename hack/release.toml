@@ -63,7 +63,7 @@ For example:
 ```yaml
 install:
   extraKernelArgs:
-    - kexec_load_disabled=1
+    - sysctl.kernel.kexec_load_disabled=1
 ```
 
 Please note that capabilities are dropped before machine configuration is loaded,
