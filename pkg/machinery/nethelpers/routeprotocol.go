@@ -4,9 +4,7 @@
 
 package nethelpers
 
-import "golang.org/x/sys/unix"
-
-//go:generate stringer -type=RouteProtocol -linecomment -output routeprotocol_string_linux.go
+//go:generate stringer -type=RouteProtocol -linecomment
 
 // RouteProtocol is a routing protocol.
 type RouteProtocol uint8
@@ -18,9 +16,9 @@ func (rp RouteProtocol) MarshalYAML() (interface{}, error) {
 
 // RouteType constants.
 const (
-	ProtocolUnspec   RouteProtocol = unix.RTPROT_UNSPEC   // unspec
-	ProtocolRedirect RouteProtocol = unix.RTPROT_REDIRECT // redirect
-	ProtocolKernel   RouteProtocol = unix.RTPROT_KERNEL   // kernel
-	ProtocolBoot     RouteProtocol = unix.RTPROT_BOOT     // boot
-	ProtocolStatic   RouteProtocol = unix.RTPROT_STATIC   // static
+	ProtocolUnspec   RouteProtocol = iota // unspec
+	ProtocolRedirect                      // redirect
+	ProtocolKernel                        // kernel
+	ProtocolBoot                          // boot
+	ProtocolStatic                        // static
 )

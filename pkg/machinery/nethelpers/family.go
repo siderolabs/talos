@@ -4,9 +4,7 @@
 
 package nethelpers
 
-import "golang.org/x/sys/unix"
-
-//go:generate stringer -type=Family -linecomment -output family_string_linux.go
+//go:generate stringer -type=Family -linecomment
 
 // Family is a network family.
 type Family uint8
@@ -18,6 +16,6 @@ func (family Family) MarshalYAML() (interface{}, error) {
 
 // Family constants.
 const (
-	FamilyInet4 Family = unix.AF_INET  // inet4
-	FamilyInet6 Family = unix.AF_INET6 // inet6
+	FamilyInet4 Family = 2  // inet4
+	FamilyInet6 Family = 10 // inet6
 )

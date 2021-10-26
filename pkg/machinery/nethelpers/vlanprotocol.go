@@ -4,9 +4,7 @@
 
 package nethelpers
 
-import "golang.org/x/sys/unix"
-
-//go:generate stringer -type=VLANProtocol -linecomment -output vlanprotocol_string_linux.go
+//go:generate stringer -type=VLANProtocol -linecomment
 
 // VLANProtocol is a VLAN protocol.
 type VLANProtocol uint16
@@ -18,6 +16,6 @@ func (proto VLANProtocol) MarshalYAML() (interface{}, error) {
 
 // VLANProtocol constants.
 const (
-	VLANProtocol8021Q  VLANProtocol = unix.ETH_P_8021Q  // 802.1q
-	VLANProtocol8021AD VLANProtocol = unix.ETH_P_8021AD // 802.1ad
+	VLANProtocol8021Q  VLANProtocol = 33024 // 802.1q
+	VLANProtocol8021AD VLANProtocol = 34984 // 802.1ad
 )
