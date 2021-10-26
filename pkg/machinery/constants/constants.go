@@ -168,6 +168,12 @@ const (
 	// KubernetesSchedulerOrganization defines Organization value of kube-scheduler client certificate.
 	KubernetesSchedulerOrganization = "system:kube-scheduler"
 
+	// KubernetesKubeletOrganization defines Organization value of kubelet client certificate.
+	KubernetesKubeletOrganization = "system:nodes"
+
+	// KubernetesKubeletCommonNamePrefix defines prefix CN property of kubelet certificate to access kube-apiserver API.
+	KubernetesKubeletCommonNamePrefix = "system:node:"
+
 	// KubernetesAdminCertDefaultLifetime defines default lifetime for Kubernetes generated admin certificate.
 	KubernetesAdminCertDefaultLifetime = 365 * 24 * time.Hour
 
