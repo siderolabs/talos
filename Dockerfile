@@ -156,8 +156,6 @@ COPY ./api/machine/machine.proto /api/machine/machine.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size machine/machine.proto
 COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size time/time.proto
-COPY ./api/network/network.proto /api/network/network.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size network/network.proto
 COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size cluster/cluster.proto
 COPY ./api/resource/resource.proto /api/resource/resource.proto
@@ -184,7 +182,6 @@ COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
 COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
 COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
 COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
-COPY --from=generate-build /api/network/*.pb.go /pkg/machinery/api/network/
 COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
@@ -673,7 +670,6 @@ RUN protoc \
     -I/protos/common \
     -I/protos/inspect \
     -I/protos/machine \
-    -I/protos/network \
     -I/protos/resource \
     -I/protos/security \
     -I/protos/storage \
@@ -684,7 +680,6 @@ RUN protoc \
     /protos/common/*.proto \
     /protos/inspect/*.proto \
     /protos/machine/*.proto \
-    /protos/network/*.proto \
     /protos/resource/*.proto \
     /protos/security/*.proto \
     /protos/storage/*.proto \

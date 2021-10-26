@@ -15,7 +15,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/api/network"
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/api/time"
@@ -28,7 +27,6 @@ func collectMethods(t *testing.T) map[string]struct{} {
 		cluster.ClusterService_ServiceDesc,
 		inspect.InspectService_ServiceDesc,
 		machine.MachineService_ServiceDesc,
-		network.NetworkService_ServiceDesc,
 		resource.ResourceService_ServiceDesc,
 		// security.SecurityService_ServiceDesc, - not in machined
 		storage.StorageService_ServiceDesc,

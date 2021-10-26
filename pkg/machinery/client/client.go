@@ -30,7 +30,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	networkapi "github.com/talos-systems/talos/pkg/machinery/api/network"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
 	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
@@ -53,7 +52,6 @@ type Client struct {
 
 	MachineClient  machineapi.MachineServiceClient
 	TimeClient     timeapi.TimeServiceClient
-	NetworkClient  networkapi.NetworkServiceClient
 	ClusterClient  clusterapi.ClusterServiceClient
 	StorageClient  storageapi.StorageServiceClient
 	ResourceClient resourceapi.ResourceServiceClient
@@ -155,7 +153,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
-	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn)
@@ -309,7 +306,6 @@ func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialO
 
 	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
-	c.NetworkClient = networkapi.NewNetworkServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 
 	return c, nil
@@ -565,40 +561,6 @@ func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (r
 	var filtered interface{}
 	filtered, err = FilterMessages(resp, err)
 	resp, _ = filtered.(*machineapi.VersionResponse) //nolint:errcheck
-
-	return
-}
-
-// Routes implements the networkdproto.NetworkClient interface.
-//
-// Deprecated: Do not use.
-func (c *Client) Routes(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.RoutesResponse, err error) {
-	resp, err = c.NetworkClient.Routes(
-		ctx,
-		&emptypb.Empty{},
-		callOptions...,
-	)
-
-	var filtered interface{}
-	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*networkapi.RoutesResponse) //nolint:errcheck
-
-	return
-}
-
-// Interfaces implements the proto.MachineServiceClient interface.
-//
-// Deprecated: Do not use.
-func (c *Client) Interfaces(ctx context.Context, callOptions ...grpc.CallOption) (resp *networkapi.InterfacesResponse, err error) {
-	resp, err = c.NetworkClient.Interfaces(
-		ctx,
-		&emptypb.Empty{},
-		callOptions...,
-	)
-
-	var filtered interface{}
-	filtered, err = FilterMessages(resp, err)
-	resp, _ = filtered.(*networkapi.InterfacesResponse) //nolint:errcheck
 
 	return
 }
