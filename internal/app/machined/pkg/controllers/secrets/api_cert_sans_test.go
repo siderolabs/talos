@@ -67,10 +67,10 @@ func (suite *APICertSANsSuite) startRuntime() {
 }
 
 func (suite *APICertSANsSuite) TestReconcileControlPlane() {
-	rootSecrets := secrets.NewRoot(secrets.RootOSID)
+	rootSecrets := secrets.NewOSRoot(secrets.OSRootID)
 
-	rootSecrets.OSSpec().CertSANDNSNames = []string{"some.org"}
-	rootSecrets.OSSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().CertSANDNSNames = []string{"some.org"}
+	rootSecrets.TypedSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)

@@ -134,8 +134,8 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 	inputs := []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootOSID),
+			Type:      secrets.OSRootType,
+			ID:        pointer.ToString(secrets.OSRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -212,7 +212,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
 
-		rootResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootOSID, resource.VersionUndefined))
+		rootResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -225,7 +225,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 			return fmt.Errorf("error getting etcd root secrets: %w", err)
 		}
 
-		rootSpec := rootResource.(*secrets.Root).OSSpec()
+		rootSpec := rootResource.(*secrets.OSRoot).TypedSpec()
 
 		certSANResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANAPIID, resource.VersionUndefined))
 		if err != nil {
@@ -272,7 +272,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-func (ctrl *APIController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.RootOSSpec, certSANs *secrets.CertSANSpec) error {
+func (ctrl *APIController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.OSRootSpec, certSANs *secrets.CertSANSpec) error {
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.CA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
@@ -332,7 +332,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 }
 
 func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	rootSpec *secrets.RootOSSpec, endpointsStr []string, certSANs *secrets.CertSANSpec) error {
+	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec) error {
 	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.CA)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)

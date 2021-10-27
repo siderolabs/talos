@@ -38,7 +38,14 @@ func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
+			Type:      secrets.KubernetesRootType,
+			ID:        pointer.ToString(secrets.KubernetesRootID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.EtcdRootType,
+			ID:        pointer.ToString(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -95,7 +102,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootEtcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootEtcdID, resource.VersionUndefined))
+		rootEtcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -104,7 +111,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootK8sRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		rootK8sRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -113,8 +120,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootEtcdSecrets := rootEtcdRes.(*secrets.Root).EtcdSpec()
-		rootK8sSecrets := rootK8sRes.(*secrets.Root).KubernetesSpec()
+		rootEtcdSecrets := rootEtcdRes.(*secrets.EtcdRoot).TypedSpec()
+		rootK8sSecrets := rootK8sRes.(*secrets.KubernetesRoot).TypedSpec()
 		etcdSecrets := etcdRes.(*secrets.Etcd).Certs()
 		k8sSecrets := secretsRes.(*secrets.Kubernetes).Certs()
 
@@ -264,7 +271,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			}
 
 			type templateParams struct {
-				Root    *secrets.RootKubernetesSpec
+				Root    *secrets.KubernetesRootSpec
 				Secrets *secrets.KubernetesCertsSpec
 			}
 

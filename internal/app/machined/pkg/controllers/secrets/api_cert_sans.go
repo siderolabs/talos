@@ -34,8 +34,8 @@ func (ctrl *APICertSANsController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootOSID),
+			Type:      secrets.OSRootType,
+			ID:        pointer.ToString(secrets.OSRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -74,7 +74,7 @@ func (ctrl *APICertSANsController) Run(ctx context.Context, r controller.Runtime
 		case <-r.EventCh():
 		}
 
-		apiRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootOSID, resource.VersionUndefined))
+		apiRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -87,7 +87,7 @@ func (ctrl *APICertSANsController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error getting root k8s secrets: %w", err)
 		}
 
-		apiRoot := apiRootRes.(*secrets.Root).OSSpec()
+		apiRoot := apiRootRes.(*secrets.OSRoot).TypedSpec()
 
 		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 		if err != nil {

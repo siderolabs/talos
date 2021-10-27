@@ -95,8 +95,8 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 	if err := r.UpdateInputs([]controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Type:      secrets.KubernetesRootType,
+			ID:        pointer.ToString(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -128,7 +128,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		case <-refreshTicker.C:
 		}
 
-		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -141,7 +141,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("error getting root k8s secrets: %w", err)
 		}
 
-		k8sRoot := k8sRootRes.(*secrets.Root).KubernetesSpec()
+		k8sRoot := k8sRootRes.(*secrets.KubernetesRoot).TypedSpec()
 
 		// wait for time sync as certs depend on current time
 		timeSyncResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, timeresource.StatusType, timeresource.StatusID, resource.VersionUndefined))
@@ -176,7 +176,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 	}
 }
 
-func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.RootKubernetesSpec, k8sSecrets *secrets.KubernetesCertsSpec,
+func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootSpec, k8sSecrets *secrets.KubernetesCertsSpec,
 	certSANs *secrets.CertSANSpec) error {
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.CA)
 	if err != nil {
@@ -304,7 +304,7 @@ func (ctrl *KubernetesController) teardownAll(ctx context.Context, r controller.
 
 // generateAdminAdapter allows to translate input config into GenerateAdmin input.
 type generateAdminAdapter struct {
-	k8sRoot *secrets.RootKubernetesSpec
+	k8sRoot *secrets.KubernetesRootSpec
 }
 
 func (adapter *generateAdminAdapter) Name() string {

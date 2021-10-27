@@ -71,20 +71,20 @@ func (suite *APISuite) startRuntime() {
 }
 
 func (suite *APISuite) TestReconcileControlPlane() {
-	rootSecrets := secrets.NewRoot(secrets.RootOSID)
+	rootSecrets := secrets.NewOSRoot(secrets.OSRootID)
 
 	talosCA, err := x509.NewSelfSignedCertificateAuthority(
 		x509.Organization("talos"),
 	)
 	suite.Require().NoError(err)
 
-	rootSecrets.OSSpec().CA = &x509.PEMEncodedCertificateAndKey{
+	rootSecrets.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
 		Crt: talosCA.CrtPEM,
 		Key: talosCA.KeyPEM,
 	}
-	rootSecrets.OSSpec().CertSANDNSNames = []string{"example.com"}
-	rootSecrets.OSSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
-	rootSecrets.OSSpec().Token = "something"
+	rootSecrets.TypedSpec().CertSANDNSNames = []string{"example.com"}
+	rootSecrets.TypedSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().Token = "something"
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 
 	machineType := config.NewMachineType()

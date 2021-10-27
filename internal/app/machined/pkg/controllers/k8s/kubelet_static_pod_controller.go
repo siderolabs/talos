@@ -64,8 +64,8 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Type:      secrets.KubernetesRootType,
+			ID:        pointer.ToString(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -130,7 +130,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		rootSecretResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		rootSecretResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.cleanupPods(logger, nil); err != nil {
@@ -143,7 +143,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		rootSecrets := rootSecretResource.(*secrets.Root).KubernetesSpec()
+		rootSecrets := rootSecretResource.(*secrets.KubernetesRoot).TypedSpec()
 
 		secretsResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
 		if err != nil {

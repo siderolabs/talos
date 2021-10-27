@@ -51,7 +51,15 @@ func (ctrl *RootController) Inputs() []controller.Input {
 func (ctrl *RootController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: secrets.RootType,
+			Type: secrets.EtcdRootType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: secrets.KubernetesRootType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: secrets.OSRootType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -71,7 +79,7 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
-				if err = ctrl.teardown(ctx, r, secrets.RootOSID, secrets.RootEtcdID, secrets.RootKubernetesID); err != nil {
+				if err = ctrl.teardown(ctx, r, secrets.OSRootType, secrets.EtcdRootType, secrets.KubernetesRootType); err != nil {
 					return fmt.Errorf("error destroying secrets: %w", err)
 				}
 
@@ -94,36 +102,36 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 
 		machineType := machineTypeRes.(*config.MachineType).MachineType()
 
-		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootOSID), func(r resource.Resource) error {
-			return ctrl.updateOSSecrets(cfgProvider, r.(*secrets.Root).OSSpec())
+		if err = r.Modify(ctx, secrets.NewOSRoot(secrets.OSRootID), func(r resource.Resource) error {
+			return ctrl.updateOSSecrets(cfgProvider, r.(*secrets.OSRoot).TypedSpec())
 		}); err != nil {
 			return err
 		}
 
 		// TODO: k8s secrets (partial) should be valid for the worker nodes as well, worker node should have machine (OS) CA cert (?)
 		if machineType == machine.TypeWorker {
-			if err = ctrl.teardown(ctx, r, secrets.RootEtcdID, secrets.RootKubernetesID); err != nil {
+			if err = ctrl.teardown(ctx, r, secrets.EtcdRootType, secrets.KubernetesRootType); err != nil {
 				return fmt.Errorf("error destroying secrets: %w", err)
 			}
 
 			continue
 		}
 
-		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootEtcdID), func(r resource.Resource) error {
-			return ctrl.updateEtcdSecrets(cfgProvider, r.(*secrets.Root).EtcdSpec())
+		if err = r.Modify(ctx, secrets.NewEtcdRoot(secrets.EtcdRootID), func(r resource.Resource) error {
+			return ctrl.updateEtcdSecrets(cfgProvider, r.(*secrets.EtcdRoot).TypedSpec())
 		}); err != nil {
 			return err
 		}
 
-		if err = r.Modify(ctx, secrets.NewRoot(secrets.RootKubernetesID), func(r resource.Resource) error {
-			return ctrl.updateK8sSecrets(cfgProvider, r.(*secrets.Root).KubernetesSpec())
+		if err = r.Modify(ctx, secrets.NewKubernetesRoot(secrets.KubernetesRootID), func(r resource.Resource) error {
+			return ctrl.updateK8sSecrets(cfgProvider, r.(*secrets.KubernetesRoot).TypedSpec())
 		}); err != nil {
 			return err
 		}
 	}
 }
 
-func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, osSecrets *secrets.RootOSSpec) error {
+func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, osSecrets *secrets.OSRootSpec) error {
 	osSecrets.CA = cfgProvider.Machine().Security().CA()
 
 	osSecrets.CertSANIPs = nil
@@ -142,7 +150,7 @@ func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, os
 	return nil
 }
 
-func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, etcdSecrets *secrets.RootEtcdSpec) error {
+func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, etcdSecrets *secrets.EtcdRootSpec) error {
 	etcdSecrets.EtcdCA = cfgProvider.Cluster().Etcd().CA()
 
 	if etcdSecrets.EtcdCA == nil {
@@ -152,7 +160,7 @@ func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, 
 	return nil
 }
 
-func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k8sSecrets *secrets.RootKubernetesSpec) error {
+func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k8sSecrets *secrets.KubernetesRootSpec) error {
 	k8sSecrets.Name = cfgProvider.Cluster().Name()
 	k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
 	k8sSecrets.CertSANs = cfgProvider.Cluster().CertSANs()
@@ -187,11 +195,16 @@ func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k
 	return nil
 }
 
-func (ctrl *RootController) teardown(ctx context.Context, r controller.Runtime, ids ...resource.ID) error {
+func (ctrl *RootController) teardown(ctx context.Context, r controller.Runtime, types ...resource.Type) error {
 	// TODO: change this to proper teardown sequence
-	for _, id := range ids {
-		if err := r.Destroy(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, id, resource.VersionUndefined)); err != nil {
-			if !state.IsNotFoundError(err) {
+	for _, resourceType := range types {
+		items, err := r.List(ctx, resource.NewMetadata(secrets.NamespaceName, resourceType, "", resource.VersionUndefined))
+		if err != nil {
+			return err
+		}
+
+		for _, item := range items.Items {
+			if err := r.Destroy(ctx, item.Metadata()); err != nil {
 				return err
 			}
 		}

@@ -34,8 +34,8 @@ func (ctrl *KubernetesCertSANsController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Type:      secrets.KubernetesRootType,
+			ID:        pointer.ToString(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -74,7 +74,7 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		k8sRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -87,7 +87,7 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 			return fmt.Errorf("error getting root k8s secrets: %w", err)
 		}
 
-		k8sRoot := k8sRootRes.(*secrets.Root).KubernetesSpec()
+		k8sRoot := k8sRootRes.(*secrets.KubernetesRoot).TypedSpec()
 
 		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 		if err != nil {

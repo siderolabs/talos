@@ -34,8 +34,8 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootEtcdID),
+			Type:      secrets.EtcdRootType,
+			ID:        pointer.ToString(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -74,7 +74,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 		case <-r.EventCh():
 		}
 
-		etcdRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootEtcdID, resource.VersionUndefined))
+		etcdRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -87,7 +87,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return fmt.Errorf("error getting etcd root secrets: %w", err)
 		}
 
-		etcdRoot := etcdRootRes.(*secrets.Root).EtcdSpec()
+		etcdRoot := etcdRootRes.(*secrets.EtcdRoot).TypedSpec()
 
 		// wait for network to be ready as it might change IPs/hostname
 		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
@@ -127,7 +127,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 	}
 }
 
-func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.RootEtcdSpec, etcdCerts *secrets.EtcdCertsSpec) error {
+func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCerts *secrets.EtcdCertsSpec) error {
 	var err error
 
 	etcdCerts.Etcd, err = etcd.GenerateCert(etcdRoot.EtcdCA)

@@ -74,7 +74,7 @@ func (suite *KubernetesSuite) startRuntime() {
 }
 
 func (suite *KubernetesSuite) TestReconcile() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 
 	k8sCA, err := x509.NewSelfSignedCertificateAuthority(
 		x509.Organization("kubernetes"),
@@ -91,24 +91,24 @@ func (suite *KubernetesSuite) TestReconcile() {
 	serviceAccount, err := x509.NewECDSAKey()
 	suite.Require().NoError(err)
 
-	rootSecrets.KubernetesSpec().Name = "cluster1"
-	rootSecrets.KubernetesSpec().Endpoint, err = url.Parse("https://some.url:6443/")
+	rootSecrets.TypedSpec().Name = "cluster1"
+	rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.url:6443/")
 	suite.Require().NoError(err)
 
-	rootSecrets.KubernetesSpec().CA = &x509.PEMEncodedCertificateAndKey{
+	rootSecrets.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
 		Crt: k8sCA.CrtPEM,
 		Key: k8sCA.KeyPEM,
 	}
-	rootSecrets.KubernetesSpec().AggregatorCA = &x509.PEMEncodedCertificateAndKey{
+	rootSecrets.TypedSpec().AggregatorCA = &x509.PEMEncodedCertificateAndKey{
 		Crt: aggregatorCA.CrtPEM,
 		Key: aggregatorCA.KeyPEM,
 	}
-	rootSecrets.KubernetesSpec().ServiceAccount = &x509.PEMEncodedKey{
+	rootSecrets.TypedSpec().ServiceAccount = &x509.PEMEncodedKey{
 		Key: serviceAccount.KeyPEM,
 	}
-	rootSecrets.KubernetesSpec().CertSANs = []string{"example.com"}
-	rootSecrets.KubernetesSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
-	rootSecrets.KubernetesSpec().DNSDomain = "cluster.remote"
+	rootSecrets.TypedSpec().CertSANs = []string{"example.com"}
+	rootSecrets.TypedSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().DNSDomain = "cluster.remote"
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 
 	machineType := config.NewMachineType()

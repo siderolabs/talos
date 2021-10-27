@@ -125,8 +125,10 @@ func NewState() (*State, error) {
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.Etcd{},
+		&secrets.EtcdRoot{},
 		&secrets.Kubernetes{},
-		&secrets.Root{},
+		&secrets.KubernetesRoot{},
+		&secrets.OSRoot{},
 		&time.Status{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {

@@ -116,7 +116,7 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 }
 
 func (suite *ManifestSuite) TestReconcileDefaults() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 	manifestConfig := config.NewK8sManifests()
 	manifestConfig.SetManifests(defaultManifestSpec)
 
@@ -145,7 +145,7 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 }
 
 func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 	manifestConfig := config.NewK8sManifests()
 	spec := defaultManifestSpec
 	spec.ProxyEnabled = false
@@ -175,7 +175,7 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 }
 
 func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 	manifestConfig := config.NewK8sManifests()
 	spec := defaultManifestSpec
 	spec.ProxyArgs = append(spec.ProxyArgs, "--bind-address=\"::\"")
@@ -220,7 +220,7 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 }
 
 func (suite *ManifestSuite) TestReconcileDisablePSP() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 	manifestConfig := config.NewK8sManifests()
 	spec := defaultManifestSpec
 	spec.PodSecurityPolicyEnabled = false
@@ -257,7 +257,7 @@ func (suite *ManifestSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), secrets.NewRoot(secrets.RootEtcdID)))
+	suite.Assert().NoError(suite.state.Create(context.Background(), secrets.NewKubernetesRoot("-")))
 	suite.Assert().NoError(suite.state.Create(context.Background(), config.NewK8sControlPlaneAPIServer()))
 }
 

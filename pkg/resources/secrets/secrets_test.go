@@ -28,8 +28,10 @@ func TestRegisterResource(t *testing.T) {
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.Etcd{},
+		&secrets.EtcdRoot{},
 		&secrets.Kubernetes{},
-		&secrets.Root{},
+		&secrets.KubernetesRoot{},
+		&secrets.OSRoot{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

@@ -42,8 +42,8 @@ func (ctrl *ManifestController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.RootType,
-			ID:        pointer.ToString(secrets.RootKubernetesID),
+			Type:      secrets.KubernetesRootType,
+			ID:        pointer.ToString(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -85,7 +85,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 
 		config := configResource.(*config.K8sControlPlane).Manifests()
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.RootType, secrets.RootKubernetesID, resource.VersionUndefined))
+		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -98,7 +98,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Root).KubernetesSpec()
+		secrets := secretsResources.(*secrets.KubernetesRoot).TypedSpec()
 
 		renderedManifests, err := ctrl.render(config, secrets)
 		if err != nil {
@@ -155,11 +155,11 @@ func jsonify(input string) (string, error) {
 	return string(out), err
 }
 
-func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secrets.RootKubernetesSpec) ([]renderedManifest, error) {
+func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secrets.KubernetesRootSpec) ([]renderedManifest, error) {
 	templateConfig := struct {
 		config.K8sManifestsSpec
 
-		Secrets *secrets.RootKubernetesSpec
+		Secrets *secrets.KubernetesRootSpec
 	}{
 		K8sManifestsSpec: cfg,
 		Secrets:          scrt,

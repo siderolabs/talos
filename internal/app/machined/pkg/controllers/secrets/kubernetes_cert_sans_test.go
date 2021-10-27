@@ -69,14 +69,14 @@ func (suite *KubernetesCertSANsSuite) startRuntime() {
 }
 
 func (suite *KubernetesCertSANsSuite) TestReconcile() {
-	rootSecrets := secrets.NewRoot(secrets.RootKubernetesID)
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
 
 	var err error
 
-	rootSecrets.KubernetesSpec().CertSANs = []string{"example.com"}
-	rootSecrets.KubernetesSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
-	rootSecrets.KubernetesSpec().DNSDomain = "cluster.remote"
-	rootSecrets.KubernetesSpec().Endpoint, err = url.Parse("https://some.url:6443/")
+	rootSecrets.TypedSpec().CertSANs = []string{"example.com"}
+	rootSecrets.TypedSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().DNSDomain = "cluster.remote"
+	rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.url:6443/")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
