@@ -72,6 +72,11 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
+	// clean up the socket if it already exists (important for Talos in a container)
+	if err := os.RemoveAll(constants.APIRuntimeSocketPath); err != nil {
+		return err
+	}
+
 	listener, err := net.Listen("unix", constants.APIRuntimeSocketPath)
 	if err != nil {
 		return err
