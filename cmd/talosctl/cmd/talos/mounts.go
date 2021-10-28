@@ -7,16 +7,13 @@ package talos
 import (
 	"context"
 	"fmt"
-	"math"
 	"os"
-	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -40,37 +37,9 @@ var mountsCmd = &cobra.Command{
 				cli.Warning("%s", err)
 			}
 
-			return mountsRender(&remotePeer, resp)
+			return cli.RenderMounts(resp, os.Stdout, &remotePeer)
 		})
 	},
-}
-
-func mountsRender(remotePeer *peer.Peer, resp *machineapi.MountsResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
-
-	defaultNode := client.AddrFromPeer(remotePeer)
-
-	for _, msg := range resp.Messages {
-		for _, r := range msg.Stats {
-			percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
-
-			if math.IsNaN(percentAvailable) {
-				continue
-			}
-
-			node := defaultNode
-
-			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
-			}
-
-			fmt.Fprintf(w, "%s\t%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n",
-				node, r.Filesystem, float64(r.Size)*1e-9, float64(r.Size-r.Available)*1e-9, float64(r.Available)*1e-9, percentAvailable, r.MountedOn)
-		}
-	}
-
-	return w.Flush()
 }
 
 func init() {

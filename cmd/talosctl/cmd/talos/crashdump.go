@@ -6,11 +6,10 @@ package talos
 
 import (
 	"context"
-	"os"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -20,25 +19,14 @@ var crashdumpCmdFlags struct {
 
 // crashdumpCmd represents the crashdump command.
 var crashdumpCmd = &cobra.Command{
-	Use:   "crashdump",
-	Short: "Dump debug information about the cluster",
-	Long:  ``,
-	Args:  cobra.NoArgs,
+	Use:    "crashdump",
+	Short:  "Dump debug information about the cluster",
+	Long:   ``,
+	Args:   cobra.NoArgs,
+	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
-			clientProvider := &cluster.ConfigClientProvider{
-				DefaultClient: c,
-			}
-			defer clientProvider.Close() //nolint:errcheck
-
-			worker := cluster.APICrashDumper{
-				ClientProvider: clientProvider,
-				Info:           &crashdumpCmdFlags.clusterState,
-			}
-
-			worker.CrashDump(ctx, os.Stdout)
-
-			return nil
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			return fmt.Errorf("`talosctl crashdump` is deprecated, please use `talosctl support` instead")
 		})
 	},
 }

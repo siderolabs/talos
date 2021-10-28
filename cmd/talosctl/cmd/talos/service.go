@@ -9,14 +9,12 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
-	"time"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -81,7 +79,7 @@ func serviceList(ctx context.Context, c *client.Client) error {
 
 	for _, msg := range resp.Messages {
 		for _, s := range msg.Services {
-			svc := serviceInfoWrapper{s}
+			svc := cli.ServiceInfoWrapper{ServiceInfo: s}
 
 			node := defaultNode
 
@@ -108,44 +106,13 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 		cli.Warning("%s", err)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-
 	defaultNode := client.AddrFromPeer(&remotePeer)
-
-	for _, s := range services {
-		node := defaultNode
-
-		if s.Metadata != nil {
-			node = s.Metadata.Hostname
-		}
-
-		fmt.Fprintf(w, "NODE\t%s\n", node)
-
-		svc := serviceInfoWrapper{s.Service}
-		fmt.Fprintf(w, "ID\t%s\n", svc.Id)
-		fmt.Fprintf(w, "STATE\t%s\n", svc.State)
-		fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
-
-		if svc.Health.LastMessage != "" {
-			fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
-		}
-
-		label := "EVENTS"
-
-		for i := range svc.Events.Events {
-			event := svc.Events.Events[len(svc.Events.Events)-1-i]
-
-			ts := event.Ts.AsTime()
-			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-			label = "" //nolint:wastedassign
-		}
-	}
 
 	if len(services) == 0 {
 		return fmt.Errorf("service %q is not registered on any nodes", id)
 	}
 
-	return w.Flush()
+	return cli.RenderServicesInfo(services, os.Stdout, defaultNode, true)
 }
 
 func serviceStart(ctx context.Context, c *client.Client, id string) error {
@@ -236,40 +203,6 @@ func serviceRestart(ctx context.Context, c *client.Client, id string) error {
 	}
 
 	return w.Flush()
-}
-
-type serviceInfoWrapper struct {
-	*machineapi.ServiceInfo
-}
-
-func (svc serviceInfoWrapper) LastUpdated() string {
-	if len(svc.Events.Events) == 0 {
-		return ""
-	}
-
-	ts := svc.Events.Events[len(svc.Events.Events)-1].Ts.AsTime()
-
-	return time.Since(ts).Round(time.Second).String()
-}
-
-func (svc serviceInfoWrapper) LastEvent() string {
-	if len(svc.Events.Events) == 0 {
-		return "<none>"
-	}
-
-	return svc.Events.Events[len(svc.Events.Events)-1].Msg
-}
-
-func (svc serviceInfoWrapper) HealthStatus() string {
-	if svc.Health.Unknown {
-		return "?"
-	}
-
-	if svc.Health.Healthy {
-		return "OK"
-	}
-
-	return "Fail"
 }
 
 func init() {
