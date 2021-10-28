@@ -70,6 +70,17 @@ Please note that capabilities are dropped before machine configuration is loaded
 so disabling kexec via `machine.sysctls` will not be enough.
 """
 
+    [notes.support]
+        title = "`talosctl support`"
+        description = """\
+`talosctl` CLI tool now has a new subcommand called `support`, that can gather all
+cluster information that could help with future debugging in a single run.
+
+Output of the command is a `zip` archive with all talos service logs, kubernetes pod logs and manifests,
+talos resources manifests and so on.
+Generated archive does not contain any secret information so it is safe to send it for analysis to a third party.
+"""
+
 [make_deps]
 
     [make_deps.tools]

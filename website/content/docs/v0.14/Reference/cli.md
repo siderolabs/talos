@@ -690,36 +690,6 @@ talosctl copy <src-path> -|<local-path> [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl crashdump
-
-Dump debug information about the cluster
-
-```
-talosctl crashdump [flags]
-```
-
-### Options
-
-```
-      --control-plane-nodes strings   specify IPs of control plane nodes
-  -h, --help                          help for crashdump
-      --init-node string              specify IPs of init node
-      --worker-nodes strings          specify IPs of worker nodes
-```
-
-### Options inherited from parent commands
-
-```
-      --context string       Context to be used in command
-  -e, --endpoints strings    override default endpoints in Talos configuration
-  -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
-```
-
-### SEE ALSO
-
-* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-
 ## talosctl dashboard
 
 Cluster dashboard with real-time metrics
@@ -1885,6 +1855,36 @@ talosctl stats [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl support
+
+Dump debug information about the cluster
+
+```
+talosctl support [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for support
+  -w, --num-workers int   count of debug info collection workers to use per node (default 1)
+  -O, --output string     output file to write support archive to
+  -v, --verbose           verbose output
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl time
 
 Gets current server time
@@ -2093,7 +2093,6 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
-* [talosctl crashdump](#talosctl-crashdump)	 - Dump debug information about the cluster
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
 * [talosctl disks](#talosctl-disks)	 - Get the list of disks from /sys/block on the machine
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
@@ -2120,6 +2119,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
 * [talosctl stats](#talosctl-stats)	 - Get container stats
+* [talosctl support](#talosctl-support)	 - Dump debug information about the cluster
 * [talosctl time](#talosctl-time)	 - Gets current server time
 * [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node
 * [talosctl upgrade-k8s](#talosctl-upgrade-k8s)	 - Upgrade Kubernetes control plane in the Talos cluster.
