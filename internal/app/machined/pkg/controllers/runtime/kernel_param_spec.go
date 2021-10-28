@@ -15,7 +15,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/kernel"
+	krnl "github.com/talos-systems/talos/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/resources/runtime"
 )
 
@@ -122,14 +123,14 @@ func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r 
 	prop := &kernel.Param{Key: key, Value: value}
 
 	if _, ok := ctrl.defaults[key]; !ok {
-		if data, err := kernel.ReadParam(prop); err == nil {
+		if data, err := krnl.ReadParam(prop); err == nil {
 			ctrl.defaults[key] = string(data)
 		} else if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
 
-	if err := kernel.WriteParam(prop); err != nil {
+	if err := krnl.WriteParam(prop); err != nil {
 		return err
 	}
 
@@ -149,12 +150,12 @@ func (ctrl *KernelParamSpecController) resetKernelParam(ctx context.Context, r c
 	var err error
 
 	if def, ok := ctrl.defaults[key]; ok {
-		err = kernel.WriteParam(&kernel.Param{
+		err = krnl.WriteParam(&kernel.Param{
 			Key:   key,
 			Value: def,
 		})
 	} else {
-		err = kernel.DeleteParam(&kernel.Param{Key: key})
+		err = krnl.DeleteParam(&kernel.Param{Key: key})
 	}
 
 	if err != nil {

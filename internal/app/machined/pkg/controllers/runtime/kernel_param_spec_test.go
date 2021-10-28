@@ -16,7 +16,8 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
-	"github.com/talos-systems/talos/pkg/kernel"
+	krnl "github.com/talos-systems/talos/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	runtimeresource "github.com/talos-systems/talos/pkg/resources/runtime"
 )
 
@@ -50,7 +51,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		),
 	))
 
-	prop, err := kernel.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err := krnl.ReadParam(&kernel.Param{Key: fsFileMax})
 	suite.Assert().NoError(err)
 	suite.Require().Equal(value, strings.TrimSpace(string(prop)))
 
@@ -74,7 +75,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		},
 	))
 
-	prop, err = kernel.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err = krnl.ReadParam(&kernel.Param{Key: fsFileMax})
 	suite.Assert().NoError(err)
 	suite.Require().Equal(def, strings.TrimSpace(string(prop)))
 }

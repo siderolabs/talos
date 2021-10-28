@@ -16,8 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/pkg/kernel"
-	"github.com/talos-systems/talos/pkg/kernel/kspp"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/resources/runtime"
 )
 
@@ -77,10 +76,36 @@ func TestCondition(t *testing.T) {
 			Succeeds: false,
 		},
 		{
-			Name:               "multiple values",
-			ActualKernelParams: kspp.GetKernelParams(),
-			AwaitKernelParams:  kspp.GetKernelParams(),
-			Succeeds:           true,
+			Name: "multiple values",
+			ActualKernelParams: []*kernel.Param{
+				{
+					Key:   "kernel.kptr_restrict",
+					Value: "1",
+				},
+				{
+					Key:   "kernel.dmesg_restrict",
+					Value: "1",
+				},
+				{
+					Key:   "kernel.perf_event_paranoid",
+					Value: "3",
+				},
+			},
+			AwaitKernelParams: []*kernel.Param{
+				{
+					Key:   "kernel.kptr_restrict",
+					Value: "1",
+				},
+				{
+					Key:   "kernel.dmesg_restrict",
+					Value: "1",
+				},
+				{
+					Key:   "kernel.perf_event_paranoid",
+					Value: "3",
+				},
+			},
+			Succeeds: true,
 		},
 	} {
 		tt := tt
