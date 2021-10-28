@@ -56,22 +56,21 @@ Retrieve the admin `kubeconfig` by running:
 talosctl kubeconfig
 ```
 
-## Boot Talos from an SSD Drive
+## Boot Talos from an eMMC or SSD Drive
 
 > Note: this is only tested on Rock PI 4c
 
-Rock PI 4 has an M2 slot which supports NVMe disks.
-It is possible to run Talos without any SD cards right from that SSD disk.
+It is possible to run Talos without any SD cards right from either an eMMC or SSD disk.
 
-The pre-installed SPI loader won't be able to chain Talos u-boot on the SSD drive because it's too outdated.
-The official docs on booting from the SSD also propose using an outdated SPI to flash u-boot.
+The pre-installed SPI loader won't be able to chain Talos u-boot on the device because it's too outdated.
 
 Instead, it is necessary to update u-boot to a more recent version for this process to work.
 The Armbian u-boot build for Rock PI 4c has been proved to work: [https://users.armbian.com/piter75/](https://users.armbian.com/piter75/).
 
 ### Steps
 
-- Flash any OS to the SD card (can be Armbian for example).
+- Flash the Rock PI 4c variant of [Debian](https://wiki.radxa.com/Rockpi4/downloads) to the SD card.
+- Check that /dev/mtdblock0 exists otherwise the command will silently fail; e.g. `lsblk`.
 - Download Armbian u-boot and update SPI flash:
 
 ```bash
