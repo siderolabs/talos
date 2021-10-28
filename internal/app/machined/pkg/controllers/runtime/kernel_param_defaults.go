@@ -12,8 +12,8 @@ import (
 	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/kernel/kspp"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/resources/runtime"
 )
 

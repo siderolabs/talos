@@ -57,7 +57,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/images"
-	"github.com/talos-systems/talos/pkg/kernel"
+	krnl "github.com/talos-systems/talos/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -66,6 +66,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	resourceruntime "github.com/talos-systems/talos/pkg/resources/runtime"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -88,7 +89,7 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 
 		// disable ratelimiting for kmsg, otherwise logs might be not visible.
 		// this should be set via kernel arg, but in case it's not set, try to force it.
-		if err = kernel.WriteParam(&kernel.Param{
+		if err = krnl.WriteParam(&kernel.Param{
 			Key:   "kernel.printk_devkmsg",
 			Value: "on\n",
 		}); err != nil {
@@ -241,7 +242,7 @@ func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 // DropCapabilities drops some capabilities so that they can't be restored by child processes.
 func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		prop, err := kernel.ReadParam(&kernel.Param{Key: "kernel.kexec_load_disabled"})
+		prop, err := krnl.ReadParam(&kernel.Param{Key: "kernel.kexec_load_disabled"})
 		if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
 			logger.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
 

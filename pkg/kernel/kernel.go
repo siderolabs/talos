@@ -7,32 +7,21 @@ package kernel
 import (
 	"io/ioutil"
 	"os"
-	"path"
-	"strings"
+
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 )
 
-// Param represents a kernel system property.
-type Param struct {
-	Key   string
-	Value string
-}
-
 // WriteParam writes a value to a key under /proc/sys.
-func WriteParam(prop *Param) error {
+func WriteParam(prop *kernel.Param) error {
 	return ioutil.WriteFile(prop.Path(), []byte(prop.Value), 0o644)
 }
 
 // ReadParam reads a value from a key under /proc/sys.
-func ReadParam(prop *Param) ([]byte, error) {
+func ReadParam(prop *kernel.Param) ([]byte, error) {
 	return ioutil.ReadFile(prop.Path())
 }
 
 // DeleteParam deletes a value from a key under /proc/sys.
-func DeleteParam(prop *Param) error {
+func DeleteParam(prop *kernel.Param) error {
 	return os.Remove(prop.Path())
-}
-
-// Path returns the path to the systctl file under /proc/sys.
-func (prop *Param) Path() string {
-	return path.Join("/proc/sys", strings.ReplaceAll(prop.Key, ".", "/"))
 }

@@ -4,6 +4,11 @@
 
 package kernel
 
+import (
+	"path"
+	"strings"
+)
+
 // DefaultArgs returns the Talos default kernel commandline options.
 var DefaultArgs = []string{
 	"init_on_alloc=1",
@@ -19,4 +24,15 @@ var DefaultArgs = []string{
 	"ima_template=ima-ng",
 	"ima_appraise=fix",
 	"ima_hash=sha512",
+}
+
+// Param represents a kernel system property.
+type Param struct {
+	Key   string
+	Value string
+}
+
+// Path returns the path to the systctl file under /proc/sys.
+func (prop *Param) Path() string {
+	return path.Join("/proc/sys", strings.ReplaceAll(prop.Key, ".", "/"))
 }

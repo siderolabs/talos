@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 
-	"github.com/talos-systems/talos/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 )
 
 // KernelParamsSetCondition implements condition which waits for the kernels to be in sync.
