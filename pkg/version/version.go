@@ -5,8 +5,9 @@
 package version
 
 import (
-	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"runtime"
 	"text/template"
 
@@ -49,28 +50,29 @@ func NewVersion() *machineapi.VersionInfo {
 
 // PrintLongVersion prints verbose version information.
 func PrintLongVersion() {
-	printLong(NewVersion())
+	printLong(os.Stdout, NewVersion())
 }
 
 // PrintLongVersionFromExisting prints verbose version information.
 func PrintLongVersionFromExisting(v *machineapi.VersionInfo) {
-	printLong(v)
+	printLong(os.Stdout, v)
 }
 
-func printLong(v *machineapi.VersionInfo) {
-	var wr bytes.Buffer
+// WriteLongVersionFromExisting writes verbose version to io.Writer.
+func WriteLongVersionFromExisting(w io.Writer, v *machineapi.VersionInfo) {
+	printLong(w, v)
+}
 
+func printLong(w io.Writer, v *machineapi.VersionInfo) {
 	tmpl, err := template.New("version").Parse(versionTemplate)
 	if err != nil {
 		return
 	}
 
-	err = tmpl.Execute(&wr, v)
+	err = tmpl.Execute(w, v)
 	if err != nil {
 		return
 	}
-
-	fmt.Print(wr.String())
 }
 
 // PrintShortVersion prints the tag and SHA.
