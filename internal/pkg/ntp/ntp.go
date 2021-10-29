@@ -288,11 +288,13 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		fmt.Fprintf(&buf, "adjusting time (jump) by %s via %s", offset, server)
 
 		req = syscall.Timex{
-			Modes: timex.ADJ_SETOFFSET | timex.ADJ_NANO | timex.ADJ_STATUS,
+			Modes: timex.ADJ_SETOFFSET | timex.ADJ_NANO | timex.ADJ_STATUS | timex.ADJ_MAXERROR | timex.ADJ_ESTERROR,
 			Time: syscall.Timeval{
 				Sec:  int64(offset / time.Second),
 				Usec: int64(offset / time.Nanosecond % time.Second),
 			},
+			Maxerror: 0,
+			Esterror: 0,
 		}
 
 		// kernel wants tv_usec to be positive
