@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
-	"github.com/prometheus/procfs"
 )
 
 // CPUType is type of Etcd resource.
@@ -102,41 +101,7 @@ func (r *CPU) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Update current CPU snapshot.
-func (r *CPU) Update(stat *procfs.Stat) {
-	translateCPUStat := func(in procfs.CPUStat) CPUStat {
-		return CPUStat{
-			User:      in.User,
-			Nice:      in.Nice,
-			System:    in.System,
-			Idle:      in.Idle,
-			Iowait:    in.Iowait,
-			Irq:       in.IRQ,
-			SoftIrq:   in.SoftIRQ,
-			Steal:     in.Steal,
-			Guest:     in.Guest,
-			GuestNice: in.GuestNice,
-		}
-	}
-
-	translateListOfCPUStat := func(in []procfs.CPUStat) []CPUStat {
-		res := make([]CPUStat, len(in))
-
-		for i := range in {
-			res[i] = translateCPUStat(in[i])
-		}
-
-		return res
-	}
-
-	r.spec = CPUSpec{
-		CPUTotal:        translateCPUStat(stat.CPUTotal),
-		CPU:             translateListOfCPUStat(stat.CPU),
-		IRQTotal:        stat.IRQTotal,
-		ContextSwitches: stat.ContextSwitches,
-		ProcessCreated:  stat.ProcessCreated,
-		ProcessRunning:  stat.ProcessesRunning,
-		ProcessBlocked:  stat.ProcessesBlocked,
-		SoftIrqTotal:    stat.SoftIRQTotal,
-	}
+// TypedSpec returns .spec.
+func (r *CPU) TypedSpec() *CPUSpec {
+	return &r.spec
 }

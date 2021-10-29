@@ -17,7 +17,7 @@ rules:
   #  action: deny
   #- regexp: ^github.com/mdlayher/netx
   #  action: deny
-  #- regexp: ^github.com/prometheus/procfs
-  #  action: deny
+  - regexp: ^github.com/prometheus/procfs
+    action: deny
   #- regexp: ^golang.zx2c4.com/wireguard/wgctrl
   #  action: deny

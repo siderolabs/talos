@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/procfs"
 	"go.uber.org/zap"
 
+	perfadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/perf"
 	"github.com/talos-systems/talos/pkg/resources/perf"
 )
 
@@ -88,7 +89,7 @@ func (ctrl *StatsController) updateCPU(ctx context.Context, r controller.Runtime
 	}
 
 	return r.Modify(ctx, cpu, func(r resource.Resource) error {
-		r.(*perf.CPU).Update(&stat)
+		perfadapter.CPU(r.(*perf.CPU)).Update(&stat)
 
 		return nil
 	})
@@ -103,7 +104,7 @@ func (ctrl *StatsController) updateMemory(ctx context.Context, r controller.Runt
 	}
 
 	return r.Modify(ctx, mem, func(r resource.Resource) error {
-		r.(*perf.Memory).Update(&info)
+		perfadapter.Memory(r.(*perf.Memory)).Update(&info)
 
 		return nil
 	})
