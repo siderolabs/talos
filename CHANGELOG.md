@@ -1,3 +1,56 @@
+## [Talos 0.13.2](https://github.com/talos-systems/talos/releases/tag/v0.13.2) (2021-11-02)
+
+Welcome to the v0.13.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Kexec and capabilities
+
+When kexec support is disabled Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
+That is helpful for advanced use-cases like Docker-in-Docker.
+
+If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
+For example:
+
+```yaml
+install:
+  extraKernelArgs:
+    - kexec_load_disabled=1
+```
+
+Please note that capabilities are dropped before machine configuration is loaded,
+so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec`) will not be enough.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Serge Logvinov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`a937e6f7`](https://github.com/talos-systems/talos/commit/a937e6f7da11a70525dee138f44768fac2e0aa20) fix: remove listening socket to fix Talos in a container restart
+* [`26986791`](https://github.com/talos-systems/talos/commit/26986791620168987b92a6b24d9f634cc3f4a59e) feat: automatically limit kubelet node IP family based on service CIDRs
+* [`c873dc5d`](https://github.com/talos-systems/talos/commit/c873dc5d057ccaeb69f5c189011e225cb1e0c393) fix: don't drop ability to use ambient capabilities
+* [`2226a992`](https://github.com/talos-systems/talos/commit/2226a9924ebe0e01662fc5e4357deef8efb3d641) fix: hcloud network config changes
+* [`7cb9813b`](https://github.com/talos-systems/talos/commit/7cb9813b62a28d48168ba567c38cd3cc3f113f72) feat: update Kubernetes to 1.22.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **k8s.io/api**        v0.22.2 -> v0.22.3
+* **k8s.io/client-go**  v0.22.2 -> v0.22.3
+* **k8s.io/kubectl**    v0.22.2 -> v0.22.3
+* **k8s.io/kubelet**    v0.22.2 -> v0.22.3
+
+Previous release can be found at [v0.13.1](https://github.com/talos-systems/talos/releases/tag/v0.13.1)
+
 ## [Talos 0.13.1](https://github.com/talos-systems/talos/releases/tag/v0.13.1) (2021-10-25)
 
 Welcome to the v0.13.1 release of Talos!
