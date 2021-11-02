@@ -1,0 +1,172 @@
+resources:
+- type: storage.v1.bucket
+  name: {{ env["deployment"] }}-talos-assets
+- action: gcp-types/cloudbuild-v1:cloudbuild.projects.builds.create
+  name: create-talos-artifact
+  metadata:
+    runtimePolicy:
+    - CREATE
+  properties:
+    steps:
+    - name: gcr.io/cloud-builders/curl
+      args:
+        - -fSLO
+        - https://github.com/talos-systems/talos/releases/download/{{ properties["talosVersion"] }}/gcp-amd64.tar.gz
+    - name: gcr.io/cloud-builders/gsutil
+      args:
+        - cp
+        - gcp-amd64.tar.gz
+        - gs://$(ref.{{ env["deployment"] }}-talos-assets.name)/gcp-amd64.tar.gz
+    timeout: 120s
+- type: compute.v1.image
+  name: {{ env["deployment"] }}-talos-image
+  metadata:
+    dependsOn:
+    - create-talos-artifact
+  properties:
+    rawDisk:
+      source: https://storage.cloud.google.com/$(ref.{{ env["deployment"] }}-talos-assets.name)/gcp-amd64.tar.gz
+    sourceType: RAW
+    description: Talos image
+    family: talos
+- type: compute.v1.instanceGroup
+  name: {{ env["deployment"] }}-talos-ig
+  properties:
+    zone: {{ properties["zone"] }}
+    description: Talos instance group
+    namedPorts:
+    - name: tcp6443
+      port: 6443
+- type: compute.v1.healthCheck
+  name: {{ env["deployment"] }}-talos-healthcheck
+  properties:
+    description: Talos health check
+    type: TCP
+    tcpHealthCheck:
+      port: 6443
+- type: compute.v1.backendService
+  name: {{ env["deployment"] }}-talos-backend
+  properties:
+    description: Talos backend service
+    protocol: TCP
+    healthChecks:
+    - $(ref.{{ env["deployment"] }}-talos-healthcheck.selfLink)
+    timeoutSec: 300
+    backends:
+    - description: Talos backend
+      group: $(ref.{{ env["deployment"] }}-talos-ig.selfLink)
+    portName: tcp6443
+- type: compute.v1.targetTcpProxy
+  name: {{ env["deployment"] }}-talos-tcp-proxy
+  properties:
+    description: Talos TCP proxy
+    service: $(ref.{{ env["deployment"] }}-talos-backend.selfLink)
+    proxyHeader: NONE
+- type: compute.v1.globalAddress
+  name: {{ env["deployment"] }}-talos-lb-ip
+  properties:
+    description: Talos LoadBalancer IP
+- type: compute.v1.globalForwardingRule
+  name: talos-fwd-rule
+  properties:
+    description: Talos Forwarding rule
+    target: $(ref.{{ env["deployment"] }}-talos-tcp-proxy.selfLink)
+    IPAddress: $(ref.{{ env["deployment"] }}-talos-lb-ip.address)
+    IPProtocol: TCP
+    portRange: 443
+- type: compute.v1.firewall
+  name: {{ env["deployment"] }}-talos-controlplane-firewall
+  properties:
+    description: Talos controlplane firewall
+    sourceRanges:
+    - 130.211.0.0/22
+    - 35.191.0.0/16
+    targetTags:
+    - talos-controlplane
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 6443
+- type: compute.v1.firewall
+  name: {{ env["deployment"] }}-talos-controlplane-talosctl
+  properties:
+    description: Talos controlplane talosctl firewall
+    sourceRanges:
+    - 0.0.0.0/0
+    targetTags:
+    - talos-controlplane
+    - talos-workers
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 50000
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+- type: compute.v1.instance
+  name: {{ env["deployment"] }}-talos-controlplane-{{ index }}
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties["controlPlaneNodeType"] }}
+    tags:
+      items:
+      - talos-controlplane
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskSizeGb: 20
+        sourceImage: $(ref.{{ env["deployment"] }}-talos-image.selfLink)
+    networkInterfaces:
+    - network: global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+{% endfor %}
+{% for index in range(properties["workerNodeCount"]) %}
+- type: compute.v1.instance
+  name: {{ env["deployment"] }}-talos-worker-{{ index }}
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties["workerNodeType"] }}
+    tags:
+      items:
+      - talos-workers
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskSizeGb: 20
+        sourceImage: $(ref.{{ env["deployment"] }}-talos-image.selfLink)
+    networkInterfaces:
+    - network: global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+{% endfor %}
+- name: {{ env["deployment"] }}-talos-ig-members
+  action: gcp-types/compute-v1:compute.instanceGroups.addInstances
+  properties:
+    zone: {{ properties["zone"] }}
+    instanceGroup: $(ref.{{ env["deployment"] }}-talos-ig.name)
+    instances:
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+        - instance: $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.selfLink)
+{% endfor %}
+outputs:
+- name: bucketName
+  value: $(ref.{{ env["deployment"] }}-talos-assets.name)
+- name: loadbalancerIP
+  value: $(ref.{{ env["deployment"] }}-talos-lb-ip.address)
+- name: controlPlaneNodeIPs
+  value:
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+  - $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
+{% endfor %}
+- name: workerNodeIPs
+{%  for index in range(properties["workerNodeCount"]) %}
+  value:
+  - $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
+{% endfor %}

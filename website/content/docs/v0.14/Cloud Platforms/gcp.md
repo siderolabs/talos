@@ -9,6 +9,10 @@ In this guide, we will create an HA Kubernetes cluster in GCP with 1 worker node
 We will assume an existing [Cloud Storage bucket](https://cloud.google.com/storage/docs/creating-buckets), and some familiarity with Google Cloud.
 If you need more information on Google Cloud specifics, please see the [official Google documentation](https://cloud.google.com/docs/).
 
+[jq](https://stedolan.github.io/jq/) and [talosctl](../../introduction/quickstart/#talosctl) also needs to be installed
+
+## Manual Setup
+
 ### Environment Setup
 
 We'll make use of the following environment variables throughout the setup.
@@ -50,6 +54,8 @@ gcloud compute images create talos \
 
 Once the image is prepared, we'll want to work through setting up the network.
 Issue the following to create a firewall, load balancer, and their required components.
+
+`130.211.0.0/22` and `35.191.0.0/16` are the GCP [Load Balancer IP ranges](https://cloud.google.com/load-balancing/docs/health-checks#fw-rule)
 
 ```bash
 # Create Instance Group
@@ -182,4 +188,201 @@ At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl --talosconfig talosconfig kubeconfig .
+```
+
+### Cleanup
+
+```bash
+# cleanup VM's
+gcloud compute instances delete \
+  talos-worker-0 \
+  talos-controlplane-0 \
+  talos-controlplane-1 \
+  talos-controlplane-2
+
+# cleanup firewall rules
+gcloud compute firewall-rules delete \
+  talos-controlplane-talosctl \
+  talos-controlplane-firewall
+
+# cleanup forwarding rules
+gcloud compute forwarding-rules delete \
+  talos-fwd-rule
+
+# cleanup addresses
+gcloud compute addresses delete \
+  talos-lb-ip
+
+# cleanup proxies
+gcloud compute target-tcp-proxies delete \
+  talos-tcp-proxy
+
+# cleanup backend services
+gcloud compute backend-services delete \
+  talos-be
+
+# cleanup health checks
+gcloud compute health-checks delete \
+  talos-health-check
+
+# cleanup unmanaged instance groups
+gcloud compute instance-groups unmanaged delete \
+  talos-ig
+
+# cleanup Talos image
+gcloud compute images delete \
+  talos
+```
+
+## Using GCP Deployment manager
+
+Using GCP deployment manager automatically creates a Google Storage bucket and uploads the Talos image to it.
+
+By default this setup creates a three node control plane and a single worker in `us-west2-c`
+
+First we need to create a folder to store our deployment manifests and perform all subsequent operations from that folder.
+
+```bash
+mkdir -p talos-gcp-deployment
+cd talos-gcp-deployment
+```
+
+### Getting the deployment manifests
+
+We need to download two deployment manifests for the deployment from the Talos github repository.
+
+```bash
+curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/config.yaml"
+curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/talos-ha.yaml"
+```
+
+### Updating the config
+
+Now we need to update the local `config.yaml` file with any required changes such as changing the default zone, Talos version, machine sizes, nodes count etc.
+
+An example `config.yaml` file is shown below:
+
+```yaml
+imports:
+  - path: talos-ha.jinja
+
+resources:
+  - name: talos-ha
+    type: talos-ha.jinja
+    properties:
+      zone: us-west2-c
+      talosVersion: v0.13.2
+      controlPlaneNodeCount: 5
+      controlPlaneNodeType: n1-standard-1
+      workerNodeCount: 3
+      workerNodeType: n1-standard-1
+outputs:
+  - name: bucketName
+    value: $(ref.talos-ha.bucketName)
+  - name: loadbalancerIP
+    value: $(ref.talos-ha.loadbalancerIP)
+  - name: controlPlaneNodeIPs
+    value: $(ref.talos-ha.controlPlaneNodeIPs)
+  - name: workerNodeIPs
+    value: $(ref.talos-ha.workerNodeIPs)
+```
+
+### Creating the deployment
+
+Now we are ready to create the deployment.
+Confirm with `y` for any prompts.
+Run the following command to create the deployment:
+
+```bash
+# a unique name for the deployment, resources are prefixed with the deployment name
+export DEPLOYMENT_NAME="talos-gcp-ha"
+gcloud deployment-manager deployments create "${DEPLOYMENT_NAME}" --config config.yaml
+```
+
+### Retrieving the outputs
+
+First we need to get the deployment outputs.
+
+```bash
+# first get the outputs
+OUTPUTS=$(gcloud deployment-manager deployments describe "${DEPLOYMENT_NAME}" --format json | jq '.outputs[]')
+
+BUCKET_NAME=$(jq -r '. | select(.name == "bucketName").finalValue' <<< "${OUTPUTS}")
+LOADBALANCER_IP=$(jq -r '. | select(.name == "loadbalancerIP").finalValue' <<< "${OUTPUTS}")
+CONTROLPLANE0_IP=$(jq -r '. | select(.name == "controlPlaneNodeIPs[0]").finalValue' <<< "${OUTPUTS}")
+CONTROLPLANE_IPS=$(jq -r '. | select(.name | contains("controlPlaneNodeIPs")).finalValue' <<< "${OUTPUTS}")
+WORKER_IPS=$(jq -r '. | select(.name | contains("workerNodeIPs")).finalValue' <<< "${OUTPUTS}")
+```
+
+### Generating talos config
+
+We need to generate `talosconfig`, controlplane and worker configs
+
+```bash
+# use a directory to store the configs
+mkdir -p generated
+talosctl gen config \
+  "${DEPLOYMENT_NAME}" \
+  "https://${LOADBALANCER_IP}:443" \
+  --output-dir generated/
+```
+
+### Bootstrap nodes
+
+Now we'r ready to bootstrap the nodes.
+
+```bash
+# bootstrap controlplane nodes
+for CONTROLPLANE_IP in "${CONTROLPLANE_IPS}"; do
+  talosctl apply-config \
+    --insecure \
+    --nodes "${CONTROLPLANE_IP}" \
+    --endpoints "${CONTROLPLANE_IP}" \
+    --file generated/controlplane.yaml
+done
+
+# bootstrap worker nodes
+for WORKER_IP in "${WORKER_IPS}"; do
+  talosctl apply-config \
+    --insecure \
+    --nodes "${WORKER_IP}" \
+    --endpoints "${WORKER_IP}" \
+    --file generated/worker.yaml
+done
+```
+
+### Bootstrap etcd
+
+```bash
+talosctl \
+  --talosconfig generated/talosconfig \
+  --nodes "${CONTROLPLANE0_IP}" \
+  --endpoints "${CONTROLPLANE0_IP}" \
+  bootstrap
+```
+
+### Retrieve `kubeconfig`
+
+At this point we can retrieve the admin `kubeconfig` by running:
+
+```bash
+talosctl \
+  --talosconfig generated/talosconfig \
+  kubeconfig generated
+```
+
+### Check cluster status
+
+```bash
+kubectl \
+  --kubeconfig generated/kubeconfig \
+  get nodes
+```
+
+### Cleanup deployment
+
+```bash
+gsutil rm \
+  "gs://${DEPLOYMENT_NAME}-talos-assets/gcp-amd64.tar.gz"
+gcloud deployment-manager deployments delete "${DEPLOYMENT_NAME}"
 ```
