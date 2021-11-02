@@ -9,6 +9,10 @@ In this guide, we will create an HA Kubernetes cluster in GCP with 1 worker node
 We will assume an existing [Cloud Storage bucket](https://cloud.google.com/storage/docs/creating-buckets), and some familiarity with Google Cloud.
 If you need more information on Google Cloud specifics, please see the [official Google documentation](https://cloud.google.com/docs/).
 
+[jq](https://stedolan.github.io/jq/) and [talosctl](../../introduction/quickstart/#talosctl) also needs to be installed
+
+## Manual Setup
+
 ### Environment Setup
 
 We'll make use of the following environment variables throughout the setup.
@@ -50,6 +54,8 @@ gcloud compute images create talos \
 
 Once the image is prepared, we'll want to work through setting up the network.
 Issue the following to create a firewall, load balancer, and their required components.
+
+`130.211.0.0/22` and `35.191.0.0/16` are the GCP [Load Balancer IP ranges](https://cloud.google.com/load-balancing/docs/health-checks#fw-rule)
 
 ```bash
 # Create Instance Group
@@ -182,4 +188,144 @@ At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl --talosconfig talosconfig kubeconfig .
+```
+
+### Cleanup
+
+```bash
+# cleanup VM's
+gcloud compute instances delete \
+  talos-worker-0 \
+  talos-controlplane-0 \
+  talos-controlplane-1 \
+  talos-controlplane-2
+
+# cleanup firewall rules
+gcloud compute firewall-rules delete \
+  talos-controlplane-talosctl \
+  talos-controlplane-firewall
+
+# cleanup forwarding rules
+gcloud compute forwarding-rules delete \
+  talos-fwd-rule
+
+# cleanup addresses
+gcloud compute addresses delete \
+  talos-lb-ip
+
+# cleanup proxies
+gcloud compute target-tcp-proxies delete \
+  talos-tcp-proxy
+
+# cleanup backend services
+gcloud compute backend-services delete \
+  talos-be
+
+# cleanup health checks
+gcloud compute health-checks delete \
+  talos-health-check
+
+# cleanup unmanaged instance groups
+gcloud compute instance-groups unmanaged delete \
+  talos-ig
+
+# cleanup Talos image
+gcloud compute images delete \
+  talos
+```
+
+## Using GCP Deployment manager
+
+Using GCP deployment manager automatically creates a Google Storage bucket and uploads the Talos image to it.
+Once the deployment is complete the generated `talosconfig` and `kubeconfig` files are uploaded to the bucket.
+
+By default this setup creates a three node control plane and a single worker in `us-west2-c`
+
+First we need to create a folder to store our deployment manifests and perform all subsequent operations from that folder.
+
+```bash
+mkdir -p talos-gcp-deployment
+cd talos-gcp-deployment
+```
+
+### Getting the deployment manifests
+
+We need to download two deployment manifests for the deployment from the Talos github repository.
+
+```bash
+curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/config.yaml"
+curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/talos-ha.yaml"
+```
+
+### Updating the config
+
+Now we need to update the local `config.yaml` file with any required changes such as changing the default zone, Talos version, machine sizes, nodes count etc.
+
+An example `config.yaml` file is shown below:
+
+```yaml
+imports:
+  - path: talos-ha.jinja
+
+resources:
+  - name: talos-ha
+    type: talos-ha.jinja
+    properties:
+      zone: us-west2-c
+      talosVersion: v0.13.2
+      controlPlaneNodeCount: 5
+      controlPlaneNodeType: n1-standard-1
+      workerNodeCount: 3
+      workerNodeType: n1-standard-1
+outputs:
+  - name: bucketName
+    value: $(ref.talos-ha.bucketName)
+```
+
+### Creating the deployment
+
+Now we are ready to create the deployment.
+Confirm with `y` for any prompts.
+Run the following command to create the deployment:
+
+```bash
+# use a unique name for the deployment, resources are prefixed with the deployment name
+export DEPLOYMENT_NAME="<deployment name>"
+gcloud deployment-manager deployments create "${DEPLOYMENT_NAME}" --config config.yaml
+```
+
+### Retrieving the outputs
+
+First we need to get the deployment outputs.
+
+```bash
+# first get the outputs
+OUTPUTS=$(gcloud deployment-manager deployments describe "${DEPLOYMENT_NAME}" --format json | jq '.outputs[]')
+
+BUCKET_NAME=$(jq -r '. | select(.name == "bucketName").finalValue' <<< "${OUTPUTS}")
+```
+
+### Downloading talos and kube config
+
+```bash
+gsutil cp "gs://${BUCKET_NAME}/generated/talosconfig" .
+gsutil cp "gs://${BUCKET_NAME}/generated/kubeconfig" .
+```
+
+### Check cluster status
+
+```bash
+kubectl \
+  --kubeconfig kubeconfig \
+  get nodes
+```
+
+### Cleanup deployment
+
+Warning: This will delete the deployment and all resources associated with it.
+
+```bash
+# delete the objects in the bucket first
+gsutil rm -r "gs://${BUCKET_NAME}"
+gcloud deployment-manager deployments delete "${DEPLOYMENT_NAME}"
 ```
