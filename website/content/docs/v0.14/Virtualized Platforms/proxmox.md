@@ -154,7 +154,7 @@ Using the `controlplane.yaml` generated above, you can now apply this config usi
 Issue:
 
 ```bash
-talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/controlplan.yaml
+talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/controlplane.yaml
 ```
 
 You should now see some action in the Proxmox console for this VM.
