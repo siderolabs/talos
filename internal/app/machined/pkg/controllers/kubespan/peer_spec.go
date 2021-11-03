@@ -129,7 +129,8 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 					for otherPublicKey, otherIPSet := range peerIPSets {
 						if otherIPSet.Overlaps(ipSet) {
-							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
+							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
+								zap.Strings("ignored_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
 
 							continue affiliateLoop
 						}
@@ -173,4 +174,16 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			}
 		}
 	}
+}
+
+// dumpSet converts IPSet to a form suitable for logging.
+func dumpSet(set *netaddr.IPSet) []string {
+	ranges := set.Ranges()
+	res := make([]string, len(ranges))
+
+	for i, p := range ranges {
+		res[i] = p.String()
+	}
+
+	return res
 }
