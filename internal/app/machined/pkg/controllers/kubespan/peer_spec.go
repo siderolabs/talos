@@ -127,9 +127,22 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						continue
 					}
 
+					ipSetPrefixes := ipSet.Prefixes()
+					ipSetStrings := make([]string, len(ipSetPrefixes))
+					for i, p := range ipSetPrefixes {
+						ipSetStrings[i] = p.String()
+					}
+
 					for otherPublicKey, otherIPSet := range peerIPSets {
 						if otherIPSet.Overlaps(ipSet) {
-							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
+							otherIPSetPrefixes := otherIPSet.Prefixes()
+							otherIPSetStrings := make([]string, len(otherIPSetPrefixes))
+							for i, p := range otherIPSetPrefixes {
+								otherIPSetStrings[i] = p.String()
+							}
+
+							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
+								zap.Strings("ignored_ips", ipSetStrings), zap.Strings("other_ips", otherIPSetStrings))
 
 							continue affiliateLoop
 						}
