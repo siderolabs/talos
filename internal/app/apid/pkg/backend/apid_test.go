@@ -11,14 +11,22 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
+	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/talos-systems/talos/pkg/machinery/api/storage"
+	"github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
@@ -187,4 +195,52 @@ func (suite *APIDSuite) TestBuildErrorStreaming() {
 
 func TestAPIDSuite(t *testing.T) {
 	suite.Run(t, new(APIDSuite))
+}
+
+// Test idiosyncrasies of our APIs.
+func TestAPIs(t *testing.T) {
+	for _, services := range []protoreflect.ServiceDescriptors{
+		common.File_common_common_proto.Services(),
+		cluster.File_cluster_cluster_proto.Services(),
+		inspect.File_inspect_inspect_proto.Services(),
+		machine.File_machine_machine_proto.Services(),
+		resource.File_resource_resource_proto.Services(),
+		// security.File_security_security_proto.Services() is different
+		storage.File_storage_storage_proto.Services(),
+		time.File_time_time_proto.Services(),
+	} {
+		for i := 0; i < services.Len(); i++ {
+			service := services.Get(i)
+			methods := service.Methods()
+
+			for j := 0; j < methods.Len(); j++ {
+				method := methods.Get(j)
+
+				t.Run(string(method.FullName()), func(t *testing.T) {
+					response := method.Output()
+					responseFields := response.Fields()
+
+					if method.IsStreamingServer() {
+						metadata := responseFields.Get(0)
+						assert.Equal(t, "metadata", metadata.TextName())
+						assert.Equal(t, 1, int(metadata.Number()))
+					} else {
+						require.Equal(t, 1, responseFields.Len(), "unary responses should have exactly one field")
+
+						messages := responseFields.Get(0)
+						assert.Equal(t, "messages", messages.TextName())
+						assert.Equal(t, 1, int(messages.Number()))
+
+						reply := messages.Message()
+						replyFields := reply.Fields()
+						require.GreaterOrEqual(t, replyFields.Len(), 1, "unary replies should have at least one field")
+
+						metadata := replyFields.Get(0)
+						assert.Equal(t, "metadata", metadata.TextName())
+						assert.Equal(t, 1, int(metadata.Number()))
+					}
+				})
+			}
+		}
+	}
 }
