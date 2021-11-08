@@ -110,6 +110,7 @@ resources:
     tags:
       items:
       - talos-controlplane
+      - {{ env["deployment"] }}-talos-controlplane-{{ index }} # required for cloud controller-manager
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -133,6 +134,7 @@ resources:
     tags:
       items:
       - talos-workers
+      - {{ env["deployment"] }}-talos-worker-{{ index }} # required for cloud controller-manager
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -170,23 +172,22 @@ resources:
     - name: alpine
       args:
         - /bin/sh
-        - -c
+        - -ec
         - |
-          chmod +x talosctl-linux-amd64 && \
-          mv talosctl-linux-amd64 /usr/local/bin/talosctl && \
-          mkdir -p generated && \
-          talosctl gen config {{ env["deployment"] }} https://$(ref.{{ env["deployment"] }}-talos-lb-ip.address):443 --output-dir generated/ && \
+          chmod +x talosctl-linux-amd64
+          mv talosctl-linux-amd64 /usr/local/bin/talosctl
+          mkdir -p generated
+          talosctl gen config \
+            {{ env["deployment"] }} \
+            https://$(ref.{{ env["deployment"] }}-talos-lb-ip.address):443 \
+            --output-dir generated/
 {% for index in range(properties["controlPlaneNodeCount"]) %}
           echo "applying config for {{ env["deployment"] }}-talos-controlplane-{{ index }}"
-          talosctl apply-config --insecure --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --file generated/controlplane.yaml && \
-          talosctl --talosconfig generated/talosconfig config endpoint $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
-          talosctl --talosconfig generated/talosconfig config node $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
+          talosctl apply-config --insecure --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --file generated/controlplane.yaml
 {% endfor %}
 {%  for index in range(properties["workerNodeCount"]) %}
           echo "applying config for {{ env["deployment"] }}-talos-worker-{{ index }}"
-          talosctl apply-config --insecure --nodes $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --file generated/worker.yaml && \
-          talosctl --talosconfig generated/talosconfig config endpoint $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
-          talosctl --talosconfig generated/talosconfig config node $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP)
+          talosctl apply-config --insecure --nodes $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) --file generated/worker.yaml
 {% endfor %}
           # wait before bootstrapping
           wait_count=100
@@ -198,8 +199,10 @@ resources:
               exit 1
             fi
           done
-          talosctl --talosconfig generated/talosconfig --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) bootstrap && \
+          talosctl --talosconfig generated/talosconfig --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) bootstrap
           talosctl --talosconfig generated/talosconfig --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) kubeconfig generated/
+          talosctl --talosconfig generated/talosconfig config endpoint {% for index in range(properties["controlPlaneNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %} {% for index in range(properties["workerNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %}
+          talosctl --talosconfig generated/talosconfig config node {% for index in range(properties["controlPlaneNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %} {% for index in range(properties["workerNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %}
     - name: gcr.io/cloud-builders/gsutil
       args:
         - -m
