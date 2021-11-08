@@ -61,7 +61,7 @@ type roundRobinResolver struct {
 func (r *roundRobinResolver) start() error {
 	var addrs []resolver.Address //nolint:prealloc
 
-	for _, a := range strings.Split(r.target.Endpoint, ",") {
+	for _, a := range strings.Split(r.target.Endpoint, ",") { //nolint:staticcheck
 		addrs = append(addrs, resolver.Address{
 			ServerName: a,
 			Addr:       fmt.Sprintf("%s:%d", net.FormatAddress(a), r.port),
