@@ -103,13 +103,13 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
-	k8s.io/api v0.23.0-alpha.3
-	k8s.io/apimachinery v0.23.0-alpha.3
+	k8s.io/api v0.23.0-alpha.4
+	k8s.io/apimachinery v0.23.0-alpha.4
 	k8s.io/apiserver v0.23.0-alpha.3 // indirect; use the same version as other k8s deps
-	k8s.io/client-go v0.23.0-alpha.3
+	k8s.io/client-go v0.23.0-alpha.4
 	k8s.io/cri-api v0.23.0-alpha.3
 	k8s.io/kubectl v0.23.0-alpha.3
-	k8s.io/kubelet v0.23.0-alpha.3
+	k8s.io/kubelet v0.23.0-alpha.4
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.60
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -159,7 +159,7 @@ require (
 	github.com/gertd/go-pluralize v0.1.7 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-logr/logr v1.1.0 // indirect
+	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
@@ -280,12 +280,13 @@ require (
 	honnef.co/go/tools v0.2.1 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
 	k8s.io/cli-runtime v0.23.0-alpha.3 // indirect
-	k8s.io/component-base v0.23.0-alpha.3 // indirect
+	k8s.io/component-base v0.23.0-alpha.4 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.20.0 // indirect
+	k8s.io/klog/v2 v2.30.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210817084001-7fbd8d59e5b8 // indirect
-	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
+	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.60 // indirect
+	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/kustomize/api v0.8.11 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
