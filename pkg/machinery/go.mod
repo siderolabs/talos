@@ -24,7 +24,7 @@ require (
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.0
 	google.golang.org/genproto v0.0.0-20211029142109-e255c875f7c7
-	google.golang.org/grpc v1.41.0
+	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
