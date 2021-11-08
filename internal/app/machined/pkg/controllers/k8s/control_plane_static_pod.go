@@ -435,7 +435,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
 						LivenessProbe: &v1.Probe{
-							Handler: v1.Handler{
+							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path:   "/healthz",
 									Host:   "localhost",
@@ -541,7 +541,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
 						LivenessProbe: &v1.Probe{
-							Handler: v1.Handler{
+							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path:   "/healthz",
 									Host:   "localhost",
