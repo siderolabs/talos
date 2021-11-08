@@ -5,7 +5,6 @@
 package restart_test
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -29,7 +28,7 @@ type MockRunner struct {
 	stopped chan struct{}
 }
 
-func (m *MockRunner) Open(ctx context.Context) error {
+func (m *MockRunner) Open() error {
 	m.stop = make(chan struct{})
 	m.stopped = make(chan struct{})
 
@@ -84,7 +83,7 @@ func (suite *RestartSuite) TestRunOnce() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -104,7 +103,7 @@ func (suite *RestartSuite) TestRunOnceStop() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Once))
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -124,7 +123,7 @@ func (suite *RestartSuite) TestRunUntilSuccess() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -151,7 +150,7 @@ func (suite *RestartSuite) TestRunForever() {
 	}
 
 	r := restart.New(&mock, restart.WithType(restart.Forever), restart.WithRestartInterval(time.Millisecond))
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 

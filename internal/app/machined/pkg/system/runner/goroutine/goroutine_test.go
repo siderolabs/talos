@@ -70,7 +70,7 @@ func (suite *GoroutineSuite) TestRunSuccess() {
 			return nil
 		}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -85,7 +85,7 @@ func (suite *GoroutineSuite) TestRunFail() {
 			return errors.New("service failed")
 		}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -100,7 +100,7 @@ func (suite *GoroutineSuite) TestRunPanic() {
 			panic("service panic")
 		}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -119,7 +119,7 @@ func (suite *GoroutineSuite) TestStop() {
 			return ctx.Err()
 		}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -150,7 +150,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 			return nil
 		}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 

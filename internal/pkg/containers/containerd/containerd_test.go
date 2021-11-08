@@ -120,7 +120,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
-	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
+	suite.Require().NoError(suite.containerdRunner.Open())
 	suite.containerdWg.Add(1)
 
 	go func() {
@@ -159,7 +159,7 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 	runningCh := make(chan bool, 2*len(runners))
 
 	for _, r := range runners {
-		suite.Require().NoError(r.Open(context.Background()))
+		suite.Require().NoError(r.Open())
 
 		suite.containerRunners = append(suite.containerRunners, r)
 

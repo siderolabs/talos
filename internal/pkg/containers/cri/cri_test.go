@@ -114,7 +114,7 @@ func (suite *CRISuite) SetupSuite() {
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
-	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
+	suite.Require().NoError(suite.containerdRunner.Open())
 	suite.containerdWg.Add(1)
 
 	go func() {

@@ -5,7 +5,6 @@
 package process_test
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -66,7 +65,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 		ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
 	}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -81,7 +80,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 		ProcessArgs: []string{"/bin/sh", "-c", "echo -n \"Test 1\nTest 2\n\""},
 	}, runner.WithLoggingManager(suite.loggingManager))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -109,7 +108,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		ProcessArgs: []string{"/bin/sh", "-c", "echo \"ran\"; test -f " + testFile},
 	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -162,7 +161,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 		ProcessArgs: []string{"/bin/sh", "-c", "test -f " + testFile},
 	}, runner.WithLoggingManager(suite.loggingManager)), restart.WithType(restart.Forever), restart.WithRestartInterval(5*time.Millisecond))
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -209,7 +208,7 @@ func (suite *ProcessSuite) TestStopSigKill() {
 		runner.WithGracefulShutdownTimeout(10*time.Millisecond),
 	)
 
-	suite.Assert().NoError(r.Open(context.Background()))
+	suite.Assert().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 

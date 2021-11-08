@@ -57,7 +57,7 @@ func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.R
 }
 
 // Open implements the Runner interface.
-func (c *containerdRunner) Open(ctx context.Context) error {
+func (c *containerdRunner) Open() error {
 	// Create the containerd client.
 	var err error
 

@@ -5,7 +5,6 @@
 package process
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +51,7 @@ func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.R
 }
 
 // Open implements the Runner interface.
-func (p *processRunner) Open(ctx context.Context) error {
+func (p *processRunner) Open() error {
 	return nil
 }
 

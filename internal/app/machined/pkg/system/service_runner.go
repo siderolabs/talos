@@ -268,7 +268,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		return nil
 	}
 
-	if err := runnr.Open(ctx); err != nil {
+	if err := runnr.Open(); err != nil {
 		return fmt.Errorf("error opening runner: %w", err)
 	}
 

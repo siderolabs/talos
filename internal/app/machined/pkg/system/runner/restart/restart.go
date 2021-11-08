@@ -5,7 +5,6 @@
 package restart
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -96,8 +95,8 @@ func WithRestartInterval(interval time.Duration) Option {
 }
 
 // Open implements the Runner interface.
-func (r *restarter) Open(ctx context.Context) error {
-	return r.wrappedRunner.Open(ctx)
+func (r *restarter) Open() error {
+	return r.wrappedRunner.Open()
 }
 
 // Run implements the Runner interface

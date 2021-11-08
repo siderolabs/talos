@@ -100,7 +100,7 @@ type MockRunner struct {
 	exitCh chan error
 }
 
-func (m *MockRunner) Open(ctx context.Context) error {
+func (m *MockRunner) Open() error {
 	return nil
 }
 

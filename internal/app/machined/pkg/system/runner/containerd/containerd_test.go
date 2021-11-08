@@ -116,7 +116,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
-	suite.Require().NoError(suite.containerdRunner.Open(context.Background()))
+	suite.Require().NoError(suite.containerdRunner.Open())
 	suite.containerdWg.Add(1)
 
 	go func() {
@@ -174,7 +174,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -194,7 +194,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -228,7 +228,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r1.Open(context.Background()))
+	suite.Require().NoError(r1.Open())
 
 	r2 := containerdrunner.NewRunner(false, &runner.Args{
 		ID:          suite.containerID,
@@ -239,7 +239,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 		runner.WithContainerImage(busyboxImage),
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
-	suite.Require().NoError(r2.Open(context.Background()))
+	suite.Require().NoError(r2.Open())
 
 	defer func() { suite.Assert().NoError(r2.Close()) }()
 
@@ -259,7 +259,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -303,7 +303,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		restart.WithRestartInterval(5*time.Millisecond),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -374,7 +374,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
@@ -411,7 +411,7 @@ func (suite *ContainerdSuite) TestContainerStdin() {
 		runner.WithContainerdAddress(suite.containerdAddress),
 	)
 
-	suite.Require().NoError(r.Open(context.Background()))
+	suite.Require().NoError(r.Open())
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 

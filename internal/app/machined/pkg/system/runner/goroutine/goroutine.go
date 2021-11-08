@@ -55,7 +55,7 @@ func NewRunner(r runtime.Runtime, id string, main FuncMain, setters ...runner.Op
 }
 
 // Open implements the Runner interface.
-func (r *goroutineRunner) Open(ctx context.Context) error {
+func (r *goroutineRunner) Open() error {
 	return nil
 }
 

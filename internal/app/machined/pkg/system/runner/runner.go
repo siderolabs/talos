@@ -5,7 +5,6 @@
 package runner
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"time"
@@ -22,7 +21,7 @@ import (
 // Runner describes the requirements for running a process.
 type Runner interface {
 	fmt.Stringer
-	Open(ctx context.Context) error
+	Open() error
 	Run(events.Recorder) error
 	Stop() error
 	Close() error
