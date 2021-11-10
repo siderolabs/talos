@@ -97,7 +97,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.0.0-00010101000000-000000000000
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
-	github.com/vmware-tanzu/sonobuoy v0.54.0
+	github.com/vmware-tanzu/sonobuoy v0.55.0
 	github.com/vmware/govmomi v0.27.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
 	github.com/vultr/metadata v1.0.3
@@ -144,7 +144,6 @@ require (
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/briandowns/spinner v1.6.1 // indirect
-	github.com/c2h5oh/datasize v0.0.0-20171227191756-4eba002a5eae // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect

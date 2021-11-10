@@ -14,11 +14,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/vmware-tanzu/sonobuoy/cmd/sonobuoy/app"
+	"github.com/vmware-tanzu/sonobuoy/pkg/buildinfo"
 	"github.com/vmware-tanzu/sonobuoy/pkg/client"
 	"github.com/vmware-tanzu/sonobuoy/pkg/config"
 	sonodynamic "github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
@@ -125,6 +127,11 @@ func CertifiedConformance(ctx context.Context, cluster cluster.K8sProvider) erro
 //
 //nolint:gocyclo,cyclop
 func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) error {
+	// see init() function
+	if buildinfo.Version == "" {
+		return fmt.Errorf("failed to read sonobuoy version")
+	}
+
 	var waitOutput string
 
 	if options.UseSpinner {
@@ -339,4 +346,31 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	}
 
 	return cleanup()
+}
+
+// Workaround for https://github.com/vmware-tanzu/sonobuoy/issues/1520.
+// Remove when this is fixed by upstream.
+func init() {
+	buildinfo.Version = ""
+	config.DefaultImage = ""
+
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+
+	for _, dep := range buildInfo.Deps {
+		if dep.Path != "github.com/vmware-tanzu/sonobuoy" {
+			continue
+		}
+
+		if dep.Replace != nil {
+			panic("sonobuoy version replacement is not supported")
+		}
+
+		buildinfo.Version = dep.Version
+		config.DefaultImage = "sonobuoy/sonobuoy:" + dep.Version
+
+		return
+	}
 }
