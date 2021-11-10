@@ -32,6 +32,7 @@ type NTPSuite struct {
 	clockAdjustments []time.Duration
 
 	failingServer int
+	spikyServer   int
 }
 
 func TestNTPSuite(t *testing.T) {
@@ -87,6 +88,7 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 			Time:          suite.systemClock,
 			ReferenceTime: suite.systemClock,
 			ClockOffset:   time.Millisecond,
+			RTT:           time.Millisecond / 2,
 		}
 
 		suite.Require().NoError(resp.Validate())
@@ -98,6 +100,7 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 			Time:          suite.systemClock,
 			ReferenceTime: suite.systemClock,
 			ClockOffset:   2 * time.Millisecond,
+			RTT:           time.Millisecond / 2,
 		}
 
 		suite.Require().NoError(resp.Validate())
@@ -109,6 +112,7 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 			Time:          suite.systemClock,
 			ReferenceTime: suite.systemClock,
 			ClockOffset:   ntp.EpochLimit * 2,
+			RTT:           time.Millisecond,
 		}
 
 		suite.Require().NoError(resp.Validate())
@@ -126,6 +130,31 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 			Time:          suite.systemClock,
 			ReferenceTime: suite.systemClock,
 			ClockOffset:   time.Millisecond,
+			RTT:           time.Millisecond / 2,
+		}
+
+		suite.Require().NoError(resp.Validate())
+
+		return resp, nil
+	case "127.0.0.7": // server with spikes
+		suite.spikyServer++
+
+		if suite.spikyServer%5 == 4 {
+			resp = &beevikntp.Response{
+				Stratum:       1,
+				Time:          suite.systemClock,
+				ReferenceTime: suite.systemClock,
+				ClockOffset:   time.Second,
+				RTT:           2 * time.Second,
+			}
+		} else {
+			resp = &beevikntp.Response{
+				Stratum:       1,
+				Time:          suite.systemClock,
+				ReferenceTime: suite.systemClock,
+				ClockOffset:   time.Millisecond,
+				RTT:           time.Millisecond / 2,
+			}
 		}
 
 		suite.Require().NoError(resp.Validate())
@@ -205,7 +234,60 @@ func (suite *NTPSuite) TestSyncContinuous() {
 			}
 
 			return nil
-		}))
+		}),
+	)
+
+	cancel()
+
+	wg.Wait()
+}
+
+func (suite *NTPSuite) TestSyncWithSpikes() {
+	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.7"})
+
+	syncer.AdjustTime = suite.adjustSystemClock
+	syncer.CurrentTime = suite.getSystemClock
+	syncer.NTPQuery = suite.fakeQuery
+
+	syncer.MinPoll = time.Second
+	syncer.MaxPoll = time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		syncer.Run(ctx)
+	}()
+
+	select {
+	case <-syncer.Synced():
+	case <-time.After(10 * time.Second):
+		suite.Assert().Fail("time sync timeout")
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(12*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+			suite.clockLock.Lock()
+			defer suite.clockLock.Unlock()
+
+			if len(suite.clockAdjustments) < 6 {
+				return retry.ExpectedError(fmt.Errorf("not enough syncs"))
+			}
+
+			for _, adj := range suite.clockAdjustments {
+				// 1s spike should be filtered out
+				suite.Assert().Equal(time.Millisecond, adj)
+			}
+
+			return nil
+		}),
+	)
 
 	cancel()
 
@@ -289,7 +371,8 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 			}
 
 			return nil
-		}))
+		}),
+	)
 
 	cancel()
 
@@ -379,7 +462,8 @@ func (suite *NTPSuite) TestSyncSwitchTimeservers() {
 			}
 
 			return nil
-		}))
+		}),
+	)
 
 	cancel()
 
