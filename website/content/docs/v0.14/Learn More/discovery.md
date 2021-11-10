@@ -12,7 +12,7 @@ Before sending data to the discovery service, Talos will encrypt the affiliate d
 Each node submits it's data encrypted plus it submits the endpoints it sees from other peers to the discovery service
 The discovery service aggregates the data, deduplicates the endpoints, and sends updates to each connected peer.
 Each peer receives information back about other affiliates from the discovery service, decrypts it and uses it to drive KubeSpan and cluster discovery.
-Moreover, the discovery service has no peristence.
+Moreover, the discovery service has no persistence.
 Data is stored in memory only with a TTL set by the clients (i.e. Talos).
 The cluster ID is used as a key to select the affiliates (so that different clusters see different affiliates).
 

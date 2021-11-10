@@ -210,7 +210,7 @@ One of the most popular open source add-on object stores is [MinIO](https://min.
 ## Others (iSCSI)
 
 The most common remaining systems involve iSCSI in one form or another.
-This includes things like the original OpenEBS, Racher's Longhorn, and many proprietary systems.
+This includes things like the original OpenEBS, Rancher's Longhorn, and many proprietary systems.
 Unfortunately, Talos does _not_ support iSCSI-based systems.
 iSCSI in Linux is facilitated by [open-iscsi](https://github.com/open-iscsi/open-iscsi).
 This system was designed long before containers caught on, and it is not well

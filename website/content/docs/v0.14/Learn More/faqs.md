@@ -20,7 +20,7 @@ Since Talos is fully API-driven, all maintenance and debugging operations should
 We would like for Talos users to start thinking about what a "machine" is in the context of a Kubernetes cluster.
 That is, that a Kubernetes _cluster_ can be thought of as one massive machine, and the _nodes_ are merely additional, undifferentiated resources.
 We don't want humans to focus on the _nodes_, but rather on the _machine_ that is the Kubernetes cluster.
-Should an issue arise at the node level, `talosctl` should provide the necessary tooling to assist in the identification, debugging, and remedation of the issue.
+Should an issue arise at the node level, `talosctl` should provide the necessary tooling to assist in the identification, debugging, and remediation of the issue.
 However, the API is based on the Principle of Least Privilege, and exposes only a limited set of methods.
 We envision Talos being a great place for the application of [control theory](https://en.wikipedia.org/wiki/Control_theory) in order to provide a self-healing platform.
 

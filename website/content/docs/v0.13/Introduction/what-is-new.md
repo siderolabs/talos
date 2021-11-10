@@ -8,7 +8,7 @@ weight: 5
 This release of Talos includes two new closely related
 features: [cluster membership discovery](../../guides/discovery/) and [KubeSpan](../../guides/kubespan/).
 
-KubeSpan is a feature of Talos that automates the setup and maintainance of a full mesh [WireGuard](https://www.wireguard.com) network for your cluster, giving you the ablility to operate hybrid Kuberentes clusters that can span the edge, datacenter, and cloud.
+KubeSpan is a feature of Talos that automates the setup and maintainance of a full mesh [WireGuard](https://www.wireguard.com) network for your cluster, giving you the ablility to operate hybrid Kubernetes clusters that can span the edge, datacenter, and cloud.
 Management of keys and discovery of peers can be completely automated for a zero-touch experience that makes it simple and easy to create hybrid clusters.
 
 These new features are not enabled by default, to enable them please make following changes to the machine configuration:
