@@ -72,7 +72,7 @@ func parseLine(line string) (*duInfo, error) {
 
 // TestSuccess runs comand with success.
 func (suite *DiskUsageSuite) TestSuccess() {
-	folder := "/var"
+	folder := "/etc"
 	node := suite.RandomDiscoveredNode()
 
 	var folderSize int64 = 4096
