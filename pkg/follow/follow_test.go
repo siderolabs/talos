@@ -210,6 +210,8 @@ func (suite *FollowSuite) TestDeleted() {
 	// pass sizeHint as 15+1 to make code read beyond the end and encounter file removed
 	combinedCh := suite.readAll(ctx, "file was removed while watching", 16, time.Second)
 
+	time.Sleep(150 * time.Millisecond)
+
 	//nolint:errcheck
 	suite.writer.WriteString("abc")
 	//nolint:errcheck
