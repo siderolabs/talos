@@ -6,7 +6,8 @@ resources:
     type: talos-ha.jinja
     properties:
       zone: us-west2-c
-      talosVersion: v0.13.2
+      talosVersion: v0.13.3
+      externalCloudProvider: false
       controlPlaneNodeCount: 3
       controlPlaneNodeType: n1-standard-1
       workerNodeCount: 1
@@ -14,3 +15,7 @@ resources:
 outputs:
   - name: bucketName
     value: $(ref.talos-ha.bucketName)
+  - name: serviceAccount
+    value: $(ref.talos-ha.serviceAccount)
+  - name: project
+    value: $(ref.talos-ha.project)
