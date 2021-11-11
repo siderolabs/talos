@@ -737,7 +737,7 @@ func getDisks() ([]*provision.Disk, error) {
 				return nil, fmt.Errorf("user disk partitions can only be mounted into /var folder")
 			}
 
-			value, e := strconv.ParseInt(partitions[j+1], 10, -1)
+			value, e := strconv.ParseInt(partitions[j+1], 10, 0)
 			partitionSize := uint64(value)
 
 			if e != nil {
