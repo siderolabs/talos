@@ -5,15 +5,10 @@
 package cluster
 
 import (
-	"crypto/rand"
 	"fmt"
-	"io"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
-	"github.com/jxskiss/base62"
-
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // IdentityType is type of Identity resource.
@@ -90,17 +85,4 @@ func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
 // TypedSpec allows to access the Spec with the proper type.
 func (r *Identity) TypedSpec() *IdentitySpec {
 	return &r.spec
-}
-
-// Generate new identity.
-func (spec *IdentitySpec) Generate() error {
-	buf := make([]byte, constants.DefaultNodeIdentitySize)
-
-	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
-		return err
-	}
-
-	spec.NodeID = base62.EncodeToString(buf)
-
-	return nil
 }

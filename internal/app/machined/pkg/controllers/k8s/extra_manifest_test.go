@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -132,9 +133,9 @@ metadata:
 
 	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
 
-	suite.Assert().Len(manifest.Objects(), 2)
-	suite.Assert().Equal("ci", manifest.Objects()[0].GetName())
-	suite.Assert().Equal("build", manifest.Objects()[1].GetName())
+	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 2)
+	suite.Assert().Equal("ci", k8sadapter.Manifest(manifest).Objects()[0].GetName())
+	suite.Assert().Equal("build", k8sadapter.Manifest(manifest).Objects()[1].GetName())
 }
 
 func (suite *ExtraManifestSuite) TearDownTest() {

@@ -5,16 +5,10 @@
 package k8s
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // ManifestType is type of Manifest resource.
@@ -23,28 +17,24 @@ const ManifestType = resource.Type("Manifests.kubernetes.talos.dev")
 // Manifest resource holds definition of kubelet static pod.
 type Manifest struct {
 	md   resource.Metadata
-	spec *manifestSpec
+	spec *ManifestSpec
 }
 
-type manifestSpec struct {
-	Items []*unstructured.Unstructured
+// ManifestSpec holds the Kubernetes resources spec.
+type ManifestSpec struct {
+	Items []map[string]interface{}
 }
 
-func (spec *manifestSpec) MarshalYAML() (interface{}, error) {
-	result := make([]map[string]interface{}, 0, len(spec.Items))
-
-	for _, obj := range spec.Items {
-		result = append(result, obj.Object)
-	}
-
-	return result, nil
+// MarshalYAML implements yaml.Marshaler.
+func (spec *ManifestSpec) MarshalYAML() (interface{}, error) {
+	return spec.Items, nil
 }
 
 // NewManifest initializes an empty Manifest resource.
 func NewManifest(namespace resource.Namespace, id resource.ID) *Manifest {
 	r := &Manifest{
 		md:   resource.NewMetadata(namespace, ManifestType, id, resource.VersionUndefined),
-		spec: &manifestSpec{},
+		spec: &ManifestSpec{},
 	}
 
 	r.md.BumpVersion()
@@ -68,17 +58,11 @@ func (r *Manifest) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *Manifest) DeepCopy() resource.Resource {
-	spec := &manifestSpec{
-		Items: make([]*unstructured.Unstructured, len(r.spec.Items)),
-	}
-
-	for i := range r.spec.Items {
-		spec.Items[i] = r.spec.Items[i].DeepCopy()
-	}
-
 	return &Manifest{
-		md:   r.md,
-		spec: spec,
+		md: r.md,
+		spec: &ManifestSpec{
+			Items: append([]map[string]interface{}(nil), r.spec.Items...),
+		},
 	}
 }
 
@@ -91,50 +75,7 @@ func (r *Manifest) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// SetYAML parses manifest from YAML.
-func (r *Manifest) SetYAML(yamlBytes []byte) error {
-	r.spec.Items = nil
-	reader := yaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(yamlBytes)))
-
-	for {
-		yamlManifest, err := reader.Read()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			return err
-		}
-
-		yamlManifest = bytes.TrimSpace(yamlManifest)
-
-		if len(yamlManifest) == 0 {
-			continue
-		}
-
-		jsonManifest, err := yaml.ToJSON(yamlManifest)
-		if err != nil {
-			return fmt.Errorf("error converting manifest to JSON: %w", err)
-		}
-
-		if bytes.Equal(jsonManifest, []byte("null")) || bytes.Equal(jsonManifest, []byte("{}")) {
-			// skip YAML docs which contain only comments
-			continue
-		}
-
-		obj := new(unstructured.Unstructured)
-
-		if err = json.Unmarshal(jsonManifest, obj); err != nil {
-			return fmt.Errorf("error loading JSON manifest into unstructured: %w", err)
-		}
-
-		r.spec.Items = append(r.spec.Items, obj)
-	}
-
-	return nil
-}
-
-// Objects returns list of unstrustured object.
-func (r *Manifest) Objects() []*unstructured.Unstructured {
-	return r.spec.Items
+// TypedSpec returns .spec.
+func (r *Manifest) TypedSpec() *ManifestSpec {
+	return r.spec
 }

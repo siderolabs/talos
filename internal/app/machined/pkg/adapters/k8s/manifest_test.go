@@ -11,13 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 )
 
 func TestManifestSetYAML(t *testing.T) {
 	manifest := k8s.NewManifest(k8s.ControlPlaneNamespaceName, "test")
+	adapter := k8sadapter.Manifest(manifest)
 
-	require.NoError(t, manifest.SetYAML([]byte(strings.TrimSpace(`
+	require.NoError(t, adapter.SetYAML([]byte(strings.TrimSpace(`
 ---
 apiVersion: audit.k8s.io/v1beta1
 kind: Policy
@@ -26,14 +28,15 @@ rules:
 ---
 `))))
 
-	assert.Len(t, manifest.Objects(), 1)
-	assert.Equal(t, manifest.Objects()[0].GetKind(), "Policy")
+	assert.Len(t, adapter.Objects(), 1)
+	assert.Equal(t, adapter.Objects()[0].GetKind(), "Policy")
 }
 
 func TestManifestSetYAMLEmptyComments(t *testing.T) {
 	manifest := k8s.NewManifest(k8s.ControlPlaneNamespaceName, "test")
+	adapter := k8sadapter.Manifest(manifest)
 
-	require.NoError(t, manifest.SetYAML([]byte(strings.TrimSpace(`
+	require.NoError(t, adapter.SetYAML([]byte(strings.TrimSpace(`
 ---
 apiVersion: audit.k8s.io/v1beta1
 kind: Policy
@@ -44,6 +47,6 @@ rules:
 ---
 `))))
 
-	assert.Len(t, manifest.Objects(), 1)
-	assert.Equal(t, manifest.Objects()[0].GetKind(), "Policy")
+	assert.Len(t, adapter.Objects(), 1)
+	assert.Equal(t, adapter.Objects()[0].GetKind(), "Policy")
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
 
+	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -46,7 +47,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
-	suite.Require().NoError(nodeIdentity.TypedSpec().Generate())
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
@@ -183,7 +184,7 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
-	suite.Require().NoError(nodeIdentity.TypedSpec().Generate())
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")

@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	v1 "k8s.io/api/core/v1"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -174,7 +175,8 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	apiServerPod := r.(*k8s.StaticPod).Pod()
+	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+	suite.Require().NoError(err)
 
 	suite.Assert().Len(apiServerPod.Spec.Volumes, 2)
 	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 2)
@@ -271,7 +273,8 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 		r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
 		suite.Require().NoError(err)
 
-		apiServerPod := r.(*k8s.StaticPod).Pod()
+		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+		suite.Require().NoError(err)
 
 		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
 

@@ -9,10 +9,10 @@ rules:
     action: allow
   - regexp: ^github.com/talos-systems/talos/pkg/machinery
     action: allow
-  #- regexp: ^k8s.io/
-  #  action: deny
-  #- regexp: ^github.com/jxskiss/base62
-  #  action: deny
+  - regexp: ^k8s.io/
+    action: deny
+  - regexp: ^github.com/jxskiss/base62
+    action: deny
   #- regexp: ^github.com/mdlayher/netlink
   #  action: deny
   #- regexp: ^github.com/mdlayher/netx

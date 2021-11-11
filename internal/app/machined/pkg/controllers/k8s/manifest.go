@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/resources/config"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
 	"github.com/talos-systems/talos/pkg/resources/secrets"
@@ -110,7 +111,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 
 			if err = r.Modify(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
 				func(r resource.Resource) error {
-					return r.(*k8s.Manifest).SetYAML(renderedManifest.data)
+					return k8sadapter.Manifest(r.(*k8s.Manifest)).SetYAML(renderedManifest.data)
 				}); err != nil {
 				return fmt.Errorf("error updating manifests: %w", err)
 			}

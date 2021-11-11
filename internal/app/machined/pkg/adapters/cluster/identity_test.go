@@ -10,14 +10,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
 )
 
 func TestIdentityGenerate(t *testing.T) {
 	var spec1, spec2 cluster.IdentitySpec
 
-	require.NoError(t, spec1.Generate())
-	require.NoError(t, spec2.Generate())
+	require.NoError(t, clusteradapter.IdentitySpec(&spec1).Generate())
+	require.NoError(t, clusteradapter.IdentitySpec(&spec2).Generate())
 
 	assert.NotEqual(t, spec1, spec2)
 

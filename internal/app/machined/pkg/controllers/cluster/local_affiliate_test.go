@@ -14,6 +14,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
 
+	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
@@ -38,7 +39,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, discoveryConfig))
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
-	suite.Require().NoError(nodeIdentity.TypedSpec().Generate())
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)

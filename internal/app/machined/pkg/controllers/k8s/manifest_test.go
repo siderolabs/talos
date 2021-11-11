@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -208,11 +209,11 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	suite.Require().NoError(err)
 
 	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
-	suite.Assert().Len(manifest.Objects(), 3)
+	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 3)
 
-	suite.Assert().Equal("DaemonSet", manifest.Objects()[0].GetKind())
+	suite.Assert().Equal("DaemonSet", k8sadapter.Manifest(manifest).Objects()[0].GetKind())
 
-	ds := manifest.Objects()[0].Object
+	ds := k8sadapter.Manifest(manifest).Objects()[0].Object
 	containerSpec := ds["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0]
 	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck,forcetypeassert
 

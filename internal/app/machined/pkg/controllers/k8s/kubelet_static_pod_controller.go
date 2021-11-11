@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/k8s"
@@ -329,9 +330,7 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 		podsSeen[statusID] = struct{}{}
 
 		if err = r.Modify(ctx, k8s.NewStaticPodStatus(k8s.ControlPlaneNamespaceName, statusID), func(r resource.Resource) error {
-			r.(*k8s.StaticPodStatus).SetStatus(&pod.Status)
-
-			return nil
+			return k8sadapter.StaticPodStatus(r.(*k8s.StaticPodStatus)).SetStatus(&pod.Status)
 		}); err != nil {
 			return fmt.Errorf("error updating pod status: %w", err)
 		}

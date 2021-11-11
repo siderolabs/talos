@@ -5,12 +5,10 @@
 package k8s
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
-	v1 "k8s.io/api/core/v1"
 )
 
 // StaticPodStatusType is type of StaticPodStatus resource.
@@ -19,32 +17,24 @@ const StaticPodStatusType = resource.Type("StaticPodStatuses.kubernetes.talos.de
 // StaticPodStatus resource holds definition of kubelet static pod.
 type StaticPodStatus struct {
 	md   resource.Metadata
-	spec *staticPodStatusSpec
+	spec *StaticPodStatusSpec
 }
 
-// staticPodStatusSpec describes kubelet static pod status.
-type staticPodStatusSpec struct {
-	*v1.PodStatus
+// StaticPodStatusSpec describes kubelet static pod status.
+type StaticPodStatusSpec struct {
+	PodStatus map[string]interface{}
 }
 
-func (spec *staticPodStatusSpec) MarshalYAML() (interface{}, error) {
-	jsonSerialized, err := json.Marshal(spec.PodStatus)
-	if err != nil {
-		return nil, err
-	}
-
-	var obj interface{}
-
-	err = json.Unmarshal(jsonSerialized, &obj)
-
-	return obj, err
+// MarshalYAML implements yaml.Marshaler.
+func (spec *StaticPodStatusSpec) MarshalYAML() (interface{}, error) {
+	return spec.PodStatus, nil
 }
 
 // NewStaticPodStatus initializes a StaticPodStatus resource.
 func NewStaticPodStatus(namespace resource.Namespace, id resource.ID) *StaticPodStatus {
 	r := &StaticPodStatus{
 		md:   resource.NewMetadata(namespace, StaticPodStatusType, id, resource.VersionUndefined),
-		spec: &staticPodStatusSpec{},
+		spec: &StaticPodStatusSpec{},
 	}
 
 	r.md.BumpVersion()
@@ -70,8 +60,8 @@ func (r *StaticPodStatus) String() string {
 func (r *StaticPodStatus) DeepCopy() resource.Resource {
 	return &StaticPodStatus{
 		md: r.md,
-		spec: &staticPodStatusSpec{
-			PodStatus: r.spec.PodStatus.DeepCopy(),
+		spec: &StaticPodStatusSpec{
+			PodStatus: r.spec.PodStatus,
 		},
 	}
 }
@@ -91,12 +81,7 @@ func (r *StaticPodStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// Status gets pod status.
-func (r *StaticPodStatus) Status() *v1.PodStatus {
-	return r.spec.PodStatus
-}
-
-// SetStatus sets pod status.
-func (r *StaticPodStatus) SetStatus(status *v1.PodStatus) {
-	r.spec.PodStatus = status
+// TypedSpec returns .spec.
+func (r *StaticPodStatus) TypedSpec() *StaticPodStatusSpec {
+	return r.spec
 }

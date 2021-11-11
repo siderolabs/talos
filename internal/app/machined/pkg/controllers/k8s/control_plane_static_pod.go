@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -279,8 +280,8 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver", nil), func(r resource.Resource) error {
-		r.(*k8s.StaticPod).SetPod(&v1.Pod{
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver"), func(r resource.Resource) error {
+		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
@@ -346,8 +347,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
-
-		return nil
 	})
 }
 
@@ -402,8 +401,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager", nil), func(r resource.Resource) error {
-		r.(*k8s.StaticPod).SetPod(&v1.Pod{
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager"), func(r resource.Resource) error {
+		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
@@ -471,8 +470,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
-
-		return nil
 	})
 }
 
@@ -508,8 +505,8 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler", nil), func(r resource.Resource) error {
-		r.(*k8s.StaticPod).SetPod(&v1.Pod{
+	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler"), func(r resource.Resource) error {
+		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
@@ -577,7 +574,5 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				}, volumes(cfg.ExtraVolumes)...),
 			},
 		})
-
-		return nil
 	})
 }

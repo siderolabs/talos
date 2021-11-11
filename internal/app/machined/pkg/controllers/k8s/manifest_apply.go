@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -212,7 +213,7 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 	objects := make([]*unstructured.Unstructured, 0, len(manifests.Items))
 
 	for _, manifest := range manifests.Items {
-		objects = append(objects, manifest.(*k8s.Manifest).Objects()...)
+		objects = append(objects, k8sadapter.Manifest(manifest.(*k8s.Manifest)).Objects()...)
 	}
 
 	// sort the list so that namespaces come first, followed by CRDs and everything else after that
