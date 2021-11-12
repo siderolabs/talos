@@ -110,7 +110,8 @@ var supportCmd = &cobra.Command{
 
 func collectData(archive *cluster.BundleArchive, progress chan cluster.BundleProgress) error {
 	return WithClient(func(ctx context.Context, c *client.Client) error {
-		sources := append(Nodes, "cluster")
+		sources := append([]string{}, Nodes...)
+		sources = append(sources, "cluster")
 
 		var (
 			errsMu sync.Mutex

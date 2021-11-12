@@ -100,7 +100,8 @@ func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error 
 }
 
 func (check *preflightCheckContext) cniDirectories(ctx context.Context) error {
-	cniDirs := append(check.request.Network.CNI.BinPath, check.request.Network.CNI.CacheDir, check.request.Network.CNI.ConfDir)
+	cniDirs := append([]string{}, check.request.Network.CNI.BinPath...)
+	cniDirs = append(cniDirs, check.request.Network.CNI.CacheDir, check.request.Network.CNI.ConfDir)
 
 	for _, cniDir := range cniDirs {
 		st, err := os.Stat(cniDir)

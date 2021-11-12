@@ -61,6 +61,7 @@ func (t *Trustd) DependsOn(r runtime.Runtime) []string {
 	return []string{"containerd"}
 }
 
+// Runner implements the Service interface.
 func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the process arguments.
 	args := runner.Args{

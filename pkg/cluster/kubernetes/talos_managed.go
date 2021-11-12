@@ -546,7 +546,7 @@ func getResourceDiff(ctx context.Context, dr dynamic.ResourceInterface, obj *uns
 		return "", err
 	}
 
-	return cmp.Diff(fmt.Sprintf("%s", x), fmt.Sprintf("%s", y)), nil
+	return cmp.Diff(string(x), string(y)), nil
 }
 
 //nolint:gocyclo

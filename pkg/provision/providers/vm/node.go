@@ -16,7 +16,8 @@ import (
 func (p *Provisioner) DestroyNodes(cluster provision.ClusterInfo, options *provision.Options) error {
 	errCh := make(chan error)
 
-	nodes := append(cluster.Nodes, cluster.ExtraNodes...)
+	nodes := append([]provision.NodeInfo{}, cluster.Nodes...)
+	nodes = append(nodes, cluster.ExtraNodes...)
 
 	for _, node := range nodes {
 		go func(node provision.NodeInfo) {
