@@ -9,6 +9,7 @@ package cli
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 )
@@ -38,6 +39,17 @@ func (suite *ServicesSuite) TestStatus() {
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),
 	)
+}
+
+// TestRestart verifies kubelet restart.
+func (suite *ServicesSuite) TestRestart() {
+	node := suite.RandomDiscoveredNode()
+
+	suite.RunCLI([]string{"service", "kubelet", "restart", "--nodes", node})
+
+	time.Sleep(200 * time.Millisecond)
+
+	suite.RunAndWaitForMatch([]string{"service", "-n", node, "kubelet"}, regexp.MustCompile(`EVENTS\s+\[Running\]: Health check successful`), 30*time.Second)
 }
 
 func init() {

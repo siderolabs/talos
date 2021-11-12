@@ -845,6 +845,7 @@ func TestValidate(t *testing.T) {
 						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
 								"10.0.0.0/8",
+								"!10.0.0.3/32",
 							},
 						},
 					},

@@ -253,6 +253,11 @@ func (k *Kubelet) HealthSettings(runtime.Runtime) *health.Settings {
 	return &settings
 }
 
+// APIRestartAllowed implements APIRestartableService.
+func (k *Kubelet) APIRestartAllowed(runtime.Runtime) bool {
+	return true
+}
+
 func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconfig.KubeletConfiguration {
 	f := false
 	t := true
@@ -327,6 +332,11 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// anyway filter out pod cidrs, they can't be node IPs
+	for _, cidr := range r.Config().Cluster().Network().PodCIDRs() {
+		validSubnets = append(validSubnets, "!"+cidr)
 	}
 
 	nodeIPs, err := pickNodeIPs(validSubnets)
@@ -432,20 +442,5 @@ func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 		return nil, fmt.Errorf("failed to discover interface IP addresses: %w", err)
 	}
 
-	var result []stdnet.IP
-
-	for _, subnet := range cidrs {
-		network, err := net.ParseCIDR(subnet)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse subnet: %w", err)
-		}
-
-		for _, ip := range ips {
-			if network.Contains(ip) {
-				result = append(result, ip)
-			}
-		}
-	}
-
-	return result, nil
+	return net.FilterIPs(ips, cidrs)
 }

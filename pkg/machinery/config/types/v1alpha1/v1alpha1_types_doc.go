@@ -533,7 +533,7 @@ func init() {
 	KubeletNodeIPConfigDoc.Fields[0].Name = "validSubnets"
 	KubeletNodeIPConfigDoc.Fields[0].Type = "[]string"
 	KubeletNodeIPConfigDoc.Fields[0].Note = ""
-	KubeletNodeIPConfigDoc.Fields[0].Description = "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIf not specified, kubelet configures node IP automatically."
+	KubeletNodeIPConfigDoc.Fields[0].Description = "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both."
 	KubeletNodeIPConfigDoc.Fields[0].Comments[encoder.LineComment] = "The `validSubnets` field configures the networks to pick kubelet node IP from."
 
 	NetworkConfigDoc.Type = "NetworkConfig"

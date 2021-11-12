@@ -470,6 +470,7 @@ metadata:
 	kubeletNodeIPExample = KubeletNodeIPConfig{
 		KubeletNodeIPValidSubnets: []string{
 			"10.0.0.0/8",
+			"!10.0.0.3/32",
 			"fdc7::/16",
 		},
 	}
@@ -894,7 +895,9 @@ type KubeletNodeIPConfig struct {
 	//  description: |
 	//    The `validSubnets` field configures the networks to pick kubelet node IP from.
 	//    For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.
-	//    If not specified, kubelet configures node IP automatically.
+	//    IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.
+	//    Negative subnet matches should be specified last to filter out IPs picked by positive matches.
+	//    If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.
 	KubeletNodeIPValidSubnets []string `yaml:"validSubnets,omitempty"`
 }
 
