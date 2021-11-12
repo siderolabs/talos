@@ -35,6 +35,14 @@ so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec
 """
 
 
+    [notes.kubelet]
+        title = "Kubelet"
+        description = """\
+Kubelet service can now be restarted with `talosctl service kubelet restart`.
+
+Kubelet node IP configuration (`.machine.kubelet.nodeIP.validSubnets`) can now include negative subnet matches (prefixed with `!`).
+"""
+
 [make_deps]
 
     [make_deps.tools]
