@@ -7,13 +7,18 @@ From time to time, it may be beneficial to reset a Talos machine to its "origina
 Bear in mind that this is a destructive action for the given machine.
 Doing this means removing the machine from Kubernetes, Etcd (if applicable), and clears any data on the machine that would normally persist a reboot.
 
+> WARNING: Running a `talosctl reset` on cloud VM's might result in the VM being unable to boot as this wipes the entire disk.
+It might be more useful to just wipe the `STATE` and `EPHEMERAL` partitions on a cloud VM if not booting via `iPXE`.
+`talosctl reset --system-labels-to-wipe STATE --system-labels-to-wipe EPHEMERAL`
+
 The API command for doing this is `talosctl reset`.
 There are a couple of flags as part of this command:
 
 ```bash
 Flags:
-      --graceful   if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
-      --reboot     if true, reboot the node after resetting instead of shutting down
+      --graceful                        if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
+      --reboot                          if true, reboot the node after resetting instead of shutting down
+      --system-labels-to-wipe strings   if set, just wipe selected system disk partitions by label but keep other partitions intact keep other partitions intact
 ```
 
 The `graceful` flag is especially important when considering HA vs. non-HA Talos clusters.
