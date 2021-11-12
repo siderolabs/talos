@@ -376,9 +376,10 @@ local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privile
         "IMAGE_REGISTRY": local_registry,
         "WITH_DISK_ENCRYPTION": "true",
 });
-local integration_canal_reset = Step("e2e-canal-reset", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
+local integration_canal_reset = Step("e2e-canal-disabled-reset", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
         "INTEGRATION_TEST_RUN": "TestIntegration/api.ResetSuite/TestResetWithSpec",
-        "CUSTOM_CNI_URL": "https://docs.projectcalico.org/manifests/canal.yaml",
+        // TODO: re-enable when https://github.com/projectcalico/cni-plugin/issues/1214 is fixed
+        // "CUSTOM_CNI_URL": "https://docs.projectcalico.org/manifests/canal.yaml",
         "REGISTRY": local_registry,
 });
 local integration_no_cluster_discovery = Step("e2e-no-cluster-discovery", target="e2e-qemu", privileged=true, depends_on=[integration_canal_reset], environment={
