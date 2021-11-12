@@ -524,6 +524,10 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 				return retry.ExpectedError(err)
 			}
 
+			if strings.Contains(err.Error(), "failed to acquire upgrade lock") {
+				return retry.ExpectedError(err)
+			}
+
 			return err
 		}
 
