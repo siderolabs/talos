@@ -5,50 +5,61 @@
 package network
 
 import (
-	"encoding/binary"
-
 	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
-// Encode the VLANSpec into netlink attributes.
-func (vlan *VLANSpec) Encode() ([]byte, error) {
-	encoder := netlink.NewAttributeEncoder()
-
-	encoder.Uint16(unix.IFLA_VLAN_ID, vlan.VID)
-
-	buf := make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, uint16(vlan.Protocol))
-	encoder.Bytes(unix.IFLA_VLAN_PROTOCOL, buf)
-
-	return encoder.Encode()
+// BondMasterSpec adapter provides encoding/decoding to netlink structures.
+//
+//nolint:revive,golint
+func BondMasterSpec(r *network.BondMasterSpec) bondMaster {
+	return bondMaster{
+		BondMasterSpec: r,
+	}
 }
 
-// Decode the VLANSpec from netlink attributes.
-func (vlan *VLANSpec) Decode(data []byte) error {
-	decoder, err := netlink.NewAttributeDecoder(data)
-	if err != nil {
-		return err
+type bondMaster struct {
+	*network.BondMasterSpec
+}
+
+// FillDefaults fills zero values with proper default values.
+func (a bondMaster) FillDefaults() {
+	bond := a.BondMasterSpec
+
+	if bond.ResendIGMP == 0 {
+		bond.ResendIGMP = 1
 	}
 
-	for decoder.Next() {
-		switch decoder.Type() {
-		case unix.IFLA_VLAN_ID:
-			vlan.VID = decoder.Uint16()
-		case unix.IFLA_VLAN_PROTOCOL:
-			vlan.Protocol = nethelpers.VLANProtocol(binary.BigEndian.Uint16(decoder.Bytes()))
-		}
+	if bond.LPInterval == 0 {
+		bond.LPInterval = 1
 	}
 
-	return decoder.Err()
+	if bond.PacketsPerSlave == 0 {
+		bond.PacketsPerSlave = 1
+	}
+
+	if bond.NumPeerNotif == 0 {
+		bond.NumPeerNotif = 1
+	}
+
+	if bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
+		bond.TLBDynamicLB = 1
+	}
+
+	if bond.Mode == nethelpers.BondMode8023AD {
+		bond.ADActorSysPrio = 65535
+	}
 }
 
 // Encode the BondMasterSpec into netlink attributes.
 //
 //nolint:gocyclo
-func (bond *BondMasterSpec) Encode() ([]byte, error) {
+func (a bondMaster) Encode() ([]byte, error) {
+	bond := a.BondMasterSpec
+
 	encoder := netlink.NewAttributeEncoder()
 
 	encoder.Uint8(unix.IFLA_BOND_MODE, uint8(bond.Mode))
@@ -121,7 +132,9 @@ func (bond *BondMasterSpec) Encode() ([]byte, error) {
 // Decode the BondMasterSpec from netlink attributes.
 //
 //nolint:gocyclo,cyclop
-func (bond *BondMasterSpec) Decode(data []byte) error {
+func (a bondMaster) Decode(data []byte) error {
+	bond := a.BondMasterSpec
+
 	decoder, err := netlink.NewAttributeDecoder(data)
 	if err != nil {
 		return err

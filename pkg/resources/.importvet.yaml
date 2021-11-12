@@ -1,7 +1,7 @@
 ---
 # temporary rules to facilitate moving `pkg/resources` into `pkg/machinery`:
 #  - no imports of anything from Talos except for machinery and pkg/resources itself
-#  - (not enforced yet) external dependencies we don't have to see in the machinery
+#  - external dependencies we don't have to see in the machinery
 rules:
   - regexp: ^github.com/talos-systems/talos
     action: deny
@@ -13,11 +13,9 @@ rules:
     action: deny
   - regexp: ^github.com/jxskiss/base62
     action: deny
-  #- regexp: ^github.com/mdlayher/netlink
-  #  action: deny
-  #- regexp: ^github.com/mdlayher/netx
-  #  action: deny
+  - regexp: ^github.com/mdlayher/netx
+    action: deny
   - regexp: ^github.com/prometheus/procfs
     action: deny
-  #- regexp: ^golang.zx2c4.com/wireguard/wgctrl
-  #  action: deny
+  - regexp: ^golang.zx2c4.com/wireguard/wgctrl
+    action: deny

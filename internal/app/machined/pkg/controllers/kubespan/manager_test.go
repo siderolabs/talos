@@ -17,6 +17,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
+	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -138,8 +139,8 @@ func (suite *ManagerSuite) TestReconcile() {
 	suite.Require().NoError(err)
 
 	localIdentity := kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity)
-	suite.Require().NoError(localIdentity.TypedSpec().GenerateKey())
-	suite.Require().NoError(localIdentity.TypedSpec().UpdateAddress("v16UCWpO2iOm82n6F8dGCJ41ZXXBvDrjRDs2su7C_zs=", mac))
+	suite.Require().NoError(kubespanadapter.IdentitySpec(localIdentity.TypedSpec()).GenerateKey())
+	suite.Require().NoError(kubespanadapter.IdentitySpec(localIdentity.TypedSpec()).UpdateAddress("v16UCWpO2iOm82n6F8dGCJ41ZXXBvDrjRDs2su7C_zs=", mac))
 	suite.Require().NoError(suite.state.Create(suite.ctx, localIdentity))
 
 	// initial setup: link should be created without any peers

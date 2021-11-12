@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -107,7 +108,7 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 				var localIdentity kubespan.IdentitySpec
 
 				if err = controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.KubeSpanIdentityFilename), &localIdentity, func(v interface{}) error {
-					return v.(*kubespan.IdentitySpec).GenerateKey()
+					return kubespanadapter.IdentitySpec(v.(*kubespan.IdentitySpec)).GenerateKey()
 				}); err != nil {
 					return fmt.Errorf("error caching kubespan identity: %w", err)
 				}
@@ -115,7 +116,7 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 				kubespanCfg := cfg.(*kubespan.Config).TypedSpec()
 				mac := firstMAC.(*network.HardwareAddr).TypedSpec()
 
-				if err = localIdentity.UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
+				if err = kubespanadapter.IdentitySpec(&localIdentity).UpdateAddress(kubespanCfg.ClusterID, net.HardwareAddr(mac.HardwareAddr)); err != nil {
 					return fmt.Errorf("error updating KubeSpan address: %w", err)
 				}
 

@@ -6,14 +6,10 @@ package kubespan
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
-
-	"github.com/talos-systems/talos/pkg/resources/network"
 )
 
 // IdentityType is type of Identity resource.
@@ -98,28 +94,4 @@ func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
 // TypedSpec allows to access the Spec with the proper type.
 func (r *Identity) TypedSpec() *IdentitySpec {
 	return &r.spec
-}
-
-// GenerateKey generates new Wireguard key.
-func (spec *IdentitySpec) GenerateKey() error {
-	key, err := wgtypes.GeneratePrivateKey()
-	if err != nil {
-		return err
-	}
-
-	spec.PrivateKey = key.String()
-	spec.PublicKey = key.PublicKey().String()
-
-	return nil
-}
-
-// UpdateAddress re-calculates node address based on input data.
-func (spec *IdentitySpec) UpdateAddress(clusterID string, mac net.HardwareAddr) error {
-	spec.Subnet = network.ULAPrefix(clusterID, network.ULAKubeSpan)
-
-	var err error
-
-	spec.Address, err = wgEUI64(spec.Subnet, mac)
-
-	return err
 }

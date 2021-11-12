@@ -24,6 +24,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -331,7 +332,7 @@ func (suite *LinkSpecSuite) TestBond() {
 		},
 		ConfigLayer: network.ConfigDefault,
 	}
-	bond.TypedSpec().BondMaster.FillDefaults()
+	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
 
 	dummy0Name := suite.uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
@@ -463,7 +464,7 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 		},
 		ConfigLayer: network.ConfigDefault,
 	}
-	bond.TypedSpec().BondMaster.FillDefaults()
+	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
 
 	dummies := []resource.Resource{}
 	dummyNames := []string{}

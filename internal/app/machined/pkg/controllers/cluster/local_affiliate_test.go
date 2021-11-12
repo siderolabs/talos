@@ -15,6 +15,7 @@ import (
 	"inet.af/netaddr"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
+	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/resources/cluster"
@@ -78,8 +79,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(err)
 
 	ksIdentity := kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity)
-	suite.Require().NoError(ksIdentity.TypedSpec().GenerateKey())
-	suite.Require().NoError(ksIdentity.TypedSpec().UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
+	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).GenerateKey())
+	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksIdentity))
 
 	// add KS address to the list of node addresses, it should be ignored in the endpoints

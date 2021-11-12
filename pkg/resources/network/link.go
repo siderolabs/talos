@@ -5,11 +5,9 @@
 package network
 
 import (
-	"net"
 	"sort"
 	"time"
 
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -50,33 +48,6 @@ type BondMasterSpec struct {
 	ADActorSysPrio  uint16                        `yaml:"adActorSysPrio,omitempty"`
 	ADUserPortKey   uint16                        `yaml:"adUserPortKey,omitempty"`
 	PeerNotifyDelay uint32                        `yaml:"peerNotifyDelay,omitempty"`
-}
-
-// FillDefaults fills zero values with proper default values.
-func (bond *BondMasterSpec) FillDefaults() {
-	if bond.ResendIGMP == 0 {
-		bond.ResendIGMP = 1
-	}
-
-	if bond.LPInterval == 0 {
-		bond.LPInterval = 1
-	}
-
-	if bond.PacketsPerSlave == 0 {
-		bond.PacketsPerSlave = 1
-	}
-
-	if bond.NumPeerNotif == 0 {
-		bond.NumPeerNotif = 1
-	}
-
-	if bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
-		bond.TLBDynamicLB = 1
-	}
-
-	if bond.Mode == nethelpers.BondMode8023AD {
-		bond.ADActorSysPrio = 65535
-	}
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
@@ -198,176 +169,6 @@ func (spec *WireguardSpec) Sort() {
 				return false
 			}
 		})
-	}
-}
-
-// Encode converts WireguardSpec to wgctrl.Config "patch" to adjust the config to match the spec.
-//
-// Both specs should be sorted.
-//
-// Encode produces a "diff" as *wgtypes.Config which when applied transitions `existing` configuration into
-// configuration `spec`.
-//
-//nolint:gocyclo,cyclop
-func (spec *WireguardSpec) Encode(existing *WireguardSpec) (*wgtypes.Config, error) {
-	cfg := &wgtypes.Config{}
-
-	if existing.PrivateKey != spec.PrivateKey {
-		key, err := wgtypes.ParseKey(spec.PrivateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		cfg.PrivateKey = &key
-	}
-
-	if existing.ListenPort != spec.ListenPort {
-		cfg.ListenPort = &spec.ListenPort
-	}
-
-	if existing.FirewallMark != spec.FirewallMark {
-		cfg.FirewallMark = &spec.FirewallMark
-	}
-
-	// perform a merge of two sorted list of peers producing diff
-	l, r := 0, 0
-
-	for l < len(existing.Peers) || r < len(spec.Peers) {
-		addPeer := func(peer *WireguardPeer) error {
-			pubKey, err := wgtypes.ParseKey(peer.PublicKey)
-			if err != nil {
-				return err
-			}
-
-			var presharedKey *wgtypes.Key
-
-			if peer.PresharedKey != "" {
-				var parsedKey wgtypes.Key
-
-				parsedKey, err = wgtypes.ParseKey(peer.PresharedKey)
-				if err != nil {
-					return err
-				}
-
-				presharedKey = &parsedKey
-			}
-
-			var endpoint *net.UDPAddr
-
-			if peer.Endpoint != "" {
-				endpoint, err = net.ResolveUDPAddr("", peer.Endpoint)
-				if err != nil {
-					return err
-				}
-			}
-
-			allowedIPs := make([]net.IPNet, len(peer.AllowedIPs))
-
-			for i := range peer.AllowedIPs {
-				allowedIPs[i] = *peer.AllowedIPs[i].IPNet()
-			}
-
-			cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
-				PublicKey:                   pubKey,
-				Endpoint:                    endpoint,
-				PresharedKey:                presharedKey,
-				PersistentKeepaliveInterval: &peer.PersistentKeepaliveInterval,
-				ReplaceAllowedIPs:           true,
-				AllowedIPs:                  allowedIPs,
-			})
-
-			return nil
-		}
-
-		deletePeer := func(peer *WireguardPeer) error {
-			pubKey, err := wgtypes.ParseKey(peer.PublicKey)
-			if err != nil {
-				return err
-			}
-
-			cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
-				PublicKey: pubKey,
-				Remove:    true,
-			})
-
-			return nil
-		}
-
-		var left, right *WireguardPeer
-
-		if l < len(existing.Peers) {
-			left = &existing.Peers[l]
-		}
-
-		if r < len(spec.Peers) {
-			right = &spec.Peers[r]
-		}
-
-		switch {
-		// peer from the "right" (new spec) is missing in "existing" (left), add it
-		case left == nil || (right != nil && left.PublicKey > right.PublicKey):
-			if err := addPeer(right); err != nil {
-				return nil, err
-			}
-
-			r++
-		// peer from the "left" (existing) is missing in new spec (right), so it should be removed
-		case right == nil || (left != nil && left.PublicKey < right.PublicKey):
-			// deleting peers from the existing
-			if err := deletePeer(left); err != nil {
-				return nil, err
-			}
-
-			l++
-		// peer public keys are equal, so either they are identical or peer should be replaced
-		case left.PublicKey == right.PublicKey:
-			if !left.Equal(right) {
-				// replace peer
-				if err := addPeer(right); err != nil {
-					return nil, err
-				}
-			}
-
-			l++
-			r++
-		}
-	}
-
-	return cfg, nil
-}
-
-// Decode spec from the device state.
-func (spec *WireguardSpec) Decode(dev *wgtypes.Device, isStatus bool) {
-	if isStatus {
-		spec.PublicKey = dev.PublicKey.String()
-	} else {
-		spec.PrivateKey = dev.PrivateKey.String()
-	}
-
-	spec.ListenPort = dev.ListenPort
-	spec.FirewallMark = dev.FirewallMark
-
-	spec.Peers = make([]WireguardPeer, len(dev.Peers))
-
-	for i := range spec.Peers {
-		spec.Peers[i].PublicKey = dev.Peers[i].PublicKey.String()
-
-		if dev.Peers[i].Endpoint != nil {
-			spec.Peers[i].Endpoint = dev.Peers[i].Endpoint.String()
-		}
-
-		var zeroKey wgtypes.Key
-
-		if dev.Peers[i].PresharedKey != zeroKey {
-			spec.Peers[i].PresharedKey = dev.Peers[i].PresharedKey.String()
-		}
-
-		spec.Peers[i].PersistentKeepaliveInterval = dev.Peers[i].PersistentKeepaliveInterval
-		spec.Peers[i].AllowedIPs = make([]netaddr.IPPrefix, len(dev.Peers[i].AllowedIPs))
-
-		for j := range dev.Peers[i].AllowedIPs {
-			spec.Peers[i].AllowedIPs[j], _ = netaddr.FromStdIPNet(&dev.Peers[i].AllowedIPs[j])
-		}
 	}
 }
 

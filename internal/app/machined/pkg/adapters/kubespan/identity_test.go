@@ -11,13 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/talos-systems/talos/pkg/resources/kubespan"
 )
 
 func TestIdentityGenerateKey(t *testing.T) {
 	var spec kubespan.IdentitySpec
 
-	assert.NoError(t, spec.GenerateKey())
+	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).GenerateKey())
 }
 
 func TestIdentityUpdateAddress(t *testing.T) {
@@ -26,7 +27,7 @@ func TestIdentityUpdateAddress(t *testing.T) {
 	mac, err := net.ParseMAC("2e:1a:b6:53:81:69")
 	require.NoError(t, err)
 
-	assert.NoError(t, spec.UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
+	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
 
 	assert.Equal(t, "fd7f:175a:b97c:5602:2c1a:b6ff:fe53:8169/128", spec.Address.String())
 	assert.Equal(t, "fd7f:175a:b97c:5602::/64", spec.Subnet.String())

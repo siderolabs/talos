@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl"
 
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/network"
@@ -212,7 +213,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			if !replace && link.TypedSpec().Kind == network.LinkKindVLAN {
 				var existingVLAN network.VLANSpec
 
-				if err := existingVLAN.Decode(existing.Attributes.Info.Data); err != nil {
+				if err := networkadapter.VLANSpec(&existingVLAN).Decode(existing.Attributes.Info.Data); err != nil {
 					return fmt.Errorf("error decoding VLAN properties on %q: %w", link.TypedSpec().Name, err)
 				}
 
@@ -264,7 +265,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			}
 
 			if link.TypedSpec().Kind == network.LinkKindVLAN {
-				data, err = link.TypedSpec().VLAN.Encode()
+				data, err = networkadapter.VLANSpec(&link.TypedSpec().VLAN).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding VLAN attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
@@ -302,7 +303,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		if link.TypedSpec().Kind == network.LinkKindBond {
 			var existingBond network.BondMasterSpec
 
-			if err := existingBond.Decode(existing.Attributes.Info.Data); err != nil {
+			if err := networkadapter.BondMasterSpec(&existingBond).Decode(existing.Attributes.Info.Data); err != nil {
 				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
@@ -312,7 +313,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					zap.String("new", fmt.Sprintf("%+v", link.TypedSpec().BondMaster)),
 				)
 
-				data, err := link.TypedSpec().BondMaster.Encode()
+				data, err := networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding bond attributes for %q: %w", link.TypedSpec().Name, err)
 				}
@@ -374,14 +375,14 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			var existingSpec network.WireguardSpec
 
-			existingSpec.Decode(wgDev, false)
+			networkadapter.WireguardSpec(&existingSpec).Decode(wgDev, false)
 			existingSpec.Sort()
 
 			link.TypedSpec().Wireguard.Sort()
 
 			// order here is important: we allow listenPort to be zero in the configuration
 			if !existingSpec.Equal(&link.TypedSpec().Wireguard) {
-				config, err := link.TypedSpec().Wireguard.Encode(&existingSpec)
+				config, err := networkadapter.WireguardSpec(&link.TypedSpec().Wireguard).Encode(&existingSpec)
 				if err != nil {
 					return fmt.Errorf("error creating wireguard config patch for %q: %w", link.TypedSpec().Name, err)
 				}

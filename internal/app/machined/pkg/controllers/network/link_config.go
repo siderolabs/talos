@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -442,7 +443,7 @@ func bondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 		ADUserPortKey:   bond.ADUserPortKey(),
 		PeerNotifyDelay: bond.PeerNotifyDelay(),
 	}
-	link.BondMaster.FillDefaults()
+	networkadapter.BondMasterSpec(&link.BondMaster).FillDefaults()
 
 	return nil
 }

@@ -20,6 +20,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
+	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/resources/config"
@@ -286,14 +287,14 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		if wgDevice != nil { // wgDevice might be nil if the link is not created yet
 			for _, peerInfo := range wgDevice.Peers {
 				if peerStatus, ok := peerStatuses[peerInfo.PublicKey.String()]; ok {
-					peerStatus.UpdateFromWireguard(peerInfo)
+					kubespanadapter.PeerStatusSpec(peerStatus).UpdateFromWireguard(peerInfo)
 				}
 			}
 		}
 
 		// calculate peer status connection state
 		for _, peerStatus := range peerStatuses {
-			peerStatus.CalculateState()
+			kubespanadapter.PeerStatusSpec(peerStatus).CalculateState()
 		}
 
 		// build wireguard peer configuration
@@ -306,14 +307,14 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			var endpoint string
 
 			// check if the endpoint should be updated
-			if peerStatus.ShouldChangeEndpoint() {
-				newEndpoint := peerStatus.PickNewEndpoint(peerSpec.Endpoints)
+			if kubespanadapter.PeerStatusSpec(peerStatus).ShouldChangeEndpoint() {
+				newEndpoint := kubespanadapter.PeerStatusSpec(peerStatus).PickNewEndpoint(peerSpec.Endpoints)
 
 				if !newEndpoint.IsZero() {
 					logger.Debug("updating endpoint for the peer", zap.String("peer", pubKey), zap.String("label", peerSpec.Label), zap.Stringer("endpoint", newEndpoint))
 
 					endpoint = newEndpoint.String()
-					peerStatus.UpdateEndpoint(newEndpoint)
+					kubespanadapter.PeerStatusSpec(peerStatus).UpdateEndpoint(newEndpoint)
 
 					updateSpecs = true
 				}

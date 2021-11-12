@@ -2,5 +2,5 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package cluster providers adapters wrapping resources/cluster to provide additional functionality.
+// Package cluster implements adapters wrapping resources/cluster to provide additional functionality.
 package cluster

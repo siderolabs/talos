@@ -2,5 +2,5 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package k8s providers adapters wrapping resources/k8s to provide additional functionality.
+// Package k8s implements adapters wrapping resources/k8s to provide additional functionality.
 package k8s
