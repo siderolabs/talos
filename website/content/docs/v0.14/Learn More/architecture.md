@@ -20,14 +20,14 @@ This is a key component in reducing coupling and maintaining modularity.
 
 ## File system partitions
 
-Talos uses these partions with the following labels:
+Talos uses these partitions with the following labels:
 
-    - **EFI**: The EFI partition, which is the first partition on the disk and used for EFI boot.
-    - **BIOS**: The BIOS partition, which is the second partition on the disk and used for GRUB's second stage boot.
-    - **BOOT**: The boot partition, which is the third partition on the disk and used for the bootloader.
-    - **META**: The meta partition, which is the fourth partition on the disk and used for storing metadata about the talos node, such as node id's.
-    - **STATE**: The state partition, which is the fifth partition on the disk and used for storing persistent state information.
-    - **EPHEMERAL**: The ephemeral partition, which is the sixth partition on the disk and used for storing ephemeral state information. All the data in this partition can be re-created from the information from the talos machine configuration.
+1. **EFI** - stores EFI boot data.
+1. **BIOS** - used for GRUB's second stage boot.
+1. **BOOT** - used for the boot loader, stores initramfs and kernel data.
+1. **META** - stores metadata about the talos node, such as node id's.
+1. **STATE** - stores machine configuration, node identity data for cluster discovery and KubeSpan info
+1. **EPHEMERAL** - stores ephemeral state information, mounted at `/var`
 
 ## The File System
 
