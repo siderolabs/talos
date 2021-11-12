@@ -56,7 +56,7 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 		suite.T().Skip("cluster doesn't support reboots")
 	}
 
-	nodes := suite.DiscoverNodes().Nodes()
+	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	for _, node := range nodes {
@@ -76,7 +76,7 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		suite.T().Skip("cluster doesn't support reboots")
 	}
 
-	nodes := suite.DiscoverNodes().Nodes()
+	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	errCh := make(chan error, len(nodes))

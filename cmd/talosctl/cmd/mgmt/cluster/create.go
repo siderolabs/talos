@@ -753,7 +753,7 @@ func getDisks() ([]*provision.Disk, error) {
 				DiskMountPoint: partitionPath,
 			}
 			diskSize += partitionSize
-			partitionIndex++ //nolint:wastedassign
+			partitionIndex++
 		}
 
 		disks = append(disks, &provision.Disk{

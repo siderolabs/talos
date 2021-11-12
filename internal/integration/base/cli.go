@@ -8,6 +8,7 @@
 package base
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os/exec"
@@ -34,8 +35,8 @@ type CLISuite struct {
 // DiscoverNodes provides list of Talos nodes in the cluster.
 //
 // As there's no way to provide this functionality via Talos CLI, it relies on cluster info.
-func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
-	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes()
+func (cliSuite *CLISuite) DiscoverNodes(ctx context.Context) cluster.Info {
+	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes(ctx)
 	if discoveredNodes != nil {
 		return discoveredNodes
 	}
@@ -53,7 +54,7 @@ func (cliSuite *CLISuite) DiscoverNodes() cluster.Info {
 
 // RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
 func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
-	nodeInfo := cliSuite.DiscoverNodes()
+	nodeInfo := cliSuite.DiscoverNodes(context.TODO())
 
 	var nodes []string
 

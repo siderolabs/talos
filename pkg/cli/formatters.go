@@ -229,7 +229,7 @@ func RenderServicesInfo(services []client.ServiceInfo, output io.Writer, default
 
 			ts := event.Ts.AsTime()
 			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-			label = "" //nolint:wastedassign
+			label = ""
 		}
 	}
 

@@ -63,7 +63,7 @@ func (apiSuite *APISuite) SetupSuite() {
 	apiSuite.Require().NoError(err)
 
 	// clear any connection refused errors left after the previous tests
-	nodes := apiSuite.DiscoverNodes().Nodes()
+	nodes := apiSuite.DiscoverNodes(context.TODO()).Nodes()
 
 	if len(nodes) > 0 {
 		// grpc might trigger backoff on reconnect attempts, so make sure we clear them
@@ -76,15 +76,22 @@ func (apiSuite *APISuite) SetupSuite() {
 // As there's no way to provide this functionality via Talos API, it works the following way:
 // 1. If there's a provided cluster info, it's used.
 // 2. If integration test was compiled with k8s support, k8s is used.
-func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
-	discoveredNodes := apiSuite.TalosSuite.DiscoverNodes()
+//
+// The passed ctx is additionally limited to one minute.
+func (apiSuite *APISuite) DiscoverNodes(ctx context.Context) cluster.Info {
+	discoveredNodes := apiSuite.TalosSuite.DiscoverNodes(ctx)
 	if discoveredNodes != nil {
 		return discoveredNodes
 	}
 
 	var err error
 
-	apiSuite.discoveredNodes, err = discoverNodesK8s(apiSuite.Client, &apiSuite.TalosSuite)
+	var ctxCancel context.CancelFunc
+	ctx, ctxCancel = context.WithTimeout(ctx, time.Minute)
+
+	defer ctxCancel()
+
+	apiSuite.discoveredNodes, err = discoverNodesK8s(ctx, apiSuite.Client, &apiSuite.TalosSuite)
 	apiSuite.Require().NoError(err, "k8s discovery failed")
 
 	if apiSuite.discoveredNodes == nil {
@@ -97,7 +104,7 @@ func (apiSuite *APISuite) DiscoverNodes() cluster.Info {
 
 // RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
 func (apiSuite *APISuite) RandomDiscoveredNode(types ...machine.Type) string {
-	nodeInfo := apiSuite.DiscoverNodes()
+	nodeInfo := apiSuite.DiscoverNodes(context.TODO())
 
 	var nodes []string
 
@@ -238,7 +245,7 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 
 // WaitForBootDone waits for boot phase done event.
 func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
-	nodes := apiSuite.DiscoverNodes().Nodes()
+	nodes := apiSuite.DiscoverNodes(ctx).Nodes()
 
 	nodesNotDoneBooting := make(map[string]struct{})
 
@@ -273,7 +280,7 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 	ctx, cancel := context.WithTimeout(ctx, backoff.DefaultConfig.MaxDelay)
 	defer cancel()
 
-	numMasterNodes := len(apiSuite.DiscoverNodes().NodesByType(machine.TypeControlPlane)) + len(apiSuite.DiscoverNodes().NodesByType(machine.TypeInit))
+	numMasterNodes := len(apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeControlPlane)) + len(apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeInit))
 	if numMasterNodes == 0 {
 		numMasterNodes = 3
 	}

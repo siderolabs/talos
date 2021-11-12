@@ -121,7 +121,7 @@ DrainLoop:
 
 // TestClusterHasDmesg verifies that all the cluster nodes have dmesg.
 func (suite *DmesgSuite) TestClusterHasDmesg() {
-	nodes := suite.DiscoverNodes().Nodes()
+	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	ctx := client.WithNodes(suite.ctx, nodes...)

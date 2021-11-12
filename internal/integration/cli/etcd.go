@@ -8,6 +8,7 @@
 package cli
 
 import (
+	"context"
 	"path/filepath"
 	"regexp"
 
@@ -32,7 +33,7 @@ func (suite *EtcdSuite) TestMembers() {
 
 // TestForfeitLeadership etcd forfeit-leadership check.
 func (suite *EtcdSuite) TestForfeitLeadership() {
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+	nodes := suite.DiscoverNodes(context.TODO()).NodesByType(machine.TypeControlPlane)
 
 	if len(nodes) < 3 {
 		suite.T().Skip("test only can be run on HA etcd clusters")

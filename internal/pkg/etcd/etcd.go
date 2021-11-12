@@ -101,7 +101,7 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider,
 		return nil
 	}
 
-	resp, err := c.MemberList(context.Background())
+	resp, err := c.MemberList(ctx)
 	if err != nil {
 		return err
 	}

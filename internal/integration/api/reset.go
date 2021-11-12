@@ -69,7 +69,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		}
 	}
 
-	nodes := suite.DiscoverNodes().Nodes()
+	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 	suite.Require().NotEmpty(nodes)
 
 	sort.Strings(nodes)

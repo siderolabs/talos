@@ -455,7 +455,8 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) //nolint:errcheck
 			}
 
-			if err := s.Controller.Run(context.Background(), runtime.SequenceStageUpgrade, in); err != nil {
+			// ???
+			if err := s.Controller.Run(ctx, runtime.SequenceStageUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("reboot for staged upgrade failed:", err)
 				}
@@ -473,7 +474,8 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				defer mu.Unlock(ctx) //nolint:errcheck
 			}
 
-			if err := s.Controller.Run(context.Background(), runtime.SequenceUpgrade, in); err != nil {
+			// ???
+			if err := s.Controller.Run(ctx, runtime.SequenceUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("upgrade failed:", err)
 				}

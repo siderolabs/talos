@@ -59,7 +59,7 @@ func (suite *EtcdSuite) TestEtcdForfeitLeadership() {
 		suite.T().Skip("without full cluster state etcd test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeControlPlane)
 
 	if len(nodes) < 3 {
 		suite.T().Skip("test only can be run on HA etcd clusters")
@@ -91,7 +91,7 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeControlPlane)
 
 	if len(nodes) < 3 {
 		suite.T().Skip("test only can be run on HA etcd clusters")

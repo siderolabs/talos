@@ -23,10 +23,7 @@ import (
 )
 
 //nolint:gocyclo
-func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
-	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
-	defer ctxCancel()
-
+func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	kubeconfig, err := client.Kubeconfig(ctx)
 	if err != nil {
 		return nil, err
