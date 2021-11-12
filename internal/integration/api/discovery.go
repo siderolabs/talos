@@ -65,7 +65,7 @@ func (suite *DiscoverySuite) TearDownTest() {
 //
 //nolint:gocyclo
 func (suite *DiscoverySuite) TestMembers() {
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes(suite.ctx)
 	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)
 
 	for _, node := range nodes.Nodes() {
@@ -144,7 +144,7 @@ func (suite *DiscoverySuite) TestMembers() {
 func (suite *DiscoverySuite) TestRegistries() {
 	registries := []string{"k8s/", "service/"}
 
-	nodes := suite.DiscoverNodes()
+	nodes := suite.DiscoverNodes(suite.ctx)
 
 	for _, node := range nodes.Nodes() {
 		nodeCtx := client.WithNodes(suite.ctx, node)
@@ -199,7 +199,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 		suite.T().Skip("KubeSpan is disabled")
 	}
 
-	nodes := suite.DiscoverNodes().Nodes()
+	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 
 	for _, node := range nodes {
 		nodeCtx := client.WithNodes(suite.ctx, node)

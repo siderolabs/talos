@@ -48,9 +48,6 @@ linters-settings:
   govet:
     # report about shadowed variables
     check-shadowing: true
-  golint:
-    # minimal confidence for issues, default is 0.8
-    min-confidence: 0.8
   gofmt:
     # simplify code: gofmt with `-s` option, true by default
     simplify: true
@@ -126,30 +123,47 @@ linters-settings:
   cyclop:
     # the maximal code complexity to report
     max-complexity: 20
+  gomoddirectives:
+    replace-local: true
+    replace-allow-list:
+      - gopkg.in/yaml.v3
+      - inet.af/tcpproxy
+      - github.com/vmware-tanzu/sonobuoy
+    retract-allow-no-explanation: false
+    exclude-forbidden: true
 
 linters:
   enable-all: true
   disable:
-    - gas
-    - typecheck
-    - gochecknoglobals
-    - gochecknoinits
-    - ifshort
+    - errorlint
+    - exhaustivestruct
     - forbidigo
     - funlen
-    - godox
+    - gas
+    - gochecknoglobals
+    - gochecknoinits
     - gocognit
-    - gomnd
+    - godox
     - goerr113
+    - gomnd
+    - ifshort
+    - ireturn # we return interfaces
     - nestif
-    - exhaustivestruct
-    - errorlint
+    - nilnil # we return "nil, nil"
     - paralleltest
+    - promlinter # https://github.com/golangci/golangci-lint/issues/2222
+    - tagliatelle # we have many different conventions
     - thelper
+    - typecheck
+    - varnamelen # too annoying
     - wrapcheck
+
     # abandoned linters for which golangci shows the warning that the repo is archived by the owner
+    - golint
     - interfacer
     - maligned
+    - scopelint
+
   disable-all: false
   fast: false
 
@@ -159,7 +173,8 @@ issues:
   # it can be disabled by `exclude-use-default: false`. To list all
   # excluded by default patterns execute `golangci-lint run --help`
   exclude:
-    - ^ST1000 # ST1000: package comment should be of the form "Package services ..." (stylecheck)
+    - package comment should be of the form "Package services ..." # revive
+    - ^ST1000 # ST1000: at least one file in a package should have a package comment (stylecheck)
 
   exclude-rules:
     - path: cmd/talosctl/cmd

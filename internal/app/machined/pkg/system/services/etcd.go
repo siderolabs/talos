@@ -88,7 +88,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = generatePKI(r); err != nil {
+	if err = generatePKI(ctx, r); err != nil {
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
@@ -235,7 +235,7 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 }
 
 //nolint:gocyclo
-func generatePKI(r runtime.Runtime) (err error) {
+func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
 	// remove legacy etcd PKI directory to handle upgrades with `--preserve` to Talos 0.12
 	// TODO: remove me in Talos 0.13
 	if err = os.RemoveAll("/etc/kubernetes/pki/etcd"); err != nil {
@@ -255,9 +255,6 @@ func generatePKI(r runtime.Runtime) (err error) {
 	}
 
 	// wait for etcd certificates to be generated in the controller
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	watchCh := make(chan state.Event)
 
 	if err = r.State().V1Alpha2().Resources().Watch(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined), watchCh); err != nil {

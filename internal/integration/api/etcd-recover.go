@@ -68,9 +68,9 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 	}
 
 	// 'init' nodes are not compatible with etcd recovery
-	suite.Require().Empty(suite.DiscoverNodes().NodesByType(machine.TypeInit))
+	suite.Require().Empty(suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeInit))
 
-	controlPlaneNodes := suite.DiscoverNodes().NodesByType(machine.TypeControlPlane)
+	controlPlaneNodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeControlPlane)
 	suite.Require().NotEmpty(controlPlaneNodes)
 
 	snapshotNode := suite.RandomDiscoveredNode(machine.TypeControlPlane)

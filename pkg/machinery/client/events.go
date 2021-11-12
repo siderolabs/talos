@@ -76,7 +76,7 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 		return err
 	}
 
-	defaultNode := RemotePeer(stream.Context())
+	defaultNode := RemotePeer(stream.Context()) //nolint:contextcheck
 
 	var wg sync.WaitGroup
 

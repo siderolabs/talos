@@ -8,10 +8,12 @@
 package base
 
 import (
+	"context"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
-func discoverNodesK8s(client *client.Client, suite *TalosSuite) (cluster.Info, error) {
+func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSuite) (cluster.Info, error) {
 	return nil, nil
 }

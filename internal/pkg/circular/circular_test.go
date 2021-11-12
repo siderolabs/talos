@@ -101,7 +101,7 @@ func (suite *CircularSuite) TestStreamingReadWriter() {
 			suite.Require().Equal(l, n)
 
 			i += l
-			p = p[l:] //nolint:wastedassign
+			p = p[l:]
 		}
 	}()
 
@@ -192,7 +192,7 @@ func (suite *CircularSuite) TestStreamingMultipleReaders() {
 		suite.Require().Equal(l, n)
 
 		i += l
-		p = p[l:] //nolint:wastedassign
+		p = p[l:]
 	}
 }
 

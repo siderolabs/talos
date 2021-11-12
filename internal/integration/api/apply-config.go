@@ -79,7 +79,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	nodes := suite.DiscoverNodes().NodesByType(machine.TypeWorker)
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)

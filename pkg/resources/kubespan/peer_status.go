@@ -119,8 +119,6 @@ func (r *PeerStatus) TypedSpec() *PeerStatusSpec {
 // Handshake Timeout (180s) + Rekey Timeout (5s) + Rekey Attempt Timeout (90s)
 //
 // This interval is applied when the link is already established.
-//
-//nolint:durationcheck
 const PeerDownInterval = (180 + 5 + 90) * time.Second
 
 // EndpointConnectionTimeout is time to wait for initial handshake when the endpoint is just set.
