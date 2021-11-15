@@ -8,7 +8,7 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/prometheus/procfs"
 
-	"github.com/talos-systems/talos/pkg/resources/perf"
+	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
 )
 
 // Memory adapter provides conversion from procfs.

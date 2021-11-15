@@ -14,8 +14,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
 // ConfigController watches v1alpha1.Config, updates KubeSpan config.

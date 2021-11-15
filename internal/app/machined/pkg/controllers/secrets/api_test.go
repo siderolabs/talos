@@ -27,10 +27,10 @@ import (
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/role"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
 )
 
 type APISuite struct {

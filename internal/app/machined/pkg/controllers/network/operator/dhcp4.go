@@ -20,7 +20,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // DHCP4 implements the DHCPv4 network operator.

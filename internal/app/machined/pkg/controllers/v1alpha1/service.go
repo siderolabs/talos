@@ -16,7 +16,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // ServiceController manages v1alpha1.Service based on services subsystem state.

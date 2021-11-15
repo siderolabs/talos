@@ -15,7 +15,7 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // HCloudHandler implements assignment and release of Virtual IPs using API.

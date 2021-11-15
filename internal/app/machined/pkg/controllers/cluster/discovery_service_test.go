@@ -28,9 +28,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
 type DiscoveryServiceSuite struct {

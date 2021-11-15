@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // OperatorSpecController applies network.OperatorSpec to the actual interfaces.

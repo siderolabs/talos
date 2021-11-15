@@ -12,8 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
 // EndpointController watches KubeSpanPeerStatuses, Affiliates and harvests additional endpoints for the peers.

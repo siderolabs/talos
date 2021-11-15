@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 // MachineTypeController manages config.MachineType based on configuration.

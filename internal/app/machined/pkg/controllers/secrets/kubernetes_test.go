@@ -30,10 +30,10 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
 type KubernetesSuite struct {

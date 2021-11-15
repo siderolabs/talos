@@ -27,10 +27,10 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
-	v1alpha1resource "github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
+	v1alpha1resource "github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type SyncSuite struct {

@@ -16,8 +16,8 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 // EndpointController looks up control plane endpoints.

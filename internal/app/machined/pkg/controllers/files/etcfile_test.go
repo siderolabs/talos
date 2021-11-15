@@ -24,7 +24,7 @@ import (
 
 	filesctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/resources/files"
+	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 )
 
 type EtcFileSuite struct {

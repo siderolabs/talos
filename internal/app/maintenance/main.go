@@ -24,7 +24,7 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // Run executes the configuration receiver, returning any configuration it receives.

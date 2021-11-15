@@ -21,9 +21,9 @@ import (
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 type ManagerSuite struct {

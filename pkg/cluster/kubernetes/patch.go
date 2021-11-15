@@ -14,7 +14,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 // patchNodeConfig updates node configuration by means of patch function.

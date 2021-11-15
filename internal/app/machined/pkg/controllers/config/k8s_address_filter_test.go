@@ -25,9 +25,9 @@ import (
 	configctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 type K8sAddressFilterSuite struct {

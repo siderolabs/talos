@@ -12,8 +12,8 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // IdentitySpec adapter provides identity generation.

@@ -17,11 +17,11 @@ import (
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
-	runtimeres "github.com/talos-systems/talos/pkg/resources/runtime"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type PeerSpecSuite struct {

@@ -35,7 +35,7 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	configresource "github.com/talos-systems/talos/pkg/resources/config"
+	configresource "github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 // Controller implements runtime.V1alpha2Controller.

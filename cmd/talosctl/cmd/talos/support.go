@@ -25,7 +25,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	clusterresource "github.com/talos-systems/talos/pkg/resources/cluster"
+	clusterresource "github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 var supportCmdFlags struct {

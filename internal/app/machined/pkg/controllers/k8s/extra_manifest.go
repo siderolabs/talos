@@ -21,9 +21,9 @@ import (
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // ExtraManifestController renders manifests based on templates and config/secrets.

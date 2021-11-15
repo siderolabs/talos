@@ -17,8 +17,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 // ConfigController watches v1alpha1.Config, updates discovery config.

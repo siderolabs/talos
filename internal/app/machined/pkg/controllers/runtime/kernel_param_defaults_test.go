@@ -15,7 +15,7 @@ import (
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	runtimeresource "github.com/talos-systems/talos/pkg/resources/runtime"
+	runtimeresource "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 type KernelParamDefaultsSuite struct {

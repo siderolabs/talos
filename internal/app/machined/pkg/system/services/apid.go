@@ -30,7 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
 // APID implements the Service interface. It serves as the concrete type with

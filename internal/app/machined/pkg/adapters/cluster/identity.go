@@ -11,7 +11,7 @@ import (
 	"github.com/jxskiss/base62"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 // IdentitySpec adapter provides identity generation.

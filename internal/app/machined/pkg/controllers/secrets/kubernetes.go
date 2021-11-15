@@ -22,10 +22,10 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // KubernetesCertificateValidityDuration is the validity duration for the certificates created with this controller.

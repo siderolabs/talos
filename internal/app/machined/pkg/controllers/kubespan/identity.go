@@ -19,11 +19,11 @@ import (
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	runtimeres "github.com/talos-systems/talos/pkg/resources/runtime"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // IdentityController watches KubeSpan configuration, updates KubeSpan Identity.

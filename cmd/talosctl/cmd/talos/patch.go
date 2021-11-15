@@ -22,7 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
-	"github.com/talos-systems/talos/pkg/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 var patchCmdFlags struct {

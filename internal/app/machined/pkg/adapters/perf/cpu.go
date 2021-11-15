@@ -7,7 +7,7 @@ package perf
 import (
 	"github.com/prometheus/procfs"
 
-	"github.com/talos-systems/talos/pkg/resources/perf"
+	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
 )
 
 // CPU adapter provides conversion from procfs.

@@ -22,7 +22,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
 	"github.com/talos-systems/talos/pkg/logging"
-	perfresource "github.com/talos-systems/talos/pkg/resources/perf"
+	perfresource "github.com/talos-systems/talos/pkg/machinery/resources/perf"
 )
 
 type PerfSuite struct {

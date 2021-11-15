@@ -26,7 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 type OperatorSpecSuite struct {

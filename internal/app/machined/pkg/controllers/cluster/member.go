@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 // MemberController converts Affiliates which have Nodename set into Members.

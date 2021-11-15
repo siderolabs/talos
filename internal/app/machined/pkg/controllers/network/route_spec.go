@@ -18,7 +18,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // RouteSpecController applies network.RouteSpec to the actual interfaces.

@@ -15,7 +15,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // HostnameSpecController applies network.HostnameSpec to the actual interfaces.

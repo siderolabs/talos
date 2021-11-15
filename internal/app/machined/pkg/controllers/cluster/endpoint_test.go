@@ -16,8 +16,8 @@ import (
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 type EndpointSuite struct {

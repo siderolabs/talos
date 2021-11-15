@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
 func TestIdentityGenerateKey(t *testing.T) {

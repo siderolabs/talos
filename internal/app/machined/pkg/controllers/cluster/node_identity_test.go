@@ -18,9 +18,9 @@ import (
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	runtimeres "github.com/talos-systems/talos/pkg/resources/runtime"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type NodeIdentitySuite struct {

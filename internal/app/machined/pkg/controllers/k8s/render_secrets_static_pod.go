@@ -21,8 +21,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
 // RenderSecretsStaticPodController manages k8s.SecretsReady and renders secrets from secrets.Kubernetes.

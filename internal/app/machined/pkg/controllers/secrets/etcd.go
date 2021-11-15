@@ -15,10 +15,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
-	"github.com/talos-systems/talos/pkg/resources/time"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // EtcdController manages secrets.Etcd based on configuration.

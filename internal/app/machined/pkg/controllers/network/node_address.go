@@ -15,7 +15,7 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // NodeAddressController manages secrets.Etcd based on configuration.

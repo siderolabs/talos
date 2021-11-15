@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // EquinixMetalHandler implements assignment and release of Virtual IPs using API.

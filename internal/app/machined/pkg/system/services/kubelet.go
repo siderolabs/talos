@@ -40,9 +40,9 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1

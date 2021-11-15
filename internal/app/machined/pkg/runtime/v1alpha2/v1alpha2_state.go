@@ -14,17 +14,17 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/files"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	"github.com/talos-systems/talos/pkg/resources/perf"
-	"github.com/talos-systems/talos/pkg/resources/runtime"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
-	"github.com/talos-systems/talos/pkg/resources/time"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/files"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // State implements runtime.V1alpha2State interface.

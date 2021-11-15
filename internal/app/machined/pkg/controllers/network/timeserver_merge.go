@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // TimeServerMergeController merges network.TimeServerSpec in network.ConfigNamespace and produces final network.TimeServerSpec in network.Namespace.

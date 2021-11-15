@@ -14,7 +14,7 @@ import (
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	"github.com/talos-systems/talos/pkg/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // KernelParamDefaultsController creates default kernel params.

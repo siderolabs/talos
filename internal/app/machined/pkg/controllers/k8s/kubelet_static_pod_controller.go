@@ -24,9 +24,9 @@ import (
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/secrets"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // KubeletStaticPodController renders static pod definitions and manages k8s.StaticPodStatus.

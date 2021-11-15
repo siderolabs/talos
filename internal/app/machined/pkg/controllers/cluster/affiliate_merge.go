@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 // AffiliateMergeController merges raw Affiliates from the RawNamespaceName into final representation in the NamespaceName.

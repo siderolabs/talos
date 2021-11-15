@@ -22,8 +22,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	runtimeres "github.com/talos-systems/talos/pkg/resources/runtime"
-	"github.com/talos-systems/talos/pkg/resources/v1alpha1"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 var (

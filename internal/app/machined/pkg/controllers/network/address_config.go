@@ -20,8 +20,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // AddressConfigController manages network.AddressSpec based on machine configuration, kernel cmdline and some built-in defaults.

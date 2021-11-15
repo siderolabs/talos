@@ -15,9 +15,9 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/k8s"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // K8sAddressFilterController creates NodeAddressFilters based on machine configuration.

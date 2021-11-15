@@ -19,8 +19,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // OperatorConfigController manages network.OperatorSpec based on machine configuration, kernel cmdline.

@@ -15,9 +15,9 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/pkg/resources/cluster"
-	"github.com/talos-systems/talos/pkg/resources/config"
-	"github.com/talos-systems/talos/pkg/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
 // PeerSpecController watches cluster.Affiliates updates PeerSpec.

@@ -67,7 +67,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	resourceruntime "github.com/talos-systems/talos/pkg/resources/runtime"
+	resourceruntime "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/version"
 )
 

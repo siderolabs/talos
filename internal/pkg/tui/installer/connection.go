@@ -16,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // Connection unifies clients for bootstrap node and the node which is being configured.

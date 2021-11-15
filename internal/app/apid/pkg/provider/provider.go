@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/crypto/tls"
 
-	"github.com/talos-systems/talos/pkg/resources/secrets"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
 // TLSConfig provides client & server TLS configs for apid.

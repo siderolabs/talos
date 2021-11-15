@@ -17,7 +17,7 @@ import (
 
 	krnl "github.com/talos-systems/talos/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	"github.com/talos-systems/talos/pkg/resources/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // KernelParamSpecController watches KernelParamSpecs, sets/resets kernel params.

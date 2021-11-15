@@ -74,8 +74,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 	"github.com/talos-systems/talos/pkg/machinery/role"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
 	"github.com/talos-systems/talos/pkg/version"
 )
 

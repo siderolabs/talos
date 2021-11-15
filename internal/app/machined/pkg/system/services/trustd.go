@@ -25,8 +25,8 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/resources/network"
-	timeresource "github.com/talos-systems/talos/pkg/resources/time"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
 // Trustd implements the Service interface. It serves as the concrete type with
