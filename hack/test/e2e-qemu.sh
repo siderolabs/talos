@@ -72,6 +72,16 @@ case "${WITH_DISK_ENCRYPTION:-false}" in
     ;;
 esac
 
+case "${WITH_CONFIG_PATCH:-false}" in
+  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH
+  false)
+     CONFIG_PATCH_FLAG=()
+    ;;
+  *)
+    CONFIG_PATCH_FLAG=(--config-patch "${WITH_CONFIG_PATCH}")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
@@ -95,7 +105,8 @@ function create_cluster {
     ${DISK_ENCRYPTION_FLAG} \
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
-    ${CUSTOM_CNI_FLAG}
+    ${CUSTOM_CNI_FLAG} \
+    "${CONFIG_PATCH_FLAG[@]}"
 
   "${TALOSCTL}" config node 172.20.1.2
 }

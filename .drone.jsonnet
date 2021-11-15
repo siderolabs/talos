@@ -363,6 +363,7 @@ local integration_provision_tests_track_2 = Step("provision-tests-track-2", priv
 local integration_cilium = Step("e2e-cilium-1.9.10", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/cilium/cilium/v1.9.10/install/kubernetes/quick-install.yaml",
+        "WITH_CONFIG_PATCH": '[{"op": "replace", "path": "/cluster/network/podSubnets", "value": ["10.0.0.0/8"]}]', # use Pod CIDRs as hardcoded in Cilium's quick-install
         "IMAGE_REGISTRY": local_registry,
 });
 local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
