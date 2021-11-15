@@ -28,7 +28,7 @@ type API struct {
 	spec *APICertsSpec
 }
 
-// APICertsSpec describes etcd certs secrets.
+// APICertsSpec describes API certs secrets.
 type APICertsSpec struct {
 	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca"` // only cert is passed, without key
 	Client *x509.PEMEncodedCertificateAndKey `yaml:"client"`

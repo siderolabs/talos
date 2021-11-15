@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,6 +55,13 @@ func marshalResource(r resource.Resource) (*resourceapi.Resource, error) {
 		spec.Yaml, err = yaml.Marshal(r.Spec())
 		if err != nil {
 			return nil, err
+		}
+
+		if protoMarshaler, ok := r.Spec().(protobuf.ProtoMarshaler); ok {
+			spec.Protobuf, err = protoMarshaler.MarshalProto()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

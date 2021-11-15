@@ -37,6 +37,7 @@ message Metadata {
 
 message Spec {
     bytes yaml = 1;
+    bytes protobuf = 2;
 }
 
 // rpc Get
