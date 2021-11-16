@@ -1,12 +1,10 @@
 version = 2
 
-disabled_plugins = ["io.containerd.snapshotter.v1.aufs", "io.containerd.v1.zfs", "io.containerd.snapshotter.v1.zfs", "io.containerd.v1.devmapper", "io.containerd.snapshotter.v1.devmapper", "io.containerd.snapshotter.v1.btrfs"]
-
-imports = ["/var/cri/conf.d/*.toml"]
+disabled_plugins = [
+    "io.containerd.grpc.v1.cri",
+    "io.containerd.internal.v1.opt",
+]
 
 [debug]
 level = "info"
 format = "json"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
