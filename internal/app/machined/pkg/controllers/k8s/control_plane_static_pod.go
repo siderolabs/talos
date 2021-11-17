@@ -114,8 +114,10 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).TypedSpec().Version
 
+		touchedIDs := map[string]struct{}{}
+
 		for _, pod := range []struct {
-			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string) error
+			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string) (string, error)
 			id resource.ID
 		}{
 			{
@@ -140,8 +142,32 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 				return fmt.Errorf("error getting control plane config: %w", err)
 			}
 
-			if err = pod.f(ctx, r, logger, res.(*config.K8sControlPlane), secretsVersion); err != nil {
+			var podID string
+
+			if podID, err = pod.f(ctx, r, logger, res.(*config.K8sControlPlane), secretsVersion); err != nil {
 				return fmt.Errorf("error updating static pod for %q: %w", pod.id, err)
+			}
+
+			if podID != "" {
+				touchedIDs[podID] = struct{}{}
+			}
+		}
+
+		// clean up static pods which haven't been touched
+		{
+			list, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+			if err != nil {
+				return err
+			}
+
+			for _, res := range list.Items {
+				if _, ok := touchedIDs[res.Metadata().ID()]; ok {
+					continue
+				}
+
+				if err = r.Destroy(ctx, res.Metadata()); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -195,7 +221,8 @@ func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
 	return result
 }
 
-func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
+	configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
 	cfg := configResource.APIServer()
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
@@ -275,12 +302,12 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return err
+		return "", err
 	}
 
 	args = append(args, builder.Args()...)
 
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-apiserver"), func(r resource.Resource) error {
+	return config.K8sControlPlaneAPIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneAPIServerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -351,8 +378,12 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
 	cfg := configResource.ControllerManager()
+
+	if !cfg.Enabled {
+		return "", nil
+	}
 
 	args := []string{
 		"/usr/local/bin/kube-controller-manager",
@@ -395,13 +426,13 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	}
 
 	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return err
+		return "", err
 	}
 
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-controller-manager"), func(r resource.Resource) error {
+	return config.K8sControlPlaneControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -474,8 +505,12 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
 	cfg := configResource.Scheduler()
+
+	if !cfg.Enabled {
+		return "", nil
+	}
 
 	args := []string{
 		"/usr/local/bin/kube-scheduler",
@@ -499,13 +534,13 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	}
 
 	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return err
+		return "", err
 	}
 
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, "kube-scheduler"), func(r resource.Resource) error {
+	return config.K8sControlPlaneSchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneSchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",

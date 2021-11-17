@@ -134,6 +134,11 @@ var (
 		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
 	}
 
+	machineControlplaneExample = &MachineControlPlaneConfig{
+		MachineControllerManager: &MachineControllerManagerConfig{},
+		MachineScheduler:         &MachineSchedulerConfig{MachineSchedulerDisabled: true},
+	}
+
 	machineKubeletExample = &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
 		KubeletExtraArgs: map[string]string{
@@ -582,6 +587,12 @@ type MachineConfig struct {
 	//       value: '[]string{"10.0.0.10", "172.16.0.10", "192.168.0.10"}'
 	MachineCertSANs []string `yaml:"certSANs"`
 	//   description: |
+	//     Provides machine specific contolplane configuration options.
+	//   examples:
+	//     - name: ControlPlane definition example.
+	//       value: machineControlplaneExample
+	MachineControlPlane *MachineControlPlaneConfig `yaml:"controlPlane,omitempty"`
+	//   description: |
 	//     Used to provide additional options to the kubelet.
 	//   examples:
 	//     - name: Kubelet definition example.
@@ -845,6 +856,30 @@ func (in *ExtraMount) DeepCopy() *ExtraMount {
 	in.DeepCopyInto(out)
 
 	return out
+}
+
+// MachineControlPlaneConfig machine specific configuration options.
+type MachineControlPlaneConfig struct {
+	//   description: |
+	//     Controller manager machine specific configuration options.
+	MachineControllerManager *MachineControllerManagerConfig `yaml:"controllerManager,omitempty"`
+	//   description: |
+	//     Scheduler machine specific configuration options.
+	MachineScheduler *MachineSchedulerConfig `yaml:"scheduler,omitempty"`
+}
+
+// MachineControllerManagerConfig represents the machine specific ControllerManager config values.
+type MachineControllerManagerConfig struct {
+	//   description: |
+	//     Disable kube-controller-manager on the node.
+	MachineControllerManagerDisabled bool `yaml:"disabled"`
+}
+
+// MachineSchedulerConfig represents the machine specific Scheduler config values.
+type MachineSchedulerConfig struct {
+	//   description: |
+	//     Disable kube-scheduler on the node.
+	MachineSchedulerDisabled bool `yaml:"disabled"`
 }
 
 // KubeletConfig represents the kubelet config values.

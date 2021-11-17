@@ -201,6 +201,43 @@ func (m *MachineConfig) Time() config.Time {
 	return m.MachineTime
 }
 
+// Controlplane implements the config.Provider interface.
+func (m *MachineConfig) Controlplane() config.MachineControlPlane {
+	if m.MachineControlPlane == nil {
+		return &MachineControlPlaneConfig{}
+	}
+
+	return m.MachineControlPlane
+}
+
+// ControllerManager implements the config.Provider interface.
+func (m *MachineControlPlaneConfig) ControllerManager() config.MachineControllerManager {
+	if m.MachineControllerManager == nil {
+		return &MachineControllerManagerConfig{}
+	}
+
+	return m.MachineControllerManager
+}
+
+// Scheduler implements the config.Provider interface.
+func (m *MachineControlPlaneConfig) Scheduler() config.MachineScheduler {
+	if m.MachineScheduler == nil {
+		return &MachineSchedulerConfig{}
+	}
+
+	return m.MachineScheduler
+}
+
+// Disabled implements the config.Provider interface.
+func (m *MachineControllerManagerConfig) Disabled() bool {
+	return m.MachineControllerManagerDisabled
+}
+
+// Disabled implements the config.Provider interface.
+func (m *MachineSchedulerConfig) Disabled() bool {
+	return m.MachineSchedulerDisabled
+}
+
 // Kubelet implements the config.Provider interface.
 func (m *MachineConfig) Kubelet() config.Kubelet {
 	if m.MachineKubelet == nil {

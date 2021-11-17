@@ -59,6 +59,7 @@ type K8sControlPlaneAPIServerSpec struct {
 
 // K8sControlPlaneControllerManagerSpec is configuration for kube-controller-manager.
 type K8sControlPlaneControllerManagerSpec struct {
+	Enabled       bool              `yaml:"enabled"`
 	Image         string            `yaml:"image"`
 	CloudProvider string            `yaml:"cloudProvider"`
 	PodCIDRs      []string          `yaml:"podCIDRs"`
@@ -69,6 +70,7 @@ type K8sControlPlaneControllerManagerSpec struct {
 
 // K8sControlPlaneSchedulerSpec is configuration for kube-scheduler.
 type K8sControlPlaneSchedulerSpec struct {
+	Enabled      bool              `yaml:"enabled"`
 	Image        string            `yaml:"image"`
 	ExtraArgs    map[string]string `yaml:"extraArgs"`
 	ExtraVolumes []K8sExtraVolume  `yaml:"extraVolumes"`
@@ -130,7 +132,7 @@ func NewK8sControlPlaneAPIServer() *K8sControlPlane {
 func NewK8sControlPlaneControllerManager() *K8sControlPlane {
 	r := &K8sControlPlane{
 		md:   resource.NewMetadata(NamespaceName, K8sControlPlaneType, K8sControlPlaneControllerManagerID, resource.VersionUndefined),
-		spec: K8sControlPlaneControllerManagerSpec{},
+		spec: K8sControlPlaneControllerManagerSpec{Enabled: true},
 	}
 
 	r.md.BumpVersion()
@@ -142,7 +144,7 @@ func NewK8sControlPlaneControllerManager() *K8sControlPlane {
 func NewK8sControlPlaneScheduler() *K8sControlPlane {
 	r := &K8sControlPlane{
 		md:   resource.NewMetadata(NamespaceName, K8sControlPlaneType, K8sControlPlaneSchedulerID, resource.VersionUndefined),
-		spec: K8sControlPlaneSchedulerSpec{},
+		spec: K8sControlPlaneSchedulerSpec{Enabled: true},
 	}
 
 	r.md.BumpVersion()
