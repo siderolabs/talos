@@ -1262,6 +1262,9 @@ type APIServerConfig struct {
 // ControllerManagerConfig represents the kube controller manager configuration options.
 type ControllerManagerConfig struct {
 	//   description: |
+	//     Disable clusterControllerManager on the node.
+	Disabled bool `yaml:"disabled,omitempty"`
+	//   description: |
 	//     The container image used in the controller manager manifest.
 	//   examples:
 	//     - value: clusterControllerManagerImageExample
@@ -1297,6 +1300,9 @@ type ProxyConfig struct {
 
 // SchedulerConfig represents the kube scheduler configuration options.
 type SchedulerConfig struct {
+	//   description: |
+	//     Disable clusterScheduler on the node.
+	Disabled bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     The container image used in the scheduler manifest.
 	//   examples:

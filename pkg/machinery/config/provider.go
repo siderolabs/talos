@@ -345,6 +345,7 @@ type APIServer interface {
 // ControllerManager defines the requirements for a config that pertains to controller manager related
 // options.
 type ControllerManager interface {
+	Enabled() bool
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
@@ -367,6 +368,7 @@ type Proxy interface {
 // Scheduler defines the requirements for a config that pertains to scheduler related
 // options.
 type Scheduler interface {
+	Enabled() bool
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount

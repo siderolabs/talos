@@ -354,6 +354,10 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.ControllerManager()
 
+	if !cfg.Enabled {
+		return nil
+	}
+
 	args := []string{
 		"/usr/local/bin/kube-controller-manager",
 		"--use-service-account-credentials",
@@ -476,6 +480,10 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
 	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) error {
 	cfg := configResource.Scheduler()
+
+	if !cfg.Enabled {
+		return nil
+	}
 
 	args := []string{
 		"/usr/local/bin/kube-scheduler",

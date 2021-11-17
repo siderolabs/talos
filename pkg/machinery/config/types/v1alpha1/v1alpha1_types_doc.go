@@ -906,24 +906,29 @@ func init() {
 			FieldName: "controllerManager",
 		},
 	}
-	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 3)
-	ControllerManagerConfigDoc.Fields[0].Name = "image"
-	ControllerManagerConfigDoc.Fields[0].Type = "string"
+	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 4)
+	ControllerManagerConfigDoc.Fields[0].Name = "disabled"
+	ControllerManagerConfigDoc.Fields[0].Type = "bool"
 	ControllerManagerConfigDoc.Fields[0].Note = ""
-	ControllerManagerConfigDoc.Fields[0].Description = "The container image used in the controller manager manifest."
-	ControllerManagerConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the controller manager manifest."
-
-	ControllerManagerConfigDoc.Fields[0].AddExample("", clusterControllerManagerImageExample)
-	ControllerManagerConfigDoc.Fields[1].Name = "extraArgs"
-	ControllerManagerConfigDoc.Fields[1].Type = "map[string]string"
+	ControllerManagerConfigDoc.Fields[0].Description = "Disable clusterControllerManager on the node."
+	ControllerManagerConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable clusterControllerManager on the node."
+	ControllerManagerConfigDoc.Fields[1].Name = "image"
+	ControllerManagerConfigDoc.Fields[1].Type = "string"
 	ControllerManagerConfigDoc.Fields[1].Note = ""
-	ControllerManagerConfigDoc.Fields[1].Description = "Extra arguments to supply to the controller manager."
-	ControllerManagerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the controller manager."
-	ControllerManagerConfigDoc.Fields[2].Name = "extraVolumes"
-	ControllerManagerConfigDoc.Fields[2].Type = "[]VolumeMountConfig"
+	ControllerManagerConfigDoc.Fields[1].Description = "The container image used in the controller manager manifest."
+	ControllerManagerConfigDoc.Fields[1].Comments[encoder.LineComment] = "The container image used in the controller manager manifest."
+
+	ControllerManagerConfigDoc.Fields[1].AddExample("", clusterControllerManagerImageExample)
+	ControllerManagerConfigDoc.Fields[2].Name = "extraArgs"
+	ControllerManagerConfigDoc.Fields[2].Type = "map[string]string"
 	ControllerManagerConfigDoc.Fields[2].Note = ""
-	ControllerManagerConfigDoc.Fields[2].Description = "Extra volumes to mount to the controller manager static pod."
-	ControllerManagerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the controller manager static pod."
+	ControllerManagerConfigDoc.Fields[2].Description = "Extra arguments to supply to the controller manager."
+	ControllerManagerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to the controller manager."
+	ControllerManagerConfigDoc.Fields[3].Name = "extraVolumes"
+	ControllerManagerConfigDoc.Fields[3].Type = "[]VolumeMountConfig"
+	ControllerManagerConfigDoc.Fields[3].Note = ""
+	ControllerManagerConfigDoc.Fields[3].Description = "Extra volumes to mount to the controller manager static pod."
+	ControllerManagerConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra volumes to mount to the controller manager static pod."
 
 	ProxyConfigDoc.Type = "ProxyConfig"
 	ProxyConfigDoc.Comments[encoder.LineComment] = "ProxyConfig represents the kube proxy configuration options."
@@ -973,24 +978,29 @@ func init() {
 			FieldName: "scheduler",
 		},
 	}
-	SchedulerConfigDoc.Fields = make([]encoder.Doc, 3)
-	SchedulerConfigDoc.Fields[0].Name = "image"
-	SchedulerConfigDoc.Fields[0].Type = "string"
+	SchedulerConfigDoc.Fields = make([]encoder.Doc, 4)
+	SchedulerConfigDoc.Fields[0].Name = "disabled"
+	SchedulerConfigDoc.Fields[0].Type = "bool"
 	SchedulerConfigDoc.Fields[0].Note = ""
-	SchedulerConfigDoc.Fields[0].Description = "The container image used in the scheduler manifest."
-	SchedulerConfigDoc.Fields[0].Comments[encoder.LineComment] = "The container image used in the scheduler manifest."
-
-	SchedulerConfigDoc.Fields[0].AddExample("", clusterSchedulerImageExample)
-	SchedulerConfigDoc.Fields[1].Name = "extraArgs"
-	SchedulerConfigDoc.Fields[1].Type = "map[string]string"
+	SchedulerConfigDoc.Fields[0].Description = "Disable clusterScheduler on the node."
+	SchedulerConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable clusterScheduler on the node."
+	SchedulerConfigDoc.Fields[1].Name = "image"
+	SchedulerConfigDoc.Fields[1].Type = "string"
 	SchedulerConfigDoc.Fields[1].Note = ""
-	SchedulerConfigDoc.Fields[1].Description = "Extra arguments to supply to the scheduler."
-	SchedulerConfigDoc.Fields[1].Comments[encoder.LineComment] = "Extra arguments to supply to the scheduler."
-	SchedulerConfigDoc.Fields[2].Name = "extraVolumes"
-	SchedulerConfigDoc.Fields[2].Type = "[]VolumeMountConfig"
+	SchedulerConfigDoc.Fields[1].Description = "The container image used in the scheduler manifest."
+	SchedulerConfigDoc.Fields[1].Comments[encoder.LineComment] = "The container image used in the scheduler manifest."
+
+	SchedulerConfigDoc.Fields[1].AddExample("", clusterSchedulerImageExample)
+	SchedulerConfigDoc.Fields[2].Name = "extraArgs"
+	SchedulerConfigDoc.Fields[2].Type = "map[string]string"
 	SchedulerConfigDoc.Fields[2].Note = ""
-	SchedulerConfigDoc.Fields[2].Description = "Extra volumes to mount to the scheduler static pod."
-	SchedulerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the scheduler static pod."
+	SchedulerConfigDoc.Fields[2].Description = "Extra arguments to supply to the scheduler."
+	SchedulerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to the scheduler."
+	SchedulerConfigDoc.Fields[3].Name = "extraVolumes"
+	SchedulerConfigDoc.Fields[3].Type = "[]VolumeMountConfig"
+	SchedulerConfigDoc.Fields[3].Note = ""
+	SchedulerConfigDoc.Fields[3].Description = "Extra volumes to mount to the scheduler static pod."
+	SchedulerConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra volumes to mount to the scheduler static pod."
 
 	EtcdConfigDoc.Type = "EtcdConfig"
 	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."

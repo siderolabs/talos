@@ -11,6 +11,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// Enabled implements the config.ControllerManager interface.
+func (p *ControllerManagerConfig) Enabled() bool {
+	return !p.Disabled
+}
+
 // Image implements the config.ControllerManager interface.
 func (c *ControllerManagerConfig) Image() string {
 	image := c.ContainerImage

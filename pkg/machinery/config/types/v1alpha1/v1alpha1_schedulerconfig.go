@@ -11,6 +11,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+// Enabled implements the config.Scheduler interface.
+func (p *SchedulerConfig) Enabled() bool {
+	return !p.Disabled
+}
+
 // Image implements the config.Scheduler interface.
 func (s *SchedulerConfig) Image() string {
 	image := s.ContainerImage
