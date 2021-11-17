@@ -1740,6 +1740,8 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 }
 
 // KexecPrepare loads next boot kernel via kexec_file_load.
+//
+//nolint:gocyclo
 func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if r.Config() == nil {
@@ -1791,6 +1793,10 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 				return nil
 			case errors.Is(err, unix.EPERM):
 				log.Printf("kexec support is disabled via sysctl")
+
+				return nil
+			case errors.Is(err, unix.EBUSY):
+				log.Printf("kexec is busy")
 
 				return nil
 			default:
