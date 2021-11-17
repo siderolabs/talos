@@ -270,6 +270,33 @@ certSANs:
 <hr />
 <div class="dd">
 
+<code>controlPlane</code>  <i><a href="#machinecontrolplaneconfig">MachineControlPlaneConfig</a></i>
+
+</div>
+<div class="dt">
+
+Provides machine specific contolplane configuration options.
+
+
+
+Examples:
+
+
+``` yaml
+controlPlane:
+    # Controller manager machine specific configuration options.
+    controllerManager: {}
+    # Scheduler machine specific configuration options.
+    scheduler:
+        disabled: true # Disable Scheduler on the node.
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>kubelet</code>  <i><a href="#kubeletconfig">KubeletConfig</a></i>
 
 </div>
@@ -1402,6 +1429,103 @@ Appears in:
     - rw
 ```
 
+
+
+
+## MachineControlPlaneConfig
+MachineControlPlaneConfig machine specific configuration options.
+
+Appears in:
+
+- <code><a href="#machineconfig">MachineConfig</a>.controlPlane</code>
+
+
+``` yaml
+# Controller manager machine specific configuration options.
+controllerManager: {}
+# Scheduler machine specific configuration options.
+scheduler:
+    disabled: true # Disable Scheduler on the node.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>controllerManager</code>  <i><a href="#machinecontrollermanagerconfig">MachineControllerManagerConfig</a></i>
+
+</div>
+<div class="dt">
+
+Controller manager machine specific configuration options.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>scheduler</code>  <i><a href="#machineschedulerconfig">MachineSchedulerConfig</a></i>
+
+</div>
+<div class="dt">
+
+Scheduler machine specific configuration options.
+
+</div>
+
+<hr />
+
+
+
+## MachineControllerManagerConfig
+MachineControllerManagerConfig represents the machine specific ControllerManager config values.
+
+Appears in:
+
+- <code><a href="#machinecontrolplaneconfig">MachineControlPlaneConfig</a>.controllerManager</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable ControllerManager on the node.
+
+</div>
+
+<hr />
+
+
+
+## MachineSchedulerConfig
+MachineSchedulerConfig represents the machine specific Scheduler config values.
+
+Appears in:
+
+- <code><a href="#machinecontrolplaneconfig">MachineControlPlaneConfig</a>.scheduler</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable Scheduler on the node.
+
+</div>
+
+<hr />
 
 
 
@@ -2808,6 +2932,18 @@ extraArgs:
 
 <hr />
 
+<div class="dd">
+
+<code>disabled</code>  <i>bool</i>
+
+</div>
+<div class="dt">
+
+Disable clusterScheduler on the node.
+
+</div>
+
+<hr />
 <div class="dd">
 
 <code>image</code>  <i>string</i>

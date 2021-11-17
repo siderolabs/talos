@@ -44,6 +44,7 @@ type MachineConfig interface {
 	Env() Env
 	Files() ([]File, error)
 	Type() machine.Type
+	Controlplane() MachineControlPlane
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Registries() Registries
@@ -94,6 +95,25 @@ type Security interface {
 	CA() *x509.PEMEncodedCertificateAndKey
 	Token() string
 	CertSANs() []string
+}
+
+// MachineControlPlane defines the requirements for a config that pertains to Controlplane
+// related options.
+type MachineControlPlane interface {
+	ControllerManager() MachineControllerManager
+	Scheduler() MachineScheduler
+}
+
+// MachineControllerManager defines the requirements for a config that pertains to ControllerManager
+// related options.
+type MachineControllerManager interface {
+	Disabled() bool
+}
+
+// MachineScheduler defines the requirements for a config that pertains to Scheduler
+// related options.
+type MachineScheduler interface {
+	Disabled() bool
 }
 
 // MachineNetwork defines the requirements for a config that pertains to network
