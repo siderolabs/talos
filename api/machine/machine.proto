@@ -171,10 +171,31 @@ message RestartEvent {
   int64 cmd = 1;
 };
 
+// MachineConfigErrorEvent means some machine config error.
+message MachineConfigErrorEvent {
+  enum Code {
+    // Config validation failure.
+    VALIDATION = 0;
+    // Config load failure.
+    LOAD = 1;
+  }
+
+  // Code represents numerical error code handy for machine parsing.
+  Code code = 1;
+  // Error provides human readable error description.
+  string error = 2;
+};
+
 message EventsRequest {
   int32 tail_events = 1;
   string tail_id = 2;
   int32 tail_seconds = 3;
+}
+
+// AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
+message AddressEvent {
+  string hostname = 1;
+  repeated string addresses = 2;
 }
 
 message Event {

@@ -426,6 +426,11 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			}
 
 			if e != nil {
+				r.Events().Publish(&machineapi.MachineConfigErrorEvent{
+					Code:  machineapi.MachineConfigErrorEvent_LOAD,
+					Error: err.Error(),
+				})
+
 				return e
 			}
 
@@ -451,6 +456,11 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		b, err := cfg.Bytes()
 		if err != nil {
+			r.Events().Publish(&machineapi.MachineConfigErrorEvent{
+				Code:  machineapi.MachineConfigErrorEvent_LOAD,
+				Error: err.Error(),
+			})
+
 			return err
 		}
 

@@ -26,6 +26,7 @@ description: Talos gRPC API reference.
     - [InspectService](#inspect.InspectService)
   
 - [machine/machine.proto](#machine/machine.proto)
+    - [AddressEvent](#machine.AddressEvent)
     - [ApplyConfiguration](#machine.ApplyConfiguration)
     - [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest)
     - [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse)
@@ -86,6 +87,7 @@ description: Talos gRPC API reference.
     - [LoadAvgResponse](#machine.LoadAvgResponse)
     - [LogsRequest](#machine.LogsRequest)
     - [MachineConfig](#machine.MachineConfig)
+    - [MachineConfigErrorEvent](#machine.MachineConfigErrorEvent)
     - [MemInfo](#machine.MemInfo)
     - [Memory](#machine.Memory)
     - [MemoryResponse](#machine.MemoryResponse)
@@ -157,6 +159,7 @@ description: Talos gRPC API reference.
   
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
+    - [MachineConfigErrorEvent.Code](#machine.MachineConfigErrorEvent.Code)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
@@ -438,6 +441,22 @@ InspectService provides auxilary API to inspect OS internals.
 <p align="right"><a href="#top">Top</a></p>
 
 ## machine/machine.proto
+
+
+
+<a name="machine.AddressEvent"></a>
+
+### AddressEvent
+AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostname | [string](#string) |  |  |
+| addresses | [string](#string) | repeated |  |
+
+
+
 
 
 
@@ -1455,6 +1474,22 @@ The request message containing the process name.
 | install_config | [InstallConfig](#machine.InstallConfig) |  |  |
 | network_config | [NetworkConfig](#machine.NetworkConfig) |  |  |
 | kubernetes_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.MachineConfigErrorEvent"></a>
+
+### MachineConfigErrorEvent
+MachineConfigErrorEvent means some machine config error.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [MachineConfigErrorEvent.Code](#machine.MachineConfigErrorEvent.Code) |  | Code represents numerical error code handy for machine parsing. |
+| error | [string](#string) |  | Error provides human readable error description. |
 
 
 
@@ -2659,6 +2694,18 @@ File type.
 | TYPE_CONTROL_PLANE | 2 |  |
 | TYPE_WORKER | 3 |  |
 | TYPE_JOIN | 3 | Alias for TYPE_WORKER. |
+
+
+
+<a name="machine.MachineConfigErrorEvent.Code"></a>
+
+### MachineConfigErrorEvent.Code
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VALIDATION | 0 | Config validation failure. |
+| LOAD | 1 | Config load failure. |
 
 
 
