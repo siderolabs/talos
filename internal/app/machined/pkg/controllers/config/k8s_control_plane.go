@@ -165,6 +165,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 
 	return r.Modify(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
+			Enabled:       !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
 			Image:         cfgProvider.Cluster().ControllerManager().Image(),
 			CloudProvider: cloudProvider,
 			PodCIDRs:      cfgProvider.Cluster().Network().PodCIDRs(),
@@ -180,6 +181,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Modify(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
+			Enabled:      !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
 			Image:        cfgProvider.Cluster().Scheduler().Image(),
 			ExtraArgs:    cfgProvider.Cluster().Scheduler().ExtraArgs(),
 			ExtraVolumes: convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),

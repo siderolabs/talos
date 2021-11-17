@@ -312,6 +312,53 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 	}
 }
 
+func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExeptScheduler() {
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configAPIServer := config.NewK8sControlPlaneAPIServer()
+	configControllerManager := config.NewK8sControlPlaneControllerManager()
+	configScheduler := config.NewK8sControlPlaneScheduler()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
+	suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertControlPlaneStaticPods(
+				[]string{
+					"kube-apiserver",
+					"kube-controller-manager",
+					"kube-scheduler",
+				},
+			)
+		},
+	))
+
+	// flip enabled to disable scheduler
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, configScheduler.Metadata(), func(r resource.Resource) error {
+		spec := r.(*config.K8sControlPlane).Scheduler()
+		spec.Enabled = false
+		r.(*config.K8sControlPlane).SetScheduler(spec)
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	configScheduler.SetScheduler(config.K8sControlPlaneSchedulerSpec{Enabled: false})
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertControlPlaneStaticPods(
+				[]string{
+					"kube-apiserver",
+					"kube-controller-manager",
+				},
+			)
+		},
+	))
+}
+
 func (suite *ControlPlaneStaticPodSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
