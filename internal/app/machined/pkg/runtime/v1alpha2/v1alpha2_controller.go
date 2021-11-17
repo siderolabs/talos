@@ -120,6 +120,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 			Cmdline:      procfs.ProcCmdline(),
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&network.AddressEventController{
+			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
+		},
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},

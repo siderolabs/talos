@@ -112,6 +112,9 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 			&machineapi.PhaseEvent{},
 			&machineapi.TaskEvent{},
 			&machineapi.ServiceStateEvent{},
+			&machineapi.ConfigLoadErrorEvent{},
+			&machineapi.ConfigValidationErrorEvent{},
+			&machineapi.AddressEvent{},
 		} {
 			if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
 				msg = eventType

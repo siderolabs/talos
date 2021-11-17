@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -81,6 +82,12 @@ var eventsCmd = &cobra.Command{
 						args = []interface{}{msg.GetTask(), msg.GetAction().String()}
 					case *machine.ServiceStateEvent:
 						args = []interface{}{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
+					case *machine.ConfigLoadErrorEvent:
+						args = []interface{}{"error", msg.GetError()}
+					case *machine.ConfigValidationErrorEvent:
+						args = []interface{}{"error", msg.GetError()}
+					case *machine.AddressEvent:
+						args = []interface{}{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
 					default:
 						// We haven't implemented the handling of this event yet.
 						continue

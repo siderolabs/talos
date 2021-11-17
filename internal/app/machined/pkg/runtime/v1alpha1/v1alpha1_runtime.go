@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -60,6 +61,10 @@ func (r *Runtime) ValidateConfig(b []byte) (config.Provider, error) {
 func (r *Runtime) SetConfig(b []byte) error {
 	cfg, err := r.ValidateConfig(b)
 	if err != nil {
+		r.Events().Publish(&machine.ConfigLoadErrorEvent{
+			Error: err.Error(),
+		})
+
 		return err
 	}
 

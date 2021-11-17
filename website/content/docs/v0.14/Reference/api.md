@@ -26,6 +26,7 @@ description: Talos gRPC API reference.
     - [InspectService](#inspect.InspectService)
   
 - [machine/machine.proto](#machine/machine.proto)
+    - [AddressEvent](#machine.AddressEvent)
     - [ApplyConfiguration](#machine.ApplyConfiguration)
     - [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest)
     - [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse)
@@ -39,6 +40,8 @@ description: Talos gRPC API reference.
     - [CPUsInfo](#machine.CPUsInfo)
     - [ClusterConfig](#machine.ClusterConfig)
     - [ClusterNetworkConfig](#machine.ClusterNetworkConfig)
+    - [ConfigLoadErrorEvent](#machine.ConfigLoadErrorEvent)
+    - [ConfigValidationErrorEvent](#machine.ConfigValidationErrorEvent)
     - [Container](#machine.Container)
     - [ContainerInfo](#machine.ContainerInfo)
     - [ContainersRequest](#machine.ContainersRequest)
@@ -441,6 +444,22 @@ InspectService provides auxilary API to inspect OS internals.
 
 
 
+<a name="machine.AddressEvent"></a>
+
+### AddressEvent
+AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostname | [string](#string) |  |  |
+| addresses | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="machine.ApplyConfiguration"></a>
 
 ### ApplyConfiguration
@@ -680,6 +699,36 @@ Enable this when recovering from data directory copy to skip integrity check. |
 | ----- | ---- | ----- | ----------- |
 | dns_domain | [string](#string) |  |  |
 | cni_config | [CNIConfig](#machine.CNIConfig) |  |  |
+
+
+
+
+
+
+<a name="machine.ConfigLoadErrorEvent"></a>
+
+### ConfigLoadErrorEvent
+ConfigLoadErrorEvent is reported when the config loading has failed.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ConfigValidationErrorEvent"></a>
+
+### ConfigValidationErrorEvent
+ConfigValidationErrorEvent is reported when config validation has failed.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| error | [string](#string) |  |  |
 
 
 

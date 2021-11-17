@@ -171,6 +171,23 @@ message RestartEvent {
   int64 cmd = 1;
 };
 
+// ConfigLoadErrorEvent is reported when the config loading has failed.
+message ConfigLoadErrorEvent {
+  string error = 1;
+};
+
+
+// ConfigValidationErrorEvent is reported when config validation has failed.
+message ConfigValidationErrorEvent {
+  string error = 1;
+};
+
+// AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
+message AddressEvent {
+  string hostname = 1;
+  repeated string addresses = 2;
+}
+
 message EventsRequest {
   int32 tail_events = 1;
   string tail_id = 2;
