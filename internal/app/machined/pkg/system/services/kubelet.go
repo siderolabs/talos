@@ -294,6 +294,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 	}
 }
 
+//nolint:gocyclo
 func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 	nodename, err := r.NodeName()
 	if err != nil {
@@ -332,6 +333,13 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 	// anyway filter out pod cidrs, they can't be node IPs
 	for _, cidr := range r.Config().Cluster().Network().PodCIDRs() {
 		validSubnets = append(validSubnets, "!"+cidr)
+	}
+
+	// filter out any virtual IPs, they can't be node IPs either
+	for _, device := range r.Config().Machine().Network().Devices() {
+		if device.VIPConfig() != nil {
+			validSubnets = append(validSubnets, "!"+device.VIPConfig().IP())
+		}
 	}
 
 	nodeIPs, err := pickNodeIPs(validSubnets)
