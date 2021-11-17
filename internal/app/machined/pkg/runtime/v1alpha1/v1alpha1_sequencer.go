@@ -65,7 +65,7 @@ func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyCon
 		"cleanup",
 		StopAllPods,
 	).AppendList(
-		stopAllPhaselist(r),
+		stopAllPhaselist(r, true),
 	).Append(
 		"reboot",
 		Reboot,
@@ -286,7 +286,7 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 		"cleanup",
 		StopAllPods,
 	).
-		AppendList(stopAllPhaselist(r)).
+		AppendList(stopAllPhaselist(r, true)).
 		Append("reboot", Reboot)
 
 	return phases
@@ -298,7 +298,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
-		phases = phases.AppendList(stopAllPhaselist(r)).
+		phases = phases.AppendList(stopAllPhaselist(r, false)).
 			Append(
 				"shutdown",
 				Shutdown,
@@ -321,7 +321,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"leave",
 			LeaveEtcd,
 		).AppendList(
-			stopAllPhaselist(r),
+			stopAllPhaselist(r, false),
 		).AppendWhen(
 			len(in.GetSystemDiskTargets()) == 0,
 			"reset",
@@ -351,7 +351,7 @@ func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
 			"cleanup",
 			StopAllPods,
 		).
-		AppendList(stopAllPhaselist(r)).
+		AppendList(stopAllPhaselist(r, false)).
 		Append("shutdown", Shutdown)
 
 	return phases
@@ -373,7 +373,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 			"leave",
 			LeaveEtcd,
 		).AppendList(
-			stopAllPhaselist(r),
+			stopAllPhaselist(r, true),
 		).Append(
 			"reboot",
 			Reboot,
@@ -450,7 +450,7 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 	return phases
 }
 
-func stopAllPhaselist(r runtime.Runtime) PhaseList {
+func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive
@@ -477,13 +477,16 @@ func stopAllPhaselist(r runtime.Runtime) PhaseList {
 			"unmountSystem",
 			UnmountEphemeralPartition,
 			UnmountStatePartition,
-		).Append(
+		).AppendWhen(
+			enableKexec,
 			"mountBoot",
 			MountBootPartition,
-		).Append(
+		).AppendWhen(
+			enableKexec,
 			"kexec",
 			KexecPrepare,
-		).Append(
+		).AppendWhen(
+			enableKexec,
 			"unmountBoot",
 			UnmountBootPartition,
 		)
