@@ -22,6 +22,9 @@ const (
 
 	// ULAKubeSpan is the Unique Local Addressing space key for the Talos KubeSpan feature.
 	ULAKubeSpan = 0x02
+
+	// ULASideroLink is the Unique Local Addressing space key for the SideroLink feature.
+	ULASideroLink = 0x03
 )
 
 // ULAPrefix calculates and returns a Talos-specific Unique Local Address prefix for the given purpose.
