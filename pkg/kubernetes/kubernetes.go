@@ -347,6 +347,11 @@ func (h *Client) Cordon(ctx context.Context, name string) error {
 				return retry.ExpectedError(err)
 			}
 
+			if apierrors.IsNotFound(err) {
+				// node not found, should have already been deleted, skip cordoning
+				return nil
+			}
+
 			return err
 		}
 
