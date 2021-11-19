@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -147,6 +149,12 @@ type NodeRequest struct {
 	//
 	// BootOrder can be forced to be "nc" (PXE boot) via the API in QEMU provisioner.
 	DefaultBootOrder string
+
+	// ExtraKernelArgs passes additional kernel args
+	// to the initial boot from initramfs and vmlinuz.
+	//
+	// This doesn't apply to boots from ISO or from the disk image.
+	ExtraKernelArgs *procfs.Cmdline
 
 	// Testing features
 

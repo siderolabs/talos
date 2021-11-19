@@ -22,6 +22,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
+	"github.com/talos-systems/go-procfs/procfs"
 	talosnet "github.com/talos-systems/net"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -110,6 +111,7 @@ var (
 	configPatchControlPlane   string
 	configPatchWorker         string
 	badRTC                    bool
+	extraBootKernelArgs       string
 )
 
 // createCmd represents the cluster up command.
@@ -494,6 +496,12 @@ func create(ctx context.Context) (err error) {
 		}
 	}
 
+	var extraKernelArgs *procfs.Cmdline
+
+	if extraBootKernelArgs != "" {
+		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
+	}
+
 	// Add talosconfig to provision options so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
@@ -515,6 +523,7 @@ func create(ctx context.Context) (err error) {
 			Disks:               disks,
 			SkipInjectingConfig: skipInjectingConfig,
 			BadRTC:              badRTC,
+			ExtraKernelArgs:     extraKernelArgs,
 		}
 
 		if i == 0 {
@@ -567,6 +576,7 @@ func create(ctx context.Context) (err error) {
 				Config:              cfg,
 				SkipInjectingConfig: skipInjectingConfig,
 				BadRTC:              badRTC,
+				ExtraKernelArgs:     extraKernelArgs,
 			})
 	}
 
@@ -837,6 +847,7 @@ func init() {
 	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	createCmd.Flags().StringVar(&configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
+	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 
 	Cmd.AddCommand(createCmd)
 }
