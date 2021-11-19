@@ -82,6 +82,13 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	// Talos config
 	cmdline.Append("talos.platform", "metal")
 
+	// add overrides
+	if nodeReq.ExtraKernelArgs != nil {
+		if err = cmdline.AppendAll(nodeReq.ExtraKernelArgs.Strings()); err != nil {
+			return provision.NodeInfo{}, err
+		}
+	}
+
 	var nodeConfig string
 
 	if !nodeReq.SkipInjectingConfig {

@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/siderolink"
 	timecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -181,6 +182,9 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&secrets.KubernetesController{},
 		&secrets.KubernetesCertSANsController{},
 		&secrets.RootController{},
+		&siderolink.ManagerController{
+			Cmdline: procfs.ProcCmdline(),
+		},
 	} {
 		if err := ctrl.controllerRuntime.RegisterController(c); err != nil {
 			return err

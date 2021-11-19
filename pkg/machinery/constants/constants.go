@@ -65,6 +65,9 @@ const (
 	// KernelParamPanic is the kernel parameter name for specifying the time to wait until rebooting after kernel panic (0 disables reboot).
 	KernelParamPanic = "panic"
 
+	// KernelParamSideroLink is the kernel paramater name to specify SideroLink API endpoint.
+	KernelParamSideroLink = "siderolink.api"
+
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
@@ -521,6 +524,12 @@ const (
 
 	// LoggingFormatJSONLines represents "JSON lines" logging format.
 	LoggingFormatJSONLines = "json_lines"
+
+	// SideroLinkName is the interface name for SideroLink.
+	SideroLinkName = "siderolink"
+
+	// SideroLinkDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
+	SideroLinkDefaultPeerKeepalive = 25 * time.Second
 )
 
 // See https://linux.die.net/man/3/klogctl
