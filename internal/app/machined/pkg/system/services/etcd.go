@@ -264,7 +264,11 @@ func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
 	var event state.Event
 
 	for {
-		event = <-watchCh
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event = <-watchCh:
+		}
 
 		if event.Type == state.Created || event.Type == state.Updated {
 			break
