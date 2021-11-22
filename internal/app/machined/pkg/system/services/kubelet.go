@@ -215,6 +215,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithCapabilities(capability.AllGrantableCapabilities()), // TODO: kubelet doesn't need all of these, we should consider limiting capabilities
 		),
 		runner.WithOOMScoreAdj(constants.KubeletOOMScoreAdj),
+		runner.WithCustomSeccompProfile(kubeletSeccomp),
 	),
 		restart.WithType(restart.Forever),
 	), nil
@@ -451,4 +452,18 @@ func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 	}
 
 	return net.FilterIPs(ips, cidrs)
+}
+
+func kubeletSeccomp(seccomp *specs.LinuxSeccomp) {
+	// for cephfs mounts
+	seccomp.Syscalls = append(seccomp.Syscalls,
+		specs.LinuxSyscall{
+			Names: []string{
+				"add_key",
+				"request_key",
+			},
+			Action: specs.ActAllow,
+			Args:   []specs.LinuxSeccompArg{},
+		},
+	)
 }

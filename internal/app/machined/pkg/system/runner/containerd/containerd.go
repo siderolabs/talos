@@ -287,9 +287,15 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		c.opts.OCISpecOpts...,
 	)
 
-	specOpts = append(specOpts,
-		seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities
-	)
+	if c.opts.OverrideSeccompProfile != nil {
+		specOpts = append(specOpts,
+			WithCustomSeccompProfile(c.opts.OverrideSeccompProfile),
+		)
+	} else {
+		specOpts = append(specOpts,
+			seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities
+		)
+	}
 
 	return specOpts
 }

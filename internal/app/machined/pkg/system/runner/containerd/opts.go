@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/containerd/containerd/oci"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -37,6 +38,17 @@ func WithRootfsPropagation(rp string) oci.SpecOpts {
 func WithOOMScoreAdj(score int) oci.SpecOpts {
 	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
 		s.Process.OOMScoreAdj = &score
+
+		return nil
+	}
+}
+
+// WithCustomSeccompProfile allows to override default seccomp profile.
+func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) oci.SpecOpts {
+	return func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
+		s.Linux.Seccomp = seccomp.DefaultProfile(s)
+
+		override(s.Linux.Seccomp)
 
 		return nil
 	}
