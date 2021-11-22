@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.13.1"
+previous = "v0.13.2"
 
 pre_release = false
 
@@ -14,26 +14,6 @@ preface = """\
 """
 
 [notes]
-
-    [notes.caps]
-        title = "Kexec and capabilities"
-        description = """\
-When kexec support is disabled Talos no longer drops Linux capabilities (`CAP_SYS_BOOT` and `CAP_SYS_MODULES`) for child processes.
-That is helpful for advanced use-cases like Docker-in-Docker.
-
-If you want to permanently disable kexec and capabilities dropping, pass `kexec_load_disabled=1` argument to the kernel.
-For example:
-
-```yaml
-install:
-  extraKernelArgs:
-    - kexec_load_disabled=1
-```
-
-Please note that capabilities are dropped before machine configuration is loaded,
-so disabling kexec via `machine.sysctls` (like in the section `Reboots via kexec`) will not be enough.
-"""
-
 
     [notes.kubelet]
         title = "Kubelet"

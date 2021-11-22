@@ -1,3 +1,49 @@
+## [Talos 0.13.3](https://github.com/talos-systems/talos/releases/tag/v0.13.3) (2021-11-22)
+
+Welcome to the v0.13.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Kubelet
+
+Kubelet service can now be restarted with `talosctl service kubelet restart`.
+
+Kubelet node IP configuration (`.machine.kubelet.nodeIP.validSubnets`) can now include negative subnet matches (prefixed with `!`).
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`f375ba1d`](https://github.com/talos-systems/talos/commit/f375ba1d368dfd19b3e8b5912d0bfb0402e12760) fix: unblock events watch on context cancel
+* [`8b5fcb1c`](https://github.com/talos-systems/talos/commit/8b5fcb1ccde73816869871f9175f954e96eb3b7d) fix: ignore not existing nodes on cordoning
+* [`f303a8c3`](https://github.com/talos-systems/talos/commit/f303a8c3fbba176427dc1f7483d88f983d849dec) fix: ignore virtual IP as kubelet node IPs
+* [`980cbc68`](https://github.com/talos-systems/talos/commit/980cbc68ae31c785050b6170957100998df66690) feat: allow kubelet to be restarted and provide negative nodeIP subnets
+* [`0018fbf6`](https://github.com/talos-systems/talos/commit/0018fbf66150aa6567629dceb1fb548b7d1966ae) fix: don't run kexec prepare on shutdown and reset
+</p>
+</details>
+
+### Changes from talos-systems/net
+<details><summary>1 commit</summary>
+<p>
+
+* [`0abe5bd`](https://github.com/talos-systems/net/commit/0abe5bdae8f85e4e976bc4d90e95dcb4be8fb853) feat: implement FilterIPs function
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/net**  v0.3.0 -> 0abe5bdae8f8
+
+Previous release can be found at [v0.13.2](https://github.com/talos-systems/talos/releases/tag/v0.13.2)
+
 ## [Talos 0.13.2](https://github.com/talos-systems/talos/releases/tag/v0.13.2) (2021-11-02)
 
 Welcome to the v0.13.2 release of Talos!
