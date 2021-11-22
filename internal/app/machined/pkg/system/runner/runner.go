@@ -12,6 +12,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
@@ -60,6 +61,8 @@ type Options struct {
 	OOMScoreAdj int
 	// CgroupPath (optional) sets the cgroup path to use
 	CgroupPath string
+	// OverrideSeccompProfile default Linux seccomp profile.
+	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 }
 
 // Option is the functional option func.
@@ -152,5 +155,12 @@ func WithOOMScoreAdj(score int) Option {
 func WithCgroupPath(path string) Option {
 	return func(args *Options) {
 		args.CgroupPath = path
+	}
+}
+
+// WithCustomSeccompProfile sets the function to override seccomp profile.
+func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
+	return func(args *Options) {
+		args.OverrideSeccompProfile = override
 	}
 }
