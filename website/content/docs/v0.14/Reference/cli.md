@@ -253,11 +253,11 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 
 ## talosctl completion
 
-Output shell completion code for the specified shell (bash or zsh)
+Output shell completion code for the specified shell (bash, fish or zsh)
 
 ### Synopsis
 
-Output shell completion code for the specified shell (bash or zsh).
+Output shell completion code for the specified shell (bash, fish or zsh).
 The shell code must be evaluated to provide interactive
 completion of talosctl commands.  This can be done by sourcing it from
 the .bash_profile.
@@ -292,10 +292,14 @@ talosctl completion SHELL [flags]
 		source '$HOME/.talos/completion.bash.inc'
 		" >> $HOME/.bash_profile
 	source $HOME/.bash_profile
+# Load the talosctl completion code for fish[1] into the current shell
+	talosctl completion fish | source
+# Set the talosctl completion code for fish[1] to autoload on startup
+    talosctl completion fish > ~/.config/fish/completions/talosctl.fish
 # Load the talosctl completion code for zsh[1] into the current shell
 	source <(talosctl completion zsh)
 # Set the talosctl completion code for zsh[1] to autoload on startup
-talosctl completion zsh > "${fpath[1]}/_talosctl"
+    talosctl completion zsh > "${fpath[1]}/_talosctl"
 ```
 
 ### Options
@@ -2111,7 +2115,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl apply-config](#talosctl-apply-config)	 - Apply a new configuration to a node
 * [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
-* [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash or zsh)
+* [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash, fish or zsh)
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers

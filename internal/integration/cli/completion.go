@@ -24,6 +24,7 @@ func (suite *CompletionSuite) SuiteName() string {
 // TestSuccess runs comand with success.
 func (suite *CompletionSuite) TestSuccess() {
 	suite.RunCLI([]string{"completion", "bash"})
+	suite.RunCLI([]string{"completion", "fish"})
 	suite.RunCLI([]string{"completion", "zsh"})
 }
 

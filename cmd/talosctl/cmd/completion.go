@@ -16,8 +16,8 @@ import (
 // completionCmd represents the completion command.
 var completionCmd = &cobra.Command{
 	Use:   "completion SHELL",
-	Short: "Output shell completion code for the specified shell (bash or zsh)",
-	Long: `Output shell completion code for the specified shell (bash or zsh).
+	Short: "Output shell completion code for the specified shell (bash, fish or zsh)",
+	Long: `Output shell completion code for the specified shell (bash, fish or zsh).
 The shell code must be evaluated to provide interactive
 completion of talosctl commands.  This can be done by sourcing it from
 the .bash_profile.
@@ -44,11 +44,15 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 		source '$HOME/.talos/completion.bash.inc'
 		" >> $HOME/.bash_profile
 	source $HOME/.bash_profile
+# Load the talosctl completion code for fish[1] into the current shell
+	talosctl completion fish | source
+# Set the talosctl completion code for fish[1] to autoload on startup
+    talosctl completion fish > ~/.config/fish/completions/talosctl.fish
 # Load the talosctl completion code for zsh[1] into the current shell
 	source <(talosctl completion zsh)
 # Set the talosctl completion code for zsh[1] to autoload on startup
-talosctl completion zsh > "${fpath[1]}/_talosctl"`,
-	ValidArgs: []string{"bash", "zsh"},
+    talosctl completion zsh > "${fpath[1]}/_talosctl"`,
+	ValidArgs: []string{"bash", "fish", "zsh"},
 	Args:      cobra.ExactValidArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
@@ -59,6 +63,8 @@ talosctl completion zsh > "${fpath[1]}/_talosctl"`,
 		switch args[0] {
 		case "bash":
 			return rootCmd.GenBashCompletion(os.Stdout)
+		case "fish":
+			return rootCmd.GenFishCompletion(os.Stdout, true)
 		case "zsh":
 			err := rootCmd.GenZshCompletion(os.Stdout)
 			// cobra does not hook the completion, so let's do it manually
