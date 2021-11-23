@@ -4,8 +4,8 @@ package cluster;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/cluster";
 
-import "google/protobuf/duration.proto";
 import "common/common.proto";
+import "google/protobuf/duration.proto";
 
 // The cluster service definition.
 service ClusterService {
@@ -13,12 +13,12 @@ service ClusterService {
 }
 
 message HealthCheckRequest {
-    google.protobuf.Duration wait_timeout = 1;
-    ClusterInfo cluster_info = 2;
+  google.protobuf.Duration wait_timeout = 1;
+  ClusterInfo cluster_info = 2;
 }
 
 message ClusterInfo {
-  repeated string control_plane_nodes  = 1;
+  repeated string control_plane_nodes = 1;
   repeated string worker_nodes = 2;
   string force_endpoint = 3;
 }

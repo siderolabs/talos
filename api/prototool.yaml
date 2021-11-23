@@ -1,55 +1,10 @@
-# Paths to exclude when searching for Protobuf files.
-# These can either be file or directory names.
-# If there is a directory name, that directory and all sub-directories will be excluded.
-#excludes:
-#  - path/to/a
-#  - path/to/b/file.proto
-
-# Protoc directives.
 protoc:
-  # The Protobuf version to use from https://github.com/protocolbuffers/protobuf/releases.
-  # By default use 3.11.0.
-  # You probably want to set this to make your builds completely reproducible.
-  version: 3.15.6
-
-  # Additional paths to include with -I to protoc.
-  # By default, the directory of the config file is included,
-  # or the current directory if there is no config file.
+  version: 3.19.1
   includes:
     - vendor/
 
-  # If not set, compile will fail if there are unused imports.
-  # Setting this will ignore unused imports.
-  #allow_unused_imports: true
-
-# Create directives.
-#create:
-# List of mappings from relative directory to base package.
-# This affects how packages are generated with create.
-#packages:
-# This means that a file created "foo.proto" in the current directory will have package "bar".
-# A file created "a/b/foo.proto" will have package "bar.a.b".
-#- directory: .
-#  name: bar
-# This means that a file created "idl/code.uber/a/b/c.proto" will have package "uber.a.b".
-#- directory: idl/code.uber
-#  name: uber
-
-# Lint directives.
 lint:
-  # The lint group to use.
-  # Available groups: "uber1", "uber2", "google", "empty".
-  # The default group is the "uber1" lint group for backwards compatibility reasons,
-  # however we recommend using the "uber2" lint group.
-  # The special group "empty" has no linters, allowing you to manually specify all
-  # lint rules in lint.rules.add.
-  # Run prototool lint --list-all-lint-groups to see all available lint groups.
-  # Run prototool lint --list-lint-group GROUP to list the linters in the given lint group.
   group: empty
-
-  # Linter files to ignore.
-  # These can either be file or directory names.
-  # If there is a directory name, that directory and all sub-directories will be ignored.
   ignores:
     - id: FILE_OPTIONS_GO_PACKAGE_NOT_LONG_FORM
       files:
@@ -58,17 +13,14 @@ lint:
       files:
         - common/common.proto
 
-  # Linter rules.
-  # Run prototool lint --list-all-linters to see all available linters.
-  # Run prototool lint --list-linters to see the currently configured linters.
   rules:
-
     # The specific linters to add.
     # TODO Enable more: https://github.com/talos-systems/talos/issues/2722.
     add:
       # All rules except language-specific (C#, Java, Obj-C, PHP, Ruby, but not Go).
+      # prototool lint --list-all-linters | grep -vE '(CSHARP|JAVA|OBJC|PHP|RUBY)'
       - COMMENTS_NO_C_STYLE                                            # Verifies that there are no /* c-style */ comments.
-      # - COMMENTS_NO_INLINE                                             # Verifies that there are no inline comments.
+      - COMMENTS_NO_INLINE                                             # Verifies that there are no inline comments.
       # - ENUMS_HAVE_COMMENTS                                            # Verifies that all enums have a comment of the form "// EnumName ...".
       # - ENUMS_HAVE_SENTENCE_COMMENTS                                   # Verifies that all enums have a comment that contains at least one complete sentence.
       # - ENUMS_NO_ALLOW_ALIAS                                           # Verifies that no enums use the option "allow_alias".
@@ -143,121 +95,8 @@ lint:
       # - WKT_DURATION_SUFFIX                                            # Verifies that all google.protobuf.Duration field names are "duration" or end in "_duration".
       # - WKT_TIMESTAMP_SUFFIX                                           # Verifies that all google.protobuf.Timestamp field names are "time" or end in "_time".
 
-# The specific linters to remove.
-#    remove:
-#      - ENUM_NAMES_CAMEL_CASE
+break:
+  include_beta: false
+  allow_beta_deps: false
 
-# The path to the file header or the file header content for all Protobuf files.
-# If either path or content is set and the FILE_HEADER linter is turned on,
-# files will be checked to begin with the given header, and format --fix
-# will place this header before the syntax declaration. Note that
-# format --fix will delete anything before the syntax declaration
-# if this is set.
-#
-# Set path to use a file's contents for the header. Path must be relative.
-# Set content to directly specify the header.
-# **Both path and content cannot be set at the same time. They are only done
-# so here for example purposes.**
-#
-# If is_commented is set, this file is assumed to already have comments
-# and will be added directly. If is_commented is not set, "// " will be
-# added before every line.
-#  file_header:
-#    path: path/to/protobuf_file_header.txt
-#    content: |
-#      //
-#      // Acme, Inc. (c) 2019
-#      //
-#    is_commented: true
-# Override the default java_package file option prefix of "com".
-# If this is set, this will affect lint, create, and format --fix to use.
-# this prefix instead of "com".
-#  java_package_prefix: au.com
-
-# Breaking change detector directives.
-#break:
-# Include beta packages in breaking change detection.
-# Beta packages have the form "foo.bar.vMAJORbetaBETA" where MAJOR > 0 and BETA > 0.
-# By default, beta packages are ignored.
-#include_beta: true
-# Allow stable packages to depend on beta packages.
-# By default, the breaking change detector will error if a stable package
-# depends on a breaking package.
-# If include_beta is true, this is implicitly set.
-#allow_beta_deps: true
-
-# Code generation directives.
-#generate:
-# Options that will apply to all plugins of type go and gogo.
-#  go_options:
-# The base import path. This should be the go path of the prototool.yaml file.
-# This is required if you have any go plugins.
-#    import_path: uber/foo/bar.git/idl/uber
-
-# Extra modifiers to include with Mfile=package.
-#    extra_modifiers:
-#      google/api/annotations.proto: google.golang.org/genproto/googleapis/api/annotations
-#      google/api/http.proto: google.golang.org/genproto/googleapis/api/annotations
-
-# The list of plugins.
-#  plugins:
-# The plugin name. This will go to protoc with --name_out, so it either needs
-# to be a built-in name (like java), or a plugin name with a binary
-# protoc-gen-name.
-#    - name: gogo
-
-# The type, if any. Valid types are go, gogo.
-# Use go if your plugin is a standard Golang plugin
-# that uses github.com/golang/protobuf imports, use gogo
-# if it uses github.com/gogo/protobuf imports. For protoc-gen-go
-# use go, For protoc-gen-gogo, protoc-gen-gogoslick, etc, use gogo.
-#      type: gogo
-
-# Extra flags to specify.
-# The only flag you will generally set is plugins=grpc for Golang.
-# The Mfile=package flags are automatically set.
-# ** Otherwise, generally do not set this unless you know what you are doing. **
-#      flags: plugins=grpc
-
-# The path to output generated files to.
-# If the directory does not exist, it will be created when running generation.
-# This needs to be a relative path.
-#      output: ../../.gen/proto/go
-
-# Optional override for the plugin path. For example, if you set set path to
-# /usr/local/bin/gogo_plugin", prototool will add the
-# "--plugin=protoc-gen-gogo=/usr/local/bin/gogo_plugin" flag to protoc calls.
-# If set to "gogo_plugin", prototool will search your path for "gogo_plugin",.
-# and fail if "gogo_plugin" cannot be found.
-#      path: gogo_plugin
-
-#    - name: yarpc-go
-#      type: gogo
-#      output: ../../.gen/proto/go
-
-#    - name: grpc-gateway
-#      type: go
-#      output: ../../.gen/proto/go
-
-#    - name: java
-#      output: ../../.gen/proto/java
-
-# Optional file suffix for plugins that output a single file as opposed
-# to writing a set of files to a directory. This is only valid in two
-# known cases:
-# - For the java plugin, set this to "jar" to produce jars
-#   https://developers.google.com/protocol-buffers/docs/reference/java-generated#invocation
-# - For the descriptor_set plugin, this is required as using descriptor_set
-#   requires a file to be given instead of a directory.
-#      file_suffix: jar
-
-# descriptor_set is special, and uses the --descriptor_set_out flag on protoc.
-# file_suffix is required, and the options include_imports and include_source_info
-# can be optionally set to add the flags --include_imports and --include_source-info.
-# The include_imports and include_source_info options are not valid for any
-# other plugin name.
-#    - name: descriptor_set
-#      output: ../../.gen/proto/descriptor
-#      file_suffix: bin
-#      include_imports: true
-#      include_source_info: true
+# We don't use prototool for code generation, so there are no settings for that.

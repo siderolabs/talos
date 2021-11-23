@@ -34,11 +34,17 @@ message Data {
   bytes bytes = 2;
 }
 
-message DataResponse { repeated Data messages = 1; }
+message DataResponse {
+  repeated Data messages = 1;
+}
 
-message Empty { Metadata metadata = 1; }
+message Empty {
+  Metadata metadata = 1;
+}
 
-message EmptyResponse { repeated Empty messages = 1; }
+message EmptyResponse {
+  repeated Empty messages = 1;
+}
 
 enum ContainerDriver {
   CONTAINERD = 0;

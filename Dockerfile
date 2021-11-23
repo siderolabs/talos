@@ -127,6 +127,7 @@ ARG CGO_ENABLED
 ENV CGO_ENABLED ${CGO_ENABLED}
 ENV GOCACHE /.cache/go-build
 ENV GOMODCACHE /.cache/mod
+ENV PROTOTOOL_CACHE_PATH /.cache/prototool
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 WORKDIR /src
@@ -144,7 +145,18 @@ RUN --mount=type=cache,target=/.cache go mod verify
 
 # The generate target generates code from protobuf service definitions and machinery config.
 
+# format protobuf service definitions
+FROM build AS proto-format-build
+WORKDIR /src/api
+COPY api .
+RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+
+FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
+COPY --from=proto-format-build /src/api/ /api/
+
+# compile protobuf service definitions
 FROM build AS generate-build
+COPY --from=proto-format-build /src/api /api/
 # Common needs to be at or near the top to satisfy the subsequent imports
 COPY ./api/vendor/ /api/vendor/
 COPY ./api/common/common.proto /api/common/common.proto
@@ -179,6 +191,7 @@ RUN --mount=type=cache,target=/.cache go generate ./...
 RUN gofumports -w -local github.com/talos-systems/talos ./
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
+COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
 COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
 COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
@@ -627,7 +640,6 @@ RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/t
 FROM base AS lint-protobuf
 WORKDIR /src/api
 COPY api .
-COPY prototool.yaml .
 RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 
 # The markdownlint target performs linting on Markdown files.

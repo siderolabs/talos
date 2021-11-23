@@ -27,6 +27,12 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MachineServiceClient interface {
 	ApplyConfiguration(ctx context.Context, in *ApplyConfigurationRequest, opts ...grpc.CallOption) (*ApplyConfigurationResponse, error)
+	// Bootstrap method makes control plane node enter etcd bootstrap mode.
+	//
+	// Node aborts etcd join sequence and creates single-node etcd cluster.
+	//
+	// If recover_etcd argument is specified, etcd is recovered from a snapshot
+	// uploaded with EtcdRecover.
 	Bootstrap(ctx context.Context, in *BootstrapRequest, opts ...grpc.CallOption) (*BootstrapResponse, error)
 	Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersResponse, error)
 	Copy(ctx context.Context, in *CopyRequest, opts ...grpc.CallOption) (MachineService_CopyClient, error)
@@ -682,6 +688,12 @@ func (c *machineServiceClient) GenerateClientConfiguration(ctx context.Context, 
 // for forward compatibility
 type MachineServiceServer interface {
 	ApplyConfiguration(context.Context, *ApplyConfigurationRequest) (*ApplyConfigurationResponse, error)
+	// Bootstrap method makes control plane node enter etcd bootstrap mode.
+	//
+	// Node aborts etcd join sequence and creates single-node etcd cluster.
+	//
+	// If recover_etcd argument is specified, etcd is recovered from a snapshot
+	// uploaded with EtcdRecover.
 	Bootstrap(context.Context, *BootstrapRequest) (*BootstrapResponse, error)
 	Containers(context.Context, *ContainersRequest) (*ContainersResponse, error)
 	Copy(*CopyRequest, MachineService_CopyServer) error

@@ -262,9 +262,14 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 
 # Code Quality
 
-.PHONY: fmt
-fmt: ## Formats the source code.
+fmt-go: ## Formats the source code.
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && gofumports -w -local github.com/talos-systems/talos ."
+
+fmt-protobuf: ## Formats protobuf files.
+	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/amd64
+
+fmt: ## Formats the source code and protobuf files.
+	@$(MAKE) fmt-go fmt-protobuf
 
 lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
 	@$(MAKE) target-lint-$* PLATFORM=linux/amd64

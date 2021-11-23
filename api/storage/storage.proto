@@ -4,8 +4,8 @@ package storage;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/storage";
 
-import "google/protobuf/empty.proto";
 import "common/common.proto";
+import "google/protobuf/empty.proto";
 
 // StorageService represents the storage service.
 service StorageService {
@@ -46,4 +46,7 @@ message Disks {
   common.Metadata metadata = 1;
   repeated Disk disks = 2;
 }
-message DisksResponse { repeated Disks messages = 1; }
+
+message DisksResponse {
+  repeated Disks messages = 1;
+}

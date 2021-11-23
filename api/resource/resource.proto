@@ -19,73 +19,75 @@ service ResourceService {
 // common resource definition
 
 message Resource {
-    Metadata metadata = 1;
-    Spec spec = 2;
+  Metadata metadata = 1;
+  Spec spec = 2;
 }
 
 message Metadata {
-    string namespace = 1;
-    string type = 2;
-    string id = 3;
-    string version = 4;
-    string owner = 7;
-    string phase = 5;
-    google.protobuf.Timestamp created = 8;
-    google.protobuf.Timestamp updated = 9;
-    repeated string finalizers = 6;
+  string namespace = 1;
+  string type = 2;
+  string id = 3;
+  string version = 4;
+  string owner = 7;
+  string phase = 5;
+  google.protobuf.Timestamp created = 8;
+  google.protobuf.Timestamp updated = 9;
+  repeated string finalizers = 6;
 }
 
 message Spec {
-    bytes yaml = 1;
+  bytes yaml = 1;
 }
 
 // rpc Get
 message GetRequest {
-    string namespace = 1;
-    string type = 2;
-    string id = 3;
+  string namespace = 1;
+  string type = 2;
+  string id = 3;
 }
 
 // The GetResponse message contains the Resource returned.
 message Get {
-    common.Metadata metadata = 1;
-    Resource definition = 2;
-    Resource resource = 3;
+  common.Metadata metadata = 1;
+  Resource definition = 2;
+  Resource resource = 3;
 }
 
-message GetResponse { repeated Get messages = 1; }
+message GetResponse {
+  repeated Get messages = 1;
+}
 
 // rpc List
 // The ListResponse message contains the Resource returned.
 message ListRequest {
-    string namespace = 1;
-    string type = 2;
+  string namespace = 1;
+  string type = 2;
 }
 
 message ListResponse {
-    common.Metadata metadata = 1;
-    Resource definition = 2;
-    Resource resource = 3;
+  common.Metadata metadata = 1;
+  Resource definition = 2;
+  Resource resource = 3;
 }
 
 // rpc Watch
 // The WatchResponse message contains the Resource returned.
 message WatchRequest {
-    string namespace = 1;
-    string type = 2;
-    string id = 3;
-    uint32 tail_events = 4;
+  string namespace = 1;
+  string type = 2;
+  string id = 3;
+  uint32 tail_events = 4;
 }
 
 enum EventType {
-    CREATED = 0;
-    UPDATED = 1;
-    DESTROYED = 2;
+  CREATED = 0;
+  UPDATED = 1;
+  DESTROYED = 2;
 }
 
 message WatchResponse {
-    common.Metadata metadata = 1;
-    EventType event_type = 2;
-    Resource definition = 3;
-    Resource resource = 4;
+  common.Metadata metadata = 1;
+  EventType event_type = 2;
+  Resource definition = 3;
+  Resource resource = 4;
 }

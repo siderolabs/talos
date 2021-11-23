@@ -4,9 +4,9 @@ package time;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/time";
 
+import "common/common.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "common/common.proto";
 
 // The time service definition.
 service TimeService {
@@ -15,7 +15,9 @@ service TimeService {
 }
 
 // The response message containing the ntp server
-message TimeRequest { string server = 1; }
+message TimeRequest {
+  string server = 1;
+}
 
 message Time {
   common.Metadata metadata = 1;
@@ -25,4 +27,6 @@ message Time {
 }
 
 // The response message containing the ntp server, time, and offset
-message TimeResponse { repeated Time messages = 1; }
+message TimeResponse {
+  repeated Time messages = 1;
+}

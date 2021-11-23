@@ -1258,9 +1258,7 @@ FileInfo describes a file or directory's information
 | name | [string](#string) |  | Name is the name (including prefixed path) of the file or directory |
 | size | [int64](#int64) |  | Size indicates the number of bytes contained within the file |
 | mode | [uint32](#uint32) |  | Mode is the bitmap of UNIX mode/permission flags of the file |
-| modified | [int64](#int64) |  | Modified indicates the UNIX timestamp at which the file was last modified
-
-TODO: unix timestamp or include proto's Date type |
+| modified | [int64](#int64) |  | Modified indicates the UNIX timestamp at which the file was last modified |
 | is_dir | [bool](#bool) |  | IsDir indicates that the file is a directory |
 | error | [string](#string) |  | Error describes any error encountered while trying to read the file information. |
 | link | [string](#string) |  | Link is filled with symlink target |
@@ -2778,7 +2776,11 @@ The machine service definition.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
-| Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) |  |
+| Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) | Bootstrap method makes control plane node enter etcd bootstrap mode.
+
+Node aborts etcd join sequence and creates single-node etcd cluster.
+
+If recover_etcd argument is specified, etcd is recovered from a snapshot uploaded with EtcdRecover. |
 | Containers | [ContainersRequest](#machine.ContainersRequest) | [ContainersResponse](#machine.ContainersResponse) |  |
 | Copy | [CopyRequest](#machine.CopyRequest) | [.common.Data](#common.Data) stream |  |
 | CPUInfo | [.google.protobuf.Empty](#google.protobuf.Empty) | [CPUInfoResponse](#machine.CPUInfoResponse) |  |

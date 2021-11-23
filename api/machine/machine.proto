@@ -4,26 +4,22 @@ package machine;
 
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/machine";
 
+import "common/common.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
-import "common/common.proto";
 
 // The machine service definition.
 service MachineService {
-  rpc ApplyConfiguration(ApplyConfigurationRequest)
-      returns (ApplyConfigurationResponse);
-
+  rpc ApplyConfiguration(ApplyConfigurationRequest) returns (ApplyConfigurationResponse);
   // Bootstrap method makes control plane node enter etcd bootstrap mode.
   //
   // Node aborts etcd join sequence and creates single-node etcd cluster.
   //
   // If recover_etcd argument is specified, etcd is recovered from a snapshot
   // uploaded with EtcdRecover.
-
   rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
-
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Copy(CopyRequest) returns (stream common.Data);
   rpc CPUInfo(google.protobuf.Empty) returns (CPUInfoResponse);
@@ -31,27 +27,20 @@ service MachineService {
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
-  rpc EtcdRemoveMember(EtcdRemoveMemberRequest)
-      returns (EtcdRemoveMemberResponse);
-  rpc EtcdLeaveCluster(EtcdLeaveClusterRequest)
-      returns (EtcdLeaveClusterResponse);
-  rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest)
-      returns (EtcdForfeitLeadershipResponse);
-
+  rpc EtcdRemoveMember(EtcdRemoveMemberRequest) returns (EtcdRemoveMemberResponse);
+  rpc EtcdLeaveCluster(EtcdLeaveClusterRequest) returns (EtcdLeaveClusterResponse);
+  rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest) returns (EtcdForfeitLeadershipResponse);
   // EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
   // to the node.
   //
   // Snapshot can be later used to recover the cluster via Bootstrap method.
   rpc EtcdRecover(stream common.Data) returns (EtcdRecoverResponse);
-
   // EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
   // and streams it back to the client.
   //
   // This method is available only on control plane nodes (which run etcd).
   rpc EtcdSnapshot(EtcdSnapshotRequest) returns (stream common.Data);
-
-  rpc GenerateConfiguration(GenerateConfigurationRequest)
-      returns (GenerateConfigurationResponse);
+  rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
   rpc List(ListRequest) returns (stream FileInfo);
@@ -60,8 +49,7 @@ service MachineService {
   rpc Logs(LogsRequest) returns (stream common.Data);
   rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
-  rpc NetworkDeviceStats(google.protobuf.Empty)
-      returns (NetworkDeviceStatsResponse);
+  rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
   rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
   rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
@@ -77,7 +65,6 @@ service MachineService {
   rpc SystemStat(google.protobuf.Empty) returns (SystemStatResponse);
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
-
   // GenerateClientConfiguration generates talosctl client configuration (talosconfig).
   rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
 }
@@ -97,12 +84,20 @@ message ApplyConfiguration {
   // Configuration validation warnings.
   repeated string warnings = 2;
 }
-message ApplyConfigurationResponse { repeated ApplyConfiguration messages = 1; }
+
+message ApplyConfigurationResponse {
+  repeated ApplyConfiguration messages = 1;
+}
 
 // rpc reboot
 // The reboot message containing the reboot status.
-message Reboot { common.Metadata metadata = 1; }
-message RebootResponse { repeated Reboot messages = 1; }
+message Reboot {
+  common.Metadata metadata = 1;
+}
+
+message RebootResponse {
+  repeated Reboot messages = 1;
+}
 
 // rpc Bootstrap
 message BootstrapRequest {
@@ -117,8 +112,13 @@ message BootstrapRequest {
 }
 
 // The bootstrap message containing the bootstrap status.
-message Bootstrap { common.Metadata metadata = 1; }
-message BootstrapResponse { repeated Bootstrap messages = 1; }
+message Bootstrap {
+  common.Metadata metadata = 1;
+}
+
+message BootstrapResponse {
+  repeated Bootstrap messages = 1;
+}
 
 // rpc events
 message SequenceEvent {
@@ -161,26 +161,25 @@ message ServiceStateEvent {
     FINISHED = 5;
     FAILED = 6;
     SKIPPED = 7;
-  };
+  }
   Action action = 2;
   string message = 3;
   ServiceHealth health = 4;
-};
+}
 
 message RestartEvent {
   int64 cmd = 1;
-};
+}
 
 // ConfigLoadErrorEvent is reported when the config loading has failed.
 message ConfigLoadErrorEvent {
   string error = 1;
-};
-
+}
 
 // ConfigValidationErrorEvent is reported when config validation has failed.
 message ConfigValidationErrorEvent {
   string error = 1;
-};
+}
 
 // AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
 message AddressEvent {
@@ -218,13 +217,23 @@ message ResetRequest {
 }
 
 // The reset message containing the restart status.
-message Reset { common.Metadata metadata = 1; }
-message ResetResponse { repeated Reset messages = 1; }
+message Reset {
+  common.Metadata metadata = 1;
+}
+
+message ResetResponse {
+  repeated Reset messages = 1;
+}
 
 // rpc shutdown
 // The messages message containing the shutdown status.
-message Shutdown { common.Metadata metadata = 1; }
-message ShutdownResponse { repeated Shutdown messages = 1; }
+message Shutdown {
+  common.Metadata metadata = 1;
+}
+
+message ShutdownResponse {
+  repeated Shutdown messages = 1;
+}
 
 // rpc upgrade
 message UpgradeRequest {
@@ -238,14 +247,20 @@ message Upgrade {
   common.Metadata metadata = 1;
   string ack = 2;
 }
-message UpgradeResponse { repeated Upgrade messages = 1; }
+
+message UpgradeResponse {
+  repeated Upgrade messages = 1;
+}
 
 // rpc servicelist
 message ServiceList {
   common.Metadata metadata = 1;
   repeated ServiceInfo services = 2;
 }
-message ServiceListResponse { repeated ServiceList messages = 1; }
+
+message ServiceListResponse {
+  repeated ServiceList messages = 1;
+}
 
 message ServiceInfo {
   string id = 1;
@@ -254,7 +269,9 @@ message ServiceInfo {
   ServiceHealth health = 4;
 }
 
-message ServiceEvents { repeated ServiceEvent events = 1; }
+message ServiceEvents {
+  repeated ServiceEvent events = 1;
+}
 
 message ServiceEvent {
   string msg = 1;
@@ -270,29 +287,44 @@ message ServiceHealth {
 }
 
 // rpc servicestart
-message ServiceStartRequest { string id = 1; }
+message ServiceStartRequest {
+  string id = 1;
+}
 
 message ServiceStart {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStartResponse { repeated ServiceStart messages = 1; }
 
-message ServiceStopRequest { string id = 1; }
+message ServiceStartResponse {
+  repeated ServiceStart messages = 1;
+}
+
+message ServiceStopRequest {
+  string id = 1;
+}
 
 message ServiceStop {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceStopResponse { repeated ServiceStop messages = 1; }
 
-message ServiceRestartRequest { string id = 1; }
+message ServiceStopResponse {
+  repeated ServiceStop messages = 1;
+}
+
+message ServiceRestartRequest {
+  string id = 1;
+}
 
 message ServiceRestart {
   common.Metadata metadata = 1;
   string resp = 2;
 }
-message ServiceRestartResponse { repeated ServiceRestart messages = 1; }
+
+message ServiceRestartResponse {
+  repeated ServiceRestart messages = 1;
+}
 
 message StartRequest {
   option deprecated = true;
@@ -370,7 +402,7 @@ message FileInfo {
   // Mode is the bitmap of UNIX mode/permission flags of the file
   uint32 mode = 4;
   // Modified indicates the UNIX timestamp at which the file was last modified
-  int64 modified = 5; // TODO: unix timestamp or include proto's Date type
+  int64 modified = 5;
   // IsDir indicates that the file is a directory
   bool is_dir = 6;
   // Error describes any error encountered while trying to read the file
@@ -405,7 +437,10 @@ message Mounts {
   common.Metadata metadata = 1;
   repeated MountStat stats = 2;
 }
-message MountsResponse { repeated Mounts messages = 1; }
+
+message MountsResponse {
+  repeated Mounts messages = 1;
+}
 
 // The messages message containing the requested processes.
 message MountStat {
@@ -423,7 +458,9 @@ message Version {
   FeaturesInfo features = 4;
 }
 
-message VersionResponse { repeated Version messages = 1; }
+message VersionResponse {
+  repeated Version messages = 1;
+}
 
 message VersionInfo {
   string tag = 1;
@@ -456,13 +493,20 @@ message LogsRequest {
   int32 tail_lines = 5;
 }
 
-message ReadRequest { string path = 1; }
+message ReadRequest {
+  string path = 1;
+}
 
 // rpc rollback
 message RollbackRequest {}
 
-message Rollback { common.Metadata metadata = 1; }
-message RollbackResponse { repeated Rollback messages = 1; }
+message Rollback {
+  common.Metadata metadata = 1;
+}
+
+message RollbackResponse {
+  repeated Rollback messages = 1;
+}
 
 // rpc Containers
 
@@ -489,7 +533,9 @@ message Container {
   repeated ContainerInfo containers = 2;
 }
 
-message ContainersResponse { repeated Container messages = 1; }
+message ContainersResponse {
+  repeated Container messages = 1;
+}
 
 // dmesg
 message DmesgRequest {
@@ -498,7 +544,9 @@ message DmesgRequest {
 }
 
 // rpc processes
-message ProcessesResponse { repeated Process messages = 1; }
+message ProcessesResponse {
+  repeated Process messages = 1;
+}
 
 message Process {
   common.Metadata metadata = 1;
@@ -527,10 +575,14 @@ message RestartRequest {
   common.ContainerDriver driver = 3;
 }
 
-message Restart { common.Metadata metadata = 1; }
+message Restart {
+  common.Metadata metadata = 1;
+}
 
 // The messages message containing the restart status.
-message RestartResponse { repeated Restart messages = 1; }
+message RestartResponse {
+  repeated Restart messages = 1;
+}
 
 // rpc stats
 
@@ -547,7 +599,9 @@ message Stats {
   repeated Stat stats = 2;
 }
 
-message StatsResponse { repeated Stats messages = 1; }
+message StatsResponse {
+  repeated Stats messages = 1;
+}
 
 // The messages message containing the requested stat.
 message Stat {
@@ -564,7 +618,9 @@ message Memory {
   MemInfo meminfo = 2;
 }
 
-message MemoryResponse { repeated Memory messages = 1; }
+message MemoryResponse {
+  repeated Memory messages = 1;
+}
 
 message MemInfo {
   uint64 memtotal = 1;
@@ -619,7 +675,9 @@ message MemInfo {
 
 // rpc Hostname
 
-message HostnameResponse { repeated Hostname messages = 1; }
+message HostnameResponse {
+  repeated Hostname messages = 1;
+}
 
 message Hostname {
   common.Metadata metadata = 1;
@@ -628,7 +686,9 @@ message Hostname {
 
 // rpc LoadAvg
 
-message LoadAvgResponse { repeated LoadAvg messages = 1; }
+message LoadAvgResponse {
+  repeated LoadAvg messages = 1;
+}
 
 message LoadAvg {
   common.Metadata metadata = 1;
@@ -639,7 +699,9 @@ message LoadAvg {
 
 // rpc SystemStat
 
-message SystemStatResponse { repeated SystemStat messages = 1; }
+message SystemStatResponse {
+  repeated SystemStat messages = 1;
+}
 
 message SystemStat {
   common.Metadata metadata = 1;
@@ -684,7 +746,9 @@ message SoftIRQStat {
 
 // rpc CPUInfo
 
-message CPUInfoResponse { repeated CPUsInfo messages = 1; }
+message CPUInfoResponse {
+  repeated CPUsInfo messages = 1;
+}
 
 message CPUsInfo {
   common.Metadata metadata = 1;
@@ -722,7 +786,9 @@ message CPUInfo {
 
 // rpc NetworkDeviceStats
 
-message NetworkDeviceStatsResponse { repeated NetworkDeviceStats messages = 1; }
+message NetworkDeviceStatsResponse {
+  repeated NetworkDeviceStats messages = 1;
+}
 
 message NetworkDeviceStats {
   common.Metadata metadata = 1;
@@ -752,7 +818,9 @@ message NetDev {
 
 // rpc DiskStats
 
-message DiskStatsResponse { repeated DiskStats messages = 1; }
+message DiskStatsResponse {
+  repeated DiskStats messages = 1;
+}
 
 message DiskStats {
   common.Metadata metadata = 1;
@@ -780,20 +848,34 @@ message DiskStat {
 }
 
 message EtcdLeaveClusterRequest {}
-message EtcdLeaveCluster { common.Metadata metadata = 1; }
-message EtcdLeaveClusterResponse { repeated EtcdLeaveCluster messages = 1; }
+
+message EtcdLeaveCluster {
+  common.Metadata metadata = 1;
+}
+
+message EtcdLeaveClusterResponse {
+  repeated EtcdLeaveCluster messages = 1;
+}
 
 message EtcdRemoveMemberRequest {
   string member = 1;
 }
-message EtcdRemoveMember { common.Metadata metadata = 1; }
-message EtcdRemoveMemberResponse { repeated EtcdRemoveMember messages = 1; }
+
+message EtcdRemoveMember {
+  common.Metadata metadata = 1;
+}
+
+message EtcdRemoveMemberResponse {
+  repeated EtcdRemoveMember messages = 1;
+}
 
 message EtcdForfeitLeadershipRequest {}
+
 message EtcdForfeitLeadership {
   common.Metadata metadata = 1;
   string member = 2;
 }
+
 message EtcdForfeitLeadershipResponse {
   repeated EtcdForfeitLeadership messages = 1;
 }
@@ -824,14 +906,20 @@ message EtcdMembers {
   // the list of etcd members registered on the node.
   repeated EtcdMember members = 3;
 }
-message EtcdMemberListResponse { repeated EtcdMembers messages = 1; }
+
+message EtcdMemberListResponse {
+  repeated EtcdMembers messages = 1;
+}
 
 message EtcdSnapshotRequest {}
 
 message EtcdRecover {
   common.Metadata metadata = 1;
 }
-message EtcdRecoverResponse { repeated EtcdRecover messages = 1; }
+
+message EtcdRecoverResponse {
+  repeated EtcdRecover messages = 1;
+}
 
 // rpc generateConfiguration
 
@@ -874,7 +962,7 @@ message MachineConfig {
     TYPE_WORKER = 3;
     // Alias for TYPE_WORKER.
     TYPE_JOIN = 3 [deprecated = true];
-  };
+  }
   MachineType type = 1;
   InstallConfig install_config = 2;
   NetworkConfig network_config = 3;
