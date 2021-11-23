@@ -8,7 +8,9 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -91,7 +93,7 @@ type operatorRunState struct {
 	wg     sync.WaitGroup
 }
 
-func (state *operatorRunState) Start(ctx context.Context, notifyCh chan<- struct{}) {
+func (state *operatorRunState) Start(ctx context.Context, notifyCh chan<- struct{}, logger *zap.Logger, id string) {
 	state.wg.Add(1)
 
 	ctx, state.cancel = context.WithCancel(ctx)
@@ -99,8 +101,46 @@ func (state *operatorRunState) Start(ctx context.Context, notifyCh chan<- struct
 	go func() {
 		defer state.wg.Done()
 
-		state.Operator.Run(ctx, notifyCh)
+		state.runWithRestarts(ctx, notifyCh, logger, id)
 	}()
+}
+
+func (state *operatorRunState) runWithRestarts(ctx context.Context, notifyCh chan<- struct{}, logger *zap.Logger, id string) {
+	backoff := backoff.NewExponentialBackOff()
+
+	// disable number of retries limit
+	backoff.MaxElapsedTime = 0
+
+	for ctx.Err() == nil {
+		if err := state.runWithPanicHandler(ctx, notifyCh, logger, id); err == nil {
+			// operator finished without an error
+			return
+		}
+
+		interval := backoff.NextBackOff()
+
+		logger.Debug("restarting operator", zap.Duration("interval", interval), zap.String("operator", id))
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(interval):
+		}
+	}
+}
+
+func (state *operatorRunState) runWithPanicHandler(ctx context.Context, notifyCh chan<- struct{}, logger *zap.Logger, id string) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("panic: %v", p)
+
+			logger.Error("operator panicked", zap.Stack("stack"), zap.Error(err), zap.String("operator", id))
+		}
+	}()
+
+	state.Operator.Run(ctx, notifyCh)
+
+	return nil
 }
 
 func (state *operatorRunState) Stop() {
@@ -210,7 +250,7 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 			}
 
 			logger.Debug("starting operator", zap.String("operator", id))
-			ctrl.operators[id].Start(ctx, notifyCh)
+			ctrl.operators[id].Start(ctx, notifyCh, logger, id)
 		}
 	}
 
