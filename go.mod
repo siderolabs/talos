@@ -36,6 +36,7 @@ require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v0.4.1
 	github.com/beevik/ntp v0.3.0
+	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/containerd/cgroups v1.0.2
 	github.com/containerd/containerd v1.5.7
 	github.com/containerd/cri v1.19.0
@@ -149,7 +150,6 @@ require (
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/briandowns/spinner v1.6.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/cilium/ebpf v0.7.0 // indirect

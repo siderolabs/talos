@@ -44,6 +44,7 @@ type OperatorSpecSuite struct {
 type mockOperator struct {
 	spec     network.OperatorSpecSpec
 	notifyCh chan<- struct{}
+	panicked bool
 
 	mu          sync.Mutex
 	addresses   []network.AddressSpecSpec
@@ -72,13 +73,22 @@ func (mock *mockOperator) Run(ctx context.Context, notifyCh chan<- struct{}) {
 		runningOperatorsMu.Unlock()
 	}
 
-	<-ctx.Done()
-
-	{
+	defer func() {
 		runningOperatorsMu.Lock()
 		delete(runningOperators, mock.Prefix())
 		runningOperatorsMu.Unlock()
+	}()
+
+	if mock.spec.Operator == network.OperatorDHCP6 {
+		// DHCP6 operator panics on odd run
+		if !mock.panicked {
+			mock.panicked = true
+
+			panic("oh no, IPv6!!!")
+		}
 	}
+
+	<-ctx.Done()
 }
 
 func (mock *mockOperator) notify() {
@@ -330,6 +340,48 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertRunning([]string{"vip/eth0"}, func(op *mockOperator) error {
+				return nil
+			})
+		}))
+}
+
+func (suite *OperatorSpecSuite) TestPanic() {
+	specPanic := network.NewOperatorSpec(network.NamespaceName, "dhcp6/eth0")
+	*specPanic.TypedSpec() = network.OperatorSpecSpec{
+		Operator:  network.OperatorDHCP6,
+		LinkName:  "eth0",
+		RequireUp: true,
+		DHCP6: network.DHCP6OperatorSpec{
+			RouteMetric: 1024,
+		},
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, specPanic))
+
+	linkState := network.NewLinkStatus(network.NamespaceName, "eth0")
+	*linkState.TypedSpec() = network.LinkStatusSpec{
+		OperationalState: nethelpers.OperStateUp,
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, linkState))
+
+	// DHCP6 operator should panic and then restart
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertRunning([]string{"dhcp6/eth0"}, func(op *mockOperator) error { return nil })
+		}))
+
+	// bring down the interface, operator should be stopped
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, linkState.Metadata(), func(r resource.Resource) error {
+		r.(*network.LinkStatus).TypedSpec().OperationalState = nethelpers.OperStateDown
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertRunning(nil, func(op *mockOperator) error {
 				return nil
 			})
 		}))
