@@ -1263,7 +1263,7 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 		opts = append(opts, runtime.WithTailDuration(time.Duration(req.TailSeconds)*time.Second))
 	}
 
-	if err := s.Controller.Runtime().Events().Watch(func(events <-chan runtime.Event) {
+	if err := s.Controller.Runtime().Events().Watch(func(events <-chan runtime.IncomingEvent) {
 		errCh <- func() error {
 			for {
 				select {
