@@ -6,6 +6,7 @@ package mount
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -77,7 +78,7 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 	}
 
 	part, err := device.GetPartition(label)
-	if err != nil && err != os.ErrNotExist {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
 
