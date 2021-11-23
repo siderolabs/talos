@@ -52,12 +52,12 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 
 	wg.Add(1)
 
-	if err := ctrl.V1Alpha1Events.Watch(func(eventCh <-chan runtime.Event) {
+	if err := ctrl.V1Alpha1Events.Watch(func(eventCh <-chan runtime.EventInfo) {
 		defer wg.Done()
 
 		for {
 			var (
-				event runtime.Event
+				event runtime.EventInfo
 				ok    bool
 			)
 

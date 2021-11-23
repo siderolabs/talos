@@ -68,6 +68,6 @@ type Controller interface {
 
 // V1Alpha2Controller provides glue into v2alpha1 controller runtime.
 type V1Alpha2Controller interface {
-	Run(context.Context) error
+	Run(context.Context, *Drainer) error
 	DependencyGraph() (*controller.DependencyGraph, error)
 }

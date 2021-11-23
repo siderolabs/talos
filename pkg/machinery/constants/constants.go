@@ -30,6 +30,10 @@ const (
 	// SBC.
 	KernelParamBoard = "talos.board"
 
+	// KernelParamEventsSink is the kernel parameter name for specifying the
+	// events sink server.
+	KernelParamEventsSink = "talos.events.sink"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 

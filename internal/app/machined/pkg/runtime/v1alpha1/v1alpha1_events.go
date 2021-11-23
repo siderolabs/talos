@@ -116,7 +116,7 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 	// context is used to abort the loop when WatchFunc exits
 	ctx, ctxCancel := context.WithCancel(context.Background())
 
-	ch := make(chan runtime.Event)
+	ch := make(chan runtime.EventInfo)
 
 	go func() {
 		defer ctxCancel()
@@ -194,12 +194,16 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 
 			event := e.stream[pos%int64(e.cap)]
 			pos++
+			backlog := int(e.writePos - pos)
 
 			e.mu.Unlock()
 
 			// send event to WatchFunc, wait for it to process the event
 			select {
-			case ch <- event:
+			case ch <- runtime.EventInfo{
+				Event:   event,
+				Backlog: backlog,
+			}:
 			case <-ctx.Done():
 				return
 			}
