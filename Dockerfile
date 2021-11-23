@@ -570,7 +570,10 @@ RUN unlink /etc/ssl
 COPY --from=rootfs / /
 ARG TESTPKGS
 ENV PLATFORM container
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
+ARG GO_LDFLAGS
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v \
+    -ldflags "${GO_LDFLAGS}" \
+    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -count 1 -p 4 ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
@@ -582,7 +585,10 @@ COPY --from=rootfs / /
 ARG TESTPKGS
 ENV PLATFORM container
 ENV CGO_ENABLED 1
-RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v -race -count 1 -p 4 ${TESTPKGS}
+ARG GO_LDFLAGS
+RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v \
+    -ldflags "${GO_LDFLAGS}" \
+    -race -count 1 -p 4 ${TESTPKGS}
 
 # The integration-test targets builds integration test binary.
 

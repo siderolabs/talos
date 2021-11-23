@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 type LocalAffiliateSuite struct {
@@ -67,7 +68,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			suite.Assert().Equal("example1", spec.Hostname)
 			suite.Assert().Equal("example1.com", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
-			suite.Assert().Equal(" ()", spec.OperatingSystem) // build tags are not set for unit-tests
+			suite.Assert().Equal("Talos ("+version.Tag+")", spec.OperatingSystem)
 			suite.Assert().Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 
 			return nil
