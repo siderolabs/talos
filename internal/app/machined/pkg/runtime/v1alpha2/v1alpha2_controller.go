@@ -74,7 +74,7 @@ func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 }
 
 // Run the controller runtime.
-func (ctrl *Controller) Run(ctx context.Context) error {
+func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error {
 	// adjust the log level based on machine configuration
 	go ctrl.watchMachineConfig(ctx)
 
@@ -171,6 +171,11 @@ func (ctrl *Controller) Run(ctx context.Context) error {
 		&network.TimeServerMergeController{},
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
+		&runtimecontrollers.EventsSinkController{
+			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
+			Cmdline:        procfs.ProcCmdline(),
+			Drainer:        drainer,
+		},
 		&runtimecontrollers.KernelParamConfigController{},
 		&runtimecontrollers.KernelParamDefaultsController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

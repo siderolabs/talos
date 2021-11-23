@@ -22,8 +22,14 @@ type Event struct {
 	Payload proto.Message
 }
 
+// EventInfo unifies event and queue information for the WatchFunc.
+type EventInfo struct {
+	Event
+	Backlog int
+}
+
 // WatchFunc defines the watcher callback function.
-type WatchFunc func(<-chan Event)
+type WatchFunc func(<-chan EventInfo)
 
 // WatchOptions defines options for the watch call.
 //

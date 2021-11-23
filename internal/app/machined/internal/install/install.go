@@ -109,6 +109,10 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamSideroLink, *c))
 	}
 
+	if c := procfs.ProcCmdline().Get(constants.KernelParamEventsSink).First(); c != nil {
+		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamEventsSink, *c))
+	}
+
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(img),
 		oci.WithProcessArgs(args...),

@@ -76,7 +76,7 @@ func TestEvents_Publish(t *testing.T) {
 			got := uint32(0)
 
 			for i := 0; i < tt.watchers; i++ {
-				if err := e.Watch(func(events <-chan runtime.Event) {
+				if err := e.Watch(func(events <-chan runtime.EventInfo) {
 					defer wg.Done()
 
 					l := rate.NewLimiter(500, tt.cap*8/10)
@@ -126,12 +126,12 @@ func TestEvents_Publish(t *testing.T) {
 	}
 }
 
-func receive(t *testing.T, e runtime.Watcher, n int, opts ...runtime.WatchOptionFunc) (result []runtime.Event) {
+func receive(t *testing.T, e runtime.Watcher, n int, opts ...runtime.WatchOptionFunc) (result []runtime.EventInfo) {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 
-	if err := e.Watch(func(events <-chan runtime.Event) {
+	if err := e.Watch(func(events <-chan runtime.EventInfo) {
 		defer wg.Done()
 
 		for j := 0; j < n; j++ {
@@ -161,7 +161,7 @@ func receive(t *testing.T, e runtime.Watcher, n int, opts ...runtime.WatchOption
 	return result
 }
 
-func extractSeq(t *testing.T, events []runtime.Event) (result []int) {
+func extractSeq(t *testing.T, events []runtime.EventInfo) (result []int) {
 	for _, event := range events {
 		seq, err := strconv.Atoi(event.Payload.(*machine.SequenceEvent).Sequence)
 		if err != nil {
@@ -262,7 +262,7 @@ func BenchmarkWatch(b *testing.B) {
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		_ = e.Watch(func(events <-chan runtime.Event) { wg.Done() }) //nolint:errcheck
+		_ = e.Watch(func(events <-chan runtime.EventInfo) { wg.Done() }) //nolint:errcheck
 	}
 
 	wg.Wait()
@@ -280,7 +280,7 @@ func BenchmarkPublish(bb *testing.B) {
 			wg.Add(watchers)
 
 			for j := 0; j < watchers; j++ {
-				_ = e.Watch(func(events <-chan runtime.Event) { //nolint:errcheck
+				_ = e.Watch(func(events <-chan runtime.EventInfo) { //nolint:errcheck
 					defer wg.Done()
 
 					for i := 0; i < b.N; i++ {
