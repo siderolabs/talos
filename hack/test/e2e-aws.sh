@@ -78,7 +78,7 @@ function setup {
 
   ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/talos-systems/cluster-api-templates/blob/main/aws/standard/standard.yaml > ${TMP}/cluster.yaml
+    --from https://github.com/talos-systems/cluster-api-templates/blob/v1alpha4/aws/standard/standard.yaml > ${TMP}/cluster.yaml
 }
 
 setup
