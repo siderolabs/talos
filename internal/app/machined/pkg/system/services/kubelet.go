@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"log"
 	stdnet "net"
 	"net/http"
 	"os"
@@ -343,19 +344,24 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		}
 	}
 
-	nodeIPs, err := pickNodeIPs(validSubnets)
-	if err != nil {
-		return nil, err
-	}
+	// if the user supplied node-ip via extra args, no need to pick automatically
+	if !extraArgs.Contains("node-ip") {
+		var nodeIPs []stdnet.IP
 
-	if len(nodeIPs) > 0 {
-		nodeIPsString := make([]string, len(nodeIPs))
-
-		for i := range nodeIPs {
-			nodeIPsString[i] = nodeIPs[i].String()
+		nodeIPs, err = pickNodeIPs(validSubnets)
+		if err != nil {
+			return nil, err
 		}
 
-		args["node-ip"] = strings.Join(nodeIPsString, ",")
+		if len(nodeIPs) > 0 {
+			nodeIPsString := make([]string, len(nodeIPs))
+
+			for i := range nodeIPs {
+				nodeIPsString[i] = nodeIPs[i].String()
+			}
+
+			args["node-ip"] = strings.Join(nodeIPsString, ",")
+		}
 	}
 
 	if err = args.Merge(extraArgs, argsbuilder.WithMergePolicies(
@@ -367,7 +373,6 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 			"config":                     argsbuilder.MergeDenied,
 			"cert-dir":                   argsbuilder.MergeDenied,
 			"cni-conf-dir":               argsbuilder.MergeDenied,
-			"node-ip":                    argsbuilder.MergeAdditive,
 		},
 	)); err != nil {
 		return nil, err
@@ -446,7 +451,36 @@ func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 		return nil, fmt.Errorf("failed to discover interface IP addresses: %w", err)
 	}
 
-	return net.FilterIPs(ips, cidrs)
+	ips, err = net.FilterIPs(ips, cidrs)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter down to make sure only one IPv4 and one IPv6 address stays
+	var hasIPv4, hasIPv6 bool
+
+	result := make([]stdnet.IP, 0, 2)
+
+	for _, ip := range ips {
+		switch {
+		case ip.To4() != nil:
+			if !hasIPv4 {
+				result = append(result, ip)
+				hasIPv4 = true
+			} else {
+				log.Printf("kubelet: warning: skipped node IP %s, please use .machine.kubelet.nodeIP to provide explicit subnet for the node IP", ip)
+			}
+		case ip.To16() != nil:
+			if !hasIPv6 {
+				result = append(result, ip)
+				hasIPv6 = true
+			} else {
+				log.Printf("kubelet: warning: skipped node IP %s, please use .machine.kubelet.nodeIP to provide explicit subnet for the node IP", ip)
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func kubeletSeccomp(seccomp *specs.LinuxSeccomp) {
