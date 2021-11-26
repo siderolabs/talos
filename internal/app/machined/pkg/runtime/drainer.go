@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -19,13 +20,23 @@ func NewDrainer() *Drainer {
 // Drainer is used in controllers to ensure graceful shutdown.
 type Drainer struct {
 	subscriptionsMu sync.Mutex
+	draining        bool
 	subscriptions   []*DrainSubscription
-	shutdown        chan struct{}
+
+	shutdown chan struct{}
 }
 
 // Drain initializes drain sequence waits for it to succeed until the context is canceled.
 func (d *Drainer) Drain(ctx context.Context) error {
 	d.subscriptionsMu.Lock()
+	if d.draining {
+		d.subscriptionsMu.Unlock()
+
+		return fmt.Errorf("already draining")
+	}
+
+	d.draining = true
+
 	for _, s := range d.subscriptions {
 		select {
 		case s.events <- DrainEvent{}:
@@ -61,6 +72,10 @@ func (d *Drainer) Subscribe() *DrainSubscription {
 		drainer: d,
 	}
 
+	if d.draining {
+		subscription.events <- DrainEvent{}
+	}
+
 	d.subscriptions = append(d.subscriptions, subscription)
 
 	return subscription
@@ -80,7 +95,6 @@ func (s *DrainSubscription) EventCh() <-chan DrainEvent {
 // Cancel the subscription which triggers drain to shutdown.
 func (s *DrainSubscription) Cancel() {
 	s.drainer.subscriptionsMu.Lock()
-	defer s.drainer.subscriptionsMu.Unlock()
 
 	for i, sub := range s.drainer.subscriptions {
 		if sub == s {
@@ -89,6 +103,8 @@ func (s *DrainSubscription) Cancel() {
 			break
 		}
 	}
+
+	s.drainer.subscriptionsMu.Unlock()
 
 	select {
 	case s.drainer.shutdown <- struct{}{}:

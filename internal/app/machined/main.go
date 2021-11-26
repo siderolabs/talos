@@ -209,7 +209,7 @@ func run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	drainer := &runtime.Drainer{}
+	drainer := runtime.NewDrainer()
 	defer func() {
 		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
 
