@@ -181,6 +181,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&runtimecontrollers.KernelParamSpecController{},
+		&runtimecontrollers.KmsgLogDeliveryController{
+			Cmdline: procfs.ProcCmdline(),
+			Drainer: drainer,
+		},
 		&secrets.APIController{},
 		&secrets.APICertSANsController{},
 		&secrets.EtcdController{},

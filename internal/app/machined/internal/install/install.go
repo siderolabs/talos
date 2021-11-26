@@ -33,7 +33,7 @@ import (
 
 // RunInstallerContainer performs an installation via the installer container.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg config.Registries, opts ...Option) error {
 	options := DefaultInstallOptions()
 
@@ -111,6 +111,10 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 
 	if c := procfs.ProcCmdline().Get(constants.KernelParamEventsSink).First(); c != nil {
 		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamEventsSink, *c))
+	}
+
+	if c := procfs.ProcCmdline().Get(constants.KernelParamLoggingKernel).First(); c != nil {
+		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamLoggingKernel, *c))
 	}
 
 	specOpts := []oci.SpecOpts{
