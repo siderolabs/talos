@@ -34,6 +34,10 @@ const (
 	// events sink server.
 	KernelParamEventsSink = "talos.events.sink"
 
+	// KernelParamLoggingKernel is the kernel parameter name for specifying the
+	// kernel log delivery destination.
+	KernelParamLoggingKernel = "talos.logging.kernel"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 
