@@ -13,6 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos"
+	"github.com/talos-systems/talos/pkg/cli"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
 
@@ -38,6 +39,8 @@ func Execute() error {
 	rootCmd.PersistentFlags().StringVar(&talos.Cmdcontext, "context", "", "Context to be used in command")
 	rootCmd.PersistentFlags().StringSliceVarP(&talos.Nodes, "nodes", "n", []string{}, "target the specified nodes")
 	rootCmd.PersistentFlags().StringSliceVarP(&talos.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
+	cli.Should(rootCmd.RegisterFlagCompletionFunc("context", talos.CompleteConfigContext))
+	cli.Should(rootCmd.RegisterFlagCompletionFunc("nodes", talos.CompleteNodes))
 
 	cmd, err := rootCmd.ExecuteC()
 	if err != nil {

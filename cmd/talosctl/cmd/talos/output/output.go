@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/spf13/cobra"
 )
 
 // Writer interface.
@@ -31,4 +32,9 @@ func NewWriter(format string) (Writer, error) {
 	default:
 		return nil, fmt.Errorf("output format %q is not supported", format)
 	}
+}
+
+// CompleteOutputArg represents tab completion for `--output` argument.
+func CompleteOutputArg(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return []string{"json", "table", "yaml"}, cobra.ShellCompDirectiveNoFileComp
 }

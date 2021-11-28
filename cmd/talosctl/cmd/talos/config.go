@@ -134,6 +134,7 @@ var configContextCmd = &cobra.Command{
 
 		return nil
 	},
+	ValidArgsFunction: CompleteConfigContext,
 }
 
 // configAddCmdFlags represents the `config add` command flags.
@@ -408,6 +409,23 @@ var configInfoCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// CompleteConfigContext represents tab completion for `--context` argument and `config context` command.
+func CompleteConfigContext(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	c, err := clientconfig.Open(Talosconfig)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	contextnames := make([]string, 0, len(c.Contexts))
+	for contextname := range c.Contexts {
+		contextnames = append(contextnames, contextname)
+	}
+
+	sort.Strings(contextnames)
+
+	return contextnames, cobra.ShellCompDirectiveNoFileComp
 }
 
 func init() {
