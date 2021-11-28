@@ -1276,7 +1276,7 @@ talosctl get <type> [<id>] [flags]
   -h, --help               help for get
   -i, --insecure           get resources using the insecure (encrypted with no auth) maintenance service
       --namespace string   resource namespace (default is to use default namespace per resource)
-  -o, --output string      output mode (table, yaml) (default "table")
+  -o, --output string      output mode (json, table, yaml) (default "table")
   -w, --watch              watch resource changes
 ```
 

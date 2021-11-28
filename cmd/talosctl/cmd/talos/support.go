@@ -57,6 +57,7 @@ var supportCmd = &cobra.Command{
 
 	- Kubernetes nodes and kube-system pods manifests.
 `,
+	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(Nodes) == 0 {
 			return fmt.Errorf("please provide at least a single node to gather the debug information from")
