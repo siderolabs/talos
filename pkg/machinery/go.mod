@@ -12,7 +12,7 @@ require (
 	github.com/containerd/go-cni v1.1.0
 	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
 	github.com/dustin/go-humanize v1.0.0
-	github.com/evanphx/json-patch v4.12.0+incompatible
+	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink v0.0.0-20211022192332-93da33804786
@@ -23,7 +23,7 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.1-0.20211112122313-0abe5bdae8f8
-	google.golang.org/genproto v0.0.0-20211112145013-271947fe86fd
+	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
