@@ -16,6 +16,8 @@ description: Talos gRPC API reference.
     - [Code](#common.Code)
     - [ContainerDriver](#common.ContainerDriver)
   
+    - [File-level Extensions](#common/common.proto-extensions)
+  
 - [inspect/inspect.proto](#inspect/inspect.proto)
     - [ControllerDependencyEdge](#inspect.ControllerDependencyEdge)
     - [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse)
@@ -140,14 +142,10 @@ description: Talos gRPC API reference.
     - [Shutdown](#machine.Shutdown)
     - [ShutdownResponse](#machine.ShutdownResponse)
     - [SoftIRQStat](#machine.SoftIRQStat)
-    - [StartRequest](#machine.StartRequest)
-    - [StartResponse](#machine.StartResponse)
     - [Stat](#machine.Stat)
     - [Stats](#machine.Stats)
     - [StatsRequest](#machine.StatsRequest)
     - [StatsResponse](#machine.StatsResponse)
-    - [StopRequest](#machine.StopRequest)
-    - [StopResponse](#machine.StopResponse)
     - [SystemStat](#machine.SystemStat)
     - [SystemStatResponse](#machine.SystemStatResponse)
     - [TaskEvent](#machine.TaskEvent)
@@ -337,6 +335,19 @@ Common metadata message nested in all reply message types
 
 
  <!-- end enums -->
+
+
+<a name="common/common.proto-extensions"></a>
+
+### File-level Extensions
+| Extension | Type | Base | Number | Description |
+| --------- | ---- | ---- | ------ | ----------- |
+| remove_deprecated_enum | string | .google.protobuf.EnumOptions | 93117 | Indicates the Talos version when this deprecated enum will be removed from API. |
+| remove_deprecated_enum_value | string | .google.protobuf.EnumValueOptions | 93117 | Indicates the Talos version when this deprecated enum value will be removed from API. |
+| remove_deprecated_field | string | .google.protobuf.FieldOptions | 93117 | Indicates the Talos version when this deprecated filed will be removed from API. |
+| remove_deprecated_message | string | .google.protobuf.MessageOptions | 93117 | Indicates the Talos version when this deprecated message will be removed from API. |
+| remove_deprecated_method | string | .google.protobuf.MethodOptions | 93117 | Indicates the Talos version when this deprecated method will be removed from API. |
+| remove_deprecated_service | string | .google.protobuf.ServiceOptions | 93117 | Indicates the Talos version when this deprecated service will be removed from API. |
 
  <!-- end HasExtensions -->
 
@@ -2393,36 +2404,6 @@ The messages message containing the shutdown status.
 
 
 
-<a name="machine.StartRequest"></a>
-
-### StartRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="machine.StartResponse"></a>
-
-### StartResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| resp | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="machine.Stat"></a>
 
 ### Stat
@@ -2484,36 +2465,6 @@ The request message containing the containerd namespace.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [Stats](#machine.Stats) | repeated |  |
-
-
-
-
-
-
-<a name="machine.StopRequest"></a>
-
-### StopRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="machine.StopResponse"></a>
-
-### StopResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| resp | [string](#string) |  |  |
 
 
 
@@ -2705,7 +2656,7 @@ File type.
 | TYPE_INIT | 1 |  |
 | TYPE_CONTROL_PLANE | 2 |  |
 | TYPE_WORKER | 3 |  |
-| TYPE_JOIN | 3 | Alias for TYPE_WORKER. |
+| TYPE_JOIN | 3 | Deprecated alias for TYPE_WORKER. It will be removed in v0.15. |
 
 
 

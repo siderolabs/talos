@@ -5,7 +5,43 @@ package common;
 option go_package = "github.com/talos-systems/talos/pkg/machinery/api/common";
 
 import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
 import "google/rpc/status.proto";
+
+// An alternative to using options could be extracting versions from comments.
+// Unfortunately, they are not available: https://github.com/golang/protobuf/issues/1134
+// Also, while option numbers can be the same,
+// names should be different: https://github.com/protocolbuffers/protobuf/issues/4861
+
+extend google.protobuf.MessageOptions {
+  // Indicates the Talos version when this deprecated message will be removed from API.
+  string remove_deprecated_message = 93117;
+}
+
+extend google.protobuf.FieldOptions {
+  // Indicates the Talos version when this deprecated filed will be removed from API.
+  string remove_deprecated_field = 93117;
+}
+
+extend google.protobuf.EnumOptions {
+  // Indicates the Talos version when this deprecated enum will be removed from API.
+  string remove_deprecated_enum = 93117;
+}
+
+extend google.protobuf.EnumValueOptions {
+  // Indicates the Talos version when this deprecated enum value will be removed from API.
+  string remove_deprecated_enum_value = 93117;
+}
+
+extend google.protobuf.MethodOptions {
+  // Indicates the Talos version when this deprecated method will be removed from API.
+  string remove_deprecated_method = 93117;
+}
+
+extend google.protobuf.ServiceOptions {
+  // Indicates the Talos version when this deprecated service will be removed from API.
+  string remove_deprecated_service = 93117;
+}
 
 enum Code {
   FATAL = 0;

@@ -9,9 +9,6 @@ lint:
     - id: FILE_OPTIONS_GO_PACKAGE_NOT_LONG_FORM
       files:
         - vendor/google/rpc/status.proto
-    - id: NAMES_NO_COMMON
-      files:
-        - common/common.proto
 
   rules:
     # The specific linters to add.
@@ -62,7 +59,7 @@ lint:
       - MESSAGE_FIELD_NAMES_NO_DESCRIPTOR                              # Verifies that all message field names are not "descriptor", which results in a collision in Java-generated code.
       - MESSAGE_NAMES_CAMEL_CASE                                       # Verifies that all non-extended message names are CamelCase.
       - MESSAGE_NAMES_CAPITALIZED                                      # Verifies that all non-extended message names are Capitalized.
-      - NAMES_NO_COMMON                                                # Verifies that no type name contains the word "common".
+      # - NAMES_NO_COMMON                                                # Verifies that no type name contains the word "common".
       # - NAMES_NO_DATA                                                  # Verifies that no type name contains the word "data".
       # - NAMES_NO_UUID                                                  # Verifies that no type name contains the word "uuid".
       - ONEOF_NAMES_LOWER_SNAKE_CASE                                   # Verifies that all oneof names are lower_snake_case.

@@ -15,7 +15,7 @@ description: Talos gRPC API reference.
   {{end}}
   {{- end -}}
   {{- if .Extensions }}
-  {{range .Extensions}}  - [File-level Extensions](#{{$file_name}}-extensions)
+  {{range (list .Extensions | uniq)}}  - [File-level Extensions](#{{$file_name}}-extensions)
   {{end}}
   {{- end -}}
   {{- if .Services }}

@@ -10,13 +10,16 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/AlekSi/pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	protobuf "google.golang.org/protobuf/proto" //nolint:depguard,gci
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
@@ -25,10 +28,13 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/talos-systems/talos/pkg/machinery/api/security"
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/api/time"
+	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 func TestAPIDInterfaces(t *testing.T) {
@@ -197,8 +203,7 @@ func TestAPIDSuite(t *testing.T) {
 	suite.Run(t, new(APIDSuite))
 }
 
-// Test idiosyncrasies of our APIs.
-func TestAPIs(t *testing.T) {
+func TestAPIIdiosyncrasies(t *testing.T) {
 	for _, services := range []protoreflect.ServiceDescriptors{
 		common.File_common_common_proto.Services(),
 		cluster.File_cluster_cluster_proto.Services(),
@@ -240,6 +245,141 @@ func TestAPIs(t *testing.T) {
 						assert.Equal(t, 1, int(metadata.Number()))
 					}
 				})
+			}
+		}
+	}
+}
+
+//nolint:nakedret,gocyclo,errcheck,forcetypeassert
+func getOptions(t *testing.T, descriptor protoreflect.Descriptor) (deprecated bool, version string) {
+	switch opts := descriptor.Options().(type) {
+	case *descriptorpb.EnumOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedEnum).(string)
+		}
+	case *descriptorpb.EnumValueOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedEnumValue).(string)
+		}
+	case *descriptorpb.MessageOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedMessage).(string)
+		}
+	case *descriptorpb.FieldOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedField).(string)
+		}
+	case *descriptorpb.ServiceOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedService).(string)
+		}
+	case *descriptorpb.MethodOptions:
+		if opts != nil {
+			deprecated = pointer.GetBool(opts.Deprecated)
+			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedMethod).(string)
+		}
+
+	default:
+		t.Fatalf("unhandled %T", opts)
+	}
+
+	return
+}
+
+func testDeprecated(t *testing.T, descriptor protoreflect.Descriptor, currentVersion *config.VersionContract) {
+	deprecated, version := getOptions(t, descriptor)
+
+	assert.Equal(t, deprecated, version != "",
+		"%s: `deprecated` and `remove_deprecated_XXX_in` options should be used together", descriptor.FullName())
+
+	if !deprecated || version == "" {
+		return
+	}
+
+	v, err := config.ParseContractFromVersion(version)
+	require.NoError(t, err, "%s", descriptor.FullName())
+
+	assert.True(t, v.Greater(currentVersion), "%s should be removed in this version", descriptor.FullName())
+}
+
+func testEnum(t *testing.T, enum protoreflect.EnumDescriptor, currentVersion *config.VersionContract) {
+	testDeprecated(t, enum, currentVersion)
+
+	values := enum.Values()
+	for i := 0; i < values.Len(); i++ {
+		testDeprecated(t, values.Get(i), currentVersion)
+	}
+}
+
+func testMessage(t *testing.T, message protoreflect.MessageDescriptor, currentVersion *config.VersionContract) {
+	testDeprecated(t, message, currentVersion)
+
+	fields := message.Fields()
+	for i := 0; i < fields.Len(); i++ {
+		testDeprecated(t, fields.Get(i), currentVersion)
+	}
+
+	oneofs := message.Oneofs()
+	for i := 0; i < oneofs.Len(); i++ {
+		testDeprecated(t, oneofs.Get(i), currentVersion)
+	}
+
+	enums := message.Enums()
+	for i := 0; i < enums.Len(); i++ {
+		testEnum(t, enums.Get(i), currentVersion)
+	}
+
+	// test nested messages
+	messages := message.Messages()
+	for i := 0; i < messages.Len(); i++ {
+		testMessage(t, messages.Get(i), currentVersion)
+	}
+}
+
+func TestDeprecatedAPIs(t *testing.T) {
+	currentVersion, err := config.ParseContractFromVersion(version.Tag)
+	require.NoError(t, err)
+
+	for _, file := range []protoreflect.FileDescriptor{
+		common.File_common_common_proto,
+		cluster.File_cluster_cluster_proto,
+		inspect.File_inspect_inspect_proto,
+		machine.File_machine_machine_proto,
+		resource.File_resource_resource_proto,
+		security.File_security_security_proto,
+		storage.File_storage_storage_proto,
+		time.File_time_time_proto,
+	} {
+		enums := file.Enums()
+		for i := 0; i < enums.Len(); i++ {
+			testEnum(t, enums.Get(i), currentVersion)
+		}
+
+		messages := file.Messages()
+		for i := 0; i < messages.Len(); i++ {
+			testMessage(t, messages.Get(i), currentVersion)
+		}
+
+		services := file.Services()
+		for i := 0; i < services.Len(); i++ {
+			service := services.Get(i)
+			testDeprecated(t, service, currentVersion)
+
+			methods := service.Methods()
+			for j := 0; j < methods.Len(); j++ {
+				method := methods.Get(j)
+				testDeprecated(t, method, currentVersion)
+
+				message := method.Input()
+				testMessage(t, message, currentVersion)
+
+				message = method.Output()
+				testMessage(t, message, currentVersion)
 			}
 		}
 	}
