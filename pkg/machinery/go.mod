@@ -22,7 +22,7 @@ require (
 	github.com/talos-systems/crypto v0.3.4
 	github.com/talos-systems/go-blockdevice v0.2.4
 	github.com/talos-systems/go-debug v0.2.1
-	github.com/talos-systems/net v0.3.1-0.20211112122313-0abe5bdae8f8
+	github.com/talos-systems/net v0.3.1-0.20211129211222-b4b718179a1a
 	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1

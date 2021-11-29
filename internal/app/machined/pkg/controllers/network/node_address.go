@@ -123,6 +123,11 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				continue
 			}
 
+			if network.IsULA(ip.IP(), network.ULASideroLink) {
+				// ignore SideroLink addresses, as they are point-to-point addresses
+				continue
+			}
+
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			// ignore address which are not assigned from the physical links
 			if addr.Metadata().Owner() == addressStatusControllerName {

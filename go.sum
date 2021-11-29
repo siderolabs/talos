@@ -1087,8 +1087,8 @@ github.com/talos-systems/go-smbios v0.1.1-0.20211122130416-fd5ec8ce4873 h1:YXgD3
 github.com/talos-systems/go-smbios v0.1.1-0.20211122130416-fd5ec8ce4873/go.mod h1:vk76naUSZaWE8Z95wbDn51FgH0goECM4oK3KY2hYSMU=
 github.com/talos-systems/grpc-proxy v0.2.0 h1:DN75bLfaW4xfhq0r0mwFRnfGhSB+HPhK1LNzuMEs9Pw=
 github.com/talos-systems/grpc-proxy v0.2.0/go.mod h1:sm97Vc/z2cok3pu6ruNeszQej4KDxFrDgfWs4C1mtC4=
-github.com/talos-systems/net v0.3.1-0.20211112122313-0abe5bdae8f8 h1:oT2MASZ8V3DuZbhaJWJ8oZ373zfmgXpvw2xLHM5cOYk=
-github.com/talos-systems/net v0.3.1-0.20211112122313-0abe5bdae8f8/go.mod h1:zhcGixNJz9dgwFiUwc7gkkAqdVqXagU1SNNoIVXYKGo=
+github.com/talos-systems/net v0.3.1-0.20211129211222-b4b718179a1a h1:FeWCNuAUTNRpEV5+8w7TSkWXCQ2UM9QNFxQinaBLD2Y=
+github.com/talos-systems/net v0.3.1-0.20211129211222-b4b718179a1a/go.mod h1:zhcGixNJz9dgwFiUwc7gkkAqdVqXagU1SNNoIVXYKGo=
 github.com/talos-systems/siderolink v0.1.0 h1:7mkJ9EicQ8J9DHHkwiNYGoccCgFcEIFcmfcKRyI7Y+8=
 github.com/talos-systems/siderolink v0.1.0/go.mod h1:bEGwDYl9QgC3oZ4kdnJTuR2HX/XlUhxZjx/QAakKuBc=
 github.com/tchap/go-patricia v2.2.6+incompatible/go.mod h1:bmLyhP68RS6kStMGxByiQ23RP/odRBOTVjwp2cDyi6I=

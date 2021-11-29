@@ -680,6 +680,8 @@ func primaryAndListenAddresses(subnet string) (primary, listen string, err error
 		return "", "", fmt.Errorf("failed to discover interface IP addresses: %w", err)
 	}
 
+	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
+
 	if len(ips) == 0 {
 		return "", "", errors.New("no valid unicast IP addresses on any interface")
 	}

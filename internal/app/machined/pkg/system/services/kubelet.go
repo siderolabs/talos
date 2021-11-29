@@ -456,6 +456,8 @@ func pickNodeIPs(cidrs []string) ([]stdnet.IP, error) {
 		return nil, fmt.Errorf("failed to discover interface IP addresses: %w", err)
 	}
 
+	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
+
 	ips, err = net.FilterIPs(ips, cidrs)
 	if err != nil {
 		return nil, err

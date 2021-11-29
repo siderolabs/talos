@@ -13,6 +13,8 @@ import (
 
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/net"
+
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // NewCommonOptions set common certificate options.
@@ -21,6 +23,8 @@ func NewCommonOptions() ([]x509.Option, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
 	}
+
+	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
 
 	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
 	if net.IsIPv6(ips...) {

@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -63,6 +64,8 @@ func Main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
 
 	dnsNames, err := net.DNSNames()
 	if err != nil {

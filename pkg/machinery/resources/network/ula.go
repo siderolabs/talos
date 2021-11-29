@@ -6,6 +6,7 @@ package network
 
 import (
 	"crypto/sha256"
+	"net"
 
 	"inet.af/netaddr"
 )
@@ -45,4 +46,30 @@ func ULAPrefix(clusterID string, purpose ULAPurpose) netaddr.IPPrefix {
 	prefixData[7] = byte(purpose)
 
 	return netaddr.IPPrefixFrom(netaddr.IPFrom16(prefixData), 64).Masked()
+}
+
+// IsULA checks whether IP address is a Unique Local Address with the specific purpose.
+func IsULA(ip netaddr.IP, purpose ULAPurpose) bool {
+	if !ip.Is6() {
+		return false
+	}
+
+	raw := ip.As16()
+
+	return raw[0] == 0xfd && raw[7] == byte(purpose)
+}
+
+// IsStdULA implements IsULA for stdlib net.IP.
+func IsStdULA(ip net.IP, purpose ULAPurpose) bool {
+	addr, ok := netaddr.FromStdIP(ip)
+	if !ok {
+		return false
+	}
+
+	return IsULA(addr, purpose)
+}
+
+// NotSideroLinkStdIP is a shorthand for !IsStdULA(ip, ULASideroLink).
+func NotSideroLinkStdIP(ip net.IP) bool {
+	return !IsStdULA(ip, ULASideroLink)
 }
