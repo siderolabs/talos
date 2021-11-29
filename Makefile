@@ -262,6 +262,9 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 
 # Code Quality
 
+api-descriptors: ## Generates API descriptors used to detect breaking API changes.
+	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/amd64
+
 fmt-go: ## Formats the source code.
 	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && gofumports -w -local github.com/talos-systems/talos ."
 
