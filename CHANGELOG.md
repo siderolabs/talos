@@ -1,3 +1,33 @@
+## [Talos 0.13.4](https://github.com/talos-systems/talos/releases/tag/v0.13.4) (2021-11-29)
+
+Welcome to the v0.13.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`58560a02`](https://github.com/talos-systems/talos/commit/58560a02d97b14c3b327c3a85eff800ee2b39ad5) fix: leave only a single IPv4/IPv6 address as kubelet's node IP
+* [`de4aeaf4`](https://github.com/talos-systems/talos/commit/de4aeaf4e669cc5d6afef46fe1a5f1ca335691e7) fix: catch panics in network operator runs
+* [`774d3a92`](https://github.com/talos-systems/talos/commit/774d3a92ce6cb261feecb370fd83208b7c8dfe8b) fix: ignore EBUSY from `kexec_file_load`
+* [`7d633498`](https://github.com/talos-systems/talos/commit/7d6334982c4854f996839d97bf18e845b6026f22) fix: allow add_key and request_key in kubelet seccomp profile
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/cenkalti/backoff/v4**  v4.1.1 **_new_**
+
+Previous release can be found at [v0.13.3](https://github.com/talos-systems/talos/releases/tag/v0.13.3)
+
 ## [Talos 0.13.3](https://github.com/talos-systems/talos/releases/tag/v0.13.3) (2021-11-22)
 
 Welcome to the v0.13.3 release of Talos!

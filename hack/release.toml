@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.13.2"
+previous = "v0.13.3"
 
 pre_release = false
 
@@ -14,14 +14,6 @@ preface = """\
 """
 
 [notes]
-
-    [notes.kubelet]
-        title = "Kubelet"
-        description = """\
-Kubelet service can now be restarted with `talosctl service kubelet restart`.
-
-Kubelet node IP configuration (`.machine.kubelet.nodeIP.validSubnets`) can now include negative subnet matches (prefixed with `!`).
-"""
 
 [make_deps]
 
