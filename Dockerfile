@@ -145,6 +145,16 @@ RUN --mount=type=cache,target=/.cache go mod verify
 
 # The generate target generates code from protobuf service definitions and machinery config.
 
+# generate API descriptors
+FROM build AS api-descriptors-build
+WORKDIR /src/api
+COPY api .
+RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool break descriptor-set --output-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+
+FROM --platform=${BUILDPLATFORM} scratch AS api-descriptors
+COPY --from=api-descriptors-build /src/api/api.descriptors /api/api.descriptors
+
 # format protobuf service definitions
 FROM build AS proto-format-build
 WORKDIR /src/api
@@ -646,7 +656,8 @@ RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/t
 FROM base AS lint-protobuf
 WORKDIR /src/api
 COPY api .
-RUN prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool lint --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
+RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-path=api.descriptors --protoc-bin-path=/toolchain/bin/protoc --protoc-wkt-path=/toolchain/include
 
 # The markdownlint target performs linting on Markdown files.
 
