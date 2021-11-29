@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -81,14 +82,17 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 
 	suite.handler = &logHandler{}
 
-	suite.srv, err = logreceiver.NewServer(logger, "localhost:4001", suite.handler.HandleLog)
+	listener, err := net.Listen("tcp", "localhost:0")
+	suite.Require().NoError(err)
+
+	suite.srv, err = logreceiver.NewServer(logger, listener, suite.handler.HandleLog)
 	suite.Require().NoError(err)
 
 	go func() {
 		suite.srv.Serve() //nolint:errcheck
 	}()
 
-	suite.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamLoggingKernel, "tcp://localhost:4001"))
+	suite.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamLoggingKernel, fmt.Sprintf("tcp://%s", listener.Addr())))
 	suite.drainer = talosruntime.NewDrainer()
 
 	suite.Require().NoError(suite.runtime.RegisterController(&controllerruntime.KmsgLogDeliveryController{
