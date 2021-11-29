@@ -76,9 +76,9 @@ function setup {
   export AWS_NODE_ADDL_SEC_GROUPS='[{id: sg-ebe8e59f}]'
   export AWS_NODE_IAM_PROFILE=CAPI_AWS_Worker
 
-  ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
+  ${CLUSTERCTL} generate cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/talos-systems/cluster-api-templates/blob/v1alpha4/aws/standard/standard.yaml > ${TMP}/cluster.yaml
+    --from https://github.com/Unix4ever/cluster-api-templates/blob/drop-init-configs/aws/standard/standard.yaml > ${TMP}/cluster.yaml
 }
 
 setup
