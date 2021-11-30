@@ -40,13 +40,13 @@ see `.machine.logging` machine configuration option.
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.1
+* Linux: 5.15.5
 * etcd: 3.5.1
-* containerd: 1.5.7
+* containerd: 1.5.8
 * Kubernetes: 1.23.0-rc.0
 * CoreDNS: 1.8.6
 
-Talos is built with Go 1.17.2
+Talos is built with Go 1.17.3
 """
 
     [notes.caps]
