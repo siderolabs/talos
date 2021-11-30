@@ -94,6 +94,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		Args: [][2]string{
 			{"IP", strings.Join(fakeIPs, ",")},
 			{"GATEWAY", strings.Join(gatewayAddrs, ",")},
+			{"IgnoreUnknown", "1"},
 		},
 	}
 

@@ -122,6 +122,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		Args: [][2]string{
 			{"IP", strings.Join(ips, ",")},
 			{"GATEWAY", strings.Join(gatewayAddrs, ",")},
+			{"IgnoreUnknown", "1"},
 		},
 	}
 

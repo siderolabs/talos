@@ -37,7 +37,7 @@ func List(config config.Provider) Versions {
 
 	images.Etcd = config.Cluster().Etcd().Image()
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.Flannel = "quay.io/coreos/flannel:v0.13.0"
+	images.Flannel = "quay.io/coreos/flannel:v0.15.1"
 	images.FlannelCNI = fmt.Sprintf("ghcr.io/talos-systems/install-cni:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
