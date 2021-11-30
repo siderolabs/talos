@@ -35,7 +35,27 @@ $ talosctl -n 172.20.1.2 logs machined
 [...]
 ```
 
+Container logs for Kubernetes pods can be retrieved with `talosctl logs -k` command:
+
+```sh
+$ talosctl -n 172.20.1.2 containers -k
+NODE         NAMESPACE   ID                                                 IMAGE                                                         PID    STATUS
+172.20.1.2   k8s.io      kube-system/kube-flannel-dk6d5                     k8s.gcr.io/pause:3.5                                          1329   SANDBOX_READY
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-cni      ghcr.io/talos-systems/install-cni:v0.7.0-alpha.0-1-g2bb2efc   0      CONTAINER_EXITED
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-config   quay.io/coreos/flannel:v0.13.0                                0      CONTAINER_EXITED
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:kube-flannel     quay.io/coreos/flannel:v0.13.0                                1610   CONTAINER_RUNNING
+172.20.1.2   k8s.io      kube-system/kube-proxy-gfkqj                       k8s.gcr.io/pause:3.5                                          1311   SANDBOX_READY
+172.20.1.2   k8s.io      └─ kube-system/kube-proxy-gfkqj:kube-proxy         k8s.gcr.io/kube-proxy:v1.23.0-rc.0                            1379   CONTAINER_RUNNING
+
+$ talosctl -n 172.20.1.2 logs -k kube-system/kube-proxy-gfkqj:kube-proxy
+172.20.1.2: 2021-11-30T19:13:20.567825192Z stderr F I1130 19:13:20.567737       1 server_others.go:138] "Detected node IP" address="172.20.0.3"
+172.20.1.2: 2021-11-30T19:13:20.599684397Z stderr F I1130 19:13:20.599613       1 server_others.go:206] "Using iptables Proxier"
+[...]
+```
+
 ## Sending logs
+
+### Service logs
 
 You can enable logs sendings in machine configuration:
 
@@ -65,6 +85,35 @@ The only currently supported format is `json_lines`:
 Messages are newline-separated when sent over TCP.
 Over UDP messages are sent with one message per packet.
 `msg`, `talos-level`, `talos-service`, and `talos-time` fields are always present; there may be additional fields.
+
+### Kernel logs
+
+Kernel log delivery can be enabled with the `talos.logging.kernel` kernel command line argument, which can be specified
+in the `.machine.installer.extraKernelArgs`:
+
+```yaml
+machine:
+  install:
+    extraKernelArgs:
+      - talos.logging.kernel=tcp://host:5044/
+```
+
+Kernel log destination is specified in the same way as service log endpoint.
+The only supported format is `json_lines`.
+
+Sample message:
+
+```json
+{
+  "clock":6252819, // time relative to the kernel boot time
+  "facility":"user",
+  "msg":"[talos] task startAllServices (1/1): waiting for 6 services\n",
+  "priority":"warning",
+  "seq":711,
+  "talos-level":"warn", // Talos-translated `priority` into common logging level
+  "talos-time":"2021-11-26T16:53:21.3258698Z" // Talos-translated `clock` using current time
+}
+```
 
 ### Filebeat example
 
