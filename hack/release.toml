@@ -26,14 +26,15 @@ So there is no need to update CoreDNS, Flannel container manually after running 
     [notes.discovery]
         title = "Cluster Discovery"
         description="""\
-Cluster Discovery is enabled by default for Talos 0.14.
+[Cluster Discovery](https://www.talos.dev/docs/v0.14/guides/discovery/) is enabled by default for Talos 0.14.
 Cluster Discovery can be disabled with `talosctl gen config --with-cluster-discovery=false`.
 """
 
     [notes.logs]
         title = "Log Shipping"
         description="""\
-Talos can now ship system logs to the configured destination using either JSON-over-UDP or JSON-over-TCP:
+Talos can now [ship system logs](https://www.talos.dev/docs/v0.14/guides/logging/)
+to the configured destination using either JSON-over-UDP or JSON-over-TCP:
 see `.machine.logging` machine configuration option.
 """
 
@@ -87,6 +88,22 @@ Generated archive does not contain any secret information so it is safe to send 
 Kubelet service can now be restarted with `talosctl service kubelet restart`.
 
 Kubelet node IP configuration (`.machine.kubelet.nodeIP.validSubnets`) can now include negative subnet matches (prefixed with `!`).
+"""
+
+    [notes.siderolink]
+        title = "SideroLink"
+        description = """\
+A set of Talos ehancements is going to unlock a number of exciting features in the upcoming release of [Sidero](https://www.sidero.dev/):
+
+* `SideroLink`: a point-to-point Wireguard tunnel connecting Talos node back to the provisioning platform (Sidero).
+* event sink (kernel arg `talos.event.sink=http://10.0.0.1:4000`) delivers Talos internal events to the specified destination.
+* kmsg log delivery (kernel arg `talos.logging.kernel=tcp://10.0.0.1:4001`) sends kernel logs as JSON lines over TCP or UDP.
+"""
+
+    [notes.ntp]
+        title = "NTP Sync"
+        description = """\
+Talos NTP sync process was improved to align better with kernel time adjustment periods and to filter out spikes.
 """
 
 [make_deps]
