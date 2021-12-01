@@ -239,7 +239,7 @@ gcloud compute images delete \
 Using GCP deployment manager automatically creates a Google Storage bucket and uploads the Talos image to it.
 Once the deployment is complete the generated `talosconfig` and `kubeconfig` files are uploaded to the bucket.
 
-By default this setup creates a three node control plane and a single worker in `us-west2-c`
+By default this setup creates a three node control plane and a single worker in `us-west1-b`
 
 First we need to create a folder to store our deployment manifests and perform all subsequent operations from that folder.
 
@@ -254,7 +254,7 @@ We need to download two deployment manifests for the deployment from the Talos g
 
 ```bash
 curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/config.yaml"
-curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/talos-ha.yaml"
+curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/talos-ha.jinja"
 # if using ccm
 curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/gcp-ccm.yaml"
 ```
@@ -273,7 +273,7 @@ resources:
   - name: talos-ha
     type: talos-ha.jinja
     properties:
-      zone: us-west2-c
+      zone: us-west1-b
       talosVersion: v0.13.2
       externalCloudProvider: false
       controlPlaneNodeCount: 5
@@ -394,27 +394,29 @@ kubectl \
 
 Warning: This will delete the deployment and all resources associated with it.
 
-```bash
-# delete the objects in the bucket first
-gsutil rm -r "gs://${BUCKET_NAME}"
-gcloud deployment-manager deployments delete "${DEPLOYMENT_NAME}"
-```
-
 Run below if cloud controller manager is enabled
 
 ```bash
-gcloud projects delete-iam-policy-binding \
+gcloud projects remove-iam-policy-binding \
     "${PROJECT}" \
     --member "serviceAccount:${SERVICE_ACCOUNT}" \
     --role roles/iam.serviceAccountUser
 
-gcloud projects delete-iam-policy-binding \
+gcloud projects remove-iam-policy-binding \
     "${PROJECT}" \
     --member serviceAccount:"${SERVICE_ACCOUNT}" \
     --role roles/compute.admin
 
-gcloud projects delete-iam-policy-binding \
+gcloud projects remove-iam-policy-binding \
     "${PROJECT}" \
     --member serviceAccount:"${SERVICE_ACCOUNT}" \
     --role roles/compute.loadBalancerAdmin
+```
+
+Now we can finally remove the deployment
+
+```bash
+# delete the objects in the bucket first
+gsutil -m rm -r "gs://${BUCKET_NAME}"
+gcloud deployment-manager deployments delete "${DEPLOYMENT_NAME}" --quiet
 ```
