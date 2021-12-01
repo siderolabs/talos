@@ -19,6 +19,8 @@ function setup {
   export GCP_PROJECT=talos-testbed
   export GCP_REGION=us-central1
   export GCP_NETWORK=default
+  export GCP_VM_SVC_ACCOUNT=e2e-tester@talos-testbed.iam.gserviceaccount.com
+
 
   ## Control plane vars
   export CONTROL_PLANE_MACHINE_COUNT=3
