@@ -66,7 +66,7 @@ type MachineServiceClient interface {
 	NetworkDeviceStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NetworkDeviceStatsResponse, error)
 	Processes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ProcessesResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (MachineService_ReadClient, error)
-	Reboot(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RebootResponse, error)
+	Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error)
 	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartResponse, error)
 	Rollback(ctx context.Context, in *RollbackRequest, opts ...grpc.CallOption) (*RollbackResponse, error)
 	Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
@@ -557,7 +557,7 @@ func (x *machineServiceReadClient) Recv() (*common.Data, error) {
 	return m, nil
 }
 
-func (c *machineServiceClient) Reboot(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RebootResponse, error) {
+func (c *machineServiceClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error) {
 	out := new(RebootResponse)
 	err := c.cc.Invoke(ctx, "/machine.MachineService/Reboot", in, out, opts...)
 	if err != nil {
@@ -727,7 +727,7 @@ type MachineServiceServer interface {
 	NetworkDeviceStats(context.Context, *emptypb.Empty) (*NetworkDeviceStatsResponse, error)
 	Processes(context.Context, *emptypb.Empty) (*ProcessesResponse, error)
 	Read(*ReadRequest, MachineService_ReadServer) error
-	Reboot(context.Context, *emptypb.Empty) (*RebootResponse, error)
+	Reboot(context.Context, *RebootRequest) (*RebootResponse, error)
 	Restart(context.Context, *RestartRequest) (*RestartResponse, error)
 	Rollback(context.Context, *RollbackRequest) (*RollbackResponse, error)
 	Reset(context.Context, *ResetRequest) (*ResetResponse, error)
@@ -852,7 +852,7 @@ func (UnimplementedMachineServiceServer) Read(*ReadRequest, MachineService_ReadS
 	return status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 
-func (UnimplementedMachineServiceServer) Reboot(context.Context, *emptypb.Empty) (*RebootResponse, error) {
+func (UnimplementedMachineServiceServer) Reboot(context.Context, *RebootRequest) (*RebootResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reboot not implemented")
 }
 
@@ -1424,7 +1424,7 @@ func (x *machineServiceReadServer) Send(m *common.Data) error {
 }
 
 func _MachineService_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(RebootRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1436,7 +1436,7 @@ func _MachineService_Reboot_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/machine.MachineService/Reboot",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).Reboot(ctx, req.(*emptypb.Empty))
+		return srv.(MachineServiceServer).Reboot(ctx, req.(*RebootRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

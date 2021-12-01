@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -137,7 +136,7 @@ func (suite *EtcdSuite) TestEtcdLeaveCluster() {
 	// NB: Reboot the node so that it can rejoin the etcd cluster. This allows us
 	// to check the cluster health and catch any issues in rejoining.
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		_, err = suite.Client.MachineClient.Reboot(nodeCtx, &emptypb.Empty{})
+		_, err = suite.Client.MachineClient.Reboot(nodeCtx, &machineapi.RebootRequest{})
 
 		return err
 	}, 10*time.Minute)

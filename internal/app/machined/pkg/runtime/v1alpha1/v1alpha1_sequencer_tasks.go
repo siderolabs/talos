@@ -1754,6 +1754,14 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 //nolint:gocyclo
 func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if req, ok := data.(*machineapi.RebootRequest); ok {
+			if req.Mode == machineapi.RebootRequest_POWERCYCLE {
+				log.Print("kexec skipped as reboot with power cycle was requested")
+
+				return nil
+			}
+		}
+
 		if r.Config() == nil {
 			return nil
 		}

@@ -1671,7 +1671,8 @@ talosctl reboot [flags]
 ### Options
 
 ```
-  -h, --help   help for reboot
+  -h, --help       help for reboot
+  -m, --mode int   skips kexec and reboots with power cycle
 ```
 
 ### Options inherited from parent commands
