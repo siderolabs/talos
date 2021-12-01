@@ -109,6 +109,7 @@ description: Talos gRPC API reference.
     - [ProcessesResponse](#machine.ProcessesResponse)
     - [ReadRequest](#machine.ReadRequest)
     - [Reboot](#machine.Reboot)
+    - [RebootRequest](#machine.RebootRequest)
     - [RebootResponse](#machine.RebootResponse)
     - [Reset](#machine.Reset)
     - [ResetPartitionSpec](#machine.ResetPartitionSpec)
@@ -159,6 +160,7 @@ description: Talos gRPC API reference.
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
+    - [RebootRequest.Mode](#machine.RebootRequest.Mode)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
     - [TaskEvent.Action](#machine.TaskEvent.Action)
@@ -1866,13 +1868,27 @@ rpc processes
 <a name="machine.Reboot"></a>
 
 ### Reboot
-rpc reboot
 The reboot message containing the reboot status.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.RebootRequest"></a>
+
+### RebootRequest
+rpc reboot
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [RebootRequest.Mode](#machine.RebootRequest.Mode) |  |  |
 
 
 
@@ -2672,6 +2688,18 @@ File type.
 
 
 
+<a name="machine.RebootRequest.Mode"></a>
+
+### RebootRequest.Mode
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DEFAULT | 0 |  |
+| POWERCYCLE | 1 |  |
+
+
+
 <a name="machine.SequenceEvent.Action"></a>
 
 ### SequenceEvent.Action
@@ -2760,7 +2788,7 @@ This method is available only on control plane nodes (which run etcd). |
 | NetworkDeviceStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse) |  |
 | Processes | [.google.protobuf.Empty](#google.protobuf.Empty) | [ProcessesResponse](#machine.ProcessesResponse) |  |
 | Read | [ReadRequest](#machine.ReadRequest) | [.common.Data](#common.Data) stream |  |
-| Reboot | [.google.protobuf.Empty](#google.protobuf.Empty) | [RebootResponse](#machine.RebootResponse) |  |
+| Reboot | [RebootRequest](#machine.RebootRequest) | [RebootResponse](#machine.RebootResponse) |  |
 | Restart | [RestartRequest](#machine.RestartRequest) | [RestartResponse](#machine.RestartResponse) |  |
 | Rollback | [RollbackRequest](#machine.RollbackRequest) | [RollbackResponse](#machine.RollbackResponse) |  |
 | Reset | [ResetRequest](#machine.ResetRequest) | [ResetResponse](#machine.ResetResponse) |  |

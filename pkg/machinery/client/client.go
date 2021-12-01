@@ -485,9 +485,22 @@ func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest)
 	return
 }
 
+// RebootMode provides various mode through which the reboot process can be done.
+type RebootMode func(*machineapi.RebootRequest)
+
+// WithPowerCycle option runs the Reboot fun in powercycle mode.
+func WithPowerCycle(req *machineapi.RebootRequest) {
+	req.Mode = machineapi.RebootRequest_POWERCYCLE
+}
+
 // Reboot implements the proto.MachineServiceClient interface.
-func (c *Client) Reboot(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Reboot(ctx, &emptypb.Empty{})
+func (c *Client) Reboot(ctx context.Context, opts ...RebootMode) (err error) {
+	var req machineapi.RebootRequest
+	for _, opt := range opts {
+		opt(&req)
+	}
+
+	resp, err := c.MachineClient.Reboot(ctx, &req)
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)

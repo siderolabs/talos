@@ -208,7 +208,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 // Reboot implements the machine.MachineServer interface.
 //
 //nolint:dupl
-func (s *Server) Reboot(ctx context.Context, in *emptypb.Empty) (reply *machine.RebootResponse, err error) {
+func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *machine.RebootResponse, err error) {
 	log.Printf("reboot via API received")
 
 	if err := s.checkSupported(runtime.Reboot); err != nil {
