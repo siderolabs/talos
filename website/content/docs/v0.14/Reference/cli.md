@@ -1671,7 +1671,8 @@ talosctl reboot [flags]
 ### Options
 
 ```
-  -h, --help   help for reboot
+  -h, --help          help for reboot
+  -m, --mode string   select the reboot mode: "default", "powercyle" (skips kexec) (default "default")
 ```
 
 ### Options inherited from parent commands

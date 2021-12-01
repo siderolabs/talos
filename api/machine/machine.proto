@@ -52,7 +52,7 @@ service MachineService {
   rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
   rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
   rpc Read(ReadRequest) returns (stream common.Data);
-  rpc Reboot(google.protobuf.Empty) returns (RebootResponse);
+  rpc Reboot(RebootRequest) returns (RebootResponse);
   rpc Restart(RestartRequest) returns (RestartResponse);
   rpc Rollback(RollbackRequest) returns (RollbackResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
@@ -90,6 +90,14 @@ message ApplyConfigurationResponse {
 }
 
 // rpc reboot
+message RebootRequest {
+  enum Mode {
+    DEFAULT = 0;
+    POWERCYCLE = 1;
+  }
+  Mode mode = 1;
+}
+
 // The reboot message containing the reboot status.
 message Reboot {
   common.Metadata metadata = 1;

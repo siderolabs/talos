@@ -21,7 +21,19 @@ var rebootCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if err := c.Reboot(ctx); err != nil {
+			mode, err := cmd.Flags().GetString("mode")
+			if err != nil {
+				return fmt.Errorf("error getting input value for --mode flag: %s", err)
+			}
+
+			opts := []client.RebootMode{}
+
+			// skips kexec and reboots with power cycle
+			if mode == "powercycle" {
+				opts = append(opts, client.WithPowerCycle)
+			}
+
+			if err := c.Reboot(ctx, opts...); err != nil {
 				return fmt.Errorf("error executing reboot: %s", err)
 			}
 
@@ -31,5 +43,6 @@ var rebootCmd = &cobra.Command{
 }
 
 func init() {
+	rebootCmd.Flags().StringP("mode", "m", "default", "select the reboot mode: \"default\", \"powercyle\" (skips kexec)")
 	addCommand(rebootCmd)
 }
