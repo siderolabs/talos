@@ -907,6 +907,11 @@ func (v *Vlan) Addresses() []string {
 	}
 }
 
+// MTU implements the MachineNetwork interface.
+func (v *Vlan) MTU() uint32 {
+	return v.VlanMTU
+}
+
 // Routes implements the MachineNetwork interface.
 func (v *Vlan) Routes() []config.Route {
 	routes := make([]config.Route, len(v.VlanRoutes))

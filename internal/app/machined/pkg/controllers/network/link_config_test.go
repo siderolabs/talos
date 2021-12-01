@@ -178,7 +178,8 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						DeviceInterface: "eth0",
 						DeviceVlans: []*v1alpha1.Vlan{
 							{
-								VlanID: 24,
+								VlanID:  24,
+								VlanMTU: 1000,
 								VlanAddresses: []string{
 									"10.0.0.1/8",
 								},
@@ -283,8 +284,10 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 
 					if r.TypedSpec().Name == "eth0.24" {
 						suite.Assert().EqualValues(24, r.TypedSpec().VLAN.VID)
+						suite.Assert().EqualValues(1000, r.TypedSpec().MTU)
 					} else {
 						suite.Assert().EqualValues(48, r.TypedSpec().VLAN.VID)
+						suite.Assert().EqualValues(0, r.TypedSpec().MTU)
 					}
 				case "eth2", "eth3":
 					suite.Assert().True(r.TypedSpec().Up)

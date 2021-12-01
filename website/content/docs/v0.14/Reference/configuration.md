@@ -4803,6 +4803,18 @@ The VLAN's ID.
 </div>
 
 <hr />
+<div class="dd">
+
+<code>mtu</code>  <i>uint32</i>
+
+</div>
+<div class="dt">
+
+The VLAN's MTU.
+
+</div>
+
+<hr />
 
 
 

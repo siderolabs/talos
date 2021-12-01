@@ -206,6 +206,7 @@ type Vlan interface {
 	Routes() []Route
 	DHCP() bool
 	ID() uint16
+	MTU() uint32
 }
 
 // Route represents a network route.

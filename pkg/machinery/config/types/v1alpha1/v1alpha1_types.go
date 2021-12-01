@@ -1855,6 +1855,8 @@ type Vlan struct {
 	VlanDHCP bool `yaml:"dhcp"`
 	//   description: The VLAN's ID.
 	VlanID uint16 `yaml:"vlanId"`
+	//   description: The VLAN's MTU.
+	VlanMTU uint32 `yaml:"mtu,omitempty"`
 }
 
 // Route represents a network route.

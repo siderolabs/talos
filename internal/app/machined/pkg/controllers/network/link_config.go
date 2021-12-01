@@ -453,6 +453,7 @@ func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {
 		Name:       fmt.Sprintf("%s.%d", linkName, vlan.ID()),
 		Logical:    true,
 		Up:         true,
+		MTU:        vlan.MTU(),
 		Kind:       network.LinkKindVLAN,
 		Type:       nethelpers.LinkEther,
 		ParentName: linkName,

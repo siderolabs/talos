@@ -1780,7 +1780,7 @@ func init() {
 			FieldName: "vlans",
 		},
 	}
-	VlanDoc.Fields = make([]encoder.Doc, 5)
+	VlanDoc.Fields = make([]encoder.Doc, 6)
 	VlanDoc.Fields[0].Name = "addresses"
 	VlanDoc.Fields[0].Type = "[]string"
 	VlanDoc.Fields[0].Note = ""
@@ -1801,6 +1801,11 @@ func init() {
 	VlanDoc.Fields[4].Note = ""
 	VlanDoc.Fields[4].Description = "The VLAN's ID."
 	VlanDoc.Fields[4].Comments[encoder.LineComment] = "The VLAN's ID."
+	VlanDoc.Fields[5].Name = "mtu"
+	VlanDoc.Fields[5].Type = "uint32"
+	VlanDoc.Fields[5].Note = ""
+	VlanDoc.Fields[5].Description = "The VLAN's MTU."
+	VlanDoc.Fields[5].Comments[encoder.LineComment] = "The VLAN's MTU."
 
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.LineComment] = "Route represents a network route."
