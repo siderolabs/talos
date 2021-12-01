@@ -79,7 +79,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(env),
-		runner.WithCgroupPath(constants.CgroupRuntime),
+		runner.WithCgroupPath(constants.CgroupSystemRuntime),
 	),
 		restart.WithType(restart.Forever),
 	), nil

@@ -23,6 +23,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	multierror "github.com/hashicorp/go-multierror"
@@ -151,32 +152,78 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 			}
 		}
 
-		groups := []string{
-			constants.CgroupInit,
-			constants.CgroupRuntime,
-			constants.CgroupPodRuntime,
-			constants.CgroupKubelet,
+		groups := []struct {
+			name      string
+			resources *cgroupsv2.Resources
+		}{
+			{
+				name: constants.CgroupInit,
+				resources: &cgroupsv2.Resources{
+					Memory: &cgroupsv2.Memory{
+						Min: pointer.ToInt64(constants.CgroupInitReservedMemory),
+						Low: pointer.ToInt64(constants.CgroupInitReservedMemory * 2),
+					},
+				},
+			},
+			{
+				name: constants.CgroupSystem,
+				resources: &cgroupsv2.Resources{
+					Memory: &cgroupsv2.Memory{
+						Min: pointer.ToInt64(constants.CgroupSystemReservedMemory),
+						Low: pointer.ToInt64(constants.CgroupSystemReservedMemory * 2),
+					},
+				},
+			},
+			{
+				name:      constants.CgroupSystemRuntime,
+				resources: &cgroupsv2.Resources{},
+			},
+			{
+				name: constants.CgroupPodRuntime,
+				resources: &cgroupsv2.Resources{
+					Memory: &cgroupsv2.Memory{
+						Min: pointer.ToInt64(constants.CgroupPodRuntimeReservedMemory),
+						Low: pointer.ToInt64(constants.CgroupPodRuntimeReservedMemory * 2),
+					},
+				},
+			},
+			{
+				name: constants.CgroupKubelet,
+				resources: &cgroupsv2.Resources{
+					Memory: &cgroupsv2.Memory{
+						Min: pointer.ToInt64(constants.CgroupKubeletReservedMemory),
+						Low: pointer.ToInt64(constants.CgroupKubeletReservedMemory * 2),
+					},
+				},
+			},
 		}
 
 		for _, c := range groups {
 			if cgroups.Mode() == cgroups.Unified {
-				cg, err := cgroupsv2.NewManager(constants.CgroupMountPath, c, &cgroupsv2.Resources{})
+				resources := c.resources
+
+				if r.State().Platform().Mode() == runtime.ModeContainer {
+					// don't attempt to set resources in container mode, as they might conflict with the parent cgroup tree
+					resources = &cgroupsv2.Resources{}
+				}
+
+				cg, err := cgroupsv2.NewManager(constants.CgroupMountPath, c.name, resources)
 				if err != nil {
 					return fmt.Errorf("failed to create cgroup: %w", err)
 				}
 
-				if c == constants.CgroupInit {
+				if c.name == constants.CgroupInit {
 					if err := cg.AddProc(uint64(os.Getpid())); err != nil {
 						return fmt.Errorf("failed to move init process to cgroup: %w", err)
 					}
 				}
 			} else {
-				cg, err := cgroups.New(cgroups.V1, cgroups.StaticPath(c), &specs.LinuxResources{})
+				cg, err := cgroups.New(cgroups.V1, cgroups.StaticPath(c.name), &specs.LinuxResources{})
 				if err != nil {
 					return fmt.Errorf("failed to create cgroup: %w", err)
 				}
 
-				if c == constants.CgroupInit {
+				if c.name == constants.CgroupInit {
 					if err := cg.Add(cgroups.Process{
 						Pid: os.Getpid(),
 					}); err != nil {

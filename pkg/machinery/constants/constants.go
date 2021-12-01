@@ -287,7 +287,7 @@ const (
 	KubeletSystemReservedCPU = "50m"
 
 	// KubeletSystemReservedMemory memory system reservation value for kubelet kubeconfig.
-	KubeletSystemReservedMemory = "128Mi"
+	KubeletSystemReservedMemory = "192Mi"
 
 	// KubeletSystemReservedPid pid system reservation value for kubelet kubeconfig.
 	KubeletSystemReservedPid = "100"
@@ -458,11 +458,17 @@ const (
 	// CgroupInit is the cgroup name for init process.
 	CgroupInit = "/init"
 
+	// CgroupInitReservedMemory is the hard memory protection for the init process.
+	CgroupInitReservedMemory = 96 * 1024 * 1024
+
 	// CgroupSystem is the cgroup name for system processes.
 	CgroupSystem = "/system"
 
-	// CgroupRuntime is the cgroup name for containerd runtime processes.
-	CgroupRuntime = CgroupSystem + "/runtime"
+	// CgroupSystemReservedMemory is the hard memory protection for the system processes.
+	CgroupSystemReservedMemory = 96 * 1024 * 1024
+
+	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
+	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
@@ -470,8 +476,14 @@ const (
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
 
+	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
+	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
+
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"
+
+	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
+	CgroupKubeletReservedMemory = 64 * 1024 * 1024
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"

@@ -35,7 +35,7 @@ require (
 	github.com/aws/aws-sdk-go v1.43.8
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
-	github.com/containerd/cgroups v1.0.3
+	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
 	github.com/containerd/containerd v1.6.0
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
