@@ -19,6 +19,9 @@ const NamespaceName resource.Namespace = v1alpha1.NamespaceName
 // KernelParamSpecType is type of KernelParam resource.
 const KernelParamSpecType = resource.Type("KernelParamSpecs.runtime.talos.dev")
 
+// KernelParamDefaultSpecType is type of KernelParam resource for default kernel params.
+const KernelParamDefaultSpecType = resource.Type("KernelParamDefaultSpecs.runtime.talos.dev")
+
 // KernelParamSpec resource holds sysctl flags to define.
 type KernelParamSpec struct {
 	md   resource.Metadata
@@ -35,6 +38,18 @@ type KernelParamSpecSpec struct {
 func NewKernelParamSpec(namespace resource.Namespace, id resource.ID) *KernelParamSpec {
 	r := &KernelParamSpec{
 		md:   resource.NewMetadata(namespace, KernelParamSpecType, id, resource.VersionUndefined),
+		spec: KernelParamSpecSpec{},
+	}
+
+	r.md.BumpVersion()
+
+	return r
+}
+
+// NewKernelParamDefaultSpec initializes a KernelParamSpec resource.
+func NewKernelParamDefaultSpec(namespace resource.Namespace, id resource.ID) *KernelParamSpec {
+	r := &KernelParamSpec{
+		md:   resource.NewMetadata(namespace, KernelParamDefaultSpecType, id, resource.VersionUndefined),
 		spec: KernelParamSpecSpec{},
 	}
 

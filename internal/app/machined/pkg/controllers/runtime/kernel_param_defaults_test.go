@@ -69,7 +69,7 @@ func (suite *KernelParamDefaultsSuite) TestContainerMode() {
 
 		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			suite.assertResource(
-				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, prop.Key, resource.VersionUndefined),
+				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),
 				func(res resource.Resource) bool {
 					return res.(*runtimeresource.KernelParamSpec).TypedSpec().Value == prop.Value
 				},
@@ -93,7 +93,7 @@ func (suite *KernelParamDefaultsSuite) TestMetalMode() {
 
 		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			suite.assertResource(
-				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, prop.Key, resource.VersionUndefined),
+				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),
 				func(res resource.Resource) bool {
 					return res.(*runtimeresource.KernelParamSpec).TypedSpec().Value == prop.Value
 				},
