@@ -291,12 +291,10 @@ kubectl edit daemonsets -n kube-system kube-proxy
 
 ## Kubelet
 
-Upgrading Kubelet version requires Talos node reboot after machine configuration change.
-
-For every node, patch machine configuration with new kubelet version, wait for the node to reboot:
+For every node, patch machine configuration with new kubelet version, wait for the kubelet to restart with new version:
 
 ```bash
-$ talosctl -n <IP> patch mc -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.4"}]'
+$ talosctl -n <IP> patch mc --immediate -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.23.0"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -305,5 +303,5 @@ Once node boots with the new configuration, confirm upgrade with `kubectl get no
 ```bash
 $ kubectl get nodes talos-default-master-1
 NAME                     STATUS   ROLES                  AGE    VERSION
-talos-default-master-1   Ready    control-plane,master   123m   v1.20.4
+talos-default-master-1   Ready    control-plane,master   123m   v1.23.0
 ```

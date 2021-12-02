@@ -33,7 +33,7 @@ func (condition *NodenameReadyCondition) String() string {
 func (condition *NodenameReadyCondition) Wait(ctx context.Context) error {
 	_, err := condition.state.WatchFor(
 		ctx,
-		resource.NewMetadata(ControlPlaneNamespaceName, NodenameType, NodenameID, resource.VersionUndefined),
+		resource.NewMetadata(NamespaceName, NodenameType, NodenameID, resource.VersionUndefined),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			if resource.IsTombstone(r) {
 				return false, nil

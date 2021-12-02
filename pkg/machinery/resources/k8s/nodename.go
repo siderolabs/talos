@@ -68,7 +68,7 @@ func (r *Nodename) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodenameType,
 		Aliases:          []resource.Type{},
-		DefaultNamespace: ControlPlaneNamespaceName,
+		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Nodename",

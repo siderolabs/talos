@@ -48,7 +48,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	hostnameStatus.TypedSpec().Hostname = "example1"
 	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
 
-	nodename := k8s.NewNodename(k8s.ControlPlaneNamespaceName, k8s.NodenameID)
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
 	nodename.TypedSpec().Nodename = "example1.com"
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 

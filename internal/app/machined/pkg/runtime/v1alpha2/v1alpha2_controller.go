@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/pkg/logging"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -107,9 +108,16 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},
+		&k8s.KubeletConfigController{},
+		&k8s.KubeletServiceController{
+			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
+		},
+		&k8s.KubeletSpecController{},
 		&k8s.KubeletStaticPodController{},
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
+		&k8s.NodeIPController{},
+		&k8s.NodeIPConfigController{},
 		&k8s.NodenameController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&kubespan.ConfigController{},
@@ -188,6 +196,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.APIController{},
 		&secrets.APICertSANsController{},
 		&secrets.EtcdController{},
+		&secrets.KubeletController{},
 		&secrets.KubernetesController{},
 		&secrets.KubernetesCertSANsController{},
 		&secrets.RootController{},

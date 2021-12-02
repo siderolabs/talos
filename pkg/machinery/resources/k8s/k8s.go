@@ -7,6 +7,9 @@ package k8s
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
+// NamespaceName contains resources supporting Kubernetes components on all node types.
+const NamespaceName resource.Namespace = "k8s"
+
 // ControlPlaneNamespaceName contains resources supporting Kubernetes control plane.
 const ControlPlaneNamespaceName resource.Namespace = "controlplane"
 

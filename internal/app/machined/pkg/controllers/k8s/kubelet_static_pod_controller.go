@@ -46,7 +46,7 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
-			Namespace: k8s.ControlPlaneNamespaceName,
+			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
 			ID:        pointer.ToString(k8s.NodenameID),
 			Kind:      controller.InputWeak,
@@ -161,7 +161,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		secrets := secretsResource.(*secrets.Kubernetes).Certs()
 
-		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 		if err != nil {
 			// nodename should exist if the kubelet is running
 			return err

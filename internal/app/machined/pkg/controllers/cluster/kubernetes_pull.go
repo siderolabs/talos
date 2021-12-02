@@ -41,7 +41,7 @@ func (ctrl *KubernetesPullController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: k8s.ControlPlaneNamespaceName,
+			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
 			ID:        pointer.ToString(k8s.NodenameID),
 			Kind:      controller.InputWeak,
@@ -105,7 +105,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		nodename, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		nodename, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting nodename: %w", err)

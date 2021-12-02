@@ -111,6 +111,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 	// * .machine.sysctls
 	// * .machine.logging
 	// * .machine.controlplane
+	// * .machine.kubelet
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
@@ -121,6 +122,7 @@ func (r *Runtime) CanApplyImmediate(b []byte) error {
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane
+		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
@@ -149,7 +151,7 @@ func (r *Runtime) Logging() runtime.LoggingManager {
 
 // NodeName implements the Runtime interface.
 func (r *Runtime) NodeName() (string, error) {
-	nodenameResource, err := r.s.V1Alpha2().Resources().Get(context.Background(), resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+	nodenameResource, err := r.s.V1Alpha2().Resources().Get(context.Background(), resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 	if err != nil {
 		return "", fmt.Errorf("error getting nodename resource: %w", err)
 	}

@@ -69,7 +69,7 @@ func (suite *NodenameSuite) startRuntime() {
 
 //nolint:dupl
 func (suite *NodenameSuite) assertNodename(expected string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.NodenameType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}

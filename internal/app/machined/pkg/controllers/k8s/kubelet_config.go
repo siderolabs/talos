@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -16,19 +17,18 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
-// NodenameController renders manifests based on templates and config/secrets.
-type NodenameController struct{}
+// KubeletConfigController renders manifests based on templates and config/secrets.
+type KubeletConfigController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *NodenameController) Name() string {
-	return "k8s.NodenameController"
+func (ctrl *KubeletConfigController) Name() string {
+	return "k8s.KubeletConfigController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *NodenameController) Inputs() []controller.Input {
+func (ctrl *KubeletConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -36,27 +36,21 @@ func (ctrl *NodenameController) Inputs() []controller.Input {
 			ID:        pointer.ToString(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.HostnameStatusType,
-			ID:        pointer.ToString(network.HostnameID),
-			Kind:      controller.InputWeak,
-		},
 	}
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *NodenameController) Outputs() []controller.Output {
+func (ctrl *KubeletConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: k8s.NodenameType,
+			Type: k8s.KubeletConfigType,
 			Kind: controller.OutputExclusive,
 		},
 	}
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -75,35 +69,40 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 
 		cfgProvider := cfg.(*config.MachineConfig).Config()
 
-		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
-		}
-
-		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
-
 		if err = r.Modify(
 			ctx,
-			k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID),
+			k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID),
 			func(r resource.Resource) error {
-				nodename := r.(*k8s.Nodename) //nolint:errcheck,forcetypeassert
+				kubeletConfig := r.(*k8s.KubeletConfig).TypedSpec()
 
-				if cfgProvider.Machine().Kubelet().RegisterWithFQDN() {
-					nodename.TypedSpec().Nodename = hostnameStatus.FQDN()
-				} else {
-					nodename.TypedSpec().Nodename = hostnameStatus.Hostname
+				kubeletConfig.Image = cfgProvider.Machine().Kubelet().Image()
+
+				kubeletConfig.ClusterDNS = cfgProvider.Machine().Kubelet().ClusterDNS()
+
+				if len(kubeletConfig.ClusterDNS) == 0 {
+					var addrs []net.IP
+
+					addrs, err = cfgProvider.Cluster().Network().DNSServiceIPs()
+					if err != nil {
+						return fmt.Errorf("error building DNS service IPs: %w", err)
+					}
+
+					kubeletConfig.ClusterDNS = make([]string, 0, len(addrs))
+
+					for _, addr := range addrs {
+						kubeletConfig.ClusterDNS = append(kubeletConfig.ClusterDNS, addr.String())
+					}
 				}
 
-				nodename.TypedSpec().HostnameVersion = hostnameResource.Metadata().Version().String()
+				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()
+				kubeletConfig.ExtraArgs = cfgProvider.Machine().Kubelet().ExtraArgs()
+				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
+				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()
 
 				return nil
 			},
 		); err != nil {
-			return fmt.Errorf("error modifying nodename resource: %w", err)
+			return fmt.Errorf("error modifying KubeletConfig resource: %w", err)
 		}
 	}
 }

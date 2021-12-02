@@ -62,7 +62,7 @@ func TestCondition(t *testing.T) {
 			require.NoError(t, state.Create(ctx, hostnameStatus))
 
 			if tt.NodenameExists {
-				nodename := k8s.NewNodename(k8s.ControlPlaneNamespaceName, k8s.NodenameID)
+				nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
 				nodename.TypedSpec().Nodename = "foo"
 
 				md := hostnameStatus.Metadata()
