@@ -1506,6 +1506,11 @@ func (in *Vlan) DeepCopyInto(out *Vlan) {
 			}
 		}
 	}
+	if in.VlanVIP != nil {
+		in, out := &in.VlanVIP, &out.VlanVIP
+		*out = new(DeviceVIPConfig)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

@@ -207,6 +207,7 @@ type Vlan interface {
 	DHCP() bool
 	ID() uint16
 	MTU() uint32
+	VIPConfig() VIPConfig
 }
 
 // Route represents a network route.

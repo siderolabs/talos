@@ -354,6 +354,12 @@ func (k *Kubelet) args(r runtime.Runtime) ([]string, error) {
 		if device.VIPConfig() != nil {
 			validSubnets = append(validSubnets, "!"+device.VIPConfig().IP())
 		}
+
+		for _, vlan := range device.Vlans() {
+			if vlan.VIPConfig() != nil {
+				validSubnets = append(validSubnets, "!"+vlan.VIPConfig().IP())
+			}
+		}
 	}
 
 	// if the user supplied node-ip via extra args, no need to pick automatically

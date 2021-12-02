@@ -4271,6 +4271,7 @@ DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an inte
 Appears in:
 
 - <code><a href="#device">Device</a>.vip</code>
+- <code><a href="#vlan">Vlan</a>.vip</code>
 
 
 ``` yaml
@@ -4811,6 +4812,18 @@ The VLAN's ID.
 <div class="dt">
 
 The VLAN's MTU.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>vip</code>  <i><a href="#devicevipconfig">DeviceVIPConfig</a></i>
+
+</div>
+<div class="dt">
+
+The VLAN's virtual IP address configuration.
 
 </div>
 

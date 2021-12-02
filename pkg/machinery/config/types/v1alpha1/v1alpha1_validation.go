@@ -117,6 +117,12 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 			if d.VIPConfig() != nil {
 				result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
 			}
+
+			for _, vlan := range d.Vlans() {
+				if vlan.VIPConfig() != nil {
+					result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
+				}
+			}
 		}
 
 	case machine.TypeUnknown:
