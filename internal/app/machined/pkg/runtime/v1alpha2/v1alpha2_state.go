@@ -120,6 +120,7 @@ func NewState() (*State, error) {
 		&perf.CPU{},
 		&perf.Memory{},
 		&runtime.KernelParamSpec{},
+		&runtime.KernelParamDefaultSpec{},
 		&runtime.KernelParamStatus{},
 		&runtime.MountStatus{},
 		&secrets.API{},

@@ -36,7 +36,7 @@ func (ctrl *KernelParamDefaultsController) Inputs() []controller.Input {
 func (ctrl *KernelParamDefaultsController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.KernelParamSpecType,
+			Type: runtime.KernelParamDefaultSpecType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -55,13 +55,13 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 
 		for _, prop := range kernelParams {
 			value := prop.Value
-			item := runtime.NewKernelParamSpec(runtime.NamespaceName, prop.Key)
+			item := runtime.NewKernelParamDefaultSpec(runtime.NamespaceName, prop.Key)
 
 			if err := r.Modify(ctx, item, func(res resource.Resource) error {
-				res.(*runtime.KernelParamSpec).TypedSpec().Value = value
+				res.(*runtime.KernelParamDefaultSpec).TypedSpec().Value = value
 
 				if item.Metadata().ID() == "net.ipv6.conf.default.forwarding" {
-					res.(*runtime.KernelParamSpec).TypedSpec().IgnoreErrors = true
+					res.(*runtime.KernelParamDefaultSpec).TypedSpec().IgnoreErrors = true
 				}
 
 				return nil

@@ -61,7 +61,6 @@ func (suite *SupportSuite) TestSupport() {
 		"machined.state",
 		"kubelet.log",
 		"kubelet.state",
-		"talosResources/kernelparamspecs.runtime.talos.dev.yaml",
 		"talosResources/kernelparamstatuses.runtime.talos.dev.yaml",
 		"kube-system/kube-apiserver.log",
 		"mounts",

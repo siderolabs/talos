@@ -36,6 +36,11 @@ func (ctrl *KernelParamSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: runtime.NamespaceName,
+			Type:      runtime.KernelParamDefaultSpecType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: runtime.NamespaceName,
 			Type:      runtime.KernelParamSpecType,
 			Kind:      controller.InputStrong,
 		},
@@ -68,18 +73,35 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			list, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelParamSpecType, "", resource.VersionUndefined))
+			defaults, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelParamDefaultSpecType, "", resource.VersionUndefined))
 			if err != nil {
 				return err
 			}
 
-			touchedIDs := map[string]struct{}{}
+			configs, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelParamSpecType, "", resource.VersionUndefined))
+			if err != nil {
+				return err
+			}
+
+			configsCounts := len(configs.Items)
+
+			list := configs.Items
+
+			list = append(list, defaults.Items...)
+
+			touchedIDs := map[string]string{}
 
 			var errs *multierror.Error
 
-			for _, item := range list.Items {
-				spec := item.(*runtime.KernelParamSpec).TypedSpec()
+			for i, item := range list {
+				spec := item.(runtime.KernelParam).TypedSpec()
 				key := item.Metadata().ID()
+
+				if value, duplicate := touchedIDs[key]; i >= configsCounts && duplicate {
+					logger.Warn("overriding KSPP enforced parameter, this is not recommended", zap.String("key", key), zap.String("value", value))
+
+					continue
+				}
 
 				if err = ctrl.updateKernelParam(ctx, r, key, spec.Value); err != nil {
 					if errors.Is(err, os.ErrNotExist) && spec.IgnoreErrors {
@@ -99,7 +121,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 					continue
 				}
 
-				touchedIDs[item.Metadata().ID()] = struct{}{}
+				touchedIDs[item.Metadata().ID()] = spec.Value
 			}
 
 			for key := range ctrl.state {
