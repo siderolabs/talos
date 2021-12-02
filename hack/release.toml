@@ -15,6 +15,12 @@ preface = """\
 
 [notes]
 
+    [notes.vlan]
+        title = "VLAN Enhancements"
+        description="""\
+Talos now supports setting MTU and Virtual IPs on VLAN interfaces.
+"""
+
     [notes.upgrades]
         title = "Kubernetes Upgrade Enhancements"
         description="""\

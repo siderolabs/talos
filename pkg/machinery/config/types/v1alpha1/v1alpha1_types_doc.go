@@ -1573,6 +1573,10 @@ func init() {
 			TypeName:  "Device",
 			FieldName: "vip",
 		},
+		{
+			TypeName:  "Vlan",
+			FieldName: "vip",
+		},
 	}
 	DeviceVIPConfigDoc.Fields = make([]encoder.Doc, 3)
 	DeviceVIPConfigDoc.Fields[0].Name = "ip"
@@ -1780,7 +1784,7 @@ func init() {
 			FieldName: "vlans",
 		},
 	}
-	VlanDoc.Fields = make([]encoder.Doc, 6)
+	VlanDoc.Fields = make([]encoder.Doc, 7)
 	VlanDoc.Fields[0].Name = "addresses"
 	VlanDoc.Fields[0].Type = "[]string"
 	VlanDoc.Fields[0].Note = ""
@@ -1806,6 +1810,11 @@ func init() {
 	VlanDoc.Fields[5].Note = ""
 	VlanDoc.Fields[5].Description = "The VLAN's MTU."
 	VlanDoc.Fields[5].Comments[encoder.LineComment] = "The VLAN's MTU."
+	VlanDoc.Fields[6].Name = "vip"
+	VlanDoc.Fields[6].Type = "DeviceVIPConfig"
+	VlanDoc.Fields[6].Note = ""
+	VlanDoc.Fields[6].Description = "The VLAN's virtual IP address configuration."
+	VlanDoc.Fields[6].Comments[encoder.LineComment] = "The VLAN's virtual IP address configuration."
 
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.LineComment] = "Route represents a network route."

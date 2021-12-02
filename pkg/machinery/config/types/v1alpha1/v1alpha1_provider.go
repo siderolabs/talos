@@ -108,14 +108,7 @@ func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.
 	}
 
 	if c.MachineConfig.MachineNetwork != nil {
-		for _, nc := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
-			if nc.VIPConfig() != nil {
-				sharedIP := net.ParseIP(nc.VIPConfig().IP())
-				if sharedIP != nil {
-					addrs = append(addrs, sharedIP)
-				}
-			}
-		}
+		addrs = append(addrs, addressesFromMachineNetworkConfig(c.MachineConfig.MachineNetwork)...)
 	}
 
 	existingSANs := map[string]bool{}
@@ -912,6 +905,15 @@ func (v *Vlan) MTU() uint32 {
 	return v.VlanMTU
 }
 
+// VIPConfig implements the MachineNetwork interface.
+func (v *Vlan) VIPConfig() config.VIPConfig {
+	if v.VlanVIP == nil {
+		return nil
+	}
+
+	return v.VlanVIP
+}
+
 // Routes implements the MachineNetwork interface.
 func (v *Vlan) Routes() []config.Route {
 	routes := make([]config.Route, len(v.VlanRoutes))
@@ -1229,4 +1231,28 @@ func (v VolumeMountConfig) ReadOnly() bool {
 // Rules implements config.Udev interface.
 func (u *UdevConfig) Rules() []string {
 	return u.UdevRules
+}
+
+func addressesFromMachineNetworkConfig(nc *NetworkConfig) []net.IP {
+	var addresses []net.IP
+
+	for _, networkConfig := range nc.NetworkInterfaces {
+		if networkConfig.VIPConfig() != nil {
+			sharedIP := net.ParseIP(networkConfig.VIPConfig().IP())
+			if sharedIP != nil {
+				addresses = append(addresses, sharedIP)
+			}
+
+			for _, vlan := range networkConfig.Vlans() {
+				if vlan.VIPConfig() != nil {
+					sharedIP := net.ParseIP(vlan.VIPConfig().IP())
+					if sharedIP != nil {
+						addresses = append(addresses, sharedIP)
+					}
+				}
+			}
+		}
+	}
+
+	return addresses
 }

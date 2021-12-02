@@ -161,47 +161,10 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 				}
 
 				if device.VIPConfig() != nil {
-					var sharedIP netaddr.IP
-
-					sharedIP, err = netaddr.ParseIP(device.VIPConfig().IP())
-					if err != nil {
-						logger.Warn("ignoring vip parse failure", zap.Error(err), zap.String("link", device.Interface()))
+					if spec, specErr := handleVIP(ctx, device.VIPConfig(), device.Interface(), logger); specErr != nil {
+						specErrors = multierror.Append(specErrors, specErr)
 					} else {
-						spec := network.OperatorSpecSpec{
-							Operator:  network.OperatorVIP,
-							LinkName:  device.Interface(),
-							RequireUp: true,
-							VIP: network.VIPOperatorSpec{
-								IP:            sharedIP,
-								GratuitousARP: true,
-							},
-						}
-
-						switch {
-						// Equinix Metal VIP
-						case device.VIPConfig().EquinixMetal() != nil:
-							spec.VIP.GratuitousARP = false
-							spec.VIP.EquinixMetal.APIToken = device.VIPConfig().EquinixMetal().APIToken()
-
-							if err = vip.GetProjectAndDeviceIDs(ctx, &spec.VIP.EquinixMetal); err != nil {
-								specErrors = multierror.Append(specErrors, err)
-							} else {
-								specs = append(specs, spec)
-							}
-						// Hetzner Cloud VIP
-						case device.VIPConfig().HCloud() != nil:
-							spec.VIP.GratuitousARP = false
-							spec.VIP.HCloud.APIToken = device.VIPConfig().HCloud().APIToken()
-
-							if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP); err != nil {
-								specErrors = multierror.Append(specErrors, err)
-							} else {
-								specs = append(specs, spec)
-							}
-						// Regular layer 2 VIP
-						default:
-							specs = append(specs, spec)
-						}
+						specs = append(specs, spec)
 					}
 				}
 
@@ -215,6 +178,15 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 								RouteMetric: DefaultRouteMetric,
 							},
 						})
+					}
+
+					if vlan.VIPConfig() != nil {
+						linkName := fmt.Sprintf("%s.%d", device.Interface(), vlan.ID())
+						if spec, specErr := handleVIP(ctx, vlan.VIPConfig(), linkName, logger); specErr != nil {
+							specErrors = multierror.Append(specErrors, specErr)
+						} else {
+							specs = append(specs, spec)
+						}
 					}
 				}
 			}
@@ -307,4 +279,48 @@ func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Ru
 	}
 
 	return ids, nil
+}
+
+func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName string, logger *zap.Logger) (network.OperatorSpecSpec, error) {
+	var sharedIP netaddr.IP
+
+	sharedIP, err := netaddr.ParseIP(vlanConfig.IP())
+	if err != nil {
+		logger.Warn("ignoring vip parse failure", zap.Error(err), zap.String("link", deviceName))
+
+		return network.OperatorSpecSpec{}, err
+	}
+
+	spec := network.OperatorSpecSpec{
+		Operator:  network.OperatorVIP,
+		LinkName:  deviceName,
+		RequireUp: true,
+		VIP: network.VIPOperatorSpec{
+			IP:            sharedIP,
+			GratuitousARP: true,
+		},
+	}
+
+	switch {
+	// Equinix Metal VIP
+	case vlanConfig.EquinixMetal() != nil:
+		spec.VIP.GratuitousARP = false
+		spec.VIP.EquinixMetal.APIToken = vlanConfig.EquinixMetal().APIToken()
+
+		if err = vip.GetProjectAndDeviceIDs(ctx, &spec.VIP.EquinixMetal); err != nil {
+			return network.OperatorSpecSpec{}, err
+		}
+	// Hetzner Cloud VIP
+	case vlanConfig.HCloud() != nil:
+		spec.VIP.GratuitousARP = false
+		spec.VIP.HCloud.APIToken = vlanConfig.HCloud().APIToken()
+
+		if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP); err != nil {
+			return network.OperatorSpecSpec{}, err
+		}
+	// Regular layer 2 VIP
+	default:
+	}
+
+	return spec, nil
 }

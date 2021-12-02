@@ -1857,6 +1857,8 @@ type Vlan struct {
 	VlanID uint16 `yaml:"vlanId"`
 	//   description: The VLAN's MTU.
 	VlanMTU uint32 `yaml:"mtu,omitempty"`
+	//   description: The VLAN's virtual IP address configuration.
+	VlanVIP *DeviceVIPConfig `yaml:"vip,omitempty"`
 }
 
 // Route represents a network route.
