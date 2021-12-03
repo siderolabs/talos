@@ -98,7 +98,7 @@ COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 
 CI_ARGS ?=
 
-all: initramfs kernel installer talosctl talosctl-image talos
+all: initramfs kernel installer imager talosctl talosctl-image talos
 
 # Help Menu
 
@@ -196,15 +196,20 @@ initramfs: ## Builds the compressed initramfs and outputs it to the artifact dir
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false TARGET_ARGS="--allow security.insecure"
 
 .PHONY: installer
-installer: ## Builds the container image for the installer and outputs it to the artifact directory.
+installer: ## Builds the container image for the installer and outputs it to the registry.
+	@INSTALLER_ARCH=targetarch  \
+		$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+
+.PHONY: imager
+imager: ## Builds the container image for the imager and outputs it to the registry.
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
 
 .PHONY: talos
-talos: ## Builds the Talos container image and outputs it to the artifact directory.
+talos: ## Builds the Talos container image and outputs it to the registry.
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
 
 .PHONY: talosctl-image
-talosctl-image: ## Builds the talosctl container image and outputs it to the artifact directory.
+talosctl-image: ## Builds the talosctl container image and outputs it to the registry.
 	@$(MAKE) registry-talosctl TARGET_ARGS="--allow security.insecure"
 
 talosctl-%:
@@ -213,26 +218,26 @@ talosctl-%:
 talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
-	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
-		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS) ; \
+		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS) ; \
 	done
 
 images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-metal image-nocloud image-openstack image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, GCP, HCloud, Metal, NoCloud, Openstack, Scaleway, UpCloud, Vultr and VMware).
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4 and pine64 (e.g. sbc-rpi_4)
-	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
 sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-pine64 ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, pine64, and Libre Computer Board ALL-H3-CC).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
-	@docker pull $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
-		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
+		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
 	done
 
 .PHONY: boot
@@ -352,25 +357,14 @@ $(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinuz $(ARTIFACTS
 # download release artifacts for specific version
 $(ARTIFACTS)/$(TALOS_RELEASE)/%:
 	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
-	@case "$(TALOS_RELEASE)" in \
-		v0.6*) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*" \
+	@case "$*" in \
+		vmlinuz) \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
 			;; \
-		v0.7.0-alpha.[0-3]) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/$*" \
-			;; \
-		*) \
-			case "$*" in \
-				vmlinuz) \
-					curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
-					;; \
-				initramfs.xz) \
-					curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
-					;; \
-			esac \
+		initramfs.xz) \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
 			;; \
 	esac
-
 
 .PHONY: release-artifacts
 release-artifacts:
@@ -394,12 +388,13 @@ ifeq ($(DOCKER_LOGIN_ENABLED), true)
 	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(IMAGE_REGISTRY)
 endif
 
-push: login ## Pushes the installer, and talos images to the configured container registry with the generated tag.
+push: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the generated tag.
 	@$(MAKE) installer PUSH=true
+	@$(MAKE) imager PUSH=true
 	@$(MAKE) talos PUSH=true
 	@$(MAKE) talosctl-image PUSH=true
 
-push-%: login ## Pushes the installer, and talos images to the configured container registry with the specified tag (e.g. push-latest).
+push-%: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the specified tag (e.g. push-latest).
 	@$(MAKE) push IMAGE_TAG=$*
 
 .PHONY: clean

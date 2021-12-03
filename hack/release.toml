@@ -113,6 +113,20 @@ A set of Talos ehancements is going to unlock a number of exciting features in t
 Talos NTP sync process was improved to align better with kernel time adjustment periods and to filter out spikes.
 """
 
+    [notes.installer]
+        title = "`installer` and `imager` images"
+        description = """\
+Talos supports two target architectures: `amd64` and `arm64`, so all Talos images are built for both `amd64` and `arm64`.
+
+New image `imager` was added which contains Talos assets for both architectures which allows to generate Talos disk images
+cross-arch: e.g. generate Talos Raspberry PI disk image on `amd64` machine.
+
+As `installer` image is used only to do initial install and upgrades, it now contains Talos assets for a specific architecture.
+This reduces size of the `installer` image leading to faster upgrades and less memory usage.
+
+There are no user-visible changes except that now `imager` container image should be used to produce Talos disk images.
+"""
+
 [make_deps]
 
     [make_deps.tools]

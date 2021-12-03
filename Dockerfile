@@ -573,6 +573,8 @@ ONBUILD RUN find /rootfs \
     && rm -rf /initramfs
 ONBUILD WORKDIR /
 
+FROM installer AS imager
+
 # The test target performs tests on the source code.
 
 FROM base AS unit-tests-runner
