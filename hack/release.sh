@@ -27,8 +27,8 @@ function release-notes {
 
   size=$(stat -c%s "${1}")
 
-  if (( size > 25000 )); then
-    echo "Release notes size exceeds GitHub limit of 25000 bytes"
+  if (( size > 50000 )); then
+    echo "Release notes size exceeds GitHub limit of 50000 bytes"
     exit 1
   fi
 }
