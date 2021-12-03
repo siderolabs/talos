@@ -31,7 +31,7 @@ var getCmd = &cobra.Command{
 	Use:     "get <type> [<id>]",
 	Aliases: []string{"g"},
 	Short:   "Get a specific resource or list of resources.",
-	Long:    ``,
+	Long:    `Similar to 'kubectl get', 'talosctl get' returns a set of resources from the OS.  To get a list of all available resource definitions, issue 'talosctl get rd'`,
 	Args:    cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if getCmdFlags.insecure {
