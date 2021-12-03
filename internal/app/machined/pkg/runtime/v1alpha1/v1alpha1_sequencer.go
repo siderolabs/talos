@@ -45,35 +45,6 @@ func (p PhaseList) AppendList(list PhaseList) PhaseList {
 	return append(p, list...)
 }
 
-// ApplyConfiguration defines a sequence which applies a new machine configuration to the node, rebooting to make it active.
-func (*Sequencer) ApplyConfiguration(r runtime.Runtime, req *machineapi.ApplyConfigurationRequest) []runtime.Phase {
-	phases := PhaseList{}
-
-	phases = phases.Append(
-		"saveStateEncryptionConfig",
-		SaveStateEncryptionConfig,
-	).Append(
-		"mountState",
-		MountStatePartition,
-	).Append(
-		"saveConfig",
-		SaveConfig,
-	).Append(
-		"unmountState",
-		UnmountStatePartition,
-	).Append(
-		"cleanup",
-		StopAllPods,
-	).AppendList(
-		stopAllPhaselist(r, true),
-	).Append(
-		"reboot",
-		Reboot,
-	)
-
-	return phases
-}
-
 // Initialize is the initialize sequence. The primary goals of this sequence is
 // to load the config and enforce kernel security requirements.
 func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {

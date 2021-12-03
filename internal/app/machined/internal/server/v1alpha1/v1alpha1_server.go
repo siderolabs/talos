@@ -127,47 +127,42 @@ func (s *Server) Register(obj *grpc.Server) {
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
 
-	applyDynamicConfig := func() ([]byte, error) {
-		cfg, err := s.Controller.Runtime().ValidateConfig(in.GetData())
-		if err != nil {
+	// --immediate
+	if in.Immediate {
+		if err := s.Controller.Runtime().CanApplyImmediate(in.GetData()); err != nil {
 			return nil, err
 		}
+	}
 
-		err = cfg.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
-		if err != nil {
-			return nil, err
-		}
+	cfgProvider, err := s.Controller.Runtime().ValidateConfig(in.GetData())
+	if err != nil {
+		return nil, err
+	}
 
-		return cfg.Bytes()
+	err = cfgProvider.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := cfgProvider.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
+		return nil, err
 	}
 
 	switch {
 	// --immediate
 	case in.Immediate:
-		if err := s.Controller.Runtime().CanApplyImmediate(in.GetData()); err != nil {
-			return nil, err
-		}
-
-		cfg, err := applyDynamicConfig()
-		if err != nil {
-			return nil, err
-		}
-
 		if err := s.Controller.Runtime().SetConfig(cfg); err != nil {
 			return nil, err
 		}
-
-		if err := ioutil.WriteFile(constants.ConfigPath, in.GetData(), 0o600); err != nil {
-			return nil, err
-		}
-	// default (no flags)
+	// default, no `--on-reboot`
 	case !in.OnReboot:
-		if err := s.Controller.Runtime().SetConfig(in.GetData()); err != nil {
-			return nil, err
-		}
-
 		go func() {
-			if err := s.Controller.Run(context.Background(), runtime.SequenceApplyConfiguration, in); err != nil {
+			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("apply configuration failed:", err)
 				}
@@ -177,16 +172,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 				}
 			}
 		}()
-	// --no-reboot
-	case in.OnReboot:
-		cfg, err := applyDynamicConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		if err = ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
-			return nil, err
-		}
 	}
 
 	return &machine.ApplyConfigurationResponse{

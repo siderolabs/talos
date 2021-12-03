@@ -14,10 +14,8 @@ import (
 type Sequence int
 
 const (
-	// SequenceApplyConfiguration is the apply configuration sequence.
-	SequenceApplyConfiguration Sequence = iota
 	// SequenceBoot is the boot sequence.
-	SequenceBoot
+	SequenceBoot Sequence = iota
 	// SequenceBootstrap is the boot sequence.
 	SequenceBootstrap
 	// SequenceInitialize is the initialize sequence.
@@ -39,22 +37,21 @@ const (
 )
 
 const (
-	applyConfiguration = "applyConfiguration"
-	boot               = "boot"
-	bootstrap          = "bootstrap"
-	initialize         = "initialize"
-	install            = "install"
-	shutdown           = "shutdown"
-	upgrade            = "upgrade"
-	stageUpgrade       = "stageUpgrade"
-	reset              = "reset"
-	reboot             = "reboot"
-	noop               = "noop"
+	boot         = "boot"
+	bootstrap    = "bootstrap"
+	initialize   = "initialize"
+	install      = "install"
+	shutdown     = "shutdown"
+	upgrade      = "upgrade"
+	stageUpgrade = "stageUpgrade"
+	reset        = "reset"
+	reboot       = "reboot"
+	noop         = "noop"
 )
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{applyConfiguration, boot, bootstrap, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot, noop}[s]
+	return [...]string{boot, bootstrap, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot, noop}[s]
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.
@@ -62,8 +59,6 @@ func (s Sequence) String() string {
 //nolint:gocyclo
 func ParseSequence(s string) (seq Sequence, err error) {
 	switch s {
-	case applyConfiguration:
-		seq = SequenceApplyConfiguration
 	case boot:
 		seq = SequenceBoot
 	case bootstrap:
@@ -107,7 +102,6 @@ type PartitionTarget interface {
 // Sequencer describes the set of sequences required for the lifecycle
 // management of the operating system.
 type Sequencer interface {
-	ApplyConfiguration(Runtime, *machine.ApplyConfigurationRequest) []Phase
 	Boot(Runtime) []Phase
 	Bootstrap(Runtime) []Phase
 	Initialize(Runtime) []Phase

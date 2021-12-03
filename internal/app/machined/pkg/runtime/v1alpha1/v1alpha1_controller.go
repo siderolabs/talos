@@ -382,17 +382,6 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	var phases []runtime.Phase
 
 	switch seq {
-	case runtime.SequenceApplyConfiguration:
-		var (
-			in *machine.ApplyConfigurationRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.ApplyConfigurationRequest); !ok {
-			return nil, runtime.ErrInvalidSequenceData
-		}
-
-		phases = c.s.ApplyConfiguration(c.r, in)
 	case runtime.SequenceBoot:
 		phases = c.s.Boot(c.r)
 	case runtime.SequenceBootstrap:
