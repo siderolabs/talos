@@ -22,7 +22,7 @@ require (
 	k8s.io/apiserver v0.23.0-alpha.4 // indirect
 	k8s.io/cli-runtime v0.23.0-alpha.4 // indirect
 	k8s.io/client-go v0.23.0-alpha.4
-	k8s.io/component-base v0.23.0-alpha.4 // indirect
+	k8s.io/component-base v0.23.0-alpha.4
 	k8s.io/cri-api v0.23.0-alpha.4
 	k8s.io/kubectl v0.23.0-alpha.4
 	k8s.io/kubelet v0.23.0-alpha.4
@@ -36,7 +36,6 @@ require (
 	github.com/containerd/cgroups v1.0.2
 	github.com/containerd/containerd v1.5.8
 	github.com/containerd/cri v1.19.0
-	github.com/containerd/go-cni v1.1.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
 	github.com/containernetworking/plugins v1.0.1
@@ -79,7 +78,6 @@ require (
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
-	github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.4
@@ -152,6 +150,7 @@ require (
 	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
+	github.com/containerd/go-cni v1.1.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect

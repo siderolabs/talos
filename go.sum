@@ -1003,8 +1003,6 @@ github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1
 github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/smartystreets/goconvey v1.6.4 h1:fv0U8FUIMPNf1L9lnHLvLhgicrIVChEkdzIKYqbNC9s=
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
-github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935 h1:64eGQ94st1udqkO66IaMG05KGThUJcXHqyE6UeKQBoE=
-github.com/smira/go-xz v0.0.0-20201019130106-9921ed7a9935/go.mod h1:smSuTvETRIkX95VAIWBdKoGJuUxif7NT7FgbkpVqOiA=
 github.com/smira/tcpproxy v0.0.0-20201015133617-de5f7797b95b h1:95WXQlM2dDPgIXTlnpwiJPa0l0ipl1RwMvdy8KLUyH8=
 github.com/smira/tcpproxy v0.0.0-20201015133617-de5f7797b95b/go.mod h1:yDIWrelwlTRXdKvQqqQ+8lCwCjbSRtkat49REnui7hk=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
