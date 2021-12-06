@@ -554,8 +554,8 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 		}
 
 		if peer.WireguardEndpoint != "" {
-			if _, err := net.ResolveUDPAddr("", peer.WireguardEndpoint); err != nil {
-				result = multierror.Append(result, fmt.Errorf("peer endpoint %q is invalid: %w", peer.WireguardEndpoint, err))
+			if !talosnet.AddressContainsPort(peer.WireguardEndpoint) {
+				result = multierror.Append(result, fmt.Errorf("peer endpoint %q is invalid", peer.WireguardEndpoint))
 			}
 		}
 

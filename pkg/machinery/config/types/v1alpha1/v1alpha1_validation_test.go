@@ -644,6 +644,7 @@ func TestValidate(t *testing.T) {
 										{},
 										{
 											WireguardPublicKey: "4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1A=",
+											WireguardEndpoint:  "example.com:1234",
 											WireguardAllowedIPs: []string{
 												"10.2.0.5/31",
 												"2.4.5.3/32",
@@ -651,6 +652,7 @@ func TestValidate(t *testing.T) {
 										},
 										{
 											WireguardPublicKey: "4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==",
+											WireguardEndpoint:  "12.3.4.5",
 											WireguardAllowedIPs: []string{
 												"10.2.0",
 											},
@@ -669,8 +671,8 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "3 errors occurred:\n\t* public key invalid: wrong key \"\" length: 0\n\t* public key invalid: wrong key \"4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==\" length: 31\n" +
-				"\t* peer allowed IP \"10.2.0\" is invalid: invalid CIDR address: 10.2.0\n\n",
+			expectedError: "4 errors occurred:\n\t* public key invalid: wrong key \"\" length: 0\n\t* public key invalid: wrong key \"4A3rogGVHuVjeZz5cbqryWXGkGBdIGC0E6+5mX2Iz1==\" length: 31\n" +
+				"\t* peer endpoint \"12.3.4.5\" is invalid\n\t* peer allowed IP \"10.2.0\" is invalid: invalid CIDR address: 10.2.0\n\n",
 		},
 		{
 			name: "StaticRoutes",
