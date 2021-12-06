@@ -12,6 +12,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/images"
 	"github.com/talos-systems/go-retry/retry"
 
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -71,7 +72,13 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 	resolver := NewResolver(reg)
 
 	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).Retry(func() error {
-		if img, err = client.Pull(ctx, ref, containerd.WithPullUnpack, containerd.WithResolver(resolver)); err != nil {
+		if img, err = client.Pull(
+			ctx,
+			ref,
+			containerd.WithPullUnpack,
+			containerd.WithResolver(resolver),
+			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
 			if errdefs.IsNotFound(err) || errdefs.IsCanceled(err) {

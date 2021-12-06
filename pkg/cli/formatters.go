@@ -57,7 +57,7 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 			if defaultNode != "" {
 				format = "%s\t" + format
 
-				args = append([]interface{}{node}, args)
+				args = append([]interface{}{node}, args...)
 			}
 
 			fmt.Fprintf(w, format, args...)
