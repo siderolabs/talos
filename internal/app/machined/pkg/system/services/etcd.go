@@ -357,7 +357,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		lastNag time.Time
 	)
 
-	err = retry.Constant(10*time.Minute,
+	err = retry.Constant(constants.EtcdJoinTimeout,
 		retry.WithUnits(3*time.Second),
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
