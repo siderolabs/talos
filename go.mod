@@ -17,15 +17,15 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.23.0-alpha.4
-	k8s.io/apimachinery v0.23.0-alpha.4
-	k8s.io/apiserver v0.23.0-alpha.4 // indirect
-	k8s.io/cli-runtime v0.23.0-alpha.4 // indirect
-	k8s.io/client-go v0.23.0-alpha.4
-	k8s.io/component-base v0.23.0-alpha.4
-	k8s.io/cri-api v0.23.0-alpha.4
-	k8s.io/kubectl v0.23.0-alpha.4
-	k8s.io/kubelet v0.23.0-alpha.4
+	k8s.io/api v0.23.0-rc.1
+	k8s.io/apimachinery v0.23.0-rc.1
+	k8s.io/apiserver v0.23.0-rc.1 // indirect
+	k8s.io/cli-runtime v0.23.0-rc.1 // indirect
+	k8s.io/client-go v0.23.0-rc.1
+	k8s.io/component-base v0.23.0-rc.1
+	k8s.io/cri-api v0.23.0-rc.1
+	k8s.io/kubectl v0.23.0-rc.1
+	k8s.io/kubelet v0.23.0-rc.1
 )
 
 require (
@@ -62,19 +62,19 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go v1.33.1
 	github.com/insomniacslk/dhcp v0.0.0-20211026125128-ad197bcd36fd
-	github.com/jsimonetti/rtnetlink v0.0.0-20211022192332-93da33804786
+	github.com/jsimonetti/rtnetlink v0.0.0-20211203074127-fd9a11f42291
 	github.com/jxskiss/base62 v1.0.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
 	github.com/mdlayher/genetlink v1.0.0
-	github.com/mdlayher/netlink v1.4.1
+	github.com/mdlayher/netlink v1.4.2
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.19.1
+	github.com/packethost/packngo v0.20.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/prometheus/procfs v0.7.3
-	github.com/rivo/tview v0.0.0-20211109175620-badfa0f0b301
+	github.com/rivo/tview v0.0.0-20211202162923-2a6de950f73b
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
@@ -83,16 +83,16 @@ require (
 	github.com/talos-systems/crypto v0.3.4
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
-	github.com/talos-systems/go-blockdevice v0.2.5-0.20211123181846-15b182db0cd2
+	github.com/talos-systems/go-blockdevice v0.2.5
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
 	github.com/talos-systems/go-loadbalancer v0.1.1
 	github.com/talos-systems/go-procfs v0.1.0
 	github.com/talos-systems/go-retry v0.3.1
-	github.com/talos-systems/go-smbios v0.1.1-0.20211122130416-fd5ec8ce4873
+	github.com/talos-systems/go-smbios v0.1.1
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.3.1-0.20211129211222-b4b718179a1a
+	github.com/talos-systems/net v0.3.1
 	github.com/talos-systems/siderolink v0.1.0
 	github.com/talos-systems/talos/pkg/machinery v0.14.0-alpha.2
 	github.com/u-root/u-root v7.0.0+incompatible
@@ -105,11 +105,11 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
-	go.uber.org/atomic v1.7.0
+	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
+	golang.org/x/net v0.0.0-20211205041911-012df41ee64c
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
+	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211124212657-dd7407c86d22
@@ -180,7 +180,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
@@ -274,25 +274,25 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20211123210315-387f7c461a16 // indirect
 	google.golang.org/api v0.44.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1 // indirect
+	google.golang.org/genproto v0.0.0-20211203200212-54befc351ae9 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	honnef.co/go/tools v0.2.1 // indirect
+	honnef.co/go/tools v0.2.2 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.30.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20210817084001-7fbd8d59e5b8 // indirect
+	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.61 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
-	sigs.k8s.io/kustomize/api v0.8.11 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
+	sigs.k8s.io/kustomize/api v0.10.1 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.13.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 )
