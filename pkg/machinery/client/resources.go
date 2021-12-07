@@ -6,10 +6,12 @@ package client
 
 import (
 	"context"
+	"errors"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
@@ -135,6 +137,8 @@ type ResourceWatchClient struct {
 }
 
 // Recv next item from the list.
+//
+//nolint:gocyclo
 func (client *ResourceWatchClient) Recv() (WatchResponse, error) {
 	var watchResp WatchResponse
 
@@ -143,7 +147,13 @@ func (client *ResourceWatchClient) Recv() (WatchResponse, error) {
 		return watchResp, err
 	}
 
-	watchResp.Metadata = msg.GetMetadata()
+	if msg.GetMetadata().GetError() != "" {
+		if msg.GetMetadata().Status != nil {
+			return watchResp, status.ErrorProto(msg.GetMetadata().GetStatus())
+		}
+
+		return watchResp, errors.New(msg.GetMetadata().GetError())
+	}
 
 	if msg.GetDefinition() != nil {
 		var e error

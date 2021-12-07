@@ -64,7 +64,7 @@ var deprecations = map[string][]string{
 
 // UpgradeTalosManaged the Kubernetes control plane.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	switch path := options.Path(); path {
 	// nothing for all those
@@ -102,8 +102,17 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 
 	options.Log("discovered master nodes %q", options.masterNodes)
 
+	if options.UpgradeKubelet {
+		options.workerNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeWorker)
+		if err != nil {
+			return fmt.Errorf("error fetching worker nodes: %w", err)
+		}
+
+		options.Log("discovered worker nodes %q", options.workerNodes)
+	}
+
 	for _, service := range []string{kubeAPIServer, kubeControllerManager, kubeScheduler} {
-		if err = upgradeConfigPatch(ctx, cluster, options, service); err != nil {
+		if err = upgradeStaticPod(ctx, cluster, options, service); err != nil {
 			return fmt.Errorf("failed updating service %q: %w", service, err)
 		}
 	}
@@ -116,6 +125,10 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		}
 	}
 
+	if err = upgradeKubelet(ctx, cluster, options); err != nil {
+		return fmt.Errorf("failed upgrading kubelet: %w", err)
+	}
+
 	objects, err := getManifests(ctx, cluster)
 	if err != nil {
 		return err
@@ -124,11 +137,11 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 	return syncManifests(ctx, objects, cluster, options)
 }
 
-func upgradeConfigPatch(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {
+func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {
 	options.Log("updating %q to version %q", service, options.ToVersion)
 
 	for _, node := range options.masterNodes {
-		if err := upgradeNodeConfigPatch(ctx, cluster, options, service, node); err != nil {
+		if err := upgradeStaticPodOnNode(ctx, cluster, options, service, node); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}
 	}
@@ -137,7 +150,7 @@ func upgradeConfigPatch(ctx context.Context, cluster UpgradeProvider, options Up
 }
 
 //nolint:gocyclo
-func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string) error {
+func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -173,7 +186,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 
 	skipConfigWait := false
 
-	err = patchNodeConfig(ctx, cluster, node, upgradeConfigPatcher(options, service, watchInitial.Resource))
+	err = patchNodeConfig(ctx, cluster, node, upgradeStaticPodPatcher(options, service, watchInitial.Resource))
 	if err != nil {
 		if errors.Is(err, errUpdateSkipped) {
 			skipConfigWait = true
@@ -222,7 +235,7 @@ func upgradeNodeConfigPatch(ctx context.Context, cluster UpgradeProvider, option
 var errUpdateSkipped = fmt.Errorf("update skipped")
 
 //nolint:gocyclo,cyclop
-func upgradeConfigPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {
+func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
 		if config.ClusterConfig == nil {
 			config.ClusterConfig = &v1alpha1config.ClusterConfig{}

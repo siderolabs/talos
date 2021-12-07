@@ -1996,6 +1996,7 @@ talosctl upgrade-k8s [flags]
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
       --to string         the Kubernetes control plane version to upgrade to (default "1.23.0-rc.1")
+      --upgrade-kubelet   upgrade kubelet service (default true)
 ```
 
 ### Options inherited from parent commands

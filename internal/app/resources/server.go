@@ -48,7 +48,7 @@ func marshalResource(r resource.Resource) (*resourceapi.Resource, error) {
 
 	spec := &resourceapi.Spec{}
 
-	if r.Spec() != nil {
+	if !resource.IsTombstone(r) && r.Spec() != nil {
 		var err error
 
 		spec.Yaml, err = yaml.Marshal(r.Spec())

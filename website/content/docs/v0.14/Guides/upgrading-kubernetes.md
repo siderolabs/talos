@@ -17,8 +17,7 @@ To see a live demo of this writeup, see the video below:
 To check what is going to be upgraded you can run `talosctl upgrade-k8s` with `--dry-run` flag:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --from 1.21.3 --to 1.22.0 --dry-run
-checking for resource APIs to be deprecated in version 1.22.0
+$ talosctl --nodes <master node> upgrade-k8s --to 1.23.0 --dry-run
 WARNING: found resources which are going to be deprecated/migrated in the version 1.22.0
 RESOURCE                                                               COUNT
 validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io   4
@@ -26,60 +25,254 @@ mutatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io     3
 customresourcedefinitions.v1beta1.apiextensions.k8s.io                 25
 apiservices.v1beta1.apiregistration.k8s.io                             54
 leases.v1beta1.coordination.k8s.io                                     4
-
-discovered master nodes ["10.5.0.2"]
-updating "kube-apiserver" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-apiserver: v1.21.3 -> 1.22.0
+automatically detected the lowest Kubernetes version 1.22.4
+checking for resource APIs to be deprecated in version 1.23.0
+discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
+discovered worker nodes ["172.20.0.5" "172.20.0.6"]
+updating "kube-apiserver" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
  > skipped in dry-run
-updating "kube-controller-manager" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-controller-manager: v1.21.3 -> 1.22.0
+ > "172.20.0.3": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
  > skipped in dry-run
-updating "kube-scheduler" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-scheduler: v1.21.3 -> 1.22.0
+ > "172.20.0.4": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
  > skipped in dry-run
-updating daemonset "kube-proxy" to version "1.22.0"
+updating "kube-controller-manager" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.3": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.4": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+updating "kube-scheduler" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.3": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.4": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+updating daemonset "kube-proxy" to version "1.23.0"
 skipped in dry-run
+updating kubelet to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.3": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.4": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.5": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+ > "172.20.0.6": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > skipped in dry-run
+updating manifests
+ > apply manifest Secret bootstrap-token-3lb63t
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding system-bootstrap-approve-node-client-csr
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding system-bootstrap-node-bootstrapper
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding system-bootstrap-node-renewal
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding system:default-sa
+ > apply skipped in dry run
+ > apply manifest ClusterRole psp:privileged
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding psp:privileged
+ > apply skipped in dry run
+ > apply manifest PodSecurityPolicy privileged
+ > apply skipped in dry run
+ > apply manifest ClusterRole flannel
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding flannel
+ > apply skipped in dry run
+ > apply manifest ServiceAccount flannel
+ > apply skipped in dry run
+ > apply manifest ConfigMap kube-flannel-cfg
+ > apply skipped in dry run
+ > apply manifest DaemonSet kube-flannel
+ > apply skipped in dry run
+ > apply manifest ServiceAccount kube-proxy
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding kube-proxy
+ > apply skipped in dry run
+ > apply manifest ServiceAccount coredns
+ > apply skipped in dry run
+ > apply manifest ClusterRoleBinding system:coredns
+ > apply skipped in dry run
+ > apply manifest ClusterRole system:coredns
+ > apply skipped in dry run
+ > apply manifest ConfigMap coredns
+ > apply skipped in dry run
+ > apply manifest Deployment coredns
+ > apply skipped in dry run
+ > apply manifest Service kube-dns
+ > apply skipped in dry run
+ > apply manifest ConfigMap kubeconfig-in-cluster
+ > apply skipped in dry run
 ```
 
-To upgrade Kubernetes from v1.21.3 to v1.22.0 run:
+To upgrade Kubernetes from v1.22.4 to v1.23.0 run:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --from 1.21.3 --to 1.22.0
-checking for resource APIs to be deprecated in version 1.22.0
-discovered master nodes ["10.5.0.2"]
-updating "kube-apiserver" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-apiserver: v1.21.3 -> 1.22.0
- > "10.5.0.2": machine configuration patched
- > "10.5.0.2": waiting for API server state pod update
- < "10.5.0.2": successfully updated
-updating "kube-controller-manager" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-controller-manager: v1.21.3 -> 1.22.0
- > "10.5.0.2": machine configuration patched
- > "10.5.0.2": waiting for API server state pod update
- < "10.5.0.2": successfully updated
-updating "kube-scheduler" to version "1.22.0"
- > "10.5.0.2": starting update
- > update kube-scheduler: v1.21.3 -> 1.22.0
- > "10.5.0.2": machine configuration patched
- > "10.5.0.2": waiting for API server state pod update
- < "10.5.0.2": successfully updated
-updating daemonset "kube-proxy" to version "1.22.0"
+$ talosctl --nodes <master node> upgrade-k8s --to 1.24.0
+automatically detected the lowest Kubernetes version 1.22.4
+checking for resource APIs to be deprecated in version 1.23.0
+discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
+discovered worker nodes ["172.20.0.5" "172.20.0.6"]
+updating "kube-apiserver" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
+ > "172.20.0.2": machine configuration patched
+ > "172.20.0.2": waiting for API server state pod update
+ < "172.20.0.2": successfully updated
+ > "172.20.0.3": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
+ > "172.20.0.3": machine configuration patched
+ > "172.20.0.3": waiting for API server state pod update
+ < "172.20.0.3": successfully updated
+ > "172.20.0.4": starting update
+ > update kube-apiserver: v1.22.4 -> 1.23.0
+ > "172.20.0.4": machine configuration patched
+ > "172.20.0.4": waiting for API server state pod update
+ < "172.20.0.4": successfully updated
+updating "kube-controller-manager" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > "172.20.0.2": machine configuration patched
+ > "172.20.0.2": waiting for API server state pod update
+ < "172.20.0.2": successfully updated
+ > "172.20.0.3": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > "172.20.0.3": machine configuration patched
+ > "172.20.0.3": waiting for API server state pod update
+ < "172.20.0.3": successfully updated
+ > "172.20.0.4": starting update
+ > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > "172.20.0.4": machine configuration patched
+ > "172.20.0.4": waiting for API server state pod update
+ < "172.20.0.4": successfully updated
+updating "kube-scheduler" to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > "172.20.0.2": machine configuration patched
+ > "172.20.0.2": waiting for API server state pod update
+ < "172.20.0.2": successfully updated
+ > "172.20.0.3": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > "172.20.0.3": machine configuration patched
+ > "172.20.0.3": waiting for API server state pod update
+ < "172.20.0.3": successfully updated
+ > "172.20.0.4": starting update
+ > update kube-scheduler: v1.22.4 -> 1.23.0
+ > "172.20.0.4": machine configuration patched
+ > "172.20.0.4": waiting for API server state pod update
+ < "172.20.0.4": successfully updated
+updating daemonset "kube-proxy" to version "1.23.0"
+updating kubelet to version "1.23.0"
+ > "172.20.0.2": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > "172.20.0.2": machine configuration patched
+ > "172.20.0.2": waiting for kubelet restart
+ > "172.20.0.2": waiting for node update
+ < "172.20.0.2": successfully updated
+ > "172.20.0.3": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > "172.20.0.3": machine configuration patched
+ > "172.20.0.3": waiting for kubelet restart
+ > "172.20.0.3": waiting for node update
+ < "172.20.0.3": successfully updated
+ > "172.20.0.4": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > "172.20.0.4": machine configuration patched
+ > "172.20.0.4": waiting for kubelet restart
+ > "172.20.0.4": waiting for node update
+ < "172.20.0.4": successfully updated
+ > "172.20.0.5": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > "172.20.0.5": machine configuration patched
+ > "172.20.0.5": waiting for kubelet restart
+ > "172.20.0.5": waiting for node update
+ < "172.20.0.5": successfully updated
+ > "172.20.0.6": starting update
+ > update kubelet: v1.22.4 -> 1.23.0
+ > "172.20.0.6": machine configuration patched
+ > "172.20.0.6": waiting for kubelet restart
+ > "172.20.0.6": waiting for node update
+ < "172.20.0.6": successfully updated
+updating manifests
+ > apply manifest Secret bootstrap-token-3lb63t
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding system-bootstrap-approve-node-client-csr
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding system-bootstrap-node-bootstrapper
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding system-bootstrap-node-renewal
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding system:default-sa
+ > apply skipped: nothing to update
+ > apply manifest ClusterRole psp:privileged
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding psp:privileged
+ > apply skipped: nothing to update
+ > apply manifest PodSecurityPolicy privileged
+ > apply skipped: nothing to update
+ > apply manifest ClusterRole flannel
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding flannel
+ > apply skipped: nothing to update
+ > apply manifest ServiceAccount flannel
+ > apply skipped: nothing to update
+ > apply manifest ConfigMap kube-flannel-cfg
+ > apply skipped: nothing to update
+ > apply manifest DaemonSet kube-flannel
+ > apply skipped: nothing to update
+ > apply manifest ServiceAccount kube-proxy
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding kube-proxy
+ > apply skipped: nothing to update
+ > apply manifest ServiceAccount coredns
+ > apply skipped: nothing to update
+ > apply manifest ClusterRoleBinding system:coredns
+ > apply skipped: nothing to update
+ > apply manifest ClusterRole system:coredns
+ > apply skipped: nothing to update
+ > apply manifest ConfigMap coredns
+ > apply skipped: nothing to update
+ > apply manifest Deployment coredns
+ > apply skipped: nothing to update
+ > apply manifest Service kube-dns
+ > apply skipped: nothing to update
+ > apply manifest ConfigMap kubeconfig-in-cluster
+ > apply skipped: nothing to update
 ```
 
-Script runs in two phases:
+Script runs in several phases:
 
-1. In the first phase every control plane node machine configuration is patched with new image version for each control plane component.
+1. Every control plane node machine configuration is patched with new image version for each control plane component.
    Talos renders new static pod definition on configuration update which is picked up by the kubelet.
    Script waits for the change to propagate to the API server state.
-   Messages `config version mismatch` indicate that script is waiting for the updated container to be registered in the API server.
-2. In the second phase script updates `kube-proxy` daemonset with the new image version.
+2. The script updates `kube-proxy` daemonset with the new image version.
+3. On every node in the cluster, `kubelet` version is updated.
+   The script waits for the `kubelet` service to be restarted, become healthy.
+   Update is verified with the `Node` resource state.
+4. Kubernetes bootstrap manifests are re-applied to the cluster.
+   The script never deletes any resources from the cluster, they should be deleted manually.
+   Updated bootstrap manifests might come with new Talos version (e.g. CoreDNS version update), or might be result of machine configuration change.
 
-If script fails for any reason, it can be safely restarted to continue upgrade process.
+If the script fails for any reason, it can be safely restarted to continue upgrade process from the moment of the failure.
 
 ## Manual Kubernetes Upgrade
 
@@ -289,7 +482,29 @@ To edit the `DaemonSet`, run:
 kubectl edit daemonsets -n kube-system kube-proxy
 ```
 
-## Kubelet
+### Bootstrap Manifests
+
+Bootstrap manifests can be retrieved in a format which works for `kubectl` with the following command:
+
+```bash
+talosctl -n <master IP> get manifests -o yaml | yq eval-all '.spec | .[] | splitDoc' - > manifests.yaml
+```
+
+Diff the manifests with the cluster:
+
+```bash
+kubectl diff -f manifests.yaml
+```
+
+Apply the manifests:
+
+```bash
+kubectl apply -f manifests.yaml
+```
+
+> Note: if some boostrap resources were removed, they have to be removed from the cluster manually.
+
+### kubelet
 
 For every node, patch machine configuration with new kubelet version, wait for the kubelet to restart with new version:
 
@@ -298,7 +513,7 @@ $ talosctl -n <IP> patch mc --immediate -p '[{"op": "replace", "path": "/machine
 patched mc at the node 172.20.0.2
 ```
 
-Once node boots with the new configuration, confirm upgrade with `kubectl get nodes <name>`:
+Once `kubelet` restarts with the new configuration, confirm upgrade with `kubectl get nodes <name>`:
 
 ```bash
 $ kubectl get nodes talos-default-master-1
