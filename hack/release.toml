@@ -47,7 +47,7 @@ see `.machine.logging` machine configuration option.
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.5
+* Linux: 5.15.6
 * etcd: 3.5.1
 * containerd: 1.5.8
 * runc: 1.0.3
