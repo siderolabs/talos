@@ -24,7 +24,10 @@ Talos now supports setting MTU and Virtual IPs on VLAN interfaces.
     [notes.upgrades]
         title = "Kubernetes Upgrade Enhancements"
         description="""\
-`talosctl upgrade-k8s` now syncs all Talos manifest resources generated from templates.
+`talosctl upgrade-k8s` was improved to:
+
+* sync all boostrap manifest resources in the Kubernetes cluster with versions bundled with current version Talos
+* upgrade `kubelet` to the version of the control plane components (without node reboot)
 
 So there is no need to update CoreDNS, Flannel container manually after running `upgrade-k8s` anymore.
 """

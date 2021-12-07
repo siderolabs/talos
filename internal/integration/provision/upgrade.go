@@ -60,6 +60,8 @@ type upgradeSpec struct {
 	TargetVersion        string
 	TargetK8sVersion     string
 
+	SkipKubeletUpgrade bool
+
 	MasterNodes int
 	WorkerNodes int
 
@@ -94,6 +96,9 @@ func upgradePreviousToStable() upgradeSpec {
 		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/talos-systems/installer", stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
+
+		// TODO: remove when StableVersion >= 0.14.0-beta.0
+		SkipKubeletUpgrade: true,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -565,7 +570,7 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	suite.waitForClusterHealth()
 }
 
-func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
+func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skipKubeletUpgrade bool) {
 	if fromVersion == toVersion {
 		suite.T().Logf("skipping Kubernetes upgrade, as versions are equal %q -> %q", fromVersion, toVersion)
 
@@ -579,6 +584,8 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string) {
 		ToVersion:   toVersion,
 
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
+
+		UpgradeKubelet: !skipKubeletUpgrade,
 	}
 
 	suite.Require().NoError(kubernetes.UpgradeTalosManaged(suite.ctx, suite.clusterAccess, options))
@@ -643,7 +650,7 @@ func (suite *UpgradeSuite) TestRolling() {
 	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
 
 	// upgrade Kubernetes if required
-	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion)
+	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion, suite.spec.SkipKubeletUpgrade)
 
 	// run e2e test
 	suite.runE2E(suite.spec.TargetK8sVersion)
