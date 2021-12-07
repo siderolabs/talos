@@ -66,6 +66,23 @@ machine:
         ip: 192.168.0.15
 ```
 
+Virtual IP's can also be configured on a VLAN interface.
+
+```yaml
+machine:
+  network:
+    interfaces:
+    - interface: eth0
+      dhcp: true
+      vip:
+        ip: 192.168.0.15
+      vlans:
+        - vlanId: 100
+          dhcp: true
+          vip:
+            ip: 192.168.1.15
+```
+
 Obviously, for your own environment, the interface and the DHCP setting may
 differ.
 You are free to use static addressing (`cidr`) instead of DHCP.
