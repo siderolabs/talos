@@ -240,13 +240,6 @@ iso: ## Builds the ISO and outputs it to the artifact directory.
 		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
 	done
 
-.PHONY: boot
-boot: ## Creates a compressed tarball that includes vmlinuz-{amd64,arm64} and initramfs-{amd64,arm64}.xz. Note that these files must already be present in the artifacts directory.
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		tar  -C $(ARTIFACTS) --transform=s/-$${arch}// -czf $(ARTIFACTS)/boot-$${arch}.tar.gz vmlinuz-$${arch} initramfs-$${arch}.xz ; \
-	done
-
 .PHONY: talosctl-cni-bundle
 talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle for talosctl.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
