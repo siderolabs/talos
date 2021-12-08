@@ -25,6 +25,18 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
 ### Available Talos-specific parameters
 
+#### `ip`
+
+  Initial configuration of the interface, routes, DNS, NTP servers.
+
+  Full documentation is available in the [Linux kernel docs](https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt).
+
+  `ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>`
+
+  Talos will use the configuration supplied via the kernel parameter as the initial network configuration.
+  This parameter is useful in the environments where DHCP doesn't provide IP addresses or when default DNS and NTP servers should be overridden
+  before loading machine configuration.
+  Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DHCP and DNS servers.
 #### `panic`
 
   The amount of time to wait after a panic before a reboot is issued.
@@ -35,7 +47,7 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   This option allows the user to delay the reboot to give time to collect debug
   information from the console screen.
 
-  A value of `0` disables automtic rebooting entirely.
+  A value of `0` disables automatic rebooting entirely.
 
 #### `talos.config`
 
@@ -101,7 +113,5 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   configure each network interface by DHCP.
   If there are many network interfaces on the machine which have link but no
   DHCP server, this can add significant boot delays.
-  
+
   This option may be specified multiple times for multiple network interfaces.
-
-
