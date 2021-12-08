@@ -120,7 +120,7 @@ talosctl cluster create [flags]
       --ipv4                                    enable IPv4 network in the cluster (default true)
       --ipv6                                    enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                         the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string               desired kubernetes version to run (default "1.23.0-rc.1")
+      --kubernetes-version string               desired kubernetes version to run (default "1.23.0")
       --masters int                             the number of masters to create (default 1)
       --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
@@ -1995,7 +1995,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
-      --to string         the Kubernetes control plane version to upgrade to (default "1.23.0-rc.1")
+      --to string         the Kubernetes control plane version to upgrade to (default "1.23.0")
 ```
 
 ### Options inherited from parent commands
