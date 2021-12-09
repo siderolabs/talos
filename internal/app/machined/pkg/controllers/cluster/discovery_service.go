@@ -129,6 +129,11 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		}
 
 		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryServiceEnabled {
+			// if discovery is disabled cleanup existing resources
+			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
+				return err
+			}
+
 			if clientCtxCancel != nil {
 				clientCtxCancel()
 
@@ -267,22 +272,8 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			touchedIDs[id] = struct{}{}
 		}
 
-		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
+		if err := cleanupAffiliates(ctx, ctrl, r, touchedIDs); err != nil {
+			return err
 		}
 	}
 }
