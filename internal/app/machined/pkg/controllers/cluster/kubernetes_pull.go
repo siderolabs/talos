@@ -98,6 +98,11 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 		}
 
 		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled {
+			// if discovery is disabled cleanup existing resources
+			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
+				return err
+			}
+
 			continue
 		}
 
@@ -127,7 +132,6 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 
 		if notifyCh == nil {
 			var watchCtx context.Context
-
 			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
 
 			notifyCh, err = kubernetesRegistry.Watch(watchCtx, logger)
@@ -159,22 +163,8 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			touchedIDs[id] = struct{}{}
 		}
 
-		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
+		if err := cleanupAffiliates(ctx, ctrl, r, touchedIDs); err != nil {
+			return err
 		}
 	}
 }

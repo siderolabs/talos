@@ -232,6 +232,108 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	suite.Assert().NoError(<-errCh)
 }
 
+func (suite *DiscoveryServiceSuite) TestDisable() {
+	suite.startRuntime()
+
+	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.DiscoveryServiceController{}))
+
+	serviceEndpoint, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+	suite.Require().NoError(err)
+
+	if serviceEndpoint.Port() == "" {
+		serviceEndpoint.Host += ":443"
+	}
+
+	clusterIDRaw := make([]byte, constants.DefaultClusterIDSize)
+	_, err = io.ReadFull(rand.Reader, clusterIDRaw)
+	suite.Require().NoError(err)
+
+	clusterID := base64.StdEncoding.EncodeToString(clusterIDRaw)
+
+	encryptionKey := make([]byte, constants.DefaultClusterSecretSize)
+	_, err = io.ReadFull(rand.Reader, encryptionKey)
+	suite.Require().NoError(err)
+
+	// regular discovery affiliate
+	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
+	discoveryConfig.TypedSpec().DiscoveryEnabled = true
+	discoveryConfig.TypedSpec().RegistryServiceEnabled = true
+	discoveryConfig.TypedSpec().ServiceEndpoint = serviceEndpoint.Host
+	discoveryConfig.TypedSpec().ServiceClusterID = clusterID
+	discoveryConfig.TypedSpec().ServiceEncryptionKey = encryptionKey
+	suite.Require().NoError(suite.state.Create(suite.ctx, discoveryConfig))
+
+	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
+
+	localAffiliate := cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID)
+	*localAffiliate.TypedSpec() = cluster.AffiliateSpec{
+		NodeID:      nodeIdentity.TypedSpec().NodeID,
+		Hostname:    "foo.com",
+		Nodename:    "bar",
+		MachineType: machine.TypeControlPlane,
+		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+	}
+	suite.Require().NoError(suite.state.Create(suite.ctx, localAffiliate))
+
+	// create a test client connected to the same cluster but under different affiliate ID
+	cipher, err := aes.NewCipher(discoveryConfig.TypedSpec().ServiceEncryptionKey)
+	suite.Require().NoError(err)
+
+	cli, err := client.NewClient(client.Options{
+		Cipher:      cipher,
+		Endpoint:    serviceEndpoint.Host,
+		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
+		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		TTL:         5 * time.Minute,
+	})
+	suite.Require().NoError(err)
+
+	errCh := make(chan error, 1)
+	notifyCh := make(chan struct{}, 1)
+
+	cliCtx, cliCtxCancel := context.WithCancel(suite.ctx)
+	defer cliCtxCancel()
+
+	go func() {
+		errCh <- cli.Run(cliCtx, logging.Wrap(log.Writer()), notifyCh)
+	}()
+
+	// inject some affiliate via our client, controller should publish it as an affiliate
+	suite.Require().NoError(cli.SetLocalData(&client.Affiliate{
+		Affiliate: &pb.Affiliate{
+			NodeId: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		},
+	}, nil))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
+			spec := r.(*cluster.Affiliate).TypedSpec()
+
+			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
+
+			return nil
+		}),
+	))
+
+	// now disable the service registry
+	_, err = suite.state.UpdateWithConflicts(suite.ctx, discoveryConfig.Metadata(), func(r resource.Resource) error {
+		r.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
+
+		return nil
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertNoResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata()),
+	))
+
+	cliCtxCancel()
+	suite.Assert().NoError(<-errCh)
+}
+
 func TestDiscoveryServiceSuite(t *testing.T) {
 	suite.Run(t, new(DiscoveryServiceSuite))
 }
