@@ -58,7 +58,7 @@ see `.machine.logging` machine configuration option.
 * CoreDNS: 1.8.6
 * Flannel (default CNI): 0.15.1
 
-Talos is built with Go 1.17.4
+Talos is built with Go 1.17.5
 """
 
     [notes.caps]
