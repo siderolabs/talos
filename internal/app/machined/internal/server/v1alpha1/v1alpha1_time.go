@@ -16,6 +16,7 @@ import (
 
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // ConfigProvider defines an interface sufficient for the TimeServer.
@@ -40,7 +41,7 @@ func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeap
 	timeServers := r.ConfigProvider.Config().Machine().Time().Servers()
 
 	if len(timeServers) == 0 {
-		return nil, fmt.Errorf("no time servers configured")
+		timeServers = []string{constants.DefaultNTPServer}
 	}
 
 	return r.TimeCheck(ctx, &timeapi.TimeRequest{
