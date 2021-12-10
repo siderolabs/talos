@@ -203,6 +203,11 @@ func (k *Kubelet) APIRestartAllowed(runtime.Runtime) bool {
 	return true
 }
 
+// APIStartAllowed implements APIStartableService.
+func (k *Kubelet) APIStartAllowed(runtime.Runtime) bool {
+	return true
+}
+
 func kubeletSeccomp(seccomp *specs.LinuxSeccomp) {
 	// for cephfs mounts
 	seccomp.Syscalls = append(seccomp.Syscalls,
