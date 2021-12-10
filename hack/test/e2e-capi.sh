@@ -4,11 +4,11 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-export CAPI_VERSION="${CAPI_VERSION:-0.4.4}"
-export CABPT_VERSION="${CABPT_VERSION:-0.4.2}"
-export CACPPT_VERSION="${CACPPT_VERSION:-0.3.1}"
-export CAPA_VERSION="${CAPA_VERSION:-0.7.2}"
-export CAPG_VERSION="${CAPG_VERSION:-0.4.0}"
+export CAPI_VERSION="${CAPI_VERSION:-1.0.2}"
+export CABPT_VERSION="${CABPT_VERSION:-0.5.0}"
+export CACPPT_VERSION="${CACPPT_VERSION:-0.4.0}"
+export CAPA_VERSION="${CAPA_VERSION:-1.1.0}"
+export CAPG_VERSION="${CAPG_VERSION:-1.0.0}"
 
 # We need to override this here since e2e.sh will set it to ${TMP}/capi/kubeconfig.
 export KUBECONFIG="/tmp/e2e/docker/kubeconfig"

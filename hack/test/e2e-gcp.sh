@@ -34,10 +34,9 @@ function setup {
   export GCP_NODE_VOL_SIZE=50
   export GCP_NODE_IMAGE_ID=projects/${GCP_PROJECT}/global/images/talos-e2e-${SHA}
 
-  ## TODO: update to talos-systems once merged
-  ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
+  ${CLUSTERCTL} generate cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/talos-systems/cluster-api-templates/blob/v1alpha4/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
+    --from https://github.com/talos-systems/cluster-api-templates/blob/v1beta1/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
   
 }
 
