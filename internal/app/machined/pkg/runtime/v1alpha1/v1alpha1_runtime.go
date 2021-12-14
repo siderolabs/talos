@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -43,8 +42,8 @@ func (r *Runtime) Config() config.Provider {
 	return r.c
 }
 
-// ValidateConfig implements the Runtime interface.
-func (r *Runtime) ValidateConfig(b []byte) (config.Provider, error) {
+// LoadAndValidateConfig implements the Runtime interface.
+func (r *Runtime) LoadAndValidateConfig(b []byte) (config.Provider, error) {
 	cfg, err := configloader.NewFromBytes(b)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
@@ -58,28 +57,14 @@ func (r *Runtime) ValidateConfig(b []byte) (config.Provider, error) {
 }
 
 // SetConfig implements the Runtime interface.
-func (r *Runtime) SetConfig(b []byte) error {
-	cfg, err := r.ValidateConfig(b)
-	if err != nil {
-		r.Events().Publish(&machine.ConfigLoadErrorEvent{
-			Error: err.Error(),
-		})
-
-		return err
-	}
-
+func (r *Runtime) SetConfig(cfg config.Provider) error {
 	r.c = cfg
 
 	return r.s.V1Alpha2().SetConfig(cfg)
 }
 
 // CanApplyImmediate implements the Runtime interface.
-func (r *Runtime) CanApplyImmediate(b []byte) error {
-	cfg, err := r.ValidateConfig(b)
-	if err != nil {
-		return err
-	}
-
+func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// serialize and load back current config to remove any changes made
 	// to the config in-memory while the node was running
 	currentBytes, err := r.Config().Bytes()

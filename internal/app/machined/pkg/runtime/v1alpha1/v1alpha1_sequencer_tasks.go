@@ -437,7 +437,16 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			logger.Printf("storing config in memory")
 
-			return r.SetConfig(b)
+			cfg, e := r.LoadAndValidateConfig(b)
+			if e != nil {
+				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
+					Error: err.Error(),
+				})
+
+				return e
+			}
+
+			return r.SetConfig(cfg)
 		}
 
 		cfg, err := configloader.NewFromFile(constants.ConfigPath)
@@ -455,16 +464,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 		logger.Printf("persistence is enabled, using existing config on disk")
 
-		b, err := cfg.Bytes()
-		if err != nil {
-			r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
-				Error: err.Error(),
-			})
-
-			return err
-		}
-
-		return r.SetConfig(b)
+		return r.SetConfig(cfg)
 	}, "loadConfig"
 }
 

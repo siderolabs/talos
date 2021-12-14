@@ -127,14 +127,7 @@ func (s *Server) Register(obj *grpc.Server) {
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
 
-	// --immediate
-	if in.Immediate {
-		if err := s.Controller.Runtime().CanApplyImmediate(in.GetData()); err != nil {
-			return nil, err
-		}
-	}
-
-	cfgProvider, err := s.Controller.Runtime().ValidateConfig(in.GetData())
+	cfgProvider, err := s.Controller.Runtime().LoadAndValidateConfig(in.GetData())
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +135,13 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	err = cfgProvider.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
 	if err != nil {
 		return nil, err
+	}
+
+	// --immediate
+	if in.Immediate {
+		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
+			return nil, err
+		}
 	}
 
 	cfg, err := cfgProvider.Bytes()
@@ -156,7 +156,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	switch {
 	// --immediate
 	case in.Immediate:
-		if err := s.Controller.Runtime().SetConfig(cfg); err != nil {
+		if err := s.Controller.Runtime().SetConfig(cfgProvider); err != nil {
 			return nil, err
 		}
 	// default, no `--on-reboot`

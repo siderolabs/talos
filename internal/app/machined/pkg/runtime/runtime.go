@@ -11,9 +11,9 @@ import (
 // Runtime defines the runtime parameters.
 type Runtime interface {
 	Config() config.Provider
-	ValidateConfig([]byte) (config.Provider, error)
-	SetConfig([]byte) error
-	CanApplyImmediate([]byte) error
+	LoadAndValidateConfig([]byte) (config.Provider, error)
+	SetConfig(config.Provider) error
+	CanApplyImmediate(config.Provider) error
 	State() State
 	Events() EventStream
 	Logging() LoggingManager
