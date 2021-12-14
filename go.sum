@@ -1065,8 +1065,8 @@ github.com/talos-systems/discovery-api v0.1.0 h1:aKod6uqakH6VfeQ6HaxPF7obqFAL1QT
 github.com/talos-systems/discovery-api v0.1.0/go.mod h1:ZsbzzOC5bzToaF3+YvUXDf9paeWV5bedpDu5RPXrglM=
 github.com/talos-systems/discovery-client v0.1.0 h1:m+f96TKGFckMWrhDI+o9+QhcGn8f1A61Jp6YYVwiulI=
 github.com/talos-systems/discovery-client v0.1.0/go.mod h1:LxqCv16VBB68MgaMnV8jXujYd3Q097DAn22U5gaHmkU=
-github.com/talos-systems/go-blockdevice v0.2.5 h1:Xsj9ayTvBae56kGB5hsueA4cMFBRf7Nx4f1U6o+DbOs=
-github.com/talos-systems/go-blockdevice v0.2.5/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
+github.com/talos-systems/go-blockdevice v0.2.6-0.20211214184027-6928ee43c303 h1:uXg/dMlBbt9zHkA3g4wVY1i6X55c/exRMjrz17KTtIo=
+github.com/talos-systems/go-blockdevice v0.2.6-0.20211214184027-6928ee43c303/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=
 github.com/talos-systems/go-cmd v0.1.0 h1:bqPeL0ksproFyTOlvMisdUXc7uAf0aqJ5Q6waSGv32s=
 github.com/talos-systems/go-cmd v0.1.0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=
