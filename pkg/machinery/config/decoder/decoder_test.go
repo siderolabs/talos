@@ -5,9 +5,12 @@
 package decoder_test
 
 import (
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/decoder"
@@ -19,8 +22,8 @@ type Mock struct {
 }
 
 type MockV2 struct {
-	Slice []Mock          `yaml:"slice"`
-	Map   map[string]Mock `yaml:"map"`
+	Slice []Mock           `yaml:"slice"`
+	Map   map[string]*Mock `yaml:"map"`
 }
 
 type MockV3 struct {
@@ -211,7 +214,7 @@ spec:
 `),
 			expected: []interface{}{
 				&MockV2{
-					Map: map[string]Mock{
+					Map: map[string]*Mock{
 						"first": {
 							Test: true,
 						},
@@ -279,5 +282,42 @@ spec:
 				assert.EqualError(t, err, tt.expectedErr)
 			}
 		})
+	}
+}
+
+func TestDecoderV1Alpha1Config(t *testing.T) {
+	t.Parallel()
+
+	files, err := filepath.Glob(filepath.Join("testdata", "*.yaml"))
+	require.NoError(t, err)
+
+	for _, file := range files {
+		file := file
+
+		t.Run(file, func(t *testing.T) {
+			t.Parallel()
+
+			contents, err := ioutil.ReadFile(file)
+			require.NoError(t, err)
+
+			d := decoder.NewDecoder(contents)
+			_, err = d.Decode()
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
+	b.ReportAllocs()
+
+	contents, err := ioutil.ReadFile("testdata/controlplane.yaml")
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		d := decoder.NewDecoder(contents)
+		_, err = d.Decode()
+
+		assert.NoError(b, err)
 	}
 }
