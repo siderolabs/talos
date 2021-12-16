@@ -91,7 +91,7 @@ func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*
 
 		spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
 
-		for _, alias := range spec.Aliases {
+		for _, alias := range spec.AllAliases {
 			if strings.EqualFold(alias, kind.Type) {
 				matched = append(matched, rd)
 

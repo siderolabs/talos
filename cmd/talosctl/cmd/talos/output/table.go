@@ -58,6 +58,8 @@ func (table *Table) WriteHeader(definition resource.Resource, withEvents bool) e
 			return fmt.Errorf("error parsing column %q jsonpath: %w", name, err)
 		}
 
+		expr = expr.AllowMissingKeys(true)
+
 		table.dynamicColumns = append(table.dynamicColumns, func(val interface{}) (string, error) {
 			var buf bytes.Buffer
 
