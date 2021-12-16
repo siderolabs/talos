@@ -22,11 +22,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-const ciliumCustomCNI = "cilium"
+const canalCustomCNI = "canal"
 
 var customCNIPresets = map[string][]string{
-	ciliumCustomCNI: {
-		"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
+	canalCustomCNI: {
+		"https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml",
 	},
 }
 
@@ -153,7 +153,7 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 				&state.cni,
 				components.NewTableHeaders("CNI", "description"),
 				constants.FlannelCNI, "CNI used by Talos by default",
-				ciliumCustomCNI, "Cillium 1.8 installed through quick-install.yaml",
+				canalCustomCNI, "Canal v3.20",
 				constants.NoneCNI, "CNI will not be installed",
 			))
 	}

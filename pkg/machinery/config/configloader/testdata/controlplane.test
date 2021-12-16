@@ -256,7 +256,7 @@ cluster:
         #     name: custom # Name of CNI to use.
         #     # URLs containing manifests to apply for the CNI.
         #     urls:
-        #         - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
+        #         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
     token: y9pn8n.g7wi0m50e0wu9b9v # The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.
     aescbcEncryptionSecret: /ZaQCnD11lrRRF2OH7ez96cpn99VWhD1AXdWbZwLQrc= # The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
     # The base64 encoded root certificate authority used by Kubernetes.

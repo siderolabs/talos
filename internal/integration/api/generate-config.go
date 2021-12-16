@@ -73,7 +73,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 				CniConfig: &machineapi.CNIConfig{
 					Name: constants.CustomCNI,
 					Urls: []string{
-						"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
+						"https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml",
 					},
 				},
 			},

@@ -443,7 +443,7 @@ var (
 	clusterCustomCNIExample = &CNIConfig{
 		CNIName: constants.CustomCNI,
 		CNIUrls: []string{
-			"https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml",
+			"https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml",
 		},
 	}
 

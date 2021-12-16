@@ -3152,7 +3152,7 @@ cni:
     name: custom # Name of CNI to use.
     # URLs containing manifests to apply for the CNI.
     urls:
-        - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
+        - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
 ```
 
 
@@ -3243,7 +3243,7 @@ Appears in:
 name: custom # Name of CNI to use.
 # URLs containing manifests to apply for the CNI.
 urls:
-    - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
+    - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
 ```
 
 <hr />
