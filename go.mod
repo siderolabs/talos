@@ -17,15 +17,15 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.23.0
-	k8s.io/apimachinery v0.23.0
-	k8s.io/apiserver v0.23.0 // indirect
-	k8s.io/cli-runtime v0.23.0 // indirect
-	k8s.io/client-go v0.23.0
-	k8s.io/component-base v0.23.0
-	k8s.io/cri-api v0.23.0
-	k8s.io/kubectl v0.23.0
-	k8s.io/kubelet v0.23.0
+	k8s.io/api v0.23.1
+	k8s.io/apimachinery v0.23.1
+	k8s.io/apiserver v0.23.1 // indirect
+	k8s.io/cli-runtime v0.23.1 // indirect
+	k8s.io/client-go v0.23.1
+	k8s.io/component-base v0.23.1
+	k8s.io/cri-api v0.23.1
+	k8s.io/kubectl v0.23.1
+	k8s.io/kubelet v0.23.1
 )
 
 require (
@@ -107,7 +107,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20211205041911-012df41ee64c
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
