@@ -54,7 +54,7 @@ see `.machine.logging` machine configuration option.
 * etcd: 3.5.1
 * containerd: 1.5.8
 * runc: 1.0.3
-* Kubernetes: 1.23.0
+* Kubernetes: 1.23.1
 * CoreDNS: 1.8.6
 * Flannel (default CNI): 0.15.1
 
