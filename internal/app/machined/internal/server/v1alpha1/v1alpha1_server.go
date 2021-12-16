@@ -58,6 +58,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
+	"github.com/talos-systems/talos/internal/pkg/miniprocfs"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/archiver"
 	"github.com/talos-systems/talos/pkg/chunker"
@@ -1532,56 +1533,24 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 
 // Processes implements the machine.MachineServer interface.
 func (s *Server) Processes(ctx context.Context, in *emptypb.Empty) (reply *machine.ProcessesResponse, err error) {
-	procs, err := procfs.AllProcs()
+	var processes []*machine.ProcessInfo
+
+	procs, err := miniprocfs.NewProcesses()
 	if err != nil {
 		return nil, err
 	}
 
-	processes := make([]*machine.ProcessInfo, 0, len(procs))
-
-	var (
-		command    string
-		executable string
-		args       []string
-		stats      procfs.ProcStat
-	)
-
-	for _, proc := range procs {
-		// due to race condition, reading process info might fail if process has already terminated
-		command, err = proc.Comm()
+	for {
+		info, err := procs.Next()
 		if err != nil {
-			continue
+			return nil, err
 		}
 
-		executable, err = proc.Executable()
-		if err != nil {
-			continue
+		if info == nil {
+			break
 		}
 
-		args, err = proc.CmdLine()
-		if err != nil {
-			continue
-		}
-
-		stats, err = proc.Stat()
-		if err != nil {
-			continue
-		}
-
-		p := &machine.ProcessInfo{
-			Pid:            int32(proc.PID),
-			Ppid:           int32(stats.PPID),
-			State:          stats.State,
-			Threads:        int32(stats.NumThreads),
-			CpuTime:        stats.CPUTime(),
-			VirtualMemory:  uint64(stats.VirtualMemory()),
-			ResidentMemory: uint64(stats.ResidentMemory()),
-			Command:        command,
-			Executable:     executable,
-			Args:           strings.Join(args, " "),
-		}
-
-		processes = append(processes, p)
+		processes = append(processes, info)
 	}
 
 	reply = &machine.ProcessesResponse{
