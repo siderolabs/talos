@@ -10,7 +10,7 @@ require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/containerd/go-cni v1.1.0
-	github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77
+	github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0

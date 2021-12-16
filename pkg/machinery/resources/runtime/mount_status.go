@@ -66,7 +66,7 @@ func (r *MountStatus) DeepCopy() resource.Resource {
 func (r *MountStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MountStatusType,
-		Aliases:          []resource.Type{"Mounts"},
+		Aliases:          []resource.Type{"mounts"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{

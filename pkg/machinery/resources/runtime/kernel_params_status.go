@@ -65,7 +65,7 @@ func (r *KernelParamStatus) DeepCopy() resource.Resource {
 func (r *KernelParamStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamStatusType,
-		Aliases:          []resource.Type{"Sysctls", "KernelParameters", "KernelParams"},
+		Aliases:          []resource.Type{"sysctls", "kernelparameters", "kernelparams"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{

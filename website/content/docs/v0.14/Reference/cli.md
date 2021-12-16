@@ -1268,7 +1268,8 @@ Get a specific resource or list of resources.
 
 ### Synopsis
 
-Similar to 'kubectl get', 'talosctl get' returns a set of resources from the OS.  To get a list of all available resource definitions, issue 'talosctl get rd'
+Similar to 'kubectl get', 'talosctl get' returns a set of resources from the OS.
+To get a list of all available resource definitions, issue 'talosctl get rd'
 
 ```
 talosctl get <type> [<id>] [flags]

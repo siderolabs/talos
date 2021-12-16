@@ -320,8 +320,9 @@ github.com/coreos/go-systemd/v22 v22.3.2 h1:D9/bQk5vlXQFZ6Kwuu6zaiXJ9oTPe68++AzA
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77 h1:epmZGalngJg+68I3C6lIj9x1Jn7DWSvDT/ZZbojfYic=
 github.com/cosi-project/runtime v0.0.0-20210906201716-5cb7f5002d77/go.mod h1:fWDa1vgmSfHFypuffoq04I++IGMHQcduRKffG51jPfY=
+github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f h1:COaUfDid6VOPrwViW30CdYZ6rHLHMfnN25C+TKQIrgU=
+github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f/go.mod h1:fWDa1vgmSfHFypuffoq04I++IGMHQcduRKffG51jPfY=
 github.com/cpuguy83/go-md2man v1.0.10 h1:BSKMNlYxDvnunlTymqtgONjNnaRV1sTpcovwwjF22jk=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
