@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/talos-systems/go-retry/retry"
 )
 
 // RunOption configures options for Run.
@@ -24,6 +25,7 @@ type RunOption func(*runOptions)
 type MatchFunc func(output string) error
 
 type runOptions struct {
+	retryer               retry.Retryer
 	shouldFail            bool
 	stdoutEmpty           bool
 	stderrNotEmpty        bool
@@ -33,6 +35,13 @@ type runOptions struct {
 	stderrNegativeRegexps []*regexp.Regexp
 	stdoutMatchers        []MatchFunc
 	stderrMatchers        []MatchFunc
+}
+
+// WithRetry retries failing command runs.
+func WithRetry(retryer retry.Retryer) RunOption {
+	return func(opts *runOptions) {
+		opts.retryer = retryer
+	}
 }
 
 // ShouldFail tells run command should fail (with non-empty stderr).
@@ -141,6 +150,21 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 	return &stdout, &stderr, err
 }
 
+// retryRunAndWait retries runAndWait if the command fails to run.
+func retryRunAndWait(suite *suite.Suite, cmd *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+	err = retryer.Retry(func() error {
+		stdoutBuf, stderrBuf, err = runAndWait(suite, cmd)
+
+		if _, ok := err.(*exec.ExitError); ok {
+			return retry.ExpectedError(err)
+		}
+
+		return err
+	})
+
+	return
+}
+
 // run executes command, asserts on its exit status/output, and returns stdout.
 //
 //nolint:gocyclo,nakedret
@@ -151,7 +175,17 @@ func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string
 		o(&opts)
 	}
 
-	stdoutBuf, stderrBuf, err := runAndWait(suite, cmd)
+	var (
+		stdoutBuf, stderrBuf *bytes.Buffer
+		err                  error
+	)
+
+	if opts.retryer != nil {
+		stdoutBuf, stderrBuf, err = retryRunAndWait(suite, cmd, opts.retryer)
+	} else {
+		stdoutBuf, stderrBuf, err = runAndWait(suite, cmd)
+	}
+
 	if err != nil {
 		// check that command failed, not something else happened
 		_, ok := err.(*exec.ExitError)
