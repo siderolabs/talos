@@ -87,6 +87,9 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		return fmt.Errorf("new config is not v1alpha1")
 	}
 
+	// copy the config as we're going to modify it
+	newConfig = newConfig.DeepCopy()
+
 	// the config changes allowed to be applied immediately are:
 	// * .debug
 	// * .cluster

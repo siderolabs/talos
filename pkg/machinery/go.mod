@@ -18,7 +18,7 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.4
+	github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382
 	github.com/talos-systems/go-blockdevice v0.2.6-0.20211214184027-6928ee43c303
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.1
