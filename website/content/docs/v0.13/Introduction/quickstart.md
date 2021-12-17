@@ -11,10 +11,20 @@ The easiest way to try Talos is by using the CLI (`talosctl`) to create a cluste
 
 Download `talosctl`:
 
+#### `amd64`
+
 ```bash
 curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
+
+#### `arm64`
+
+```bash
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
+chmod +x /usr/local/bin/talosctl
+```
+
 
 ### `kubectl`
 
