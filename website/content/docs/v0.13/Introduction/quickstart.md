@@ -27,7 +27,6 @@ curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases
 chmod +x /usr/local/bin/talosctl
 ```
 
-
 ### `kubectl`
 
 Download `kubectl` via one of methods outlined in the [documentation](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
