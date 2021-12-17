@@ -9,6 +9,9 @@ package cli
 
 import (
 	"regexp"
+	"time"
+
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 )
@@ -28,6 +31,7 @@ func (suite *TimeSuite) TestDefault() {
 	suite.RunCLI([]string{"time", "--nodes", suite.RandomDiscoveredNode()},
 		base.StdoutShouldMatch(regexp.MustCompile(`NTP-SERVER`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`UTC`)),
+		base.WithRetry(retry.Constant(time.Minute, retry.WithUnits(time.Second))),
 	)
 }
 
