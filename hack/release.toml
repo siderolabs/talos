@@ -52,6 +52,13 @@ Talos now preserves machine configuration as it was submitted to the node.
 There is some work still going on various cloud platforms to stop modifying machine configuration on the fly.
 """
 
+    [notes.platforms]
+        title = "Platform Support"
+        description="""\
+Talos now supports Oracle Cloud.
+"""
+
+
 [make_deps]
 
     [make_deps.tools]

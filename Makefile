@@ -228,7 +228,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 
 images-essential: image-aws image-gcp image-metal ## Builds only essential images used in the CI (AWS, GCP, and Metal).
 
-images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-metal image-nocloud image-openstack image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, GCP, HCloud, Metal, NoCloud, Openstack, Scaleway, UpCloud, Vultr and VMware).
+images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-metal image-nocloud image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, GCP, HCloud, Metal, NoCloud, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4 and pine64 (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)

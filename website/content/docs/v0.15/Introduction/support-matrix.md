@@ -11,7 +11,7 @@ weight: 6
 | Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.23, 1.22, 1.21                   |
 | Architecture                                                                                                   | amd64, arm64                                                            |
 | **Platforms**                                                                                                  |                                    |                                    |
-| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud  |
+| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud  |
 | - bare metal                                                                                                   | x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image                |
 | - virtualized                                                                                                  | VMware, Hyper-V, KVM, Proxmox, Xen                                      |
 | - SBCs                                                                                                         | Raspberry Pi4, Banana Pi M64, Pine64, and other                         |
@@ -46,6 +46,7 @@ Tier 3: Not tested by core Talos team, community tested.
 
 * Hetzner
 * nocloud
+* Oracle Cloud
 * Scaleway
 * Vultr
 * Upcloud

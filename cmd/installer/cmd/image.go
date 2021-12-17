@@ -84,7 +84,7 @@ func runImageCmd() (err error) {
 
 	if options.ConfigSource == "" {
 		switch p.Name() {
-		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "nocloud", "scaleway", "upcloud", "vultr":
+		case "aws", "azure", "digital-ocean", "gcp", "hcloud", "nocloud", "oracle", "scaleway", "upcloud", "vultr":
 			options.ConfigSource = constants.ConfigNone
 		case "vmware":
 			options.ConfigSource = constants.ConfigGuestInfo
@@ -167,6 +167,19 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 		}
 	case "openstack":
 		if err = tar(fmt.Sprintf("openstack-%s.tar.gz", arch), file, dir); err != nil {
+			return err
+		}
+	case "oracle":
+		name = fmt.Sprintf("oracle-%s.qcow2", arch)
+		file = filepath.Join(outputArg, name)
+
+		if err = qemuimg.Convert("raw", "qcow2", "cluster_size=8k", img, file); err != nil {
+			return err
+		}
+
+		log.Println("compressing image")
+
+		if err = xz(file); err != nil {
 			return err
 		}
 	case "scaleway":

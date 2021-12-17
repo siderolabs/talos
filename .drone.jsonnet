@@ -556,6 +556,8 @@ local release = {
       '_out/nocloud-arm64.raw.xz',
       '_out/openstack-amd64.tar.gz',
       '_out/openstack-arm64.tar.gz',
+      '_out/oracle-amd64.qcow2.xz',
+      '_out/oracle-arm64.qcow2.xz',
       '_out/scaleway-amd64.raw.xz',
       '_out/scaleway-arm64.raw.xz',
       '_out/talos-amd64.iso',
