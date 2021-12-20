@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -94,7 +95,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 	apiEndpoint := *ctrl.Cmdline.Get(constants.KernelParamSideroLink).First()
 
-	conn, err := grpc.DialContext(ctx, apiEndpoint, grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, apiEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("error dialing SideroLink endpoint %q: %w", apiEndpoint, err)
 	}

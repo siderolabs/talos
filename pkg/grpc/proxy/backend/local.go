@@ -10,6 +10,7 @@ import (
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
@@ -56,7 +57,7 @@ func (l *Local) GetConnection(ctx context.Context) (context.Context, *grpc.Clien
 	l.conn, err = grpc.DialContext(
 		ctx,
 		"unix:"+l.socketPath,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 
 	)

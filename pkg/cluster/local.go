@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -31,7 +32,7 @@ func (c *LocalClientProvider) Client(endpoints ...string) (*client.Client, error
 	var err error
 
 	if c.client == nil {
-		c.client, err = client.New(context.TODO(), client.WithUnixSocket(constants.APISocketPath), client.WithGRPCDialOptions(grpc.WithInsecure()))
+		c.client, err = client.New(context.TODO(), client.WithUnixSocket(constants.APISocketPath), client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
 	}
 
 	return c.client, err

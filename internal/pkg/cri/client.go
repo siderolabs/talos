@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
 	"github.com/talos-systems/talos/pkg/grpc/dialer"
@@ -32,7 +33,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, endpoint,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.FailOnNonTempDialError(false),
 		grpc.WithBackoffMaxDelay(3*time.Second), //nolint:staticcheck

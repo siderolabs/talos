@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	runtime "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
@@ -69,7 +70,7 @@ func (suite *TimedSuite) TestTime() {
 
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
 	suite.Require().NoError(err)
@@ -103,7 +104,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(dialer.DialUnix()),
 	)
 	suite.Require().NoError(err)

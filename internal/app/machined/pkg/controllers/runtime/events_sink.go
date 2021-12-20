@@ -18,6 +18,7 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -110,7 +111,7 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 
 	sink := ctrl.Cmdline.Get(constants.KernelParamEventsSink).First()
 
-	conn, err := grpc.DialContext(ctx, *sink, grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, *sink, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
