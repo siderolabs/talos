@@ -239,6 +239,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	if options.RetrieveResults {
 		resultR, errCh, err := sclient.RetrieveResults(&client.RetrieveConfig{
 			Namespace: config.DefaultNamespace,
+			Path:      config.AggregatorResultsPath,
 		})
 		if err != nil {
 			return fmt.Errorf("error retrieving results: %w", err)
