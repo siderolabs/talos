@@ -22,6 +22,12 @@ module.exports = {
     },
     dropdownOptions: [
       {
+        version: "v0.15",
+        url: "/docs/v0.15/",
+        latest: false,
+        prerelease: true,
+      },
+      {
         version: "v0.14",
         url: "/docs/v0.14/",
         latest: true,
@@ -182,6 +188,17 @@ module.exports = {
             { title: "Learn More", method: "weighted" },
           ],
           "v0.14": [
+            { title: "Introduction", method: "weighted" },
+            { title: "Bare Metal Platforms", method: "alphabetical" },
+            { title: "Virtualized Platforms", method: "alphabetical" },
+            { title: "Cloud Platforms", method: "alphabetical" },
+            { title: "Local Platforms", method: "alphabetical" },
+            { title: "Single Board Computers", method: "alphabetical" },
+            { title: "Guides", method: "alphabetical" },
+            { title: "Reference", method: "alphabetical" },
+            { title: "Learn More", method: "weighted" },
+          ],
+          "v0.15": [
             { title: "Introduction", method: "weighted" },
             { title: "Bare Metal Platforms", method: "alphabetical" },
             { title: "Virtualized Platforms", method: "alphabetical" },

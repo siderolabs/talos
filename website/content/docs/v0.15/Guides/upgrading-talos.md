@@ -12,9 +12,9 @@ To see a live demo of this writeup, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/sw78qS8vBGc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-### After Upgrade to 0.14
+### After Upgrade to 0.15
 
-No actions required.
+TBD
 
 ## `talosctl` Upgrade
 
@@ -22,12 +22,12 @@ To manually upgrade a Talos node, you will specify the node's IP address and the
 installer container image for the version of Talos to which you wish to upgrade.
 
 For instance, if your Talos node has the IP address `10.20.30.40` and you want
-to install the official version `v0.14.0`, you would enter a command such
+to install the official version `v0.15.0`, you would enter a command such
 as:
 
 ```sh
   $ talosctl upgrade --nodes 10.20.30.40 \
-      --image ghcr.io/talos-systems/installer:v0.14.0
+      --image ghcr.io/talos-systems/installer:v0.15.0
 ```
 
 There is an option to this command: `--preserve`, which can be used to explicitly tell Talos to either keep intact its ephemeral data or not.
@@ -56,5 +56,4 @@ future.
 
 ## Machine Configuration Changes
 
-Talos 0.14 enables cluster discovery by default for new clusters.
-Cluster discovery feature  won't be enabled after an upgrade if the feature wasn't enabled before the upgrade.
+TBD
