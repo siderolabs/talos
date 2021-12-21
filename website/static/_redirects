@@ -1,7 +1,7 @@
-/docs/latest/* /docs/v0.13/:splat 302
+/docs/latest/* /docs/v0.14/:splat 302
 
 # The Netlify documentation says that the following redirect rules are
 # equivalent: https://docs.netlify.com/routing/redirects/redirect-options/#trailing-slash
 # But that is not what is observed in practice.
-/docs/latest  /docs/v0.13/ 302
-/docs/latest/ /docs/v0.13/ 302
+/docs/latest  /docs/v0.14/ 302
+/docs/latest/ /docs/v0.14/ 302
