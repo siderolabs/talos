@@ -8,11 +8,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
+	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
@@ -26,6 +30,8 @@ var (
 	Nodes       []string
 	Cmdcontext  string
 )
+
+const pathAutoCompleteLimit = 500
 
 // WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
 //
@@ -122,4 +128,102 @@ var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)
+}
+
+// completeResource represents tab complete options for `ls` and `ls *` commands.
+func completePathFromNode(inputPath string) []string {
+	pathToSearch := inputPath
+
+	// If the pathToSearch is empty, use root '/'
+	if pathToSearch == "" {
+		pathToSearch = "/"
+	}
+
+	var paths map[string]struct{}
+
+	// search up one level to find possible completions
+	if pathToSearch != "/" && !strings.HasSuffix(pathToSearch, "/") {
+		index := strings.LastIndex(pathToSearch, "/")
+		// we need a trailing slash to search for items in a directory
+		pathToSearch = pathToSearch[:index] + "/"
+	}
+
+	paths = getPathFromNode(pathToSearch, inputPath)
+
+	result := make([]string, 0, len(paths))
+
+	for k := range paths {
+		result = append(result, k)
+	}
+
+	return result
+}
+
+//nolint:gocyclo
+func getPathFromNode(path, filter string) map[string]struct{} {
+	paths := make(map[string]struct{})
+
+	if WithClient(func(ctx context.Context, c *client.Client) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		stream, err := c.LS(ctx, &machineapi.ListRequest{
+			Root: path,
+		})
+		if err != nil {
+			return err
+		}
+
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+					return nil
+				}
+
+				return fmt.Errorf("error streaming results: %s", err)
+			}
+
+			if resp.Metadata != nil && resp.Metadata.Error != "" {
+				continue
+			}
+
+			if resp.Error != "" {
+				continue
+			}
+
+			// skip reference to the same directory
+			if resp.RelativeName == "." {
+				continue
+			}
+
+			// limit the results to a reasonable amount
+			if len(paths) > pathAutoCompleteLimit {
+				return nil
+			}
+
+			// directories have a trailing slash
+			if resp.IsDir {
+				fullPath := path + resp.RelativeName + "/"
+
+				if relativeTo(fullPath, filter) {
+					paths[fullPath] = struct{}{}
+				}
+			} else {
+				fullPath := path + resp.RelativeName
+
+				if relativeTo(fullPath, filter) {
+					paths[fullPath] = struct{}{}
+				}
+			}
+		}
+	}) != nil {
+		return paths
+	}
+
+	return paths
+}
+
+func relativeTo(fullPath string, filter string) bool {
+	return strings.HasPrefix(fullPath, filter)
 }
