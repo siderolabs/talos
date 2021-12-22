@@ -368,9 +368,19 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		)
 
 		if time.Since(lastNag) > 30*time.Second {
-			log.Printf("etcd is waiting to join the cluster, if this node is the first node in the cluster, please run `talosctl bootstrap`")
-
 			lastNag = time.Now()
+
+			log.Printf("etcd is waiting to join the cluster, if this node is the first node in the cluster, please run `talosctl bootstrap` against one of the following IPs:")
+
+			// we "allow" a failure here since we want to fallthrough and attempt to add the etcd member regardless of
+			// whether we can print our IPs
+			currentAddresses, addrErr := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined))
+			if addrErr != nil {
+				log.Printf("error getting node addresses: %s", addrErr.Error())
+			} else {
+				ips := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
+				log.Printf("%s", ips)
+			}
 		}
 
 		attemptCtx, attemptCtxCancel := context.WithTimeout(ctx, 30*time.Second)
