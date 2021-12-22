@@ -8,11 +8,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
+	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 )
@@ -122,4 +126,93 @@ var Commands []*cobra.Command
 
 func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)
+}
+
+// completeResource represents tab complete options for `ls` and `ls *` commands.
+func completePathFromNode(inputPath string) []string {
+	pathToSearch := inputPath
+
+	// If the pathToSearch is empty, use root '/'
+	if pathToSearch == "" {
+		pathToSearch = "/"
+	}
+
+	var paths map[string]struct{}
+
+	// search up one level to find possible completions
+	if pathToSearch != "/" && !strings.HasSuffix(pathToSearch, "/") {
+		splits := strings.Split(pathToSearch, "/")
+		// we need a trailing slash to search for items in a directory
+		pathToSearch = strings.Join(splits[:len(splits)-1], "/") + "/"
+	}
+
+	paths = getPathFromNode(pathToSearch)
+
+	result := make([]string, 0, len(paths))
+
+	for k := range paths {
+		result = append(result, k)
+	}
+
+	return filterPaths(result, inputPath)
+}
+
+func filterPaths(input []string, filter string) []string {
+	result := make([]string, 0, len(input))
+
+	for _, v := range input {
+		if strings.HasPrefix(v, filter) {
+			result = append(result, v)
+		}
+	}
+
+	return result
+}
+
+//nolint:gocyclo
+func getPathFromNode(path string) map[string]struct{} {
+	paths := make(map[string]struct{})
+
+	if WithClient(func(ctx context.Context, c *client.Client) error {
+		stream, err := c.LS(ctx, &machineapi.ListRequest{
+			Root: path,
+		})
+		if err != nil {
+			return err
+		}
+
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+					return nil
+				}
+
+				return fmt.Errorf("error streaming results: %s", err)
+			}
+
+			if resp.Metadata != nil && resp.Metadata.Error != "" {
+				continue
+			}
+
+			if resp.Error != "" {
+				continue
+			}
+
+			// // skip reference to the same directory
+			if resp.RelativeName == "." {
+				continue
+			}
+			// directories have a trailing slash
+			if resp.IsDir {
+				paths[path+resp.RelativeName+"/"] = struct{}{}
+			} else {
+				paths[path+resp.RelativeName] = struct{}{}
+			}
+		}
+	}) != nil {
+		return paths
+	}
+
+	return paths
 }
