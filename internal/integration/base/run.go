@@ -151,9 +151,9 @@ func runAndWait(suite *suite.Suite, cmd *exec.Cmd) (stdoutBuf, stderrBuf *bytes.
 }
 
 // retryRunAndWait retries runAndWait if the command fails to run.
-func retryRunAndWait(suite *suite.Suite, cmd *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
+func retryRunAndWait(suite *suite.Suite, cmdFunc func() *exec.Cmd, retryer retry.Retryer) (stdoutBuf, stderrBuf *bytes.Buffer, err error) {
 	err = retryer.Retry(func() error {
-		stdoutBuf, stderrBuf, err = runAndWait(suite, cmd)
+		stdoutBuf, stderrBuf, err = runAndWait(suite, cmdFunc())
 
 		if _, ok := err.(*exec.ExitError); ok {
 			return retry.ExpectedError(err)
@@ -168,7 +168,7 @@ func retryRunAndWait(suite *suite.Suite, cmd *exec.Cmd, retryer retry.Retryer) (
 // run executes command, asserts on its exit status/output, and returns stdout.
 //
 //nolint:gocyclo,nakedret
-func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string) {
+func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout string) {
 	var opts runOptions
 
 	for _, o := range options {
@@ -181,9 +181,9 @@ func run(suite *suite.Suite, cmd *exec.Cmd, options ...RunOption) (stdout string
 	)
 
 	if opts.retryer != nil {
-		stdoutBuf, stderrBuf, err = retryRunAndWait(suite, cmd, opts.retryer)
+		stdoutBuf, stderrBuf, err = retryRunAndWait(suite, cmdFunc, opts.retryer)
 	} else {
-		stdoutBuf, stderrBuf, err = runAndWait(suite, cmd)
+		stdoutBuf, stderrBuf, err = runAndWait(suite, cmdFunc())
 	}
 
 	if err != nil {
