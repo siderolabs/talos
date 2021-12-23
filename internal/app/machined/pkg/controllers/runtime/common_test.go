@@ -28,7 +28,7 @@ const (
 	fsFileMax = "fs.file-max"
 )
 
-type KernelParamSuite struct {
+type RuntimeSuite struct {
 	suite.Suite
 
 	state state.State
@@ -40,7 +40,7 @@ type KernelParamSuite struct {
 	ctxCancel context.CancelFunc
 }
 
-func (suite *KernelParamSuite) SetupTest() {
+func (suite *RuntimeSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
 
 	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
@@ -53,7 +53,7 @@ func (suite *KernelParamSuite) SetupTest() {
 	suite.Require().NoError(err)
 }
 
-func (suite *KernelParamSuite) startRuntime() {
+func (suite *RuntimeSuite) startRuntime() {
 	suite.wg.Add(1)
 
 	go func() {
@@ -63,7 +63,7 @@ func (suite *KernelParamSuite) startRuntime() {
 	}()
 }
 
-func (suite *KernelParamSuite) assertResource(md resource.Metadata, compare func(res resource.Resource) bool) func() error {
+func (suite *RuntimeSuite) assertResource(md resource.Metadata, compare func(res resource.Resource) bool) func() error {
 	return func() error {
 		r, err := suite.state.Get(suite.ctx, md)
 		if err != nil {
@@ -82,7 +82,7 @@ func (suite *KernelParamSuite) assertResource(md resource.Metadata, compare func
 	}
 }
 
-func (suite *KernelParamSuite) TearDownTest() {
+func (suite *RuntimeSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
 	suite.ctxCancel()

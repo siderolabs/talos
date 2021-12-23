@@ -496,6 +496,14 @@ metadata:
 			},
 		},
 	}
+
+	machineKernelExample = &KernelConfig{
+		KernelModules: []*KernelModuleConfig{
+			{
+				ModuleName: "brtfs",
+			},
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -694,6 +702,11 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineLoggingExample
 	MachineLogging *LoggingConfig `yaml:"logging,omitempty"`
+	//   description: |
+	//     Configures the kernel.
+	//   examples:
+	//     - value: machineKernelExample
+	MachineKernel *KernelConfig `yaml:"kernel,omitempty"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -2104,4 +2117,18 @@ type LoggingDestination struct {
 	// values:
 	//   - json_lines
 	LoggingFormat string `yaml:"format"`
+}
+
+// KernelConfig struct configures Talos Linux kernel.
+type KernelConfig struct {
+	// description: |
+	//   Kernel modules to load.
+	KernelModules []*KernelModuleConfig `yaml:"modules,omitempty"`
+}
+
+// KernelModuleConfig struct configures Linux kernel modules to load.
+type KernelModuleConfig struct {
+	// description: |
+	//   Module name.
+	ModuleName string `yaml:"name"`
 }

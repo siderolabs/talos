@@ -818,6 +818,31 @@ logging:
 </div>
 
 <hr />
+<div class="dd">
+
+<code>kernel</code>  <i><a href="#kernelconfig">KernelConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configures the kernel.
+
+
+
+Examples:
+
+
+``` yaml
+kernel:
+    # Kernel modules to load.
+    modules:
+        - name: brtfs # Module name.
+```
+
+
+</div>
+
+<hr />
 
 
 
@@ -5846,6 +5871,63 @@ Valid values:
 
 
   - <code>json_lines</code>
+</div>
+
+<hr />
+
+
+
+## KernelConfig
+KernelConfig struct configures Talos Linux kernel.
+
+Appears in:
+
+- <code><a href="#machineconfig">MachineConfig</a>.kernel</code>
+
+
+``` yaml
+# Kernel modules to load.
+modules:
+    - name: brtfs # Module name.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>modules</code>  <i>[]<a href="#kernelmoduleconfig">KernelModuleConfig</a></i>
+
+</div>
+<div class="dt">
+
+Kernel modules to load.
+
+</div>
+
+<hr />
+
+
+
+## KernelModuleConfig
+KernelModuleConfig struct configures Linux kernel modules to load.
+
+Appears in:
+
+- <code><a href="#kernelconfig">KernelConfig</a>.modules</code>
+
+
+
+<hr />
+
+<div class="dd">
+
+<code>name</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Module name.
+
 </div>
 
 <hr />

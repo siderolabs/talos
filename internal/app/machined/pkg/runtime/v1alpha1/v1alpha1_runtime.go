@@ -100,6 +100,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.logging
 	// * .machine.controlplane
 	// * .machine.kubelet
+	// * .machine.kernel
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
@@ -111,6 +112,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane
 		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
+		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {

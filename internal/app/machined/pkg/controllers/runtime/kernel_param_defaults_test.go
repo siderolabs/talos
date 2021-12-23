@@ -19,7 +19,7 @@ import (
 )
 
 type KernelParamDefaultsSuite struct {
-	KernelParamSuite
+	RuntimeSuite
 }
 
 func getParams(mode runtime.Mode) []*kernel.Param {

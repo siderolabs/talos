@@ -22,7 +22,7 @@ import (
 )
 
 type KernelParamSpecSuite struct {
-	KernelParamSuite
+	RuntimeSuite
 }
 
 func (suite *KernelParamSpecSuite) TestParamsSynced() {

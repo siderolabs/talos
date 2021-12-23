@@ -333,6 +333,15 @@ func (m *MachineConfig) Logging() config.Logging {
 	return m.MachineLogging
 }
 
+// Kernel implements the config.MachineConfig interface.
+func (m *MachineConfig) Kernel() config.Kernel {
+	if m.MachineKernel == nil {
+		return &KernelConfig{}
+	}
+
+	return m.MachineKernel
+}
+
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
 	image := k.KubeletImage

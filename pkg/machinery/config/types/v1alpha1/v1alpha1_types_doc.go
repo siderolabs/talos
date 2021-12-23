@@ -73,6 +73,8 @@ var (
 	UdevConfigDoc                     encoder.Doc
 	LoggingConfigDoc                  encoder.Doc
 	LoggingDestinationDoc             encoder.Doc
+	KernelConfigDoc                   encoder.Doc
+	KernelModuleConfigDoc             encoder.Doc
 )
 
 func init() {
@@ -134,7 +136,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 18)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 19)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -275,6 +277,13 @@ func init() {
 	MachineConfigDoc.Fields[17].Comments[encoder.LineComment] = "Configures the logging system."
 
 	MachineConfigDoc.Fields[17].AddExample("", machineLoggingExample)
+	MachineConfigDoc.Fields[18].Name = "kernel"
+	MachineConfigDoc.Fields[18].Type = "KernelConfig"
+	MachineConfigDoc.Fields[18].Note = ""
+	MachineConfigDoc.Fields[18].Description = "Configures the kernel."
+	MachineConfigDoc.Fields[18].Comments[encoder.LineComment] = "Configures the kernel."
+
+	MachineConfigDoc.Fields[18].AddExample("", machineKernelExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
@@ -2299,6 +2308,40 @@ func init() {
 	LoggingDestinationDoc.Fields[1].Values = []string{
 		"json_lines",
 	}
+
+	KernelConfigDoc.Type = "KernelConfig"
+	KernelConfigDoc.Comments[encoder.LineComment] = "KernelConfig struct configures Talos Linux kernel."
+	KernelConfigDoc.Description = "KernelConfig struct configures Talos Linux kernel."
+
+	KernelConfigDoc.AddExample("", machineKernelExample)
+	KernelConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "kernel",
+		},
+	}
+	KernelConfigDoc.Fields = make([]encoder.Doc, 1)
+	KernelConfigDoc.Fields[0].Name = "modules"
+	KernelConfigDoc.Fields[0].Type = "[]KernelModuleConfig"
+	KernelConfigDoc.Fields[0].Note = ""
+	KernelConfigDoc.Fields[0].Description = "Kernel modules to load."
+	KernelConfigDoc.Fields[0].Comments[encoder.LineComment] = "Kernel modules to load."
+
+	KernelModuleConfigDoc.Type = "KernelModuleConfig"
+	KernelModuleConfigDoc.Comments[encoder.LineComment] = "KernelModuleConfig struct configures Linux kernel modules to load."
+	KernelModuleConfigDoc.Description = "KernelModuleConfig struct configures Linux kernel modules to load."
+	KernelModuleConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "KernelConfig",
+			FieldName: "modules",
+		},
+	}
+	KernelModuleConfigDoc.Fields = make([]encoder.Doc, 1)
+	KernelModuleConfigDoc.Fields[0].Name = "name"
+	KernelModuleConfigDoc.Fields[0].Type = "string"
+	KernelModuleConfigDoc.Fields[0].Note = ""
+	KernelModuleConfigDoc.Fields[0].Description = "Module name."
+	KernelModuleConfigDoc.Fields[0].Comments[encoder.LineComment] = "Module name."
 }
 
 func (_ Config) Doc() *encoder.Doc {
@@ -2545,6 +2588,14 @@ func (_ LoggingDestination) Doc() *encoder.Doc {
 	return &LoggingDestinationDoc
 }
 
+func (_ KernelConfig) Doc() *encoder.Doc {
+	return &KernelConfigDoc
+}
+
+func (_ KernelModuleConfig) Doc() *encoder.Doc {
+	return &KernelModuleConfigDoc
+}
+
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -2612,6 +2663,8 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&UdevConfigDoc,
 			&LoggingConfigDoc,
 			&LoggingDestinationDoc,
+			&KernelConfigDoc,
+			&KernelModuleConfigDoc,
 		},
 	}
 }

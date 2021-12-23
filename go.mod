@@ -73,6 +73,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.20.0
 	github.com/pin/tftp v2.1.0+incompatible
+	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.7.3
 	github.com/rivo/tview v0.0.0-20211202162923-2a6de950f73b
 	github.com/rs/xid v1.3.0

@@ -19,22 +19,27 @@ import (
 	runtimeresource "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
-type KernelParamConfigSuite struct {
+type KernelModuleConfigSuite struct {
 	RuntimeSuite
 }
 
-func (suite *KernelParamConfigSuite) TestReconcileConfig() {
-	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.KernelParamConfigController{}))
+func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
+	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.KernelModuleConfigController{}))
 
 	suite.startRuntime()
-
-	value := "500000"
 
 	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineSysctls: map[string]string{
-				fsFileMax: value,
+			MachineKernel: &v1alpha1.KernelConfig{
+				KernelModules: []*v1alpha1.KernelModuleConfig{
+					{
+						ModuleName: "brtfs",
+					},
+					{
+						ModuleName: "e1000",
+					},
+				},
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
@@ -42,13 +47,13 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	specMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, fsFileMax, resource.VersionUndefined)
+	specMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelModuleSpecType, "e1000", resource.VersionUndefined)
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(
 			specMD,
 			func(res resource.Resource) bool {
-				return res.(*runtimeresource.KernelParamSpec).TypedSpec().Value == value
+				return res.(*runtimeresource.KernelModuleSpec).TypedSpec().Name == "e1000"
 			},
 		),
 	))
@@ -56,7 +61,7 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	cfg = config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineSysctls: map[string]string{},
+			MachineKernel: nil,
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
@@ -88,6 +93,6 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	))
 }
 
-func TestKernelParamConfigSuite(t *testing.T) {
-	suite.Run(t, new(KernelParamConfigSuite))
+func TestKernelModuleConfigSuite(t *testing.T) {
+	suite.Run(t, new(KernelModuleConfigSuite))
 }
