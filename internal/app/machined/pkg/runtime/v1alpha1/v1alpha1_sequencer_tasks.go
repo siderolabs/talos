@@ -471,15 +471,6 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // SaveConfig represents the SaveConfig task.
 func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if err = r.Config().ApplyDynamicConfig(ctx, r.State().Platform()); err != nil {
-			return err
-		}
-
-		err = r.State().V1Alpha2().SetConfig(r.Config())
-		if err != nil {
-			return err
-		}
-
 		var b []byte
 
 		b, err = r.Config().Bytes()

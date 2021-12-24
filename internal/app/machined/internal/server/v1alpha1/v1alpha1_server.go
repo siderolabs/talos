@@ -133,11 +133,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, err
 	}
 
-	err = cfgProvider.ApplyDynamicConfig(ctx, s.Controller.Runtime().State().Platform())
-	if err != nil {
-		return nil, err
-	}
-
 	// --immediate
 	if in.Immediate {
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {

@@ -5,12 +5,9 @@
 package v1alpha1
 
 import (
-	"context"
 	"crypto/tls"
 	stdx509 "crypto/x509"
 	"fmt"
-	"log"
-	"net"
 	"os"
 	"strings"
 	"time"
@@ -76,79 +73,6 @@ func (c *Config) String(options ...encoder.Option) (string, error) {
 // Bytes implements the config.Provider interface.
 func (c *Config) Bytes(options ...encoder.Option) ([]byte, error) {
 	return encoder.NewEncoder(c, options...).Encode()
-}
-
-// ApplyDynamicConfig implements the config.Provider interface.
-//nolint:gocyclo
-func (c *Config) ApplyDynamicConfig(ctx context.Context, dynamicProvider config.DynamicConfigProvider) error {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	if c.MachineConfig == nil {
-		c.MachineConfig = &MachineConfig{}
-	}
-
-	hostname, err := dynamicProvider.Hostname(ctx)
-	if err != nil {
-		return err
-	}
-
-	if hostname != nil {
-		if c.MachineConfig.MachineNetwork == nil {
-			c.MachineConfig.MachineNetwork = &NetworkConfig{}
-		}
-
-		c.MachineConfig.MachineNetwork.NetworkHostname = string(hostname)
-	}
-
-	addrs, err := dynamicProvider.ExternalIPs(ctx)
-	if err != nil {
-		// TODO: use passed logger instead of the global one
-		log.Printf("certificates will be created without external IPs: %v", err)
-	}
-
-	if c.MachineConfig.MachineNetwork != nil {
-		addrs = append(addrs, addressesFromMachineNetworkConfig(c.MachineConfig.MachineNetwork)...)
-	}
-
-	existingSANs := map[string]bool{}
-	for _, addr := range c.MachineConfig.MachineCertSANs {
-		existingSANs[addr] = true
-	}
-
-	sans := make([]string, 0, len(addrs))
-	for i, addr := range addrs {
-		sans = append(sans, addr.String())
-
-		if existingSANs[sans[i]] {
-			continue
-		}
-
-		c.MachineConfig.MachineCertSANs = append(c.MachineConfig.MachineCertSANs, sans[i])
-	}
-
-	if c.ClusterConfig == nil {
-		c.ClusterConfig = &ClusterConfig{}
-	}
-
-	if c.ClusterConfig.APIServerConfig == nil {
-		c.ClusterConfig.APIServerConfig = &APIServerConfig{}
-	}
-
-	existingCertSANs := map[string]bool{}
-	for _, certSAN := range c.ClusterConfig.APIServerConfig.CertSANs {
-		existingCertSANs[certSAN] = true
-	}
-
-	for _, certSAN := range sans {
-		if existingCertSANs[certSAN] {
-			continue
-		}
-
-		c.ClusterConfig.APIServerConfig.CertSANs = append(c.ClusterConfig.APIServerConfig.CertSANs, certSAN)
-	}
-
-	return nil
 }
 
 // Install implements the config.Provider interface.
@@ -1277,28 +1201,4 @@ func (v VolumeMountConfig) ReadOnly() bool {
 // Rules implements config.Udev interface.
 func (u *UdevConfig) Rules() []string {
 	return u.UdevRules
-}
-
-func addressesFromMachineNetworkConfig(nc *NetworkConfig) []net.IP {
-	var addresses []net.IP
-
-	for _, networkConfig := range nc.NetworkInterfaces {
-		if networkConfig.VIPConfig() != nil {
-			sharedIP := net.ParseIP(networkConfig.VIPConfig().IP())
-			if sharedIP != nil {
-				addresses = append(addresses, sharedIP)
-			}
-
-			for _, vlan := range networkConfig.Vlans() {
-				if vlan.VIPConfig() != nil {
-					sharedIP := net.ParseIP(vlan.VIPConfig().IP())
-					if sharedIP != nil {
-						addresses = append(addresses, sharedIP)
-					}
-				}
-			}
-		}
-	}
-
-	return addresses
 }

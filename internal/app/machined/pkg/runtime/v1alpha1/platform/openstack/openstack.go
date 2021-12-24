@@ -292,7 +292,6 @@ func (o *Openstack) Hostname(ctx context.Context) (hostname []byte, err error) {
 		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
 	if err != nil {
 		// Platform cannot support this endpoint, or return timeout.
-		// ApplyDynamicConfig can crash in this situation.
 		log.Printf("failed to fetch hostname, ignored: %s", err)
 
 		return nil, nil
