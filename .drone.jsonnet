@@ -197,8 +197,7 @@ local build = Step("build", target="talosctl-linux talosctl-darwin talosctl-wind
 local lint = Step("lint", depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
 local iso = Step("iso", target="iso", depends_on=[build], environment={"IMAGE_REGISTRY": local_registry});
-local images = Step("images", target="images", depends_on=[iso], environment={"IMAGE_REGISTRY": local_registry});
-local sbcs = Step("sbcs", target="sbcs", depends_on=[images], environment={"IMAGE_REGISTRY": local_registry});
+local images_essential = Step("images-essential", target="images-essential", depends_on=[iso], environment={"IMAGE_REGISTRY": local_registry});
 local unit_tests = Step("unit-tests", target="unit-tests unit-tests-race", depends_on=[build, lint]);
 local e2e_docker = Step("e2e-docker-short", depends_on=[build, unit_tests], target="e2e-docker", environment={"SHORT_INTEGRATION_TEST": "yes", "IMAGE_REGISTRY": local_registry});
 local e2e_qemu = Step("e2e-qemu-short", privileged=true, target="e2e-qemu", depends_on=[build, unit_tests, talosctl_cni_bundle], environment={"IMAGE_REGISTRY": local_registry, "SHORT_INTEGRATION_TEST": "yes"}, when={event: ['pull_request']});
@@ -280,7 +279,7 @@ local save_artifacts = {
     's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
-  depends_on: [build.name, images.name, iso.name, sbcs.name, talosctl_cni_bundle.name],
+  depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
 };
 
 local load_artifacts = {
@@ -306,8 +305,7 @@ local default_steps = [
   lint,
   talosctl_cni_bundle,
   iso,
-  images,
-  sbcs,
+  images_essential,
   unit_tests,
   save_artifacts,
   coverage,
@@ -399,6 +397,9 @@ local integration_qemu_encrypted_vip = Step("e2e-encrypted-vip", target="e2e-qem
         "IMAGE_REGISTRY": local_registry,
 });
 
+local integration_images = Step("images", target="images", depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry});
+local integration_sbcs = Step("sbcs", target="sbcs", depends_on=[integration_images], environment={"IMAGE_REGISTRY": local_registry});
+
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -436,6 +437,7 @@ local integration_pipelines = [
   Pipeline('integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan]) + integration_trigger(['integration-misc']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
+  Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
@@ -445,6 +447,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-misc', default_pipeline_steps + [integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-images', default_pipeline_steps + [integration_images, integration_sbcs], [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 
 
@@ -516,6 +519,8 @@ local conformance_pipelines = [
 // Release pipeline.
 
 local cloud_images = Step("cloud-images", depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
+local images = Step("images", target="images", depends_on=[iso], environment={"IMAGE_REGISTRY": local_registry});
+local sbcs = Step("sbcs", target="sbcs", depends_on=[images], environment={"IMAGE_REGISTRY": local_registry});
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
