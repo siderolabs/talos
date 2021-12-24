@@ -38,6 +38,10 @@ const (
 	// kernel log delivery destination.
 	KernelParamLoggingKernel = "talos.logging.kernel"
 
+	// KernelParamWipe is the kernel parameter name for specifying the
+	// disk to wipe on the next boot and reboot.
+	KernelParamWipe = "talos.experimental.wipe"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 

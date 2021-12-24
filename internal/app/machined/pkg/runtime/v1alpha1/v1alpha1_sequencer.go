@@ -5,9 +5,12 @@
 package v1alpha1
 
 import (
+	"github.com/talos-systems/go-procfs/procfs"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Sequencer implements the sequencer interface.
@@ -163,6 +166,11 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 // This sequence should never be reached if an installation is not found.
 func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
+
+	wipe := procfs.ProcCmdline().Get(constants.KernelParamWipe).First()
+	if wipe != nil && *wipe == "system" {
+		return phases.Append("wipeSystemDisk", ResetSystemDisk).Append("reboot", Reboot)
+	}
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
