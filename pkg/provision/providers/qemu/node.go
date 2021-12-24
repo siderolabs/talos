@@ -94,7 +94,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	if !nodeReq.SkipInjectingConfig {
 		cmdline.Append("talos.config", "{TALOS_CONFIG_URL}") // to be patched by launcher
 
-		nodeConfig, err = nodeReq.Config.String()
+		nodeConfig, err = nodeReq.Config.EncodeString()
 		if err != nil {
 			return provision.NodeInfo{}, err
 		}

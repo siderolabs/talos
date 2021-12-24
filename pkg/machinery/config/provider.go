@@ -20,15 +20,25 @@ import (
 
 // Provider defines the configuration consumption interface.
 type Provider interface {
+	// Config parts accessor.
 	Version() string
 	Debug() bool
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
+
 	// Validate checks configuration and returns warnings and fatal errors (as multierror).
 	Validate(RuntimeMode, ...ValidationOption) ([]string, error)
-	String(encoderOptions ...encoder.Option) (string, error)
-	Bytes(encoderOptions ...encoder.Option) ([]byte, error)
+
+	// Bytes returns source YAML representation (if available) or does default encoding.
+	Bytes() ([]byte, error)
+
+	// Encode configuration to YAML using the provided options.
+	EncodeString(encoderOptions ...encoder.Option) (string, error)
+	EncodeBytes(encoderOptions ...encoder.Option) ([]byte, error)
+
+	// Raw returns internal config representation.
+	Raw() interface{}
 }
 
 // MachineConfig defines the requirements for a config that pertains to machine

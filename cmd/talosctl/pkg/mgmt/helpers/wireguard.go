@@ -14,7 +14,6 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -98,21 +97,7 @@ type WireguardConfigBundle struct {
 
 // PatchConfig generates config patch for a node and patches the configuration data.
 func (w *WireguardConfigBundle) PatchConfig(ip fmt.Stringer, cfg config.Provider) (config.Provider, error) {
-	bytes, err := cfg.Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := configloader.NewFromBytes(bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	config, ok := c.(*v1alpha1.Config)
-
-	if !ok {
-		return nil, fmt.Errorf("failed to get wireguard config for node %s", ip.String())
-	}
+	config := cfg.Raw().(*v1alpha1.Config).DeepCopy()
 
 	if config.MachineConfig.MachineNetwork == nil {
 		config.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{

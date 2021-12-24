@@ -51,18 +51,21 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 			return nil
 		}
 
+		metadata := msg.Resource.Metadata()
+		id := metadata.ID()
+
+		body, err := yaml.Marshal(msg.Resource.Spec())
+		if err != nil {
+			return err
+		}
+
+		edited := body
+
 		for {
 			var (
 				buf bytes.Buffer
 				w   io.Writer = &buf
-				id  string
 			)
-
-			metadata := msg.Resource.Metadata()
-
-			if metadata != nil {
-				id = metadata.ID()
-			}
 
 			if runtime.GOOS == "windows" {
 				w = crlf.NewCRLFWriter(w)
@@ -81,40 +84,32 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 				lines := strings.Split(lastError, "\n")
 
 				_, err = w.Write([]byte(
-					fmt.Sprintf("#\n# %s\n", strings.Join(lines, "\n# ")),
+					fmt.Sprintf("# \n# %s\n", strings.Join(lines, "\n# ")),
 				))
 				if err != nil {
 					return err
 				}
 			}
 
-			body, err := yaml.Marshal(msg.Resource.Spec())
+			_, err = w.Write(edited)
 			if err != nil {
 				return err
 			}
 
-			_, err = w.Write(body)
+			edited, _, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", msg.Resource.Metadata().Type(), id), ".yaml", &buf)
 			if err != nil {
 				return err
 			}
 
-			edited, _, err := edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", msg.Resource.Metadata().Type(), id), ".yaml", &buf)
-			if err != nil {
-				return err
-			}
+			edited = stripEditingComment(edited)
 
-			editedWithoutComments := bytes.TrimSpace(cmdutil.StripComments(edited))
-
-			if len(bytes.TrimSpace(editedWithoutComments)) == 0 {
+			if len(bytes.TrimSpace(bytes.TrimSpace(cmdutil.StripComments(edited)))) == 0 {
 				fmt.Println("Apply was skipped: empty file.")
 
 				break
 			}
 
-			if bytes.Equal(
-				editedWithoutComments,
-				bytes.TrimSpace(cmdutil.StripComments(body)),
-			) {
+			if bytes.Equal(edited, body) {
 				fmt.Println("Apply was skipped: no changes detected.")
 
 				break
@@ -141,6 +136,21 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 		}
 
 		return nil
+	}
+}
+
+func stripEditingComment(in []byte) []byte {
+	for {
+		idx := bytes.Index(in, []byte{'\n'})
+		if idx == -1 {
+			return in
+		}
+
+		if !bytes.HasPrefix(in, []byte("# ")) {
+			return in
+		}
+
+		in = in[idx+1:]
 	}
 }
 

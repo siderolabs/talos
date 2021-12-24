@@ -101,7 +101,7 @@ func (o *Openstack) ConfigurationNetwork(metadataNetworkConfig []byte, metadataC
 		unmarshalledMetadataConfig = MetadataConfig{}
 	}
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
+	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
 	if !ok {
 		return nil, fmt.Errorf("unable to determine machine config type")
 	}
@@ -241,7 +241,7 @@ func (o *Openstack) ConfigurationNetwork(metadataNetworkConfig []byte, metadataC
 		}
 	}
 
-	return confProvider, nil
+	return machineConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.

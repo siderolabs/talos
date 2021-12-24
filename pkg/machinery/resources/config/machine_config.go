@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -31,8 +30,9 @@ type v1alpha1Spec struct {
 	cfg config.Provider
 }
 
-func (s *v1alpha1Spec) MarshalYAML() (interface{}, error) {
-	return encoder.NewEncoder(s.cfg).Marshal()
+// MarshalYAMLBytes implements RawYAML interface.
+func (s *v1alpha1Spec) MarshalYAMLBytes() ([]byte, error) {
+	return s.cfg.Bytes()
 }
 
 // NewMachineConfig initializes a V1Alpha1 resource.
@@ -65,10 +65,20 @@ func (r *MachineConfig) String() string {
 
 // DeepCopy implements resource.Resource.
 func (r *MachineConfig) DeepCopy() resource.Resource {
+	var cfgCopy config.Provider
+
+	switch r.spec.cfg.(type) {
+	case *v1alpha1.ReadonlyProvider:
+		// don't copy read only config
+		cfgCopy = r.spec.cfg
+	default:
+		cfgCopy = r.spec.cfg.Raw().(*v1alpha1.Config).DeepCopy()
+	}
+
 	return &MachineConfig{
 		md: r.md,
 		spec: &v1alpha1Spec{
-			cfg: r.spec.cfg.(*v1alpha1.Config).DeepCopy(),
+			cfg: cfgCopy,
 		},
 	}
 }

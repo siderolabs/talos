@@ -108,7 +108,7 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 
 	var machineConfig *v1alpha1.Config
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
+	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
 	if !ok {
 		return nil, fmt.Errorf("unable to determine machine config type")
 	}
@@ -212,7 +212,7 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 		&bondDev,
 	)
 
-	return confProvider.Bytes()
+	return machineConfig.Bytes()
 }
 
 // Mode implements the platform.Platform interface.

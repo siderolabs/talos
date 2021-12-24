@@ -60,9 +60,9 @@ func (c *Config) Cluster() config.ClusterConfig {
 	return c.ClusterConfig
 }
 
-// String implements the config.Provider interface.
-func (c *Config) String(options ...encoder.Option) (string, error) {
-	b, err := c.Bytes(options...)
+// EncodeString implements the config.Provider interface.
+func (c *Config) EncodeString(options ...encoder.Option) (string, error) {
+	b, err := c.EncodeBytes(options...)
 	if err != nil {
 		return "", err
 	}
@@ -70,9 +70,19 @@ func (c *Config) String(options ...encoder.Option) (string, error) {
 	return string(b), nil
 }
 
-// Bytes implements the config.Provider interface.
-func (c *Config) Bytes(options ...encoder.Option) ([]byte, error) {
+// EncodeBytes implements the config.Provider interface.
+func (c *Config) EncodeBytes(options ...encoder.Option) ([]byte, error) {
 	return encoder.NewEncoder(c, options...).Encode()
+}
+
+// Bytes implements the config.Provider interface.
+func (c *Config) Bytes() ([]byte, error) {
+	return c.EncodeBytes()
+}
+
+// Raw implements the config.Provider interface.
+func (c *Config) Raw() interface{} {
+	return c
 }
 
 // Install implements the config.Provider interface.

@@ -75,7 +75,7 @@ func (a *Azure) Name() string {
 func (a *Azure) ConfigurationNetwork(metadataNetworkConfig []byte, confProvider config.Provider) (config.Provider, error) {
 	var machineConfig *v1alpha1.Config
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
+	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
 	if !ok {
 		return nil, fmt.Errorf("unable to determine machine config type")
 	}
@@ -114,7 +114,7 @@ func (a *Azure) ConfigurationNetwork(metadataNetworkConfig []byte, confProvider 
 		}
 	}
 
-	return confProvider, nil
+	return machineConfig, nil
 }
 
 // Configuration implements the platform.Platform interface.

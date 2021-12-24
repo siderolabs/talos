@@ -224,6 +224,8 @@ func upgradeKubeletPatcher(options UpgradeOptions, kubeletSpec resource.Resource
 				version = parts[1]
 			}
 
+			version = strings.TrimLeft(version, "v")
+
 			options.Log(" > update %s: %s -> %s", kubelet, version, options.ToVersion)
 
 			if options.DryRun {

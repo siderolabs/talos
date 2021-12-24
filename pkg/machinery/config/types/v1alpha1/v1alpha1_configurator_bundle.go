@@ -63,17 +63,17 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 
 		switch t {
 		case machine.TypeInit:
-			configString, err = c.Init().String(encoder.WithComments(commentsFlags))
+			configString, err = c.Init().EncodeString(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
 		case machine.TypeControlPlane:
-			configString, err = c.ControlPlane().String(encoder.WithComments(commentsFlags))
+			configString, err = c.ControlPlane().EncodeString(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}
 		case machine.TypeWorker:
-			configString, err = c.Worker().String(encoder.WithComments(commentsFlags))
+			configString, err = c.Worker().EncodeString(encoder.WithComments(commentsFlags))
 			if err != nil {
 				return err
 			}

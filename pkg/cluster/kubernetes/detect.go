@@ -34,12 +34,6 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 	}
 
 	var version *semver.Version
-	if options.ToVersion != "" {
-		version, err = semver.NewVersion(options.ToVersion)
-		if err != nil {
-			return "", err
-		}
-	}
 
 	for _, pod := range pods.Items {
 		app := pod.GetObjectMeta().GetLabels()["k8s-app"]

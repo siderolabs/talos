@@ -75,7 +75,7 @@ func (u *UpCloud) Name() string {
 func (u *UpCloud) ConfigurationNetwork(metadataConfig []byte, confProvider config.Provider) (config.Provider, error) {
 	var machineConfig *v1alpha1.Config
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
+	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
 	if !ok {
 		return nil, fmt.Errorf("unable to determine machine config type")
 	}
@@ -129,7 +129,7 @@ func (u *UpCloud) ConfigurationNetwork(metadataConfig []byte, confProvider confi
 		}
 	}
 
-	return confProvider, nil
+	return machineConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.

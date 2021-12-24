@@ -34,7 +34,7 @@ func newConfig(source []byte) (config config.Provider, err error) {
 	// a special way.
 	for _, manifest := range manifests {
 		if talosconfig, ok := manifest.(*v1alpha1.Config); ok {
-			return talosconfig, nil
+			return v1alpha1.WrapReadonly(talosconfig, source), nil
 		}
 	}
 

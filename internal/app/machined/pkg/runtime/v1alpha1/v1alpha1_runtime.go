@@ -65,24 +65,12 @@ func (r *Runtime) SetConfig(cfg config.Provider) error {
 
 // CanApplyImmediate implements the Runtime interface.
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	// serialize and load back current config to remove any changes made
-	// to the config in-memory while the node was running
-	currentBytes, err := r.Config().Bytes()
-	if err != nil {
-		return fmt.Errorf("error serializing current config: %w", err)
-	}
-
-	currentConfigProvider, err := configloader.NewFromBytes(currentBytes)
-	if err != nil {
-		return fmt.Errorf("error loading current config: %w", err)
-	}
-
-	currentConfig, ok := currentConfigProvider.(*v1alpha1.Config)
+	currentConfig, ok := r.Config().Raw().(*v1alpha1.Config)
 	if !ok {
 		return fmt.Errorf("current config is not v1alpha1")
 	}
 
-	newConfig, ok := cfg.(*v1alpha1.Config)
+	newConfig, ok := cfg.Raw().(*v1alpha1.Config)
 	if !ok {
 		return fmt.Errorf("new config is not v1alpha1")
 	}

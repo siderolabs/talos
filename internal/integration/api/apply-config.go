@@ -93,7 +93,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.(*v1alpha1.Config)
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	if cfg.MachineConfig.MachineSysctls == nil {
@@ -147,7 +147,7 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-	cfg, ok := provider.(*v1alpha1.Config)
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	if cfg.MachineConfig.MachineSysctls == nil {
@@ -177,7 +177,7 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 		applyConfigNoRebootTestSysctlVal,
 	)
 
-	cfg, ok = newProvider.(*v1alpha1.Config)
+	cfg, ok = newProvider.Raw().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	// revert back
@@ -194,6 +194,8 @@ func (suite *ApplyConfigSuite) TestApplyOnReboot() {
 }
 
 // TestApplyConfigRotateEncryptionSecrets verify key rotation by sequential apply config calls.
+//
+//nolint:gocyclo
 func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
@@ -207,16 +209,28 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	suite.Assert().NoError(err)
 
-	encryption := provider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
+	machineConfig, ok := provider.Raw().(*v1alpha1.Config)
+	suite.Assert().True(ok)
+
+	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
+
+	if encryption == nil {
+		suite.T().Skip("skipped in not encrypted mode")
+	}
+
+	cfg := encryption.EphemeralPartition
+
+	if cfg == nil {
+		suite.T().Skip("skipped in not encrypted mode")
+	}
+
+	provider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
 
 	if encryption == nil {
 		suite.T().Skip("skipped in not encrypted mode")
 	}
 
 	suite.WaitForBootDone(suite.ctx)
-
-	cfg, ok := encryption.(*v1alpha1.EncryptionConfig)
-	suite.Assert().True(ok)
 
 	keySets := [][]*v1alpha1.EncryptionKey{
 		{
@@ -268,7 +282,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	for _, keys := range keySets {
 		cfg.EncryptionKeys = keys
 
-		data, err := provider.Bytes()
+		data, err := machineConfig.Bytes()
 		suite.Require().NoError(err)
 
 		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
