@@ -21,6 +21,14 @@ preface = """\
 * Linux: 5.15.11
 """
 
+    [notes.wipe]
+        title = "Wipe System Kernel Parameter"
+        description="""\
+Added new kernel parameter `talos.experimental.wipe=system` which can help resetting system disk for the machine
+and start over with a fresh installation.
+See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-machine/#kernel-parameter) on how to use it.
+"""
+
 [make_deps]
 
     [make_deps.tools]
@@ -34,3 +42,4 @@ preface = """\
     [make_deps.extras]
         variable = "EXTRAS"
         repository = "github.com/talos-systems/extras"
+

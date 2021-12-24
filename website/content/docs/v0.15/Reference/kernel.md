@@ -115,3 +115,10 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   DHCP server, this can add significant boot delays.
 
   This option may be specified multiple times for multiple network interfaces.
+
+#### `talos.experimental.wipe`
+
+  Resets the disk before starting up the system.
+
+  Valid options are:
+    - `system` resets system disk.
