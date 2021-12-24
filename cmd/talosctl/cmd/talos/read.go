@@ -19,10 +19,11 @@ import (
 
 // readCmd represents the read command.
 var readCmd = &cobra.Command{
-	Use:   "read <path>",
-	Short: "Read a file on the machine",
-	Long:  ``,
-	Args:  cobra.ExactArgs(1),
+	Use:     "read <path>",
+	Short:   "Read a file on the machine",
+	Long:    ``,
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"cat"},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp

@@ -44,7 +44,7 @@ func (ctrl *KernelModuleSpecController) Outputs() []controller.Output {
 func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	manager, err := kmod.New()
 	if err != nil {
-		return fmt.Errorf("error initializing kmod manager")
+		return fmt.Errorf("error initializing kmod manager: %w", err)
 	}
 
 	for {

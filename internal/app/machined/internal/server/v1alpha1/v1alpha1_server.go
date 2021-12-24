@@ -110,6 +110,17 @@ func (s *Server) checkSupported(feature runtime.ModeCapability) error {
 	return nil
 }
 
+func (s *Server) checkControlplane(apiName string) error {
+	switch s.Controller.Runtime().Config().Machine().Type() { //nolint:exhaustive
+	case machinetype.TypeControlPlane:
+		fallthrough
+	case machinetype.TypeInit:
+		return nil
+	}
+
+	return status.Errorf(codes.Unimplemented, "%s is only available on control plane nodes", apiName)
+}
+
 // Register implements the factory.Registrator interface.
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
@@ -1059,6 +1070,10 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (reply *machine
 
 // Kubeconfig implements the machine.MachineServer interface.
 func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_KubeconfigServer) error {
+	if err := s.checkControlplane("kubeconfig"); err != nil {
+		return err
+	}
+
 	var b bytes.Buffer
 
 	if err := kubeconfig.GenerateAdmin(s.Controller.Runtime().Config().Cluster(), &b); err != nil {
@@ -1635,6 +1650,10 @@ func (s *Server) Memory(ctx context.Context, in *emptypb.Empty) (reply *machine.
 
 // EtcdMemberList implements the machine.MachineServer interface.
 func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (reply *machine.EtcdMemberListResponse, err error) {
+	if err = s.checkControlplane("member list"); err != nil {
+		return nil, err
+	}
+
 	var client *etcd.Client
 
 	if in.QueryLocal {
@@ -1688,6 +1707,10 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 
 // EtcdRemoveMember implements the machine.MachineServer interface.
 func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMemberRequest) (reply *machine.EtcdRemoveMemberResponse, err error) {
+	if err = s.checkControlplane("etcd remove member"); err != nil {
+		return nil, err
+	}
+
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
@@ -1713,6 +1736,10 @@ func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMem
 
 // EtcdLeaveCluster implements the machine.MachineServer interface.
 func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (reply *machine.EtcdLeaveClusterResponse, err error) {
+	if err = s.checkControlplane("etcd leave"); err != nil {
+		return nil, err
+	}
+
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
@@ -1738,6 +1765,10 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 
 // EtcdForfeitLeadership implements the machine.MachineServer interface.
 func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForfeitLeadershipRequest) (reply *machine.EtcdForfeitLeadershipResponse, err error) {
+	if err = s.checkControlplane("etcd forfeit leadership"); err != nil {
+		return nil, err
+	}
+
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().Config().Cluster().CA(), s.Controller.Runtime().Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
@@ -1766,6 +1797,10 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 
 // EtcdSnapshot implements the machine.MachineServer interface.
 func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.MachineService_EtcdSnapshotServer) error {
+	if err := s.checkControlplane("etcd snapshot"); err != nil {
+		return err
+	}
+
 	client, err := etcd.NewLocalClient()
 	if err != nil {
 		return fmt.Errorf("failed to create etcd client: %w", err)
@@ -1799,6 +1834,10 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 
 // EtcdRecover implements the machine.MachineServer interface.
 func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error {
+	if err := s.checkControlplane("etcd recover"); err != nil {
+		return err
+	}
+
 	snapshot, err := os.OpenFile(constants.EtcdRecoverySnapshotPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 	if err != nil {
 		return fmt.Errorf("error creating etcd recovery snapshot: %w", err)
