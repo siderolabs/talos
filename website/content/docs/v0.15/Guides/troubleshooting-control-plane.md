@@ -8,16 +8,6 @@ description: "Troubleshoot control plane failures for running cluster and bootst
 This guide is written as series of topics and detailed answers for each topic.
 It starts with basics of control plane and goes into Talos specifics.
 
-This document mostly applies only to Talos 0.9 control plane based on static pods.
-If Talos was upgraded from version 0.8, it might be still running self-hosted control plane, current status can
-be checked with the command `talosctl get bootstrapstatus`:
-
-```bash
-$ talosctl -n <IP> get bs
-NODE         NAMESPACE   TYPE              ID              VERSION   SELF HOSTED
-172.20.0.2   runtime     BootstrapStatus   control-plane   1         false
-```
-
 In this guide we assume that Talos client config is available and Talos API access is available.
 Kubernetes client configuration can be pulled from control plane nodes with `talosctl -n <IP> kubeconfig`
 (this command works before Kubernetes is fully booted).
