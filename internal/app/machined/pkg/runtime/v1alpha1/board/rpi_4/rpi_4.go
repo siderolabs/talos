@@ -40,6 +40,11 @@ func (r *RPi4) Install(disk string) (err error) {
 		return err
 	}
 
+	err = copy.File("/usr/install/arm64/u-boot/rpi_4/bl31.bin", "/boot/EFI/bl31.bin")
+	if err != nil {
+		return err
+	}
+
 	return ioutil.WriteFile("/boot/EFI/config.txt", configTxt, 0o600)
 }
 
@@ -47,7 +52,6 @@ func (r *RPi4) Install(disk string) (err error) {
 func (r *RPi4) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyAMA0,115200"),
-		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
 	}
 }
 
