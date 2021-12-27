@@ -6,24 +6,14 @@ package gcp
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"net"
+	"strings"
 
+	"cloud.google.com/go/compute/metadata"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/talos-systems/talos/pkg/download"
-)
-
-// Ref: https://cloud.google.com/compute/docs/storing-retrieving-metadata
-// ex, curl -H "Metadata-Flavor: Google" 'http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/?recursive=true'
-const (
-	// GCUserDataEndpoint is the local metadata endpoint inside of DO.
-	GCUserDataEndpoint = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/user-data"
-	// GCExternalIPEndpoint displays all external addresses associated with the instance.
-	GCExternalIPEndpoint = "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/?recursive=true"
 )
 
 // GCP is the concrete type that implements the platform.Platform interface.
@@ -36,17 +26,32 @@ func (g *GCP) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (g *GCP) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching machine config from: %q", GCUserDataEndpoint)
+	userdata, err := metadata.InstanceAttributeValue("user-data")
+	if err != nil {
+		if _, ok := err.(metadata.NotDefinedError); ok {
+			return nil, errors.ErrNoConfigSource
+		}
 
-	return download.Download(ctx, GCUserDataEndpoint,
-		download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}),
-		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
-		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+		return nil, err
+	}
+
+	userdata = strings.TrimSpace(userdata)
+
+	if userdata == "" {
+		return nil, errors.ErrNoConfigSource
+	}
+
+	return []byte(userdata), nil
 }
 
 // Hostname implements the platform.Platform interface.
 func (g *GCP) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, nil
+	host, err := metadata.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(host), nil
 }
 
 // Mode implements the platform.Platform interface.
@@ -56,33 +61,17 @@ func (g *GCP) Mode() runtime.Mode {
 
 // ExternalIPs implements the runtime.Platform interface.
 func (g *GCP) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	log.Printf("fetching externalIP from: %q", GCExternalIPEndpoint)
-
-	metadataNetworkConfig, err := download.Download(ctx, GCExternalIPEndpoint,
-		download.WithHeaders(map[string]string{"Metadata-Flavor": "Google"}),
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	extIP, err := metadata.ExternalIP()
 	if err != nil {
-		return nil, err
-	}
-
-	type metadata []struct {
-		AccessConfigs []struct {
-			ExternalIP string `json:"externalIp"`
-		} `json:"accessConfigs"`
-	}
-
-	m := metadata{}
-	if err = json.Unmarshal(metadataNetworkConfig, &m); err != nil {
-		return nil, err
-	}
-
-	for _, networkInterface := range m {
-		for _, accessConfig := range networkInterface.AccessConfigs {
-			if addr := net.ParseIP(accessConfig.ExternalIP); addr != nil {
-				addrs = append(addrs, addr)
-			}
+		if _, ok := err.(metadata.NotDefinedError); ok {
+			return nil, nil
 		}
+
+		return nil, err
+	}
+
+	if addr := net.ParseIP(extIP); addr != nil {
+		addrs = append(addrs, addr)
 	}
 
 	return addrs, nil
