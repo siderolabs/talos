@@ -1,0 +1,57 @@
+addresses:
+    - address: 192.168.1.0/24
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2001:2:3:4:5:6:7:8/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 192.168.1.1
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::1
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 192.168.1.1
+      layer: platform
+timeServers: []
+operators: []
+externalIPs: []

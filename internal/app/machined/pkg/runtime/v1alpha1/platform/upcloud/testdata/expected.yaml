@@ -1,0 +1,75 @@
+addresses:
+    - address: 185.70.197.3/32
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2a04:3544:8000:1000:0:1111:2222:3333/64
+      linkName: eth2
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet6
+      dst: 2a04:3544:8000:1000::/64
+      src: ""
+      gateway: 2a04:3544:8000:1000::1
+      outLinkName: eth2
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 94.237.127.9
+        - 94.237.40.9
+        - 2a04:3540:53::1
+        - 2a04:3544:53::1
+      layer: platform
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+    - operator: dhcp4
+      linkName: eth1
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 185.70.197.2

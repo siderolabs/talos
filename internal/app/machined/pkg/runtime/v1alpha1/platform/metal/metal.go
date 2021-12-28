@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -105,19 +104,9 @@ func getSystemUUID() (uuid.UUID, error) {
 	return s.SystemInformation().UUID()
 }
 
-// Hostname implements the platform.Platform interface.
-func (m *Metal) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, nil
-}
-
 // Mode implements the platform.Platform interface.
 func (m *Metal) Mode() runtime.Mode {
 	return runtime.ModeMetal
-}
-
-// ExternalIPs implements the platform.Platform interface.
-func (m *Metal) ExternalIPs(context.Context) (addrs []net.IP, err error) {
-	return addrs, err
 }
 
 func readConfigFromISO() (b []byte, err error) {
@@ -161,4 +150,9 @@ func (m *Metal) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS0").Append("tty0"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (m *Metal) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	return nil
 }

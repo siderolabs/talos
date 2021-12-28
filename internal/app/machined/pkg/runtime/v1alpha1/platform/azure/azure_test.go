@@ -5,73 +5,35 @@
 package azure_test
 
 import (
+	_ "embed"
+	"encoding/json"
 	"testing"
 
-	"github.com/AlekSi/pointer"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-type ConfigSuite struct {
-	suite.Suite
-}
+//go:embed metadata.json
+var rawMetadata []byte
 
-func (suite *ConfigSuite) TestNetworkConfig() {
-	cfg := []byte(`
-[
-  {
-    "ipv4": {
-      "ipAddress": [
-        {
-          "privateIpAddress": "172.18.1.10",
-          "publicIpAddress": "1.2.3.4"
-        }
-      ],
-      "subnet": [
-        {
-          "address": "172.18.1.0",
-          "prefix": "24"
-        }
-      ]
-    },
-    "ipv6": {
-      "ipAddress": [
-        {
-            "privateIpAddress": "fd00::10",
-            "publicIpAddress": ""
-        }
-       ]
-    },
-    "macAddress": "000D3AD631EE"
-  }
-]
-`)
+//go:embed expected.yaml
+var expectedNetworkConfig string
+
+func TestParseMetadata(t *testing.T) {
 	a := &azure.Azure{}
 
-	defaultMachineConfig := &v1alpha1.Config{}
+	var m []azure.NetworkConfig
 
-	machineConfig := &v1alpha1.Config{
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceInterface:   "eth0",
-						DeviceDHCP:        true,
-						DeviceDHCPOptions: &v1alpha1.DHCPOptions{DHCPIPv6: pointer.ToBool(true)},
-					},
-				},
-			},
-		},
-	}
+	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 
-	result, err := a.ConfigurationNetwork(cfg, defaultMachineConfig)
+	networkConfig, err := a.ParseMetadata(m, []byte("some.fqdn"))
+	require.NoError(t, err)
 
-	suite.Require().NoError(err)
-	suite.Assert().Equal(machineConfig, result)
-}
+	marshaled, err := yaml.Marshal(networkConfig)
+	require.NoError(t, err)
 
-func TestConfigSuite(t *testing.T) {
-	suite.Run(t, new(ConfigSuite))
+	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }

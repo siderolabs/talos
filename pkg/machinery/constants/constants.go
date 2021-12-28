@@ -565,6 +565,9 @@ const (
 
 	// SideroLinkDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	SideroLinkDefaultPeerKeepalive = 25 * time.Second
+
+	// PlatformNetworkConfigFilename is the filename to cache platform network configuration reboots.
+	PlatformNetworkConfigFilename = "platform-network.yaml"
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -155,6 +155,7 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
+//nolint:dupl
 func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Runtime, addresses []network.AddressSpecSpec) ([]resource.ID, error) {
 	ids := make([]string, 0, len(addresses))
 

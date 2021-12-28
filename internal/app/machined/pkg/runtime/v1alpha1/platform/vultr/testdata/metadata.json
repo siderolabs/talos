@@ -1,0 +1,61 @@
+{
+    "bgp": {
+        "ipv4": {
+            "my-address": "",
+            "my-asn": "",
+            "peer-address": "",
+            "peer-asn": ""
+        },
+        "ipv6": {
+            "my-address": "",
+            "my-asn": "",
+            "peer-address": "",
+            "peer-asn": ""
+        }
+    },
+    "hostname": "talos",
+    "instance-v2-id": "91b07056-af72-4551-b15b-d57d34071be9",
+    "instanceid": "50190000",
+    "interfaces": [
+        {
+            "ipv4": {
+                "additional": [],
+                "address": "95.111.222.111",
+                "gateway": "95.111.222.1",
+                "netmask": "255.255.254.0"
+            },
+            "ipv6": {
+                "additional": [],
+                "address": "2001:19f0:5001:2095:1111:2222:3333:4444",
+                "network": "2001:19f0:5001:2095::",
+                "prefix": "64"
+            },
+            "mac": "56:00:03:89:53:e0",
+            "network-type": "public"
+        },
+        {
+            "ipv4": {
+                "additional": [],
+                "address": "10.7.96.3",
+                "gateway": "",
+                "netmask": "255.255.240.0"
+            },
+            "ipv6": {
+                "additional": [],
+                "network": "",
+                "prefix": ""
+            },
+            "mac": "5a:00:03:89:53:e0",
+            "network-type": "private",
+            "network-v2-id": "dadc2b30-0b55-4fa1-8c29-f67215bd5ac4",
+            "networkid": "net6126811851cd7"
+        }
+    ],
+    "public-keys": [
+        "ssh-ed25519"
+    ],
+    "region": {
+        "regioncode": "AMS"
+    },
+    "user-defined": []
+}

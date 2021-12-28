@@ -1,0 +1,42 @@
+addresses:
+    - address: 2a01:4f8:1:2::1/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::1
+      outLinkName: eth0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: some
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: false
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 1.2.3.4

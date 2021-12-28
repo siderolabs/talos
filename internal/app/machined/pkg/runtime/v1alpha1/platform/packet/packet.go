@@ -12,14 +12,15 @@ import (
 	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
+	"inet.af/netaddr"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
+	networkctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // Metadata holds packet metadata info.
@@ -50,14 +51,15 @@ type Interface struct {
 
 // Address holds address info from the packet metadata.
 type Address struct {
-	Public  bool   `json:"public"`
-	Enabled bool   `json:"enabled"`
-	CIDR    int    `json:"cidr"`
-	Family  int    `json:"address_family"`
-	Netmask string `json:"netmask"`
-	Network string `json:"network"`
-	Address string `json:"address"`
-	Gateway string `json:"gateway"`
+	Public     bool   `json:"public"`
+	Management bool   `json:"management"`
+	Enabled    bool   `json:"enabled"`
+	CIDR       int    `json:"cidr"`
+	Family     int    `json:"address_family"`
+	Netmask    string `json:"netmask"`
+	Network    string `json:"network"`
+	Address    string `json:"address"`
+	Gateway    string `json:"gateway"`
 }
 
 const (
@@ -67,7 +69,7 @@ const (
 	PacketMetaDataEndpoint = "https://metadata.platformequinix.com/metadata"
 )
 
-// Packet is a discoverer for non-cloud environments.
+// Packet is a platform for Equinix Metal cloud.
 type Packet struct{}
 
 // Name implements the platform.Platform interface.
@@ -76,48 +78,38 @@ func (p *Packet) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-//nolint:gocyclo,cyclop
 func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
-	// Fetch and unmarshal both the talos machine config and the
-	// metadata about the instance from packet's metadata server
 	log.Printf("fetching machine config from: %q", PacketUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, PacketUserDataEndpoint,
+	return download.Download(ctx, PacketUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
-	if err != nil {
-		return nil, err
+}
+
+// Mode implements the platform.Platform interface.
+func (p *Packet) Mode() runtime.Mode {
+	return runtime.ModeMetal
+}
+
+// KernelArgs implements the runtime.Platform interface.
+func (p *Packet) KernelArgs() procfs.Parameters {
+	return []*procfs.Parameter{
+		procfs.NewParameter("console").Append("ttyS1,115200n8"),
 	}
+}
 
-	log.Printf("fetching equinix network config from: %q", PacketMetaDataEndpoint)
+// ParseMetadata converts Equinix Metal (Packet) metadata into Talos network configuration.
+//
+//nolint:gocyclo,cyclop
+func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	metadataConfig, err := download.Download(ctx, PacketMetaDataEndpoint)
-	if err != nil {
-		return nil, err
-	}
+	// 1. Links
 
-	var unmarshalledMetadataConfig Metadata
-	if err = json.Unmarshal(metadataConfig, &unmarshalledMetadataConfig); err != nil {
-		return nil, err
-	}
-
-	confProvider, err := configloader.NewFromBytes(machineConfigDl)
-	if err != nil {
-		return nil, err
-	}
-
-	var machineConfig *v1alpha1.Config
-
-	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
-	if !ok {
-		return nil, fmt.Errorf("unable to determine machine config type")
-	}
-
-	// translate the int returned from bond mode metadata to the type needed by networkd
-	bondMode := nethelpers.BondMode(uint8(unmarshalledMetadataConfig.Network.Bonding.Mode))
+	// translate the int returned from bond mode metadata to the type needed by network resources
+	bondMode := nethelpers.BondMode(uint8(packetMetadata.Network.Bonding.Mode))
 
 	// determine bond name and build list of interfaces enslaved by the bond
-	devicesInBond := []string{}
 	bondName := ""
 
 	hostInterfaces, err := net.Interfaces()
@@ -125,7 +117,7 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
-	for _, iface := range unmarshalledMetadataConfig.Network.Interfaces {
+	for _, iface := range packetMetadata.Network.Interfaces {
 		if iface.Bond == "" {
 			continue
 		}
@@ -134,117 +126,202 @@ func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
 			return nil, fmt.Errorf("encountered multiple bonds. this is unexpected in the equinix metal platform")
 		}
 
+		bondName = iface.Bond
+
 		found := false
 
 		for _, hostIf := range hostInterfaces {
 			if hostIf.HardwareAddr.String() == iface.MAC {
 				found = true
 
-				devicesInBond = append(devicesInBond, hostIf.Name)
+				networkConfig.Links = append(networkConfig.Links,
+					network.LinkSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						Name:        hostIf.Name,
+						Up:          true,
+						MasterName:  bondName,
+					})
 
 				break
 			}
 		}
 
 		if !found {
-			log.Printf("interface with MAC %q wasn't found on the host, skipping", iface.MAC)
+			log.Printf("interface with MAC %q wasn't found on the host, adding with the name from metadata", iface.MAC)
 
-			continue
+			networkConfig.Links = append(networkConfig.Links,
+				network.LinkSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Name:        iface.Name,
+					Up:          true,
+					MasterName:  bondName,
+				})
 		}
-
-		bondName = iface.Bond
 	}
 
-	bondDev := v1alpha1.Device{
-		DeviceInterface: bondName,
-		DeviceDHCP:      false,
-		DeviceBond: &v1alpha1.Bond{
-			BondMode:       bondMode.String(),
-			BondDownDelay:  200,
-			BondMIIMon:     100,
-			BondUpDelay:    200,
-			BondHashPolicy: "layer3+4",
-			BondInterfaces: devicesInBond,
+	bondLink := network.LinkSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		Name:        bondName,
+		Logical:     true,
+		Up:          true,
+		Kind:        network.LinkKindBond,
+		Type:        nethelpers.LinkEther,
+		BondMaster: network.BondMasterSpec{
+			Mode:       bondMode,
+			DownDelay:  200,
+			MIIMon:     100,
+			UpDelay:    200,
+			HashPolicy: nethelpers.BondXmitPolicyLayer34,
 		},
 	}
 
-	for _, addr := range unmarshalledMetadataConfig.Network.Addresses {
-		bondDev.DeviceAddresses = append(bondDev.DeviceAddresses,
-			fmt.Sprintf("%s/%d", addr.Address, addr.CIDR),
+	networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
+
+	networkConfig.Links = append(networkConfig.Links, bondLink)
+
+	// 2. addresses
+
+	for _, addr := range packetMetadata.Network.Addresses {
+		if !(addr.Enabled && addr.Management) {
+			continue
+		}
+
+		ipAddr, err := netaddr.ParseIPPrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
+		if err != nil {
+			return nil, err
+		}
+
+		family := nethelpers.FamilyInet4
+		if ipAddr.IP().Is6() {
+			family = nethelpers.FamilyInet6
+		}
+
+		networkConfig.Addresses = append(networkConfig.Addresses,
+			network.AddressSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				LinkName:    bondName,
+				Address:     ipAddr,
+				Scope:       nethelpers.ScopeGlobal,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				Family:      family,
+			},
 		)
+	}
+
+	// 3. routes
+
+	for _, addr := range packetMetadata.Network.Addresses {
+		if !(addr.Enabled && addr.Management) {
+			continue
+		}
+
+		ipAddr, err := netaddr.ParseIPPrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
+		if err != nil {
+			return nil, err
+		}
+
+		family := nethelpers.FamilyInet4
+		if ipAddr.IP().Is6() {
+			family = nethelpers.FamilyInet6
+		}
 
 		if addr.Public {
 			// for "Public" address add the default route
-			switch addr.Family {
-			case 4:
-				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
-					RouteNetwork: "0.0.0.0/0",
-					RouteGateway: addr.Gateway,
-				})
-			case 6:
-				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
-					RouteNetwork: "::/0",
-					RouteGateway: addr.Gateway,
-					RouteMetric:  2 * network.DefaultRouteMetric,
-				})
+			gw, err := netaddr.ParseIP(addr.Gateway)
+			if err != nil {
+				return nil, err
 			}
+
+			route := network.RouteSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				Gateway:     gw,
+				OutLinkName: bondName,
+				Table:       nethelpers.TableMain,
+				Protocol:    nethelpers.ProtocolStatic,
+				Type:        nethelpers.TypeUnicast,
+				Family:      family,
+				Priority:    networkctrl.DefaultRouteMetric,
+			}
+
+			if addr.Family == 6 {
+				route.Priority = 2 * networkctrl.DefaultRouteMetric
+			}
+
+			route.Normalize()
+
+			networkConfig.Routes = append(networkConfig.Routes, route)
 		} else {
 			// for "Private" addresses, we add a route that goes out the gateway for the private subnets.
-			for _, privSubnet := range unmarshalledMetadataConfig.PrivateSubnets {
-				bondDev.DeviceRoutes = append(bondDev.DeviceRoutes, &v1alpha1.Route{
-					RouteNetwork: privSubnet,
-					RouteGateway: addr.Gateway,
-				})
+			for _, privSubnet := range packetMetadata.PrivateSubnets {
+				gw, err := netaddr.ParseIP(addr.Gateway)
+				if err != nil {
+					return nil, err
+				}
+
+				dest, err := netaddr.ParseIPPrefix(privSubnet)
+				if err != nil {
+					return nil, err
+				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Gateway:     gw,
+					Destination: dest,
+					OutLinkName: bondName,
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      family,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
 			}
 		}
 	}
 
-	if machineConfig.MachineConfig == nil {
-		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
+	// 4. hostname
+
+	if packetMetadata.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(packetMetadata.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if machineConfig.MachineConfig.MachineNetwork == nil {
-		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
-
-	machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(
-		machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces,
-		&bondDev,
-	)
-
-	return machineConfig.Bytes()
+	return networkConfig, nil
 }
 
-// Mode implements the platform.Platform interface.
-func (p *Packet) Mode() runtime.Mode {
-	return runtime.ModeMetal
-}
-
-// Hostname implements the platform.Platform interface.
-func (p *Packet) Hostname(ctx context.Context) (hostname []byte, err error) {
-	log.Printf("fetching equinix metadata from: %q", PacketMetaDataEndpoint)
+// NetworkConfiguration implements the runtime.Platform interface.
+func (p *Packet) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching equinix network config from: %q", PacketMetaDataEndpoint)
 
 	metadataConfig, err := download.Download(ctx, PacketMetaDataEndpoint)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var unmarshalledMetadataConfig Metadata
-	if err = json.Unmarshal(metadataConfig, &unmarshalledMetadataConfig); err != nil {
-		return nil, err
+	var packetMetadata Metadata
+	if err = json.Unmarshal(metadataConfig, &packetMetadata); err != nil {
+		return err
 	}
 
-	return []byte(unmarshalledMetadataConfig.Hostname), nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (p *Packet) ExternalIPs(context.Context) (addrs []net.IP, err error) {
-	return addrs, err
-}
-
-// KernelArgs implements the runtime.Platform interface.
-func (p *Packet) KernelArgs() procfs.Parameters {
-	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS1,115200n8"),
+	networkConfig, err := p.ParseMetadata(&packetMetadata)
+	if err != nil {
+		return err
 	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case ch <- networkConfig:
+	}
+
+	return nil
 }

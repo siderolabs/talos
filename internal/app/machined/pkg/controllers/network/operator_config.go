@@ -47,6 +47,11 @@ func (ctrl *OperatorConfigController) Inputs() []controller.Input {
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.ConfigNamespaceName,
+			Type:      network.LinkSpecType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -55,7 +60,7 @@ func (ctrl *OperatorConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: network.OperatorSpecType,
-			Kind: controller.OutputExclusive,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -85,7 +90,6 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
-		configuredInterfaces := map[string]struct{}{}
 
 		if ctrl.Cmdline != nil {
 			var settings CmdlineNetworking
@@ -98,10 +102,6 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			for _, link := range settings.IgnoreInterfaces {
 				ignoredInterfaces[link] = struct{}{}
 			}
-
-			if settings.LinkName != "" {
-				configuredInterfaces[settings.LinkName] = struct{}{}
-			}
 		}
 
 		var (
@@ -112,20 +112,12 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		// operators from the config
 		if cfgProvider != nil {
 			for _, device := range cfgProvider.Machine().Network().Devices() {
-				configuredInterfaces[device.Interface()] = struct{}{}
-
 				if device.Ignore() {
-					continue
+					ignoredInterfaces[device.Interface()] = struct{}{}
 				}
 
 				if _, ignore := ignoredInterfaces[device.Interface()]; ignore {
 					continue
-				}
-
-				if device.Bond() != nil {
-					for _, link := range device.Bond().Interfaces() {
-						configuredInterfaces[link] = struct{}{}
-					}
 				}
 
 				if device.DHCP() && device.DHCPOptions().IPv4() {
@@ -141,6 +133,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						DHCP4: network.DHCP4OperatorSpec{
 							RouteMetric: routeMetric,
 						},
+						ConfigLayer: network.ConfigMachineConfiguration,
 					})
 				}
 
@@ -157,6 +150,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						DHCP6: network.DHCP6OperatorSpec{
 							RouteMetric: routeMetric,
 						},
+						ConfigLayer: network.ConfigMachineConfiguration,
 					})
 				}
 
@@ -177,6 +171,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							DHCP4: network.DHCP4OperatorSpec{
 								RouteMetric: DefaultRouteMetric,
 							},
+							ConfigLayer: network.ConfigMachineConfiguration,
 						})
 					}
 
@@ -192,10 +187,33 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		// operators from defaults
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		// build configuredInterfaces from linkSpecs in `network-config` namespace
+		// any link which has any configuration derived from the machine configuration or platform configuration should be ignored
+		configuredInterfaces := map[string]struct{}{}
+
+		list, err := r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
-			return fmt.Errorf("error listing link statuses")
+			return fmt.Errorf("error listing link specs: %w", err)
+		}
+
+		for _, item := range list.Items {
+			linkSpec := item.(*network.LinkSpec).TypedSpec()
+
+			switch linkSpec.ConfigLayer {
+			case network.ConfigDefault:
+				// ignore default link specs
+			case network.ConfigOperator:
+				// specs produced by operators, ignore
+			case network.ConfigCmdline, network.ConfigMachineConfiguration, network.ConfigPlatform:
+				// interface is configured explicitly, don't run default dhcp4
+				configuredInterfaces[linkSpec.Name] = struct{}{}
+			}
+		}
+
+		// operators from defaults
+		list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
 		}
 
 		for _, item := range list.Items {
@@ -212,6 +230,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							DHCP4: network.DHCP4OperatorSpec{
 								RouteMetric: DefaultRouteMetric,
 							},
+							ConfigLayer: network.ConfigDefault,
 						})
 					}
 				}
@@ -230,7 +249,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// list specs for cleanup
-		list, err = r.List(ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+		list, err = r.List(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
@@ -261,11 +280,11 @@ func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Ru
 
 	for _, spec := range specs {
 		spec := spec
-		id := network.OperatorID(spec.Operator, spec.LinkName)
+		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
 
 		if err := r.Modify(
 			ctx,
-			network.NewOperatorSpec(network.NamespaceName, id),
+			network.NewOperatorSpec(network.ConfigNamespaceName, id),
 			func(r resource.Resource) error {
 				*r.(*network.OperatorSpec).TypedSpec() = spec
 
@@ -299,6 +318,7 @@ func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName
 			IP:            sharedIP,
 			GratuitousARP: true,
 		},
+		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
 	switch {

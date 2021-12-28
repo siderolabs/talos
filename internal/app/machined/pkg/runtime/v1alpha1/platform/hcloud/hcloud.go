@@ -6,19 +6,19 @@ package hcloud
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"gopkg.in/yaml.v3"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
@@ -61,104 +61,109 @@ func (h *Hcloud) Name() string {
 	return "hcloud"
 }
 
-// ConfigurationNetwork implements the network configuration interface.
+// ParseMetadata converts HCloud metadata to platform network configuration.
+//
 //nolint:gocyclo
-func (h *Hcloud) ConfigurationNetwork(metadataNetworkConfig []byte, confProvider config.Provider) (config.Provider, error) {
-	var unmarshalledNetworkConfig NetworkConfig
+func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if err := yaml.Unmarshal(metadataNetworkConfig, &unmarshalledNetworkConfig); err != nil {
-		return nil, err
+	if len(host) > 0 {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(string(host)); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if unmarshalledNetworkConfig.Version != 1 {
-		return nil, fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
+	if len(extIP) > 0 {
+		if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
 	}
 
-	var machineConfig *v1alpha1.Config
-
-	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
-	if !ok {
-		return nil, fmt.Errorf("unable to determine machine config type")
-	}
-
-	if machineConfig.MachineConfig == nil {
-		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
-	}
-
-	if machineConfig.MachineConfig.MachineNetwork == nil {
-		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
-
-	for _, network := range unmarshalledNetworkConfig.Config {
-		if network.Type != "physical" {
+	for _, ntwrk := range unmarshalledNetworkConfig.Config {
+		if ntwrk.Type != "physical" {
 			continue
 		}
 
-		iface := v1alpha1.Device{
-			DeviceInterface: network.Interfaces,
-			DeviceDHCP:      false,
-		}
+		networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+			Name:        ntwrk.Interfaces,
+			Up:          true,
+			ConfigLayer: network.ConfigPlatform,
+		})
 
-		for _, subnet := range network.Subnets {
+		for _, subnet := range ntwrk.Subnets {
 			if subnet.Type == "dhcp" && subnet.Ipv4 {
-				iface.DeviceDHCP = true
+				networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+					Operator: network.OperatorDHCP4,
+					LinkName: ntwrk.Interfaces,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric: 1024,
+					},
+					ConfigLayer: network.ConfigPlatform,
+				})
 			}
 
 			if subnet.Type == "static" {
-				iface.DeviceAddresses = append(iface.DeviceAddresses,
-					subnet.Address,
+				ipAddr, err := netaddr.ParseIPPrefix(subnet.Address)
+				if err != nil {
+					return nil, err
+				}
+
+				family := nethelpers.FamilyInet4
+				if ipAddr.IP().Is6() {
+					family = nethelpers.FamilyInet6
+				}
+
+				networkConfig.Addresses = append(networkConfig.Addresses,
+					network.AddressSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						LinkName:    ntwrk.Interfaces,
+						Address:     ipAddr,
+						Scope:       nethelpers.ScopeGlobal,
+						Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+						Family:      family,
+					},
 				)
 			}
 
 			if subnet.Gateway != "" && subnet.Ipv6 {
-				iface.DeviceRoutes = []*v1alpha1.Route{
-					{
-						RouteNetwork: "::/0",
-						RouteGateway: subnet.Gateway,
-						RouteMetric:  1024,
-					},
+				gw, err := netaddr.ParseIP(subnet.Gateway)
+				if err != nil {
+					return nil, err
 				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Gateway:     gw,
+					OutLinkName: ntwrk.Interfaces,
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      nethelpers.FamilyInet6,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
 			}
 		}
-
-		machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(
-			machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces,
-			&iface,
-		)
 	}
 
-	return machineConfig, nil
+	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
 func (h *Hcloud) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching hcloud network config from: %q", HCloudNetworkEndpoint)
-
-	metadataNetworkConfig, err := download.Download(ctx, HCloudNetworkEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch network config from metadata service")
-	}
-
 	log.Printf("fetching machine config from: %q", HCloudUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, HCloudUserDataEndpoint,
+	return download.Download(ctx, HCloudUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err := configloader.NewFromBytes(machineConfigDl)
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err = h.ConfigurationNetwork(metadataNetworkConfig, confProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	return confProvider.Bytes()
 }
 
 // Mode implements the runtime.Platform interface.
@@ -166,41 +171,62 @@ func (h *Hcloud) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the runtime.Platform interface.
-func (h *Hcloud) Hostname(ctx context.Context) (hostname []byte, err error) {
-	log.Printf("fetching hostname from: %q", HCloudHostnameEndpoint)
-
-	host, err := download.Download(ctx, HCloudHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil {
-		return nil, err
-	}
-
-	return host, nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (h *Hcloud) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	log.Printf("fetching externalIP from: %q", HCloudExternalIPEndpoint)
-
-	exIP, err := download.Download(ctx, HCloudExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil {
-		return nil, err
-	}
-
-	if ip := net.ParseIP(string(exIP)); ip != nil {
-		addrs = append(addrs, ip)
-	}
-
-	return addrs, nil
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (h *Hcloud) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+//
+//nolint:gocyclo
+func (h *Hcloud) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching hcloud network config from: %q", HCloudNetworkEndpoint)
+
+	metadataNetworkConfig, err := download.Download(ctx, HCloudNetworkEndpoint)
+	if err != nil {
+		return fmt.Errorf("failed to fetch network config from metadata service: %w", err)
+	}
+
+	var unmarshalledNetworkConfig NetworkConfig
+
+	if err = yaml.Unmarshal(metadataNetworkConfig, &unmarshalledNetworkConfig); err != nil {
+		return err
+	}
+
+	if unmarshalledNetworkConfig.Version != 1 {
+		return fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
+	}
+
+	log.Printf("fetching hostname from: %q", HCloudHostnameEndpoint)
+
+	host, err := download.Download(ctx, HCloudHostnameEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoHostname),
+		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
+	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
+		return err
+	}
+
+	log.Printf("fetching externalIP from: %q", HCloudExternalIPEndpoint)
+
+	extIP, err := download.Download(ctx, HCloudExternalIPEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
+		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
+		return err
+	}
+
+	networkConfig, err := h.ParseMetadata(&unmarshalledNetworkConfig, host, extIP)
+	if err != nil {
+		return err
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }

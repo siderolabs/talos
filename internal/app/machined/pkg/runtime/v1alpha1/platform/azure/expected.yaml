@@ -1,0 +1,18 @@
+addresses: []
+links: []
+routes: []
+hostnames:
+    - hostname: some
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp6
+      linkName: eth0
+      requireUp: true
+      dhcp6:
+        routeMetric: 1024
+      layer: default
+externalIPs:
+    - 1.2.3.4

@@ -1,0 +1,12 @@
+version: 2
+ethernets:
+  eth0:
+    dhcp4: true
+    addresses:
+      - 192.168.14.2/24
+      - 2001:1::1/64
+    gateway4: 192.168.14.1
+    gateway6: 2001:1::2
+    nameservers:
+      search: [foo.local, bar.local]
+      addresses: [8.8.8.8]

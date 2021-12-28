@@ -1,0 +1,19 @@
+{
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "scw-talos",
+    "commercial_type": "DEV1-S",
+    "hostname": "scw-talos",
+    "tags": [],
+    "state_detail": "booted",
+    "public_ip": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "address": "11.22.222.222",
+        "dynamic": false
+    },
+    "private_ip": "10.00.222.222",
+    "ipv6": {
+        "address": "2001:111:222:3333::1",
+        "gateway": "2001:111:222:3333::",
+        "netmask": "64"
+    }
+}

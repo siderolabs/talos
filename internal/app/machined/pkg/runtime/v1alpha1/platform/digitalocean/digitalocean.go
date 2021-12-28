@@ -6,17 +6,16 @@ package digitalocean
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
+	stderrors "errors"
 	"log"
-	"net"
-	"net/http"
 
 	"github.com/talos-systems/go-procfs/procfs"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
@@ -50,65 +49,56 @@ func (d *DigitalOcean) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the platform.Platform interface.
-func (d *DigitalOcean) Hostname(ctx context.Context) (hostname []byte, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, DigitalOceanHostnameEndpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return hostname, fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
-	}
-
-	return ioutil.ReadAll(resp.Body)
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (d *DigitalOcean) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	var (
-		body []byte
-		req  *http.Request
-		resp *http.Response
-	)
-
-	if req, err = http.NewRequestWithContext(ctx, "GET", DigitalOceanExternalIPEndpoint, nil); err != nil {
-		return
-	}
-
-	client := &http.Client{}
-	if resp, err = client.Do(req); err != nil {
-		return
-	}
-
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return addrs, fmt.Errorf("failed to retrieve external addresses for instance")
-	}
-
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
-	if addr := net.ParseIP(string(body)); addr != nil {
-		addrs = append(addrs, addr)
-	}
-
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (d *DigitalOcean) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS0").Append("tty0").Append("tty1"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+//
+//nolint:gocyclo
+func (d *DigitalOcean) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	host, err := download.Download(ctx, DigitalOceanHostnameEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoHostname),
+		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
+	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
+		return err
+	}
+
+	extIP, err := download.Download(ctx, DigitalOceanExternalIPEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
+		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
+		return err
+	}
+
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	if len(host) > 0 {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(string(host)); err != nil {
+			return err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
+	if len(extIP) > 0 {
+		if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }

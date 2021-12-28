@@ -99,7 +99,7 @@ func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func
 }
 
 func (suite *AddressMergeSuite) assertNoAddress(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}

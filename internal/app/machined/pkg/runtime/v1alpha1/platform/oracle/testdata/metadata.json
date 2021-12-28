@@ -1,0 +1,12 @@
+[
+    {
+        "vnicId": "ocid1.vnic.oc1.eu-amsterdam-1.asdasd",
+        "privateIp": "172.16.1.11",
+        "vlanTag": 1,
+        "macAddr": "02:00:17:00:00:00",
+        "virtualRouterIp": "172.16.1.1",
+        "subnetCidrBlock": "172.16.1.0/24",
+        "ipv6SubnetCidrBlock": "2603:a:b:c::/64",
+        "ipv6VirtualRouterIp": "fe80::a:b:c:d"
+    }
+]

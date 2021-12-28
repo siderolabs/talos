@@ -1,0 +1,17 @@
+addresses: []
+links: []
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp6
+      linkName: eth0
+      requireUp: true
+      dhcp6:
+        routeMetric: 1024
+      layer: platform
+externalIPs: []
