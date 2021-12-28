@@ -7,29 +7,43 @@ package aws
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/talos-systems/talos/pkg/download"
 )
 
-const (
-	// AWSExternalIPEndpoint displays all external addresses associated with the instance.
-	AWSExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
-	// AWSHostnameEndpoint is the local EC2 endpoint for the hostname.
-	AWSHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
-	// AWSUserDataEndpoint is the local EC2 endpoint for the config.
-	AWSUserDataEndpoint = "http://169.254.169.254/latest/user-data"
-)
+const notFoundError = "NotFoundError"
 
 // AWS is the concrete type that implements the runtime.Platform interface.
-type AWS struct{}
+type AWS struct {
+	metadataClient *ec2metadata.EC2Metadata
+}
+
+// NewAWS initializes AWS platform building the IMDS client.
+func NewAWS() (*AWS, error) {
+	a := &AWS{}
+
+	sess, err := session.NewSession(&aws.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	sess.Config.Credentials = ec2rolecreds.NewCredentials(sess)
+
+	a.metadataClient = ec2metadata.New(sess)
+
+	return a, nil
+}
 
 // Name implements the runtime.Platform interface.
 func (a *AWS) Name() string {
@@ -38,11 +52,26 @@ func (a *AWS) Name() string {
 
 // Configuration implements the runtime.Platform interface.
 func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching machine config from: %q", AWSUserDataEndpoint)
+	log.Printf("fetching machine config from AWS")
 
-	return download.Download(ctx, AWSUserDataEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
-		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == notFoundError {
+				return nil, errors.ErrNoConfigSource
+			}
+		}
+
+		return nil, fmt.Errorf("failed to fetch EC2 userdata: %w", err)
+	}
+
+	userdata = strings.TrimSpace(userdata)
+
+	if userdata == "" {
+		return nil, errors.ErrNoConfigSource
+	}
+
+	return []byte(userdata), nil
 }
 
 // Mode implements the runtime.Platform interface.
@@ -52,62 +81,38 @@ func (a *AWS) Mode() runtime.Mode {
 
 // Hostname implements the runtime.Platform interface.
 func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, AWSHostnameEndpoint, nil)
+	host, err := a.metadataClient.GetMetadataWithContext(ctx, "hostname")
 	if err != nil {
-		return nil, err
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == notFoundError {
+				return nil, nil
+			}
+		}
+
+		return nil, fmt.Errorf("failed to fetch hostname from IMDS: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return hostname, fmt.Errorf("failed to fetch hostname from metadata service: %d", resp.StatusCode)
-	}
-
-	return ioutil.ReadAll(resp.Body)
+	return []byte(host), nil
 }
 
 // ExternalIPs implements the runtime.Platform interface.
 func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	var (
-		body []byte
-		req  *http.Request
-		resp *http.Response
-	)
+	publicIP, err := a.metadataClient.GetMetadataWithContext(ctx, "public-ipv4")
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if awsErr.Code() == notFoundError {
+				return nil, nil
+			}
+		}
 
-	if req, err = http.NewRequestWithContext(ctx, "GET", AWSExternalIPEndpoint, nil); err != nil {
-		return
+		return nil, fmt.Errorf("failed to fetch public IPv4 from IMDS: %w", err)
 	}
 
-	client := &http.Client{}
-	if resp, err = client.Do(req); err != nil {
-		return
-	}
-
-	//nolint:errcheck
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return addrs, fmt.Errorf("failed to retrieve external addresses for instance: %d", resp.StatusCode)
-	}
-
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
-	if addr := net.ParseIP(string(body)); addr != nil {
+	if addr := net.ParseIP(publicIP); addr != nil {
 		addrs = append(addrs, addr)
 	}
 
-	return addrs, err
+	return addrs, nil
 }
 
 // KernelArgs implements the runtime.Platform interface.

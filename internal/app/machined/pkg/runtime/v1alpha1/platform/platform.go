@@ -57,7 +57,7 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "aws":
-		p = &aws.AWS{}
+		return aws.NewAWS()
 	case "azure":
 		p = &azure.Azure{}
 	case "container":
