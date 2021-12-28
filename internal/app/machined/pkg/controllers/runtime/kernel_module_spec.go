@@ -13,11 +13,14 @@ import (
 	"github.com/pmorjan/kmod"
 	"go.uber.org/zap"
 
+	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // KernelModuleSpecController watches KernelModuleSpecs, sets/resets kernel params.
-type KernelModuleSpecController struct{}
+type KernelModuleSpecController struct {
+	V1Alpha1Mode v1alpha1runtime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *KernelModuleSpecController) Name() string {
@@ -42,6 +45,11 @@ func (ctrl *KernelModuleSpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
+		// not supported in container mode
+		return nil
+	}
+
 	manager, err := kmod.New()
 	if err != nil {
 		return fmt.Errorf("error initializing kmod manager: %w", err)

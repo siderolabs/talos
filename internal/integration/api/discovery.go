@@ -151,10 +151,25 @@ func (suite *DiscoverySuite) TestRegistries() {
 
 		members := suite.getMembers(nodeCtx)
 		localIdentity := suite.getNodeIdentity(nodeCtx)
-		rawAffiliates := suite.getAffiliates(nodeCtx, cluster.RawNamespaceName)
 
 		// raw affiliates don't contain the local node
-		suite.Assert().Len(rawAffiliates, len(registries)*(len(members)-1))
+		expectedRawAffiliates := len(registries) * (len(members) - 1)
+
+		var rawAffiliates []*cluster.Affiliate
+
+		for i := 0; i < 30; i++ {
+			rawAffiliates = suite.getAffiliates(nodeCtx, cluster.RawNamespaceName)
+
+			if len(rawAffiliates) == expectedRawAffiliates {
+				break
+			}
+
+			suite.T().Logf("waiting for cluster affiliates to be discovered: %d expected, %d found", expectedRawAffiliates, len(rawAffiliates))
+
+			time.Sleep(2 * time.Second)
+		}
+
+		suite.Assert().Len(rawAffiliates, expectedRawAffiliates)
 
 		rawAffiliatesByID := make(map[string]*cluster.Affiliate)
 
