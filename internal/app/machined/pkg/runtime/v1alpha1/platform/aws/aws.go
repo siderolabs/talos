@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,9 +16,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/talos-systems/go-procfs/procfs"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const notFoundError = "NotFoundError"
@@ -65,9 +66,7 @@ func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("failed to fetch EC2 userdata: %w", err)
 	}
 
-	userdata = strings.TrimSpace(userdata)
-
-	if userdata == "" {
+	if strings.TrimSpace(userdata) == "" {
 		return nil, errors.ErrNoConfigSource
 	}
 
@@ -79,45 +78,70 @@ func (a *AWS) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the runtime.Platform interface.
-func (a *AWS) Hostname(ctx context.Context) (hostname []byte, err error) {
-	host, err := a.metadataClient.GetMetadataWithContext(ctx, "hostname")
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == notFoundError {
-				return nil, nil
-			}
-		}
-
-		return nil, fmt.Errorf("failed to fetch hostname from IMDS: %w", err)
-	}
-
-	return []byte(host), nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (a *AWS) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	publicIP, err := a.metadataClient.GetMetadataWithContext(ctx, "public-ipv4")
-	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == notFoundError {
-				return nil, nil
-			}
-		}
-
-		return nil, fmt.Errorf("failed to fetch public IPv4 from IMDS: %w", err)
-	}
-
-	if addr := net.ParseIP(publicIP); addr != nil {
-		addrs = append(addrs, addr)
-	}
-
-	return addrs, nil
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (a *AWS) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+//
+//nolint:gocyclo
+func (a *AWS) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	getMetadataKey := func(key string) (string, error) {
+		v, err := a.metadataClient.GetMetadataWithContext(ctx, key)
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok {
+				if awsErr.Code() == notFoundError {
+					return "", nil
+				}
+			}
+
+			return "", fmt.Errorf("failed to fetch %q from IMDS: %w", key, err)
+		}
+
+		return v, nil
+	}
+
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	hostname, err := getMetadataKey("hostname")
+	if err != nil {
+		return err
+	}
+
+	if hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err = hostnameSpec.ParseFQDN(hostname); err != nil {
+			return err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
+	externalIP, err := getMetadataKey("public-ipv4")
+	if err != nil {
+		return err
+	}
+
+	if externalIP != "" {
+		ip, err := netaddr.ParseIP(externalIP)
+		if err != nil {
+			return err
+		}
+
+		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }

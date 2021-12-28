@@ -1,0 +1,60 @@
+addresses:
+    - address: 192.168.14.2/24
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2001:1::1/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 192.168.14.1
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: 2001:1::2
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames: []
+resolvers:
+    - dnsServers:
+        - 8.8.8.8
+      layer: platform
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs: []

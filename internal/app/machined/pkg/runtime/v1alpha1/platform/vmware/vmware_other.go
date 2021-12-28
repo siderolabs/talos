@@ -10,7 +10,6 @@ package vmware
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
@@ -30,22 +29,17 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	return nil, fmt.Errorf("arch not supported")
 }
 
-// Hostname implements the platform.Platform interface.
-func (v *VMware) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, fmt.Errorf("arch not supported")
-}
-
 // Mode implements the platform.Platform interface.
 func (v *VMware) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// ExternalIPs implements the runtime.Platform interface.
-func (v *VMware) ExternalIPs(context.Context) (addrs []net.IP, err error) {
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (v *VMware) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (v *VMware) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	return nil
 }

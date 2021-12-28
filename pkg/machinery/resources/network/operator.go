@@ -4,7 +4,7 @@
 
 package network
 
-//go:generate stringer -type=Operator -linecomment
+//go:generate enumer -type=Operator -linecomment -text
 
 // Operator enumerates Talos network operators.
 type Operator int
@@ -15,8 +15,3 @@ const (
 	OperatorDHCP6                 // dhcp6
 	OperatorVIP                   // vip
 )
-
-// MarshalYAML implements yaml.Marshaler.
-func (operator Operator) MarshalYAML() (interface{}, error) {
-	return operator.String(), nil
-}

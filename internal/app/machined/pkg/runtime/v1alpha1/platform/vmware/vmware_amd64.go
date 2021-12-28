@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vmware/govmomi/ovf"
@@ -186,19 +185,9 @@ func (v *VMware) Configuration(context.Context) ([]byte, error) {
 	return nil, nil
 }
 
-// Hostname implements the platform.Platform interface.
-func (v *VMware) Hostname(context.Context) (hostname []byte, err error) {
-	return nil, nil
-}
-
 // Mode implements the platform.Platform interface.
 func (v *VMware) Mode() runtime.Mode {
 	return runtime.ModeCloud
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (v *VMware) ExternalIPs(context.Context) (addrs []net.IP, err error) {
-	return addrs, err
 }
 
 // KernelArgs implements the runtime.Platform interface.
@@ -207,4 +196,9 @@ func (v *VMware) KernelArgs() procfs.Parameters {
 		procfs.NewParameter("console").Append("tty0").Append("ttyS0"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (v *VMware) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	return nil
 }

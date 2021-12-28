@@ -73,7 +73,7 @@ func (suite *OperatorConfigSuite) assertOperators(requiredIDs []string, check fu
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (suite *OperatorConfigSuite) assertNoOperators(unexpectedIDs []string) erro
 		unexpIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -138,17 +138,17 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertOperators([]string{
-				"dhcp4/eth0",
-				"dhcp4/eth1",
+				"default/dhcp4/eth0",
+				"default/dhcp4/eth1",
 			}, func(r *network.OperatorSpec) error {
 				suite.Assert().Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 				suite.Assert().True(r.TypedSpec().RequireUp)
 				suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 
 				switch r.Metadata().ID() {
-				case "dhcp4/eth0":
+				case "default/dhcp4/eth0":
 					suite.Assert().Equal("eth0", r.TypedSpec().LinkName)
-				case "dhcp4/eth1":
+				case "default/dhcp4/eth1":
 					suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
 				}
 
@@ -175,17 +175,17 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertOperators([]string{
-				"dhcp4/eth0",
-				"dhcp4/eth2",
+				"default/dhcp4/eth0",
+				"default/dhcp4/eth2",
 			}, func(r *network.OperatorSpec) error {
 				suite.Assert().Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 				suite.Assert().True(r.TypedSpec().RequireUp)
 				suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 
 				switch r.Metadata().ID() {
-				case "dhcp4/eth0":
+				case "default/dhcp4/eth0":
 					suite.Assert().Equal("eth0", r.TypedSpec().LinkName)
-				case "dhcp4/eth2":
+				case "default/dhcp4/eth2":
 					suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
 				}
 
@@ -199,13 +199,17 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoOperators([]string{
-				"dhcp4/eth2",
+				"default/dhcp4/eth2",
 			})
 		}))
 }
 
 func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.OperatorConfigController{
+		Cmdline: procfs.NewCmdline("talos.network.interface.ignore=eth5"),
+	}))
+	// add LinkConfig controller to produce link specs based on machine configuration
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{
 		Cmdline: procfs.NewCmdline("talos.network.interface.ignore=eth5"),
 	}))
 
@@ -280,21 +284,21 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertOperators([]string{
-				"dhcp4/eth1",
-				"dhcp4/eth3",
-				"dhcp4/eth4.25",
+				"configuration/dhcp4/eth1",
+				"configuration/dhcp4/eth3",
+				"configuration/dhcp4/eth4.25",
 			}, func(r *network.OperatorSpec) error {
 				suite.Assert().Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 				suite.Assert().True(r.TypedSpec().RequireUp)
 
 				switch r.Metadata().ID() {
-				case "dhcp4/eth1":
+				case "configuration/dhcp4/eth1":
 					suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
-				case "dhcp4/eth3":
+				case "configuration/dhcp4/eth3":
 					suite.Assert().Equal("eth3", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
-				case "dhcp4/eth4.25":
+				case "configuration/dhcp4/eth4.25":
 					suite.Assert().Equal("eth4.25", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 				}
@@ -306,9 +310,11 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoOperators([]string{
-				"dhcp4/eth0",
-				"dhcp4/eth2",
-				"dhcp4/eth4.26",
+				"configuration/dhcp4/eth0",
+				"default/dhcp4/eth0",
+				"configuration/dhcp4/eth2",
+				"default/dhcp4/eth2",
+				"configuration/dhcp4/eth4.26",
 			})
 		}))
 }
@@ -365,17 +371,17 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertOperators([]string{
-				"dhcp6/eth2",
-				"dhcp6/eth3",
+				"configuration/dhcp6/eth2",
+				"configuration/dhcp6/eth3",
 			}, func(r *network.OperatorSpec) error {
 				suite.Assert().Equal(network.OperatorDHCP6, r.TypedSpec().Operator)
 				suite.Assert().True(r.TypedSpec().RequireUp)
 
 				switch r.Metadata().ID() {
-				case "dhcp6/eth2":
+				case "configuration/dhcp6/eth2":
 					suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP6.RouteMetric)
-				case "dhcp6/eth3":
+				case "configuration/dhcp6/eth3":
 					suite.Assert().Equal("eth3", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(512, r.TypedSpec().DHCP6.RouteMetric)
 				}
@@ -387,7 +393,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoOperators([]string{
-				"dhcp6/eth1",
+				"configuration/dhcp6/eth1",
 			})
 		}))
 }
@@ -448,21 +454,21 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationVIP() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertOperators([]string{
-				"vip/eth1",
-				"vip/eth2",
-				"vip/eth3.26",
+				"configuration/vip/eth1",
+				"configuration/vip/eth2",
+				"configuration/vip/eth3.26",
 			}, func(r *network.OperatorSpec) error {
 				suite.Assert().Equal(network.OperatorVIP, r.TypedSpec().Operator)
 				suite.Assert().True(r.TypedSpec().RequireUp)
 
 				switch r.Metadata().ID() {
-				case "vip/eth1":
+				case "configuration/vip/eth1":
 					suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netaddr.MustParseIP("2.3.4.5"), r.TypedSpec().VIP.IP)
-				case "vip/eth2":
+				case "configuration/vip/eth2":
 					suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netaddr.MustParseIP("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"), r.TypedSpec().VIP.IP)
-				case "vip/eth3.26":
+				case "configuration/vip/eth3.26":
 					suite.Assert().Equal("eth3.26", r.TypedSpec().LinkName)
 					suite.Assert().EqualValues(netaddr.MustParseIP("5.5.4.4"), r.TypedSpec().VIP.IP)
 				}
@@ -490,7 +496,7 @@ func (suite *OperatorConfigSuite) TearDownTest() {
 
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkStatus(network.ConfigNamespaceName, "bar")))
 }
 
 func TestOperatorConfigSuite(t *testing.T) {

@@ -7,19 +7,18 @@ package scaleway
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
-	"net"
+	"strconv"
 
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
 	"github.com/talos-systems/go-procfs/procfs"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
@@ -35,66 +34,97 @@ func (s *Scaleway) Name() string {
 	return "scaleway"
 }
 
-// ConfigurationNetwork implements the network configuration interface.
-func (s *Scaleway) ConfigurationNetwork(metadataConfig *instance.Metadata, confProvider config.Provider) (config.Provider, error) {
-	var machineConfig *v1alpha1.Config
+// ParseMetadata converts Scaleway met.
+func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
-	if !ok {
-		return nil, fmt.Errorf("unable to determine machine config type")
+	if metadataConfig.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(metadataConfig.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if machineConfig.MachineConfig == nil {
-		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
+	if metadataConfig.PublicIP.Address != "" {
+		ip, err := netaddr.ParseIP(metadataConfig.PublicIP.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
-	if machineConfig.MachineConfig.MachineNetwork == nil {
-		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
+	networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+		Name:        "eth0",
+		Up:          true,
+		ConfigLayer: network.ConfigPlatform,
+	})
 
-	iface := v1alpha1.Device{
-		DeviceInterface: "eth0",
-		DeviceDHCP:      true,
-	}
+	networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+		Operator:  network.OperatorDHCP4,
+		LinkName:  "eth0",
+		RequireUp: true,
+		DHCP4: network.DHCP4OperatorSpec{
+			RouteMetric: 1024,
+		},
+		ConfigLayer: network.ConfigPlatform,
+	})
 
 	if metadataConfig.IPv6.Address != "" {
-		iface.DeviceAddresses = append(iface.DeviceAddresses,
-			fmt.Sprintf("%s/%s", metadataConfig.IPv6.Address, metadataConfig.IPv6.Netmask),
+		bits, err := strconv.Atoi(metadataConfig.IPv6.Netmask)
+		if err != nil {
+			return nil, err
+		}
+
+		ip, err := netaddr.ParseIP(metadataConfig.IPv6.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		addr := netaddr.IPPrefixFrom(ip, uint8(bits))
+
+		networkConfig.Addresses = append(networkConfig.Addresses,
+			network.AddressSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				LinkName:    "eth0",
+				Address:     addr,
+				Scope:       nethelpers.ScopeGlobal,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				Family:      nethelpers.FamilyInet6,
+			},
 		)
 
-		iface.DeviceRoutes = []*v1alpha1.Route{
-			{
-				RouteNetwork: "::/0",
-				RouteGateway: metadataConfig.IPv6.Gateway,
-				RouteMetric:  1024,
-			},
+		gw, err := netaddr.ParseIP(metadataConfig.IPv6.Gateway)
+		if err != nil {
+			return nil, err
 		}
+
+		route := network.RouteSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Gateway:     gw,
+			OutLinkName: "eth0",
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Family:      nethelpers.FamilyInet6,
+			Priority:    1024,
+		}
+
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
 	}
 
-	machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(
-		machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces,
-		&iface,
-	)
-
-	return confProvider, nil
+	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
 func (s *Scaleway) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching scaleway instance config from: %q ", ScalewayMetadataEndpoint)
-
-	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
-		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
-	if err != nil {
-		return nil, errors.ErrNoConfigSource
-	}
-
-	metadata := &instance.Metadata{}
-	if err = json.Unmarshal(metadataDl, metadata); err != nil {
-		return nil, errors.ErrNoConfigSource
-	}
-
 	log.Printf("fetching machine config from scaleway metadata server")
 
 	instanceAPI := instance.NewMetadataAPI()
@@ -104,17 +134,7 @@ func (s *Scaleway) Configuration(ctx context.Context) ([]byte, error) {
 		return nil, errors.ErrNoConfigSource
 	}
 
-	confProvider, err := configloader.NewFromBytes(machineConfigDl)
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err = s.ConfigurationNetwork(metadata, confProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	return confProvider.Bytes()
+	return machineConfigDl, nil
 }
 
 // Mode implements the runtime.Platform interface.
@@ -122,49 +142,26 @@ func (s *Scaleway) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the runtime.Platform interface.
-func (s *Scaleway) Hostname(ctx context.Context) (hostname []byte, err error) {
-	log.Printf("fetching hostname from: %q", ScalewayMetadataEndpoint)
-
-	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil {
-		return nil, err
-	}
-
-	metadata := &instance.Metadata{}
-	if err = json.Unmarshal(metadataDl, metadata); err != nil {
-		return nil, err
-	}
-
-	return []byte(metadata.Hostname), nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (s *Scaleway) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	log.Printf("fetching external IP from: %q", ScalewayMetadataEndpoint)
-
-	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil {
-		return addrs, err
-	}
-
-	metadata := &instance.Metadata{}
-	if err = json.Unmarshal(metadataDl, metadata); err != nil {
-		return addrs, err
-	}
-
-	addrs = append(addrs, net.ParseIP(metadata.PublicIP.Address))
-
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (s *Scaleway) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 	}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (s *Scaleway) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching scaleway instance config from: %q ", ScalewayMetadataEndpoint)
+
+	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint)
+	if err != nil {
+		return err
+	}
+
+	metadata := &instance.Metadata{}
+	if err = json.Unmarshal(metadataDl, metadata); err != nil {
+		return err
+	}
+
+	return nil
 }

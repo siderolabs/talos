@@ -1,0 +1,117 @@
+{
+    "id": "X",
+    "hostname": "infra-green-ci",
+    "plan": "c3.medium.x86",
+    "reserved": false,
+    "class": "c3.medium.x86",
+    "facility": "ny5",
+    "metro": "ny",
+    "private_subnets": [
+        "10.0.0.0/8"
+    ],
+    "tags": [],
+    "ssh_keys": [
+    ],
+    "customdata": {},
+    "network": {
+        "bonding": {
+            "mode": 4,
+            "link_aggregation": "mlag_ha",
+            "mac": "68:05:ca:b8:f1:f8"
+        },
+        "interfaces": [
+            {
+                "name": "eth0",
+                "mac": "68:05:ca:b8:f1:f8",
+                "bond": "bond0"
+            },
+            {
+                "name": "eth1",
+                "mac": "68:05:ca:b8:f1:f9",
+                "bond": "bond0"
+            }
+        ],
+        "addresses": [
+            {
+                "id": "d6be5d63-50f8-452c-b5cd-6cba42fbd5b3",
+                "address_family": 4,
+                "netmask": "255.255.255.254",
+                "created_at": "2021-11-24T20:24:54Z",
+                "public": true,
+                "cidr": 31,
+                "management": true,
+                "enabled": true,
+                "network": "147.75.78.40",
+                "address": "147.75.78.41",
+                "gateway": "147.75.78.40",
+                "parent_block": {
+                    "network": "147.75.78.40",
+                    "netmask": "255.255.255.254",
+                    "cidr": 31,
+                    "href": "/ips/e5cc5a4e-1d80-42c8-b5ea-39644effb407"
+                }
+            },
+            {
+                "id": "09c743e9-52e4-4125-9e88-da56c8e62ae4",
+                "address_family": 6,
+                "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
+                "created_at": "2021-11-24T20:24:54Z",
+                "public": true,
+                "cidr": 127,
+                "management": true,
+                "enabled": true,
+                "network": "2604:1380:45d1:fd00::10",
+                "address": "2604:1380:45d1:fd00::11",
+                "gateway": "2604:1380:45d1:fd00::10",
+                "parent_block": {
+                    "network": "2604:1380:45d1:fd00:0000:0000:0000:0000",
+                    "netmask": "ffff:ffff:ffff:ff00:0000:0000:0000:0000",
+                    "cidr": 56,
+                    "href": "/ips/a76e6dd1-a22a-4f8a-a04d-7b68b4f358e5"
+                }
+            },
+            {
+                "id": "c7d3cd31-beae-460a-b008-29776c95562b",
+                "address_family": 4,
+                "netmask": "255.255.255.255",
+                "created_at": "2021-12-10T13:41:14Z",
+                "public": true,
+                "cidr": 32,
+                "management": false,
+                "enabled": true,
+                "network": "147.75.195.143",
+                "address": "147.75.195.143",
+                "gateway": "147.75.195.143",
+                "parent_block": {
+                  "network": "147.75.195.143",
+                  "netmask": "255.255.255.255",
+                  "cidr": 32,
+                  "href": "/ips/77e054ac-cd40-473a-9c59-8f6c322c5a20"
+                }
+              },
+              {
+                "id": "5e0bc796-9e7f-46a5-9472-ced35b8acb6d",
+                "address_family": 4,
+                "netmask": "255.255.255.254",
+                "created_at": "2021-11-24T20:24:54Z",
+                "public": false,
+                "cidr": 31,
+                "management": true,
+                "enabled": true,
+                "network": "10.66.142.16",
+                "address": "10.66.142.17",
+                "gateway": "10.66.142.16",
+                "parent_block": {
+                    "network": "10.66.142.0",
+                    "netmask": "255.255.255.128",
+                    "cidr": 25,
+                    "href": "/ips/045b5dd5-6a32-48e6-870d-8ea9a39169d6"
+                }
+            }
+        ],
+        "metal_gateways": []
+    },
+    "api_url": "https://metadata.packet.net",
+    "phone_home_url": "http://tinkerbell.ny5.packet.net/phone-home",
+    "user_state_url": "http://tinkerbell.ny5.packet.net/events"
+}

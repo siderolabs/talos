@@ -1,0 +1,38 @@
+addresses:
+    - address: 10.7.96.0/20
+      linkName: eth1
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 1450
+      kind: ""
+      type: netrom
+      layer: platform
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 1.2.3.4

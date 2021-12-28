@@ -1,0 +1,104 @@
+addresses:
+    - address: 147.75.78.41/31
+      linkName: bond0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2604:1380:45d1:fd00::11/127
+      linkName: bond0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.66.142.17/31
+      linkName: bond0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      layer: platform
+    - name: bond0
+      logical: true
+      up: true
+      mtu: 0
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer3+4
+        lacpRate: slow
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 147.75.78.40
+      outLinkName: bond0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: 2604:1380:45d1:fd00::10
+      outLinkName: bond0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 10.0.0.0/8
+      src: ""
+      gateway: 10.66.142.16
+      outLinkName: bond0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: infra-green-ci
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs: []

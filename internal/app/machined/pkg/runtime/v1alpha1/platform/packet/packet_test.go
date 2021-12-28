@@ -4,11 +4,36 @@
 
 package packet_test
 
-import "testing"
+import (
+	_ "embed"
+	"encoding/json"
+	"testing"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
+
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
+)
+
+//go:embed testdata/metadata.json
+var rawMetadata []byte
+
+//go:embed testdata/expected.yaml
+var expectedNetworkConfig string
+
+func TestParseMetadata(t *testing.T) {
+	p := &packet.Packet{}
+
+	var m packet.Metadata
+
+	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+
+	networkConfig, err := p.ParseMetadata(&m)
+	require.NoError(t, err)
+
+	marshaled, err := yaml.Marshal(networkConfig)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }

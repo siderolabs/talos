@@ -30,6 +30,8 @@ type OperatorSpecSpec struct {
 	DHCP4 DHCP4OperatorSpec `yaml:"dhcp4,omitempty"`
 	DHCP6 DHCP6OperatorSpec `yaml:"dhcp6,omitempty"`
 	VIP   VIPOperatorSpec   `yaml:"vip,omitempty"`
+
+	ConfigLayer ConfigLayer `yaml:"layer"`
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.

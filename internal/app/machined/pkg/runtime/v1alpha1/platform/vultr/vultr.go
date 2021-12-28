@@ -7,19 +7,19 @@ package vultr
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vultr/metadata"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
@@ -41,87 +41,96 @@ func (v *Vultr) Name() string {
 	return "vultr"
 }
 
-// ConfigurationNetwork implements the network configuration interface.
-func (v *Vultr) ConfigurationNetwork(metadataConfig []byte, confProvider config.Provider) (config.Provider, error) {
-	var machineConfig *v1alpha1.Config
+// ParseMetadata converts Vultr platform metadata into platform network config.
+//
+//nolint:gocyclo
+func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	machineConfig, ok := confProvider.(*v1alpha1.Config)
-	if !ok {
-		return nil, fmt.Errorf("unable to determine machine config type")
+	if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
-	meta := &metadata.MetaData{}
-	if err := json.Unmarshal(metadataConfig, meta); err != nil {
-		return nil, err
+	if meta.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(meta.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if machineConfig.MachineConfig == nil {
-		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
-	}
+	for i, addr := range meta.Interfaces {
+		iface := fmt.Sprintf("eth%d", i)
 
-	if machineConfig.MachineConfig.MachineNetwork == nil {
-		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
+		link := network.LinkSpecSpec{
+			Name:        iface,
+			Up:          true,
+			ConfigLayer: network.ConfigPlatform,
+		}
 
-	if machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces == nil {
-		for i, addr := range meta.Interfaces {
-			iface := &v1alpha1.Device{
-				DeviceInterface: fmt.Sprintf("eth%d", i),
-			}
+		if addr.NetworkType == "private" {
+			link.MTU = 1450
+		}
 
-			if addr.IPv4.Address != "" {
-				iface.DeviceDHCP = true
-			}
+		networkConfig.Links = append(networkConfig.Links, link)
 
-			if addr.NetworkType == "private" {
-				iface.DeviceMTU = 1450
-
-				if addr.IPv4.Address != "" {
-					mask, _ := net.IPMask(net.ParseIP(addr.IPv4.Netmask).To4()).Size()
-
-					iface.DeviceDHCP = false
-					iface.DeviceAddresses = append(iface.DeviceAddresses,
-						fmt.Sprintf("%s/%d", addr.IPv4.Address, mask),
-					)
+		if addr.IPv4.Address != "" {
+			if addr.NetworkType != "private" {
+				networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  iface,
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric: 1024,
+					},
+					ConfigLayer: network.ConfigPlatform,
+				})
+			} else {
+				maskIP, err := netaddr.ParseIP(addr.IPv4.Netmask)
+				if err != nil {
+					return nil, err
 				}
-			}
 
-			machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces, iface)
+				mask, _ := maskIP.MarshalBinary() //nolint:errcheck // never fails
+
+				ip, err := netaddr.ParseIP(addr.IPv4.Address)
+				if err != nil {
+					return nil, err
+				}
+
+				ipAddr, err := ip.Netmask(mask)
+				if err != nil {
+					return nil, err
+				}
+
+				networkConfig.Addresses = append(networkConfig.Addresses,
+					network.AddressSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						LinkName:    iface,
+						Address:     ipAddr,
+						Scope:       nethelpers.ScopeGlobal,
+						Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+						Family:      nethelpers.FamilyInet4,
+					},
+				)
+			}
 		}
 	}
 
-	return confProvider, nil
+	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
 func (v *Vultr) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching Vultr instance config from: %q ", VultrMetadataEndpoint)
-
-	metaConfigDl, err := download.Download(ctx, VultrMetadataEndpoint)
-	if err != nil {
-		return nil, errors.ErrNoConfigSource
-	}
-
 	log.Printf("fetching machine config from: %q", VultrUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, VultrUserDataEndpoint,
+	return download.Download(ctx, VultrUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err := configloader.NewFromBytes(machineConfigDl)
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err = v.ConfigurationNetwork(metaConfigDl, confProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	return confProvider.Bytes()
 }
 
 // Mode implements the runtime.Platform interface.
@@ -129,39 +138,42 @@ func (v *Vultr) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the runtime.Platform interface.
-func (v *Vultr) Hostname(ctx context.Context) (hostname []byte, err error) {
-	log.Printf("fetching hostname from: %q", VultrHostnameEndpoint)
-
-	hostname, err = download.Download(ctx, VultrHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil {
-		return nil, err
-	}
-
-	return hostname, nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (v *Vultr) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	log.Printf("fetching external IP from: %q", VultrExternalIPEndpoint)
-
-	exIP, err := download.Download(ctx, VultrExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil {
-		return nil, err
-	}
-
-	if addr := net.ParseIP(string(exIP)); addr != nil {
-		addrs = append(addrs, addr)
-	}
-
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (v *Vultr) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (v *Vultr) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching Vultr instance config from: %q ", VultrMetadataEndpoint)
+
+	metaConfigDl, err := download.Download(ctx, VultrMetadataEndpoint)
+	if err != nil {
+		return fmt.Errorf("error fetching metadata: %w", err)
+	}
+
+	meta := &metadata.MetaData{}
+	if err = json.Unmarshal(metaConfigDl, meta); err != nil {
+		return err
+	}
+
+	extIP, err := download.Download(ctx, VultrExternalIPEndpoint,
+		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
+		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
+	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
+		return err
+	}
+
+	networkConfig, err := v.ParseMetadata(meta, extIP)
+	if err != nil {
+		return err
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }

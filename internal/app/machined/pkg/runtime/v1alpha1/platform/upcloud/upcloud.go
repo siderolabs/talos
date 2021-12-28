@@ -9,27 +9,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
 	// UpCloudMetadataEndpoint is the local UpCloud endpoint.
 	UpCloudMetadataEndpoint = "http://169.254.169.254/metadata/v1.json"
-
-	// UpCloudExternalIPEndpoint is the local UpCloud endpoint for the external IP.
-	UpCloudExternalIPEndpoint = "http://169.254.169.254/metadata/v1/network/interfaces/1/ip_addresses/1/address"
-
-	// UpCloudHostnameEndpoint is the local UpCloud endpoint for the hostname.
-	UpCloudHostnameEndpoint = "http://169.254.169.254/metadata/v1/hostname"
 
 	// UpCloudUserDataEndpoint is the local UpCloud endpoint for the config.
 	UpCloudUserDataEndpoint = "http://169.254.169.254/metadata/v1/user_data"
@@ -70,97 +63,143 @@ func (u *UpCloud) Name() string {
 	return "upcloud"
 }
 
-// ConfigurationNetwork implements the network configuration interface.
+// ParseMetadata converts Upcloud metadata into platform network configuration.
+//
 //nolint:gocyclo
-func (u *UpCloud) ConfigurationNetwork(metadataConfig []byte, confProvider config.Provider) (config.Provider, error) {
-	var machineConfig *v1alpha1.Config
+func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	machineConfig, ok := confProvider.Raw().(*v1alpha1.Config)
-	if !ok {
-		return nil, fmt.Errorf("unable to determine machine config type")
+	if meta.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(meta.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	meta := &MetaData{}
-	if err := json.Unmarshal(metadataConfig, meta); err != nil {
-		return nil, err
-	}
+	var dnsIPs []netaddr.IP
 
-	if machineConfig.MachineConfig == nil {
-		machineConfig.MachineConfig = &v1alpha1.MachineConfig{}
-	}
+	firstIP := true
 
-	if machineConfig.MachineConfig.MachineNetwork == nil {
-		machineConfig.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
+	for _, addr := range meta.Network.Interfaces {
+		if addr.Index <= 0 { // protect from negative interface name
+			continue
+		}
 
-	if machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces == nil {
-		for _, addr := range meta.Network.Interfaces {
-			if addr.Index <= 0 { // protect from negative interface name
-				continue
-			}
+		iface := fmt.Sprintf("eth%d", addr.Index-1)
 
-			iface := &v1alpha1.Device{
-				DeviceInterface: fmt.Sprintf("eth%d", addr.Index-1),
-			}
+		networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+			Name:        iface,
+			Up:          true,
+			ConfigLayer: network.ConfigPlatform,
+		})
 
-			for _, ip := range addr.IPAddresses {
-				if ip.DHCP && ip.Family == "IPv4" {
-					iface.DeviceDHCP = true
+		for _, ip := range addr.IPAddresses {
+			if firstIP {
+				ipAddr, err := netaddr.ParseIP(ip.Address)
+				if err != nil {
+					return nil, err
 				}
 
-				if !ip.DHCP {
-					if ip.Floating {
-						iface.DeviceAddresses = append(iface.DeviceAddresses, ip.Network)
-					} else {
-						iface.DeviceAddresses = append(iface.DeviceAddresses, ip.Address)
+				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ipAddr)
 
-						if ip.Gateway != "" {
-							iface.DeviceRoutes = append(iface.DeviceRoutes, &v1alpha1.Route{
-								RouteNetwork: ip.Network,
-								RouteGateway: ip.Gateway,
-								RouteMetric:  1024,
-							})
-						}
+				firstIP = false
+			}
+
+			for _, addr := range ip.DNS {
+				if ipAddr, err := netaddr.ParseIP(addr); err == nil {
+					dnsIPs = append(dnsIPs, ipAddr)
+				}
+			}
+
+			if ip.DHCP && ip.Family == "IPv4" {
+				networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  iface,
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric: 1024,
+					},
+					ConfigLayer: network.ConfigPlatform,
+				})
+			}
+
+			if !ip.DHCP {
+				ntwrk, err := netaddr.ParseIPPrefix(ip.Network)
+				if err != nil {
+					return nil, err
+				}
+
+				addr, err := netaddr.ParseIP(ip.Address)
+				if err != nil {
+					return nil, err
+				}
+
+				ipPrefix := netaddr.IPPrefixFrom(addr, ntwrk.Bits())
+
+				family := nethelpers.FamilyInet4
+				if addr.Is6() {
+					family = nethelpers.FamilyInet6
+				}
+
+				networkConfig.Addresses = append(networkConfig.Addresses,
+					network.AddressSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						LinkName:    iface,
+						Address:     ipPrefix,
+						Scope:       nethelpers.ScopeGlobal,
+						Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+						Family:      family,
+					},
+				)
+
+				if ip.Gateway != "" {
+					gw, err := netaddr.ParseIP(ip.Gateway)
+					if err != nil {
+						return nil, err
 					}
+
+					route := network.RouteSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						Gateway:     gw,
+						Destination: ntwrk,
+						OutLinkName: iface,
+						Table:       nethelpers.TableMain,
+						Protocol:    nethelpers.ProtocolStatic,
+						Type:        nethelpers.TypeUnicast,
+						Family:      family,
+						Priority:    1024,
+					}
+
+					route.Normalize()
+
+					networkConfig.Routes = append(networkConfig.Routes, route)
 				}
 			}
-
-			machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces = append(machineConfig.MachineConfig.MachineNetwork.NetworkInterfaces, iface)
 		}
 	}
 
-	return machineConfig, nil
+	if len(dnsIPs) > 0 {
+		networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
+			DNSServers:  dnsIPs,
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
 func (u *UpCloud) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching UpCloud instance config from: %q ", UpCloudMetadataEndpoint)
-
-	metaConfigDl, err := download.Download(ctx, UpCloudMetadataEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch network config from metadata service")
-	}
-
 	log.Printf("fetching machine config from: %q", UpCloudUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, UpCloudUserDataEndpoint,
+	return download.Download(ctx, UpCloudUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err := configloader.NewFromBytes(machineConfigDl)
-	if err != nil {
-		return nil, err
-	}
-
-	confProvider, err = u.ConfigurationNetwork(metaConfigDl, confProvider)
-	if err != nil {
-		return nil, err
-	}
-
-	return confProvider.Bytes()
 }
 
 // Mode implements the runtime.Platform interface.
@@ -168,37 +207,35 @@ func (u *UpCloud) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
-// Hostname implements the runtime.Platform interface.
-func (u *UpCloud) Hostname(ctx context.Context) (hostname []byte, err error) {
-	log.Printf("fetching hostname from: %q", UpCloudHostnameEndpoint)
-
-	host, err := download.Download(ctx, UpCloudHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil {
-		return nil, err
-	}
-
-	return host, nil
-}
-
-// ExternalIPs implements the runtime.Platform interface.
-func (u *UpCloud) ExternalIPs(ctx context.Context) (addrs []net.IP, err error) {
-	log.Printf("fetching external IP from: %q", UpCloudExternalIPEndpoint)
-
-	exIP, err := download.Download(ctx, UpCloudExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil {
-		return addrs, err
-	}
-
-	addrs = append(addrs, net.ParseIP(string(exIP)))
-
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (u *UpCloud) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{}
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (u *UpCloud) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching UpCloud instance config from: %q ", UpCloudMetadataEndpoint)
+
+	metaConfigDl, err := download.Download(ctx, UpCloudMetadataEndpoint)
+	if err != nil {
+		return fmt.Errorf("failed to fetch network config from metadata service: %w", err)
+	}
+
+	meta := &MetaData{}
+	if err = json.Unmarshal(metaConfigDl, meta); err != nil {
+		return err
+	}
+
+	networkConfig, err := u.ParseMetadata(meta)
+	if err != nil {
+		return err
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }

@@ -10,13 +10,13 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 // Container is a platform for installing Talos via an Container image.
@@ -44,28 +44,40 @@ func (c *Container) Configuration(context.Context) ([]byte, error) {
 	return decoded, nil
 }
 
-// Hostname implements the platform.Platform interface.
-func (c *Container) Hostname(context.Context) (hostname []byte, err error) {
-	hostname, err = ioutil.ReadFile("/etc/hostname")
-
-	if err == nil {
-		hostname = bytes.TrimSpace(hostname)
-	}
-
-	return
-}
-
 // Mode implements the platform.Platform interface.
 func (c *Container) Mode() runtime.Mode {
 	return runtime.ModeContainer
 }
 
-// ExternalIPs implements the runtime.Platform interface.
-func (c *Container) ExternalIPs(context.Context) (addrs []net.IP, err error) {
-	return addrs, err
-}
-
 // KernelArgs implements the runtime.Platform interface.
 func (c *Container) KernelArgs() procfs.Parameters {
+	return nil
+}
+
+// NetworkConfiguration implements the runtime.Platform interface.
+func (c *Container) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	hostname, err := ioutil.ReadFile("/etc/hostname")
+	if err != nil {
+		return err
+	}
+
+	hostnameSpec := network.HostnameSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+	}
+
+	if err := hostnameSpec.ParseFQDN(string(bytes.TrimSpace(hostname))); err != nil {
+		return err
+	}
+
+	networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
 	return nil
 }

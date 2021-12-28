@@ -1,0 +1,75 @@
+{
+    "links": [
+        {
+            "ethernet_mac_address": "A4:BF:00:10:20:30",
+            "id": "aae16046-6c74-4f33-acf2-a16e9ab093eb",
+            "type": "phy",
+            "mtu": 1450,
+            "vif_id": "7607af2d-c24d-4bfb-909e-c447b119f4e2"
+        },
+        {
+            "ethernet_mac_address": "A4:BF:00:10:20:31",
+            "id": "aae16046-6c74-4f33-acf2-a16e9ab093ec",
+            "type": "ovs",
+            "mtu": 9000,
+            "vif_id": "c816df7e-7bcc-45ca-9eb2-3d3d3dca0639"
+        }
+    ],
+    "networks": [
+        {
+            "id": "publicnet-ipv4",
+            "link": "aae16046-6c74-4f33-acf2-a16e9ab093eb",
+            "network_id": "66374c4d-5123-4f11-8fa9-8a6dea2b4fe7",
+            "type": "ipv4_dhcp"
+        },
+        {
+            "routes": [
+                {
+                    "network": "2000:0:100:2f00::",
+                    "gateway": "2000:0:100:2fff:ff:ff:ff:f0",
+                    "netmask": "ffff:ffff:ffff:ffc0::"
+                }
+            ],
+            "dns_nameservers": [
+                "2000:0:100::1"
+            ],
+            "gateway": "2000:0:100:2fff:ff:ff:ff:ff",
+            "link": "aae16046-6c74-4f33-acf2-a16e9ab093eb",
+            "ip_address": "2000:0:100::/56",
+            "network_id": "39b48637-d98a-4dfc-a05b-d61e8d88fafe",
+            "id": "publicnet-ipv6",
+            "type": "ipv6"
+        },
+        {
+            "id": "privatnet-ipv4",
+            "link": "aae16046-6c74-4f33-acf2-a16e9ab093ec",
+            "network_id": "66374c4d-5123-4f11-8fa9-8a6dea2b4fe7",
+            "type": "ipv4_dhcp"
+        },
+        {
+            "routes": [
+                {
+                    "network": "::",
+                    "netmask": "::",
+                    "gateway": "2000:0:ff00::"
+                }
+            ],
+            "id": "privatnet-ipv6",
+            "link": "aae16046-6c74-4f33-acf2-a16e9ab093ec",
+            "ip_address": "2000:0:ff00::1",
+            "netmask": "ffff:ffff:ffff:ff00::",
+            "network_id": "66374c4d-5123-4f11-8fa9-8a6dea2b4fe7",
+            "type": "ipv6"
+        }
+    ],
+    "services": [
+        {
+            "address": "8.8.8.8",
+            "type": "dns"
+        },
+        {
+            "address": "1.1.1.1",
+            "type": "dns"
+        }
+    ]
+}

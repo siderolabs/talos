@@ -1,0 +1,43 @@
+addresses:
+    - address: 2001:111:222:3333::1/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: '2001:111:222:3333::'
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: scw-talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 11.22.222.222

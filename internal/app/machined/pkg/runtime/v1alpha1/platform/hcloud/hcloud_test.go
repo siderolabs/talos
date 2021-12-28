@@ -5,69 +5,37 @@
 package hcloud_test
 
 import (
+	_ "embed"
+	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-type ConfigSuite struct {
-	suite.Suite
-}
+//go:embed testdata/metadata.yaml
+var rawMetadata []byte
 
-func (suite *ConfigSuite) TestNetworkConfig() {
-	cfg := []byte(`
-config:
-- mac_address: 96:00:00:1:2:3
-  name: eth0
-  subnets:
-  - ipv4: true
-    type: dhcp
-  - address: 2a01:4f8:1:2::1/64
-    gateway: fe80::1
-    ipv6: true
-    type: static
-  type: physical
-- address:
-  - 185.12.64.2
-  - 185.12.64.1
-  interface: eth0
-  type: nameserver
-version: 1
-`)
-	p := &hcloud.Hcloud{}
+//go:embed testdata/expected.yaml
+var expectedNetworkConfig string
 
-	defaultMachineConfig := &v1alpha1.Config{}
+func TestParseMetadata(t *testing.T) {
+	h := &hcloud.Hcloud{}
 
-	machineConfig := &v1alpha1.Config{
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceInterface: "eth0",
-						DeviceDHCP:      true,
-						DeviceAddresses: []string{"2a01:4f8:1:2::1/64"},
-						DeviceRoutes: []*v1alpha1.Route{
-							{
-								RouteNetwork: "::/0",
-								RouteGateway: "fe80::1",
-								RouteMetric:  1024,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	var m hcloud.NetworkConfig
 
-	result, err := p.ConfigurationNetwork(cfg, defaultMachineConfig)
+	require.NoError(t, yaml.Unmarshal(rawMetadata, &m))
 
-	suite.Require().NoError(err)
-	suite.Assert().Equal(machineConfig, result)
-}
+	networkConfig, err := h.ParseMetadata(&m, []byte("some.fqdn"), []byte("1.2.3.4"))
+	require.NoError(t, err)
 
-func TestConfigSuite(t *testing.T) {
-	suite.Run(t, new(ConfigSuite))
+	marshaled, err := yaml.Marshal(networkConfig)
+	require.NoError(t, err)
+
+	fmt.Print(string(marshaled))
+
+	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }
