@@ -102,6 +102,9 @@ RUN go install mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
 ARG STRINGER_VERSION
 RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
+ARG ENUMER_VERSION
+RUN go install github.com/alvaroloes/enumer@${ENUMER_VERSION} \
+    && mv /go/bin/enumer /toolchain/go/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
 RUN go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
     && mv /go/bin/deepcopy-gen /toolchain/go/bin/deepcopy-gen

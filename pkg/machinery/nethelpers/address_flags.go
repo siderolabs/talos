@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=AddressFlag -linecomment
+//go:generate enumer -type=AddressFlag -linecomment -text
 
 import (
 	"strings"
@@ -25,9 +25,34 @@ func (flags AddressFlags) String() string {
 	return strings.Join(values, ",")
 }
 
-// MarshalYAML implements yaml.Marshaler.
-func (flags AddressFlags) MarshalYAML() (interface{}, error) {
-	return flags.String(), nil
+// AddressFlagsString converts string representation of flags into AddressFlags.
+func AddressFlagsString(s string) (AddressFlags, error) {
+	flags := AddressFlags(0)
+
+	for _, p := range strings.Split(s, ",") {
+		flag, err := AddressFlagString(p)
+		if err != nil {
+			return flags, err
+		}
+
+		flags |= AddressFlags(flag)
+	}
+
+	return flags, nil
+}
+
+// MarshalText implements text.Marshaler.
+func (flags AddressFlags) MarshalText() ([]byte, error) {
+	return []byte(flags.String()), nil
+}
+
+// UnmarshalText implements text.Unmarshaler.
+func (flags *AddressFlags) UnmarshalText(b []byte) error {
+	var err error
+
+	*flags, err = AddressFlagsString(string(b))
+
+	return err
 }
 
 // AddressFlag wraps IFF_* constants.

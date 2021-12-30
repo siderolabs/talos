@@ -44,6 +44,7 @@ policies:
       excludeSuffixes:
         - .pb.go
         - _string.go
+        - _enumer.go
         - _string_linux.go
         - zz_generated.deepcopy.go
       header: |

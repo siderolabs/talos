@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=LinkType -linecomment
+//go:generate enumer -type=LinkType -linecomment -text
 
 // LinkType is a link type.
 type LinkType uint16
-
-// MarshalYAML implements yaml.Marshaler.
-func (typ LinkType) MarshalYAML() (interface{}, error) {
-	return typ.String(), nil
-}
 
 // LinkType constants.
 const (

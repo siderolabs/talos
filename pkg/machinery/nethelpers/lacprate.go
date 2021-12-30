@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=LACPRate -linecomment
+//go:generate enumer -type=LACPRate -linecomment -text
 
 // LACPRate is a LACP rate.
 type LACPRate uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (v LACPRate) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // LACP rate constants.
 const (

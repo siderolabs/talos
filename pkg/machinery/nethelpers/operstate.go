@@ -8,7 +8,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 )
 
-//go:generate stringer -type=OperationalState -linecomment
+//go:generate enumer -type=OperationalState -linecomment -text
 
 // OperationalState wraps rtnetlink.OperationalState for YAML marshaling.
 type OperationalState uint8
@@ -23,8 +23,3 @@ const (
 	OperStateDormant        OperationalState = OperationalState(rtnetlink.OperStateDormant)        // dormant
 	OperStateUp             OperationalState = OperationalState(rtnetlink.OperStateUp)             // up
 )
-
-// MarshalYAML implements yaml.Marshaler interface.
-func (state OperationalState) MarshalYAML() (interface{}, error) {
-	return state.String(), nil
-}

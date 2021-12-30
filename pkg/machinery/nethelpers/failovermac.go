@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=FailOverMAC -linecomment
+//go:generate enumer -type=FailOverMAC -linecomment
 
 // FailOverMAC is a MAC failover mode.
 type FailOverMAC uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (v FailOverMAC) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // FailOverMAC constants.
 const (

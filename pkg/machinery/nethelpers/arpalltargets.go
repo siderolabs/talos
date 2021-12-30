@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=ARPAllTargets -linecomment
+//go:generate enumer -type=ARPAllTargets -linecomment -text
 
 // ARPAllTargets is an ARP targets mode.
 type ARPAllTargets uint32
-
-// MarshalYAML implements yaml.Marshaler.
-func (v ARPAllTargets) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // ARPAllTargets contants.
 const (

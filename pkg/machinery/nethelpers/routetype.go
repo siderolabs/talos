@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=RouteType -linecomment
+//go:generate enumer -type=RouteType -linecomment -text
 
 // RouteType is a route type.
 type RouteType uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (rt RouteType) MarshalYAML() (interface{}, error) {
-	return rt.String(), nil
-}
 
 // RouteType constants.
 const (

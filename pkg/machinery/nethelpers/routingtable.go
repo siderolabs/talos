@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=RoutingTable -linecomment
+//go:generate enumer -type=RoutingTable -linecomment -text
 
 // RoutingTable is a routing table ID.
 type RoutingTable uint32
-
-// MarshalYAML implements yaml.Marshaler.
-func (table RoutingTable) MarshalYAML() (interface{}, error) {
-	return table.String(), nil
-}
 
 // RoutingTable constants.
 const (

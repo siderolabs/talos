@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=PrimaryReselect -linecomment
+//go:generate enumer -type=PrimaryReselect -linecomment -text
 
 // PrimaryReselect is an ARP targets mode.
 type PrimaryReselect uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (v PrimaryReselect) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // PrimaryReslect constants.
 const (

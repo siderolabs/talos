@@ -9,7 +9,7 @@ import "github.com/mdlayher/ethtool"
 // Duplex wraps ethtool.Duplex for YAML marshaling.
 type Duplex ethtool.Duplex
 
-// MarshalYAML implements yaml.Marshaler interface.
-func (duplex Duplex) MarshalYAML() (interface{}, error) {
-	return ethtool.Duplex(duplex).String(), nil
+// MarshalText implements text.Marshaler interface.
+func (duplex Duplex) MarshalText() ([]byte, error) {
+	return []byte(ethtool.Duplex(duplex).String()), nil
 }

@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=ARPValidate -linecomment
+//go:generate enumer -type=ARPValidate -linecomment -text
 
 // ARPValidate is an ARP Validation mode.
 type ARPValidate uint32
-
-// MarshalYAML implements yaml.Marshaler.
-func (v ARPValidate) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // ARPValidate constants.
 const (

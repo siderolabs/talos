@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=Family -linecomment
+//go:generate enumer -type=Family -linecomment -text
 
 // Family is a network family.
 type Family uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (family Family) MarshalYAML() (interface{}, error) {
-	return family.String(), nil
-}
 
 // Family constants.
 const (

@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=Scope -linecomment
+//go:generate enumer -type=Scope -linecomment -text
 
 // Scope is an address scope.
 type Scope uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (scope Scope) MarshalYAML() (interface{}, error) {
-	return scope.String(), nil
-}
 
 // Scope constants.
 const (

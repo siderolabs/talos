@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=BondMode -linecomment
+//go:generate enumer -type=BondMode -linecomment -text
 
 // BondMode is a bond mode.
 type BondMode uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (bm BondMode) MarshalYAML() (interface{}, error) {
-	return bm.String(), nil
-}
 
 // BondMode constants.
 //

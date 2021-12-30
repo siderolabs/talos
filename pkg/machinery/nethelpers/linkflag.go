@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=LinkFlag -linecomment
+//go:generate enumer -type=LinkFlag -linecomment -text
 
 import (
 	"strings"
@@ -25,9 +25,34 @@ func (flags LinkFlags) String() string {
 	return strings.Join(values, ",")
 }
 
-// MarshalYAML implements yaml.Marshaler.
-func (flags LinkFlags) MarshalYAML() (interface{}, error) {
-	return flags.String(), nil
+// LinkFlagsString parses string representation of LinkFlags.
+func LinkFlagsString(s string) (LinkFlags, error) {
+	flags := LinkFlags(0)
+
+	for _, p := range strings.Split(s, ",") {
+		flag, err := LinkFlagString(p)
+		if err != nil {
+			return flags, err
+		}
+
+		flags |= LinkFlags(flag)
+	}
+
+	return flags, nil
+}
+
+// MarshalText implements text.Marshaler.
+func (flags LinkFlags) MarshalText() ([]byte, error) {
+	return []byte(flags.String()), nil
+}
+
+// UnmarshalText implements text.Unmarshaler.
+func (flags *LinkFlags) UnmarshalText(b []byte) error {
+	var err error
+
+	*flags, err = LinkFlagsString(string(b))
+
+	return err
 }
 
 // LinkFlag wraps IFF_* constants.

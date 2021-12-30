@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=VLANProtocol -linecomment
+//go:generate enumer -type=VLANProtocol -linecomment -text
 
 // VLANProtocol is a VLAN protocol.
 type VLANProtocol uint16
-
-// MarshalYAML implements yaml.Marshaler.
-func (proto VLANProtocol) MarshalYAML() (interface{}, error) {
-	return proto.String(), nil
-}
 
 // VLANProtocol constants.
 const (

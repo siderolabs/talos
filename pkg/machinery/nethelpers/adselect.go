@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=ADSelect -linecomment
+//go:generate enumer -type=ADSelect -linecomment -text
 
 // ADSelect is ADSelect.
 type ADSelect uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (v ADSelect) MarshalYAML() (interface{}, error) {
-	return v.String(), nil
-}
 
 // ADSelect constants.
 const (

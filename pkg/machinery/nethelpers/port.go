@@ -9,7 +9,7 @@ import "github.com/mdlayher/ethtool"
 // Port wraps ethtool.Port for YAML marshaling.
 type Port ethtool.Port
 
-// MarshalYAML implements yaml.Marshaler interface.
-func (port Port) MarshalYAML() (interface{}, error) {
-	return ethtool.Port(port).String(), nil
+// MarshalText implements text.Marshaler interface.
+func (port Port) MarshalText() ([]byte, error) {
+	return []byte(ethtool.Port(port).String()), nil
 }

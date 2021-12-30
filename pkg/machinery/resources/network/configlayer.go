@@ -4,7 +4,7 @@
 
 package network
 
-//go:generate stringer -type=ConfigLayer -linecomment
+//go:generate enumer -type=ConfigLayer -linecomment -text
 
 // ConfigLayer describes network configuration layers, with lowest priority first.
 type ConfigLayer int
@@ -17,8 +17,3 @@ const (
 	ConfigOperator                                // operator
 	ConfigMachineConfiguration                    // configuration
 )
-
-// MarshalYAML implements yaml.Marshaler.
-func (layer ConfigLayer) MarshalYAML() (interface{}, error) {
-	return layer.String(), nil
-}

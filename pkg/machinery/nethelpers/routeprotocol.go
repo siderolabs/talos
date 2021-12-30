@@ -4,15 +4,10 @@
 
 package nethelpers
 
-//go:generate stringer -type=RouteProtocol -linecomment
+//go:generate enumer -type=RouteProtocol -linecomment -text
 
 // RouteProtocol is a routing protocol.
 type RouteProtocol uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (rp RouteProtocol) MarshalYAML() (interface{}, error) {
-	return rp.String(), nil
-}
 
 // RouteType constants.
 const (

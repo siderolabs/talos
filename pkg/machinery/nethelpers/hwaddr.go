@@ -9,9 +9,9 @@ import "net"
 // HardwareAddr wraps net.HardwareAddr for YAML marshaling.
 type HardwareAddr net.HardwareAddr
 
-// MarshalYAML implements yaml.Marshaler interface.
-func (addr HardwareAddr) MarshalYAML() (interface{}, error) {
-	return net.HardwareAddr(addr).String(), nil
+// MarshalText implements text.Marshaler interface.
+func (addr HardwareAddr) MarshalText() ([]byte, error) {
+	return []byte(net.HardwareAddr(addr).String()), nil
 }
 
 func (addr HardwareAddr) String() string {

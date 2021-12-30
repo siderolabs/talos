@@ -4,7 +4,7 @@
 
 package nethelpers
 
-//go:generate stringer -type=RouteFlag -linecomment
+//go:generate enumer -type=RouteFlag -linecomment -text
 
 import (
 	"strings"
@@ -25,14 +25,39 @@ func (flags RouteFlags) String() string {
 	return strings.Join(values, ",")
 }
 
+// RouteFlagsString parses string representation into RouteFlags.
+func RouteFlagsString(s string) (RouteFlags, error) {
+	flags := RouteFlags(0)
+
+	for _, p := range strings.Split(s, ",") {
+		flag, err := RouteFlagString(p)
+		if err != nil {
+			return flags, err
+		}
+
+		flags |= RouteFlags(flag)
+	}
+
+	return flags, nil
+}
+
 // Equal tests for RouteFlags equality ignoring flags not managed by this implementation.
 func (flags RouteFlags) Equal(other RouteFlags) bool {
 	return (flags & RouteFlags(RouteFlagsMask)) == (other & RouteFlags(RouteFlagsMask))
 }
 
-// MarshalYAML implements yaml.Marshaler.
-func (flags RouteFlags) MarshalYAML() (interface{}, error) {
-	return flags.String(), nil
+// MarshalText implements text.Marshaler.
+func (flags RouteFlags) MarshalText() ([]byte, error) {
+	return []byte(flags.String()), nil
+}
+
+// UnmarshalText implements text.Unmarshaler.
+func (flags *RouteFlags) UnmarshalText(b []byte) error {
+	var err error
+
+	*flags, err = RouteFlagsString(string(b))
+
+	return err
 }
 
 // RouteFlag wraps RTM_F_* constants.

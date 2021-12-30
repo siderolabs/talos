@@ -6,15 +6,10 @@ package nethelpers
 
 import "fmt"
 
-//go:generate stringer -type=BondXmitHashPolicy -linecomment
+//go:generate enumer -type=BondXmitHashPolicy -linecomment -text
 
 // BondXmitHashPolicy is a bond hash policy.
 type BondXmitHashPolicy uint8
-
-// MarshalYAML implements yaml.Marshaler.
-func (bp BondXmitHashPolicy) MarshalYAML() (interface{}, error) {
-	return bp.String(), nil
-}
 
 // Bond hash policy constants.
 const (
