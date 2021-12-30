@@ -2672,7 +2672,6 @@ File type.
 | TYPE_INIT | 1 |  |
 | TYPE_CONTROL_PLANE | 2 |  |
 | TYPE_WORKER | 3 |  |
-| TYPE_JOIN | 3 | Deprecated alias for TYPE_WORKER. It will be removed in v0.15. |
 
 
 

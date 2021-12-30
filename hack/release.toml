@@ -29,6 +29,13 @@ and start over with a fresh installation.
 See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-machine/#kernel-parameter) on how to use it.
 """
 
+    [notes.machine_config]
+        title = "Machine Configuration"
+        description="""\
+Talos now preserves machine configuration as it was submitted to the node.
+There is some work still going on various cloud platforms to stop modifying machine configuration on the fly.
+"""
+
 [make_deps]
 
     [make_deps.tools]
@@ -42,4 +49,3 @@ See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-ma
     [make_deps.extras]
         variable = "EXTRAS"
         repository = "github.com/talos-systems/extras"
-

@@ -943,16 +943,10 @@ message InstallConfig {
 
 message MachineConfig {
   enum MachineType {
-    option allow_alias = true;
     TYPE_UNKNOWN = 0;
     TYPE_INIT = 1;
     TYPE_CONTROL_PLANE = 2;
     TYPE_WORKER = 3;
-    // Deprecated alias for TYPE_WORKER. It will be removed in v0.15.
-    TYPE_JOIN = 3 [
-      (common.remove_deprecated_enum_value) = "v0.15",
-      deprecated = true
-    ];
   }
   MachineType type = 1;
   InstallConfig install_config = 2;
