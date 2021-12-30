@@ -586,6 +586,8 @@ local release = {
 };
 
 local release_steps = default_steps + [
+  images,
+  sbcs,
   cloud_images,
   release,
 ];
