@@ -42,7 +42,7 @@ func (m *rulesManager) Install() error {
 		return fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
-	defer nc.Delete()
+	defer nc.Close()
 
 	if err := nc.RuleAdd(&netlink.Rule{
 		Priority:          nextRuleNumber(nc, unix.AF_INET),
@@ -114,7 +114,7 @@ func (m *rulesManager) Cleanup() error {
 		return fmt.Errorf("failed to get netlink handle: %w", err)
 	}
 
-	defer nc.Delete()
+	defer nc.Close()
 
 	if err = m.deleteRulesFamily(nc, unix.AF_INET); err != nil {
 		merr = multierror.Append(merr, fmt.Errorf("failed to delete all IPv4 route rules: %w", err))
