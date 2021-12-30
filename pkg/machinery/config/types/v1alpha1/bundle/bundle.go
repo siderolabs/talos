@@ -42,6 +42,10 @@ func NewConfigBundle(opts ...Option) (*v1alpha1.ConfigBundle, error) {
 		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
+				if configType == machine.TypeInit && os.IsNotExist(err) {
+					continue
+				}
+
 				return bundle, err
 			}
 
