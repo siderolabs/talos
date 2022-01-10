@@ -29,14 +29,14 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.99.0
+	cloud.google.com/go/compute v0.1.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v0.4.1
-	github.com/aws/aws-sdk-go v1.42.25
+	github.com/aws/aws-sdk-go v1.42.30
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.2
-	github.com/containerd/containerd v1.5.8
+	github.com/containerd/containerd v1.5.9
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
@@ -64,7 +64,7 @@ require (
 	github.com/hetznercloud/hcloud-go v1.33.1
 	github.com/insomniacslk/dhcp v0.0.0-20211214070828-5297eed8f489
 	github.com/jsimonetti/rtnetlink v0.0.0-20211213041634-9dff439f7e79
-	github.com/jxskiss/base62 v1.0.0
+	github.com/jxskiss/base62 v1.1.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20211214014908-bc8fdcf6e99c
@@ -76,7 +76,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.7.3
-	github.com/rivo/tview v0.0.0-20211202162923-2a6de950f73b
+	github.com/rivo/tview v0.0.0-20220106183741-90d72bc664f5
 	github.com/rs/xid v1.3.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
@@ -108,13 +108,13 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
 	go.uber.org/atomic v1.9.0
-	go.uber.org/zap v1.19.1
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	go.uber.org/zap v1.20.0
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211215182854-7a385b3431de
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211230205640-daad0b7ba671
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
@@ -125,6 +125,8 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.100.2 // indirect
+	cloud.google.com/go/iam v0.1.0 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -223,7 +225,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/opencontainers/selinux v1.8.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
@@ -274,9 +276,9 @@ require (
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20211129173154-2dd424e2d808 // indirect
-	google.golang.org/api v0.62.0 // indirect
+	google.golang.org/api v0.63.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
+	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
