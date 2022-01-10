@@ -19,16 +19,14 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 var editCmdFlags struct {
+	helpers.Mode
 	namespace string
-	immediate bool
-	onReboot  bool
 }
 
 //nolint:gocyclo
@@ -117,8 +115,9 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 
 			resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 				Data:      edited,
-				Immediate: editCmdFlags.immediate,
-				OnReboot:  editCmdFlags.onReboot,
+				Mode:      editCmdFlags.Mode.Mode,
+				OnReboot:  editCmdFlags.OnReboot,
+				Immediate: editCmdFlags.Immediate,
 			})
 			if err != nil {
 				lastError = err.Error()
@@ -126,11 +125,7 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 				continue
 			}
 
-			for _, m := range resp.GetMessages() {
-				for _, w := range m.GetWarnings() {
-					cli.Warning("%s", w)
-				}
-			}
+			helpers.PrintApplyResults(resp)
 
 			break
 		}
@@ -181,7 +176,6 @@ or 'notepad' for Windows.`,
 
 func init() {
 	editCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
-	editCmd.Flags().BoolVar(&editCmdFlags.immediate, "immediate", false, "apply the change immediately (without a reboot)")
-	editCmd.Flags().BoolVar(&editCmdFlags.onReboot, "on-reboot", false, "apply the change on next reboot")
+	helpers.AddModeFlags(&editCmdFlags.Mode, editCmd)
 	addCommand(editCmd)
 }

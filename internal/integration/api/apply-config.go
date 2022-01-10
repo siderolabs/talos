@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -108,6 +110,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
 		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_REBOOT,
 		})
 		if err != nil {
 			// It is expected that the connection will EOF here, so just log the error
@@ -135,62 +138,67 @@ func (suite *ApplyConfigSuite) TestApply() {
 	)
 }
 
-// TestApplyOnReboot verifies the apply config API without reboot.
-func (suite *ApplyConfigSuite) TestApplyOnReboot() {
-	suite.WaitForBootDone(suite.ctx)
+// TestApplyWithoutReboot verifies the apply config API without reboot.
+func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
+	for _, mode := range []machineapi.ApplyConfigurationRequest_Mode{
+		machineapi.ApplyConfigurationRequest_AUTO,
+		machineapi.ApplyConfigurationRequest_STAGED,
+	} {
+		suite.WaitForBootDone(suite.ctx)
 
-	node := suite.RandomDiscoveredNode()
-	suite.ClearConnectionRefused(suite.ctx, node)
+		node := suite.RandomDiscoveredNode()
+		suite.ClearConnectionRefused(suite.ctx, node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+		nodeCtx := client.WithNodes(suite.ctx, node)
 
-	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().NoError(err, "failed to read existing config from node %q", node)
+		provider, err := suite.ReadConfigFromNode(nodeCtx)
+		suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-	cfg, ok := provider.Raw().(*v1alpha1.Config)
-	suite.Require().True(ok)
+		cfg, ok := provider.Raw().(*v1alpha1.Config)
+		suite.Require().True(ok)
 
-	if cfg.MachineConfig.MachineSysctls == nil {
-		cfg.MachineConfig.MachineSysctls = make(map[string]string)
+		if cfg.MachineConfig.MachineSysctls == nil {
+			cfg.MachineConfig.MachineSysctls = make(map[string]string)
+		}
+
+		cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+
+		cfgDataOut, err := cfg.Bytes()
+		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+
+		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: mode,
+		})
+		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
+
+		// Verify configuration change
+		var newProvider config.Provider
+
+		newProvider, err = suite.ReadConfigFromNode(nodeCtx)
+
+		suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
+
+		suite.Assert().Equal(
+			newProvider.Machine().Sysctls()[applyConfigNoRebootTestSysctl],
+			applyConfigNoRebootTestSysctlVal,
+		)
+
+		cfg, ok = newProvider.Raw().(*v1alpha1.Config)
+		suite.Require().True(ok)
+
+		// revert back
+		delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
+
+		cfgDataOut, err = cfg.Bytes()
+		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+
+		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: mode,
+		})
+		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
 	}
-
-	cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
-
-	cfgDataOut, err := cfg.Bytes()
-	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
-
-	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		OnReboot: true,
-		Data:     cfgDataOut,
-	})
-	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
-
-	// Verify configuration change
-	var newProvider config.Provider
-
-	newProvider, err = suite.ReadConfigFromNode(nodeCtx)
-
-	suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
-
-	suite.Assert().Equal(
-		newProvider.Machine().Sysctls()[applyConfigNoRebootTestSysctl],
-		applyConfigNoRebootTestSysctlVal,
-	)
-
-	cfg, ok = newProvider.Raw().(*v1alpha1.Config)
-	suite.Require().True(ok)
-
-	// revert back
-	delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
-
-	cfgDataOut, err = cfg.Bytes()
-	suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
-
-	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		OnReboot: true,
-		Data:     cfgDataOut,
-	})
-	suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
 }
 
 // TestApplyConfigRotateEncryptionSecrets verify key rotation by sequential apply config calls.
@@ -332,6 +340,39 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 		suite.WaitForBootDone(suite.ctx)
 	}
+}
+
+// TestApplyNoReboot verifies the apply config API fails if NoReboot mode is requested on a field that can not be applied immediately.
+func (suite *ApplyConfigSuite) TestApplyNoReboot() {
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	sort.Strings(nodes)
+
+	node := nodes[0]
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	suite.Require().True(ok)
+
+	// this won't be possible without a reboot
+	cfg.MachineConfig.MachineType = "controlplane"
+
+	cfgDataOut, err := cfg.Bytes()
+	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+
+	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		Data: cfgDataOut,
+		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+	})
+	suite.Require().Error(err)
+	suite.Require().Equal(codes.InvalidArgument, status.Code(err))
 }
 
 func init() {

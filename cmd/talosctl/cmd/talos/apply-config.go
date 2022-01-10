@@ -12,19 +12,17 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
-	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var applyConfigCmdFlags struct {
+	helpers.Mode
 	certFingerprints []string
 	filename         string
 	insecure         bool
-	interactive      bool
-	onReboot         bool
-	immediate        bool
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -61,7 +59,7 @@ var applyConfigCmd = &cobra.Command{
 			if len(cfgBytes) < 1 {
 				return fmt.Errorf("no configuration data read")
 			}
-		} else if !applyConfigCmdFlags.interactive {
+		} else if !applyConfigCmdFlags.Interactive {
 			return fmt.Errorf("no filename supplied for configuration")
 		}
 
@@ -74,7 +72,7 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		return withClient(func(ctx context.Context, c *client.Client) error {
-			if applyConfigCmdFlags.interactive {
+			if applyConfigCmdFlags.Interactive {
 				install := installer.NewInstaller()
 				node := Nodes[0]
 
@@ -111,17 +109,15 @@ var applyConfigCmd = &cobra.Command{
 
 			resp, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data:      cfgBytes,
-				OnReboot:  applyConfigCmdFlags.onReboot,
-				Immediate: applyConfigCmdFlags.immediate,
+				Mode:      applyConfigCmdFlags.Mode.Mode,
+				OnReboot:  applyConfigCmdFlags.OnReboot,
+				Immediate: applyConfigCmdFlags.Immediate,
 			})
-			for _, m := range resp.GetMessages() {
-				for _, w := range m.GetWarnings() {
-					cli.Warning("%s", w)
-				}
-			}
 			if err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
 			}
+
+			helpers.PrintApplyResults(resp)
 
 			return nil
 		})
@@ -132,8 +128,6 @@ func init() {
 	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
-	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.interactive, "interactive", false, "apply the config using text based interactive mode")
-	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.onReboot, "on-reboot", false, "apply the config on reboot")
-	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.immediate, "immediate", false, "apply the config immediately (without a reboot)")
+	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, applyConfigCmd)
 	addCommand(applyConfigCmd)
 }

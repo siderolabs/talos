@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -54,8 +55,14 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
-	if in.OnReboot {
-		return nil, fmt.Errorf("apply configuration on reboot is not supported in maintenance mode")
+	//nolint:exhaustive
+	switch in.Mode {
+	case machine.ApplyConfigurationRequest_REBOOT:
+		fallthrough
+	case machine.ApplyConfigurationRequest_AUTO:
+	default:
+		return nil, fmt.Errorf("apply configuration --mode='%s' is not supported in maintenance mode",
+			strings.ReplaceAll(strings.ToLower(in.Mode.String()), "_", "-"))
 	}
 
 	cfgProvider, err := configloader.NewFromBytes(in.GetData())
