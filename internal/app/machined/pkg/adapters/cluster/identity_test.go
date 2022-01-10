@@ -27,3 +27,14 @@ func TestIdentityGenerate(t *testing.T) {
 	assert.GreaterOrEqual(t, length, 43)
 	assert.LessOrEqual(t, length, 44)
 }
+
+func TestIdentityConvertMachineID(t *testing.T) {
+	spec := cluster.IdentitySpec{
+		NodeID: "sou7yy34ykX3n373Zw1DXKb8zD7UnyKT6HT3QDsGH6L",
+	}
+
+	machineID, err := clusteradapter.IdentitySpec(&spec).ConvertMachineID()
+	require.NoError(t, err)
+
+	assert.Equal(t, "be871ac0d0dd31fa4caca753b0f3f1b2", string(machineID))
+}

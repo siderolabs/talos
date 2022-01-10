@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
@@ -63,12 +64,18 @@ func (ctrl *KubeletServiceController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// initially, wait for the cri to be up
+	// initially, wait for the cri to be up and for machine-id to be generated
 	if err := r.UpdateInputs([]controller.Input{
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        pointer.ToString("cri"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: files.NamespaceName,
+			Type:      files.EtcFileStatusType,
+			ID:        pointer.ToString("machine-id"),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -80,6 +87,15 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		}
+
+		_, err := r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "machine-id", resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting etc file status: %w", err)
 		}
 
 		svc, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "cri", resource.VersionUndefined))

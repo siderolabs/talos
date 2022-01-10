@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -54,6 +55,10 @@ func (ctrl *NodeIdentityController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: cluster.IdentityType,
+			Kind: controller.OutputShared,
+		},
+		{
+			Type: files.EtcFileSpecType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -100,6 +105,19 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 			return nil
 		}); err != nil {
 			return fmt.Errorf("error modifying resource: %w", err)
+		}
+
+		// generate `/etc/machine-id` from node identity
+		if err := r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, "machine-id"),
+			func(r resource.Resource) error {
+				var err error
+
+				r.(*files.EtcFileSpec).TypedSpec().Contents, err = clusteradapter.IdentitySpec(&localIdentity).ConvertMachineID()
+				r.(*files.EtcFileSpec).TypedSpec().Mode = 0o444
+
+				return err
+			}); err != nil {
+			return fmt.Errorf("error modifying resolv.conf: %w", err)
 		}
 
 		if !ctrl.identityEstablished {

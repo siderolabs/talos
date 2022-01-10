@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"io"
 
 	"github.com/jxskiss/base62"
@@ -38,4 +39,17 @@ func (a identity) Generate() error {
 	a.IdentitySpec.NodeID = base62.EncodeToString(buf)
 
 	return nil
+}
+
+// ConvertMachineID returns /etc/machine-id compatible representation.
+func (a identity) ConvertMachineID() ([]byte, error) {
+	raw, err := base62.DecodeString(a.IdentitySpec.NodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := make([]byte, 32)
+	hex.Encode(buf, raw[:16])
+
+	return buf, nil
 }

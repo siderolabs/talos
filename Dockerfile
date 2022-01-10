@@ -377,9 +377,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
-RUN touch /rootfs/etc/resolv.conf
-RUN touch /rootfs/etc/hosts
-RUN touch /rootfs/etc/os-release
+RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id}
 RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
@@ -421,9 +419,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/containerd.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
-RUN touch /rootfs/etc/resolv.conf
-RUN touch /rootfs/etc/hosts
-RUN touch /rootfs/etc/os-release
+RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id}
 RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}

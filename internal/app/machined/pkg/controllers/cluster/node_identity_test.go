@@ -19,6 +19,7 @@ import (
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -68,6 +69,12 @@ func (suite *NodeIdentitySuite) TestDefault() {
 			return nil
 		}),
 	))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*files.NewEtcFileSpec(files.NamespaceName, "machine-id").Metadata(), func(_ resource.Resource) error {
+			return nil
+		}),
+	))
 }
 
 func (suite *NodeIdentitySuite) TestLoad() {
@@ -89,6 +96,14 @@ func (suite *NodeIdentitySuite) TestLoad() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata(), func(r resource.Resource) error {
 			suite.Assert().Equal("gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE", r.(*cluster.Identity).TypedSpec().NodeID)
+
+			return nil
+		}),
+	))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*files.NewEtcFileSpec(files.NamespaceName, "machine-id").Metadata(), func(r resource.Resource) error {
+			suite.Assert().Equal("8d2c0de2408fa2a178bad7f45d9aa8fb", string(r.(*files.EtcFileSpec).TypedSpec().Contents))
 
 			return nil
 		}),
