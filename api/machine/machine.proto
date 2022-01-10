@@ -73,9 +73,24 @@ service MachineService {
 // ApplyConfiguration describes a request to assert a new configuration upon a
 // node.
 message ApplyConfigurationRequest {
+  enum Mode {
+    AUTO = 0;
+    NO_REBOOT = 1;
+    REBOOT = 2;
+    STAGED = 3;
+  }
   bytes data = 1;
-  bool on_reboot = 2;
-  bool immediate = 3;
+  // replaced by mode
+  bool on_reboot = 2 [
+    (common.remove_deprecated_field) = "v0.16",
+    deprecated = true
+  ];
+  // replaced by mode
+  bool immediate = 3 [
+    (common.remove_deprecated_field) = "v0.16",
+    deprecated = true
+  ];
+  Mode mode = 4;
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.
@@ -83,6 +98,8 @@ message ApplyConfiguration {
   common.Metadata metadata = 1;
   // Configuration validation warnings.
   repeated string warnings = 2;
+  // Human readable auto mode apply detection result.
+  string auto_apply_info = 3;
 }
 
 message ApplyConfigurationResponse {

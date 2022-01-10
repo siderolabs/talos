@@ -157,6 +157,7 @@ description: Talos gRPC API reference.
     - [VersionInfo](#machine.VersionInfo)
     - [VersionResponse](#machine.VersionResponse)
   
+    - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
@@ -483,6 +484,7 @@ ApplyConfigurationResponse describes the response to a configuration request.
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | warnings | [string](#string) | repeated | Configuration validation warnings. |
+| auto_apply_info | [string](#string) |  | Human readable auto mode apply detection result. |
 
 
 
@@ -500,8 +502,9 @@ node.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  |  |
-| on_reboot | [bool](#bool) |  |  |
-| immediate | [bool](#bool) |  |  |
+| on_reboot | [bool](#bool) |  | **Deprecated.** replaced by mode |
+| immediate | [bool](#bool) |  | **Deprecated.** replaced by mode |
+| mode | [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode) |  |  |
 
 
 
@@ -2646,6 +2649,20 @@ rpc upgrade
 
 
  <!-- end messages -->
+
+
+<a name="machine.ApplyConfigurationRequest.Mode"></a>
+
+### ApplyConfigurationRequest.Mode
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AUTO | 0 |  |
+| NO_REBOOT | 1 |  |
+| REBOOT | 2 |  |
+| STAGED | 3 |  |
+
 
 
 <a name="machine.ListRequest.Type"></a>

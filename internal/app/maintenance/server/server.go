@@ -54,8 +54,8 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
-	if in.OnReboot {
-		return nil, fmt.Errorf("apply configuration on reboot is not supported in maintenance mode")
+	if in.Mode != machine.ApplyConfigurationRequest_AUTO {
+		return nil, fmt.Errorf("apply configuration mode is not supported in maintenance mode")
 	}
 
 	cfgProvider, err := configloader.NewFromBytes(in.GetData())

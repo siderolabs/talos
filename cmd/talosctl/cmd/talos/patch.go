@@ -18,7 +18,6 @@ import (
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
@@ -26,11 +25,10 @@ import (
 )
 
 var patchCmdFlags struct {
+	helpers.Mode
 	namespace string
 	patch     string
 	patchFile string
-	immediate bool
-	onReboot  bool
 }
 
 func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, client.ResourceResponse) error {
@@ -55,8 +53,9 @@ func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, clie
 
 		resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 			Data:      patched,
-			Immediate: patchCmdFlags.immediate,
-			OnReboot:  patchCmdFlags.onReboot,
+			Mode:      patchCmdFlags.Mode.Mode,
+			OnReboot:  patchCmdFlags.OnReboot,
+			Immediate: patchCmdFlags.Immediate,
 		})
 
 		if bytes.Equal(
@@ -74,11 +73,7 @@ func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, clie
 			msg.Metadata.GetHostname(),
 		)
 
-		for _, m := range resp.GetMessages() {
-			for _, w := range m.GetWarnings() {
-				cli.Warning("%s", w)
-			}
-		}
+		helpers.PrintApplyResults(resp)
 
 		return err
 	}
@@ -134,7 +129,6 @@ func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
 	patchCmd.Flags().StringVarP(&patchCmdFlags.patch, "patch", "p", "", "the patch to be applied to the resource file.")
-	patchCmd.Flags().BoolVar(&patchCmdFlags.immediate, "immediate", false, "apply the change immediately (without a reboot)")
-	patchCmd.Flags().BoolVar(&patchCmdFlags.onReboot, "on-reboot", false, "apply the change on next reboot")
+	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)
 	addCommand(patchCmd)
 }
