@@ -18,7 +18,7 @@ We hold a weekly meeting that all audiences are welcome to attend.
 
 ### Office Hours
 
-- When: Mondays at 17:00 UTC.
+- When: Mondays at 16:30 UTC.
 - Where: [Google Meet](https://meet.google.com/day-pxhv-zky).
 
 You can subscribe to this meeting by joining the community forum above.
