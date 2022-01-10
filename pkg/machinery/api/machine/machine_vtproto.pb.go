@@ -57,6 +57,11 @@ func (m *ApplyConfigurationRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Mode != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Mode))
+		i--
+		dAtA[i] = 0x20
+	}
 	if m.Immediate {
 		i--
 		if m.Immediate {
@@ -116,6 +121,18 @@ func (m *ApplyConfiguration) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.ModeDetails) > 0 {
+		i -= len(m.ModeDetails)
+		copy(dAtA[i:], m.ModeDetails)
+		i = encodeVarint(dAtA, i, uint64(len(m.ModeDetails)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Mode != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Mode))
+		i--
+		dAtA[i] = 0x18
 	}
 	if len(m.Warnings) > 0 {
 		for iNdEx := len(m.Warnings) - 1; iNdEx >= 0; iNdEx-- {
@@ -7889,6 +7906,9 @@ func (m *ApplyConfigurationRequest) SizeVT() (n int) {
 	if m.Immediate {
 		n += 2
 	}
+	if m.Mode != 0 {
+		n += 1 + sov(uint64(m.Mode))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -7916,6 +7936,13 @@ func (m *ApplyConfiguration) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + sov(uint64(l))
 		}
+	}
+	if m.Mode != 0 {
+		n += 1 + sov(uint64(m.Mode))
+	}
+	l = len(m.ModeDetails)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -11303,6 +11330,25 @@ func (m *ApplyConfigurationRequest) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.Immediate = bool(v != 0)
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mode", wireType)
+			}
+			m.Mode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mode |= ApplyConfigurationRequest_Mode(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -11430,6 +11476,57 @@ func (m *ApplyConfiguration) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Warnings = append(m.Warnings, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mode", wireType)
+			}
+			m.Mode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mode |= ApplyConfigurationRequest_Mode(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModeDetails", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ModeDetails = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

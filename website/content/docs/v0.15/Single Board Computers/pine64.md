@@ -43,7 +43,7 @@ Insert the SD card to your board, turn it on and wait for the console to show yo
 Following the instructions in the console output to connect to the interactive installer:
 
 ```bash
-talosctl apply-config --insecure --interactive --nodes <node IP or DNS name>
+talosctl apply-config --insecure --mode=interactive --nodes <node IP or DNS name>
 ```
 
 Once the interactive installation is applied, the cluster will form and you can then use `kubectl`.

@@ -15,14 +15,29 @@ There are three `talosctl` commands which facilitate machine configuration updat
 * `talosctl edit machineconfig` to launch an editor with existing node configuration, make changes and apply configuration back
 * `talosctl patch machineconfig` to apply automated machine configuration via JSON patch
 
-Each of these commands can operate in one of three modes:
+Each of these commands can operate in one of four modes:
 
-* apply change with a reboot (default): update configuration, reboot Talos node to apply configuration change
-* apply change immediately (`--immediate` flag): change is applied immediately without a reboot, only `.cluster` sub-tree of the machine configuration can be updated in Talos 0.9
-* apply change on next reboot (`--on-reboot`): change is staged to be applied after a reboot, but node is not rebooted
+* apply change in automatic mode(default): reboot if the change can't be applied without a reboot, otherwise apply the change immediately
+* apply change with a reboot (`--mode=reboot`): update configuration, reboot Talos node to apply configuration change
+* apply change immediately (`--mode=no-reboot` flag): change is applied immediately without a reboot, fails if the change contains any fields that can not be updated without a reboot
+* apply change on next reboot (`--mode=staged`): change is staged to be applied after a reboot, but node is not rebooted
+* apply change in the interactive mode (`--mode=interactive`; only for `talosctl apply-config`): launches TUI based interactive installer
 
-> Note: applying change on next reboot (`--on-reboot`) doesn't modify current node configuration, so next call to
-> `talosctl edit machineconfig --on-reboot` will not see changes
+> Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
+> `talosctl edit machineconfig --mode=staged` will not see changes
+
+The list of config changes allowed to be applied immediately in talos v0.15:
+
+* `.debug`
+* `.cluster`
+* `.machine.time`
+* `.machine.certCANs`
+* `.machine.network`
+* `.machine.sysctls`
+* `.machine.logging`
+* `.machine.controlplane`
+* `.machine.kubelet`
+* `.machine.kernel`
 
 ### `talosctl apply-config`
 
@@ -44,8 +59,16 @@ talosctl -n <IP> apply machineconfig -f config.yaml
 Applying machine configuration immediately (without a reboot):
 
 ```bash
-talosctl -n IP apply machineconfig -f config.yaml --immediate
+talosctl -n IP apply machineconfig -f config.yaml --mode=no-reboot
 ```
+
+Starting the interactive installer:
+
+```bash
+talosctl -n IP apply machineconfig --mode=interactive
+```
+
+> Note: when a Talos node is running in the maintenance mode it's necessary to provide `--insecure (-i)` flag to connect to the API and apply the config.
 
 ### `taloctl edit machineconfig`
 
@@ -70,14 +93,14 @@ talosctl -n <IP1>,<IP2>,... edit machineconfig
 Applying machine configuration change immediately (without a reboot):
 
 ```bash
-talosctl -n <IP> edit machineconfig --immediate
+talosctl -n <IP> edit machineconfig --mode=no-reboot
 ```
 
 ### `talosctl patch machineconfig`
 
 Command `talosctl patch` works similar to `talosctl edit` command - it loads current machine configuration, but instead of launching configured editor it applies [JSON patch](http://jsonpatch.com/) to the configuration and writes result back to the node.
 
-Example, updating kubelet version (with a reboot):
+Example, updating kubelet version (in auto mode):
 
 ```bash
 $ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.5"}]'
@@ -87,18 +110,18 @@ patched mc at the node <IP>
 Updating kube-apiserver version in immediate mode (without a reboot):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig --immediate -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.5"}]'
+$ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.5"}]'
 patched mc at the node <IP>
 ```
 
 Patch might be applied to multiple nodes when multiple IPs are specified:
 
 ```bash
-taloctl -n <IP1>,<IP2>,... patch machineconfig --immediate -p '[{...}]'
+taloctl -n <IP1>,<IP2>,... patch machineconfig -p '[{...}]'
 ```
 
 ### Recovering from Node Boot Failures
 
 If a Talos node fails to boot because of wrong configuration (for example, control plane endpoint is incorrect), configuration can be updated to fix the issue.
 If the boot sequence is still running, Talos might refuse applying config in default mode.
-In that case `--on-reboot` mode can be used coupled with `talosctl reboot` command to trigger a reboot and apply configuration update.
+In that case `--mode=staged` mode can be used coupled with `talosctl reboot` command to trigger a reboot and apply configuration update.

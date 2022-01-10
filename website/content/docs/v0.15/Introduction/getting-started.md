@@ -291,7 +291,7 @@ Talos will print them out during the boot process:
 [    4.614985] [talos] task loadConfig (1/1): upload configuration using talosctl:
 [    4.616978] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --file <config.yaml>
 [    4.620168] [talos] task loadConfig (1/1): or apply configuration using talosctl interactive installer:
-[    4.623046] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --interactive
+[    4.623046] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --mode=interactive
 [    4.626365] [talos] task loadConfig (1/1): optionally with node fingerprint check:
 [    4.628692] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --cert-fingerprint 'xA9a1t2dMxB0NJ0qH1pDzilWbA3+DK/DjVbFaJBYheE=' --file <config.yaml>
 ```

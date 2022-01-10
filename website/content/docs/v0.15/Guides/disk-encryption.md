@@ -135,7 +135,7 @@ There is no in-place encryption support for the partitions right now, so to avoi
 
 As such, migration from unencrypted to encrypted needs some additional handling, especially around explicitly wiping partitions.
 
-- `apply-config` should be called with `--on-reboot` flag.
+- `apply-config` should be called with `--mode=staged`.
 - Partition should be wiped after `apply-config`, but before the reboot.
 
 Edit your machine config and add the encryption configuration:
@@ -144,10 +144,10 @@ Edit your machine config and add the encryption configuration:
 vim config.yaml
 ```
 
-Apply the configuration with `--on-reboot` flag:
+Apply the configuration with `--mode=staged`:
 
 ```bash
-talosctl apply-config -f config.yaml -n <node ip> --on-reboot
+talosctl apply-config -f config.yaml -n <node ip> --mode=staged
 ```
 
 Wipe the partition you're going to encrypt:

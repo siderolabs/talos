@@ -137,19 +137,43 @@ func (s *Server) Register(obj *grpc.Server) {
 //
 //nolint:gocyclo
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
-	log.Printf("apply config request: immediate %v, on reboot %v", in.Immediate, in.OnReboot)
+	mode := in.Mode.String()
+	modeDetails := ""
+
+	// TODO: remove in v0.16
+	switch {
+	case in.Immediate: //nolint:staticcheck
+		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
+	case in.OnReboot: //nolint:staticcheck
+		in.Mode = machine.ApplyConfigurationRequest_STAGED
+	}
 
 	cfgProvider, err := s.Controller.Runtime().LoadAndValidateConfig(in.GetData())
 	if err != nil {
 		return nil, err
 	}
 
-	// --immediate
-	if in.Immediate {
+	//nolint:exhaustive
+	switch in.Mode {
+	// --mode=no-reboot
+	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
+	// --mode=auto detect actual update mode
+	case machine.ApplyConfigurationRequest_AUTO:
+		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
+			in.Mode = machine.ApplyConfigurationRequest_REBOOT
+			modeDetails = fmt.Sprintf("applied configuration with a reboot: %s", err)
+		} else {
+			in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
+			modeDetails = "applied configuration without a reboot"
+		}
+
+		mode = fmt.Sprintf("%s(%s)", mode, in.Mode)
 	}
+
+	log.Printf("apply config request: mode %s", strings.ToLower(mode))
 
 	cfg, err := cfgProvider.Bytes()
 	if err != nil {
@@ -160,14 +184,17 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, err
 	}
 
-	switch {
-	// --immediate
-	case in.Immediate:
+	//nolint:exhaustive
+	switch in.Mode {
+	// --mode=no-reboot
+	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		if err := s.Controller.Runtime().SetConfig(cfgProvider); err != nil {
 			return nil, err
 		}
-	// default, no `--on-reboot`
-	case !in.OnReboot:
+	// --mode=staged
+	case machine.ApplyConfigurationRequest_STAGED:
+	// --mode=reboot
+	case machine.ApplyConfigurationRequest_REBOOT:
 		go func() {
 			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
 				if !runtime.IsRebootError(err) {
@@ -179,11 +206,16 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 				}
 			}
 		}()
+	default:
+		return nil, fmt.Errorf("incorrect mode '%s' specified for the apply config call", in.Mode.String())
 	}
 
 	return &machine.ApplyConfigurationResponse{
 		Messages: []*machine.ApplyConfiguration{
-			{},
+			{
+				Mode:        in.Mode,
+				ModeDetails: modeDetails,
+			},
 		},
 	}, nil
 }

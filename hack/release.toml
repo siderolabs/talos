@@ -15,6 +15,19 @@ preface = """\
 
 [notes]
 
+    [notes.applyconfig]
+        title = "Apply Config Enhancements"
+        description="""\
+`talosctl apply/patch/edit` cli commands got revamped.
+Separate flags `--on-reboot`, `--immediate`, `--interactive` were replaced
+with a single `--mode` flag that can take the following values:
+- `auto` new mode that automatically applies the configuration in immediate/reboot mode.
+- `no-reboot` force apply immediately, if not possible, then fail.
+- `reboot` force reboot with apply config.
+- `staged` write new machine configuration to STATE, but don't apply it (it will be applied after a reboot).
+- `interactive` starts interactive installer, only for `apply`.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\

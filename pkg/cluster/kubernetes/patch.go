@@ -69,7 +69,8 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 
 	_, err = c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 		Data:      cfgBytes,
-		Immediate: true,
+		Mode:      machine.ApplyConfigurationRequest_NO_REBOOT,
+		Immediate: true, // keeping that for backward compatibility
 	})
 	if err != nil {
 		return fmt.Errorf("error applying config: %w", err)

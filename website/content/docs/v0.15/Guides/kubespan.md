@@ -86,7 +86,7 @@ cluster:
   secret: AbdsWjY9i797kGglghKvtGdxCsdllX9CemLq+WGVeaw=
 ```
 
-> Note: This can be applied in immediate mode (no reboot required) by passing `--immediate` to either the `edit machineconfig` or `apply-config` subcommands.
+> Note: This can be applied in immediate mode (no reboot required).
 
 #### Talos v0.12
 

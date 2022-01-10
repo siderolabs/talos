@@ -8,7 +8,7 @@ The new implementation is still using the same machine configuration file format
 in the way Talos works in 0.11.
 
 The most notable change in Talos 0.11 is that all changes to machine configuration `.machine.network` can be applied now in immediate mode (without a reboot) via
-`talosctl edit mc --immediate` or `talosctl apply-config --immediate`.
+`talosctl edit mc --mode=no-reboot` or `talosctl apply-config --mode=no-reboot`.
 
 ## Resources
 

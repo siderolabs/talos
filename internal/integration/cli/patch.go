@@ -43,7 +43,7 @@ func (suite *PatchSuite) TestSuccess() {
 	data, err := json.Marshal(patch)
 	suite.Require().NoError(err)
 
-	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "--immediate"})
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "--mode=no-reboot"})
 }
 
 // TestError runs comand with error.

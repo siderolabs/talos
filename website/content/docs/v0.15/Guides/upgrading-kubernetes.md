@@ -293,13 +293,13 @@ talosctl --nodes <master node> kubeconfig
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.4"}]'
 patched mc at the node 172.20.0.2
 ```
 
 JSON patch might need to be adjusted if current machine configuration is missing `.cluster.apiServer.image` key.
 
-Also machine configuration can be edited manually with `talosctl -n <IP>  edit mc --immediate`.
+Also machine configuration can be edited manually with `talosctl -n <IP>  edit mc --mode=no-reboot`.
 
 Capture new version of `kube-apiserver` config with:
 
@@ -347,7 +347,7 @@ Repeat this process for every control plane node, verifying that state got propa
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v1.20.4"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -396,7 +396,7 @@ Repeat this process for every control plane node, verifying that state got propa
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --immediate -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v1.20.4"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -509,7 +509,7 @@ kubectl apply -f manifests.yaml
 For every node, patch machine configuration with new kubelet version, wait for the kubelet to restart with new version:
 
 ```bash
-$ talosctl -n <IP> patch mc --immediate -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.23.0"}]'
+$ talosctl -n <IP> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.23.0"}]'
 patched mc at the node 172.20.0.2
 ```
 

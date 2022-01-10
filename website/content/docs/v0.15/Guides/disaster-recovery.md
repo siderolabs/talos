@@ -80,7 +80,7 @@ NODE         NAMESPACE   TYPE          ID             VERSION   TYPE
 ```
 
 Nodes with `init` type are incompatible with `etcd` recovery procedure.
-`init` node can be converted to `controlplane` type with `talosctl edit mc --on-reboot` command followed
+`init` node can be converted to `controlplane` type with `talosctl edit mc --mode=staged` command followed
 by node reboot with `talosctl reboot` command.
 
 ### Preparing Control Plane Nodes
