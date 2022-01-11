@@ -443,11 +443,23 @@ RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
 
+FROM build AS rootfs-extension
+RUN mkdir -p /rootfs/usr/bin
+RUN touch /rootfs/usr/bin/extension
+
+FROM rootfs-extension AS rootfs-squashfs-extension
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
+RUN mksquashfs /rootfs /extension.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
+
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /
 
 FROM scratch AS squashfs-amd64
 COPY --from=rootfs-squashfs-amd64 /rootfs.sqsh /
+
+FROM scratch AS squashfs-extension
+COPY --from=rootfs-squashfs-extension /extension.sqsh /
 
 FROM scratch AS rootfs
 COPY --from=rootfs-base /rootfs /
@@ -470,6 +482,7 @@ RUN set -o pipefail \
 FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
 COPY --from=squashfs-amd64 /rootfs.sqsh .
+COPY --from=squashfs-extension /extension.sqsh .
 COPY --from=init-build-amd64 /init .
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"

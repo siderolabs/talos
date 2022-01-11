@@ -51,12 +51,23 @@ func run() (err error) {
 	// Mount the rootfs.
 	log.Println("mounting the rootfs")
 
-	squashfs, err := mount.SquashfsMountPoints(constants.NewRoot)
+	squashfs, err := mount.SquashfsMountPoints("/layers")
 	if err != nil {
 		return err
 	}
 
 	if err = mount.Mount(squashfs); err != nil {
+		return err
+	}
+
+	overlay := mount.NewMountPoints()
+	overlay.Set(constants.NewRoot, mount.NewMountPoint("/layers/layer2:/layers/layer1", constants.NewRoot, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.ReadOnly|mount.ReadonlyOverlay)))
+
+	if err = mount.Mount(overlay); err != nil {
+		return err
+	}
+
+	if err = mount.Unmount(squashfs); err != nil {
 		return err
 	}
 

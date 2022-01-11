@@ -21,7 +21,14 @@ func SquashfsMountPoints(prefix string) (mountpoints *Points, err error) {
 	}
 
 	squashfs := NewMountPoints()
-	squashfs.Set("squashfs", NewMountPoint(dev.Path(), "/", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", WithPrefix(prefix), WithFlags(ReadOnly|Shared)))
+	squashfs.Set("layer1", NewMountPoint(dev.Path(), "/layer1", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", WithPrefix(prefix), WithFlags(ReadOnly|Shared)))
+
+	dev, err = losetup.Attach("/extension.sqsh", 0, true)
+	if err != nil {
+		return nil, err
+	}
+
+	squashfs.Set("layer2", NewMountPoint(dev.Path(), "/layer2", "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", WithPrefix(prefix), WithFlags(ReadOnly|Shared)))
 
 	return squashfs, nil
 }

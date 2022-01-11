@@ -250,6 +250,8 @@ func (p *Point) Mount() (err error) {
 	switch {
 	case p.MountFlags.Check(Overlay):
 		err = mountRetry(overlay, p, false)
+	case p.MountFlags.Check(ReadonlyOverlay):
+		err = mountRetry(readonlyOverlay, p, false)
 	default:
 		err = mountRetry(mount, p, false)
 	}
@@ -277,7 +279,8 @@ func (p *Point) Unmount() (err error) {
 	}
 
 	if mounted {
-		p.target = path.Join(p.Prefix, p.target)
+		// this is hyper-weird hack, but p.Prefix should be handled in a different way, and the way we have right now is plain wrong
+		//p.target = path.Join(p.Prefix, p.target)
 		if err = mountRetry(unmount, p, true); err != nil {
 			return err
 		}
@@ -412,6 +415,15 @@ func overlay(p *Point) error {
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", p.target, diff, workdir)
 	if err := unix.Mount("overlay", p.target, "overlay", 0, opts); err != nil {
+		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
+	}
+
+	return nil
+}
+
+func readonlyOverlay(p *Point) error {
+	opts := fmt.Sprintf("lowerdir=%s", p.source)
+	if err := unix.Mount("overlay", p.target, "overlay", p.flags, opts); err != nil {
 		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
 	}
 

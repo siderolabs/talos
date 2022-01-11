@@ -17,6 +17,9 @@ const (
 	// Overlay indicates that a the partition for a given mount point should be
 	// mounted using overlayfs.
 	Overlay
+	// ReadonlyOverlay indicates that a the partition for a given mount point should be
+	// mounted using multi-layer readonly overlay from multiple partitions given as sources.
+	ReadonlyOverlay
 	// SkipIfMounted is a flag for skipping mount if the mountpoint is already mounted.
 	SkipIfMounted
 	// SkipIfNoFilesystem is a flag for skipping formatting and mounting if the mountpoint has not filesystem.
