@@ -45,9 +45,26 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
-	nameservers := make([]string, len(networkReq.Nameservers))
-	for i := range nameservers {
-		nameservers[i] = networkReq.Nameservers[i].String()
+	nameservers := make([]string, 0, len(networkReq.Nameservers))
+
+	hasV4 := false
+	hasV6 := false
+
+	for _, subnet := range networkReq.CIDRs {
+		if subnet.IP.To4() == nil {
+			hasV6 = true
+		} else {
+			hasV4 = true
+		}
+	}
+
+	// filter nameservers by IPv4/IPv6
+	for i := range networkReq.Nameservers {
+		if networkReq.Nameservers[i].To4() == nil && hasV6 {
+			nameservers = append(nameservers, networkReq.Nameservers[i].String())
+		} else if networkReq.Nameservers[i].To4() != nil && hasV4 {
+			nameservers = append(nameservers, networkReq.Nameservers[i].String())
+		}
 	}
 
 	return []generate.GenOption{
