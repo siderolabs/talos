@@ -21,7 +21,7 @@ If you are just getting familiar with Talos, we recommend starting here:
   - Community: [#talos:matrix.org](https://matrix.to/#/#talos:matrix.org)
   - Support: [#talos-support:matrix.org](https://matrix.to/#/#talos-support:matrix.org)
 - Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
-- Forum: [community](https://groups.google.com/a/talos-systems.com/forum/#!forum/community)
+- Forum: [community](https://groups.google.com/a/siderolabs.com/forum/#!forum/community)
 - Twitter: [@SideroLabs](https://twitter.com/talossystems)
 - Email: [info@SideroLabs.com](mailto:info@SideroLabs.com)
 
