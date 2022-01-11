@@ -19,10 +19,10 @@ function remove_symlinks() {
 remove_symlinks
 
 # Remove any archives as we do not need them since everything is dynamically linked.
-find ${PREFIX} -type f -name \*.a -print0 | xargs -0 rm -rf || true
-find ${PREFIX} -type f -name \*.la -print0 | xargs -0 rm -rf || true
+find ${PREFIX} -type f -name \*.a -delete
+find ${PREFIX} -type f -name \*.la -delete
 # Remove static binaries.
-find ${PREFIX} -type f -name \*.static -print0 | xargs -0 rm -rf || true
+find ${PREFIX} -type f -name \*.static -delete
 # Strip debug symbols from all libraries and binaries.
 find ${PREFIX}/{lib,usr/lib} -type f \( -name \*.so* -a ! -name \*dbg \) -exec strip --strip-unneeded {} ';' || true
 find ${PREFIX}/{bin,sbin,usr/bin,usr/sbin} -type f -exec strip --strip-all {} ';' || true
@@ -34,3 +34,6 @@ rm -rf ${PREFIX}/{lib,usr/lib}/pkgconfig/ \
        ${PREFIX}/lib/gconv/ \
        ${PREFIX}/usr/libexec/getconf \
        ${PREFIX}/var/db
+
+# Remove contents of /usr/bin except for udevadm
+find ${PREFIX}/usr/bin \( -type f -o -type l \) ! -name udevadm -delete
