@@ -13,7 +13,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v0.10.0-alpha.0-1-g67314b1
-PKGS ?= v0.10.0-alpha.0-9-g6ce1a40
+PKGS ?= v0.10.0-alpha.0-11-g5dd08a7
 EXTRAS ?= v0.8.0-alpha.0-1-g7c1f3cc
 GO_VERSION ?= 1.17
 GOFUMPT_VERSION ?= v0.1.1
@@ -234,7 +234,7 @@ sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, banan
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
 
-sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-pine64 ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, pine64, and Libre Computer Board ALL-H3-CC).
+sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-pine64 sbc-jetson_nano ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, pine64, Libre Computer Board ALL-H3-CC and Jetson Nano).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.

@@ -13,6 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	bananapim64 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
+	jetsonnano "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/jetson_nano"
 	libretechallh3cch5 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
@@ -59,6 +60,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &rock64.Rock64{}
 	case constants.BoardRockpi4:
 		b = &rockpi4.Rockpi4{}
+	case constants.BoardJetsonNano:
+		b = &jetsonnano.JetsonNano{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}
