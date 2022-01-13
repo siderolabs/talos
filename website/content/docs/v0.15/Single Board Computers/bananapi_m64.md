@@ -10,7 +10,7 @@ You will need
 - `talosctl`
 - an SD card
 
-Download the latest alpha `talosctl`.
+Download the latest `talosctl`.
 
 ```bash
 curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64

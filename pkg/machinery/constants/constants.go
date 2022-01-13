@@ -57,6 +57,9 @@ const (
 	// BoardPine64 is the  name of the Pine64.
 	BoardPine64 = "pine64"
 
+	// BoardJetsonNano is the name of the Jetson Nano.
+	BoardJetsonNano = "jetson_nano"
+
 	// BoardRock64 is the  name of the Rock64.
 	BoardRock64 = "rock64"
 
