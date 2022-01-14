@@ -15,7 +15,7 @@ module.exports = {
     title: "Kubernetes OS",
     description: "An operating system for Kubernetes",
     web: process.env.URL_WEB || false,
-    twitter: "https://twitter.com/talossystems",
+    twitter: "https://twitter.com/SideroLabs",
     github: "https://github.com/talos-systems/talos",
     nav: {
       links: [{ path: "", title: "Docs" }],
