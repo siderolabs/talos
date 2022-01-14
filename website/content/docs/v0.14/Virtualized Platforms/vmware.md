@@ -17,7 +17,7 @@ This simply means the user should pick an IP on their "VM Network" to designate 
 
 ### Generating Base Configurations
 
-Using the VIP chosen in the prereq steps, wi will now generate the base configuration files for the Talos machines.
+Using the VIP chosen in the prereq steps, we will now generate the base configuration files for the Talos machines.
 This can be done with the `talosctl gen config ...` command.
 Take note that we will also use a JSON6902 patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
 
