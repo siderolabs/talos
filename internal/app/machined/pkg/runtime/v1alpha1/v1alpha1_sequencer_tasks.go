@@ -429,7 +429,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			if e != nil {
 				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
-					Error: err.Error(),
+					Error: e.Error(),
 				})
 
 				return e
@@ -440,7 +440,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			cfg, e := r.LoadAndValidateConfig(b)
 			if e != nil {
 				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
-					Error: err.Error(),
+					Error: e.Error(),
 				})
 
 				return e
