@@ -5,27 +5,25 @@
         <div class="flex flex-wrap justify-center items-center">
           <div class="text-xl text-gray-700 lg:w-1/2">
             <div class="text-center py-8 m-0">
-              <h1>What is Talos?</h1>
+              <h1>What is Talos Linux?</h1>
             </div>
 
             <p>
-              Talos is a modern OS designed to be secure, immutable, and
-              minimal. Its purpose is to host Kubernetes clusters, so it is
-              tightly integrated with Kubernetes.
+              Talos Linux is Linux designed for Kubernetes – secure, immutable, and minimal.
             </p>
 
             <p>
-              Talos is based on the Linux kernel, and supports most cloud
-              platforms, bare metal, and most virtualization platforms. All
-              system management is done via an API, and there is no shell or
-              interactive console.
+              Talos Linux supports cloud platforms, bare metal, and virtualization platforms. All system management is done via an API: there is no ssh, shell or interactive console.
+            </p>
+            <p>
+              Talos Linux is production ready, and supports some of the largest Kubernetes clusters in the world.
             </p>
 
             <div class="py-4 flex">
-              <p class="flex-1 text-sm text-gray-600 mr-2">
-                It takes about 3 minutes to launch a small Talos cluster on your
+              <h3 class="flex-1  text-gray-600 mr-2">
+                It only takes  3 minutes to launch a  Talos cluster on your
                 laptop inside Docker.
-              </p>
+              </h3>
               <div class="flex-1 text-center pb-4 m-0">
                 <a href="/docs/latest/introduction/quickstart/">
                   <button class="teal-cta-button">Try it now</button></a
@@ -42,30 +40,28 @@
       <div class="w-3/4 mx-auto">
         <div class="justify-center">
           <div class="text-center md:py-8">
-            <h1>Why Talos?</h1>
+            <h1>Why Talos Linux?</h1>
           </div>
           <div class="md:grid grid-columns-3 grid-gap-12 justify-center">
             <div class="px-4">
               <h2 class="text-center">Security</h2>
               <div>
-                Talos reduces your attack surface by practicing the Principle of
-                Least Privilege (PoLP) and by securing the API with mutual TLS
+                Talos reduces your attack surface. It's minimal, hardened and immutable. All API access is secured with mutual TLS
                 (mTLS) authentication.
               </div>
             </div>
             <div class="px-4">
               <h2 class="text-center">Predictability</h2>
               <div>
-                Talos eliminates unneeded variables and reduces unknown factors
-                in your environment by employing immutable infrastructure
-                ideology.
+                Talos eliminates configuration drift, reduces unknown factors
+                 by employing immutable infrastructure
+                ideology, and delivers atomic updates.
               </div>
             </div>
             <div class="px-4">
               <h2 class="text-center">Evolvability</h2>
               <div>
-                Talos simplifies your architecture and increases your ability to
-                easily accommodate future changes.
+                Talos simplifies your architecture, increases your agility, and makes always delivers current stable Kubernetes and Linux versions.
               </div>
             </div>
           </div>
@@ -134,7 +130,7 @@
           <div>
             <h2 class="text-center">Hardened</h2>
             <div>
-              <p>Talos is hardened by design and configuration:</p>
+              <p>Hardened by design:</p>
               <ul>
                 <li>
                   Built with the
@@ -161,9 +157,8 @@
           <div>
             <h2 class="text-center">Immutable</h2>
             <p>
-              Talos improves its security posture further by mounting the root
-              filesystem as read-only and removing any host-level access by
-              traditional means such as a shell and SSH.
+              Talos improves security further by mounting the root
+              filesystem as read-only and removing any host-level such as a shell and SSH.
             </p>
           </div>
         </div>
@@ -181,8 +176,8 @@
           <div>
             <h2 class="text-center">Current</h2>
             <p>
-              We are committed to staying current with the latest stable
-              versions of Kubernetes, and Linux.
+              Delivers the latest stable
+              versions of Kubernetes and Linux.
             </p>
           </div>
         </div>
