@@ -474,9 +474,9 @@ FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
 COPY --from=squashfs-amd64 /rootfs.sqsh .
 COPY --from=init-build-amd64 /init .
-COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd-ucode /lib/firmware/amd-ucode
-COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd /lib/firmware/amd
-COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amdgpu /lib/firmware/amdgpu
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd-ucode ./lib/firmware/amd-ucode
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd ./lib/firmware/amd
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amdgpu ./lib/firmware/amdgpu
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN set -o pipefail \
