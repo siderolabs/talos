@@ -37,6 +37,7 @@ type Options struct {
 	Force             bool
 	Zero              bool
 	LegacyBIOSSupport bool
+	PreviousVersion   string
 }
 
 // Install installs Talos.
@@ -264,10 +265,11 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		Default: i.Next,
 		Labels: []*grub.Label{
 			{
-				Root:   i.Next,
-				Initrd: filepath.Join("/", i.Next, constants.InitramfsAsset),
-				Kernel: filepath.Join("/", i.Next, constants.KernelAsset),
-				Append: i.cmdline.String(),
+				Root:    i.Next,
+				Initrd:  filepath.Join("/", i.Next, constants.InitramfsAsset),
+				Kernel:  filepath.Join("/", i.Next, constants.KernelAsset),
+				Append:  i.cmdline.String(),
+				Version: version.Tag,
 			},
 		},
 	}
@@ -276,10 +278,11 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		grubcfg.Fallback = i.Current
 
 		grubcfg.Labels = append(grubcfg.Labels, &grub.Label{
-			Root:   i.Current,
-			Initrd: filepath.Join("/", i.Current, constants.InitramfsAsset),
-			Kernel: filepath.Join("/", i.Current, constants.KernelAsset),
-			Append: procfs.ProcCmdline().String(),
+			Root:    i.Current,
+			Initrd:  filepath.Join("/", i.Current, constants.InitramfsAsset),
+			Kernel:  filepath.Join("/", i.Current, constants.KernelAsset),
+			Append:  procfs.ProcCmdline().String(),
+			Version: i.options.PreviousVersion,
 		})
 	}
 

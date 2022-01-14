@@ -34,10 +34,11 @@ type Cfg struct {
 
 // Label reprsents a label in the cfg file.
 type Label struct {
-	Root   string
-	Kernel string
-	Initrd string
-	Append string
+	Root    string
+	Kernel  string
+	Initrd  string
+	Append  string
+	Version string
 }
 
 const grubCfgTpl = `set default="{{ .Default }}"
@@ -53,6 +54,9 @@ terminal_output console
 
 {{ range $label := .Labels -}}
 menuentry "{{ $label.Root }}" {
+{{ if .Version }}
+  echo "Talos {{ .Version }}"
+{{ end }}
   set gfxmode=auto
   set gfxpayload=text
   linux {{ $label.Kernel }} {{ $label.Append }}

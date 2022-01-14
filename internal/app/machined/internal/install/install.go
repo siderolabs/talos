@@ -29,6 +29,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // RunInstallerContainer performs an installation via the installer container.
@@ -95,6 +96,7 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 		"--upgrade=" + upgrade,
 		"--force=" + force,
 		"--zero=" + zero,
+		"--previous-version=" + version.NewVersion().Tag,
 	}
 
 	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
