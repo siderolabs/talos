@@ -29,10 +29,10 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v0.1.0
+	cloud.google.com/go/compute v1.0.0
 	github.com/AlekSi/pointer v1.2.0
-	github.com/BurntSushi/toml v0.4.1
-	github.com/aws/aws-sdk-go v1.42.30
+	github.com/BurntSushi/toml v1.0.0
+	github.com/aws/aws-sdk-go v1.42.35
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.2
@@ -59,7 +59,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-getter v1.5.10
+	github.com/hashicorp/go-getter v1.5.11
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go v1.33.1
 	github.com/insomniacslk/dhcp v0.0.0-20211214070828-5297eed8f489
@@ -72,7 +72,7 @@ require (
 	github.com/mdlayher/netlink v1.5.0
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.20.0
+	github.com/packethost/packngo v0.21.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.7.3
@@ -109,9 +109,9 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.20.0
-	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
+	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211230205640-daad0b7ba671
@@ -278,7 +278,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20211129173154-2dd424e2d808 // indirect
 	google.golang.org/api v0.63.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368 // indirect
+	google.golang.org/genproto v0.0.0-20220114231437-d2e6a121cae0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
