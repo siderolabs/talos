@@ -72,7 +72,7 @@ require (
 	github.com/mdlayher/netlink v1.5.0
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.20.0
+	github.com/packethost/packngo v0.21.0
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.7.3
