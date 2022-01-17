@@ -20,6 +20,7 @@ import (
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
+//nolint:gocyclo
 func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
@@ -36,10 +37,32 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 	var actualNodes []string
 
 	for _, node := range nodes.Items {
+		var nodeMatched bool
+
+		var nodeInternalIPs []string
+
 		for _, nodeAddress := range node.Status.Addresses {
-			if nodeAddress.Type == v1.NodeInternalIP {
-				actualNodes = append(actualNodes, nodeAddress.Address)
+			if nodeMatched {
+				break
 			}
+
+			if nodeAddress.Type == v1.NodeInternalIP {
+				for _, expected := range expectedNodes {
+					if expected == nodeAddress.Address {
+						nodeMatched = true
+
+						actualNodes = append(actualNodes, nodeAddress.Address)
+
+						break
+					}
+				}
+			}
+		}
+
+		// We did not match any expected node, so store the first internal IP we encountered into the actualNodes set.
+		// NB: we only store a single address so as not to indicate multiple nodes in the report.
+		if !nodeMatched && len(nodeInternalIPs) > 0 {
+			actualNodes = append(actualNodes, nodeInternalIPs[0])
 		}
 	}
 
