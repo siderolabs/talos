@@ -47,6 +47,9 @@ FROM --platform=arm64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp
 FROM --platform=amd64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-arm64
 
+FROM --platform=amd64 ghcr.io/talos-systems/mdadm:${PKGS} AS pkg-mdadm-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/mdadm:${PKGS} AS pkg-mdadm-arm64
+
 FROM --platform=amd64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-arm64
 
@@ -361,6 +364,7 @@ COPY --from=pkg-libressl-amd64 / /rootfs
 COPY --from=pkg-libseccomp-amd64 / /rootfs
 COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
 COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-mdadm-amd64 / /rootfs
 COPY --from=pkg-lvm2-amd64 / /rootfs
 COPY --from=pkg-libaio-amd64 / /rootfs
 COPY --from=pkg-musl-amd64 / /rootfs
@@ -403,6 +407,7 @@ COPY --from=pkg-libressl-arm64 / /rootfs
 COPY --from=pkg-libseccomp-arm64 / /rootfs
 COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
 COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-mdadm-arm64 / /rootfs
 COPY --from=pkg-lvm2-arm64 / /rootfs
 COPY --from=pkg-libaio-arm64 / /rootfs
 COPY --from=pkg-musl-arm64 / /rootfs
