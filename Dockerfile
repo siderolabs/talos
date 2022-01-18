@@ -361,6 +361,9 @@ COPY --from=pkg-libressl-amd64 / /rootfs
 COPY --from=pkg-libseccomp-amd64 / /rootfs
 COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
 COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd-ucode /rootfs/lib/firmware/amd-ucode
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd /rootfs/lib/firmware/amd
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amdgpu /rootfs/lib/firmware/amdgpu
 COPY --from=pkg-lvm2-amd64 / /rootfs
 COPY --from=pkg-libaio-amd64 / /rootfs
 COPY --from=pkg-musl-amd64 / /rootfs
@@ -471,6 +474,9 @@ FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
 COPY --from=squashfs-amd64 /rootfs.sqsh .
 COPY --from=init-build-amd64 /init .
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd-ucode ./lib/firmware/amd-ucode
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amd ./lib/firmware/amd
+COPY --from=pkg-linux-firmware-amd64 /lib/firmware/amdgpu ./lib/firmware/amdgpu
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN set -o pipefail \
