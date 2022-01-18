@@ -19,8 +19,8 @@ preface = """\
         title = "Component Updates"
         description="""\
 * Linux: 5.15.16
+* CoreDNS: 1.8.7
 """
-
 
 [make_deps]
 

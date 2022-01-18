@@ -309,9 +309,6 @@ data:
             fallthrough in-addr.arpa ip6.arpa
         }
         forward . /etc/resolv.conf
-        {{- if not .DNSServiceIPv6 }}
-        rewrite stop type AAAA A
-        {{- end }}
         cache 30
         loop
         reload
