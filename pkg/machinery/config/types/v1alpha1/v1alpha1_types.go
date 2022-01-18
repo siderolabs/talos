@@ -1938,7 +1938,9 @@ type RegistryConfig struct {
 	//     - value: machineConfigRegistryTLSConfigExample1
 	//     - value: machineConfigRegistryTLSConfigExample2
 	RegistryTLS *RegistryTLSConfig `yaml:"tls,omitempty"`
-	//   description: The auth configuration for this registry.
+	//   description: |
+	//     The auth configuration for this registry.
+	//     Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.
 	//   examples:
 	//     - value: machineConfigRegistryAuthConfigExample
 	RegistryAuth *RegistryAuthConfig `yaml:"auth,omitempty"`

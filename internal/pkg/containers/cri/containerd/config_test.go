@@ -5,6 +5,7 @@
 package containerd_test
 
 import (
+	_ "embed"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -13,8 +14,10 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+//go:embed testdata/cri.toml
+var expectedCRIConfig string
 
 type mockConfig struct {
 	mirrors map[string]*v1alpha1.RegistryMirrorConfig
@@ -74,52 +77,10 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 		},
 	}
 
-	files, err := containerd.GenerateRegistriesConfig(cfg)
+	criConfig, err := containerd.GenerateCRIConfig(cfg)
 	suite.Require().NoError(err)
-	suite.Assert().Equal([]config.File{
-		&v1alpha1.MachineFile{
-			FileContent:     `cacert`,
-			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/ca/some.host:123.crt",
-			FileOp:          "create",
-		},
-		&v1alpha1.MachineFile{
-			FileContent:     `clientcert`,
-			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/client/some.host:123.crt",
-			FileOp:          "create",
-		},
-		&v1alpha1.MachineFile{
-			FileContent:     `clientkey`,
-			FilePermissions: 0o600,
-			FilePath:        "/var/etc/cri/client/some.host:123.key",
-			FileOp:          "create",
-		},
-		&v1alpha1.MachineFile{
-			FileContent: `[plugins]
-  [plugins."io.containerd.grpc.v1.cri"]
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-          endpoint = ["https://registry-1.docker.io", "https://registry-2.docker.io"]
-      [plugins."io.containerd.grpc.v1.cri".registry.configs]
-        [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123"]
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".auth]
-            username = "root"
-            password = "secret"
-            auth = "auth"
-            identitytoken = "token"
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."some.host:123".tls]
-            insecure_skip_verify = true
-            ca_file = "/var/etc/cri/ca/some.host:123.crt"
-            cert_file = "/var/etc/cri/client/some.host:123.crt"
-            key_file = "/var/etc/cri/client/some.host:123.key"
-`,
-			FilePermissions: 0o644,
-			FilePath:        constants.CRIContainerdConfig,
-			FileOp:          "append",
-		},
-	}, files)
+
+	suite.Assert().Equal(expectedCRIConfig, string(criConfig))
 }
 
 func TestConfigSuite(t *testing.T) {

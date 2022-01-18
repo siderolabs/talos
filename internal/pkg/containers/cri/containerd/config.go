@@ -4,11 +4,6 @@
 
 package containerd
 
-// Mirror represents a registry mirror.
-type Mirror struct {
-	Endpoints []string `toml:"endpoint"`
-}
-
 // AuthConfig represents the registry auth options.
 type AuthConfig struct {
 	Username      string `toml:"username"`
@@ -17,24 +12,15 @@ type AuthConfig struct {
 	IdentityToken string `toml:"identitytoken"`
 }
 
-// TLSConfig represents the registry TLS options.
-type TLSConfig struct {
-	InsecureSkipVerify bool   `toml:"insecure_skip_verify"`
-	CAFile             string `toml:"ca_file"`
-	CertFile           string `toml:"cert_file"`
-	KeyFile            string `toml:"key_file"`
-}
-
 // RegistryConfig represents a registry.
 type RegistryConfig struct {
 	Auth *AuthConfig `toml:"auth"`
-	TLS  *TLSConfig  `toml:"tls"`
 }
 
 // Registry represents the registry configuration.
 type Registry struct {
-	Mirrors map[string]Mirror         `toml:"mirrors"`
-	Configs map[string]RegistryConfig `toml:"configs"`
+	ConfigPath string                    `toml:"config_path"`
+	Configs    map[string]RegistryConfig `toml:"configs"`
 }
 
 // CRIConfig represents the CRI config.

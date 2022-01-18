@@ -89,6 +89,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.controlplane
 	// * .machine.kubelet
 	// * .machine.kernel
+	// * .machine.registries (note that auth is not applied immediately, containerd limitation)
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
@@ -101,6 +102,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane
 		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
 		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
+		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {

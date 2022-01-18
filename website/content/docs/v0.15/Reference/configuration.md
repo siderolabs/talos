@@ -5157,6 +5157,7 @@ tls:
 <div class="dt">
 
 The auth configuration for this registry.
+Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.
 
 
 

@@ -1969,7 +1969,7 @@ func init() {
 	RegistryConfigDoc.Fields[1].Name = "auth"
 	RegistryConfigDoc.Fields[1].Type = "RegistryAuthConfig"
 	RegistryConfigDoc.Fields[1].Note = ""
-	RegistryConfigDoc.Fields[1].Description = "The auth configuration for this registry."
+	RegistryConfigDoc.Fields[1].Description = "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot."
 	RegistryConfigDoc.Fields[1].Comments[encoder.LineComment] = "The auth configuration for this registry."
 
 	RegistryConfigDoc.Fields[1].AddExample("", machineConfigRegistryAuthConfigExample)
