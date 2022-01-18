@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 
 <p align="center">
-  <h1 align="center">Talos</h1>
+  <h1 align="center">Talos Linux</h1>
   <p align="center">A modern OS for Kubernetes.</p>
   <p align="center">
     <a href="https://github.com/talos-systems/talos/releases/latest">
@@ -15,13 +15,15 @@
 
 ---
 
-**Talos** is a modern OS designed to be secure, immutable, and minimal.
-All system management is done via an API, and there is no shell or interactive console.
-Some of the capabilities and benefits provided by Talos include:
+**Talos** is a modern OS for running Kubernetes: secure, immutable, and minimal.
+Talos is fully open source, production ready, and supported by the people at [Sidero Labs](https://www.SideroLabs.com/)
+All system management is done via an API - there is no shell or interactive console.
+Benefits include:
 
-- **Security**: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.
-- **Predictability**: Talos eliminates unneeded variables and reduces unknown factors in your environment by employing immutable infrastructure ideology.
-- **Evolvability**: Talos simplifies your architecture and increases your ability to easily accommodate future changes.
+- **Security**: Talos reduces your attack surface: It's minimal, hardened and immutable.
+  All API access is secured with mutual TLS (mTLS) authentication.
+- **Predictability**: Talos eliminates configuration drift, reduces unknown factors by employing immutable infrastructure ideology, and delivers atomic updates.
+- **Evolvability**: Talos simplifies your architecture, increases your agility, and always delivers current stable Kubernetes and Linux versions.
 
 ## Documentation
 
@@ -31,9 +33,9 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
 - Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
-- Forum: [community](https://groups.google.com/a/talos-systems.com/forum/#!forum/community)
-- Twitter: [@talossystems](https://twitter.com/talossystems)
-- Email: [info@talos-systems.com](mailto:info@talos-systems.com)
+- Forum: [community](https://groups.google.com/a/SideroLabs.com/forum/#!forum/community)
+- Twitter: [@talossystems](https://twitter.com/SideroLabs)
+- Email: [info@talos-systems.com](mailto:info@SideroLabs.com)
 
 If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
 We hold a weekly meeting that all audiences are welcome to attend.
