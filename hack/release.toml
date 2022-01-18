@@ -31,7 +31,7 @@ with a single `--mode` flag that can take the following values:
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.11
+* Linux: 5.15.14
 * containerd: 1.5.9
 * CoreDNS: 1.8.7
 
@@ -59,6 +59,11 @@ There is some work still going on various cloud platforms to stop modifying mach
 Talos now supports Oracle Cloud.
 """
 
+    [notes.sbcs]
+        title = "SBC Support"
+        description="""\
+Talos now supports Jetson Nano SBC
+"""
 
 [make_deps]
 
