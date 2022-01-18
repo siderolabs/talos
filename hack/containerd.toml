@@ -3,6 +3,8 @@ version = 2
 disabled_plugins = [
     "io.containerd.grpc.v1.cri",
     "io.containerd.internal.v1.opt",
+    "io.containerd.tracing.processor.v1.otlp",
+    "io.containerd.internal.v1.tracing",
 ]
 
 [debug]

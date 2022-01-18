@@ -378,12 +378,13 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
-COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
-RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id}
-RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
+COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
+COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
+COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
+RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
@@ -422,12 +423,13 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/containerd.toml
-COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
-RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id}
-RUN mkdir -pv /rootfs/{boot,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
+COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
+COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
+COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
+RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates

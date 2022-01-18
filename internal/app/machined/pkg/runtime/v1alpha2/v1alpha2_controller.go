@@ -101,6 +101,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&config.MachineTypeController{},
 		&config.K8sAddressFilterController{},
 		&config.K8sControlPlaneController{},
+		&files.CRIConfigPartsController{},
+		&files.CRIRegistryConfigController{},
 		&files.EtcFileController{
 			EtcPath:    "/etc",
 			ShadowPath: constants.SystemEtcPath,

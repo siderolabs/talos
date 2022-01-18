@@ -344,7 +344,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.5.9"
+	DefaultContainerdVersion = "1.6.0-rc.0"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -357,6 +357,15 @@ const (
 
 	// CRIContainerdConfig is the path to the config for the containerd instance that provides the CRI.
 	CRIContainerdConfig = "/etc/cri/containerd.toml"
+
+	// CRIConfdPath is the path to the directory providing parts of CRI plugin configuration.
+	CRIConfdPath = "/etc/cri/conf.d"
+
+	// CRIConfig is the path to the CRI merged configuration file relative to /etc.
+	CRIConfig = "cri/conf.d/cri.toml"
+
+	// CRIRegistryConfigPart is the path to the CRI generated registry configuration relative to /etc.
+	CRIRegistryConfigPart = "cri/conf.d/01-registries.part"
 
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"

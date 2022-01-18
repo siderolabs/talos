@@ -1,13 +1,15 @@
 version = 2
 
-disabled_plugins = []
+disabled_plugins = [
+    "io.containerd.tracing.processor.v1.otlp",
+    "io.containerd.internal.v1.tracing",
+]
 
-imports = ["/var/cri/conf.d/*.toml"]
+imports = [
+    "/etc/cri/conf.d/cri.toml",
+    "/var/cri/conf.d/*.toml", # deprecated
+]
 
 [debug]
 level = "info"
 format = "json"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-    runtime_type = "io.containerd.runc.v2"
-    discard_unpacked_layers = true
