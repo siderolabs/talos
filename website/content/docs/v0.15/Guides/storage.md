@@ -95,7 +95,7 @@ talosctl gen config my-cluster https://mycluster.local:6443 --config-patch '[{"o
 Patching an existing node
 
 ```bash
-talosctl patch --mode=no-reboot machineconfig -n <node ip> --config-patch '[{"op": "add", "path": "/machine/sysctls", "value": {"vm.nr_hugepages": "1024"}}, {"op": "add", "path": "/machine/kubelet/extraArgs", "value": {"node-labels": "openebs.io/engine=mayastor"}}]'
+talosctl patch --mode=no-reboot machineconfig -n <node ip> --patch '[{"op": "add", "path": "/machine/sysctls", "value": {"vm.nr_hugepages": "1024"}}, {"op": "add", "path": "/machine/kubelet/extraArgs", "value": {"node-labels": "openebs.io/engine=mayastor"}}]'
 ```
 
 > Note: If you are adding/updating the `vm.nr_hugepages` on a node which already had the `openebs.io/engine=mayastor` label set, you'd need to restart kubelet so that it picks up the new value, by issuing the following command
