@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -186,7 +185,7 @@ type Points struct {
 func NewMountPoint(source, target, fstype string, flags uintptr, data string, setters ...Option) *Point {
 	opts := NewDefaultOptions(setters...)
 
-	return &Point{
+	p := &Point{
 		source:  source,
 		target:  target,
 		fstype:  fstype,
@@ -194,6 +193,12 @@ func NewMountPoint(source, target, fstype string, flags uintptr, data string, se
 		data:    data,
 		Options: opts,
 	}
+
+	if p.Prefix != "" {
+		p.target = filepath.Join(p.Prefix, p.target)
+	}
+
+	return p
 }
 
 // NewMountPoints initializes and returns a Points struct.
@@ -231,8 +236,6 @@ func (p *Point) Data() string {
 // Mount attempts to retry a mount on EBUSY. It will attempt a retry
 // every 100 milliseconds over the course of 5 seconds.
 func (p *Point) Mount() (err error) {
-	p.target = path.Join(p.Prefix, p.target)
-
 	for _, hook := range p.Options.PreMountHooks {
 		if err = hook(p); err != nil {
 			return err
@@ -250,6 +253,8 @@ func (p *Point) Mount() (err error) {
 	switch {
 	case p.MountFlags.Check(Overlay):
 		err = mountRetry(overlay, p, false)
+	case p.MountFlags.Check(ReadonlyOverlay):
+		err = mountRetry(readonlyOverlay, p, false)
 	default:
 		err = mountRetry(mount, p, false)
 	}
@@ -277,7 +282,6 @@ func (p *Point) Unmount() (err error) {
 	}
 
 	if mounted {
-		p.target = path.Join(p.Prefix, p.target)
 		if err = mountRetry(unmount, p, true); err != nil {
 			return err
 		}
@@ -412,6 +416,15 @@ func overlay(p *Point) error {
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", p.target, diff, workdir)
 	if err := unix.Mount("overlay", p.target, "overlay", 0, opts); err != nil {
+		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
+	}
+
+	return nil
+}
+
+func readonlyOverlay(p *Point) error {
+	opts := fmt.Sprintf("lowerdir=%s", p.source)
+	if err := unix.Mount("overlay", p.target, "overlay", p.flags, opts); err != nil {
 		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
 	}
 

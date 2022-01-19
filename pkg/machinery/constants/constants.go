@@ -86,6 +86,12 @@ const (
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"
 
+	// ExtensionLayers is the path where the extensions layers are stored.
+	ExtensionLayers = "/layers"
+
+	// ExtensionsConfigFile extensions layers configuration file name.
+	ExtensionsConfigFile = "/extensions.yaml"
+
 	// EFIPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
 	EFIPartitionLabel = "EFI"
