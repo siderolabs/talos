@@ -403,6 +403,8 @@ COPY --from=pkg-libressl-arm64 / /rootfs
 COPY --from=pkg-libseccomp-arm64 / /rootfs
 COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
 COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/rtl_nic /rootfs/lib/firmware/rtl_nic
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/nvidia/tegra210 /rootfs/lib/firmware/nvidia/tegra210
 COPY --from=pkg-lvm2-arm64 / /rootfs
 COPY --from=pkg-libaio-arm64 / /rootfs
 COPY --from=pkg-musl-arm64 / /rootfs
@@ -458,6 +460,9 @@ FROM build AS initramfs-archive-arm64
 WORKDIR /initramfs
 COPY --from=squashfs-arm64 /rootfs.sqsh .
 COPY --from=init-build-arm64 /init .
+# copying over firmware binary blobs to initramfs
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/rtl_nic ./lib/firmware/rtl_nic
+COPY --from=pkg-linux-firmware-arm64 /lib/firmware/nvidia/tegra210 ./lib/firmware/nvidia/tegra210
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN set -o pipefail \

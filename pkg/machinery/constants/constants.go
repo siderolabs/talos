@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.15.11-talos"
+	DefaultKernelVersion = "5.15.14-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -56,6 +56,9 @@ const (
 
 	// BoardPine64 is the  name of the Pine64.
 	BoardPine64 = "pine64"
+
+	// BoardJetsonNano is the name of the Jetson Nano.
+	BoardJetsonNano = "jetson_nano"
 
 	// BoardRock64 is the  name of the Rock64.
 	BoardRock64 = "rock64"
@@ -245,7 +248,7 @@ const (
 	CoreDNSImage = "docker.io/coredns/coredns"
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
-	DefaultCoreDNSVersion = "1.8.6"
+	DefaultCoreDNSVersion = "1.8.7"
 
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"

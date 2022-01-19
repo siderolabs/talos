@@ -14,7 +14,7 @@ weight: 6
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud  |
 | - bare metal                                                                                                   | x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image                |
 | - virtualized                                                                                                  | VMware, Hyper-V, KVM, Proxmox, Xen                                      |
-| - SBCs                                                                                                         | Raspberry Pi4, Banana Pi M64, Pine64, and other                         |
+| - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B                         |
 | - local                                                                                                        | Docker, QEMU                                                            |
 | **Cluster API**                                                                                                |                                    |                                    |
 | [CAPI Bootstrap Provider Talos](https://github.com/talos-systems/cluster-api-bootstrap-provider-talos)         | >= 0.4.3                           | >= 0.4.3                           |
