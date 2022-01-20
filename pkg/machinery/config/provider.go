@@ -91,11 +91,17 @@ type File interface {
 // related options.
 type Install interface {
 	Image() string
+	Extensions() []Extension
 	Disk() (string, error)
 	ExtraKernelArgs() []string
 	Zero() bool
 	LegacyBIOSSupport() bool
 	WithBootloader() bool
+}
+
+// Extension defines the system extension.
+type Extension interface {
+	Image() string
 }
 
 // Security defines the requirements for a config that pertains to security

@@ -384,7 +384,7 @@ RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
-RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
+RUN touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
@@ -429,7 +429,7 @@ RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
-RUN touch /rootfs/etc/{resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
+RUN touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part}
 RUN ln -s /etc/ssl /rootfs/etc/pki
 RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
@@ -542,9 +542,11 @@ COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 FROM alpine:3.15.0 AS installer
 RUN apk add --no-cache --update --no-scripts \
     bash \
+    cpio \
     efibootmgr \
     mtools \
     qemu-img \
+    squashfs-tools \
     util-linux \
     xfsprogs \
     xorriso \

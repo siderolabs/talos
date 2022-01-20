@@ -26,6 +26,7 @@ import (
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/talos-systems/talos/internal/pkg/capability"
 	"github.com/talos-systems/talos/internal/pkg/containers/image"
+	"github.com/talos-systems/talos/internal/pkg/extensions"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -34,13 +35,18 @@ import (
 // RunInstallerContainer performs an installation via the installer container.
 //
 //nolint:gocyclo,cyclop
-func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg config.Registries, opts ...Option) error {
+func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts ...Option) error {
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
 		if err := opt(&options); err != nil {
 			return err
 		}
+	}
+
+	configBytes, err := cfg.Bytes()
+	if err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -55,6 +61,11 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 
 	defer client.Close() //nolint:errcheck
 
+	var done func(context.Context) error
+
+	ctx, done, err = client.WithLease(ctx)
+	defer done(ctx) //nolint:errcheck
+
 	var img containerd.Image
 
 	if !options.Pull {
@@ -64,15 +75,31 @@ func RunInstallerContainer(disk, platform, ref string, configBytes []byte, reg c
 	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
-		img, err = image.Pull(ctx, reg, client, ref)
+		img, err = image.Pull(ctx, cfg.Machine().Registries(), client, ref)
 	}
 
 	if err != nil {
 		return err
 	}
 
+	puller, err := extensions.NewPuller(client)
+	if err != nil {
+		return err
+	}
+
+	if err = puller.PullAndMount(ctx, cfg.Machine().Registries(), cfg.Machine().Install().Extensions()); err != nil {
+		return err
+	}
+
+	defer func() {
+		if err = puller.Cleanup(ctx); err != nil {
+			log.Printf("error cleaning up pulled system extensions: %s", err)
+		}
+	}()
+
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: constants.SystemExtensionsPath, Source: constants.SystemExtensionsPath, Options: []string{"rbind", "rshared", "ro"}},
 	}
 
 	// TODO(andrewrynhard): To handle cases when the newer version changes the

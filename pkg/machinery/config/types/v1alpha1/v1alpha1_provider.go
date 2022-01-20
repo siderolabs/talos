@@ -945,6 +945,21 @@ func (i *InstallConfig) Image() string {
 	return i.InstallImage
 }
 
+// Extensions implements the config.Provider interface.
+func (i *InstallConfig) Extensions() []config.Extension {
+	if len(i.InstallExtensions) == 0 {
+		return nil
+	}
+
+	extensions := make([]config.Extension, 0, len(i.InstallExtensions))
+
+	for _, ext := range i.InstallExtensions {
+		extensions = append(extensions, ext)
+	}
+
+	return extensions
+}
+
 // Disk implements the config.Provider interface.
 func (i *InstallConfig) Disk() (string, error) {
 	matchers := i.DiskMatchers()
@@ -1026,6 +1041,11 @@ func (i *InstallConfig) LegacyBIOSSupport() bool {
 // WithBootloader implements the config.Provider interface.
 func (i *InstallConfig) WithBootloader() bool {
 	return i.InstallBootloader
+}
+
+// Image implements the config.Provider interface.
+func (i InstallExtensionConfig) Image() string {
+	return i.ExtensionImage
 }
 
 // Enabled implements the config.Provider interface.

@@ -62,6 +62,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-getter v1.5.11
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-version v1.2.0
 	github.com/hetznercloud/hcloud-go v1.33.1
 	github.com/insomniacslk/dhcp v0.0.0-20211214070828-5297eed8f489
 	github.com/jsimonetti/rtnetlink v0.0.0-20211213041634-9dff439f7e79
@@ -72,6 +73,7 @@ require (
 	github.com/mdlayher/genetlink v1.1.0
 	github.com/mdlayher/netlink v1.5.0
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
+	github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.21.0
 	github.com/pelletier/go-toml v1.9.4
@@ -192,7 +194,6 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.2 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
-	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
@@ -228,7 +229,6 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.0.3 // indirect
 	github.com/opencontainers/selinux v1.8.2 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect

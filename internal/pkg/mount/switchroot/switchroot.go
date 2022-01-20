@@ -8,12 +8,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/talos-systems/go-debug"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+// Paths preserved in the initramfs.
+var preservedPaths = map[string]struct{}{
+	constants.ExtensionsConfigFile: {},
+}
 
 // Switch moves the rootfs to a specified directory. See
 // https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c.
@@ -53,7 +60,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 
 	log.Println("cleaning up initramfs")
 
-	if err = recursiveDelete(int(old.Fd())); err != nil {
+	if err = recursiveDelete(int(old.Fd()), "/"); err != nil {
 		return fmt.Errorf("error deleting initramfs: %w", err)
 	}
 
@@ -76,7 +83,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	return nil
 }
 
-func recursiveDelete(fd int) error {
+func recursiveDelete(fd int, path string) error {
 	parentDev, err := getDev(fd)
 	if err != nil {
 		return err
@@ -92,7 +99,7 @@ func recursiveDelete(fd int) error {
 	}
 
 	for _, name := range names {
-		if err := recusiveDeleteInner(fd, parentDev, name); err != nil {
+		if err := recusiveDeleteInner(fd, parentDev, name, filepath.Join(path, name)); err != nil {
 			return err
 		}
 	}
@@ -100,31 +107,30 @@ func recursiveDelete(fd int) error {
 	return nil
 }
 
-func recusiveDeleteInner(parentFd int, parentDev uint64, childName string) error {
-	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
-	if err != nil {
-		if err := unix.Unlinkat(parentFd, childName, 0); err != nil {
-			return err
-		}
-	} else {
-		//nolint:errcheck
-		defer unix.Close(childFd)
-
-		if childFdDev, err := getDev(childFd); err != nil {
-			return err
-		} else if childFdDev != parentDev {
-			return nil
-		}
-
-		if err := recursiveDelete(childFd); err != nil {
-			return err
-		}
-		if err := unix.Unlinkat(parentFd, childName, unix.AT_REMOVEDIR); err != nil {
-			return err
-		}
+func recusiveDeleteInner(parentFd int, parentDev uint64, childName, path string) error {
+	if _, preserve := preservedPaths[path]; preserve {
+		return nil
 	}
 
-	return nil
+	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
+	if err != nil {
+		return unix.Unlinkat(parentFd, childName, 0)
+	}
+
+	//nolint:errcheck
+	defer unix.Close(childFd)
+
+	if childFdDev, err := getDev(childFd); err != nil {
+		return err
+	} else if childFdDev != parentDev {
+		return nil
+	}
+
+	if err := recursiveDelete(childFd, path); err != nil {
+		return err
+	}
+
+	return unix.Unlinkat(parentFd, childName, unix.AT_REMOVEDIR)
 }
 
 func getDev(fd int) (dev uint64, err error) {

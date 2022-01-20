@@ -148,6 +148,9 @@ install:
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+
+    # # Allows for supplying additional system extension images to install on top of base Talos image.
+    # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
 ```
 
 <hr />
@@ -509,6 +512,9 @@ install:
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+
+    # # Allows for supplying additional system extension images to install on top of base Talos image.
+    # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
 ```
 
 
@@ -2065,6 +2071,9 @@ wipe: false # Indicates if the installation disk should be wiped at installation
 # diskSelector:
 #     size: 4GB # Disk size.
 #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+
+# # Allows for supplying additional system extension images to install on top of base Talos image.
+# extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
 ```
 
 <hr />
@@ -2162,6 +2171,28 @@ Examples:
 
 ``` yaml
 image: ghcr.io/talos-systems/installer:latest
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>extensions</code>  <i>[]<a href="#installextensionconfig">InstallExtensionConfig</a></i>
+
+</div>
+<div class="dt">
+
+Allows for supplying additional system extension images to install on top of base Talos image.
+
+
+
+Examples:
+
+
+``` yaml
+extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
 ```
 
 
@@ -2368,6 +2399,35 @@ Valid values:
   - <code>nvme</code>
 
   - <code>sd</code>
+</div>
+
+<hr />
+
+
+
+## InstallExtensionConfig
+InstallExtensionConfig represents a configuration for a system extension.
+
+Appears in:
+
+- <code><a href="#installconfig">InstallConfig</a>.extensions</code>
+
+
+``` yaml
+ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+```
+
+<hr />
+
+<div class="dd">
+
+<code>image</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+System extension image.
+
 </div>
 
 <hr />

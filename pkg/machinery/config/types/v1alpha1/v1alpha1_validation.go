@@ -211,6 +211,18 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		result = multierror.Append(result, err)
 	}
 
+	if c.MachineConfig.MachineInstall != nil {
+		extensions := map[string]struct{}{}
+
+		for _, ext := range c.MachineConfig.MachineInstall.InstallExtensions {
+			if _, exists := extensions[ext.Image()]; exists {
+				result = multierror.Append(result, fmt.Errorf("duplicate system extension %q", ext.Image()))
+			}
+
+			extensions[ext.Image()] = struct{}{}
+		}
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))

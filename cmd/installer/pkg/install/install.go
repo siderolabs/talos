@@ -165,6 +165,10 @@ func (i *Installer) probeBootPartition() error {
 //
 //nolint:gocyclo,cyclop
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
+	if err = i.installExtensions(); err != nil {
+		return err
+	}
+
 	if i.options.Board != constants.BoardNone {
 		var b runtime.Board
 
