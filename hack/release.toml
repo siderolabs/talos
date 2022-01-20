@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.13.3"
+previous = "v0.13.4"
 
 pre_release = false
 
@@ -14,6 +14,12 @@ preface = """\
 """
 
 [notes]
+
+[notes.updates]
+        title = "Component Updates"
+        description="""\
+* Linux: 5.10.93
+"""
 
 [make_deps]
 
