@@ -75,16 +75,6 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   Unless specifically required, the machine configuration should be used
   instead.
 
-#### `talos.interface`
-
-  The network interface to use for pre-configuration booting.
-
-  If the node has multiple network interfaces, you may specify which interface
-  to use by setting this option.
-
-  Keep in mind that Talos uses indexed interface names (eth0, eth1, etc) and not
-  "predictable" interface names (enp2s0) or BIOS-enumerated (eno1) names.
-
 #### `talos.shutdown`
 
   The type of shutdown to use when Talos is told to shutdown.
@@ -101,7 +91,5 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   configure each network interface by DHCP.
   If there are many network interfaces on the machine which have link but no
   DHCP server, this can add significant boot delays.
-  
+
   This option may be specified multiple times for multiple network interfaces.
-
-
