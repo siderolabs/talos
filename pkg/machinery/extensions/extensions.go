@@ -4,3 +4,10 @@
 
 // Package extensions contains Talos extensions specific API.
 package extensions
+
+// AllowedPaths lists paths allowed in the extension images.
+var AllowedPaths = []string{
+	"/etc/cri/conf.d",
+	"/lib/firmware",
+	"/usr/local",
+}

@@ -89,8 +89,11 @@ const (
 	// ExtensionLayers is the path where the extensions layers are stored.
 	ExtensionLayers = "/layers"
 
-	// ExtensionsConfigFile extensions layers configuration file name.
+	// ExtensionsConfigFile is the extensions layers configuration file name in the initramfs.
 	ExtensionsConfigFile = "/extensions.yaml"
+
+	// ExtensionsRuntimeConfigFile extensions layers configuration file name in the rootfs.
+	ExtensionsRuntimeConfigFile = "/etc/extensions.yaml"
 
 	// EFIPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
@@ -433,6 +436,9 @@ const (
 
 	// SystemLibexecPath is the path to the system libexec directory.
 	SystemLibexecPath = SystemPath + "/libexec"
+
+	// SystemExtensionsPath is the path to the system extensions directory.
+	SystemExtensionsPath = SystemPath + "/extensions"
 
 	// CgroupMountPath is the default mount path for unified cgroupsv2 setup.
 	CgroupMountPath = "/sys/fs/cgroup"

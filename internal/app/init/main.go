@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -92,20 +93,17 @@ func recovery() {
 func mountRootFS() error {
 	log.Println("mounting the rootfs")
 
-	var extensionsConfig *extensions.Config
+	var extensionsConfig extensions.Config
 
-	extensionsConfig, err := extensions.LoadConfig(constants.ExtensionsConfigFile)
-	if err != nil {
+	if err := extensionsConfig.Read(constants.ExtensionsConfigFile); err != nil {
 		if !os.IsNotExist(err) {
 			return err
 		}
 	}
 
-	var squashfs *mount.Points
-
 	// if no extensions found use plain squashfs mount
-	if extensionsConfig == nil || len(extensionsConfig.Layers) == 0 {
-		squashfs, err = mount.SquashfsMountPoints(constants.NewRoot)
+	if len(extensionsConfig.Layers) == 0 {
+		squashfs, err := mount.SquashfsMountPoints(constants.NewRoot)
 		if err != nil {
 			return err
 		}
@@ -121,7 +119,7 @@ func mountRootFS() error {
 
 	layers := []layer{}
 
-	squashfs = mount.NewMountPoints()
+	squashfs := mount.NewMountPoints()
 
 	// going in the inverse order as earlier layers are overlayed on top of the latter ones
 	for i := len(extensionsConfig.Layers) - 1; i >= 0; i-- {
@@ -129,6 +127,8 @@ func mountRootFS() error {
 			name:  fmt.Sprintf("layer%d", i),
 			image: extensionsConfig.Layers[i].Image,
 		})
+
+		log.Printf("enabling system extension %s %s", extensionsConfig.Layers[i].Metadata.Name, extensionsConfig.Layers[i].Metadata.Version)
 	}
 
 	layers = append(layers, layer{
@@ -139,9 +139,7 @@ func mountRootFS() error {
 	overlays := make([]string, 0, len(layers))
 
 	for _, layer := range layers {
-		var dev losetup.Device
-
-		dev, err = losetup.Attach(layer.image, 0, true)
+		dev, err := losetup.Attach(layer.image, 0, true)
 		if err != nil {
 			return err
 		}
@@ -152,18 +150,22 @@ func mountRootFS() error {
 		squashfs.Set(layer.name, p)
 	}
 
-	if err = mount.Mount(squashfs); err != nil {
+	if err := mount.Mount(squashfs); err != nil {
 		return err
 	}
 
 	overlay := mount.NewMountPoints()
 	overlay.Set(constants.NewRoot, mount.NewMountPoint(strings.Join(overlays, ":"), constants.NewRoot, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.ReadOnly|mount.ReadonlyOverlay|mount.Shared)))
 
-	if err = mount.Mount(overlay); err != nil {
+	if err := mount.Mount(overlay); err != nil {
 		return err
 	}
 
-	if err = mount.Unmount(squashfs); err != nil {
+	if err := mount.Unmount(squashfs); err != nil {
+		return err
+	}
+
+	if err := unix.Mount(constants.ExtensionsConfigFile, filepath.Join(constants.NewRoot, constants.ExtensionsRuntimeConfigFile), "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
 		return err
 	}
 

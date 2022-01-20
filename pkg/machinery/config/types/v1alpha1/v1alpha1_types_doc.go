@@ -24,6 +24,7 @@ var (
 	NetworkConfigDoc                  encoder.Doc
 	InstallConfigDoc                  encoder.Doc
 	InstallDiskSelectorDoc            encoder.Doc
+	InstallExtensionConfigDoc         encoder.Doc
 	TimeConfigDoc                     encoder.Doc
 	RegistriesConfigDoc               encoder.Doc
 	PodCheckpointerDoc                encoder.Doc
@@ -667,7 +668,7 @@ func init() {
 			FieldName: "install",
 		},
 	}
-	InstallConfigDoc.Fields = make([]encoder.Doc, 7)
+	InstallConfigDoc.Fields = make([]encoder.Doc, 8)
 	InstallConfigDoc.Fields[0].Name = "disk"
 	InstallConfigDoc.Fields[0].Type = "string"
 	InstallConfigDoc.Fields[0].Note = ""
@@ -698,33 +699,40 @@ func init() {
 	InstallConfigDoc.Fields[3].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
 
 	InstallConfigDoc.Fields[3].AddExample("", "ghcr.io/talos-systems/installer:latest")
-	InstallConfigDoc.Fields[4].Name = "bootloader"
-	InstallConfigDoc.Fields[4].Type = "bool"
+	InstallConfigDoc.Fields[4].Name = "extensions"
+	InstallConfigDoc.Fields[4].Type = "[]InstallExtensionConfig"
 	InstallConfigDoc.Fields[4].Note = ""
-	InstallConfigDoc.Fields[4].Description = "Indicates if a bootloader should be installed."
-	InstallConfigDoc.Fields[4].Comments[encoder.LineComment] = "Indicates if a bootloader should be installed."
-	InstallConfigDoc.Fields[4].Values = []string{
-		"true",
-		"yes",
-		"false",
-		"no",
-	}
-	InstallConfigDoc.Fields[5].Name = "wipe"
+	InstallConfigDoc.Fields[4].Description = "Allows for supplying additionsl system extension images to install on top of base Talos image."
+	InstallConfigDoc.Fields[4].Comments[encoder.LineComment] = "Allows for supplying additionsl system extension images to install on top of base Talos image."
+
+	InstallConfigDoc.Fields[4].AddExample("", "ghcr.io/talos-systems/installer:latest")
+	InstallConfigDoc.Fields[5].Name = "bootloader"
 	InstallConfigDoc.Fields[5].Type = "bool"
 	InstallConfigDoc.Fields[5].Note = ""
-	InstallConfigDoc.Fields[5].Description = "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`."
-	InstallConfigDoc.Fields[5].Comments[encoder.LineComment] = "Indicates if the installation disk should be wiped at installation time."
+	InstallConfigDoc.Fields[5].Description = "Indicates if a bootloader should be installed."
+	InstallConfigDoc.Fields[5].Comments[encoder.LineComment] = "Indicates if a bootloader should be installed."
 	InstallConfigDoc.Fields[5].Values = []string{
 		"true",
 		"yes",
 		"false",
 		"no",
 	}
-	InstallConfigDoc.Fields[6].Name = "legacyBIOSSupport"
+	InstallConfigDoc.Fields[6].Name = "wipe"
 	InstallConfigDoc.Fields[6].Type = "bool"
 	InstallConfigDoc.Fields[6].Note = ""
-	InstallConfigDoc.Fields[6].Description = "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme."
-	InstallConfigDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if MBR partition should be marked as bootable (active)."
+	InstallConfigDoc.Fields[6].Description = "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`."
+	InstallConfigDoc.Fields[6].Comments[encoder.LineComment] = "Indicates if the installation disk should be wiped at installation time."
+	InstallConfigDoc.Fields[6].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
+	InstallConfigDoc.Fields[7].Name = "legacyBIOSSupport"
+	InstallConfigDoc.Fields[7].Type = "bool"
+	InstallConfigDoc.Fields[7].Note = ""
+	InstallConfigDoc.Fields[7].Description = "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme."
+	InstallConfigDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if MBR partition should be marked as bootable (active)."
 
 	InstallDiskSelectorDoc.Type = "InstallDiskSelector"
 	InstallDiskSelectorDoc.Comments[encoder.LineComment] = "InstallDiskSelector represents a disk query parameters for the install disk lookup."
@@ -790,6 +798,24 @@ func init() {
 		"nvme",
 		"sd",
 	}
+
+	InstallExtensionConfigDoc.Type = "InstallExtensionConfig"
+	InstallExtensionConfigDoc.Comments[encoder.LineComment] = "InstallExtensionConfig represents a configuration for a system extension."
+	InstallExtensionConfigDoc.Description = "InstallExtensionConfig represents a configuration for a system extension."
+
+	InstallExtensionConfigDoc.AddExample("", "ghcr.io/talos-systems/installer:latest")
+	InstallExtensionConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "InstallConfig",
+			FieldName: "extensions",
+		},
+	}
+	InstallExtensionConfigDoc.Fields = make([]encoder.Doc, 1)
+	InstallExtensionConfigDoc.Fields[0].Name = "image"
+	InstallExtensionConfigDoc.Fields[0].Type = "string"
+	InstallExtensionConfigDoc.Fields[0].Note = ""
+	InstallExtensionConfigDoc.Fields[0].Description = "System extension image."
+	InstallExtensionConfigDoc.Fields[0].Comments[encoder.LineComment] = "System extension image."
 
 	TimeConfigDoc.Type = "TimeConfig"
 	TimeConfigDoc.Comments[encoder.LineComment] = "TimeConfig represents the options for configuring time on a machine."
@@ -2392,6 +2418,10 @@ func (_ InstallDiskSelector) Doc() *encoder.Doc {
 	return &InstallDiskSelectorDoc
 }
 
+func (_ InstallExtensionConfig) Doc() *encoder.Doc {
+	return &InstallExtensionConfigDoc
+}
+
 func (_ TimeConfig) Doc() *encoder.Doc {
 	return &TimeConfigDoc
 }
@@ -2614,6 +2644,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&NetworkConfigDoc,
 			&InstallConfigDoc,
 			&InstallDiskSelectorDoc,
+			&InstallExtensionConfigDoc,
 			&TimeConfigDoc,
 			&RegistriesConfigDoc,
 			&PodCheckpointerDoc,

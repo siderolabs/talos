@@ -1357,18 +1357,12 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 
 		logger.Printf("performing upgrade via %q", in.GetImage())
 
-		configBytes, err := r.Config().Bytes()
-		if err != nil {
-			return fmt.Errorf("error marshaling configuration: %w", err)
-		}
-
 		// We pull the installer image when we receive an upgrade request. No need
 		// to pull it again.
 		err = install.RunInstallerContainer(
 			devname, r.State().Platform().Name(),
 			in.GetImage(),
-			configBytes,
-			r.Config().Machine().Registries(),
+			r.Config(),
 			install.OptionsFromUpgradeRequest(r, in)...,
 		)
 		if err != nil {
@@ -1604,11 +1598,6 @@ func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.
 // Install mounts or installs the system partitions.
 func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		configBytes, err := r.Config().Bytes()
-		if err != nil {
-			return fmt.Errorf("error marshaling configuration: %w", err)
-		}
-
 		switch {
 		case !r.State().Machine().Installed():
 			installerImage := r.Config().Machine().Install().Image()
@@ -1627,8 +1616,7 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				disk,
 				r.State().Platform().Name(),
 				installerImage,
-				configBytes,
-				r.Config().Machine().Registries(),
+				r.Config(),
 				install.WithForce(true),
 				install.WithZero(r.Config().Machine().Install().Zero()),
 				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
@@ -1653,8 +1641,7 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 			err = install.RunInstallerContainer(
 				devname, r.State().Platform().Name(),
 				r.State().Machine().StagedInstallImageRef(),
-				configBytes,
-				r.Config().Machine().Registries(),
+				r.Config(),
 				install.WithOptions(options),
 			)
 			if err != nil {

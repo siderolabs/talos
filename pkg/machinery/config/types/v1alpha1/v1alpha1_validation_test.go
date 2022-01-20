@@ -156,7 +156,35 @@ func TestValidate(t *testing.T) {
 			},
 			requiresInstall: true,
 		},
-
+		{
+			name: "MachineInstallExtensionsDuplicate",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineInstall: &v1alpha1.InstallConfig{
+						InstallDisk: "/dev/vda",
+						InstallExtensions: []v1alpha1.InstallExtensionConfig{
+							{
+								ExtensionImage: "ghcr.io/talos-systems/gvisor:v0.1.0",
+							},
+							{
+								ExtensionImage: "ghcr.io/talos-systems/gvisor:v0.1.0",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			requiresInstall: true,
+			expectedError:   "1 error occurred:\n\t* duplicate system extension \"ghcr.io/talos-systems/gvisor:v0.1.0\"\n\n",
+		},
 		{
 			name: "ExternalCloudProviderEnabled",
 			config: &v1alpha1.Config{

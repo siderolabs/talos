@@ -17,24 +17,30 @@ type Config struct {
 
 // Layer defines overlay mount layer.
 type Layer struct {
-	Image string `yaml:"image"`
+	Image    string   `yaml:"image"`
+	Metadata Metadata `yaml:"metadata"`
 }
 
-// LoadConfig load extensions config from a file.
-func LoadConfig(path string) (*Config, error) {
+// Read extensions config from a file.
+func (cfg *Config) Read(path string) error {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer f.Close() //nolint:errcheck
 
-	var extensions *Config
+	return yaml.NewDecoder(f).Decode(cfg)
+}
 
-	decoder := yaml.NewDecoder(f)
-	if err = decoder.Decode(&extensions); err != nil {
-		return nil, err
+// Write extensions config to a file.
+func (cfg *Config) Write(path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
 	}
 
-	return extensions, nil
+	defer f.Close() //nolint:errcheck
+
+	return yaml.NewEncoder(f).Encode(cfg)
 }
