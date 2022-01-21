@@ -35,8 +35,8 @@ function setup {
   ## TODO: update to talos-systems once merged
   ${CLUSTERCTL} config cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/talos-systems/cluster-api-templates/blob/main/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
-  
+    --from https://github.com/talos-systems/cluster-api-templates/blob/v1alpha4/gcp/standard/standard.yaml > ${TMP}/cluster.yaml
+
 }
 
 setup

@@ -1,3 +1,43 @@
+## [Talos 0.13.5](https://github.com/talos-systems/talos/releases/tag/v0.13.5) (2022-01-21)
+
+Welcome to the v0.13.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Component Updates
+
+* Linux: 5.10.93
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`8f8e2984e`](https://github.com/talos-systems/talos/commit/8f8e2984e72c42e895bf22ce8b57eec1a8155364) chore: update Linux to 5.10.93
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`fad52ab`](https://github.com/talos-systems/pkgs/commit/fad52abc63dcaa3e67c91a2a4b70077f03ff7952) feat: update Linux to 5.10.93
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/pkgs**  v0.8.0 -> v0.8.0-1-gfad52ab
+
+Previous release can be found at [v0.13.4](https://github.com/talos-systems/talos/releases/tag/v0.13.4)
+
 ## [Talos 0.13.4](https://github.com/talos-systems/talos/releases/tag/v0.13.4) (2021-11-29)
 
 Welcome to the v0.13.4 release of Talos!
