@@ -97,7 +97,8 @@ talosctl cluster create [flags]
       --config-patch string                     patch generated machineconfigs (applied to all node types)
       --config-patch-control-plane string       patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker string              patch generated machineconfigs (applied to 'worker' type)
-      --cpus string                             the share of CPUs as fraction (each container/VM) (default "2.0")
+      --cpus string                             the share of CPUs as fraction (each control plane/VM) (default "2.0")
+      --cpus-workers string                     the share of CPUs as fraction (each worker/VM) (default "2.0")
       --crashdump                               print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
       --disk int                                default limit on disk size in MB (each VM) (default 6144)
@@ -109,6 +110,8 @@ talosctl cluster create [flags]
       --endpoint string                         use endpoint instead of provider defaults
   -p, --exposed-ports string                    Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
       --extra-boot-kernel-args string           add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)
+      --extra-disks int                         number of extra disks to create for each worker VM
+      --extra-disks-size int                    default limit on disk size in MB (each VM) (default 5120)
   -h, --help                                    help for create
       --image string                            the image to use (default "ghcr.io/talos-systems/talos:latest")
       --init-node-as-endpoint                   use init node as endpoint instead of any load balancer endpoint
@@ -120,7 +123,8 @@ talosctl cluster create [flags]
       --iso-path string                         the ISO path to use for the initial boot (VM only)
       --kubernetes-version string               desired kubernetes version to run (default "1.23.3")
       --masters int                             the number of masters to create (default 1)
-      --memory int                              the limit on memory usage in MB (each container/VM) (default 2048)
+      --memory int                              the limit on memory usage in MB (each control plane/VM) (default 2048)
+      --memory-workers int                      the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                 MTU of the cluster network (default 1500)
       --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for

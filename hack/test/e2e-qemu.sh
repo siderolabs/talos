@@ -82,6 +82,15 @@ case "${WITH_CONFIG_PATCH:-false}" in
     ;;
 esac
 
+case "${WITH_CSI_STORAGE_CLASS:-false}" in
+  false)
+    CSI_STORAGE_CLASS_FLAG=
+    ;;
+  *)
+    CSI_STORAGE_CLASS_FLAG="run_csi_tests"
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
@@ -91,9 +100,14 @@ function create_cluster {
     --kubernetes-version=${KUBERNETES_VERSION} \
     --masters=3 \
     --workers="${QEMU_WORKERS:-1}" \
+    --disk=15360 \
+    --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
+    --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-5120}" \
     --mtu=1450 \
     --memory=2048 \
+    --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
     --cpus="${QEMU_CPUS:-2}" \
+    --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
     --user-disk=/var/lib/extra:100MB \
     --user-disk=/var/lib/p1:100MB:/var/lib/p2:100MB \
@@ -125,6 +139,7 @@ case "${TEST_MODE:-default}" in
     get_kubeconfig
     run_talos_integration_test
     run_kubernetes_integration_test
+    ${CSI_STORAGE_CLASS_FLAG}
     ;;
 esac
 
