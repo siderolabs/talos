@@ -94,7 +94,7 @@ require (
 	github.com/talos-systems/grpc-proxy v0.2.0
 	github.com/talos-systems/net v0.3.1
 	github.com/talos-systems/siderolink v0.1.0
-	github.com/talos-systems/talos/pkg/machinery v0.14.0
+	github.com/talos-systems/talos/pkg/machinery v0.14.1
 	github.com/u-root/u-root v7.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	github.com/vmware-tanzu/sonobuoy v0.55.1

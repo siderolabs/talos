@@ -1,3 +1,47 @@
+## [Talos 0.14.1](https://github.com/talos-systems/talos/releases/tag/v0.14.1) (2022-01-21)
+
+Welcome to the v0.14.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.16
+* CoreDNS: 1.8.7
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`b6be476b4`](https://github.com/talos-systems/talos/commit/b6be476b47d2347bd97dc190a3b28d7e5fabd2a8) feat: update CoreDNS to 1.8.7
+* [`ba39f682c`](https://github.com/talos-systems/talos/commit/ba39f682c30f542c9bea4ed7ce4e4e00f62699fc) test: attempt number on two on proper retries in CLI time tests
+* [`c1c5d9e8e`](https://github.com/talos-systems/talos/commit/c1c5d9e8e77c6ffc927226e2816840da9c0df3ac) fix: pass path to conformance retrieve results
+* [`4e2b32f98`](https://github.com/talos-systems/talos/commit/4e2b32f98aa2cd41d4ccc19a709a2b6448775800) chore: update Linux to 5.15.16
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`447ce75`](https://github.com/talos-systems/pkgs/commit/447ce75a950ef1adfc3f1045d28353d7ce6387cb) feat: update Linux to 5.15.16
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/pkgs**  v0.9.0-1-g7a3419a -> v0.9.0-2-g447ce75
+
+Previous release can be found at [v0.14.0](https://github.com/talos-systems/talos/releases/tag/v0.14.0)
+
 ## [Talos 0.14.0](https://github.com/talos-systems/talos/releases/tag/v0.14.0) (2021-12-21)
 
 Welcome to the v0.14.0 release of Talos!
