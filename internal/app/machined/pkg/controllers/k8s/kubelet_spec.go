@@ -221,5 +221,6 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		Logging: v1alpha1.LoggingConfiguration{
 			Format: "json",
 		},
+		TLSMinVersion: "VersionTLS13",
 	}
 }

@@ -251,28 +251,30 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"proxy-client-cert-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt"),
 		"proxy-client-key-file":              filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key"),
 		"enable-bootstrap-token-auth":        "true",
-		"tls-cipher-suites":                  "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
-		"encryption-provider-config":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml"),
-		"audit-policy-file":                  filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml"),
-		"audit-log-path":                     "-",
-		"audit-log-maxage":                   "30",
-		"audit-log-maxbackup":                "3",
-		"audit-log-maxsize":                  "50",
-		"profiling":                          "false",
-		"etcd-cafile":                        filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt"),
-		"etcd-certfile":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt"),
-		"etcd-keyfile":                       filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key"),
-		"etcd-servers":                       strings.Join(cfg.EtcdServers, ","),
-		"kubelet-client-certificate":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt"),
-		"kubelet-client-key":                 filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key"),
-		"secure-port":                        strconv.FormatInt(int64(cfg.LocalPort), 10),
-		"service-account-issuer":             cfg.ControlPlaneEndpoint,
-		"service-account-key-file":           filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub"),
-		"service-account-signing-key-file":   filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key"),
-		"service-cluster-ip-range":           strings.Join(cfg.ServiceCIDRs, ","),
-		"tls-cert-file":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt"),
-		"tls-private-key-file":               filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key"),
-		"kubelet-preferred-address-types":    "InternalIP,ExternalIP,Hostname",
+		// NB: using TLS 1.2 instead of 1.3 here for interoperability, since this is an externally-facing service.
+		"tls-min-version":                  "VersionTLS12",
+		"tls-cipher-suites":                "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
+		"encryption-provider-config":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml"),
+		"audit-policy-file":                filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml"),
+		"audit-log-path":                   "-",
+		"audit-log-maxage":                 "30",
+		"audit-log-maxbackup":              "3",
+		"audit-log-maxsize":                "50",
+		"profiling":                        "false",
+		"etcd-cafile":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt"),
+		"etcd-certfile":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt"),
+		"etcd-keyfile":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key"),
+		"etcd-servers":                     strings.Join(cfg.EtcdServers, ","),
+		"kubelet-client-certificate":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt"),
+		"kubelet-client-key":               filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key"),
+		"secure-port":                      strconv.FormatInt(int64(cfg.LocalPort), 10),
+		"service-account-issuer":           cfg.ControlPlaneEndpoint,
+		"service-account-key-file":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub"),
+		"service-account-signing-key-file": filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key"),
+		"service-cluster-ip-range":         strings.Join(cfg.ServiceCIDRs, ","),
+		"tls-cert-file":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt"),
+		"tls-private-key-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key"),
+		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
 	}
 
 	if cfg.CloudProvider != "" {
@@ -407,6 +409,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		"root-ca-file":                     filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
 		"service-account-private-key-file": filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key"),
 		"profiling":                        "false",
+		"tls-min-version":                  "VersionTLS13",
 	}
 
 	if cfg.CloudProvider != "" {
@@ -525,6 +528,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"port":                                   "0",
 		"leader-elect":                           "true",
 		"profiling":                              "false",
+		"tls-min-version":                        "VersionTLS13",
 	}
 
 	mergePolicies := argsbuilder.MergePolicies{
