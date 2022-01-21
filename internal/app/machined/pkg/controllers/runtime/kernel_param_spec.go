@@ -112,7 +112,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 
 							return nil
 						}); e != nil {
-							errs = multierror.Append(errs, err)
+							errs = multierror.Append(errs, e)
 						}
 					} else {
 						errs = multierror.Append(errs, err)
