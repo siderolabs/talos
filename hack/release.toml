@@ -147,6 +147,13 @@ Talos now provides a way to extend set of system services Talos runs with extens
 Extension services should be included in the Talos root filesystem (e.g. via system extensions).
 """
 
+    [notes.sysfs]
+        title = "Support Sysfs Params"
+        description="""\
+Support writing kernel parameters to `/sys`.
+To write kernel params to `/sys` `.machine.sysfs` config parameters can be used.
+"""
+
 [make_deps]
 
     [make_deps.tools]

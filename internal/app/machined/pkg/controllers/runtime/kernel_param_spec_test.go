@@ -34,6 +34,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 	def := ""
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, fsFileMax)
+	spec.TypedSpec().Key = fsFileMax
 	spec.TypedSpec().Value = value
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, spec))
@@ -88,6 +89,7 @@ func (suite *KernelParamSpecSuite) TestParamsUnsupported() {
 	id := "some.really.not.existing.sysctl"
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, id)
+	spec.TypedSpec().Key = id
 	spec.TypedSpec().Value = "value"
 	spec.TypedSpec().IgnoreErrors = true
 

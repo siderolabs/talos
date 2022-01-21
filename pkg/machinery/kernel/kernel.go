@@ -5,8 +5,15 @@
 package kernel
 
 import (
-	"path"
+	"path/filepath"
 	"strings"
+)
+
+const (
+	// Sysfs defines prefix for sysfs kernel params.
+	Sysfs = "/sys"
+	// Sysctl defines prefix for sysctl kernel params.
+	Sysctl = "/proc/sys"
 )
 
 // DefaultArgs returns the Talos default kernel commandline options.
@@ -34,5 +41,12 @@ type Param struct {
 
 // Path returns the path to the systctl file under /proc/sys.
 func (prop *Param) Path() string {
-	return path.Join("/proc/sys", strings.ReplaceAll(prop.Key, ".", "/"))
+	res := strings.ReplaceAll(prop.Key, ".", "/")
+
+	// fallback to the old behavior if the key path is not absolute
+	if !strings.HasPrefix(res, "/") {
+		res = filepath.Join(Sysctl, res)
+	}
+
+	return res
 }

@@ -1105,6 +1105,13 @@ func (in *MachineConfig) DeepCopyInto(out *MachineConfig) {
 			(*out)[key] = val
 		}
 	}
+	if in.MachineSysfs != nil {
+		in, out := &in.MachineSysfs, &out.MachineSysfs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.MachineRegistries.DeepCopyInto(&out.MachineRegistries)
 	if in.MachineSystemDiskEncryption != nil {
 		in, out := &in.MachineSystemDiskEncryption, &out.MachineSystemDiskEncryption

@@ -138,7 +138,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 20)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 21)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -251,48 +251,55 @@ func init() {
 	MachineConfigDoc.Fields[13].Comments[encoder.LineComment] = "Used to configure the machine's sysctls."
 
 	MachineConfigDoc.Fields[13].AddExample("MachineSysctls usage example.", machineSysctlsExample)
-	MachineConfigDoc.Fields[14].Name = "registries"
-	MachineConfigDoc.Fields[14].Type = "RegistriesConfig"
+	MachineConfigDoc.Fields[14].Name = "sysfs"
+	MachineConfigDoc.Fields[14].Type = "map[string]string"
 	MachineConfigDoc.Fields[14].Note = ""
-	MachineConfigDoc.Fields[14].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
-	MachineConfigDoc.Fields[14].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
+	MachineConfigDoc.Fields[14].Description = "Used to configure the machine's sysfs."
+	MachineConfigDoc.Fields[14].Comments[encoder.LineComment] = "Used to configure the machine's sysfs."
 
-	MachineConfigDoc.Fields[14].AddExample("", machineConfigRegistriesExample)
-	MachineConfigDoc.Fields[15].Name = "systemDiskEncryption"
-	MachineConfigDoc.Fields[15].Type = "SystemDiskEncryptionConfig"
+	MachineConfigDoc.Fields[14].AddExample("MachineSysfs usage example.", machineSysfsExample)
+	MachineConfigDoc.Fields[15].Name = "registries"
+	MachineConfigDoc.Fields[15].Type = "RegistriesConfig"
 	MachineConfigDoc.Fields[15].Note = ""
-	MachineConfigDoc.Fields[15].Description = "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
-	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Machine system disk encryption configuration."
+	MachineConfigDoc.Fields[15].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
+	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
 
-	MachineConfigDoc.Fields[15].AddExample("", machineSystemDiskEncryptionExample)
-	MachineConfigDoc.Fields[16].Name = "features"
-	MachineConfigDoc.Fields[16].Type = "FeaturesConfig"
+	MachineConfigDoc.Fields[15].AddExample("", machineConfigRegistriesExample)
+	MachineConfigDoc.Fields[16].Name = "systemDiskEncryption"
+	MachineConfigDoc.Fields[16].Type = "SystemDiskEncryptionConfig"
 	MachineConfigDoc.Fields[16].Note = ""
-	MachineConfigDoc.Fields[16].Description = "Features describe individual Talos features that can be switched on or off."
-	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Features describe individual Talos features that can be switched on or off."
+	MachineConfigDoc.Fields[16].Description = "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
+	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Machine system disk encryption configuration."
 
-	MachineConfigDoc.Fields[16].AddExample("", machineFeaturesExample)
-	MachineConfigDoc.Fields[17].Name = "udev"
-	MachineConfigDoc.Fields[17].Type = "UdevConfig"
+	MachineConfigDoc.Fields[16].AddExample("", machineSystemDiskEncryptionExample)
+	MachineConfigDoc.Fields[17].Name = "features"
+	MachineConfigDoc.Fields[17].Type = "FeaturesConfig"
 	MachineConfigDoc.Fields[17].Note = ""
-	MachineConfigDoc.Fields[17].Description = "Configures the udev system."
-	MachineConfigDoc.Fields[17].Comments[encoder.LineComment] = "Configures the udev system."
+	MachineConfigDoc.Fields[17].Description = "Features describe individual Talos features that can be switched on or off."
+	MachineConfigDoc.Fields[17].Comments[encoder.LineComment] = "Features describe individual Talos features that can be switched on or off."
 
-	MachineConfigDoc.Fields[17].AddExample("", machineUdevExample)
-	MachineConfigDoc.Fields[18].Name = "logging"
-	MachineConfigDoc.Fields[18].Type = "LoggingConfig"
+	MachineConfigDoc.Fields[17].AddExample("", machineFeaturesExample)
+	MachineConfigDoc.Fields[18].Name = "udev"
+	MachineConfigDoc.Fields[18].Type = "UdevConfig"
 	MachineConfigDoc.Fields[18].Note = ""
-	MachineConfigDoc.Fields[18].Description = "Configures the logging system."
-	MachineConfigDoc.Fields[18].Comments[encoder.LineComment] = "Configures the logging system."
+	MachineConfigDoc.Fields[18].Description = "Configures the udev system."
+	MachineConfigDoc.Fields[18].Comments[encoder.LineComment] = "Configures the udev system."
 
-	MachineConfigDoc.Fields[18].AddExample("", machineLoggingExample)
-	MachineConfigDoc.Fields[19].Name = "kernel"
-	MachineConfigDoc.Fields[19].Type = "KernelConfig"
+	MachineConfigDoc.Fields[18].AddExample("", machineUdevExample)
+	MachineConfigDoc.Fields[19].Name = "logging"
+	MachineConfigDoc.Fields[19].Type = "LoggingConfig"
 	MachineConfigDoc.Fields[19].Note = ""
-	MachineConfigDoc.Fields[19].Description = "Configures the kernel."
-	MachineConfigDoc.Fields[19].Comments[encoder.LineComment] = "Configures the kernel."
+	MachineConfigDoc.Fields[19].Description = "Configures the logging system."
+	MachineConfigDoc.Fields[19].Comments[encoder.LineComment] = "Configures the logging system."
 
-	MachineConfigDoc.Fields[19].AddExample("", machineKernelExample)
+	MachineConfigDoc.Fields[19].AddExample("", machineLoggingExample)
+	MachineConfigDoc.Fields[20].Name = "kernel"
+	MachineConfigDoc.Fields[20].Type = "KernelConfig"
+	MachineConfigDoc.Fields[20].Note = ""
+	MachineConfigDoc.Fields[20].Description = "Configures the kernel."
+	MachineConfigDoc.Fields[20].Comments[encoder.LineComment] = "Configures the kernel."
+
+	MachineConfigDoc.Fields[20].AddExample("", machineKernelExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."

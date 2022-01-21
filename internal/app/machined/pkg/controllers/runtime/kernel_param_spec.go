@@ -95,17 +95,17 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 
 			for i, item := range list {
 				spec := item.(runtime.KernelParam).TypedSpec()
-				key := item.Metadata().ID()
+				id := item.Metadata().ID()
 
-				if value, duplicate := touchedIDs[key]; i >= configsCounts && duplicate {
-					logger.Warn("overriding KSPP enforced parameter, this is not recommended", zap.String("key", key), zap.String("value", value))
+				if value, duplicate := touchedIDs[spec.Key]; i >= configsCounts && duplicate {
+					logger.Warn("overriding KSPP enforced parameter, this is not recommended", zap.String("key", spec.Key), zap.String("value", value))
 
 					continue
 				}
 
-				if err = ctrl.updateKernelParam(ctx, r, key, spec.Value); err != nil {
+				if err = ctrl.updateKernelParam(ctx, r, id, spec.Key, spec.Value); err != nil {
 					if errors.Is(err, os.ErrNotExist) && spec.IgnoreErrors {
-						status := runtime.NewKernelParamStatus(runtime.NamespaceName, key)
+						status := runtime.NewKernelParamStatus(runtime.NamespaceName, id)
 
 						if e := r.Modify(ctx, status, func(res resource.Resource) error {
 							res.(*runtime.KernelParamStatus).TypedSpec().Unsupported = true
@@ -121,7 +121,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 					continue
 				}
 
-				touchedIDs[item.Metadata().ID()] = spec.Value
+				touchedIDs[spec.Key] = spec.Value
 			}
 
 			for key := range ctrl.state {
@@ -141,8 +141,11 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 	}
 }
 
-func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r controller.Runtime, key, value string) error {
-	prop := &kernel.Param{Key: key, Value: value}
+func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r controller.Runtime, id, key, value string) error {
+	prop := &kernel.Param{
+		Key:   key,
+		Value: value,
+	}
 
 	if _, ok := ctrl.defaults[key]; !ok {
 		if data, err := krnl.ReadParam(prop); err == nil {
@@ -158,7 +161,7 @@ func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r 
 
 	ctrl.state[key] = value
 
-	status := runtime.NewKernelParamStatus(runtime.NamespaceName, key)
+	status := runtime.NewKernelParamStatus(runtime.NamespaceName, id)
 
 	return r.Modify(ctx, status, func(res resource.Resource) error {
 		res.(*runtime.KernelParamStatus).TypedSpec().Current = value

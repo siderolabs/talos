@@ -56,6 +56,7 @@ type MachineConfig interface {
 	Pods() []map[string]interface{}
 	Kubelet() Kubelet
 	Sysctls() map[string]string
+	Sysfs() map[string]string
 	Registries() Registries
 	SystemDiskEncryption() SystemDiskEncryption
 	Features() Features
