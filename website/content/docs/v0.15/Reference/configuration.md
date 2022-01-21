@@ -700,6 +700,29 @@ sysctls:
 <hr />
 <div class="dd">
 
+<code>sysfs</code>  <i>map[string]string</i>
+
+</div>
+<div class="dt">
+
+Used to configure the machine's sysfs.
+
+
+
+Examples:
+
+
+``` yaml
+sysfs:
+    device.system.cpu.cpu0.cpufreq.scaling_governor: performance
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>registries</code>  <i><a href="#registriesconfig">RegistriesConfig</a></i>
 
 </div>

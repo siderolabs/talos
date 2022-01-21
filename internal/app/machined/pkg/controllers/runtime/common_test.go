@@ -25,7 +25,9 @@ import (
 )
 
 const (
-	fsFileMax = "fs.file-max"
+	fsFileMax        = "fs.file-max"
+	procSysfsFileMax = "proc.sys.fs.file-max"
+	sysfsFileMax     = "sys.fs.file-max"
 )
 
 type RuntimeSuite struct {

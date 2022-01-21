@@ -50,31 +50,31 @@ func EnforceKSPPKernelParameters() error {
 func GetKernelParams() []*kernel.Param {
 	return []*kernel.Param{
 		{
-			Key:   "kernel.kptr_restrict",
+			Key:   "proc.sys.kernel.kptr_restrict",
 			Value: "1",
 		},
 		{
-			Key:   "kernel.dmesg_restrict",
+			Key:   "proc.sys.kernel.dmesg_restrict",
 			Value: "1",
 		},
 		{
-			Key:   "kernel.perf_event_paranoid",
+			Key:   "proc.sys.kernel.perf_event_paranoid",
 			Value: "3",
 		},
 		{
-			Key:   "kernel.yama.ptrace_scope",
+			Key:   "proc.sys.kernel.yama.ptrace_scope",
 			Value: "1",
 		},
 		{
-			Key:   "user.max_user_namespaces",
+			Key:   "proc.sys.user.max_user_namespaces",
 			Value: "0",
 		},
 		{
-			Key:   "kernel.unprivileged_bpf_disabled",
+			Key:   "proc.sys.kernel.unprivileged_bpf_disabled",
 			Value: "1",
 		},
 		{
-			Key:   "net.core.bpf_jit_harden",
+			Key:   "proc.sys.net.core.bpf_jit_harden",
 			Value: "2",
 		},
 	}

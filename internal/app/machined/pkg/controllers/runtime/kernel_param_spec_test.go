@@ -33,12 +33,14 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 	value := "500000"
 	def := ""
 
-	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, fsFileMax)
+	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, procSysfsFileMax)
 	spec.TypedSpec().Value = value
+
+	param := &kernel.Param{Key: procSysfsFileMax}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, spec))
 
-	statusMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamStatusType, fsFileMax, resource.VersionUndefined)
+	statusMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamStatusType, procSysfsFileMax, resource.VersionUndefined)
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(
@@ -51,7 +53,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		),
 	))
 
-	prop, err := krnl.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err := krnl.ReadParam(param)
 	suite.Assert().NoError(err)
 	suite.Require().Equal(value, strings.TrimSpace(string(prop)))
 
@@ -75,7 +77,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		},
 	))
 
-	prop, err = krnl.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err = krnl.ReadParam(param)
 	suite.Assert().NoError(err)
 	suite.Require().Equal(def, strings.TrimSpace(string(prop)))
 }
@@ -85,7 +87,7 @@ func (suite *KernelParamSpecSuite) TestParamsUnsupported() {
 
 	suite.startRuntime()
 
-	id := "some.really.not.existing.sysctl"
+	id := "proc.sys.some.really.not.existing.sysctl"
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, id)
 	spec.TypedSpec().Value = "value"

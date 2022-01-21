@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	krnl "github.com/talos-systems/talos/pkg/kernel"
+	"github.com/talos-systems/talos/pkg/kernel/kspp"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
@@ -58,7 +59,7 @@ func (ctrl *KernelParamSpecController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.state == nil {
 		ctrl.state = map[string]string{}
@@ -73,6 +74,12 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+			ksppParams := map[string]struct{}{}
+
+			for _, param := range kspp.GetKernelParams() {
+				ksppParams[param.Key] = struct{}{}
+			}
+
 			defaults, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelParamDefaultSpecType, "", resource.VersionUndefined))
 			if err != nil {
 				return err
@@ -95,17 +102,19 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 
 			for i, item := range list {
 				spec := item.(runtime.KernelParam).TypedSpec()
-				key := item.Metadata().ID()
+				id := item.Metadata().ID()
 
-				if value, duplicate := touchedIDs[key]; i >= configsCounts && duplicate {
-					logger.Warn("overriding KSPP enforced parameter, this is not recommended", zap.String("key", key), zap.String("value", value))
+				if value, duplicate := touchedIDs[id]; i >= configsCounts && duplicate {
+					if _, ok := ksppParams[id]; ok {
+						logger.Warn("overriding KSPP enforced parameter, this is not recommended", zap.String("key", id), zap.String("value", value))
+					}
 
 					continue
 				}
 
-				if err = ctrl.updateKernelParam(ctx, r, key, spec.Value); err != nil {
+				if err = ctrl.updateKernelParam(ctx, r, id, spec.Value); err != nil {
 					if errors.Is(err, os.ErrNotExist) && spec.IgnoreErrors {
-						status := runtime.NewKernelParamStatus(runtime.NamespaceName, key)
+						status := runtime.NewKernelParamStatus(runtime.NamespaceName, id)
 
 						if e := r.Modify(ctx, status, func(res resource.Resource) error {
 							res.(*runtime.KernelParamStatus).TypedSpec().Unsupported = true
@@ -121,7 +130,7 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 					continue
 				}
 
-				touchedIDs[item.Metadata().ID()] = spec.Value
+				touchedIDs[id] = spec.Value
 			}
 
 			for key := range ctrl.state {
@@ -142,7 +151,10 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 }
 
 func (ctrl *KernelParamSpecController) updateKernelParam(ctx context.Context, r controller.Runtime, key, value string) error {
-	prop := &kernel.Param{Key: key, Value: value}
+	prop := &kernel.Param{
+		Key:   key,
+		Value: value,
+	}
 
 	if _, ok := ctrl.defaults[key]; !ok {
 		if data, err := krnl.ReadParam(prop); err == nil {

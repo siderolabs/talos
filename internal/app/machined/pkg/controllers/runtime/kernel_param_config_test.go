@@ -29,6 +29,7 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	suite.startRuntime()
 
 	value := "500000"
+	valueSysfs := "600000"
 
 	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -36,19 +37,37 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 			MachineSysctls: map[string]string{
 				fsFileMax: value,
 			},
+			MachineSysfs: map[string]string{
+				fsFileMax: valueSysfs,
+			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	specMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, fsFileMax, resource.VersionUndefined)
+	sysctlMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, procSysfsFileMax, resource.VersionUndefined)
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(
-			specMD,
+			sysctlMD,
 			func(res resource.Resource) bool {
-				return res.(*runtimeresource.KernelParamSpec).TypedSpec().Value == value
+				spec := res.(*runtimeresource.KernelParamSpec).TypedSpec()
+
+				return suite.Assert().Equal(value, spec.Value)
+			},
+		),
+	))
+
+	sysfsMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, sysfsFileMax, resource.VersionUndefined)
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(
+			sysfsMD,
+			func(res resource.Resource) bool {
+				spec := res.(*runtimeresource.KernelParamSpec).TypedSpec()
+
+				return suite.Assert().Equal(valueSysfs, spec.Value)
 			},
 		),
 	))
@@ -57,6 +76,9 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineSysctls: map[string]string{},
+			MachineSysfs: map[string]string{
+				fsFileMax: valueSysfs,
+			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
@@ -72,7 +94,7 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	// wait for the resource to be removed
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			for _, md := range []resource.Metadata{specMD} {
+			for _, md := range []resource.Metadata{sysctlMD} {
 				_, err = suite.state.Get(suite.ctx, md)
 				if err != nil {
 					if state.IsNotFoundError(err) {
