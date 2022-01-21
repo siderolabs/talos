@@ -35,6 +35,7 @@ type KernelParamSpec struct {
 
 // KernelParamSpecSpec describes status of the defined sysctls.
 type KernelParamSpecSpec struct {
+	Key          string `yaml:"key"`
 	Value        string `yaml:"value"`
 	IgnoreErrors bool   `yaml:"ignoreErrors"`
 }

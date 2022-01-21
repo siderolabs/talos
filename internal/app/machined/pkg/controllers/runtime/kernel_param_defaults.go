@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -58,6 +59,7 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 			item := runtime.NewKernelParamDefaultSpec(runtime.NamespaceName, prop.Key)
 
 			if err := r.Modify(ctx, item, func(res resource.Resource) error {
+				res.(*runtime.KernelParamDefaultSpec).TypedSpec().Key = filepath.Join(kernel.Sysctl, prop.Key)
 				res.(*runtime.KernelParamDefaultSpec).TypedSpec().Value = value
 
 				if item.Metadata().ID() == "net.ipv6.conf.default.forwarding" {

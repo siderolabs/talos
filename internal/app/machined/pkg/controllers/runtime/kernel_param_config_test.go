@@ -5,6 +5,8 @@ package runtime_test
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 
 	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	runtimeresource "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
@@ -29,6 +32,7 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	suite.startRuntime()
 
 	value := "500000"
+	valueSysfs := "600000"
 
 	cfg := config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -36,19 +40,39 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 			MachineSysctls: map[string]string{
 				fsFileMax: value,
 			},
+			MachineSysfs: map[string]string{
+				fsFileMax: valueSysfs,
+			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
+	key := filepath.Join(kernel.Sysctl, strings.ReplaceAll(fsFileMax, ".", "/"))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	specMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, fsFileMax, resource.VersionUndefined)
+	sysctlMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, "sysctl/"+fsFileMax, resource.VersionUndefined)
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(
-			specMD,
+			sysctlMD,
 			func(res resource.Resource) bool {
-				return res.(*runtimeresource.KernelParamSpec).TypedSpec().Value == value
+				spec := res.(*runtimeresource.KernelParamSpec).TypedSpec()
+
+				return suite.Assert().Equal(value, spec.Value) && suite.Assert().Equal(key, spec.Key)
+			},
+		),
+	))
+
+	sysfsMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamSpecType, "sysfs/"+fsFileMax, resource.VersionUndefined)
+	key = filepath.Join(kernel.Sysfs, strings.ReplaceAll(fsFileMax, ".", "/"))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(
+			sysfsMD,
+			func(res resource.Resource) bool {
+				spec := res.(*runtimeresource.KernelParamSpec).TypedSpec()
+
+				return suite.Assert().Equal(valueSysfs, spec.Value) && suite.Assert().Equal(key, spec.Key)
 			},
 		),
 	))
@@ -57,6 +81,9 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineSysctls: map[string]string{},
+			MachineSysfs: map[string]string{
+				fsFileMax: valueSysfs,
+			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
@@ -72,7 +99,7 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	// wait for the resource to be removed
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			for _, md := range []resource.Metadata{specMD} {
+			for _, md := range []resource.Metadata{sysctlMD} {
 				_, err = suite.state.Get(suite.ctx, md)
 				if err != nil {
 					if state.IsNotFoundError(err) {

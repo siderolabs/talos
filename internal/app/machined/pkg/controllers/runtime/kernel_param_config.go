@@ -7,6 +7,8 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -14,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
@@ -65,19 +68,32 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 
 			touchedIDs := make(map[resource.ID]struct{})
 
+			setKernelParam := func(kind, prefix, key, value string) error {
+				path := filepath.Join(prefix, strings.ReplaceAll(key, ".", "/"))
+				id := filepath.Join(kind, key)
+
+				item := runtime.NewKernelParamSpec(runtime.NamespaceName, id)
+
+				touchedIDs[id] = struct{}{}
+
+				return r.Modify(ctx, item, func(res resource.Resource) error {
+					res.(*runtime.KernelParamSpec).TypedSpec().Key = path
+					res.(*runtime.KernelParamSpec).TypedSpec().Value = value
+
+					return nil
+				})
+			}
+
 			if cfg != nil {
 				c, _ := cfg.(*config.MachineConfig) //nolint:errcheck
 				for key, value := range c.Config().Machine().Sysctls() {
-					touchedIDs[key] = struct{}{}
+					if err = setKernelParam("sysctl", kernel.Sysctl, key, value); err != nil {
+						return err
+					}
+				}
 
-					value := value
-					item := runtime.NewKernelParamSpec(runtime.NamespaceName, key)
-
-					if err = r.Modify(ctx, item, func(res resource.Resource) error {
-						res.(*runtime.KernelParamSpec).TypedSpec().Value = value
-
-						return nil
-					}); err != nil {
+				for key, value := range c.Config().Machine().Sysfs() {
+					if err = setKernelParam("sysfs", kernel.Sysfs, key, value); err != nil {
 						return err
 					}
 				}

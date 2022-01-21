@@ -6,6 +6,7 @@ package runtime_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -32,8 +33,10 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 
 	value := "500000"
 	def := ""
+	param := &kernel.Param{Key: filepath.Join(kernel.Sysctl, fsFileMax)}
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, fsFileMax)
+	spec.TypedSpec().Key = param.Key
 	spec.TypedSpec().Value = value
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, spec))
@@ -51,7 +54,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		),
 	))
 
-	prop, err := krnl.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err := krnl.ReadParam(param)
 	suite.Assert().NoError(err)
 	suite.Require().Equal(value, strings.TrimSpace(string(prop)))
 
@@ -75,7 +78,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 		},
 	))
 
-	prop, err = krnl.ReadParam(&kernel.Param{Key: fsFileMax})
+	prop, err = krnl.ReadParam(param)
 	suite.Assert().NoError(err)
 	suite.Require().Equal(def, strings.TrimSpace(string(prop)))
 }
@@ -88,6 +91,7 @@ func (suite *KernelParamSpecSuite) TestParamsUnsupported() {
 	id := "some.really.not.existing.sysctl"
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, id)
+	spec.TypedSpec().Key = id
 	spec.TypedSpec().Value = "value"
 	spec.TypedSpec().IgnoreErrors = true
 
