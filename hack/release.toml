@@ -70,6 +70,13 @@ even if Talos is booted in maintenance mode (without machine configuration is pl
 Talos now supports Jetson Nano SBC.
 """
 
+    [notes.patching]
+        title = "Machine Configuration Patching"
+        description="""\
+`talosctl` commands which accept JSON patches (`gen config`, `cluster create`, `patch machineconfig`) now support multiple patches, loading patches
+from files with `@file.json` syntax, and support loading from YAML format.
+"""
+
 [make_deps]
 
     [make_deps.tools]

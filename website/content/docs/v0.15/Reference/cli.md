@@ -87,66 +87,66 @@ talosctl cluster create [flags]
 ### Options
 
 ```
-      --arch string                             cluster architecture (default "amd64")
-      --bad-rtc                                 launch VM with bad RTC state (QEMU only)
-      --cidr string                             CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
-      --cni-bin-path strings                    search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                   URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.15.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")
-      --cni-cache-dir string                    CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
-      --cni-conf-dir string                     CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
-      --config-patch string                     patch generated machineconfigs (applied to all node types)
-      --config-patch-control-plane string       patch generated machineconfigs (applied to 'init' and 'controlplane' types)
-      --config-patch-worker string              patch generated machineconfigs (applied to 'worker' type)
-      --cpus string                             the share of CPUs as fraction (each control plane/VM) (default "2.0")
-      --cpus-workers string                     the share of CPUs as fraction (each worker/VM) (default "2.0")
-      --crashdump                               print debug crashdump to stderr when cluster startup fails
-      --custom-cni-url string                   install custom CNI from the URL (Talos cluster)
-      --disk int                                default limit on disk size in MB (each VM) (default 6144)
-      --disk-image-path string                  disk image to use
-      --dns-domain string                       the dns domain to use for cluster (default "cluster.local")
-      --docker-host-ip string                   Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
-      --encrypt-ephemeral                       enable ephemeral partition encryption
-      --encrypt-state                           enable state partition encryption
-      --endpoint string                         use endpoint instead of provider defaults
-  -p, --exposed-ports string                    Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
-      --extra-boot-kernel-args string           add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)
-      --extra-disks int                         number of extra disks to create for each worker VM
-      --extra-disks-size int                    default limit on disk size in MB (each VM) (default 5120)
-      --extra-uefi-search-paths strings         additional search paths for UEFI firmware (only applies when UEFI is enabled)
-  -h, --help                                    help for create
-      --image string                            the image to use (default "ghcr.io/talos-systems/talos:latest")
-      --init-node-as-endpoint                   use init node as endpoint instead of any load balancer endpoint
-      --initrd-path string                      initramfs image to use (default "_out/initramfs-${ARCH}.xz")
-  -i, --input-dir string                        location of pre-generated config files
-      --install-image string                    the installer image to use (default "ghcr.io/talos-systems/installer:latest")
-      --ipv4                                    enable IPv4 network in the cluster (default true)
-      --ipv6                                    enable IPv6 network in the cluster (QEMU provisioner only)
-      --iso-path string                         the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string               desired kubernetes version to run (default "1.23.3")
-      --masters int                             the number of masters to create (default 1)
-      --memory int                              the limit on memory usage in MB (each control plane/VM) (default 2048)
-      --memory-workers int                      the limit on memory usage in MB (each worker/VM) (default 2048)
-      --mtu int                                 MTU of the cluster network (default 1500)
-      --nameservers strings                     list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
-      --registry-insecure-skip-verify strings   list of registry hostnames to skip TLS verification for
-      --registry-mirror strings                 list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --skip-injecting-config                   skip injecting config from embedded metadata server, write config files to current directory
-      --skip-kubeconfig                         skip merging kubeconfig from the created cluster
-      --talos-version string                    the desired Talos version to generate config for (if not set, defaults to image version)
-      --use-vip                                 use a virtual IP for the controlplane endpoint instead of the loadbalancer
-      --user-disk strings                       list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
-      --vmlinuz-path string                     the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
-      --wait                                    wait for the cluster to be ready before returning (default true)
-      --wait-timeout duration                   timeout to wait for the cluster to be ready (default 20m0s)
-      --wireguard-cidr string                   CIDR of the wireguard network
-      --with-apply-config                       enable apply config when the VM is starting in maintenance mode
-      --with-bootloader                         enable bootloader to load kernel and initramfs from disk image after install (default true)
-      --with-cluster-discovery                  enable cluster discovery (default true)
-      --with-debug                              enable debug in Talos config to send service logs to the console
-      --with-init-node                          create the cluster with an init node
-      --with-kubespan                           enable KubeSpan system
-      --with-uefi                               enable UEFI on x86_64 architecture (always enabled for arm64)
-      --workers int                             the number of workers to create (default 1)
+      --arch string                              cluster architecture (default "amd64")
+      --bad-rtc                                  launch VM with bad RTC state (QEMU only)
+      --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
+      --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.15.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
+      --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
+      --cpus string                              the share of CPUs as fraction (each control plane/VM) (default "2.0")
+      --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
+      --crashdump                                print debug crashdump to stderr when cluster startup fails
+      --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
+      --disk int                                 default limit on disk size in MB (each VM) (default 6144)
+      --disk-image-path string                   disk image to use
+      --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
+      --docker-host-ip string                    Host IP to forward exposed ports to (Docker provisioner only) (default "0.0.0.0")
+      --encrypt-ephemeral                        enable ephemeral partition encryption
+      --encrypt-state                            enable state partition encryption
+      --endpoint string                          use endpoint instead of provider defaults
+  -p, --exposed-ports string                     Comma-separated list of ports/protocols to expose on init node. Ex -p <hostPort>:<containerPort>/<protocol (tcp or udp)> (Docker provisioner only)
+      --extra-boot-kernel-args string            add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)
+      --extra-disks int                          number of extra disks to create for each worker VM
+      --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
+      --extra-uefi-search-paths strings          additional search paths for UEFI firmware (only applies when UEFI is enabled)
+  -h, --help                                     help for create
+      --image string                             the image to use (default "ghcr.io/talos-systems/talos:latest")
+      --init-node-as-endpoint                    use init node as endpoint instead of any load balancer endpoint
+      --initrd-path string                       initramfs image to use (default "_out/initramfs-${ARCH}.xz")
+  -i, --input-dir string                         location of pre-generated config files
+      --install-image string                     the installer image to use (default "ghcr.io/talos-systems/installer:latest")
+      --ipv4                                     enable IPv4 network in the cluster (default true)
+      --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
+      --iso-path string                          the ISO path to use for the initial boot (VM only)
+      --kubernetes-version string                desired kubernetes version to run (default "1.23.3")
+      --masters int                              the number of masters to create (default 1)
+      --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
+      --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
+      --mtu int                                  MTU of the cluster network (default 1500)
+      --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
+      --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
+      --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
+      --skip-kubeconfig                          skip merging kubeconfig from the created cluster
+      --talos-version string                     the desired Talos version to generate config for (if not set, defaults to image version)
+      --use-vip                                  use a virtual IP for the controlplane endpoint instead of the loadbalancer
+      --user-disk strings                        list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
+      --vmlinuz-path string                      the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
+      --wait                                     wait for the cluster to be ready before returning (default true)
+      --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
+      --wireguard-cidr string                    CIDR of the wireguard network
+      --with-apply-config                        enable apply config when the VM is starting in maintenance mode
+      --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
+      --with-cluster-discovery                   enable cluster discovery (default true)
+      --with-debug                               enable debug in Talos config to send service logs to the console
+      --with-init-node                           create the cluster with an init node
+      --with-kubespan                            enable KubeSpan system
+      --with-uefi                                enable UEFI on x86_64 architecture (always enabled for arm64)
+      --workers int                              the number of workers to create (default 1)
 ```
 
 ### Options inherited from parent commands
@@ -1084,24 +1084,24 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 ### Options
 
 ```
-      --additional-sans strings             additional Subject-Alt-Names for the APIServer certificate
-      --config-patch string                 patch generated machineconfigs (applied to all node types)
-      --config-patch-control-plane string   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
-      --config-patch-worker string          patch generated machineconfigs (applied to 'worker' type)
-      --dns-domain string                   the dns domain to use for cluster (default "cluster.local")
-  -h, --help                                help for config
-      --install-disk string                 the disk to install to (default "/dev/sda")
-      --install-image string                the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string           desired kubernetes version to run
-  -o, --output-dir string                   destination to output generated files
-  -p, --persist                             the desired persist value for configs (default true)
-      --registry-mirror strings             list of registry mirrors to use in format: <registry host>=<mirror URL>
-      --talos-version string                the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
-      --version string                      the desired machine config version to generate (default "v1alpha1")
-      --with-cluster-discovery              enable cluster discovery feature (default true)
-      --with-docs                           renders all machine configs adding the documentation for each field (default true)
-      --with-examples                       renders all machine configs with the commented examples (default true)
-      --with-kubespan                       enable KubeSpan feature
+      --additional-sans strings                  additional Subject-Alt-Names for the APIServer certificate
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
+      --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
+  -h, --help                                     help for config
+      --install-disk string                      the disk to install to (default "/dev/sda")
+      --install-image string                     the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
+      --kubernetes-version string                desired kubernetes version to run
+  -o, --output-dir string                        destination to output generated files
+  -p, --persist                                  the desired persist value for configs (default true)
+      --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --talos-version string                     the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
+      --version string                           the desired machine config version to generate (default "v1alpha1")
+      --with-cluster-discovery                   enable cluster discovery feature (default true)
+      --with-docs                                renders all machine configs adding the documentation for each field (default true)
+      --with-examples                            renders all machine configs with the commented examples (default true)
+      --with-kubespan                            enable KubeSpan feature
 ```
 
 ### Options inherited from parent commands
@@ -1593,7 +1593,7 @@ talosctl patch <type> [<id>] [flags]
   -h, --help                                   help for patch
   -m, --mode auto, no-reboot, reboot, staged   apply config mode (default auto)
       --namespace string                       resource namespace (default is to use default namespace per resource)
-  -p, --patch string                           the patch to be applied to the resource file.
+  -p, --patch stringArray                      the patch to be applied to the resource file, use @file to read a patch from file.
       --patch-file string                      a file containing a patch to be applied to the resource.
 ```
 

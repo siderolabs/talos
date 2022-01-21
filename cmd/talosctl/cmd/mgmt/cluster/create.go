@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/pkg/images"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
@@ -112,9 +113,9 @@ var (
 	useVIP                    bool
 	enableKubeSpan            bool
 	enableClusterDiscovery    bool
-	configPatch               string
-	configPatchControlPlane   string
-	configPatchWorker         string
+	configPatch               []string
+	configPatchControlPlane   []string
+	configPatchWorker         []string
 	badRTC                    bool
 	extraBootKernelArgs       string
 )
@@ -453,14 +454,10 @@ func create(ctx context.Context) (err error) {
 		)
 	}
 
-	addConfigPatch := func(configPatch string, configOpt func(jsonpatch.Patch) bundle.Option) error {
-		if configPatch == "" {
-			return nil
-		}
-
+	addConfigPatch := func(configPatches []string, configOpt func(jsonpatch.Patch) bundle.Option) error {
 		var jsonPatch jsonpatch.Patch
 
-		jsonPatch, err = jsonpatch.DecodePatch([]byte(configPatch))
+		jsonPatch, err = configpatcher.LoadPatches(configPatches)
 		if err != nil {
 			return fmt.Errorf("error parsing config JSON patch: %w", err)
 		}
@@ -867,9 +864,9 @@ func init() {
 	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
 	createCmd.Flags().BoolVar(&enableClusterDiscovery, "with-cluster-discovery", true, "enable cluster discovery")
 	createCmd.Flags().BoolVar(&enableKubeSpan, "with-kubespan", false, "enable KubeSpan system")
-	createCmd.Flags().StringVar(&configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
-	createCmd.Flags().StringVar(&configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
-	createCmd.Flags().StringVar(&configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
+	createCmd.Flags().StringArrayVar(&configPatch, "config-patch", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
+	createCmd.Flags().StringArrayVar(&configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
+	createCmd.Flags().StringArrayVar(&configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 

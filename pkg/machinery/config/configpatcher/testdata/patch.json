@@ -1,0 +1,7 @@
+[
+    {
+        "op": "add",
+        "path": "/machine/certSANs",
+        "value": ["foo.com"]
+    }
+]

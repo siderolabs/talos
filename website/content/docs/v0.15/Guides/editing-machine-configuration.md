@@ -99,7 +99,7 @@ talosctl -n <IP> edit machineconfig --mode=no-reboot
 
 ### `talosctl patch machineconfig`
 
-Command `talosctl patch` works similar to `talosctl edit` command - it loads current machine configuration, but instead of launching configured editor it applies [JSON patch](http://jsonpatch.com/) to the configuration and writes result back to the node.
+Command `talosctl patch` works similar to `talosctl edit` command - it loads current machine configuration, but instead of launching configured editor it applies a set of [JSON patches](http://jsonpatch.com/) to the configuration and writes the result back to the node.
 
 Example, updating kubelet version (in auto mode):
 
@@ -115,14 +115,32 @@ $ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "
 patched mc at the node <IP>
 ```
 
-Patch might be applied to multiple nodes when multiple IPs are specified:
+A patch might be applied to multiple nodes when multiple IPs are specified:
 
 ```bash
-taloctl -n <IP1>,<IP2>,... patch machineconfig -p '[{...}]'
+talosctl -n <IP1>,<IP2>,... patch machineconfig -p '[{...}]'
+```
+
+Patches can also be sourced from files using `@file` syntax:
+
+```bash
+talosctl -n <IP> patch machineconfig -p @kubelet-patch.json -p @manifest-patch.json
+```
+
+It might be easier to store patches in YAML format vs. the default JSON format.
+Talos can detect file format automatically:
+
+```yaml
+# kubelet-patch.yaml
+- op: replace
+  path: /machine/kubelet/image
+  value: ghcr.io/talos-systems/kubelet:v1.23.3
+```
+
+```bash
+talosctl -n <IP> patch machineconfig -p @kubelet-patch.yaml
 ```
 
 ### Recovering from Node Boot Failures
 
 If a Talos node fails to boot because of wrong configuration (for example, control plane endpoint is incorrect), configuration can be updated to fix the issue.
-If the boot sequence is still running, Talos might refuse applying config in default mode.
-In that case `--mode=staged` mode can be used coupled with `talosctl reboot` command to trigger a reboot and apply configuration update.

@@ -21,6 +21,7 @@ import (
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/bundle"
@@ -38,9 +39,9 @@ var genConfigCmdFlags struct {
 	installDisk             string
 	installImage            string
 	outputDir               string
-	configPatch             string
-	configPatchControlPlane string
-	configPatchWorker       string
+	configPatch             []string
+	configPatchControlPlane []string
+	configPatchWorker       []string
 	registryMirrors         []string
 	persistConfig           bool
 	withExamples            bool
@@ -120,9 +121,9 @@ func GenV1Alpha1Config(genOptions []generate.GenOption,
 	clusterName string,
 	endpoint string,
 	kubernetesVersion string,
-	configPatch string,
-	configPatchControlPlane string,
-	configPatchWorker string) (*v1alpha1.ConfigBundle, error) {
+	configPatch []string,
+	configPatchControlPlane []string,
+	configPatchWorker []string) (*v1alpha1.ConfigBundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
@@ -134,12 +135,8 @@ func GenV1Alpha1Config(genOptions []generate.GenOption,
 		),
 	}
 
-	addConfigPatch := func(configPatch string, configOpt func(jsonpatch.Patch) bundle.Option) error {
-		if configPatch == "" {
-			return nil
-		}
-
-		jsonPatch, err := jsonpatch.DecodePatch([]byte(configPatch))
+	addConfigPatch := func(configPatches []string, configOpt func(jsonpatch.Patch) bundle.Option) error {
+		jsonPatch, err := configpatcher.LoadPatches(configPatches)
 		if err != nil {
 			return fmt.Errorf("error parsing config JSON patch: %w", err)
 		}
@@ -277,9 +274,9 @@ func init() {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.kubernetesVersion, "kubernetes-version", "", "desired kubernetes version to run")
 	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.outputDir, "output-dir", "o", "", "destination to output generated files")
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatch, "config-patch", "", "patch generated machineconfigs (applied to all node types)")
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", "", "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
-	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", "", "patch generated machineconfigs (applied to 'worker' type)")
+	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatch, "config-patch", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
+	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
+	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")

@@ -1,0 +1,6 @@
+- op: add
+  path: /some/path
+  value:
+    - a
+    - b
+    - c

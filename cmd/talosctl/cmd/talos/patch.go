@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -27,7 +25,7 @@ import (
 var patchCmdFlags struct {
 	helpers.Mode
 	namespace string
-	patch     string
+	patch     []string
 	patchFile string
 }
 
@@ -86,29 +84,15 @@ var patchCmd = &cobra.Command{
 	Args:  cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var (
-				patch     jsonpatch.Patch
-				patchData []byte
-			)
+			if patchCmdFlags.patchFile != "" {
+				patchCmdFlags.patch = append(patchCmdFlags.patch, "@"+patchCmdFlags.patchFile)
+			}
 
-			switch {
-			case patchCmdFlags.patch != "":
-				patchData = []byte(patchCmdFlags.patch)
-			case patchCmdFlags.patchFile != "":
-				f, err := os.Open(patchCmdFlags.patchFile)
-				if err != nil {
-					return err
-				}
-
-				patchData, err = ioutil.ReadAll(f)
-				if err != nil {
-					return err
-				}
-			default:
+			if len(patchCmdFlags.patch) == 0 {
 				return fmt.Errorf("either --patch or --patch-file should be defined")
 			}
 
-			patch, err := jsonpatch.DecodePatch(patchData)
+			patch, err := configpatcher.LoadPatches(patchCmdFlags.patch)
 			if err != nil {
 				return err
 			}
@@ -128,7 +112,7 @@ var patchCmd = &cobra.Command{
 func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
-	patchCmd.Flags().StringVarP(&patchCmdFlags.patch, "patch", "p", "", "the patch to be applied to the resource file.")
+	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
 	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)
 	addCommand(patchCmd)
 }
