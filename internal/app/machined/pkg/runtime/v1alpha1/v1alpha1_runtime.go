@@ -85,6 +85,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.certCANs
 	// * .machine.install
 	// * .machine.network
+	// * .machine.sysfs
 	// * .machine.sysctls
 	// * .machine.logging
 	// * .machine.controlplane
@@ -100,6 +101,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
+		newConfig.MachineConfig.MachineSysfs = currentConfig.MachineConfig.MachineSysfs
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane

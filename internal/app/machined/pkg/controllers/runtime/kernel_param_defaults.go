@@ -60,7 +60,7 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 			if err := r.Modify(ctx, item, func(res resource.Resource) error {
 				res.(*runtime.KernelParamDefaultSpec).TypedSpec().Value = value
 
-				if item.Metadata().ID() == "net.ipv6.conf.default.forwarding" {
+				if res.Metadata().ID() == "proc.sys.net.ipv6.conf.default.forwarding" {
 					res.(*runtime.KernelParamDefaultSpec).TypedSpec().IgnoreErrors = true
 				}
 
@@ -77,7 +77,7 @@ func (ctrl *KernelParamDefaultsController) Run(ctx context.Context, r controller
 func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 	res := []*kernel.Param{
 		{
-			Key:   "net.ipv4.ip_forward",
+			Key:   "proc.sys.net.ipv4.ip_forward",
 			Value: "1",
 		},
 	}
@@ -85,11 +85,11 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 	if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
 		res = append(res, []*kernel.Param{
 			{
-				Key:   "net.bridge.bridge-nf-call-iptables",
+				Key:   "proc.sys.net.bridge.bridge-nf-call-iptables",
 				Value: "1",
 			},
 			{
-				Key:   "net.bridge.bridge-nf-call-ip6tables",
+				Key:   "proc.sys.net.bridge.bridge-nf-call-ip6tables",
 				Value: "1",
 			},
 		}...)
@@ -97,32 +97,32 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 
 	res = append(res, []*kernel.Param{
 		{
-			Key:   "net.ipv6.conf.default.forwarding",
+			Key:   "proc.sys.net.ipv6.conf.default.forwarding",
 			Value: "1",
 		},
 		{
-			Key:   "net.ipv6.conf.default.accept_ra",
+			Key:   "proc.sys.net.ipv6.conf.default.accept_ra",
 			Value: "2",
 		},
 		// ipvs/conntrack tcp keepalive refresh.
 		{
-			Key:   "net.ipv4.tcp_keepalive_time",
+			Key:   "proc.sys.net.ipv4.tcp_keepalive_time",
 			Value: "600",
 		},
 		{
-			Key:   "net.ipv4.tcp_keepalive_intvl",
+			Key:   "proc.sys.net.ipv4.tcp_keepalive_intvl",
 			Value: "60",
 		},
 		{
-			Key:   "kernel.panic",
+			Key:   "proc.sys.kernel.panic",
 			Value: "10",
 		},
 		{
-			Key:   "kernel.pid_max",
+			Key:   "proc.sys.kernel.pid_max",
 			Value: "262144",
 		},
 		{
-			Key:   "vm.overcommit_memory",
+			Key:   "proc.sys.vm.overcommit_memory",
 			Value: "1",
 		},
 	}...)
@@ -131,7 +131,7 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 	res = append(res, []*kernel.Param{
 		// configs inotify.
 		{
-			Key:   "fs.inotify.max_user_instances",
+			Key:   "proc.sys.fs.inotify.max_user_instances",
 			Value: "512",
 		},
 	}...)

@@ -89,7 +89,7 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 		// disable ratelimiting for kmsg, otherwise logs might be not visible.
 		// this should be set via kernel arg, but in case it's not set, try to force it.
 		if err = krnl.WriteParam(&kernel.Param{
-			Key:   "kernel.printk_devkmsg",
+			Key:   "proc.sys.kernel.printk_devkmsg",
 			Value: "on\n",
 		}); err != nil {
 			var serr syscall.Errno

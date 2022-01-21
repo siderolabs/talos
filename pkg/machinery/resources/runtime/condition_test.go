@@ -36,13 +36,13 @@ func TestCondition(t *testing.T) {
 			Name: "okay",
 			ActualKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 			},
 			AwaitKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 			},
@@ -53,7 +53,7 @@ func TestCondition(t *testing.T) {
 			ActualKernelParams: []*kernel.Param{},
 			AwaitKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 			},
@@ -63,13 +63,13 @@ func TestCondition(t *testing.T) {
 			Name: "value differs",
 			ActualKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "0",
 				},
 			},
 			AwaitKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 			},
@@ -79,29 +79,29 @@ func TestCondition(t *testing.T) {
 			Name: "multiple values",
 			ActualKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 				{
-					Key:   "kernel.dmesg_restrict",
+					Key:   "proc.sys.kernel.dmesg_restrict",
 					Value: "1",
 				},
 				{
-					Key:   "kernel.perf_event_paranoid",
+					Key:   "proc.sys.kernel.perf_event_paranoid",
 					Value: "3",
 				},
 			},
 			AwaitKernelParams: []*kernel.Param{
 				{
-					Key:   "kernel.kptr_restrict",
+					Key:   "proc.sys.kernel.kptr_restrict",
 					Value: "1",
 				},
 				{
-					Key:   "kernel.dmesg_restrict",
+					Key:   "proc.sys.kernel.dmesg_restrict",
 					Value: "1",
 				},
 				{
-					Key:   "kernel.perf_event_paranoid",
+					Key:   "proc.sys.kernel.perf_event_paranoid",
 					Value: "3",
 				},
 			},

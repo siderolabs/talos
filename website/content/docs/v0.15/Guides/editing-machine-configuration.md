@@ -34,6 +34,7 @@ The list of config changes allowed to be applied immediately in talos v0.15:
 * `.machine.certCANs`
 * `.machine.install` (configuration is only applied during install/upgrade)
 * `.machine.network`
+* `.machine.sysfs`
 * `.machine.sysctls`
 * `.machine.logging`
 * `.machine.controlplane`

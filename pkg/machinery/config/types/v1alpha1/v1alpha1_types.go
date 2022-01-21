@@ -239,6 +239,10 @@ var (
 		"net.ipv4.ip_forward": "0",
 	}
 
+	machineSysfsExample = map[string]string{
+		"devices.system.cpu.cpu0.cpufreq.scaling_governor": "performance",
+	}
+
 	machineSystemDiskEncryptionExample = &SystemDiskEncryptionConfig{
 		EphemeralPartition: &EncryptionConfig{
 			EncryptionProvider: "luks2",
@@ -728,6 +732,12 @@ type MachineConfig struct {
 	//     - name: MachineSysctls usage example.
 	//       value: machineSysctlsExample
 	MachineSysctls map[string]string `yaml:"sysctls,omitempty"`
+	//   description: |
+	//     Used to configure the machine's sysfs.
+	//   examples:
+	//     - name: MachineSysfs usage example.
+	//       value: machineSysfsExample
+	MachineSysfs map[string]string `yaml:"sysfs,omitempty"`
 	//   description: |
 	//     Used to configure the machine's container image registry mirrors.
 	//

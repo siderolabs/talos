@@ -226,6 +226,15 @@ func (m *MachineConfig) Sysctls() map[string]string {
 	return m.MachineSysctls
 }
 
+// Sysfs implements the config.Provider interface.
+func (m *MachineConfig) Sysfs() map[string]string {
+	if m.MachineSysfs == nil {
+		return make(map[string]string)
+	}
+
+	return m.MachineSysfs
+}
+
 // CA implements the config.Provider interface.
 func (m *MachineConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return m.MachineCA
