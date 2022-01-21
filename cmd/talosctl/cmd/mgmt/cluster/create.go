@@ -84,6 +84,8 @@ var (
 	clusterMemory             int
 	clusterDiskSize           int
 	clusterDisks              []string
+	extraDisks                int
+	extraDiskSize             int
 	targetArch                string
 	clusterWait               bool
 	clusterWaitTimeout        time.Duration
@@ -315,6 +317,13 @@ func create(ctx context.Context) (err error) {
 			}
 
 			genOptions = append(genOptions, generate.WithUserDisks(machineDisks))
+		}
+
+		// append extra disks
+		for i := 0; i < extraDisks; i++ {
+			disks = append(disks, &provision.Disk{
+				Size: uint64(extraDiskSize) * 1024 * 1024,
+			})
 		}
 
 		if talosVersion == "" {
@@ -812,6 +821,8 @@ func init() {
 	createCmd.Flags().IntVar(&clusterMemory, "memory", 2048, "the limit on memory usage in MB (each container/VM)")
 	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringSliceVar(&clusterDisks, "user-disk", []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
+	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each VM")
+	createCmd.Flags().IntVar(&extraDiskSize, "extra-disk-size", 5*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")

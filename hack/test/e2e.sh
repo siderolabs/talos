@@ -211,3 +211,13 @@ function build_registry_mirrors {
     REGISTRY_MIRROR_FLAGS=${REGISTRY_MIRROR_FLAGS:-}
   fi
 }
+
+function run_csi_tests {
+  git clone --depth=1 --single-branch --branch v1.8.2 https://github.com/rook/rook.git "${TMP}/rook"
+  pushd "${TMP}/rook/deploy/examples"
+  ${KUBECTL} create -f crds.yaml -f common.yaml -f operator.yaml
+  ${KUBECTL} create -f cluster.yaml
+  ${KUBECTL} --namespace rook-ceph wait --timeout=600s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} create -f csi/rbd/storageclass.yaml
+  ${KUBESTR} fio --storageclass rook-ceph-block --size 10G
+}

@@ -97,6 +97,8 @@ function create_cluster {
     --cidr=172.20.1.0/24 \
     --user-disk=/var/lib/extra:100MB \
     --user-disk=/var/lib/p1:100MB:/var/lib/p2:100MB \
+    --extra-disks=1 \
+    --extra-disk-size=15360 \
     --install-image=${INSTALLER_IMAGE} \
     --with-init-node=false \
     --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
@@ -125,6 +127,7 @@ case "${TEST_MODE:-default}" in
     get_kubeconfig
     run_talos_integration_test
     run_kubernetes_integration_test
+    run_csi_tests
     ;;
 esac
 
