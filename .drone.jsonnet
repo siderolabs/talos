@@ -403,6 +403,17 @@ local integration_qemu_encrypted_vip = Step("e2e-encrypted-vip", target="e2e-qem
         "IMAGE_REGISTRY": local_registry,
 });
 
+local integration_qemu_csi = Step("e2e-csi", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
+        "IMAGE_REGISTRY": local_registry,
+        "SHORT_INTEGRATION_TEST": "yes",
+        "QEMU_WORKERS": "3",
+        "QEMU_CPUS_WORKERS": "4",
+        "QEMU_MEMORY_WORKERS": "5120",
+        "QEMU_EXTRA_DISKS": "1",
+        "QEMU_EXTRA_DISKS_SIZE": "12288",
+        "WITH_TEST": "run_csi_tests",
+});
+
 local integration_images = Step("images", target="images", depends_on=[load_artifacts], environment={"IMAGE_REGISTRY": local_registry});
 local integration_sbcs = Step("sbcs", target="sbcs", depends_on=[integration_images], environment={"IMAGE_REGISTRY": local_registry});
 
@@ -443,6 +454,7 @@ local integration_pipelines = [
   Pipeline('integration-misc', default_pipeline_steps + [integration_gvisor, integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan]) + integration_trigger(['integration-misc']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
+  Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
   Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
 
   // cron pipelines, triggered on schedule events
@@ -453,6 +465,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-misc', default_pipeline_steps + [integration_gvisor, integration_cilium, integration_uefi, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-images', default_pipeline_steps + [integration_images, integration_sbcs], [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 

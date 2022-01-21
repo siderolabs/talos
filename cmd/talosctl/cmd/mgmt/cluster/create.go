@@ -80,10 +80,14 @@ var (
 	dnsDomain                 string
 	workers                   int
 	masters                   int
-	clusterCpus               string
-	clusterMemory             int
+	controlPlaneCpus          string
+	workersCpus               string
+	controlPlaneMemory        int
+	workersMemory             int
 	clusterDiskSize           int
 	clusterDisks              []string
+	extraDisks                int
+	extraDiskSize             int
 	targetArch                string
 	clusterWait               bool
 	clusterWaitTimeout        time.Duration
@@ -131,12 +135,18 @@ func create(ctx context.Context) (err error) {
 		return fmt.Errorf("number of masters can't be less than 1")
 	}
 
-	nanoCPUs, err := parseCPUShare()
+	controlPlaneNanoCPUs, err := parseCPUShare(controlPlaneCpus)
 	if err != nil {
 		return fmt.Errorf("error parsing --cpus: %s", err)
 	}
 
-	memory := int64(clusterMemory) * 1024 * 1024
+	workerNanoCPUs, err := parseCPUShare(workersCpus)
+	if err != nil {
+		return fmt.Errorf("error parsing --cpus-workers: %s", err)
+	}
+
+	controlPlaneMemory := int64(controlPlaneMemory) * 1024 * 1024
+	workerMemory := int64(workersMemory) * 1024 * 1024
 
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving IPs")
@@ -518,8 +528,8 @@ func create(ctx context.Context) (err error) {
 			Name:                fmt.Sprintf("%s-master-%d", clusterName, i+1),
 			Type:                machine.TypeControlPlane,
 			IPs:                 nodeIPs,
-			Memory:              memory,
-			NanoCPUs:            nanoCPUs,
+			Memory:              controlPlaneMemory,
+			NanoCPUs:            controlPlaneNanoCPUs,
 			Disks:               disks,
 			SkipInjectingConfig: skipInjectingConfig,
 			BadRTC:              badRTC,
@@ -548,6 +558,13 @@ func create(ctx context.Context) (err error) {
 		request.Nodes = append(request.Nodes, nodeReq)
 	}
 
+	// append extra disks
+	for i := 0; i < extraDisks; i++ {
+		disks = append(disks, &provision.Disk{
+			Size: uint64(extraDiskSize) * 1024 * 1024,
+		})
+	}
+
 	for i := 1; i <= workers; i++ {
 		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
 
@@ -570,8 +587,8 @@ func create(ctx context.Context) (err error) {
 				Name:                name,
 				Type:                machine.TypeWorker,
 				IPs:                 nodeIPs,
-				Memory:              memory,
-				NanoCPUs:            nanoCPUs,
+				Memory:              workerMemory,
+				NanoCPUs:            workerNanoCPUs,
 				Disks:               disks,
 				Config:              cfg,
 				SkipInjectingConfig: skipInjectingConfig,
@@ -705,10 +722,10 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 	return merger.Write(kubeconfigPath)
 }
 
-func parseCPUShare() (int64, error) {
-	cpu, ok := new(big.Rat).SetString(clusterCpus)
+func parseCPUShare(cpus string) (int64, error) {
+	cpu, ok := new(big.Rat).SetString(cpus)
 	if !ok {
-		return 0, fmt.Errorf("failed to parsing as a rational number: %s", clusterCpus)
+		return 0, fmt.Errorf("failed to parsing as a rational number: %s", cpus)
 	}
 
 	nano := cpu.Mul(cpu, big.NewRat(1e9, 1))
@@ -808,10 +825,14 @@ func init() {
 	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
-	createCmd.Flags().StringVar(&clusterCpus, "cpus", "2.0", "the share of CPUs as fraction (each container/VM)")
-	createCmd.Flags().IntVar(&clusterMemory, "memory", 2048, "the limit on memory usage in MB (each container/VM)")
+	createCmd.Flags().StringVar(&controlPlaneCpus, "cpus", "2.0", "the share of CPUs as fraction (each control plane/VM)")
+	createCmd.Flags().StringVar(&workersCpus, "cpus-workers", "2.0", "the share of CPUs as fraction (each worker/VM)")
+	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
+	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
 	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringSliceVar(&clusterDisks, "user-disk", []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
+	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
+	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
