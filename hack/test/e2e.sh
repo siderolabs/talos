@@ -217,3 +217,21 @@ function run_gvisor_test {
   sleep 10
   ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=1m
 }
+
+function run_csi_tests {
+  rm -rf "${TMP}/rook"
+  git clone --depth=1 --single-branch --branch v1.8.2 https://github.com/rook/rook.git "${TMP}/rook"
+  pushd "${TMP}/rook/deploy/examples"
+  ${KUBECTL} apply -f crds.yaml -f common.yaml -f operator.yaml
+  ${KUBECTL} apply -f cluster.yaml
+  # wait for the controller to populate the status field
+  sleep 30
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
+  # .status.ceph is populated later only
+  sleep 60
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} create -f csi/rbd/storageclass.yaml
+  # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
+  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass rook-ceph-block --size 10G
+}
