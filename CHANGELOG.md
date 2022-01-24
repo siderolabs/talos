@@ -1,3 +1,306 @@
+## [Talos 0.15.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.15.0-alpha.1) (2022-01-24)
+
+Welcome to the v0.15.0-alpha.1 release of Talos!  
+*This is a pre-release of Talos*
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Apply Config Enhancements
+
+`talosctl apply/patch/edit` cli commands got revamped.
+Separate flags `--on-reboot`, `--immediate`, `--interactive` were replaced
+with a single `--mode` flag that can take the following values:
+- `auto` new mode that automatically applies the configuration in immediate/reboot mode.
+- `no-reboot` force apply immediately, if not possible, then fail.
+- `reboot` force reboot with apply config.
+- `staged` write new machine configuration to STATE, but don't apply it (it will be applied after a reboot).
+- `interactive` starts interactive installer, only for `apply`.
+
+
+### Machine Configuration
+
+Talos now preserves machine configuration as it was submitted to the node.
+
+
+### Platform Support
+
+Talos now supports Oracle Cloud.
+
+Platform network configuration was rewritten to avoid modifying Talos machine configuration.
+Network configuration is performed independent of the machine configuration presence, so it works
+even if Talos is booted in maintenance mode (without machine configuration is platform userdata).
+
+
+### SBC Support
+
+Talos now supports Jetson Nano SBC.
+
+
+### Component Updates
+
+* Linux: 5.15.16
+* containerd: 1.5.9
+* CoreDNS: 1.8.7
+* containerd: 1.6.0-rc.0
+* runc: 1.1.0
+
+Talos is built with Go 1.17.6
+
+
+### Wipe System Kernel Parameter
+
+Added new kernel parameter `talos.experimental.wipe=system` which can help resetting system disk for the machine
+and start over with a fresh installation.
+See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-machine/#kernel-parameter) on how to use it.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Spencer Smith
+* Artem Chernyshev
+* Seán C McCord
+* Steve Francis
+* Serge Logvinov
+* Andrew Rynhard
+* Anthony Rabbito
+* Eric Wohltman
+* Niklas Metje
+* Shahar Naveh
+
+### Changes
+<details><summary>80 commits</summary>
+<p>
+
+* [`58eb3600f`](https://github.com/talos-systems/talos/commit/58eb3600fc44dc2fccaa82322207291ffd807205) fix: enforce reasonable TLS min tls-min-version
+* [`b8d4c5dfa`](https://github.com/talos-systems/talos/commit/b8d4c5dfad4585c0af52287513176411a79fc20c) fix: use correct error in `kernel_param_spec` Modify call handling
+* [`4961d6867`](https://github.com/talos-systems/talos/commit/4961d6867cadab5e8b48e73355b23b91d36f70b4) docs: drop talos.interface kernel arg
+* [`b1e61fa5b`](https://github.com/talos-systems/talos/commit/b1e61fa5b1bcd5affd42b498711b9e3378344c33) chore: update Linux to 5.15.16
+* [`d4b844593`](https://github.com/talos-systems/talos/commit/d4b844593587ae3f82efcdbdfe0f24cda4262474) feat: support CRI configuration merging and reimplement registry config
+* [`f94c8c6e1`](https://github.com/talos-systems/talos/commit/f94c8c6e1c3915c962c331943120bdfd2b76259f) feat: update Kubernetes to 1.23.2
+* [`21f497b3e`](https://github.com/talos-systems/talos/commit/21f497b3e20f3b1cc9b744f1787ba80cf396d3e0) feat: install readonly overlay mounts during talos chroot sequence
+* [`9ad5a67d2`](https://github.com/talos-systems/talos/commit/9ad5a67d21b0788d1b43f1bea8e39c003a4a8ecc) feat: inject platform network configuration as network resources
+* [`907f8cbfb`](https://github.com/talos-systems/talos/commit/907f8cbfb8ed28cf399b9797230790718fc04a58) docs: fix patch flag
+* [`caa434426`](https://github.com/talos-systems/talos/commit/caa43442640744a0aa7a17aa1a205f1641e6445a) docs: add documentation on developing Talos
+* [`16eeb6776`](https://github.com/talos-systems/talos/commit/16eeb677625c0859d73b82948c1a073ba6e17e8d) docs: readme updates
+* [`3c0737027`](https://github.com/talos-systems/talos/commit/3c0737027b5574581a6461211199274ee709b1da) chore: update release notes
+* [`6d8bea5d5`](https://github.com/talos-systems/talos/commit/6d8bea5d559b1156f7d0b576b7b5784c25cd3595) feat: jetson nano SoC
+* [`1d8955ebe`](https://github.com/talos-systems/talos/commit/1d8955ebe43259a5e072b8a89f37cb728b6fcf53) feat: update CoreDNS to 1.8.7
+* [`6af83afd5`](https://github.com/talos-systems/talos/commit/6af83afd5aba64ffa7887d62f84c434109b7579b) fix: handle multiple-IP cluster nodes
+* [`43b2d8137`](https://github.com/talos-systems/talos/commit/43b2d8137116863cfc5ca969c429c13483465b01) chore: bump dependencies
+* [`529e80f4f`](https://github.com/talos-systems/talos/commit/529e80f4f529f066872b5768cd80eeeb7b766a31) docs: update home page and footer
+* [`37630e70c`](https://github.com/talos-systems/talos/commit/37630e70ccc9950e139bf7fcfcded6a18d0c7a01) Update twitter link
+* [`af440919b`](https://github.com/talos-systems/talos/commit/af440919bbaf12f414f04a5a621c1e2d5ed84ae2) fix: avoid panic in config loading/validation
+* [`4b8e9de59`](https://github.com/talos-systems/talos/commit/4b8e9de599812f82275605a93de7f5c05471f7f5) docs: add guide on adding proprietary kernel modules
+* [`833dc4169`](https://github.com/talos-systems/talos/commit/833dc4169a9702383930816d13be39f6b81c7a31) docs: rework vmware assets
+* [`2869b5eea`](https://github.com/talos-systems/talos/commit/2869b5eeacf0b6c96aedcb605bfa8a5f9fb87625) feat: add oraclecloud.com platform support
+* [`f3ec24beb`](https://github.com/talos-systems/talos/commit/f3ec24bebf0aaa7983228a09b21a67b9a2a098c1) fix: vmware documentation typo
+* [`2f2bdb26a`](https://github.com/talos-systems/talos/commit/2f2bdb26aa5367066c12a6402af554b7a5a148d6) feat: replace flags with --mode in `apply`, `edit` and `patch` commands
+* [`b09be2a69`](https://github.com/talos-systems/talos/commit/b09be2a69c6b6f8064a676fc014e6e60ea01a08d) docs: update index.md and sync across versions
+* [`ca65b918a`](https://github.com/talos-systems/talos/commit/ca65b918a7292ae53d40e410cca4e89be91e4261) docs: add nocloud documentation
+* [`59437d6d8`](https://github.com/talos-systems/talos/commit/59437d6d8360ad7dd8f801797ab91ac0791270f7) fix: filter down nameservers for docker-based cluster create
+* [`194eaa6f2`](https://github.com/talos-systems/talos/commit/194eaa6f22249fe4f43958bd897744a2cc57279f) chore: clean up /usr/bin from unneeded files
+* [`74e727240`](https://github.com/talos-systems/talos/commit/74e7272401ccb75464dd42ed0427d73842af74e1) docs: update office office
+* [`539af338c`](https://github.com/talos-systems/talos/commit/539af338c4b8f6e4291654f66628c81022aeda72) docs: update vmware docs
+* [`279a3fda7`](https://github.com/talos-systems/talos/commit/279a3fda7ba24037e06377f01cc495207722caa9) feat: update Go to 1.17.6, containerd to 1.5.9
+* [`3d3088941`](https://github.com/talos-systems/talos/commit/3d308894120092fe095b41970d6341362ab80a6b) chore: bump Go dependencies
+* [`d02d944ec`](https://github.com/talos-systems/talos/commit/d02d944ec767441612b84c164af31bc27c0c0659) chore: provide umarshal from YAML methods for network resource specs
+* [`2e735714d`](https://github.com/talos-systems/talos/commit/2e735714d9218cbc335d9c418730c146821fb8d4) fix: derive machine-id from node identity
+* [`d8a2721e1`](https://github.com/talos-systems/talos/commit/d8a2721e129be33f4a3c37be1bf5b89a1cd91685) test: update CAPI components to latest
+* [`7dff8a53e`](https://github.com/talos-systems/talos/commit/7dff8a53ee7bc37afe9dc216ca8a9113718d76af) fix: ignore missing init.yaml for cluster create
+* [`f4516c7d8`](https://github.com/talos-systems/talos/commit/f4516c7d847d905b49b4e2127eb86a1f38156d53) chore: bump dependencies
+* [`944f13221`](https://github.com/talos-systems/talos/commit/944f13221d50694d5c59ace1c12f8769d7ade9ae) chore: fix release pipeline
+* [`cb548a368`](https://github.com/talos-systems/talos/commit/cb548a368a75ca379209213948518c880b242b0c) release(v0.15.0-alpha.0): prepare release
+* [`da0b36e61`](https://github.com/talos-systems/talos/commit/da0b36e616f7da7eb0c6791b9cf5e4ee2757f08f) feat: introduce `talos.exp.wipe` kernel param to wipe system disk
+* [`c079eb32b`](https://github.com/talos-systems/talos/commit/c079eb32bd7fc19d506146e2a9edf5b406e25e02) refactor: use AWS SDK to access AWS metadata service
+* [`2f4b9d8d6`](https://github.com/talos-systems/talos/commit/2f4b9d8d6d10c0aa753f405282aa99696b923bb4) feat: make machine configuration read-only in Talos (almost)
+* [`524f83d3d`](https://github.com/talos-systems/talos/commit/524f83d3d8af3857f178c179a9552a5f32b70f47) feat: use official Go SDK to fetch GCP instance metadata
+* [`d2a7e082c`](https://github.com/talos-systems/talos/commit/d2a7e082c24d0b42820b3ea454329a19178ba0a4) test: retry in discovery tests
+* [`f4219e530`](https://github.com/talos-systems/talos/commit/f4219e530ca7635ada666ae69071746d698939a8) chore: remove unused methods in AWS platform
+* [`35bc2940e`](https://github.com/talos-systems/talos/commit/35bc2940e375b99e0d6e22a26a05c25d642bf35a) fix: kexec on RPI4
+* [`f235cfbae`](https://github.com/talos-systems/talos/commit/f235cfbaed8b5254e19616bfaaa8b48fd7d32e64) fix: multiple usability fixes
+* [`b3fbb2f31`](https://github.com/talos-systems/talos/commit/b3fbb2f312d5de0c14ffee567956b868a317aba7) test: don't build all images in the default CI pipeline
+* [`dac550a50`](https://github.com/talos-systems/talos/commit/dac550a50f4793194e4aeee98702a052925a0e88) docs: fix troubleshooting guide
+* [`83e8bec6b`](https://github.com/talos-systems/talos/commit/83e8bec6b9d4c0ecc689f45b15d7203bbf9bf0cc) feat: update Linux to 5.15.11
+* [`d5a82b37e`](https://github.com/talos-systems/talos/commit/d5a82b37eb147a68ffd08fc8ec800edc92da9f9c) feat: remove `ApplyDynamicConfig`
+* [`3623da136`](https://github.com/talos-systems/talos/commit/3623da136bde51422ba1aec06e22dea2e3dfa756) feat: provide a way to load Linux kernel modules
+* [`4d1514add`](https://github.com/talos-systems/talos/commit/4d1514add6e0b972aee26a8ad63ef8f972050d46) docs: update Mayastor deployment process
+* [`cff1ff6d5`](https://github.com/talos-systems/talos/commit/cff1ff6d5c3a68063ed2c0c063daadf2474cc43f) feat: shell completion for `list`, `read`
+* [`19728437e`](https://github.com/talos-systems/talos/commit/19728437ead7ab6e95afc8bd7f70be3f861c9a6e) feat: output IPs when etcd needs to be bootstrapped
+* [`c297d66a1`](https://github.com/talos-systems/talos/commit/c297d66a130cba708fcb42f8f2e6b356c36f5109) test: attempt number on two on proper retries in CLI time tests
+* [`dc299da9e`](https://github.com/talos-systems/talos/commit/dc299da9e8e885b7a44c184ef3d251726aa934a8) docs: add arm64 option to talosctl download
+* [`f49f40a33`](https://github.com/talos-systems/talos/commit/f49f40a3361381e51d6986547be12ec3b4a3f24a) fix: pass path to conformance retrieve results
+* [`942c8074f`](https://github.com/talos-systems/talos/commit/942c8074fd14478089769e2b8132ea2796109721) docs: fork docs for 0.15
+* [`880a7782c`](https://github.com/talos-systems/talos/commit/880a7782cbc703b38a2ff2b3d76c1eda621524ba) docs: update documentation for 0.14.0 release
+* [`dc9a0cfe9`](https://github.com/talos-systems/talos/commit/dc9a0cfe94b59c688d65ef74ebc04f273b8a72fb) chore: bump Go dependencies
+* [`773496935`](https://github.com/talos-systems/talos/commit/7734969356abac8355a31da08d47fafd4000e814) fix: config apply immediate
+* [`17c147488`](https://github.com/talos-systems/talos/commit/17c14748815e2ab928a9c0c8a079f65a63f0194e) test: retry `talosctl time` call in the tests
+* [`acf1ac0f1`](https://github.com/talos-systems/talos/commit/acf1ac0f1aff929ae9bf66b1c0322b4f83c0fef1) feat: show human-readable aliases in `talosctl get rd`
+* [`5532867b0`](https://github.com/talos-systems/talos/commit/5532867b05bb596f42516ff121b0a3a97176b3d1) refactor: rewrite the implementation of Processes API
+* [`80350861a`](https://github.com/talos-systems/talos/commit/80350861a2c1cee234d2f3a571d3993841c554d9) feat: update Kubernetes to 1.23.1
+* [`4c96e936e`](https://github.com/talos-systems/talos/commit/4c96e936ed467ae7838258699bdd83fd6da15ae6) docs: add cilium guide
+* [`e3f2acb5e`](https://github.com/talos-systems/talos/commit/e3f2acb5e57f9b3e7b11986f180e287f1f693079) refactor: rewrite the check for unknown keys in the machine configuration
+* [`4175396a8`](https://github.com/talos-systems/talos/commit/4175396a89f836bb1835d201b59224b286eeb62a) refactor: use update go-blockdevice library with allocation fixes
+* [`b58f567a1`](https://github.com/talos-systems/talos/commit/b58f567a133b661cc045a995dd29ab5090dfe194) refactor: optimize Runtime config interface to avoid config marshaling
+* [`bb355c9ab`](https://github.com/talos-systems/talos/commit/bb355c9ab38a417ed471bf3ce7b1879609f5e806) chore: remove govalidator library
+* [`3af56bd2e`](https://github.com/talos-systems/talos/commit/3af56bd2e70e8964cc48b430b1e67e48052af682) test: update capi templates to v1beta1
+* [`936b4c4ce`](https://github.com/talos-systems/talos/commit/936b4c4cee87697b3f08d51f22208b44b8a02db5) fix: update DHCP library with the panic fix
+* [`ab42886bf`](https://github.com/talos-systems/talos/commit/ab42886bf333dcaa9d3a1b765781ab19354de397) fix: allow kubelet to be started via the API
+* [`ec641f729`](https://github.com/talos-systems/talos/commit/ec641f7296ce62b2f9ba1353ff2eba70c2287c08) fix: use default time servers in time API if none are configured
+* [`79f213eec`](https://github.com/talos-systems/talos/commit/79f213eec65af46c4a3a4c4494d67ffc1b0a53ec) fix: cleanup affiliates
+* [`2dd0b5b68`](https://github.com/talos-systems/talos/commit/2dd0b5b68aa5b8efbc9b0bc4f8ebc159e2d991ab) chore: update Go to 1.17.5
+* [`97ffa7a64`](https://github.com/talos-systems/talos/commit/97ffa7a645d7db93ee58032795f91131f6950e89) feat: upgrade kubelet version in `talosctl upgrade-k8s`
+* [`5bc5123eb`](https://github.com/talos-systems/talos/commit/5bc5123eb91386ca12e7e7f9fc0f66637343a642) docs: document `ip=` kernel argument
+* [`8e1d0bfb5`](https://github.com/talos-systems/talos/commit/8e1d0bfb5fbaf0849bdd07b73a8e3bda4e8c3b75) feat: update Kubernetes to 1.23.0
+</p>
+</details>
+
+### Changes since v0.15.0-alpha.0
+<details><summary>37 commits</summary>
+<p>
+
+* [`58eb3600f`](https://github.com/talos-systems/talos/commit/58eb3600fc44dc2fccaa82322207291ffd807205) fix: enforce reasonable TLS min tls-min-version
+* [`b8d4c5dfa`](https://github.com/talos-systems/talos/commit/b8d4c5dfad4585c0af52287513176411a79fc20c) fix: use correct error in `kernel_param_spec` Modify call handling
+* [`4961d6867`](https://github.com/talos-systems/talos/commit/4961d6867cadab5e8b48e73355b23b91d36f70b4) docs: drop talos.interface kernel arg
+* [`b1e61fa5b`](https://github.com/talos-systems/talos/commit/b1e61fa5b1bcd5affd42b498711b9e3378344c33) chore: update Linux to 5.15.16
+* [`d4b844593`](https://github.com/talos-systems/talos/commit/d4b844593587ae3f82efcdbdfe0f24cda4262474) feat: support CRI configuration merging and reimplement registry config
+* [`f94c8c6e1`](https://github.com/talos-systems/talos/commit/f94c8c6e1c3915c962c331943120bdfd2b76259f) feat: update Kubernetes to 1.23.2
+* [`21f497b3e`](https://github.com/talos-systems/talos/commit/21f497b3e20f3b1cc9b744f1787ba80cf396d3e0) feat: install readonly overlay mounts during talos chroot sequence
+* [`9ad5a67d2`](https://github.com/talos-systems/talos/commit/9ad5a67d21b0788d1b43f1bea8e39c003a4a8ecc) feat: inject platform network configuration as network resources
+* [`907f8cbfb`](https://github.com/talos-systems/talos/commit/907f8cbfb8ed28cf399b9797230790718fc04a58) docs: fix patch flag
+* [`caa434426`](https://github.com/talos-systems/talos/commit/caa43442640744a0aa7a17aa1a205f1641e6445a) docs: add documentation on developing Talos
+* [`16eeb6776`](https://github.com/talos-systems/talos/commit/16eeb677625c0859d73b82948c1a073ba6e17e8d) docs: readme updates
+* [`3c0737027`](https://github.com/talos-systems/talos/commit/3c0737027b5574581a6461211199274ee709b1da) chore: update release notes
+* [`6d8bea5d5`](https://github.com/talos-systems/talos/commit/6d8bea5d559b1156f7d0b576b7b5784c25cd3595) feat: jetson nano SoC
+* [`1d8955ebe`](https://github.com/talos-systems/talos/commit/1d8955ebe43259a5e072b8a89f37cb728b6fcf53) feat: update CoreDNS to 1.8.7
+* [`6af83afd5`](https://github.com/talos-systems/talos/commit/6af83afd5aba64ffa7887d62f84c434109b7579b) fix: handle multiple-IP cluster nodes
+* [`43b2d8137`](https://github.com/talos-systems/talos/commit/43b2d8137116863cfc5ca969c429c13483465b01) chore: bump dependencies
+* [`529e80f4f`](https://github.com/talos-systems/talos/commit/529e80f4f529f066872b5768cd80eeeb7b766a31) docs: update home page and footer
+* [`37630e70c`](https://github.com/talos-systems/talos/commit/37630e70ccc9950e139bf7fcfcded6a18d0c7a01) Update twitter link
+* [`af440919b`](https://github.com/talos-systems/talos/commit/af440919bbaf12f414f04a5a621c1e2d5ed84ae2) fix: avoid panic in config loading/validation
+* [`4b8e9de59`](https://github.com/talos-systems/talos/commit/4b8e9de599812f82275605a93de7f5c05471f7f5) docs: add guide on adding proprietary kernel modules
+* [`833dc4169`](https://github.com/talos-systems/talos/commit/833dc4169a9702383930816d13be39f6b81c7a31) docs: rework vmware assets
+* [`2869b5eea`](https://github.com/talos-systems/talos/commit/2869b5eeacf0b6c96aedcb605bfa8a5f9fb87625) feat: add oraclecloud.com platform support
+* [`f3ec24beb`](https://github.com/talos-systems/talos/commit/f3ec24bebf0aaa7983228a09b21a67b9a2a098c1) fix: vmware documentation typo
+* [`2f2bdb26a`](https://github.com/talos-systems/talos/commit/2f2bdb26aa5367066c12a6402af554b7a5a148d6) feat: replace flags with --mode in `apply`, `edit` and `patch` commands
+* [`b09be2a69`](https://github.com/talos-systems/talos/commit/b09be2a69c6b6f8064a676fc014e6e60ea01a08d) docs: update index.md and sync across versions
+* [`ca65b918a`](https://github.com/talos-systems/talos/commit/ca65b918a7292ae53d40e410cca4e89be91e4261) docs: add nocloud documentation
+* [`59437d6d8`](https://github.com/talos-systems/talos/commit/59437d6d8360ad7dd8f801797ab91ac0791270f7) fix: filter down nameservers for docker-based cluster create
+* [`194eaa6f2`](https://github.com/talos-systems/talos/commit/194eaa6f22249fe4f43958bd897744a2cc57279f) chore: clean up /usr/bin from unneeded files
+* [`74e727240`](https://github.com/talos-systems/talos/commit/74e7272401ccb75464dd42ed0427d73842af74e1) docs: update office office
+* [`539af338c`](https://github.com/talos-systems/talos/commit/539af338c4b8f6e4291654f66628c81022aeda72) docs: update vmware docs
+* [`279a3fda7`](https://github.com/talos-systems/talos/commit/279a3fda7ba24037e06377f01cc495207722caa9) feat: update Go to 1.17.6, containerd to 1.5.9
+* [`3d3088941`](https://github.com/talos-systems/talos/commit/3d308894120092fe095b41970d6341362ab80a6b) chore: bump Go dependencies
+* [`d02d944ec`](https://github.com/talos-systems/talos/commit/d02d944ec767441612b84c164af31bc27c0c0659) chore: provide umarshal from YAML methods for network resource specs
+* [`2e735714d`](https://github.com/talos-systems/talos/commit/2e735714d9218cbc335d9c418730c146821fb8d4) fix: derive machine-id from node identity
+* [`d8a2721e1`](https://github.com/talos-systems/talos/commit/d8a2721e129be33f4a3c37be1bf5b89a1cd91685) test: update CAPI components to latest
+* [`7dff8a53e`](https://github.com/talos-systems/talos/commit/7dff8a53ee7bc37afe9dc216ca8a9113718d76af) fix: ignore missing init.yaml for cluster create
+* [`f4516c7d8`](https://github.com/talos-systems/talos/commit/f4516c7d847d905b49b4e2127eb86a1f38156d53) chore: bump dependencies
+</p>
+</details>
+
+### Changes from talos-systems/crypto
+<details><summary>1 commit</summary>
+<p>
+
+* [`6fa2d93`](https://github.com/talos-systems/crypto/commit/6fa2d93d0382299d5471e0de8e831c923398aaa8) fix: deepcopy nil fields as `nil`
+</p>
+</details>
+
+### Changes from talos-systems/extras
+<details><summary>2 commits</summary>
+<p>
+
+* [`7c1f3cc`](https://github.com/talos-systems/extras/commit/7c1f3cc0edbba59f2731cd01c0369af0490cebf9) feat: update Go to 1.17.6
+* [`495a5b2`](https://github.com/talos-systems/extras/commit/495a5b2a4964e11a9ae8629788c46a5140d07b10) feat: update Go to 1.17.5
+</p>
+</details>
+
+### Changes from talos-systems/go-blockdevice
+<details><summary>2 commits</summary>
+<p>
+
+* [`6928ee4`](https://github.com/talos-systems/go-blockdevice/commit/6928ee43c3034549e32f000f8b7bc16a6ebb7ed4) refactor: rewrite GPT serialize/deserialize functions
+* [`0c7e429`](https://github.com/talos-systems/go-blockdevice/commit/0c7e4296e01b3df815a935db3e30de6b9d4cc1d1) refactor: simplify middle endian functions
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>14 commits</summary>
+<p>
+
+* [`c14eb99`](https://github.com/talos-systems/pkgs/commit/c14eb99ec16603fc1fcbd93fab22ade7b55259ac) feat: update Linux to 5.15.16
+* [`5d4d8d6`](https://github.com/talos-systems/pkgs/commit/5d4d8d6e57814fbbdcf1abebe148827f68fd81ec) feat: bump containerd to 1.6.0-rc.0, runc to 1.1.0
+* [`5dd08a7`](https://github.com/talos-systems/pkgs/commit/5dd08a771be617720e5fadb9cb4df7b4641d83ba) feat: jetson nano SoC
+* [`402b960`](https://github.com/talos-systems/pkgs/commit/402b9601d3a0521575006c5f0c0cc1fbdab6af42) chore: bump u-boot to 2022.01
+* [`6ce1a40`](https://github.com/talos-systems/pkgs/commit/6ce1a4036d78113e9b66c6c2e074909b05b70caf) feat: update Go to 1.17.6
+* [`08f2519`](https://github.com/talos-systems/pkgs/commit/08f25196d91c4c3a1ebcb8e0ec8efc16098214bc) feat: update containerd to 1.5.9
+* [`fbb5c5c`](https://github.com/talos-systems/pkgs/commit/fbb5c5ccb83f6779a6a8ec0d4d867fd0fa7c5f56) feat: add qlcnic drivers to kernel
+* [`0505e01`](https://github.com/talos-systems/pkgs/commit/0505e0147ec27bf2c7f4d2b3c7d16fab796cc9de) chore: fix `=m` kernel build options
+* [`54aa902`](https://github.com/talos-systems/pkgs/commit/54aa902c3a3e7c3c427450b54271fb92190625e4) feat: enable amdgpu in kernel
+* [`2779c3f`](https://github.com/talos-systems/pkgs/commit/2779c3fe825a47a7c392d077f4a38d7f7b2f8eb5) fix: kexec on rpi4
+* [`950361f`](https://github.com/talos-systems/pkgs/commit/950361f79c03f718d73b60ddfbc6f661f4aa93b6) feat: update Linux to 5.15.11
+* [`ad611bc`](https://github.com/talos-systems/pkgs/commit/ad611bc512bd67366e16f0b58c24dfca35f38a12) feat: provide build instructions for NVIDIA kernel module
+* [`b22723d`](https://github.com/talos-systems/pkgs/commit/b22723d0fb4766488f1bc50244d3cdfb9a9d8bbf) feat: update iPXE to the latest available version
+* [`a675c67`](https://github.com/talos-systems/pkgs/commit/a675c676e894c33626563f57e9c124e7628bc78f) feat: update Go to 1.17.5
+</p>
+</details>
+
+### Changes from talos-systems/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`67314b1`](https://github.com/talos-systems/tools/commit/67314b13104ab1eb1ae9d7137d640499f35caead) feat: update Go to 1.17.6
+* [`9c2b9df`](https://github.com/talos-systems/tools/commit/9c2b9dfde84366c486f212cc074405cfb4d52127) feat: update Go to 1.17.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **cloud.google.com/go/compute**                    v1.0.0 **_new_**
+* **github.com/BurntSushi/toml**                     v0.4.1 -> v1.0.0
+* **github.com/aws/aws-sdk-go**                      v1.42.35 **_new_**
+* **github.com/containerd/containerd**               v1.5.8 -> v1.6.0-rc.0
+* **github.com/containerd/containerd/api**           v1.6.0-beta.3 **_new_**
+* **github.com/docker/docker**                       v20.10.11 -> v20.10.12
+* **github.com/google/nftables**                     16a134723a96 -> 6f19c4381e13
+* **github.com/hashicorp/go-getter**                 v1.5.9 -> v1.5.11
+* **github.com/jsimonetti/rtnetlink**                fd9a11f42291 -> 9dff439f7e79
+* **github.com/jxskiss/base62**                      v1.0.0 -> v1.1.0
+* **github.com/mdlayher/ethtool**                    288d040e9d60 -> bc8fdcf6e99c
+* **github.com/mdlayher/genetlink**                  v1.0.0 -> v1.1.0
+* **github.com/mdlayher/netlink**                    v1.4.2 -> v1.5.0
+* **github.com/packethost/packngo**                  v0.20.0 -> v0.21.0
+* **github.com/pelletier/go-toml**                   v1.9.4 **_new_**
+* **github.com/pmorjan/kmod**                        v1.0.0 **_new_**
+* **github.com/rivo/tview**                          2a6de950f73b -> 90d72bc664f5
+* **github.com/spf13/cobra**                         v1.2.1 -> v1.3.0
+* **github.com/talos-systems/crypto**                v0.3.4 -> 6fa2d93d0382
+* **github.com/talos-systems/extras**                v0.7.0-1-gd6b73a7 -> v0.8.0-alpha.0-1-g7c1f3cc
+* **github.com/talos-systems/go-blockdevice**        v0.2.5 -> 6928ee43c303
+* **github.com/talos-systems/pkgs**                  v0.9.0-1-g7a3419a -> v0.10.0-alpha.0-13-gc14eb99
+* **github.com/talos-systems/tools**                 v0.9.0-1-gb1146f9 -> v0.10.0-alpha.0-1-g67314b1
+* **github.com/u-root/u-root**                       v7.0.0 -> v0.8.0
+* **github.com/vishvananda/netlink**                 f5de75959ad5 -> 650dca95af54
+* **go.uber.org/zap**                                v1.19.1 -> v1.20.0
+* **golang.org/x/net**                               491a49abca63 -> 0dd24b26b47d
+* **golang.org/x/sys**                               97ca703d548d -> da31bd327af9
+* **golang.zx2c4.com/wireguard/wgctrl**              dd7407c86d22 -> daad0b7ba671
+* **google.golang.org/grpc**                         v1.42.0 -> v1.43.0
+* **k8s.io/api**                                     v0.23.1 -> v0.23.2
+* **k8s.io/apimachinery**                            v0.23.1 -> v0.23.2
+* **k8s.io/client-go**                               v0.23.1 -> v0.23.2
+* **k8s.io/component-base**                          v0.23.1 -> v0.23.2
+* **k8s.io/kubectl**                                 v0.23.1 -> v0.23.2
+* **k8s.io/kubelet**                                 v0.23.1 -> v0.23.2
+* **kernel.org/pub/linux/libs/security/libcap/cap**  v1.2.61 -> v1.2.62
+
+Previous release can be found at [v0.14.0](https://github.com/talos-systems/talos/releases/tag/v0.14.0)
+
 ## [Talos 0.15.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.15.0-alpha.0) (2021-12-30)
 
 Welcome to the v0.15.0-alpha.0 release of Talos!  

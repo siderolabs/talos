@@ -52,19 +52,22 @@ See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-ma
         title = "Machine Configuration"
         description="""\
 Talos now preserves machine configuration as it was submitted to the node.
-There is some work still going on various cloud platforms to stop modifying machine configuration on the fly.
 """
 
     [notes.platforms]
         title = "Platform Support"
         description="""\
 Talos now supports Oracle Cloud.
+
+Platform network configuration was rewritten to avoid modifying Talos machine configuration.
+Network configuration is performed independent of the machine configuration presence, so it works
+even if Talos is booted in maintenance mode (without machine configuration is platform userdata).
 """
 
     [notes.sbcs]
         title = "SBC Support"
         description="""\
-Talos now supports Jetson Nano SBC
+Talos now supports Jetson Nano SBC.
 """
 
 [make_deps]
