@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Sync changes with configuring-pull-through-cache.md.
 

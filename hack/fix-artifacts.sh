@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 for platform in $(tr "," "\n" <<< "${PLATFORM}"); do
     echo ${platform}
