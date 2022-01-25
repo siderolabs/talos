@@ -35,7 +35,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	var pflashImages []string
 
-	if pflashSpec := arch.PFlash(opts.UEFIEnabled); pflashSpec != nil {
+	if pflashSpec := arch.PFlash(opts.UEFIEnabled, opts.ExtraUEFISearchPaths); pflashSpec != nil {
 		var err error
 
 		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec); err != nil {
