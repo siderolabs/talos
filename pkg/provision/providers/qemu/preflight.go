@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/coreos/go-iptables/iptables"
@@ -164,8 +165,9 @@ func (check *preflightCheckContext) cniBundle(ctx context.Context) error {
 	}
 
 	client := getter.Client{
-		Ctx:  ctx,
-		Src:  strings.ReplaceAll(check.request.Network.CNI.BundleURL, constants.ArchVariable, check.options.TargetArch),
+		Ctx: ctx,
+		// Network CNI runs on the host
+		Src:  strings.ReplaceAll(check.request.Network.CNI.BundleURL, constants.ArchVariable, runtime.GOARCH),
 		Dst:  check.request.Network.CNI.BinPath[0],
 		Pwd:  pwd,
 		Mode: getter.ClientModeDir,
