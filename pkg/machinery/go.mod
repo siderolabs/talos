@@ -14,7 +14,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v0.0.0-20211213041634-9dff439f7e79
+	github.com/jsimonetti/rtnetlink v0.0.0-20220124090637-bbb52d448503
 	github.com/mdlayher/ethtool v0.0.0-20211214014908-bc8fdcf6e99c
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/testify v1.7.0
@@ -22,7 +22,7 @@ require (
 	github.com/talos-systems/go-blockdevice v0.2.6-0.20211214184027-6928ee43c303
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.1
-	google.golang.org/genproto v0.0.0-20220114231437-d2e6a121cae0
+	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
@@ -35,7 +35,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gertd/go-pluralize v0.1.7 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
 	github.com/mdlayher/genetlink v1.0.0 // indirect
