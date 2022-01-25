@@ -76,7 +76,7 @@ func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
 }
 
 func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error {
-	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled) {
+	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled, check.options.ExtraUEFISearchPaths) {
 		if len(flashImage.SourcePaths) == 0 {
 			continue
 		}
@@ -93,7 +93,8 @@ func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error 
 		}
 
 		if !found {
-			return fmt.Errorf("the required flash image was not found in any of the expected paths for (%q), please install it with the package manager", flashImage.SourcePaths)
+			return fmt.Errorf("the required flash image was not found in any of the expected paths for (%q), "+
+				"please install it with the package manager or specify --extra-uefi-search-paths", flashImage.SourcePaths)
 		}
 	}
 

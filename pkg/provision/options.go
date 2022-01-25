@@ -70,6 +70,15 @@ func WithUEFI(enabled bool) Option {
 	}
 }
 
+// WithExtraUEFISearchPaths configures additional search paths to look for UEFI firmware.
+func WithExtraUEFISearchPaths(extraUEFISearchPaths []string) Option {
+	return func(o *Options) error {
+		o.ExtraUEFISearchPaths = extraUEFISearchPaths
+
+		return nil
+	}
+}
+
 // WithTargetArch specifies target architecture for the cluster.
 func WithTargetArch(arch string) Option {
 	return func(o *Options) error {
@@ -110,6 +119,8 @@ type Options struct {
 
 	// Enable UEFI (for amd64), arm64 can only boot UEFI
 	UEFIEnabled bool
+	// Configure additional search paths to look for UEFI firmware.
+	ExtraUEFISearchPaths []string
 
 	// Expose ports to worker machines in docker provisioner
 	DockerPorts       []string

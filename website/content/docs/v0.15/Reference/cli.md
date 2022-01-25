@@ -112,6 +112,7 @@ talosctl cluster create [flags]
       --extra-boot-kernel-args string           add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)
       --extra-disks int                         number of extra disks to create for each worker VM
       --extra-disks-size int                    default limit on disk size in MB (each VM) (default 5120)
+      --extra-uefi-search-paths strings         additional search paths for UEFI firmware (only applies when UEFI is enabled)
   -h, --help                                    help for create
       --image string                            the image to use (default "ghcr.io/talos-systems/talos:latest")
       --init-node-as-endpoint                   use init node as endpoint instead of any load balancer endpoint
