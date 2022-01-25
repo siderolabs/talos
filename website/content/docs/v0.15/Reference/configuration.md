@@ -148,6 +148,7 @@ install:
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+    #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
     # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
@@ -512,6 +513,7 @@ install:
     # diskSelector:
     #     size: 4GB # Disk size.
     #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+    #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
     # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
@@ -2071,6 +2073,7 @@ wipe: false # Indicates if the installation disk should be wiped at installation
 # diskSelector:
 #     size: 4GB # Disk size.
 #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+#     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
 # # Allows for supplying additional system extension images to install on top of base Talos image.
 # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
@@ -2123,6 +2126,7 @@ Examples:
 diskSelector:
     size: 4GB # Disk size.
     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+    busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 ```
 
 
@@ -2273,6 +2277,7 @@ Appears in:
 ``` yaml
 size: 4GB # Disk size.
 model: WDC* # Disk model `/sys/block/<dev>/device/model`.
+busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 ```
 
 <hr />
@@ -2399,6 +2404,32 @@ Valid values:
   - <code>nvme</code>
 
   - <code>sd</code>
+</div>
+
+<hr />
+<div class="dd">
+
+<code>busPath</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Disk bus path.
+
+
+
+Examples:
+
+
+``` yaml
+busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
+```
+
+``` yaml
+busPath: /pci0000:00/*
+```
+
+
 </div>
 
 <hr />

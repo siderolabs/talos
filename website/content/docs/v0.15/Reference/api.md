@@ -3122,6 +3122,7 @@ Disk represents a disk.
 | uuid | [string](#string) |  | Uuid as in `/sys/block/<dev>/device/uuid`. |
 | wwid | [string](#string) |  | Wwid as in `/sys/block/<dev>/device/wwid`. |
 | type | [Disk.DiskType](#storage.Disk.DiskType) |  | Type is a type of the disk: nvme, ssd, hdd, sd card. |
+| bus_path | [string](#string) |  | BusPath is the bus path of the disk. |
 
 
 

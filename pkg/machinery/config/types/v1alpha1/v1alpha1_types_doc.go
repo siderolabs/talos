@@ -745,7 +745,7 @@ func init() {
 			FieldName: "diskSelector",
 		},
 	}
-	InstallDiskSelectorDoc.Fields = make([]encoder.Doc, 8)
+	InstallDiskSelectorDoc.Fields = make([]encoder.Doc, 9)
 	InstallDiskSelectorDoc.Fields[0].Name = "size"
 	InstallDiskSelectorDoc.Fields[0].Type = "InstallDiskSizeMatcher"
 	InstallDiskSelectorDoc.Fields[0].Note = ""
@@ -798,6 +798,15 @@ func init() {
 		"nvme",
 		"sd",
 	}
+	InstallDiskSelectorDoc.Fields[8].Name = "busPath"
+	InstallDiskSelectorDoc.Fields[8].Type = "string"
+	InstallDiskSelectorDoc.Fields[8].Note = ""
+	InstallDiskSelectorDoc.Fields[8].Description = "Disk bus path."
+	InstallDiskSelectorDoc.Fields[8].Comments[encoder.LineComment] = "Disk bus path."
+
+	InstallDiskSelectorDoc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
+
+	InstallDiskSelectorDoc.Fields[8].AddExample("", "/pci0000:00/*")
 
 	InstallExtensionConfigDoc.Type = "InstallExtensionConfig"
 	InstallExtensionConfigDoc.Comments[encoder.LineComment] = "InstallExtensionConfig represents a configuration for a system extension."

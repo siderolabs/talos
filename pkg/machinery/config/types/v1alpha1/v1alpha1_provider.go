@@ -980,6 +980,7 @@ func (i *InstallConfig) Disk() (string, error) {
 }
 
 // DiskMatchers implements the config.Provider interface.
+//nolint:gocyclo
 func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 	if i.InstallDiskSelector != nil {
 		selector := i.InstallDiskSelector
@@ -1015,6 +1016,10 @@ func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 
 		if disk.Type(selector.Type) != disk.TypeUnknown {
 			matchers = append(matchers, disk.WithType(disk.Type(selector.Type)))
+		}
+
+		if selector.BusPath != "" {
+			matchers = append(matchers, disk.WithBusPath(selector.BusPath))
 		}
 
 		return matchers

@@ -1164,6 +1164,11 @@ type InstallDiskSelector struct {
 	//     - nvme
 	//     - sd
 	Type InstallDiskType `yaml:"type,omitempty"`
+	//   description: Disk bus path.
+	//   examples:
+	//     - value: '"/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0"'
+	//     - value: '"/pci0000:00/*"'
+	BusPath string `yaml:"busPath,omitempty"`
 }
 
 // InstallExtensionConfig represents a configuration for a system extension.

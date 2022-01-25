@@ -39,6 +39,8 @@ message Disk {
   }
   // Type is a type of the disk: nvme, ssd, hdd, sd card.
   DiskType type = 9;
+  // BusPath is the bus path of the disk.
+  string bus_path = 10;
 }
 
 // DisksResponse represents the response of the `Disks` RPC.

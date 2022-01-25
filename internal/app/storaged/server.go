@@ -37,6 +37,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Serial:     disk.Serial,
 			Modalias:   disk.Modalias,
 			Type:       storage.Disk_DiskType(disk.Type),
+			BusPath:    disk.BusPath,
 		}
 	}
 

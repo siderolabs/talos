@@ -60,6 +60,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 			"MODALIAS",
 			"NAME",
 			"SIZE",
+			"BUS_PATH",
 		}, "\t")
 
 	getWithPlaceholder := func(in string) string {
@@ -104,6 +105,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				getWithPlaceholder(disk.Modalias),
 				getWithPlaceholder(disk.Name),
 				humanize.Bytes(disk.Size),
+				getWithPlaceholder(disk.BusPath),
 			}...)
 
 			pattern := strings.Repeat("%s\t", len(args))
