@@ -74,7 +74,7 @@ type PFlash struct {
 func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlash {
 	switch arch {
 	case ArchArm64:
-		uefiSourcePaths := []string{"QEMU_EFI.fd", "/usr/share/OVMF/QEMU_EFI.fd"}
+		uefiSourcePaths := []string{"/usr/share/ovmf/OVMF.fd", "/usr/share/OVMF/QEMU_EFI.fd"}
 		for _, p := range extraUEFISearchPaths {
 			uefiSourcePaths = append(uefiSourcePaths, path.Join(p, "QEMU_EFI.fd"))
 		}
