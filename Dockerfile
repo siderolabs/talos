@@ -95,7 +95,7 @@ RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 ARG GOLANGCILINT_VERSION
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b /toolchain/bin ${GOLANGCILINT_VERSION}
+RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCILINT_VERSION}/install.sh | bash -s -- -b /toolchain/bin ${GOLANGCILINT_VERSION}
 ARG GOFUMPT_VERSION
 RUN go install mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumports /toolchain/go/bin/gofumports
