@@ -23,7 +23,7 @@ require (
 	k8s.io/cli-runtime v0.23.2 // indirect
 	k8s.io/client-go v0.23.2
 	k8s.io/component-base v0.23.2
-	k8s.io/cri-api v0.23.2
+	k8s.io/cri-api v0.23.3
 	k8s.io/kubectl v0.23.2
 	k8s.io/kubelet v0.23.2
 )
