@@ -35,7 +35,7 @@ export vcn_id=$(oci network vcn create --cidr-block $cidr_block --display-name t
 export rt_id=$(oci network subnet create --cidr-block $subnet_block --display-name kubernetes --compartment-id $compartment_id --vcn-id $vcn_id --query data.route-table-id --raw-output)
 export ig_id=$(oci network internet-gateway create --compartment-id $compartment_id --is-enabled true --vcn-id $vcn_id --query data.id --raw-output)
 
-oci network route-table update --rt-id $rt_id --route-rules "[{\"cidrBlock\":\"0.0.0.0/0\",\"networkEntityId\":\"$ig_id\"}]"
+oci network route-table update --rt-id $rt_id --route-rules "[{\"cidrBlock\":\"0.0.0.0/0\",\"networkEntityId\":\"$ig_id\"}]" --force
 ```
 
 ### Create a Load Balancer
@@ -44,7 +44,7 @@ Create a load balancer by issuing the commands shown below.
 Save the IP/DNS name, as this info will be used in the next step.
 
 ```bash
-export subnet_id=$(oci network subnet list --compartment-id=$compartment_id --display-name kubernetes --query data[0].id)
+export subnet_id=$(oci network subnet list --compartment-id=$compartment_id --display-name kubernetes --query data[0].id --raw-output)
 export network_load_balancer_id=$(oci nlb network-load-balancer create --compartment-id $compartment_id --display-name controlplane-lb --subnet-id $subnet_id --is-preserve-source-destination false --is-private false --query data.id --raw-output)
 
 cat <<EOF > talos-health-checker.json
@@ -82,7 +82,7 @@ oci nlb network-load-balancer list --compartment-id $compartment_id --display-na
 Using the IP/DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines by issuing:
 
 ```bash
-$ talosctl gen config talos-k8s-oracle-tutorial https://<load balancer IP or DNS>:6443
+$ talosctl gen config talos-k8s-oracle-tutorial https://<load balancer IP or DNS>:6443 --additional-sans <load balancer IP or DNS>
 created controlplane.yaml
 created worker.yaml
 created talosconfig
@@ -109,6 +109,23 @@ worker.yaml is valid for cloud mode
 Create the control plane nodes with:
 
 ```bash
+export shape='VM.Standard.A1.Flex'
+export subnet_id=$(oci network subnet list --compartment-id=$compartment_id --display-name kubernetes --query data[0].id --raw-output)
+export image_id=$(oci compute image list --compartment-id $compartment_id --shape $shape --operating-system Talos --limit 1 --query data[0].id --raw-output)
+export availability_domain=$(oci iam availability-domain list --compartment-id=$compartment_id --query data[0].name --raw-output)
+
+cat <<EOF > shape.json
+{
+  "memoryInGBs": 4,
+  "ocpus": 1
+}
+EOF
+
+oci compute instance launch --shape $shape --shape-config file://shape.json --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name controlplane-1 --private-ip 10.0.0.11 --assign-public-ip true --launch-options '{"networkType":"PARAVIRTUALIZED"}' --user-data-file controlplane.yaml
+
+oci compute instance launch --shape $shape --shape-config file://shape.json --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name controlplane-2 --private-ip 10.0.0.12 --assign-public-ip true --launch-options '{"networkType":"PARAVIRTUALIZED"}' --user-data-file controlplane.yaml
+
+oci compute instance launch --shape $shape --shape-config file://shape.json --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name controlplane-3 --private-ip 10.0.0.13 --assign-public-ip true --launch-options '{"networkType":"PARAVIRTUALIZED"}' --user-data-file controlplane.yaml
 ```
 
 #### Create the Worker Nodes
@@ -116,6 +133,16 @@ Create the control plane nodes with:
 Create the worker nodes with the following command, repeating (and incrementing the name counter) as many times as desired.
 
 ```bash
+export subnet_id=$(oci network subnet list --compartment-id=$compartment_id --display-name kubernetes --query data[0].id --raw-output)
+export image_id=$(oci compute image list --compartment-id $compartment_id --operating-system Talos --limit 1 --query data[0].id --raw-output)
+export availability_domain=$(oci iam availability-domain list --compartment-id=$compartment_id --query data[0].name --raw-output)
+export shape='VM.Standard.E2.1.Micro'
+
+oci compute instance launch --shape $shape --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name worker-1 --assign-public-ip true --user-data-file worker.yaml
+
+oci compute instance launch --shape $shape --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name worker-2 --assign-public-ip true --user-data-file worker.yaml
+
+oci compute instance launch --shape $shape --availability-domain $availability_domain --compartment-id $compartment_id --image-id $image_id --subnet-id $subnet_id --display-name worker-3 --assign-public-ip true --user-data-file worker.yaml
 ```
 
 ### Bootstrap Etcd
@@ -124,12 +151,15 @@ To configure `talosctl` we will need the first control plane node's IP.
 This can be found by issuing:
 
 ```bash
+export instance_id=$(oci compute instance list --compartment-id $compartment_id --display-name controlplane-1 --query 'data[0].id' --raw-output)
+
+oci compute instance list-vnics --instance-id $instance_id --query 'data[0]."private-ip"' --raw-output
 ```
 
 Set the `endpoints` and `nodes` for your talosconfig with:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint <control-plane-1-IP>
+talosctl --talosconfig talosconfig config endpoint <load balancer IP or DNS>
 talosctl --talosconfig talosconfig config node <control-plane-1-IP>
 ```
 
