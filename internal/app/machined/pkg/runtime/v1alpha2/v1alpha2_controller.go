@@ -187,6 +187,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline:        procfs.ProcCmdline(),
 			Drainer:        drainer,
 		},
+		&runtimecontrollers.ExtensionStatusController{},
 		&runtimecontrollers.KernelModuleConfigController{},
 		&runtimecontrollers.KernelModuleSpecController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
