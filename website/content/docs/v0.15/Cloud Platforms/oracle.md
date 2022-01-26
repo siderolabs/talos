@@ -21,7 +21,21 @@ machine:
 
 ## Creating a Cluster via the CLI
 
+Login to the [console](https://www.oracle.com/cloud/).
+And open the Cloud Shell.
+
+### Create a network
+
 ```bash
+export cidr_block=10.0.0.0/16
+export subnet_block=10.0.0.0/24
+export compartment_id=<substitute-value-of-compartment_id> # https://docs.cloud.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/network/vcn/create.html#cmdoption-compartment-id
+
+export vcn_id=$(oci network vcn create --cidr-block $cidr_block --display-name talos-example --compartment-id $compartment_id --query data.id --raw-output)
+export rt_id=$(oci network subnet create --cidr-block $subnet_block --display-name kubernetes --compartment-id $compartment_id --vcn-id $vcn_id --query data.route-table-id --raw-output)
+export ig_id=$(oci network internet-gateway create --compartment-id $compartment_id --is-enabled true --vcn-id $vcn_id --query data.id --raw-output)
+
+oci network route-table update --rt-id $rt_id --route-rules "[{\"cidrBlock\":\"0.0.0.0/0\",\"networkEntityId\":\"$ig_id\"}]"
 ```
 
 ### Create a Load Balancer
@@ -30,6 +44,35 @@ Create a load balancer by issuing the commands shown below.
 Save the IP/DNS name, as this info will be used in the next step.
 
 ```bash
+export subnet_id=$(oci network subnet list --compartment-id=$compartment_id --display-name kubernetes --query data[0].id)
+export network_load_balancer_id=$(oci nlb network-load-balancer create --compartment-id $compartment_id --display-name controlplane-lb --subnet-id $subnet_id --is-preserve-source-destination false --is-private false --query data.id --raw-output)
+
+cat <<EOF > talos-health-checker.json
+{
+  "intervalInMillis": 10000,
+  "port": 50000,
+  "protocol": "TCP"
+}
+EOF
+
+oci nlb backend-set create --health-checker file://talos-health-checker.json --name talos --network-load-balancer-id $network_load_balancer_id --policy TWO_TUPLE --is-preserve-source false
+oci nlb listener create --default-backend-set-name talos --name talos --network-load-balancer-id $network_load_balancer_id --port 50000 --protocol TCP
+
+cat <<EOF > controlplane-health-checker.json
+{
+  "intervalInMillis": 10000,
+  "port": 6443,
+  "protocol": "HTTPS",
+  "returnCode": 200,
+  "urlPath": "/readyz"
+}
+EOF
+
+oci nlb backend-set create --health-checker file://controlplane-health-checker.json --name controlplane --network-load-balancer-id $network_load_balancer_id --policy TWO_TUPLE --is-preserve-source false
+oci nlb listener create --default-backend-set-name controlplane --name controlplane --network-load-balancer-id $network_load_balancer_id --port 6443 --protocol TCP
+
+# Save the external IP
+oci nlb network-load-balancer list --compartment-id $compartment_id --display-name controlplane-lb --query data.items[0].\"ip-addresses\"
 ```
 
 ### Create the Machine Configuration Files
