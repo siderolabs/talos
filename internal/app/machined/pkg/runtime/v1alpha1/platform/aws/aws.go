@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -22,8 +23,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
-
-const notFoundError = "NotFoundError"
 
 // AWS is the concrete type that implements the runtime.Platform interface.
 type AWS struct {
@@ -57,8 +56,8 @@ func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
 
 	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == notFoundError {
+		if awsErr, ok := err.(awserr.RequestFailure); ok {
+			if awsErr.StatusCode() == http.StatusNotFound {
 				return nil, errors.ErrNoConfigSource
 			}
 		}
@@ -92,8 +91,8 @@ func (a *AWS) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.Platf
 	getMetadataKey := func(key string) (string, error) {
 		v, err := a.metadataClient.GetMetadataWithContext(ctx, key)
 		if err != nil {
-			if awsErr, ok := err.(awserr.Error); ok {
-				if awsErr.Code() == notFoundError {
+			if awsErr, ok := err.(awserr.RequestFailure); ok {
+				if awsErr.StatusCode() == http.StatusNotFound {
 					return "", nil
 				}
 			}
