@@ -133,6 +133,9 @@ local setup_ci = {
 
   commands: [
     'setup-ci',
+    'docker buildx create --name ci1 --buildkitd-flags "--allow-insecure-entitlement security.insecure" --driver-opt image=moby/buildkit:master ' +
+      '--platform linux/amd64,linux/arm64 --driver docker-container --use unix:///var/outer-run/docker.sock',
+    'docker buildx inspect --bootstrap',
     'make ./_out/kubectl',
   ],
   environment: {
