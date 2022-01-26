@@ -125,6 +125,10 @@ case "${TEST_MODE:-default}" in
     get_kubeconfig
     run_talos_integration_test
     run_kubernetes_integration_test
+
+    if [ "${WITH_TEST:-none}" != "none" ]; then
+      "${WITH_TEST}"
+    fi
     ;;
 esac
 

@@ -211,3 +211,9 @@ function build_registry_mirrors {
     REGISTRY_MIRROR_FLAGS=${REGISTRY_MIRROR_FLAGS:-}
   fi
 }
+
+function run_gvisor_test {
+  ${KUBECTL} apply -f ${PWD}/hack/test/gvisor/manifest.yaml
+  sleep 10
+  ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=1m
+}
