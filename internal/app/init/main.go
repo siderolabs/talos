@@ -57,6 +57,11 @@ func run() (err error) {
 		return err
 	}
 
+	// Bind mount the lib/firmware if needed.
+	if err = bindMountFirmware(); err != nil {
+		return err
+	}
+
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
@@ -170,6 +175,20 @@ func mountRootFS() error {
 	}
 
 	return nil
+}
+
+func bindMountFirmware() error {
+	if _, err := os.Stat(constants.FirmwarePath); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	log.Printf("bind mounting %s", constants.FirmwarePath)
+
+	return unix.Mount(constants.FirmwarePath, filepath.Join(constants.NewRoot, constants.FirmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
 }
 
 func main() {

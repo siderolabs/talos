@@ -44,8 +44,8 @@ FROM --platform=arm64 ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl-arm
 FROM --platform=amd64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware-arm64
+# linux-firmware is not arch-specific
+FROM --platform=amd64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
 
 FROM --platform=amd64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-arm64
@@ -359,8 +359,6 @@ COPY --from=pkg-libjson-c-amd64 / /rootfs
 COPY --from=pkg-libpopt-amd64 / /rootfs
 COPY --from=pkg-libressl-amd64 / /rootfs
 COPY --from=pkg-libseccomp-amd64 / /rootfs
-COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=pkg-linux-firmware-amd64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
 COPY --from=pkg-lvm2-amd64 / /rootfs
 COPY --from=pkg-libaio-amd64 / /rootfs
 COPY --from=pkg-musl-amd64 / /rootfs
@@ -378,7 +376,7 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
@@ -402,10 +400,6 @@ COPY --from=pkg-libjson-c-arm64 / /rootfs
 COPY --from=pkg-libpopt-arm64 / /rootfs
 COPY --from=pkg-libressl-arm64 / /rootfs
 COPY --from=pkg-libseccomp-arm64 / /rootfs
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2 /rootfs/lib/firmware/bnx2
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/bnx2x /rootfs/lib/firmware/bnx2x
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/rtl_nic /rootfs/lib/firmware/rtl_nic
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/nvidia/tegra210 /rootfs/lib/firmware/nvidia/tegra210
 COPY --from=pkg-lvm2-arm64 / /rootfs
 COPY --from=pkg-libaio-arm64 / /rootfs
 COPY --from=pkg-musl-arm64 / /rootfs
@@ -423,7 +417,7 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,mnt,system,opt}
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
@@ -463,8 +457,8 @@ WORKDIR /initramfs
 COPY --from=squashfs-arm64 /rootfs.sqsh .
 COPY --from=init-build-arm64 /init .
 # copying over firmware binary blobs to initramfs
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/rtl_nic ./lib/firmware/rtl_nic
-COPY --from=pkg-linux-firmware-arm64 /lib/firmware/nvidia/tegra210 ./lib/firmware/nvidia/tegra210
+COPY --from=pkg-linux-firmware /lib/firmware/rtl_nic ./lib/firmware/rtl_nic
+COPY --from=pkg-linux-firmware /lib/firmware/nvidia/tegra210 ./lib/firmware/nvidia/tegra210
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN set -o pipefail \
@@ -478,6 +472,9 @@ FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
 COPY --from=squashfs-amd64 /rootfs.sqsh .
 COPY --from=init-build-amd64 /init .
+# copying over firmware binary blobs to initramfs
+COPY --from=pkg-linux-firmware /lib/firmware/bnx2 ./lib/firmware/bnx2
+COPY --from=pkg-linux-firmware /lib/firmware/bnx2x ./lib/firmware/bnx2x
 RUN find . -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN set -o pipefail \

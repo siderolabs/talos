@@ -20,6 +20,7 @@ import (
 // Paths preserved in the initramfs.
 var preservedPaths = map[string]struct{}{
 	constants.ExtensionsConfigFile: {},
+	constants.FirmwarePath:         {},
 }
 
 // Switch moves the rootfs to a specified directory. See
@@ -60,7 +61,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 
 	log.Println("cleaning up initramfs")
 
-	if err = recursiveDelete(int(old.Fd()), "/"); err != nil {
+	if _, err = recursiveDelete(int(old.Fd()), "/"); err != nil {
 		return fmt.Errorf("error deleting initramfs: %w", err)
 	}
 
@@ -83,10 +84,10 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	return nil
 }
 
-func recursiveDelete(fd int, path string) error {
+func recursiveDelete(fd int, path string) (preserved bool, err error) {
 	parentDev, err := getDev(fd)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	dir := os.NewFile(uintptr(fd), "__ignored__")
@@ -95,42 +96,57 @@ func recursiveDelete(fd int, path string) error {
 
 	names, err := dir.Readdirnames(-1)
 	if err != nil {
-		return err
+		return false, err
 	}
+
+	preserved = false
 
 	for _, name := range names {
-		if err := recusiveDeleteInner(fd, parentDev, name, filepath.Join(path, name)); err != nil {
-			return err
+		p, err := recusiveDeleteInner(fd, parentDev, name, filepath.Join(path, name))
+		if err != nil {
+			return false, err
 		}
+
+		preserved = preserved || p
 	}
 
-	return nil
+	return preserved, nil
 }
 
-func recusiveDeleteInner(parentFd int, parentDev uint64, childName, path string) error {
-	if _, preserve := preservedPaths[path]; preserve {
-		return nil
+func recusiveDeleteInner(parentFd int, parentDev uint64, childName, path string) (preserved bool, err error) {
+	if _, preserved = preservedPaths[path]; preserved {
+		return preserved, nil
 	}
 
 	childFd, err := unix.Openat(parentFd, childName, unix.O_DIRECTORY|unix.O_NOFOLLOW, unix.O_RDWR)
 	if err != nil {
-		return unix.Unlinkat(parentFd, childName, 0)
+		return false, unix.Unlinkat(parentFd, childName, 0)
 	}
 
 	//nolint:errcheck
 	defer unix.Close(childFd)
 
-	if childFdDev, err := getDev(childFd); err != nil {
-		return err
+	var childFdDev uint64
+
+	if childFdDev, err = getDev(childFd); err != nil {
+		return false, err
 	} else if childFdDev != parentDev {
-		return nil
+		return false, nil
 	}
 
-	if err := recursiveDelete(childFd, path); err != nil {
-		return err
+	preserved, err = recursiveDelete(childFd, path)
+	if err != nil {
+		return false, err
 	}
 
-	return unix.Unlinkat(parentFd, childName, unix.AT_REMOVEDIR)
+	if preserved {
+		// some child paths got preserved, skip unlinking the parent
+		return preserved, nil
+	}
+
+	err = unix.Unlinkat(parentFd, childName, unix.AT_REMOVEDIR)
+
+	return false, err
 }
 
 func getDev(fd int) (dev uint64, err error) {

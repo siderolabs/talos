@@ -592,6 +592,9 @@ const (
 
 	// PlatformNetworkConfigFilename is the filename to cache platform network configuration reboots.
 	PlatformNetworkConfigFilename = "platform-network.yaml"
+
+	// FirmwarePath is the path to the standard Linux firmware location.
+	FirmwarePath = "/lib/firmware"
 )
 
 // See https://linux.die.net/man/3/klogctl
