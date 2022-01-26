@@ -376,7 +376,9 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
+RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
@@ -417,7 +419,9 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
+RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
