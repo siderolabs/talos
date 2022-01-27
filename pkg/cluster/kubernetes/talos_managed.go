@@ -333,7 +333,7 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 		return nil, err
 	}
 
-	defer talosclient.Close() //nolint:errcheck
+	defer cluster.Close() //nolint:errcheck
 
 	listClient, err := talosclient.Resources.List(ctx, k8s.ControlPlaneNamespaceName, k8s.ManifestType)
 	if err != nil {
