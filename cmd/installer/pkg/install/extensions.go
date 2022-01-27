@@ -7,6 +7,7 @@ package install
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -107,7 +108,7 @@ func compressExtensions(extensions []*extensions.Extension, tempDir string) (*ex
 	log.Printf("compressing system extensions")
 
 	for _, ext := range extensions {
-		path, err := ext.Compress(tempDir)
+		path, err := ext.Compress(tempDir, tempDir)
 		if err != nil {
 			return nil, fmt.Errorf("error compressing extension %q: %w", ext.Manifest.Metadata.Name, err)
 		}
@@ -121,26 +122,58 @@ func compressExtensions(extensions []*extensions.Extension, tempDir string) (*ex
 	return cfg, nil
 }
 
+func buildContents(path string) (io.Reader, error) {
+	var listing bytes.Buffer
+
+	if err := buildContentsRecursive(path, "", &listing); err != nil {
+		return nil, err
+	}
+
+	return &listing, nil
+}
+
+func buildContentsRecursive(basePath, path string, w io.Writer) error {
+	if path != "" {
+		fmt.Fprintf(w, "%s\n", path)
+	}
+
+	st, err := os.Stat(filepath.Join(basePath, path))
+	if err != nil {
+		return err
+	}
+
+	if !st.IsDir() {
+		return nil
+	}
+
+	contents, err := os.ReadDir(filepath.Join(basePath, path))
+	if err != nil {
+		return err
+	}
+
+	for _, item := range contents {
+		if err = buildContentsRecursive(basePath, filepath.Join(path, item.Name()), w); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (i *Installer) rebuildInitramfs(tempDir string) error {
 	initramfsAsset := fmt.Sprintf(constants.InitramfsAssetPath, i.options.Arch)
 
 	log.Printf("creating system extensions initramfs archive")
 
-	contents, err := os.ReadDir(tempDir)
+	listing, err := buildContents(tempDir)
 	if err != nil {
 		return err
-	}
-
-	var listing bytes.Buffer
-
-	for _, item := range contents {
-		fmt.Fprintf(&listing, "%s\n", item.Name())
 	}
 
 	// build cpio image which contains .sqsh images and extensions.yaml
 	cmd := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "-F", "initramfs.sysext")
 	cmd.Dir = tempDir
-	cmd.Stdin = &listing
+	cmd.Stdin = listing
 	cmd.Stderr = os.Stderr
 
 	if err = cmd.Run(); err != nil {
