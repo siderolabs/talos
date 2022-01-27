@@ -117,8 +117,14 @@ Sample message:
 
 ### Filebeat example
 
-Talos logs can be sent to [Filebeat](https://www.elastic.co/beats/filebeat).
-If [Elastic Cloud on Kubernetes](https://www.elastic.co/elastic-cloud-kubernetes) is being used, the following Beat (custom resource) configuration might be helpful:
+To forward logs to other Log collection services, one way to do this is sending
+them to a [Filebeat](https://www.elastic.co/beats/filebeat) running in the
+cluster itself (in the host network), which takes care of forwarding it to
+other endpoints (and the necessary transformations).
+
+If [Elastic Cloud on Kubernetes](https://www.elastic.co/elastic-cloud-kubernetes)
+is being used, the following Beat (custom resource) configuration might be
+helpful:
 
 ```yaml
 apiVersion: beat.k8s.elastic.co/v1beta1
@@ -167,5 +173,11 @@ spec:
                 hostPort: 12345
 ```
 
-That input configuration ensures that messages and timestamps are extracted properly.
-In `daemonSet` configuration, make sure that the host network is being used and that the port is exposed.
+The input configuration ensures that messages and timestamps are extracted properly.
+Refer to the Filebeat documentation on how to forward logs to other outputs.
+
+Also note the `hostNetwork: true` in the `daemonSet` configuration.
+
+This ensures filebeat uses the host network, and listens on `127.0.0.1:12345`
+(UDP) on every machine, which can then be specified as a logging endpoint in
+the machine configuration.
