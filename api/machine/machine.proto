@@ -60,7 +60,7 @@ service MachineService {
   rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
   rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
   rpc ServiceStop(ServiceStopRequest) returns (ServiceStopResponse);
-  rpc Shutdown(google.protobuf.Empty) returns (ShutdownResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
   rpc Stats(StatsRequest) returns (StatsResponse);
   rpc SystemStat(google.protobuf.Empty) returns (SystemStatResponse);
   rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
@@ -256,6 +256,11 @@ message ResetResponse {
 // The messages message containing the shutdown status.
 message Shutdown {
   common.Metadata metadata = 1;
+}
+
+message ShutdownRequest {
+  // Force indicates whether node should shutdown without first cordening and draining
+  bool force = 1;
 }
 
 message ShutdownResponse {

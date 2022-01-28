@@ -391,7 +391,16 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	case runtime.SequenceInstall:
 		phases = c.s.Install(c.r)
 	case runtime.SequenceShutdown:
-		phases = c.s.Shutdown(c.r)
+		var (
+			in *machine.ShutdownRequest
+			ok bool
+		)
+
+		if in, ok = data.(*machine.ShutdownRequest); !ok {
+			return nil, runtime.ErrInvalidSequenceData
+		}
+
+		phases = c.s.Shutdown(c.r, in)
 	case runtime.SequenceReboot:
 		phases = c.s.Reboot(c.r)
 	case runtime.SequenceUpgrade:

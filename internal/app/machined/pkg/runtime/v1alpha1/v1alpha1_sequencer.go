@@ -327,12 +327,15 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 }
 
 // Shutdown is the shutdown sequence.
-func (*Sequencer) Shutdown(r runtime.Runtime) []runtime.Phase {
-	phases := PhaseList{}.
-		Append(
-			"cleanup",
-			StopAllPods,
-		).
+func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []runtime.Phase {
+	phases := PhaseList{}.AppendWhen(
+		!in.GetForce(),
+		"drain",
+		CordonAndDrainNode,
+	).Append(
+		"cleanup",
+		StopAllPods,
+	).
 		AppendList(stopAllPhaselist(r, false)).
 		Append("shutdown", Shutdown)
 

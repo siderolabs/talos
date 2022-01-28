@@ -532,8 +532,10 @@ func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest
 }
 
 // Shutdown implements the proto.MachineServiceClient interface.
-func (c *Client) Shutdown(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Shutdown(ctx, &emptypb.Empty{})
+func (c *Client) Shutdown(ctx context.Context, force bool) (err error) {
+	resp, err := c.MachineClient.Shutdown(ctx, &machineapi.ShutdownRequest{
+		Force: force,
+	})
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)

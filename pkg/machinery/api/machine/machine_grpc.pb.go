@@ -74,7 +74,7 @@ type MachineServiceClient interface {
 	ServiceRestart(ctx context.Context, in *ServiceRestartRequest, opts ...grpc.CallOption) (*ServiceRestartResponse, error)
 	ServiceStart(ctx context.Context, in *ServiceStartRequest, opts ...grpc.CallOption) (*ServiceStartResponse, error)
 	ServiceStop(ctx context.Context, in *ServiceStopRequest, opts ...grpc.CallOption) (*ServiceStopResponse, error)
-	Shutdown(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ShutdownResponse, error)
+	Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error)
 	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
 	SystemStat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SystemStatResponse, error)
 	Upgrade(ctx context.Context, in *UpgradeRequest, opts ...grpc.CallOption) (*UpgradeResponse, error)
@@ -629,7 +629,7 @@ func (c *machineServiceClient) ServiceStop(ctx context.Context, in *ServiceStopR
 	return out, nil
 }
 
-func (c *machineServiceClient) Shutdown(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ShutdownResponse, error) {
+func (c *machineServiceClient) Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error) {
 	out := new(ShutdownResponse)
 	err := c.cc.Invoke(ctx, "/machine.MachineService/Shutdown", in, out, opts...)
 	if err != nil {
@@ -735,7 +735,7 @@ type MachineServiceServer interface {
 	ServiceRestart(context.Context, *ServiceRestartRequest) (*ServiceRestartResponse, error)
 	ServiceStart(context.Context, *ServiceStartRequest) (*ServiceStartResponse, error)
 	ServiceStop(context.Context, *ServiceStopRequest) (*ServiceStopResponse, error)
-	Shutdown(context.Context, *emptypb.Empty) (*ShutdownResponse, error)
+	Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error)
 	Stats(context.Context, *StatsRequest) (*StatsResponse, error)
 	SystemStat(context.Context, *emptypb.Empty) (*SystemStatResponse, error)
 	Upgrade(context.Context, *UpgradeRequest) (*UpgradeResponse, error)
@@ -884,7 +884,7 @@ func (UnimplementedMachineServiceServer) ServiceStop(context.Context, *ServiceSt
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceStop not implemented")
 }
 
-func (UnimplementedMachineServiceServer) Shutdown(context.Context, *emptypb.Empty) (*ShutdownResponse, error) {
+func (UnimplementedMachineServiceServer) Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Shutdown not implemented")
 }
 
@@ -1568,7 +1568,7 @@ func _MachineService_ServiceStop_Handler(srv interface{}, ctx context.Context, d
 }
 
 func _MachineService_Shutdown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(ShutdownRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1580,7 +1580,7 @@ func _MachineService_Shutdown_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/machine.MachineService/Shutdown",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).Shutdown(ctx, req.(*emptypb.Empty))
+		return srv.(MachineServiceServer).Shutdown(ctx, req.(*ShutdownRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

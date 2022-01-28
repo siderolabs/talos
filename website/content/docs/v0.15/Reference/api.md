@@ -141,6 +141,7 @@ description: Talos gRPC API reference.
     - [ServiceStopRequest](#machine.ServiceStopRequest)
     - [ServiceStopResponse](#machine.ServiceStopResponse)
     - [Shutdown](#machine.Shutdown)
+    - [ShutdownRequest](#machine.ShutdownRequest)
     - [ShutdownResponse](#machine.ShutdownResponse)
     - [SoftIRQStat](#machine.SoftIRQStat)
     - [Stat](#machine.Stat)
@@ -2385,6 +2386,21 @@ The messages message containing the shutdown status.
 
 
 
+<a name="machine.ShutdownRequest"></a>
+
+### ShutdownRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| force | [bool](#bool) |  | Force indicates whether node should shutdown without first cordening and draining |
+
+
+
+
+
+
 <a name="machine.ShutdownResponse"></a>
 
 ### ShutdownResponse
@@ -2813,7 +2829,7 @@ This method is available only on control plane nodes (which run etcd). |
 | ServiceRestart | [ServiceRestartRequest](#machine.ServiceRestartRequest) | [ServiceRestartResponse](#machine.ServiceRestartResponse) |  |
 | ServiceStart | [ServiceStartRequest](#machine.ServiceStartRequest) | [ServiceStartResponse](#machine.ServiceStartResponse) |  |
 | ServiceStop | [ServiceStopRequest](#machine.ServiceStopRequest) | [ServiceStopResponse](#machine.ServiceStopResponse) |  |
-| Shutdown | [.google.protobuf.Empty](#google.protobuf.Empty) | [ShutdownResponse](#machine.ShutdownResponse) |  |
+| Shutdown | [ShutdownRequest](#machine.ShutdownRequest) | [ShutdownResponse](#machine.ShutdownResponse) |  |
 | Stats | [StatsRequest](#machine.StatsRequest) | [StatsResponse](#machine.StatsResponse) |  |
 | SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
 | Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
