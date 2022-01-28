@@ -1823,7 +1823,8 @@ talosctl shutdown [flags]
 ### Options
 
 ```
-  -h, --help   help for shutdown
+      --force   if true, force a node to shutdown without a cordon/drain
+  -h, --help    help for shutdown
 ```
 
 ### Options inherited from parent commands

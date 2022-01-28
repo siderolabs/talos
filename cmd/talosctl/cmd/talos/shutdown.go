@@ -13,6 +13,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
+var shutdownCmdFlags struct {
+	force bool
+}
+
 // shutdownCmd represents the shutdown command.
 var shutdownCmd = &cobra.Command{
 	Use:   "shutdown",
@@ -21,7 +25,7 @@ var shutdownCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if err := c.Shutdown(ctx); err != nil {
+			if err := c.Shutdown(ctx, client.WithShutdownForce(shutdownCmdFlags.force)); err != nil {
 				return fmt.Errorf("error executing shutdown: %s", err)
 			}
 
@@ -31,5 +35,6 @@ var shutdownCmd = &cobra.Command{
 }
 
 func init() {
+	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.force, "force", false, "if true, force a node to shutdown without a cordon/drain")
 	addCommand(shutdownCmd)
 }

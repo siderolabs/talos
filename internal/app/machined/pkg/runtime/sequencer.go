@@ -108,7 +108,7 @@ type Sequencer interface {
 	Install(Runtime) []Phase
 	Reboot(Runtime) []Phase
 	Reset(Runtime, ResetOptions) []Phase
-	Shutdown(Runtime) []Phase
+	Shutdown(Runtime, *machine.ShutdownRequest) []Phase
 	StageUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 }

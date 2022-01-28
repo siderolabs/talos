@@ -531,9 +531,25 @@ func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest
 	return
 }
 
+// ShutdownOption provides shutdown API options.
+type ShutdownOption func(*machineapi.ShutdownRequest)
+
+// WithShutdownForce forces the shutdown even if the Kubernetes API is down.
+func WithShutdownForce(force bool) ShutdownOption {
+	return func(req *machineapi.ShutdownRequest) {
+		req.Force = force
+	}
+}
+
 // Shutdown implements the proto.MachineServiceClient interface.
-func (c *Client) Shutdown(ctx context.Context) (err error) {
-	resp, err := c.MachineClient.Shutdown(ctx, &emptypb.Empty{})
+func (c *Client) Shutdown(ctx context.Context, opts ...ShutdownOption) (err error) {
+	var req machineapi.ShutdownRequest
+
+	for _, opt := range opts {
+		opt(&req)
+	}
+
+	resp, err := c.MachineClient.Shutdown(ctx, &req)
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)

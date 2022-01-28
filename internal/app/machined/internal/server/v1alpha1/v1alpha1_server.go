@@ -375,7 +375,7 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 // Shutdown implements the machine.MachineServer interface.
 //
 //nolint:dupl
-func (s *Server) Shutdown(ctx context.Context, in *emptypb.Empty) (reply *machine.ShutdownResponse, err error) {
+func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (reply *machine.ShutdownResponse, err error) {
 	log.Printf("shutdown via API received")
 
 	if err = s.checkSupported(runtime.Shutdown); err != nil {
