@@ -36,6 +36,8 @@ import (
 //
 //nolint:gocyclo,cyclop
 func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts ...Option) error {
+	const containerID = "upgrade"
+
 	options := DefaultInstallOptions()
 
 	for _, opt := range opts {
@@ -96,6 +98,19 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 			log.Printf("error cleaning up pulled system extensions: %s", err)
 		}
 	}()
+
+	// See if there's previous container/snapshot to clean up
+	var oldcontainer containerd.Container
+
+	if oldcontainer, err = client.LoadContainer(ctx, containerID); err == nil {
+		if err = oldcontainer.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
+			return fmt.Errorf("error deleting old container instance: %w", err)
+		}
+	}
+
+	if err = client.SnapshotService("").Remove(ctx, containerID); err != nil && !errdefs.IsNotFound(err) {
+		return fmt.Errorf("error cleaning up stale snapshot: %w", err)
+	}
 
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/dev", Source: "/dev", Options: []string{"rbind", "rshared", "rw"}},
@@ -166,11 +181,11 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 
 	containerOpts := []containerd.NewContainerOpts{
 		containerd.WithImage(img),
-		containerd.WithNewSnapshot("upgrade", img),
+		containerd.WithNewSnapshot(containerID, img),
 		containerd.WithNewSpec(specOpts...),
 	}
 
-	container, err := client.NewContainer(ctx, "upgrade", containerOpts...)
+	container, err := client.NewContainer(ctx, containerID, containerOpts...)
 	if err != nil {
 		return err
 	}

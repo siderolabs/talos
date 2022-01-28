@@ -25,6 +25,7 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
@@ -1320,18 +1321,36 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 	return <-errCh
 }
 
+//nolint:gocyclo
 func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+
+	const containerID = "validate"
 
 	client, err := containerd.New(constants.SystemContainerdAddress)
 	if err != nil {
 		return err
 	}
 
-	img, err := image.Pull(containerdctx, reg, client, ref)
+	defer client.Close() //nolint:errcheck
+
+	img, err := image.Pull(containerdctx, reg, client, ref, image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return err
+	}
+
+	// See if there's previous container/snapshot to clean up
+	var oldcontainer containerd.Container
+
+	if oldcontainer, err = client.LoadContainer(containerdctx, containerID); err == nil {
+		if err = oldcontainer.Delete(containerdctx, containerd.WithSnapshotCleanup); err != nil {
+			return fmt.Errorf("error deleting old container instance: %w", err)
+		}
+	}
+
+	if err = client.SnapshotService("").Remove(containerdctx, containerID); err != nil && !errdefs.IsNotFound(err) {
+		return fmt.Errorf("error cleaning up stale snapshot: %w", err)
 	}
 
 	// Launch the container with a known help command for a simple check to make sure the image is valid
@@ -1347,11 +1366,11 @@ func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 
 	containerOpts := []containerd.NewContainerOpts{
 		containerd.WithImage(img),
-		containerd.WithNewSnapshot("validate", img),
+		containerd.WithNewSnapshot(containerID, img),
 		containerd.WithNewSpec(specOpts...),
 	}
 
-	container, err := client.NewContainer(containerdctx, "validate", containerOpts...)
+	container, err := client.NewContainer(containerdctx, containerID, containerOpts...)
 	if err != nil {
 		return err
 	}
