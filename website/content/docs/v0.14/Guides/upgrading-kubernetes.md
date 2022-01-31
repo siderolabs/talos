@@ -10,7 +10,7 @@ refer to 0.8 docs.
 
 To see a live demo of this writeup, see the video below:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/_N_vhB_ZI2c" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uOKveKbD8MQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Automated Kubernetes Upgrade
 
