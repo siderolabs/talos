@@ -200,7 +200,7 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 	}
 
 	options.Log(" > %q: machine configuration patched", node)
-	options.Log(" > %q: waiting for API server state pod update", node)
+	options.Log(" > %q: waiting for %s pod update", node, service)
 
 	var expectedConfigVersion string
 
