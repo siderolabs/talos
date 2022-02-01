@@ -1927,9 +1927,9 @@ type Vlan struct {
 
 // Route represents a network route.
 type Route struct {
-	//   description: The route's network.
+	//   description: The route's network (destination).
 	RouteNetwork string `yaml:"network"`
-	//   description: The route's gateway.
+	//   description: The route's gateway (if empty, creates link scope route).
 	RouteGateway string `yaml:"gateway"`
 	//   description: The route's source address (optional).
 	RouteSource string `yaml:"source,omitempty"`

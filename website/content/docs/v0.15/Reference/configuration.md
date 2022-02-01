@@ -374,8 +374,8 @@ network:
             - 192.168.2.0/24
           # A list of routes associated with the interface.
           routes:
-            - network: 0.0.0.0/0 # The route's network.
-              gateway: 192.168.2.1 # The route's gateway.
+            - network: 0.0.0.0/0 # The route's network (destination).
+              gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
               metric: 1024 # The optional metric for the route.
           mtu: 1500 # The interface's MTU.
 
@@ -1813,8 +1813,8 @@ interfaces:
         - 192.168.2.0/24
       # A list of routes associated with the interface.
       routes:
-        - network: 0.0.0.0/0 # The route's network.
-          gateway: 192.168.2.1 # The route's gateway.
+        - network: 0.0.0.0/0 # The route's network (destination).
+          gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
@@ -1918,8 +1918,8 @@ interfaces:
         - 192.168.2.0/24
       # A list of routes associated with the interface.
       routes:
-        - network: 0.0.0.0/0 # The route's network.
-          gateway: 192.168.2.1 # The route's gateway.
+        - network: 0.0.0.0/0 # The route's network (destination).
+          gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
@@ -3977,8 +3977,8 @@ Appears in:
     - 192.168.2.0/24
   # A list of routes associated with the interface.
   routes:
-    - network: 0.0.0.0/0 # The route's network.
-      gateway: 192.168.2.1 # The route's gateway.
+    - network: 0.0.0.0/0 # The route's network (destination).
+      gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
       metric: 1024 # The optional metric for the route.
   mtu: 1500 # The interface's MTU.
 
@@ -4094,10 +4094,10 @@ Examples:
 
 ``` yaml
 routes:
-    - network: 0.0.0.0/0 # The route's network.
-      gateway: 10.5.0.1 # The route's gateway.
-    - network: 10.2.0.0/16 # The route's network.
-      gateway: 10.2.0.1 # The route's gateway.
+    - network: 0.0.0.0/0 # The route's network (destination).
+      gateway: 10.5.0.1 # The route's gateway (if empty, creates link scope route).
+    - network: 10.2.0.0/16 # The route's network (destination).
+      gateway: 10.2.0.1 # The route's gateway (if empty, creates link scope route).
 ```
 
 
@@ -5083,10 +5083,10 @@ Appears in:
 
 
 ``` yaml
-- network: 0.0.0.0/0 # The route's network.
-  gateway: 10.5.0.1 # The route's gateway.
-- network: 10.2.0.0/16 # The route's network.
-  gateway: 10.2.0.1 # The route's gateway.
+- network: 0.0.0.0/0 # The route's network (destination).
+  gateway: 10.5.0.1 # The route's gateway (if empty, creates link scope route).
+- network: 10.2.0.0/16 # The route's network (destination).
+  gateway: 10.2.0.1 # The route's gateway (if empty, creates link scope route).
 ```
 
 <hr />
@@ -5098,7 +5098,7 @@ Appears in:
 </div>
 <div class="dt">
 
-The route's network.
+The route's network (destination).
 
 </div>
 
@@ -5110,7 +5110,7 @@ The route's network.
 </div>
 <div class="dt">
 
-The route's gateway.
+The route's gateway (if empty, creates link scope route).
 
 </div>
 

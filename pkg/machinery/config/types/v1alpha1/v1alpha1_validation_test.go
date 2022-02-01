@@ -737,6 +737,12 @@ func TestValidate(t *testing.T) {
 										RouteGateway: "10.0.0.1",
 										RouteSource:  "10.0.0.3/32",
 									},
+									{
+										RouteNetwork: "169.254.254.254/32",
+									},
+									{
+										RouteSource: "10.0.0.3",
+									},
 								},
 							},
 						},
@@ -750,9 +756,10 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "3 errors occurred:\n\t* [networking.os.device.route[3].gateway] \"172.0.0.x\": invalid network address\n" +
+			expectedError: "4 errors occurred:\n\t* [networking.os.device.route[3].gateway] \"172.0.0.x\": invalid network address\n" +
 				"\t* [networking.os.device.route[4].network] \"10.0.0.0\": invalid network address\n" +
-				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n\n",
+				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n" +
+				"\t* [networking.os.device.route[7]]: either network or gateway should be set\n\n",
 		},
 		{
 			name: "KubeSpanNoDiscovery",
