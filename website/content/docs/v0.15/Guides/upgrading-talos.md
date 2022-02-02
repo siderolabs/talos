@@ -11,6 +11,7 @@ Upgrades use an A-B image scheme in order to facilitate rollbacks. This scheme r
 
 Unless explicitly told to `preserve` data, an upgrade will cause the node to wipe the ephemeral partition, remove itself from the etcd cluster (if it is a control node), and generally make itself as pristine as is possible. (This is generally the desired behavior, except in specialised use cases such as single-node clusters.)
 
+*Note* that unless the Kubernetes version has been specified in the machine config, an upgrade of the Talos Linux OS will also apply an upgrade of the Kubernetes version. Each release of Talos Linux includes the latest stable Kubernetes version by default.
 
 ## Video Walkthrough
 
