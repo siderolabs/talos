@@ -68,7 +68,6 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	}
 
 	return []generate.GenOption{
-		generate.WithPersist(false),
 		generate.WithNetworkOptions(
 			v1alpha1.WithNetworkInterfaceIgnore("eth0"),
 			v1alpha1.WithNetworkNameservers(nameservers...),
