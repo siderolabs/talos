@@ -17,8 +17,9 @@ The follow are requirements for running Talos in Docker:
 
 ## Caveats
 
-Due to the fact that Talos runs in a container, certain APIs are not available when running in Docker.
-For example `upgrade`, `reset`, and APIs like these don't apply in container mode.
+Due to the fact that Talos will be running in a container, certain APIs are not available.
+For example `upgrade`, `reset`, and similar APIs don't apply in container mode.
+Further, when running on a Mac in docker,  due to networking limitations, VIPs are not supported.
 
 ## Create the Cluster
 
@@ -30,20 +31,12 @@ talosctl cluster create --wait
 
 Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
 
-If you are running on MacOS, an additional command is required:
+> Note: Startup times can take up to a minute or more before the cluster is available.
 
-```bash
-talosctl config --endpoints 127.0.0.1
-```
+Finally, we just need to specify which nodes you want to communicate with using talosctl. Talosctl can operate on one or all the nodes in the cluster – this makes cluster wide commands much easier.
 
-> Note: Startup times can take up to a minute before the cluster is available.
+`talosctl config nodes 10.5.0.2 10.5.0.3`
 
-## Retrieve and Configure the `kubeconfig`
-
-```bash
-talosctl kubeconfig .
-kubectl --kubeconfig kubeconfig config set-cluster talos-default --server https://127.0.0.1:6443
-```
 
 ## Using the Cluster
 
