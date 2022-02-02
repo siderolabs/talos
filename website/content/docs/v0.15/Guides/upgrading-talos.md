@@ -108,7 +108,7 @@ This is when you would use the `talosctl rollback` command to revert back to the
 
 **Q.** Can the upgrade process be observed?
 
-**A.** Yes, using the `talosctl logs --follow machined` command.
+**A.** Yes, using the `talosctl dmesg -f` command.
 
 **Q.** Are worker node upgrades handled differently from control plane node upgrades?
 
@@ -116,17 +116,12 @@ This is when you would use the `talosctl rollback` command to revert back to the
 
 Long answer:  Both node types follow the same set procedure.
 From the user's standpoint, however, the processes are identical. However, since control plane nodes run additional services, such as etcd, there are some extra steps and checks performed on them. 
-For instance, Talos will refuse to upgrade a control plane node if that upgrade would cause a loss of quorum for etcd.
+For instance, Talos will refuse to upgrade a control plane node if that upgrade would cause a loss of quorum for etcd. If multiple control plane nodes are asked to upgrade at the same time, Talos will protect the Kubernetes cluster by ensuring only one control plane node actively upgrades at any time, via checking etcd quorum.
 If running a single-node cluster, and you want to force an upgrade despite the loss of quorum, you can set `preserve` to `true`. 
 
-**Q.** Will an upgrade try to do the whole cluster at once?
-Can I break my cluster by upgrading everything?
+**Q.** Can I break my cluster by upgrading everything at once?
 
-**A.** No.
+**A.** Maybe - it's not recommended.
 
-Nothing prevents the user from sending near-simultaneous upgrades to each node of the cluster.
-While most people would not attempt to do this, it may be the desired behaviour in certain situations.
-
-If, however, multiple control plane nodes are asked to upgrade at the same time, Talos will protect the Kubernetes cluster by ensuring only one control plane node actively upgrades at any time, via checking etcd quorum.
-A lease is taken out by the winning control plane node, and no other control plane node is allowed to execute the upgrade until the lease is released and the etcd cluster is healthy and _will_ be healthy when the next node performs its upgrade.
+Nothing prevents the user from sending near-simultaneous upgrades to each node of the cluster - and while Talos Linux and Kubernetes can generally deal with this situation, other components of the cluster may not be able to recover from more than one node rebooting at a time. (e.g. any software that maintains a quorum or state across nodes, such as Rook/Ceph)
 
