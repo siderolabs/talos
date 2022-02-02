@@ -83,10 +83,12 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 			panic(fmt.Sprintf("expected credentials.TLSInfo, got %T", p.AuthInfo))
 		}
 
-		if len(tlsInfo.State.PeerCertificates) != 1 {
-			panic(fmt.Sprintf("expected one certificate, got %d", len(tlsInfo.State.PeerCertificates)))
+		if len(tlsInfo.State.PeerCertificates) == 0 {
+			panic("expected at least one certificate")
 		}
 
+		// PeerCertificates[0] is the leaf certificate the connection was verified against, so this
+		// is the client cert. Other certificates in the chain might be CAs or intermediates.
 		strings := tlsInfo.State.PeerCertificates[0].Subject.Organization
 
 		// TODO validate cert.KeyUsage, cert.ExtKeyUsage, cert.Issuer.Organization, other fields there?
