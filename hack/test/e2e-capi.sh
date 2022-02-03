@@ -4,7 +4,7 @@ set -eou pipefail
 
 source ./hack/test/e2e.sh
 
-export CAPI_VERSION="${CAPI_VERSION:-0.4.4}"
+export CAPI_VERSION="${CAPI_VERSION:-0.4.7}"
 export CABPT_VERSION="${CABPT_VERSION:-0.4.2}"
 export CACPPT_VERSION="${CACPPT_VERSION:-0.3.1}"
 export CAPA_VERSION="${CAPA_VERSION:-0.7.2}"
