@@ -70,8 +70,8 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20191213142603-f72070a231fc
 	github.com/mdlayher/ethtool v0.0.0-20211214014908-bc8fdcf6e99c
-	github.com/mdlayher/genetlink v1.1.0
-	github.com/mdlayher/netlink v1.5.0
+	github.com/mdlayher/genetlink v1.2.0
+	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/netx v0.0.0-20200512211805-669a06fde734
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
@@ -113,9 +113,9 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.1
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.20.0
-	golang.org/x/net v0.0.0-20220121210141-e204ce36a2ba
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20211230205640-daad0b7ba671
@@ -201,7 +201,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
+	github.com/josharian/native v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/koneu/natend v0.0.0-20150829182554-ec0926ea948d // indirect
@@ -214,7 +214,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
-	github.com/mdlayher/socket v0.1.0 // indirect
+	github.com/mdlayher/socket v0.1.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
