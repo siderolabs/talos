@@ -32,7 +32,7 @@ require (
 	cloud.google.com/go/compute v1.1.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.0.0
-	github.com/aws/aws-sdk-go v1.42.41
+	github.com/aws/aws-sdk-go v1.42.47
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.2
