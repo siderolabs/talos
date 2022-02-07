@@ -1226,7 +1226,6 @@ github.com/talos-systems/discovery-api v0.1.0 h1:aKod6uqakH6VfeQ6HaxPF7obqFAL1QT
 github.com/talos-systems/discovery-api v0.1.0/go.mod h1:ZsbzzOC5bzToaF3+YvUXDf9paeWV5bedpDu5RPXrglM=
 github.com/talos-systems/discovery-client v0.1.0 h1:m+f96TKGFckMWrhDI+o9+QhcGn8f1A61Jp6YYVwiulI=
 github.com/talos-systems/discovery-client v0.1.0/go.mod h1:LxqCv16VBB68MgaMnV8jXujYd3Q097DAn22U5gaHmkU=
-github.com/talos-systems/go-blockdevice v0.2.6-0.20211214184027-6928ee43c303/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-blockdevice v0.2.6-0.20220125134504-7b9de26bc6bc h1:Q4JxETa45IkGV9pbpuxwAmcTU0+vjI7coyVLMlf3G8E=
 github.com/talos-systems/go-blockdevice v0.2.6-0.20220125134504-7b9de26bc6bc/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=
@@ -1287,8 +1286,8 @@ github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f h1:p4VB7kIXpOQvV
 github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/vmware-tanzu/sonobuoy v0.56.0 h1:a6U4G0xY1p3n+lV5juL2+Px1KnBhv9yoN+VuKNJeZyk=
 github.com/vmware-tanzu/sonobuoy v0.56.0/go.mod h1:3RuGkBOPk6cup8rvyQd0j0zuS7h36PuVpmQqnbvwuKo=
-github.com/vmware/govmomi v0.27.2 h1:Ecooqg069gUbl5EuWYwcrvzRqMkah9J8BXaf9HCEGVM=
-github.com/vmware/govmomi v0.27.2/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
+github.com/vmware/govmomi v0.27.3 h1:gwHHxKbMTNJON/3WPK3EsqZyQznTdHJAyRYPRSLm6R8=
+github.com/vmware/govmomi v0.27.3/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c h1:2eYJLPxf68Bou/liHz0brefjeVzAjzIqc9k7dheXjKs=
 github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c/go.mod h1:CSBTxrhePCm0cmXNKDGeu+6bOQzpaEklfCqEpn89JWk=

@@ -104,7 +104,7 @@ require (
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
 	github.com/vmware-tanzu/sonobuoy v0.56.0
-	github.com/vmware/govmomi v0.27.2
+	github.com/vmware/govmomi v0.27.3
 	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
 	github.com/vultr/metadata v1.0.3
 	go.etcd.io/etcd/api/v3 v3.5.1
