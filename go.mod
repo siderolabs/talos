@@ -97,7 +97,7 @@ require (
 	github.com/talos-systems/go-retry v0.3.1
 	github.com/talos-systems/go-smbios v0.1.1
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.3.1
+	github.com/talos-systems/net v0.3.2-0.20220207192449-409926aec1c3
 	github.com/talos-systems/siderolink v0.1.0
 	github.com/talos-systems/talos/pkg/machinery v0.15.0-alpha.1
 	github.com/u-root/u-root v0.8.0
