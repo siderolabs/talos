@@ -58,6 +58,7 @@ import (
 	"github.com/talos-systems/talos/pkg/images"
 	krnl "github.com/talos-systems/talos/pkg/kernel"
 	"github.com/talos-systems/talos/pkg/kernel/kspp"
+	"github.com/talos-systems/talos/pkg/kernel/vmlinuz"
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -1716,6 +1717,51 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 
 		return nil
 	}, "activateLogicalVolumes"
+}
+
+func decompressKernelAsset(path string, tailStrip int64) (*os.File, error) {
+	source, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer source.Close() //nolint:errcheck
+
+	temp, err := os.CreateTemp("/system", "talos")
+	if err != nil {
+		return nil, err
+	}
+
+	if err = os.Remove(temp.Name()); err != nil {
+		return nil, err
+	}
+
+	src := io.Reader(source)
+
+	if tailStrip != 0 {
+		st, err := source.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		src = io.LimitReader(src, st.Size()-tailStrip)
+	}
+
+	decompressed, err := vmlinuz.Decompress(src)
+	if err != nil {
+		return nil, err
+	}
+
+	defer decompressed.Close() //nolint:errcheck
+
+	_, err = io.Copy(temp, decompressed)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = temp.Seek(0, io.SeekStart)
+
+	return temp, err
 }
 
 // KexecPrepare loads next boot kernel via kexec_file_load.
