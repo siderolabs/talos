@@ -1719,7 +1719,7 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 	}, "activateLogicalVolumes"
 }
 
-func decompressKernelAsset(path string, tailStrip int64) (*os.File, error) {
+func decompressKernelAsset(path string) (*os.File, error) {
 	source, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -1732,22 +1732,7 @@ func decompressKernelAsset(path string, tailStrip int64) (*os.File, error) {
 		return nil, err
 	}
 
-	if err = os.Remove(temp.Name()); err != nil {
-		return nil, err
-	}
-
-	src := io.Reader(source)
-
-	if tailStrip != 0 {
-		st, err := source.Stat()
-		if err != nil {
-			return nil, err
-		}
-
-		src = io.LimitReader(src, st.Size()-tailStrip)
-	}
-
-	decompressed, err := vmlinuz.Decompress(src)
+	decompressed, err := vmlinuz.Decompress(source)
 	if err != nil {
 		return nil, err
 	}
@@ -1759,7 +1744,16 @@ func decompressKernelAsset(path string, tailStrip int64) (*os.File, error) {
 		return nil, err
 	}
 
-	_, err = temp.Seek(0, io.SeekStart)
+	if err = temp.Close(); err != nil {
+		return nil, err
+	}
+
+	temp, err = os.Open(temp.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Remove(temp.Name())
 
 	return temp, err
 }
@@ -1809,7 +1803,7 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		defer kernel.Close() //nolint:errcheck
 
-		initrd, err := os.Open(initrdPath)
+		initrd, err := decompressKernelAsset(initrdPath)
 		if err != nil {
 			return err
 		}
