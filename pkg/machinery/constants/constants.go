@@ -404,10 +404,10 @@ const (
 	KernelAssetPath = "/usr/install/%s/" + KernelAsset
 
 	// InitramfsAsset defines a well known name for our initramfs filename.
-	InitramfsAsset = "initramfs.xz"
+	InitramfsAsset = "initramfs.zst"
 
 	// InitramfsAssetWithArch defines a well known name for our initramfs filename with arch variable.
-	InitramfsAssetWithArch = "initramfs-" + ArchVariable + ".xz"
+	InitramfsAssetWithArch = "initramfs-" + ArchVariable + ".zst"
 
 	// InitramfsAssetPath is the path to the initramfs on disk.
 	InitramfsAssetPath = "/usr/install/%s/" + InitramfsAsset

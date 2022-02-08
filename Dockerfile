@@ -469,8 +469,8 @@ RUN set -o pipefail \
     && find . 2>/dev/null \
     | LC_ALL=c sort \
     | cpio --reproducible -H newc -o \
-    | xz -v -C crc32 -0 -e -T 0 -z \
-    > /initramfs.xz
+    | zstd -T0 -19 \
+    > /initramfs.zst
 
 FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
@@ -485,14 +485,14 @@ RUN set -o pipefail \
     && find . 2>/dev/null \
     | LC_ALL=c sort \
     | cpio --reproducible -H newc -o \
-    | xz -v -C crc32 -0 -e -T 0 -z \
-    > /initramfs.xz
+    | zstd -T0 -19 \
+    > /initramfs.zst
 
 FROM initramfs-archive-${TARGETARCH} AS initramfs-archive
 
 FROM scratch AS initramfs
 ARG TARGETARCH
-COPY --from=initramfs-archive /initramfs.xz /initramfs-${TARGETARCH}.xz
+COPY --from=initramfs-archive /initramfs.zst /initramfs-${TARGETARCH}.zst
 
 # The talos target generates a docker image that can be used to run Talos
 # in containers.
@@ -520,13 +520,13 @@ FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
-COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
+COPY --from=initramfs-archive-amd64 /initramfs.zst /usr/install/amd64/initramfs.zst
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
 COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
-COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
+COPY --from=initramfs-archive-arm64 /initramfs.zst /usr/install/arm64/initramfs.zst
 COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
 COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 
@@ -551,7 +551,8 @@ RUN apk add --no-cache --update --no-scripts \
     util-linux \
     xfsprogs \
     xorriso \
-    xz
+    xz \
+    zstd
 ARG TARGETARCH
 ENV TARGETARCH ${TARGETARCH}
 COPY --from=install-artifacts / /
@@ -568,7 +569,7 @@ ONBUILD RUN apk add --no-cache --update \
     xz
 ONBUILD WORKDIR /initramfs
 ONBUILD ARG RM
-ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
+ONBUILD RUN zstd -d /usr/install/${TARGETARCH}/initramfs.zst \
     && cpio -idvm < /usr/install/${TARGETARCH}/initramfs \
     && unsquashfs -f -d /rootfs rootfs.sqsh \
     && for f in ${RM}; do rm -rfv /rootfs$f; done \
@@ -577,7 +578,7 @@ ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
 ONBUILD COPY --from=customization / /rootfs
 ONBUILD RUN find /rootfs \
     && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
-    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/${TARGETARCH}/initramfs.xz \
+    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/${TARGETARCH}/initramfs.zst \
     && rm -rf /rootfs \
     && rm -rf /initramfs
 ONBUILD WORKDIR /
