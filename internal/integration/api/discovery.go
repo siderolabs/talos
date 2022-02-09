@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -187,7 +188,11 @@ func (suite *DiscoverySuite) TestRegistries() {
 				rawAffiliate := rawAffiliatesByID[registry+member.TypedSpec().NodeID]
 				suite.Require().NotNil(rawAffiliate)
 
-				suite.Assert().Equal(member.TypedSpec().Hostname, rawAffiliate.TypedSpec().Hostname)
+				stripDomain := func(s string) string { return strings.Split(s, ".")[0] }
+
+				// registries can be a bit inconsistent, e.g. whether they report fqdn or just hostname
+				suite.Assert().Contains([]string{member.TypedSpec().Hostname, stripDomain(member.TypedSpec().Hostname)}, rawAffiliate.TypedSpec().Hostname)
+
 				suite.Assert().Equal(member.TypedSpec().Addresses, rawAffiliate.TypedSpec().Addresses)
 				suite.Assert().Equal(member.TypedSpec().OperatingSystem, rawAffiliate.TypedSpec().OperatingSystem)
 				suite.Assert().Equal(member.TypedSpec().MachineType, rawAffiliate.TypedSpec().MachineType)
