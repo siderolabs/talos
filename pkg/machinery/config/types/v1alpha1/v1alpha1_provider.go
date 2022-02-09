@@ -137,6 +137,21 @@ func (m *MachineConfig) Controlplane() config.MachineControlPlane {
 	return m.MachineControlPlane
 }
 
+// Pods implements the config.Provider interface.
+func (m *MachineConfig) Pods() []map[string]interface{} {
+	if m.MachinePods == nil {
+		return nil
+	}
+
+	v := make([]map[string]interface{}, len(m.MachinePods))
+
+	for i := range v {
+		v[i] = m.MachinePods[i].Object
+	}
+
+	return v
+}
+
 // ControllerManager implements the config.Provider interface.
 func (m *MachineControlPlaneConfig) ControllerManager() config.MachineControllerManager {
 	if m.MachineControllerManager == nil {

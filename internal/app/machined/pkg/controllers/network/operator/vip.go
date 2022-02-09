@@ -258,7 +258,7 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 		return fmt.Errorf("error setting up etcd watch: %w", err)
 	}
 
-	err = vip.state.WatchKind(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined), watchCh)
+	err = vip.state.WatchKind(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined), watchCh)
 	if err != nil {
 		return fmt.Errorf("kube-apiserver health wait failure: %w", err)
 	}

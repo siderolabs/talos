@@ -32,7 +32,9 @@ func checkUnknownKeys(target interface{}, spec *yaml.Node) error {
 }
 
 // structKeys builds a set of known YAML fields by name and their indexes in the struct.
-func structKeys(typ reflect.Type) map[string][]int {
+//
+//nolint:gocyclo
+func structKeys(typ reflect.Type) (map[string][]int, reflect.Type) {
 	fields := reflect.VisibleFields(typ)
 
 	availableKeys := make(map[string][]int, len(fields))
@@ -45,6 +47,27 @@ func structKeys(typ reflect.Type) map[string][]int {
 
 			idx := strings.IndexByte(tag, ',')
 
+			inlined := false
+
+			if idx >= 0 {
+				options := strings.Split(tag[idx+1:], ",")
+
+				for _, opt := range options {
+					if opt == "inline" {
+						inlined = true
+					}
+				}
+			}
+
+			// handle inlined `map` objects, inlining structs in general is not supported yet
+			if inlined {
+				inlinedTyp := field.Type
+
+				if inlinedTyp.Kind() == reflect.Map {
+					return nil, inlinedTyp
+				}
+			}
+
 			if idx == -1 {
 				availableKeys[tag] = field.Index
 			} else if idx > 0 {
@@ -55,13 +78,20 @@ func structKeys(typ reflect.Type) map[string][]int {
 		}
 	}
 
-	return availableKeys
+	return availableKeys, typ
 }
+
+var typeOfInterfaceAny = reflect.TypeOf((*interface{})(nil)).Elem()
 
 //nolint:gocyclo,cyclop
 func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interface{}, err error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
+	}
+
+	// anything can be unmarshaled into `interface{}`
+	if typ == typeOfInterfaceAny {
+		return nil, nil
 	}
 
 	switch spec.Kind { //nolint:exhaustive // not checking for scalar types
@@ -72,7 +102,7 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 		case reflect.Map:
 			// any key is fine in the map
 		case reflect.Struct:
-			availableKeys = structKeys(typ)
+			availableKeys, typ = structKeys(typ)
 		default:
 			return unknown, fmt.Errorf("unexpected type for yaml mapping: %s", typ)
 		}

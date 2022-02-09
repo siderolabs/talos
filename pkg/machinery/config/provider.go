@@ -53,6 +53,7 @@ type MachineConfig interface {
 	Files() ([]File, error)
 	Type() machine.Type
 	Controlplane() MachineControlPlane
+	Pods() []map[string]interface{}
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Registries() Registries
