@@ -4,11 +4,9 @@ weight: 3
 ---
 
 This document will walk you through installing a full Talos Cluster.
-You may wish to read through the [Quickstart](../quickstart/) first, to quickly create a local virtual cluster on your workstation.
+You may wish to try the [Quickstart](../quickstart/) first, to quickly create a local virtual cluster on your workstation.
 
-Regardless of where you run Talos, you will find that there is a pattern to deploying it.
-
-In general you will need to:
+Regardless of where you run Talos, there is a pattern to deploying it. In general you will need to:
 
 - acquire the installation image
 - decide on the endpoint for Kubernetes
@@ -21,7 +19,7 @@ In general you will need to:
 
 ### `talosctl`
 
-The `talosctl` tool provides a CLI tool which interfaces with the Talos API in
+ `talosctl` provides a CLI tool which interfaces with the Talos API in
 an easy manner.
 It also includes a number of useful tools for creating and managing your clusters.
 
@@ -52,19 +50,18 @@ The latest ISO image can be found on the Github [Releases](https://github.com/ta
 - X86: [https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-amd64.iso](https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-amd64.iso)
 - ARM64: [https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-arm64.iso](https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-arm64.iso)
 
-For self-built media and network booting, you can use the kernel and initramfs:
-
-- X86: [vmlinuz-amd64](https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-amd64.xz)
-- ARM64: [vmlinuz-arm64](https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-arm64.xz)
-
 When booted from the ISO, Talos will run in RAM, and it will not install itself
 until it is provided a configuration.
 Thus, it is safe to boot the ISO onto any machine.
 
 ### Alternative Booting
 
-If you wish to use a different boot mechanism (such as network boot or a custom ISO), there
-are a number of required kernel parameters.
+For self-built media and network booting, you can use the kernel and initramfs:
+
+- X86: [vmlinuz-amd64](https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-amd64.xz)
+- ARM64: [vmlinuz-arm64](https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-arm64.xz)
+
+To use alternate booting, there are a number of required kernel parameters.
 
 Please see the [kernel](../../reference/kernel/) docs for more information.
 
@@ -82,20 +79,17 @@ Thus, the format of the endpoint may be something like:
 - `https://kube.mycluster.mydomain.com:6443`
 - `https://[2001:db8:1234::80]:6443`
 
-Because the Kubernetes controlplane is meant to be supplied in a high
-availability manner, we must also choose how to bind it to the servers
+Because the Kubernetes controlplane is meant to be highly
+available, we must also choose how to bind the API server endpoint to the servers
 themselves.
-There are three common ways to do this.
+There are three common ways to do this:
 
 ### Dedicated Load-balancer
 
 If you are using a cloud provider or have your own load-balancer available (such
 as HAProxy, nginx reverse proxy, or an F5 load-balancer), using
 a dedicated load balancer is a natural choice.
-Just create an appropriate frontend matching the endpoint, and point the backends at each of the addresses of the Talos controlplane nodes.
-
-This is convenient if a load-balancer is available, but don't worry if that is
-not the case.
+Create an appropriate frontend matching the endpoint, and point the backends at each of the addresses of the Talos controlplane nodes.
 
 ### Layer 2 Shared IP
 
@@ -103,7 +97,7 @@ Talos has integrated support for serving Kubernetes from a shared (sometimes
 called "virtual") IP address.
 This method relies on OSI Layer 2 connectivity between controlplane Talos nodes.
 
-In this case, we may choose an IP address on the same subnet as the Talos
+In this case, we choose an IP address on the same subnet as the Talos
 controlplane nodes which is not otherwise assigned to any machine.
 For instance, if your controlplane node IPs are:
 
@@ -121,8 +115,7 @@ Once chosen, form the full HTTPS URL from this IP:
 https://192.168.0.15:6443
 ```
 
-You are also free to set a DNS record to this IP address instead, but you will
-still need to use the IP address to set up the shared IP
+You are free to set a DNS record to this IP address and use that to identify the endpoint, but you will need to use the IP address to set up the shared IP
 (`machine.network.interfaces[].vip.ip`) inside the Talos
 configuration.
 
@@ -131,7 +124,7 @@ For more information about using a shared IP, see the related
 
 ### DNS records
 
-If neither of the other methods work for you, you can instead use DNS records to
+If neither of the other methods work for you, you can use DNS records to
 provide a measure of redundancy.
 In this case, you would add multiple A or AAAA records for a DNS name.
 
@@ -164,7 +157,7 @@ with highly-variable clusters easier, since you only need to know the
 controlplane nodes in advance.
 
 Even better, the `talosctl` tool will automatically load balance and fail over
-between all of your controlplane nodes, so long as it is informed of each of the
+between all of your controlplane nodes, so long as it is informed of the
 controlplane node IPs.
 
 That does, of course, present the problem that you need to know how to talk to
@@ -205,14 +198,12 @@ this purpose.
 
 Here, `cluster-name` is an arbitrary name for the cluster which will be used
 in your local client configuration as a label.
-It does not affect anything in the cluster itself.
-It is arbitrary, but it should be unique in the configuration on your local workstation.
+It does not affect anything in the cluster itself, but it should be unique in the configuration on your local workstation.
 
 The `cluster-endpoint` is where you insert the Kubernetes Endpoint you
 selected from above.
 This is the Kubernetes API URL, and it should be a complete URL, with `https://`
-and port, if not `443`.
-The default port is `6443`, so the port is almost always required.
+and port.
 
 When you run this command, you will receive a number of files in your current
 directory:
@@ -221,7 +212,7 @@ directory:
 - `worker.yaml`
 - `talosconfig`
 
-The three `.yaml` files are what we call Machine Configs.
+The `.yaml` files are what we call Machine Configs.
 They are installed onto the Talos servers to act as their complete configuration,
 describing everything from what disk Talos should be installed to, to what
 sysctls to set, to what network settings it should have.
@@ -230,15 +221,9 @@ In the case of the `controlplane.yaml`, it even describes how Talos should form 
 The `talosconfig` file (which is also YAML) is your local client configuration
 file.
 
-### Controlplane, Init, and Worker
+### Controlplane and Worker
 
-The three types of Machine Configs correspond to the three roles of Talos nodes.
-For our purposes, you can ignore the Init type.
-It is a legacy type which will go away eventually.
-Its purpose was to self-bootstrap.
-Instead, we now use an API call to bootstrap the cluster, which is much more robust.
-
-That leaves us with Controlplane and Worker.
+The two types of Machine Configs correspond to the two roles of Talos nodes.
 
 The Controlplane Machine Config describes the configuration of a Talos server on
 which the Kubernetes Controlplane should run.
