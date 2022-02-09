@@ -8,14 +8,11 @@ import "github.com/talos-systems/talos/pkg/machinery/constants"
 
 const (
 	// BootA is a bootloader label.
-	BootA = "A"
+	BootA BootLabel = "A"
 
 	// BootB is a bootloader label.
-	BootB = "B"
+	BootB BootLabel = "B"
 
-	// GrubConfig is the path to the grub config.
-	GrubConfig = constants.BootMountPoint + "/grub/grub.cfg"
-
-	// GrubDeviceMap is the path to the grub device map.
-	GrubDeviceMap = constants.BootMountPoint + "/grub/device.map"
+	// ConfigPath is the path to the grub config.
+	ConfigPath = constants.BootMountPoint + "/grub/grub.cfg"
 )
