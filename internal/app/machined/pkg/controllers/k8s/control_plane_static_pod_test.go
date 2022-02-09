@@ -78,7 +78,7 @@ func (suite *ControlPlaneStaticPodSuite) startRuntime() {
 
 //nolint:dupl
 func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests []string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+			list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 			if err != nil {
 				return err
 			}
@@ -172,7 +172,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 		},
 	))
 
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
+	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
 	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
@@ -254,7 +254,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 			// wait for some time to ensure that controller has picked the input
 			time.Sleep(500 * time.Millisecond)
 
-			_, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
+			_, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
 			suite.Require().Error(err)
 
 			continue
@@ -270,7 +270,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 			},
 		))
 
-		r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
+		r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
 		suite.Require().NoError(err)
 
 		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
@@ -297,7 +297,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 
 		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+				list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 				if err != nil {
 					return err
 				}

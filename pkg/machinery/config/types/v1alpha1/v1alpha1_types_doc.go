@@ -137,7 +137,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 19)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 20)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -172,8 +172,8 @@ func init() {
 	MachineConfigDoc.Fields[4].Name = "controlPlane"
 	MachineConfigDoc.Fields[4].Type = "MachineControlPlaneConfig"
 	MachineConfigDoc.Fields[4].Note = ""
-	MachineConfigDoc.Fields[4].Description = "Provides machine specific contolplane configuration options."
-	MachineConfigDoc.Fields[4].Comments[encoder.LineComment] = "Provides machine specific contolplane configuration options."
+	MachineConfigDoc.Fields[4].Description = "Provides machine specific control plane configuration options."
+	MachineConfigDoc.Fields[4].Comments[encoder.LineComment] = "Provides machine specific control plane configuration options."
 
 	MachineConfigDoc.Fields[4].AddExample("ControlPlane definition example.", machineControlplaneExample)
 	MachineConfigDoc.Fields[5].Name = "kubelet"
@@ -183,108 +183,115 @@ func init() {
 	MachineConfigDoc.Fields[5].Comments[encoder.LineComment] = "Used to provide additional options to the kubelet."
 
 	MachineConfigDoc.Fields[5].AddExample("Kubelet definition example.", machineKubeletExample)
-	MachineConfigDoc.Fields[6].Name = "network"
-	MachineConfigDoc.Fields[6].Type = "NetworkConfig"
+	MachineConfigDoc.Fields[6].Name = "pods"
+	MachineConfigDoc.Fields[6].Type = "[]Unstructured"
 	MachineConfigDoc.Fields[6].Note = ""
-	MachineConfigDoc.Fields[6].Description = "Provides machine specific network configuration options."
-	MachineConfigDoc.Fields[6].Comments[encoder.LineComment] = "Provides machine specific network configuration options."
+	MachineConfigDoc.Fields[6].Description = "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/."
+	MachineConfigDoc.Fields[6].Comments[encoder.LineComment] = "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver."
 
-	MachineConfigDoc.Fields[6].AddExample("Network definition example.", machineNetworkConfigExample)
-	MachineConfigDoc.Fields[7].Name = "disks"
-	MachineConfigDoc.Fields[7].Type = "[]MachineDisk"
-	MachineConfigDoc.Fields[7].Note = "Note: `size` is in units of bytes.\n"
-	MachineConfigDoc.Fields[7].Description = "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formating is done only once, if and only if no existing partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk."
-	MachineConfigDoc.Fields[7].Comments[encoder.LineComment] = "Used to partition, format and mount additional disks."
+	MachineConfigDoc.Fields[6].AddExample("nginx static pod.", machinePodsExample)
+	MachineConfigDoc.Fields[7].Name = "network"
+	MachineConfigDoc.Fields[7].Type = "NetworkConfig"
+	MachineConfigDoc.Fields[7].Note = ""
+	MachineConfigDoc.Fields[7].Description = "Provides machine specific network configuration options."
+	MachineConfigDoc.Fields[7].Comments[encoder.LineComment] = "Provides machine specific network configuration options."
 
-	MachineConfigDoc.Fields[7].AddExample("MachineDisks list example.", machineDisksExample)
-	MachineConfigDoc.Fields[8].Name = "install"
-	MachineConfigDoc.Fields[8].Type = "InstallConfig"
-	MachineConfigDoc.Fields[8].Note = ""
-	MachineConfigDoc.Fields[8].Description = "Used to provide instructions for installations."
-	MachineConfigDoc.Fields[8].Comments[encoder.LineComment] = "Used to provide instructions for installations."
+	MachineConfigDoc.Fields[7].AddExample("Network definition example.", machineNetworkConfigExample)
+	MachineConfigDoc.Fields[8].Name = "disks"
+	MachineConfigDoc.Fields[8].Type = "[]MachineDisk"
+	MachineConfigDoc.Fields[8].Note = "Note: `size` is in units of bytes.\n"
+	MachineConfigDoc.Fields[8].Description = "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formating is done only once, if and only if no existing partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk."
+	MachineConfigDoc.Fields[8].Comments[encoder.LineComment] = "Used to partition, format and mount additional disks."
 
-	MachineConfigDoc.Fields[8].AddExample("MachineInstall config usage example.", machineInstallExample)
-	MachineConfigDoc.Fields[9].Name = "files"
-	MachineConfigDoc.Fields[9].Type = "[]MachineFile"
-	MachineConfigDoc.Fields[9].Note = "Note: The specified `path` is relative to `/var`.\n"
-	MachineConfigDoc.Fields[9].Description = "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded."
-	MachineConfigDoc.Fields[9].Comments[encoder.LineComment] = "Allows the addition of user specified files."
+	MachineConfigDoc.Fields[8].AddExample("MachineDisks list example.", machineDisksExample)
+	MachineConfigDoc.Fields[9].Name = "install"
+	MachineConfigDoc.Fields[9].Type = "InstallConfig"
+	MachineConfigDoc.Fields[9].Note = ""
+	MachineConfigDoc.Fields[9].Description = "Used to provide instructions for installations."
+	MachineConfigDoc.Fields[9].Comments[encoder.LineComment] = "Used to provide instructions for installations."
 
-	MachineConfigDoc.Fields[9].AddExample("MachineFiles usage example.", machineFilesExample)
-	MachineConfigDoc.Fields[10].Name = "env"
-	MachineConfigDoc.Fields[10].Type = "Env"
-	MachineConfigDoc.Fields[10].Note = ""
-	MachineConfigDoc.Fields[10].Description = "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service."
-	MachineConfigDoc.Fields[10].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables."
+	MachineConfigDoc.Fields[9].AddExample("MachineInstall config usage example.", machineInstallExample)
+	MachineConfigDoc.Fields[10].Name = "files"
+	MachineConfigDoc.Fields[10].Type = "[]MachineFile"
+	MachineConfigDoc.Fields[10].Note = "Note: The specified `path` is relative to `/var`.\n"
+	MachineConfigDoc.Fields[10].Description = "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded."
+	MachineConfigDoc.Fields[10].Comments[encoder.LineComment] = "Allows the addition of user specified files."
 
-	MachineConfigDoc.Fields[10].AddExample("Environment variables definition examples.", machineEnvExamples[0])
+	MachineConfigDoc.Fields[10].AddExample("MachineFiles usage example.", machineFilesExample)
+	MachineConfigDoc.Fields[11].Name = "env"
+	MachineConfigDoc.Fields[11].Type = "Env"
+	MachineConfigDoc.Fields[11].Note = ""
+	MachineConfigDoc.Fields[11].Description = "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service."
+	MachineConfigDoc.Fields[11].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables."
 
-	MachineConfigDoc.Fields[10].AddExample("", machineEnvExamples[1])
+	MachineConfigDoc.Fields[11].AddExample("Environment variables definition examples.", machineEnvExamples[0])
 
-	MachineConfigDoc.Fields[10].AddExample("", machineEnvExamples[2])
-	MachineConfigDoc.Fields[10].Values = []string{
+	MachineConfigDoc.Fields[11].AddExample("", machineEnvExamples[1])
+
+	MachineConfigDoc.Fields[11].AddExample("", machineEnvExamples[2])
+	MachineConfigDoc.Fields[11].Values = []string{
 		"`GRPC_GO_LOG_VERBOSITY_LEVEL`",
 		"`GRPC_GO_LOG_SEVERITY_LEVEL`",
 		"`http_proxy`",
 		"`https_proxy`",
 		"`no_proxy`",
 	}
-	MachineConfigDoc.Fields[11].Name = "time"
-	MachineConfigDoc.Fields[11].Type = "TimeConfig"
-	MachineConfigDoc.Fields[11].Note = ""
-	MachineConfigDoc.Fields[11].Description = "Used to configure the machine's time settings."
-	MachineConfigDoc.Fields[11].Comments[encoder.LineComment] = "Used to configure the machine's time settings."
-
-	MachineConfigDoc.Fields[11].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample)
-	MachineConfigDoc.Fields[12].Name = "sysctls"
-	MachineConfigDoc.Fields[12].Type = "map[string]string"
+	MachineConfigDoc.Fields[12].Name = "time"
+	MachineConfigDoc.Fields[12].Type = "TimeConfig"
 	MachineConfigDoc.Fields[12].Note = ""
-	MachineConfigDoc.Fields[12].Description = "Used to configure the machine's sysctls."
-	MachineConfigDoc.Fields[12].Comments[encoder.LineComment] = "Used to configure the machine's sysctls."
+	MachineConfigDoc.Fields[12].Description = "Used to configure the machine's time settings."
+	MachineConfigDoc.Fields[12].Comments[encoder.LineComment] = "Used to configure the machine's time settings."
 
-	MachineConfigDoc.Fields[12].AddExample("MachineSysctls usage example.", machineSysctlsExample)
-	MachineConfigDoc.Fields[13].Name = "registries"
-	MachineConfigDoc.Fields[13].Type = "RegistriesConfig"
+	MachineConfigDoc.Fields[12].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample)
+	MachineConfigDoc.Fields[13].Name = "sysctls"
+	MachineConfigDoc.Fields[13].Type = "map[string]string"
 	MachineConfigDoc.Fields[13].Note = ""
-	MachineConfigDoc.Fields[13].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
-	MachineConfigDoc.Fields[13].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
+	MachineConfigDoc.Fields[13].Description = "Used to configure the machine's sysctls."
+	MachineConfigDoc.Fields[13].Comments[encoder.LineComment] = "Used to configure the machine's sysctls."
 
-	MachineConfigDoc.Fields[13].AddExample("", machineConfigRegistriesExample)
-	MachineConfigDoc.Fields[14].Name = "systemDiskEncryption"
-	MachineConfigDoc.Fields[14].Type = "SystemDiskEncryptionConfig"
+	MachineConfigDoc.Fields[13].AddExample("MachineSysctls usage example.", machineSysctlsExample)
+	MachineConfigDoc.Fields[14].Name = "registries"
+	MachineConfigDoc.Fields[14].Type = "RegistriesConfig"
 	MachineConfigDoc.Fields[14].Note = ""
-	MachineConfigDoc.Fields[14].Description = "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
-	MachineConfigDoc.Fields[14].Comments[encoder.LineComment] = "Machine system disk encryption configuration."
+	MachineConfigDoc.Fields[14].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
+	MachineConfigDoc.Fields[14].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
 
-	MachineConfigDoc.Fields[14].AddExample("", machineSystemDiskEncryptionExample)
-	MachineConfigDoc.Fields[15].Name = "features"
-	MachineConfigDoc.Fields[15].Type = "FeaturesConfig"
+	MachineConfigDoc.Fields[14].AddExample("", machineConfigRegistriesExample)
+	MachineConfigDoc.Fields[15].Name = "systemDiskEncryption"
+	MachineConfigDoc.Fields[15].Type = "SystemDiskEncryptionConfig"
 	MachineConfigDoc.Fields[15].Note = ""
-	MachineConfigDoc.Fields[15].Description = "Features describe individual Talos features that can be switched on or off."
-	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Features describe individual Talos features that can be switched on or off."
+	MachineConfigDoc.Fields[15].Description = "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
+	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Machine system disk encryption configuration."
 
-	MachineConfigDoc.Fields[15].AddExample("", machineFeaturesExample)
-	MachineConfigDoc.Fields[16].Name = "udev"
-	MachineConfigDoc.Fields[16].Type = "UdevConfig"
+	MachineConfigDoc.Fields[15].AddExample("", machineSystemDiskEncryptionExample)
+	MachineConfigDoc.Fields[16].Name = "features"
+	MachineConfigDoc.Fields[16].Type = "FeaturesConfig"
 	MachineConfigDoc.Fields[16].Note = ""
-	MachineConfigDoc.Fields[16].Description = "Configures the udev system."
-	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Configures the udev system."
+	MachineConfigDoc.Fields[16].Description = "Features describe individual Talos features that can be switched on or off."
+	MachineConfigDoc.Fields[16].Comments[encoder.LineComment] = "Features describe individual Talos features that can be switched on or off."
 
-	MachineConfigDoc.Fields[16].AddExample("", machineUdevExample)
-	MachineConfigDoc.Fields[17].Name = "logging"
-	MachineConfigDoc.Fields[17].Type = "LoggingConfig"
+	MachineConfigDoc.Fields[16].AddExample("", machineFeaturesExample)
+	MachineConfigDoc.Fields[17].Name = "udev"
+	MachineConfigDoc.Fields[17].Type = "UdevConfig"
 	MachineConfigDoc.Fields[17].Note = ""
-	MachineConfigDoc.Fields[17].Description = "Configures the logging system."
-	MachineConfigDoc.Fields[17].Comments[encoder.LineComment] = "Configures the logging system."
+	MachineConfigDoc.Fields[17].Description = "Configures the udev system."
+	MachineConfigDoc.Fields[17].Comments[encoder.LineComment] = "Configures the udev system."
 
-	MachineConfigDoc.Fields[17].AddExample("", machineLoggingExample)
-	MachineConfigDoc.Fields[18].Name = "kernel"
-	MachineConfigDoc.Fields[18].Type = "KernelConfig"
+	MachineConfigDoc.Fields[17].AddExample("", machineUdevExample)
+	MachineConfigDoc.Fields[18].Name = "logging"
+	MachineConfigDoc.Fields[18].Type = "LoggingConfig"
 	MachineConfigDoc.Fields[18].Note = ""
-	MachineConfigDoc.Fields[18].Description = "Configures the kernel."
-	MachineConfigDoc.Fields[18].Comments[encoder.LineComment] = "Configures the kernel."
+	MachineConfigDoc.Fields[18].Description = "Configures the logging system."
+	MachineConfigDoc.Fields[18].Comments[encoder.LineComment] = "Configures the logging system."
 
-	MachineConfigDoc.Fields[18].AddExample("", machineKernelExample)
+	MachineConfigDoc.Fields[18].AddExample("", machineLoggingExample)
+	MachineConfigDoc.Fields[19].Name = "kernel"
+	MachineConfigDoc.Fields[19].Type = "KernelConfig"
+	MachineConfigDoc.Fields[19].Note = ""
+	MachineConfigDoc.Fields[19].Description = "Configures the kernel."
+	MachineConfigDoc.Fields[19].Comments[encoder.LineComment] = "Configures the kernel."
+
+	MachineConfigDoc.Fields[19].AddExample("", machineKernelExample)
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."

@@ -504,6 +504,26 @@ metadata:
 			},
 		},
 	}
+
+	machinePodsExample = []Unstructured{
+		{
+			Object: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "pod",
+				"metadata": map[string]interface{}{
+					"name": "nginx",
+				},
+				"spec": map[string]interface{}{
+					"containers": []interface{}{
+						map[string]interface{}{
+							"name":  "nginx",
+							"image": "nginx",
+						},
+					},
+				},
+			},
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -595,7 +615,7 @@ type MachineConfig struct {
 	//       value: '[]string{"10.0.0.10", "172.16.0.10", "192.168.0.10"}'
 	MachineCertSANs []string `yaml:"certSANs"`
 	//   description: |
-	//     Provides machine specific contolplane configuration options.
+	//     Provides machine specific control plane configuration options.
 	//   examples:
 	//     - name: ControlPlane definition example.
 	//       value: machineControlplaneExample
@@ -606,6 +626,16 @@ type MachineConfig struct {
 	//     - name: Kubelet definition example.
 	//       value: machineKubeletExample
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
+	//   description: |
+	//     Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
+	//
+	//     Static pods can be used to run components which should be started before the Kubernetes control plane is up.
+	//
+	//     See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
+	//   examples:
+	//     - name: nginx static pod.
+	//       value: machinePodsExample
+	MachinePods []Unstructured `yaml:"pods,omitempty"`
 	//   description: |
 	//     Provides machine specific network configuration options.
 	//   examples:

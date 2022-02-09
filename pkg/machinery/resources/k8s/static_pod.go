@@ -71,7 +71,7 @@ func (r *StaticPod) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodType,
 		Aliases:          []resource.Type{},
-		DefaultNamespace: ControlPlaneNamespaceName,
+		DefaultNamespace: NamespaceName,
 	}
 }
 

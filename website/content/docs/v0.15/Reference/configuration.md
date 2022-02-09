@@ -279,7 +279,7 @@ certSANs:
 </div>
 <div class="dt">
 
-Provides machine specific contolplane configuration options.
+Provides machine specific control plane configuration options.
 
 
 
@@ -343,6 +343,40 @@ kubelet:
     #         - 10.0.0.0/8
     #         - '!10.0.0.3/32'
     #         - fdc7::/16
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>pods</code>  <i>[]Unstructured</i>
+
+</div>
+<div class="dt">
+
+Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
+
+Static pods can be used to run components which should be started before the Kubernetes control plane is up.
+
+See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
+
+
+
+Examples:
+
+
+``` yaml
+pods:
+    - apiVersion: v1
+      kind: pod
+      metadata:
+        name: nginx
+      spec:
+        containers:
+            - image: nginx
+              name: nginx
 ```
 
 

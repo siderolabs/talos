@@ -78,6 +78,13 @@ Talos now supports Jetson Nano SBC.
 from files with `@file.json` syntax, and support loading from YAML format.
 """
 
+    [notes.staticpods]
+        title = "Static Pods in the Machine Configuration"
+        description="""\
+Talos now accepts static pods definitions in the `.machine.pods` key of the machine configuration.
+Static pod definitions can be updated without a node reboot.
+"""
+
 [make_deps]
 
     [make_deps.tools]
