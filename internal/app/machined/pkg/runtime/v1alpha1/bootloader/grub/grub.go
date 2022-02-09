@@ -5,10 +5,10 @@
 package grub
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,27 +21,19 @@ import (
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
-// Cfg reprsents the cfg file.
-type Cfg struct {
-	Default  string
-	Fallback string
-	Labels   []*Label
-}
+// BootLabel represents a boot label, e.g. A or B.
+type BootLabel string
 
-// Label reprsents a label in the cfg file.
-type Label struct {
-	Root   string
-	Kernel string
-	Initrd string
-	Append string
-}
+const (
+	amd64 = "amd64"
+	arm64 = "arm64"
 
-const grubCfgTpl = `set default="{{ .Default }}"
-{{ with .Fallback -}}
+	confTemplate = `set default="{{ (index .Entries .Default).Name }}"
+{{ with (index .Entries .Fallback).Name -}}
 set fallback="{{ . }}"
 {{- end }}
 set timeout=3
@@ -51,190 +43,265 @@ insmod all_video
 terminal_input console
 terminal_output console
 
-{{ range $label := .Labels -}}
-menuentry "{{ $label.Root }}" {
+{{ range $key, $entry := .Entries -}}
+menuentry "{{ $entry.Name }}" {
   set gfxmode=auto
   set gfxpayload=text
-  linux {{ $label.Kernel }} {{ $label.Append }}
-  initrd {{ $label.Initrd }}
+  linux {{ $entry.Linux }} {{ $entry.Cmdline }}
+  initrd {{ $entry.Initrd }}
 }
-{{ end }}
+{{ end -}}
 `
-
-const (
-	amd64 = "amd64"
-	arm64 = "arm64"
 )
 
-// Grub represents the grub bootloader.
-type Grub struct {
-	BootDisk string
-	Arch     string
+var (
+	defaultEntryRegex  = regexp.MustCompile(`(?m)^\s*set default="(.*)"\s*$`)
+	fallbackEntryRegex = regexp.MustCompile(`(?m)^\s*set fallback="(.*)"\s*$`)
+	menuEntryRegex     = regexp.MustCompile(`(?m)^menuentry "(.+)" {([^}]+)}`)
+	linuxRegex         = regexp.MustCompile(`(?m)^\s*linux\s+(.+?)\s+(.*)$`)
+	initrdRegex        = regexp.MustCompile(`(?m)^\s*initrd\s+(.+)$`)
+)
+
+// Config represents a grub configuration file (grub.cfg).
+type Config struct {
+	Default  BootLabel
+	Fallback BootLabel
+	Entries  map[BootLabel]MenuEntry
 }
 
-// Labels implements the Bootloader interface.
-func (g *Grub) Labels() (current, next string, err error) {
-	var b []byte
-
-	if b, err = ioutil.ReadFile(GrubConfig); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			next = BootA
-
-			return current, next, nil
-		}
-
-		return "", "", err
-	}
-
-	re := regexp.MustCompile(`^set default="(.*)"`)
-	matches := re.FindAllSubmatch(b, -1)
-
-	if len(matches) != 1 {
-		return "", "", fmt.Errorf("failed to find default")
-	}
-
-	if len(matches[0]) != 2 {
-		return "", "", fmt.Errorf("expected 2 matches, got %d", len(matches[0]))
-	}
-
-	current = string(matches[0][1])
-	switch current {
-	case BootA:
-		next = BootB
-	case BootB:
-		next = BootA
-	default:
-		return "", "", fmt.Errorf("unknown grub menuentry: %q", current)
-	}
-
-	return current, next, err
-}
-
-// BootEntry describes GRUB boot entry.
-type BootEntry struct {
-	// Paths to kernel and initramfs image.
-	Linux, Initrd string
-	// Cmdline for the kernel.
+// MenuEntry represents a grub menu entry in the grub config file.
+type MenuEntry struct {
+	Name    string
+	Linux   string
 	Cmdline string
+	Initrd  string
 }
 
-// GetCurrentEntry fetches current boot entry, vmlinuz/initrd path, boot args.
-//
-//nolint:gocyclo
-func (g *Grub) GetCurrentEntry() (*BootEntry, error) {
-	f, err := os.Open(GrubConfig)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
+// NewConfig creates a new grub configuration (nothing is written to disk).
+func NewConfig(cmdline string) *Config {
+	return &Config{
+		Default: BootA,
+		Entries: map[BootLabel]MenuEntry{
+			BootA: *buildMenuEntry(BootA, cmdline),
+		},
+	}
+}
 
+// Put puts a new menu entry to the grub config (nothing is written to disk).
+func (c *Config) Put(entry BootLabel, cmdline string) error {
+	c.Entries[entry] = *buildMenuEntry(entry, cmdline)
+
+	return nil
+}
+
+// ReadFromDisk reads the grub configuration from the disk.
+func ReadFromDisk() (*Config, error) {
+	c, err := ioutil.ReadFile(GrubConfig)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+
+	if err != nil {
 		return nil, err
 	}
 
-	defer f.Close() //nolint:errcheck
+	return ParseBytes(c)
+}
 
-	scanner := bufio.NewScanner(f)
+// ParseBytes parses the grub configuration from the given bytes.
+func ParseBytes(c []byte) (*Config, error) {
+	defaultEntryMatches := defaultEntryRegex.FindAllSubmatch(c, -1)
+	if len(defaultEntryMatches) != 1 {
+		return nil, fmt.Errorf("failed to find default")
+	}
 
-	entry := &BootEntry{}
+	fallbackEntryMatches := fallbackEntryRegex.FindAllSubmatch(c, -1)
+	if len(fallbackEntryMatches) > 1 {
+		return nil, fmt.Errorf("found multiple fallback entries")
+	}
 
-	var (
-		defaultEntry string
-		currentEntry string
-	)
+	var fallbackEntry BootLabel
 
-	for scanner.Scan() {
-		line := scanner.Text()
+	if len(fallbackEntryMatches) == 1 {
+		if len(fallbackEntryMatches[0]) != 2 {
+			return nil, fmt.Errorf("failed to parse fallback entry")
+		}
 
-		switch {
-		case strings.HasPrefix(line, "set default"):
-			matches := regexp.MustCompile(`set default="(.*)"`).FindStringSubmatch(line)
-			if len(matches) != 2 {
-				return nil, fmt.Errorf("malformed default entry: %q", line)
-			}
+		entry, err := ParseBootLabel(string(fallbackEntryMatches[0][1]))
+		if err != nil {
+			return nil, err
+		}
 
-			defaultEntry = matches[1]
-		case strings.HasPrefix(line, "menuentry"):
-			matches := regexp.MustCompile(`menuentry "(.*)"`).FindStringSubmatch(line)
-			if len(matches) != 2 {
-				return nil, fmt.Errorf("malformed menuentry: %q", line)
-			}
+		fallbackEntry = entry
+	}
 
-			currentEntry = matches[1]
-		case strings.HasPrefix(line, "  linux "):
-			if currentEntry != defaultEntry {
-				continue
-			}
+	if len(defaultEntryMatches[0]) != 2 {
+		return nil, fmt.Errorf("expected 2 matches, got %d", len(defaultEntryMatches[0]))
+	}
 
-			parts := strings.SplitN(line[8:], " ", 2)
+	defaultEntry, err := ParseBootLabel(string(defaultEntryMatches[0][1]))
+	if err != nil {
+		return nil, err
+	}
 
-			entry.Linux = parts[0]
-			if len(parts) == 2 {
-				entry.Cmdline = parts[1]
-			}
-		case strings.HasPrefix(line, "  initrd "):
-			if currentEntry != defaultEntry {
-				continue
-			}
+	entries, err := parseEntries(c)
+	if err != nil {
+		return nil, err
+	}
 
-			entry.Initrd = line[9:]
+	conf := Config{
+		Default:  defaultEntry,
+		Fallback: fallbackEntry,
+		Entries:  entries,
+	}
+
+	return &conf, nil
+}
+
+func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
+	entries := make(map[BootLabel]MenuEntry)
+
+	matches := menuEntryRegex.FindAllSubmatch(conf, -1)
+	for _, m := range matches {
+		if len(m) != 3 {
+			return nil, fmt.Errorf("expected 3 matches, got %d", len(m))
+		}
+
+		confBlock := m[2]
+
+		linux, cmdline, initrd, err := parseConfBlock(confBlock)
+		if err != nil {
+			return nil, err
+		}
+
+		name := string(m[1])
+
+		bootEntry, err := ParseBootLabel(name)
+		if err != nil {
+			return nil, err
+		}
+
+		entries[bootEntry] = MenuEntry{
+			Name:    name,
+			Linux:   linux,
+			Cmdline: cmdline,
+			Initrd:  initrd,
 		}
 	}
 
-	if entry.Linux == "" || entry.Initrd == "" {
-		return nil, scanner.Err()
-	}
-
-	return entry, scanner.Err()
+	return entries, nil
 }
 
-// Install implements the Bootloader interface. It sets up grub with the
-// specified kernel parameters.
-//
+func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {
+	linuxMatches := linuxRegex.FindAllSubmatch(block, -1)
+	if len(linuxMatches) != 1 {
+		return "", "", "",
+			fmt.Errorf("expected 1 match, got %d", len(linuxMatches))
+	}
+
+	if len(linuxMatches[0]) != 3 {
+		return "", "", "",
+			fmt.Errorf("expected 3 matches, got %d", len(linuxMatches[0]))
+	}
+
+	linux = string(linuxMatches[0][1])
+	cmdline = string(linuxMatches[0][2])
+
+	initrdMatches := initrdRegex.FindAllSubmatch(block, -1)
+	if len(initrdMatches) != 1 {
+		return "", "", "",
+			fmt.Errorf("expected 1 match, got %d", len(initrdMatches))
+	}
+
+	if len(initrdMatches[0]) != 2 {
+		return "", "", "",
+			fmt.Errorf("expected 2 matches, got %d", len(initrdMatches[0]))
+	}
+
+	initrd = string(initrdMatches[0][1])
+
+	return linux, cmdline, initrd, nil
+}
+
+func (c *Config) validate() error {
+	if _, ok := c.Entries[c.Default]; !ok {
+		return fmt.Errorf("invalid default entry: %s", c.Default)
+	}
+
+	if c.Fallback != "" {
+		if _, ok := c.Entries[c.Fallback]; !ok {
+			return fmt.Errorf("invalid fallback entry: %s", c.Fallback)
+		}
+	}
+
+	if c.Default == c.Fallback {
+		return fmt.Errorf("default and fallback entries must not be the same")
+	}
+
+	return nil
+}
+
+// WriteToFile writes the grub configuration to the given file.
+func (c *Config) WriteToFile(path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+		return err
+	}
+
+	wr := new(bytes.Buffer)
+
+	err := c.Write(wr)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("writing %s to disk", path)
+
+	return ioutil.WriteFile(path, wr.Bytes(), 0o600)
+}
+
+// Write writes the grub configuration to the given writer.
+func (c *Config) Write(wr io.Writer) error {
+	if err := c.validate(); err != nil {
+		return err
+	}
+
+	t := template.Must(template.New("grub").Parse(confTemplate))
+
+	return t.Execute(wr, c)
+}
+
+// Install validates the grub configuration and writes it to the disk.
 //nolint:gocyclo
-func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Sequence) (err error) {
-	grubcfg, ok := config.(*Cfg)
-	if !ok {
-		return errors.New("expected a grub config")
-	}
-
-	if err = writeCfg(GrubConfig, grubcfg); err != nil {
+func (c *Config) Install(bootDisk, arch string) error {
+	if err := c.WriteToFile(GrubConfig); err != nil {
 		return err
 	}
 
-	dev, err := blockdevice.Open(g.BootDisk)
+	blk, err := getBlockDeviceName(bootDisk)
 	if err != nil {
 		return err
 	}
-
-	//nolint:errcheck
-	defer dev.Close()
-
-	// verify that BootDisk has boot partition
-	_, err = dev.GetPartition(constants.BootPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	blk := dev.Device().Name()
 
 	loopDevice := strings.HasPrefix(blk, "/dev/loop")
 
 	var platforms []string
 
-	switch g.Arch {
+	switch arch {
 	case amd64:
 		platforms = []string{"x86_64-efi", "i386-pc"}
 	case arm64:
 		platforms = []string{"arm64-efi"}
 	}
 
-	if goruntime.GOARCH == amd64 && g.Arch == amd64 && !loopDevice {
+	if goruntime.GOARCH == amd64 && arch == amd64 && !loopDevice {
 		// let grub choose the platform automatically if not building an image
 		platforms = []string{""}
 	}
 
 	for _, platform := range platforms {
-		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" + constants.EFIMountPoint, "--removable"}
+		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" +
+			constants.EFIMountPoint, "--removable"}
 
 		if loopDevice {
 			args = append(args, "--no-nvram")
@@ -260,37 +327,56 @@ func (g *Grub) Install(fallback string, config interface{}, sequence runtime.Seq
 	return nil
 }
 
-// Default implements the bootloader interface.
-func (g *Grub) Default(label string) (err error) {
-	var b []byte
-
-	if b, err = ioutil.ReadFile(GrubConfig); err != nil {
-		return err
+func getBlockDeviceName(bootDisk string) (string, error) {
+	dev, err := blockdevice.Open(bootDisk)
+	if err != nil {
+		return "", err
 	}
 
-	re := regexp.MustCompile(`^set default="(.*)"`)
-	b = re.ReplaceAll(b, []byte(fmt.Sprintf(`set default="%s"`, label)))
+	//nolint:errcheck
+	defer dev.Close()
 
-	log.Printf("writing %s to disk", GrubConfig)
+	// verify that BootDisk has boot partition
+	_, err = dev.GetPartition(constants.BootPartitionLabel)
+	if err != nil {
+		return "", err
+	}
 
-	return ioutil.WriteFile(GrubConfig, b, 0o600)
+	blk := dev.Device().Name()
+
+	return blk, nil
 }
 
-func writeCfg(path string, grubcfg *Cfg) (err error) {
-	b := []byte{}
-	wr := bytes.NewBuffer(b)
-	t := template.Must(template.New("grub").Parse(grubCfgTpl))
+// FlipBootLabel flips the boot entry, e.g. A -> B, B -> A.
+func FlipBootLabel(e BootLabel) (BootLabel, error) {
+	switch e {
+	case BootA:
+		return BootB, nil
+	case BootB:
+		return BootA, nil
+	default:
+		return "", fmt.Errorf("invalid entry: %s", e)
+	}
+}
 
-	if err = t.Execute(wr, grubcfg); err != nil {
-		return err
+// ParseBootLabel parses the given human-readable boot label to a grub.BootLabel.
+func ParseBootLabel(name string) (BootLabel, error) {
+	if strings.HasPrefix(name, string(BootA)) {
+		return BootA, nil
 	}
 
-	dir := filepath.Dir(path)
-	if err = os.MkdirAll(dir, os.ModeDir); err != nil {
-		return err
+	if strings.HasPrefix(name, string(BootB)) {
+		return BootB, nil
 	}
 
-	log.Printf("writing %s to disk", path)
+	return "", fmt.Errorf("could not parse boot entry from name: %s", name)
+}
 
-	return ioutil.WriteFile(path, wr.Bytes(), 0o600)
+func buildMenuEntry(entry BootLabel, cmdline string) *MenuEntry {
+	return &MenuEntry{
+		Name:    fmt.Sprintf("%s - %s", entry, version.Short()),
+		Linux:   filepath.Join("/", string(BootA), constants.KernelAsset),
+		Cmdline: cmdline,
+		Initrd:  filepath.Join("/", string(BootA), constants.InitramfsAsset),
+	}
 }

@@ -289,20 +289,27 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 			return fmt.Errorf("boot disk not found")
 		}
 
-		grub := &grub.Grub{
-			BootDisk: disk.Device().Name(),
-		}
-
-		_, next, err := grub.Labels()
+		conf, err := grub.ReadFromDisk()
 		if err != nil {
 			return err
 		}
 
-		if _, err = os.Stat(filepath.Join(constants.BootMountPoint, next)); errors.Is(err, os.ErrNotExist) {
+		if conf == nil {
+			return fmt.Errorf("grub configuration not found, nothing to rollback")
+		}
+
+		next, err := grub.FlipBootLabel(conf.Default)
+		if err != nil {
+			return err
+		}
+
+		if _, err = os.Stat(filepath.Join(constants.BootMountPoint, string(next))); errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("cannot rollback to %q, label does not exist", next)
 		}
 
-		if err := grub.Default(next); err != nil {
+		conf.Default = next
+		conf.Fallback = ""
+		if err := conf.WriteToFile(grub.GrubConfig); err != nil {
 			return fmt.Errorf("failed to revert bootloader: %v", err)
 		}
 
