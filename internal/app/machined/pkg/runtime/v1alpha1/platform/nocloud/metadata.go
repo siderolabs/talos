@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -278,12 +279,9 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 							return err
 						}
 
-						mask := netmask.As4()
-
-						ipPrefix, err = ip.Netmask(mask[:])
-						if err != nil {
-							return err
-						}
+						mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
+						ones, _ := net.IPMask(mask).Size()
+						ipPrefix = netaddr.IPPrefixFrom(ip, uint8(ones))
 					}
 
 					networkConfig.Addresses = append(networkConfig.Addresses,
