@@ -85,7 +85,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382
+	github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
 	github.com/talos-systems/go-blockdevice v0.2.6-0.20220125134504-7b9de26bc6bc

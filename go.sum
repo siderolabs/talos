@@ -460,6 +460,8 @@ github.com/form3tech-oss/jwt-go v3.2.3+incompatible/go.mod h1:pbq4aXjuKjdthFRnoD
 github.com/frankban/quicktest v1.11.3/go.mod h1:wRf/ReqHper53s+kmmSZizM8NamnL3IM0I9ntUbOk+k=
 github.com/frankban/quicktest v1.14.0 h1:+cqqvzZV87b4adx/5ayVOaYZ2CrvM4ejQvUdBzPPUss=
 github.com/frankban/quicktest v1.14.0/go.mod h1:NeW+ay9A/U67EYXNFA1nPE8e/tnQv/09mUdL/ijj8og=
+github.com/frezbo/crypto-talos v0.3.5-0.20220209123851-510b0d2753a8 h1:EtY/z1JUfLeOCsNAOKdGUWJDhXQ3mM696UI3ajmGWXA=
+github.com/frezbo/crypto-talos v0.3.5-0.20220209123851-510b0d2753a8/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.5.1 h1:mZcQUHVQUQWoPXXtuf9yuEXKudkV2sx1E06UadKWpgI=
@@ -1226,6 +1228,8 @@ github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382 h1:q2p91NCRDFE4DuB8rMh3Oib9rDEcw+uNm0JiKZ4pbN0=
 github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
+github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8 h1:1LGxMO5Mkt6KRzsI7W4hvisZxVsJOcZYyZtf9KCBdZU=
+github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
 github.com/talos-systems/discovery-api v0.1.0 h1:aKod6uqakH6VfeQ6HaxPF7obqFAL1QTJe4HHTb2mVKk=
 github.com/talos-systems/discovery-api v0.1.0/go.mod h1:ZsbzzOC5bzToaF3+YvUXDf9paeWV5bedpDu5RPXrglM=
 github.com/talos-systems/discovery-client v0.1.0 h1:m+f96TKGFckMWrhDI+o9+QhcGn8f1A61Jp6YYVwiulI=
