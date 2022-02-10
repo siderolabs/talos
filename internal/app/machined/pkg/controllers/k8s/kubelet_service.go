@@ -29,7 +29,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // ServiceManager is the interface to the v1alpha1 services subsystems.
@@ -64,14 +63,8 @@ func (ctrl *KubeletServiceController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// initially, wait for the cri to be up and for machine-id to be generated
+	// initially, wait for the machine-id to be generated
 	if err := r.UpdateInputs([]controller.Input{
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("cri"),
-			Kind:      controller.InputWeak,
-		},
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
@@ -98,18 +91,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting etc file status: %w", err)
 		}
 
-		svc, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "cri", resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting service: %w", err)
-		}
-
-		if svc.(*v1alpha1.Service).Healthy() && svc.(*v1alpha1.Service).Running() {
-			break
-		}
+		break
 	}
 
 	// normal reconcile loop, ignore cri state

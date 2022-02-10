@@ -212,10 +212,17 @@ function build_registry_mirrors {
   fi
 }
 
-function run_gvisor_test {
+function run_extensions_test {
+  echo "Testing gVsisor..."
   ${KUBECTL} apply -f ${PWD}/hack/test/gvisor/manifest.yaml
   sleep 10
   ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=1m
+
+  echo "Testing firmware extension..."
+  ${TALOSCTL} ls -lr /lib/firmware | grep intel-ucode
+
+  echo "Testing extension service..."
+  curl http://172.20.1.2/ | grep Hello
 }
 
 function run_csi_tests {

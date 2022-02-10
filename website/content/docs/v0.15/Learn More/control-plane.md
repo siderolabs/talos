@@ -1,6 +1,6 @@
 ---
 title: "Control Plane"
-weight: 8
+weight: 80
 ---
 
 This guide provides details on how Talos runs and bootstraps the Kubernetes control plane.

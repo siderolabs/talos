@@ -7,6 +7,8 @@ package system
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/talos-systems/talos/pkg/conditions"
 )
@@ -22,6 +24,9 @@ const (
 )
 
 type serviceCondition struct {
+	mu              sync.Mutex
+	waitingRegister bool
+
 	event   StateEvent
 	service string
 }
@@ -32,9 +37,13 @@ func (sc *serviceCondition) Wait(ctx context.Context) error {
 	instance.mu.Unlock()
 
 	if svcrunner == nil {
-		return fmt.Errorf("service %q is not registered", sc.service)
+		return sc.waitRegister(ctx)
 	}
 
+	return sc.waitEvent(ctx, svcrunner)
+}
+
+func (sc *serviceCondition) waitEvent(ctx context.Context, svcrunner *ServiceRunner) error {
 	notifyCh := make(chan struct{}, 1)
 
 	svcrunner.Subscribe(sc.event, notifyCh)
@@ -48,11 +57,54 @@ func (sc *serviceCondition) Wait(ctx context.Context) error {
 	}
 }
 
+func (sc *serviceCondition) waitRegister(ctx context.Context) error {
+	sc.mu.Lock()
+	sc.waitingRegister = true
+	sc.mu.Unlock()
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	var svcrunner *ServiceRunner
+
+	for {
+		instance.mu.Lock()
+		svcrunner = instance.state[sc.service]
+		instance.mu.Unlock()
+
+		if svcrunner != nil {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+	sc.mu.Lock()
+	sc.waitingRegister = false
+	sc.mu.Unlock()
+
+	return sc.waitEvent(ctx, svcrunner)
+}
+
 func (sc *serviceCondition) String() string {
+	sc.mu.Lock()
+	waitingRegister := sc.waitingRegister
+	sc.mu.Unlock()
+
+	if waitingRegister {
+		return fmt.Sprintf("service %q to be registered", sc.service)
+	}
+
 	return fmt.Sprintf("service %q to be %q", sc.service, string(sc.event))
 }
 
 // WaitForService waits for service to reach some state event.
 func WaitForService(event StateEvent, service string) conditions.Condition {
-	return &serviceCondition{event, service}
+	return &serviceCondition{
+		event:   event,
+		service: service,
+	}
 }

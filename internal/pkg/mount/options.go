@@ -17,6 +17,10 @@ const (
 	// Overlay indicates that a the partition for a given mount point should be
 	// mounted using overlayfs.
 	Overlay
+	// SystemOverlay indicates that overlay directory should be created under tmpfs.
+	//
+	// SystemOverlay should be combined with Overlay option.
+	SystemOverlay
 	// ReadonlyOverlay indicates that a the partition for a given mount point should be
 	// mounted using multi-layer readonly overlay from multiple partitions given as sources.
 	ReadonlyOverlay

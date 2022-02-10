@@ -1,6 +1,6 @@
 ---
 title: "Discovery"
-weight: 11
+weight: 110
 ---
 
 We maintain a public discovery service whereby members of your cluster can use a common and unique key to coordinate the most basic connection information (i.e. the set of possible "endpoints", or IP:port pairs).

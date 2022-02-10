@@ -1,6 +1,6 @@
 ---
 title: Philosophy
-weight: 1
+weight: 10
 ---
 
 ## Distributed

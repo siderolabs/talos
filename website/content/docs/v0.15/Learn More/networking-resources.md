@@ -1,6 +1,6 @@
 ---
 title: "Networking Resources"
-weight: 10
+weight: 100
 ---
 
 Starting with version 0.11, a new implementation of the network configuration subsystem is powered by [COSI](../controllers-resources/).

@@ -224,6 +224,7 @@ COPY --from=go-generate /src/pkg/machinery/resources/kubespan/ /pkg/machinery/re
 COPY --from=go-generate /src/pkg/machinery/resources/network/ /pkg/machinery/resources/network/
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
+COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 
 # The base target provides a container that can be used to build all Talos
 # assets.

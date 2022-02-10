@@ -405,8 +405,15 @@ func share(p *Point) error {
 func overlay(p *Point) error {
 	parts := strings.Split(p.target, "/")
 	prefix := strings.Join(parts[1:], "-")
-	diff := fmt.Sprintf(filepath.Join(constants.SystemOverlaysPath, "%s-diff"), prefix)
-	workdir := fmt.Sprintf(filepath.Join(constants.SystemOverlaysPath, "%s-workdir"), prefix)
+
+	basePath := constants.VarSystemOverlaysPath
+
+	if p.MountFlags.Check(SystemOverlay) {
+		basePath = constants.SystemOverlaysPath
+	}
+
+	diff := fmt.Sprintf(filepath.Join(basePath, "%s-diff"), prefix)
+	workdir := fmt.Sprintf(filepath.Join(basePath, "%s-workdir"), prefix)
 
 	for _, target := range []string{diff, workdir} {
 		if err := ensureDirectory(target); err != nil {

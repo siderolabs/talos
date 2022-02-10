@@ -1,6 +1,6 @@
 ---
 title: "Developing Talos"
-weight: 13
+weight: 130
 ---
 
 This guide outlines steps and tricks to develop Talos operating systems and related components.
