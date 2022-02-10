@@ -1092,7 +1092,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run
+      --kubernetes-version string                desired kubernetes version to run (default "1.23.3")
   -o, --output-dir string                        destination to output generated files
   -p, --persist                                  the desired persist value for configs (default true)
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
