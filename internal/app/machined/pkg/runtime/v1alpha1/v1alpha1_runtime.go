@@ -83,6 +83,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .cluster
 	// * .machine.time
 	// * .machine.certCANs
+	// * .machine.install
 	// * .machine.network
 	// * .machine.sysctls
 	// * .machine.logging
@@ -97,6 +98,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
+		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging

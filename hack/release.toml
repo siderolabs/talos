@@ -71,6 +71,18 @@ even if Talos is booted in maintenance mode (without machine configuration is pl
 Talos now supports Jetson Nano SBC.
 """
 
+    [notes.system_extensions]
+        title = "System Extensions"
+        description="""\
+System extensions allow extending Talos root filesystem, which enables a set of different features, including custom
+container runtimes, additional firmware, etc.
+
+System extensions are only activated during Talos installation (or upgrade), and with system extensions installed, Talos
+root filesystem is still immutable and read-only.
+
+Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation](https://www.talos.dev/docs/v0.15/guides/system-extensions/) for more information.
+"""
+
     [notes.patching]
         title = "Machine Configuration Patching"
         description="""\
