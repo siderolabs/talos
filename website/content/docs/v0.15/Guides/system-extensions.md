@@ -2,11 +2,11 @@
 title: "System Extensions"
 ---
 
-System extensions allow extending Talos root filesystem, which enables a set of different features, including custom
-container runtimes, additional firmware, etc.
+System extensions allow extending the Talos root filesystem, which enables a variety of features, such as including custom
+container runtimes, loading additional firmware, etc.
 
-System extensions are only activated during Talos installation (or upgrade), and with system extensions installed, Talos
-root filesystem is still immutable and read-only.
+System extensions are only activated during the installation or upgrade of Talos Linux.
+With system extensions installed, the Talos root filesystem is still immutable and read-only.
 
 ## Configuration
 
@@ -21,17 +21,17 @@ machine:
 
 During the initial install (e.g. when PXE booting or booting from an ISO), Talos will pull down container images for system extensions,
 validate them, and include them into the Talos `initramfs` image.
-System extensions will be activated on boot and overlaid on top of Talos root filesystem.
+System extensions will be activated on boot and overlaid on top of the Talos root filesystem.
 
-In order to update list of system extensions for a running instance, update the `.machine.install.extensions` and upgrade Talos (upgrading to same
-version of Talos is fine).
+In order to update the system extensions for a running instance, update `.machine.install.extensions` and upgrade Talos.
+(Note: upgrading to the same version of Talos is fine).
 
-> Note: in the next releases of Talos there will be a way to build Talos image with system extensions included.
+> Note: in the next releases of Talos there will be a way to build a Talos image with system extensions included.
 
 ## Creating System Extensions
 
-Talos system extension is a container image with the [specific folder structure](https://github.com/talos-systems/extensions#readme).
-System extensions can be built and managed using any tool that produces container image, e.g. `docker build`.
+A Talos system extension is a container image with the [specific folder structure](https://github.com/talos-systems/extensions#readme).
+System extensions can be built and managed using any tool that produces container images, e.g. `docker build`.
 
 Sidero Labs maintains a [repository of system extensions](https://github.com/talos-systems/extension).
 
