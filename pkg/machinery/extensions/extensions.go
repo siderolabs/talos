@@ -9,5 +9,6 @@ package extensions
 var AllowedPaths = []string{
 	"/etc/cri/conf.d",
 	"/lib/firmware",
+	"/usr/etc/udev/rules.d",
 	"/usr/local",
 }
