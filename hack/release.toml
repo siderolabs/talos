@@ -131,6 +131,13 @@ Pod Security Policy Kubernetes feature is deprecated and is going to be removed 
 Talos by default skips setting up PSP now (see machine configuration `.cluster.apiServer.disablePodSecurityPolicy`).
 """
 
+    [notes.extservices]
+        title = "Extension Services"
+        description = """\
+Talos now provides a way to extend set of system services Talos runs with extension services.
+Extension services should be included in the Talos root filesystem (e.g. via system extensions).
+"""
+
 [make_deps]
 
     [make_deps.tools]

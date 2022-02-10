@@ -1,6 +1,6 @@
 ---
 title: "Architecture"
-weight: 3
+weight: 30
 ---
 
 Talos is designed to be **atomic** in _deployment_ and **modular** in _composition_.

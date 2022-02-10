@@ -1,0 +1,9 @@
+name: invalid
+container:
+  entrypoint: ./hello-world
+  args:
+    - --msg
+    - Talos Linux Extension Service
+depends:
+  - nothing: true
+restart: random

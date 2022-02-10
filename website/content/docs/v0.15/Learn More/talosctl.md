@@ -1,6 +1,6 @@
 ---
 title: "talosctl"
-weight: 7
+weight: 70
 ---
 
 The `talosctl` tool packs a lot of power into a small package.

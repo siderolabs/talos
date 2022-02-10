@@ -425,8 +425,8 @@ const (
 	// and directories.
 	SystemPath = "/system"
 
-	// SystemOverlaysPath is the path where overlay mounts are created.
-	SystemOverlaysPath = "/var/system/overlays"
+	// VarSystemOverlaysPath is the path where overlay mounts are created.
+	VarSystemOverlaysPath = "/var/system/overlays"
 
 	// SystemRunPath is the path to the system run directory.
 	SystemRunPath = SystemPath + "/run"
@@ -443,6 +443,9 @@ const (
 	// SystemExtensionsPath is the path to the system extensions directory.
 	SystemExtensionsPath = SystemPath + "/extensions"
 
+	// SystemOverlaysPath is the path to the system overlay directory.
+	SystemOverlaysPath = SystemPath + "/overlays"
+
 	// CgroupMountPath is the default mount path for unified cgroupsv2 setup.
 	CgroupMountPath = "/sys/fs/cgroup"
 
@@ -454,6 +457,9 @@ const (
 
 	// CgroupRuntime is the cgroup name for containerd runtime processes.
 	CgroupRuntime = CgroupSystem + "/runtime"
+
+	// CgroupExtensions is the cgroup name for system extension processes.
+	CgroupExtensions = CgroupSystem + "/extensions"
 
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
@@ -598,6 +604,14 @@ const (
 
 	// FirmwarePath is the path to the standard Linux firmware location.
 	FirmwarePath = "/lib/firmware"
+
+	// ExtensionServicesConfigPath is the directory path which contains  configuration files of extension services.
+	//
+	// See pkg/machinery/extensions/services for the file format.
+	ExtensionServicesConfigPath = "/usr/local/etc/containers"
+
+	// ExtensionServicesRootfsPath is the path to the extracted rootfs files of extension services.
+	ExtensionServicesRootfsPath = "/usr/local/lib/containers"
 )
 
 // See https://linux.die.net/man/3/klogctl

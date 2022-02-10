@@ -9,6 +9,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 // ReadyCondition implements condition which waits for the network to be ready.
@@ -75,4 +77,24 @@ func HostnameReady(spec *StatusSpec) bool {
 // EtcFilesReady checks if etc files are ready.
 func EtcFilesReady(spec *StatusSpec) bool {
 	return spec.EtcFilesReady
+}
+
+// StatusChecksFromStatuses converts nethelpers.Status list into list of checks.
+func StatusChecksFromStatuses(statuses ...nethelpers.Status) []StatusCheck {
+	checks := make([]StatusCheck, 0, len(statuses))
+
+	for _, st := range statuses {
+		switch st {
+		case nethelpers.StatusAddresses:
+			checks = append(checks, AddressReady)
+		case nethelpers.StatusConnectivity:
+			checks = append(checks, ConnectivityReady)
+		case nethelpers.StatusHostname:
+			checks = append(checks, HostnameReady)
+		case nethelpers.StatusEtcFiles:
+			checks = append(checks, EtcFilesReady)
+		}
+	}
+
+	return checks
 }

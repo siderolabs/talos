@@ -1,6 +1,6 @@
 ---
 title: "Components"
-weight: 4
+weight: 40
 ---
 
 In this section, we discuss the various components that underpin Talos.

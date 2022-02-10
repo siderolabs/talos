@@ -1,6 +1,6 @@
 ---
 title: "KubeSpan"
-weight: 12
+weight: 120
 ---
 
 ## WireGuard Peer Discovery

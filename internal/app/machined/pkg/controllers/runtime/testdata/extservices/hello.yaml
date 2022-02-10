@@ -1,0 +1,10 @@
+name: hello-world
+container:
+  entrypoint: ./hello-world
+  args:
+    - --msg
+    - Talos Linux Extension Service
+depends:
+  - network:
+    - addresses
+restart: always

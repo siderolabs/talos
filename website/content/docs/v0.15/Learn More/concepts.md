@@ -1,6 +1,6 @@
 ---
 title: "Concepts"
-weight: 2
+weight: 20
 ---
 
 When people come across Talos, they frequently want a nice, bite-sized summary

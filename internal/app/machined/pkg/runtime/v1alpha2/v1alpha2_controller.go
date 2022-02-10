@@ -190,6 +190,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline:        procfs.ProcCmdline(),
 			Drainer:        drainer,
 		},
+		&runtimecontrollers.ExtensionServiceController{
+			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
+			ConfigPath:       constants.ExtensionServicesConfigPath,
+		},
 		&runtimecontrollers.ExtensionStatusController{},
 		&runtimecontrollers.KernelModuleConfigController{},
 		&runtimecontrollers.KernelModuleSpecController{
