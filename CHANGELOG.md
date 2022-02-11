@@ -1,3 +1,88 @@
+## [Talos 0.14.2](https://github.com/talos-systems/talos/releases/tag/v0.14.2) (2022-02-11)
+
+Welcome to the v0.14.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.23
+
+Talos is built with Go 1.17.7
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Spencer Smith
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`097f59b61`](https://github.com/talos-systems/talos/commit/097f59b611adc255d725678988ca04a428082a1a) feat: update Linux to 5.15.23, Go to 1.17.7
+* [`8023d9970`](https://github.com/talos-systems/talos/commit/8023d99705d78cecc494eac43fef1f710f3fdf8d) chore: bump CAPI to 1.0.4
+* [`bdcbf9bb7`](https://github.com/talos-systems/talos/commit/bdcbf9bb7f6a405e2c70e24e3e426ec91f80b795) feat: enable persistence for docker provider
+* [`2eeb91d18`](https://github.com/talos-systems/talos/commit/2eeb91d18babb709e9d30c755e2daf9f653bd1e8) fix: use leaf certificate in the apid RBAC check
+* [`5dd813a85`](https://github.com/talos-systems/talos/commit/5dd813a85be5586eeed174f52d41e53dd641e7f8) chore: fix golangci-lint install
+* [`7182bcf20`](https://github.com/talos-systems/talos/commit/7182bcf20abca057f9816840a3468bfe44725afc) release(v0.14.1): prepare release
+* [`b6be476b4`](https://github.com/talos-systems/talos/commit/b6be476b47d2347bd97dc190a3b28d7e5fabd2a8) feat: update CoreDNS to 1.8.7
+* [`ba39f682c`](https://github.com/talos-systems/talos/commit/ba39f682c30f542c9bea4ed7ce4e4e00f62699fc) test: attempt number on two on proper retries in CLI time tests
+* [`c1c5d9e8e`](https://github.com/talos-systems/talos/commit/c1c5d9e8e77c6ffc927226e2816840da9c0df3ac) fix: pass path to conformance retrieve results
+* [`4e2b32f98`](https://github.com/talos-systems/talos/commit/4e2b32f98aa2cd41d4ccc19a709a2b6448775800) chore: update Linux to 5.15.16
+</p>
+</details>
+
+### Changes since v0.14.1
+<details><summary>5 commits</summary>
+<p>
+
+* [`097f59b61`](https://github.com/talos-systems/talos/commit/097f59b611adc255d725678988ca04a428082a1a) feat: update Linux to 5.15.23, Go to 1.17.7
+* [`8023d9970`](https://github.com/talos-systems/talos/commit/8023d99705d78cecc494eac43fef1f710f3fdf8d) chore: bump CAPI to 1.0.4
+* [`bdcbf9bb7`](https://github.com/talos-systems/talos/commit/bdcbf9bb7f6a405e2c70e24e3e426ec91f80b795) feat: enable persistence for docker provider
+* [`2eeb91d18`](https://github.com/talos-systems/talos/commit/2eeb91d18babb709e9d30c755e2daf9f653bd1e8) fix: use leaf certificate in the apid RBAC check
+* [`5dd813a85`](https://github.com/talos-systems/talos/commit/5dd813a85be5586eeed174f52d41e53dd641e7f8) chore: fix golangci-lint install
+</p>
+</details>
+
+### Changes from talos-systems/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`b4c9d21`](https://github.com/talos-systems/extras/commit/b4c9d213574a82c698142a5038733a38d53be089) chore: update Go to 1.17.7
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`c875fbe`](https://github.com/talos-systems/pkgs/commit/c875fbeff54a7f10cc6619afac0b06526cc16122) feat: update Linux to 5.15.23
+* [`d67ea69`](https://github.com/talos-systems/pkgs/commit/d67ea6982b53e26af1b79100db5650ec4ab03aaa) chore: update tools for Go 1.17.7
+* [`447ce75`](https://github.com/talos-systems/pkgs/commit/447ce75a950ef1adfc3f1045d28353d7ce6387cb) feat: update Linux to 5.15.16
+</p>
+</details>
+
+### Changes from talos-systems/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c89ed2c`](https://github.com/talos-systems/tools/commit/c89ed2c078e9fc1454640c6cd5cc624eeb78d8bb) chore: bump go to 1.17.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/extras**  v0.7.0-1-gd6b73a7 -> v0.7.0-2-gb4c9d21
+* **github.com/talos-systems/pkgs**    v0.9.0-1-g7a3419a -> v0.9.0-4-gc875fbe
+* **github.com/talos-systems/tools**   v0.9.0-1-gb1146f9 -> v0.9.0-2-gc89ed2c
+
+Previous release can be found at [v0.14.0](https://github.com/talos-systems/talos/releases/tag/v0.14.0)
+
 ## [Talos 0.14.1](https://github.com/talos-systems/talos/releases/tag/v0.14.1) (2022-01-21)
 
 Welcome to the v0.14.1 release of Talos!
