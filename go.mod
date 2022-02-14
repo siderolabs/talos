@@ -111,7 +111,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.2
 	go.etcd.io/etcd/etcdutl/v3 v3.5.2
 	go.uber.org/atomic v1.9.0
-	go.uber.org/zap v1.20.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a
