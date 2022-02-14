@@ -22,8 +22,8 @@ github.com/cncf/xds/go v0.0.0-20210312221358-fbca930ec8ed/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20210805033703-aa0b78936158/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
-github.com/containerd/go-cni v1.1.1 h1:UV64yhzDgs27mBIVUrlzG8Z2bc1K0/zokOW5vDNkI4c=
-github.com/containerd/go-cni v1.1.1/go.mod h1:Rflh2EJ/++BA2/vY5ao3K6WJRR/bZKsX123aPk+kUtA=
+github.com/containerd/go-cni v1.1.2 h1:futGN9fI70oOPA1DKSN4oFmeZ8tNldb382g5TlwYfFc=
+github.com/containerd/go-cni v1.1.2/go.mod h1:Rflh2EJ/++BA2/vY5ao3K6WJRR/bZKsX123aPk+kUtA=
 github.com/containernetworking/cni v1.0.1 h1:9OIL/sZmMYDBe+G8svzILAlulUpaDTUjeAbtH/JNLBo=
 github.com/containernetworking/cni v1.0.1/go.mod h1:AKuhXbN5EzmD4yTNtfSsX3tPcmtrBI6QcRV0NiNt15Y=
 github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f h1:COaUfDid6VOPrwViW30CdYZ6rHLHMfnN25C+TKQIrgU=
