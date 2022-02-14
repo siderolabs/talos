@@ -36,7 +36,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.3
-	github.com/containerd/containerd v1.6.0-rc.2
+	github.com/containerd/containerd v1.6.0-rc.4
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1

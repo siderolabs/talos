@@ -272,8 +272,8 @@ github.com/containerd/containerd v1.5.0-rc.0/go.mod h1:V/IXoMqNGgBlabz3tHD2TWDoT
 github.com/containerd/containerd v1.5.1/go.mod h1:0DOxVqwDy2iZvrZp2JUx/E+hS0UNTVn7dJnIOwtYR4g=
 github.com/containerd/containerd v1.5.7/go.mod h1:gyvv6+ugqY25TiXxcZC3L5yOeYgEw0QMhscqVp1AR9c=
 github.com/containerd/containerd v1.5.8/go.mod h1:YdFSv5bTFLpG2HIYmfqDpSYYTDX+mc5qtSuYx1YUb/s=
-github.com/containerd/containerd v1.6.0-rc.2 h1:hsW0v4GABCGKvBjSnF7gP6oamyEX9fOwvK8wZWHZYKs=
-github.com/containerd/containerd v1.6.0-rc.2/go.mod h1:g4o55STrmMXiGegQmOMUb41SwwJk9wq+DlmFxuA8nu0=
+github.com/containerd/containerd v1.6.0-rc.4 h1:l3ngWaUxlPVURYC/4B+Uzc0m30H72K9MMbTqj6u0tZM=
+github.com/containerd/containerd v1.6.0-rc.4/go.mod h1:g4o55STrmMXiGegQmOMUb41SwwJk9wq+DlmFxuA8nu0=
 github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/continuity v0.0.0-20190815185530-f2a389ac0a02/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
@@ -460,8 +460,6 @@ github.com/form3tech-oss/jwt-go v3.2.3+incompatible/go.mod h1:pbq4aXjuKjdthFRnoD
 github.com/frankban/quicktest v1.11.3/go.mod h1:wRf/ReqHper53s+kmmSZizM8NamnL3IM0I9ntUbOk+k=
 github.com/frankban/quicktest v1.14.0 h1:+cqqvzZV87b4adx/5ayVOaYZ2CrvM4ejQvUdBzPPUss=
 github.com/frankban/quicktest v1.14.0/go.mod h1:NeW+ay9A/U67EYXNFA1nPE8e/tnQv/09mUdL/ijj8og=
-github.com/frezbo/crypto-talos v0.3.5-0.20220209123851-510b0d2753a8 h1:EtY/z1JUfLeOCsNAOKdGUWJDhXQ3mM696UI3ajmGWXA=
-github.com/frezbo/crypto-talos v0.3.5-0.20220209123851-510b0d2753a8/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.5.1 h1:mZcQUHVQUQWoPXXtuf9yuEXKudkV2sx1E06UadKWpgI=
@@ -1226,7 +1224,6 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382 h1:q2p91NCRDFE4DuB8rMh3Oib9rDEcw+uNm0JiKZ4pbN0=
 github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
 github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8 h1:1LGxMO5Mkt6KRzsI7W4hvisZxVsJOcZYyZtf9KCBdZU=
 github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8/go.mod h1:xaNCB2/Bxaj+qrkdeodhRv5eKQVvKOGBBMj58MrIPY8=
