@@ -198,7 +198,7 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 
 		log.Printf("shutdown via SIGTERM received")
 
-		if err := c.Run(ctx, runtime.SequenceShutdown, nil, runtime.WithTakeover()); err != nil {
+		if err := c.Run(ctx, runtime.SequenceShutdown, &machine.ShutdownRequest{Force: true}, runtime.WithTakeover()); err != nil {
 			log.Printf("shutdown failed: %v", err)
 		}
 
@@ -218,7 +218,7 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 
 		log.Printf("shutdown via ACPI received")
 
-		if err := c.Run(ctx, runtime.SequenceShutdown, nil, runtime.WithTakeover()); err != nil {
+		if err := c.Run(ctx, runtime.SequenceShutdown, &machine.ShutdownRequest{Force: true}, runtime.WithTakeover()); err != nil {
 			log.Printf("failed to run shutdown sequence: %s", err)
 		}
 

@@ -33,6 +33,10 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 			Value: "1",
 		},
 		{
+			Key:   "net.ipv6.conf.default.accept_ra",
+			Value: "2",
+		},
+		{
 			Key:   "kernel.pid_max",
 			Value: "262144",
 		},

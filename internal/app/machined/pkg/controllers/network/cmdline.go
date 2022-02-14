@@ -28,6 +28,34 @@ type CmdlineNetworking struct {
 	IgnoreInterfaces []string
 }
 
+// splitIPArgument splits the `ip=` kernel argument honoring the IPv6 addresses in square brackets.
+func splitIPArgument(val string) []string {
+	var (
+		squared, prev int
+		parts         []string
+	)
+
+	for i, c := range val {
+		switch c {
+		case '[':
+			squared++
+		case ']':
+			squared--
+		case ':':
+			if squared != 0 {
+				continue
+			}
+
+			parts = append(parts, strings.Trim(val[prev:i], "[]"))
+			prev = i + 1
+		}
+	}
+
+	parts = append(parts, strings.Trim(val[prev:], "[]"))
+
+	return parts
+}
+
 // ParseCmdlineNetwork parses `ip=` and Talos specific kernel cmdline argument producing all the available configuration options.
 //
 //nolint:gocyclo,cyclop
@@ -56,7 +84,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 	// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
 	// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
-	fields := strings.Split(*ipSettings, ":")
+	fields := splitIPArgument(*ipSettings)
 
 	// If dhcp is specified, we'll handle it as a normal discovered
 	// interface

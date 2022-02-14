@@ -737,6 +737,12 @@ func TestValidate(t *testing.T) {
 										RouteGateway: "10.0.0.1",
 										RouteSource:  "10.0.0.3/32",
 									},
+									{
+										RouteNetwork: "169.254.254.254/32",
+									},
+									{
+										RouteSource: "10.0.0.3",
+									},
 								},
 							},
 						},
@@ -750,9 +756,10 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "3 errors occurred:\n\t* [networking.os.device.route[3].gateway] \"172.0.0.x\": invalid network address\n" +
+			expectedError: "4 errors occurred:\n\t* [networking.os.device.route[3].gateway] \"172.0.0.x\": invalid network address\n" +
 				"\t* [networking.os.device.route[4].network] \"10.0.0.0\": invalid network address\n" +
-				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n\n",
+				"\t* [networking.os.device.route[5].source] \"10.0.0.3/32\": invalid network address\n" +
+				"\t* [networking.os.device.route[7]]: either network or gateway should be set\n\n",
 		},
 		{
 			name: "KubeSpanNoDiscovery",
@@ -876,6 +883,7 @@ func TestValidate(t *testing.T) {
 							KubeletNodeIPValidSubnets: []string{
 								"10.0.0.0/8",
 								"!10.0.0.3/32",
+								"!fd00::169:254:2:53/128",
 							},
 						},
 					},
@@ -899,7 +907,8 @@ func TestValidate(t *testing.T) {
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
-								"10.0.0.0",
+								"10.0.0.0.3",
+								"[fd00::169:254:2:53]:344",
 							},
 						},
 					},
@@ -912,7 +921,10 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "1 error occurred:\n\t* kubelet nodeIP subnet is not valid: \"10.0.0.0\"\n\n",
+			expectedError: "2 errors occurred:\n" +
+				"\t* kubelet nodeIP subnet is not valid: \"10.0.0.0.3\"\n" +
+				"\t* kubelet nodeIP subnet is not valid: \"[fd00::169:254:2:53]:344\"\n" +
+				"\n",
 		},
 	} {
 		test := test

@@ -34,7 +34,7 @@ Make sure the following steps work:
 Set up a local docker registry:
 
 ```bash
-docker run -d -p 5005:5005 \
+docker run -d -p 5005:5000 \
     --restart always \
     --name local registry:2
 ```
@@ -127,7 +127,7 @@ You can edit machine config on the fly with `talosctl edit mc --immediate`, conf
 To reboot whole cluster quickly (e.g. to pick up a change made in the code):
 
 ```bash
-for socket in ~/.talos/clusters/talos-default/talos-default-*.monitor; echo "q" | sudo socat - unix-connect:$socket; end
+for socket in ~/.talos/clusters/talos-default/talos-default-*.monitor; do echo "q" | sudo socat - unix-connect:$socket; done
 ```
 
 Sending `q` to a single socket allows to reboot a single node.

@@ -204,7 +204,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 	return route
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (routes []network.RouteSpecSpec) {
 	convert := func(linkName string, in talosconfig.Route) (route network.RouteSpecSpec, err error) {
 		if in.Network() != "" {
@@ -214,9 +214,11 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 			}
 		}
 
-		route.Gateway, err = netaddr.ParseIP(in.Gateway())
-		if err != nil {
-			return route, fmt.Errorf("error parsing route gateway: %w", err)
+		if in.Gateway() != "" {
+			route.Gateway, err = netaddr.ParseIP(in.Gateway())
+			if err != nil {
+				return route, fmt.Errorf("error parsing route gateway: %w", err)
+			}
 		}
 
 		if in.Source() != "" {
@@ -233,9 +235,12 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 			route.Priority = DefaultRouteMetric
 		}
 
-		if route.Gateway.Is6() {
+		switch {
+		case !route.Gateway.IsZero() && route.Gateway.Is6():
 			route.Family = nethelpers.FamilyInet6
-		} else {
+		case !route.Destination.IsZero() && route.Destination.IP().Is6():
+			route.Family = nethelpers.FamilyInet6
+		default:
 			route.Family = nethelpers.FamilyInet4
 		}
 

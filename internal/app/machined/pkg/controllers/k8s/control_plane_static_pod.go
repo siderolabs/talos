@@ -65,14 +65,14 @@ func (ctrl *ControlPlaneStaticPodController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: k8s.StaticPodType,
-			Kind: controller.OutputExclusive,
+			Kind: controller.OutputShared,
 		},
 	}
 }
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -155,13 +155,17 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 		// clean up static pods which haven't been touched
 		{
-			list, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+			list, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 			if err != nil {
 				return err
 			}
 
 			for _, res := range list.Items {
 				if _, ok := touchedIDs[res.Metadata().ID()]; ok {
+					continue
+				}
+
+				if res.Metadata().Owner() != ctrl.Name() {
 					continue
 				}
 
@@ -174,14 +178,16 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 }
 
 func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	list, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+	list, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 	if err != nil {
 		return err
 	}
 
-	// TODO: change this to proper teardown sequence
-
 	for _, res := range list.Items {
+		if res.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
 		if err = r.Destroy(ctx, res.Metadata()); err != nil {
 			return err
 		}
@@ -309,7 +315,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
-	return config.K8sControlPlaneAPIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneAPIServerID), func(r resource.Resource) error {
+	return config.K8sControlPlaneAPIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneAPIServerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -435,7 +441,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return config.K8sControlPlaneControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneControllerManagerID), func(r resource.Resource) error {
+	return config.K8sControlPlaneControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -544,7 +550,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return config.K8sControlPlaneSchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.ControlPlaneNamespaceName, config.K8sControlPlaneSchedulerID), func(r resource.Resource) error {
+	return config.K8sControlPlaneSchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneSchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",

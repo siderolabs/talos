@@ -456,6 +456,8 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	// TODO(scm): see issue #2121 and description below in argsForControlPlane.
 	denyListArgs := argsbuilder.Args{
 		"name":                  hostname,
+		"auto-tls":              "false",
+		"peer-auto-tls":         "false",
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
@@ -539,6 +541,8 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 
 	denyListArgs := argsbuilder.Args{
 		"name":                  hostname,
+		"auto-tls":              "false",
+		"peer-auto-tls":         "false",
 		"data-dir":              constants.EtcdDataPath,
 		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",

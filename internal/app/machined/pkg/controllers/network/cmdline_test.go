@@ -82,6 +82,18 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 		{
+			name:    "ipv6",
+			cmdline: "ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]",
+			expectedSettings: network.CmdlineNetworking{
+				Address:      netaddr.MustParseIPPrefix("2001:db8::a/128"),
+				Gateway:      netaddr.MustParseIP("fe80::1"),
+				Hostname:     "master1",
+				LinkName:     "eth1",
+				DNSAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4860::6464"), netaddr.MustParseIP("2001:4860:4860::64")},
+				NTPAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4806::")},
+			},
+		},
+		{
 			name:    "unparseable IP",
 			cmdline: "ip=xyz:",
 

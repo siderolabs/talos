@@ -101,8 +101,30 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Value: "1",
 		},
 		{
+			Key:   "net.ipv6.conf.default.accept_ra",
+			Value: "2",
+		},
+		// ipvs/conntrack tcp keepalive refresh.
+		{
+			Key:   "net.ipv4.tcp_keepalive_time",
+			Value: "600",
+		},
+		{
+			Key:   "net.ipv4.tcp_keepalive_intvl",
+			Value: "60",
+		},
+		{
 			Key:   "kernel.pid_max",
 			Value: "262144",
+		},
+	}...)
+
+	// kernel optimization for kubernetes workloads.
+	res = append(res, []*kernel.Param{
+		// configs inotify.
+		{
+			Key:   "fs.inotify.max_user_instances",
+			Value: "512",
 		},
 	}...)
 
