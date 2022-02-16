@@ -24,6 +24,7 @@ import (
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -183,6 +184,47 @@ func (suite *LinkMergeSuite) TestMerge() {
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
 			return suite.assertNoLinks("lo")
+		}))
+}
+
+func (suite *LinkMergeSuite) TestMergeLogicalLink() {
+	bondPlatform := network.NewLinkSpec(network.ConfigNamespaceName, "platform/bond0")
+	*bondPlatform.TypedSpec() = network.LinkSpecSpec{
+		Name:    "bond0",
+		Logical: true,
+		Up:      true,
+		BondMaster: network.BondMasterSpec{
+			Mode: nethelpers.BondMode8023AD,
+		},
+		ConfigLayer: network.ConfigPlatform,
+	}
+
+	bondMachineConfig := network.NewLinkSpec(network.ConfigNamespaceName, "config/bond0")
+	*bondMachineConfig.TypedSpec() = network.LinkSpecSpec{
+		Name:        "bond0",
+		MTU:         1450,
+		Up:          true,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{bondPlatform, bondMachineConfig} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			return suite.assertLinks([]string{
+				"bond0",
+			}, func(r *network.LinkSpec) error {
+				if r.TypedSpec().MTU != 1450 {
+					return retry.ExpectedErrorf("not merged yet")
+				}
+
+				suite.Assert().True(r.TypedSpec().Logical)
+				suite.Assert().EqualValues(1450, r.TypedSpec().MTU)
+
+				return nil
+			})
 		}))
 }
 
