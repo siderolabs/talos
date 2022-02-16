@@ -262,10 +262,10 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"tls-cipher-suites":                "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256", //nolint:lll
 		"encryption-provider-config":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml"),
 		"audit-policy-file":                filepath.Join(constants.KubernetesAPIServerSecretsDir, "auditpolicy.yaml"),
-		"audit-log-path":                   "-",
+		"audit-log-path":                   filepath.Join(constants.KubernetesAuditLogDir, "kube-apiserver.log"),
 		"audit-log-maxage":                 "30",
-		"audit-log-maxbackup":              "3",
-		"audit-log-maxsize":                "50",
+		"audit-log-maxbackup":              "10",
+		"audit-log-maxsize":                "100",
 		"profiling":                        "false",
 		"etcd-cafile":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt"),
 		"etcd-certfile":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt"),
@@ -356,6 +356,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								MountPath: constants.KubernetesAPIServerSecretsDir,
 								ReadOnly:  true,
 							},
+							{
+								Name:      "audit",
+								MountPath: constants.KubernetesAuditLogDir,
+								ReadOnly:  false,
+							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
@@ -376,6 +381,14 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 						VolumeSource: v1.VolumeSource{
 							HostPath: &v1.HostPathVolumeSource{
 								Path: constants.KubernetesAPIServerSecretsDir,
+							},
+						},
+					},
+					{
+						Name: "audit",
+						VolumeSource: v1.VolumeSource{
+							HostPath: &v1.HostPathVolumeSource{
+								Path: constants.KubernetesAuditLogDir,
 							},
 						},
 					},

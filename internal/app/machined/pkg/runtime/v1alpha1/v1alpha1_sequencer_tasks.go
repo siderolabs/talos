@@ -713,9 +713,20 @@ func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{"/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock"} {
+		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock"} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
+			}
+		}
+
+		// Handle Kubernetes directories which need different ownership
+		for _, p := range []string{constants.KubernetesAuditLogDir} {
+			if err = os.MkdirAll(p, 0o700); err != nil {
+				return err
+			}
+
+			if err = os.Chown(p, constants.KubernetesRunUser, -1); err != nil {
+				return fmt.Errorf("failed to chown %s: %w", p, err)
 			}
 		}
 

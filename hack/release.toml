@@ -38,6 +38,14 @@ Of particular note is that Talos now sets the `kernel.panic` reboot interval to 
 If your kubelet fails to start after the upgrade, please check the `kubelet` logs to determine the problem.
 """
 
+    [notes.auditlog]
+        title = "API Server audit logs"
+        description="""\
+`kube-apiserver` is now configured to store its audit logs separately from the `kube-apiserver` standard logs and directly to file.
+The `kube-apiserver` will maintain the rotation and retirement of these logs, which are stored in `/var/log/audit/`.
+Previously, the audit logs were sent to `kube-apiserver`'s `stdout`, along with the rest of its logs, to be collected in the usual manner by Kubernetes.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\

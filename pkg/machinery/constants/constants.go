@@ -201,7 +201,10 @@ const (
 	// KubebernetesStaticSecretsDir defines ephemeral directory which contains rendered secrets for controlplane components.
 	KubebernetesStaticSecretsDir = "/system/secrets/kubernetes"
 
-	// KubernetesAPIServerSecretsDir defines ephemeral directory with kube-apiserver secrets.
+	// KubernetesAuditLogDir defines the ephemeral directory where the kube-apiserver will store its audit logs.
+	KubernetesAuditLogDir = EphemeralMountPoint + "/" + "log" + "/" + "audit" + "/" + "kube"
+
+	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 
 	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.

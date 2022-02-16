@@ -178,8 +178,8 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
 	suite.Require().NoError(err)
 
-	suite.Assert().Len(apiServerPod.Spec.Volumes, 2)
-	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 2)
+	suite.Assert().Len(apiServerPod.Spec.Volumes, 3)
+	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 3)
 
 	suite.Assert().Equal(v1.Volume{
 		Name: "secrets",
@@ -191,13 +191,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	}, apiServerPod.Spec.Volumes[0])
 
 	suite.Assert().Equal(v1.Volume{
+		Name: "audit",
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: constants.KubernetesAuditLogDir,
+			},
+		},
+	}, apiServerPod.Spec.Volumes[1])
+
+	suite.Assert().Equal(v1.Volume{
 		Name: "foo",
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/var/lib",
 			},
 		},
-	}, apiServerPod.Spec.Volumes[1])
+	}, apiServerPod.Spec.Volumes[2])
 
 	suite.Assert().Equal(v1.VolumeMount{
 		Name:      "secrets",
@@ -206,10 +215,16 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	}, apiServerPod.Spec.Containers[0].VolumeMounts[0])
 
 	suite.Assert().Equal(v1.VolumeMount{
+		Name:      "audit",
+		MountPath: constants.KubernetesAuditLogDir,
+		ReadOnly:  false,
+	}, apiServerPod.Spec.Containers[0].VolumeMounts[1])
+
+	suite.Assert().Equal(v1.VolumeMount{
 		Name:      "foo",
 		MountPath: "/var/foo",
 		ReadOnly:  true,
-	}, apiServerPod.Spec.Containers[0].VolumeMounts[1])
+	}, apiServerPod.Spec.Containers[0].VolumeMounts[2])
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
