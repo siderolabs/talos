@@ -9,6 +9,7 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -120,17 +121,14 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 
 				bits, err := strconv.Atoi(ntwrk.Netmask)
 				if err != nil {
-					maskIP, err := netaddr.ParseIP(ntwrk.Netmask)
+					netmask, err := netaddr.ParseIP(ntwrk.Netmask)
 					if err != nil {
 						return nil, err
 					}
 
-					mask, _ := maskIP.MarshalBinary() //nolint:errcheck // never fails
-
-					ipPrefix, err = ip.Netmask(mask)
-					if err != nil {
-						return nil, err
-					}
+					mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
+					ones, _ := net.IPMask(mask).Size()
+					ipPrefix = netaddr.IPPrefixFrom(ip, uint8(ones))
 				} else {
 					ipPrefix = netaddr.IPPrefixFrom(ip, uint8(bits))
 				}

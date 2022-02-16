@@ -17,13 +17,13 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 )
 
-//go:embed metadata.json
+//go:embed testdata/metadata.json
 var rawMetadata []byte
 
-//go:embed network.json
+//go:embed testdata/network.json
 var rawNetwork []byte
 
-//go:embed expected.yaml
+//go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
 func TestParseMetadata(t *testing.T) {
