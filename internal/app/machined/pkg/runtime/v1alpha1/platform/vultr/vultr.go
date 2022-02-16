@@ -10,6 +10,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vultr/metadata"
@@ -42,8 +43,6 @@ func (v *Vultr) Name() string {
 }
 
 // ParseMetadata converts Vultr platform metadata into platform network config.
-//
-//nolint:gocyclo
 func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
@@ -90,22 +89,19 @@ func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.P
 					ConfigLayer: network.ConfigPlatform,
 				})
 			} else {
-				maskIP, err := netaddr.ParseIP(addr.IPv4.Netmask)
-				if err != nil {
-					return nil, err
-				}
-
-				mask, _ := maskIP.MarshalBinary() //nolint:errcheck // never fails
-
 				ip, err := netaddr.ParseIP(addr.IPv4.Address)
 				if err != nil {
 					return nil, err
 				}
 
-				ipAddr, err := ip.Netmask(mask)
+				netmask, err := netaddr.ParseIP(addr.IPv4.Netmask)
 				if err != nil {
 					return nil, err
 				}
+
+				mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
+				ones, _ := net.IPMask(mask).Size()
+				ipAddr := netaddr.IPPrefixFrom(ip, uint8(ones))
 
 				networkConfig.Addresses = append(networkConfig.Addresses,
 					network.AddressSpecSpec{

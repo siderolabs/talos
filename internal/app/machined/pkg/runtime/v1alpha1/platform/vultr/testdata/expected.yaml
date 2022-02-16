@@ -1,5 +1,5 @@
 addresses:
-    - address: 10.7.96.0/20
+    - address: 10.7.96.3/20
       linkName: eth1
       family: inet4
       scope: global
