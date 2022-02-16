@@ -24,6 +24,8 @@ import (
 const (
 	// ScalewayMetadataEndpoint is the local Scaleway endpoint.
 	ScalewayMetadataEndpoint = "http://169.254.42.42/conf?format=json"
+	// ScalewayUserDataEndpoint is the local Scaleway endpoint for the config.
+	ScalewayUserDataEndpoint = "http://169.254.42.42/user_data/cloud-init"
 )
 
 // Scaleway is the concrete type that implements the runtime.Platform interface.
@@ -125,11 +127,10 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 
 // Configuration implements the runtime.Platform interface.
 func (s *Scaleway) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching machine config from scaleway metadata server")
+	log.Printf("fetching machine config from %q", ScalewayUserDataEndpoint)
 
-	instanceAPI := instance.NewMetadataAPI()
-
-	machineConfigDl, err := instanceAPI.GetUserData("cloud-init")
+	machineConfigDl, err := download.Download(ctx, ScalewayUserDataEndpoint,
+		download.WithLowSrcPort())
 	if err != nil {
 		return nil, errors.ErrNoConfigSource
 	}
@@ -151,7 +152,7 @@ func (s *Scaleway) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (s *Scaleway) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
-	log.Printf("fetching scaleway instance config from: %q ", ScalewayMetadataEndpoint)
+	log.Printf("fetching scaleway instance config from: %q", ScalewayMetadataEndpoint)
 
 	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint)
 	if err != nil {
