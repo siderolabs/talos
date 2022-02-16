@@ -9,18 +9,23 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/talos-systems/go-retry/retry"
 )
 
 const b64 = "base64"
 
 type downloadOptions struct {
-	Headers map[string]string
-	Format  string
+	Headers    map[string]string
+	Format     string
+	LowSrcPort bool
 
 	ErrorOnNotFound      error
 	ErrorOnEmptyResponse error
@@ -54,6 +59,14 @@ func WithFormat(format string) Option {
 func WithHeaders(headers map[string]string) Option {
 	return func(d *downloadOptions) {
 		d.Headers = headers
+	}
+}
+
+// WithLowSrcPort sets low source port to download
+// the config.
+func WithLowSrcPort() Option {
+	return func(d *downloadOptions) {
+		d.LowSrcPort = true
 	}
 }
 
@@ -129,6 +142,25 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err error) {
 	client := &http.Client{}
+
+	if dlOpts.LowSrcPort {
+		port := 100 + rand.Intn(512)
+
+		localTCPAddr, tcperr := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
+		if tcperr != nil {
+			return nil, retry.ExpectedError(fmt.Errorf("resolving source tcp address: %s", tcperr.Error()))
+		}
+
+		d := (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+			LocalAddr: localTCPAddr,
+		}).DialContext
+
+		client.Transport = cleanhttp.DefaultTransport()
+		client.Transport.(*http.Transport).DialContext = d
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
