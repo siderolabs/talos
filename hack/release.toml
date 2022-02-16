@@ -28,6 +28,16 @@ with a single `--mode` flag that can take the following values:
 - `interactive` starts interactive installer, only for `apply`.
 """
 
+    [notes.kubelet]
+        title = "Kubelet conformance tweaks"
+        description="""\
+A number of conformance tweaks have been made to the `kubelet` to allow it to run without
+`protectKernelDefaults`.
+This includes both kubelet configuration options and sysctls.
+Of particular note is that Talos now sets the `kernel.panic` reboot interval to 10s instead of 1s.
+If your kubelet fails to start after the upgrade, please check the `kubelet` logs to determine the problem.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\

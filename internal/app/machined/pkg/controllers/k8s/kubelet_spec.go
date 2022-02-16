@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -19,13 +20,16 @@ import (
 	"k8s.io/component-base/config/v1alpha1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
+	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 // KubeletSpecController renders manifests based on templates and config/secrets.
-type KubeletSpecController struct{}
+type KubeletSpecController struct {
+	V1Alpha1Mode v1alpha1runtime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *KubeletSpecController) Name() string {
@@ -156,6 +160,13 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		kubeletConfig := newKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain)
 
+		// If our platform is container, we cannot rely on the ability to change kernel parameters.
+		// Therefore, we need to NOT attempt to enforce the kernel parameter checking done by the kubelet
+		// when the `ProtectKernelDefaults` setting is enabled.
+		if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
+			kubeletConfig.ProtectKernelDefaults = false
+		}
+
 		unstructuredConfig, err := runtime.DefaultUnstructuredConverter.ToUnstructured(kubeletConfig)
 		if err != nil {
 			return fmt.Errorf("error converting to unstructured: %w", err)
@@ -221,6 +232,8 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		Logging: v1alpha1.LoggingConfiguration{
 			Format: "json",
 		},
-		TLSMinVersion: "VersionTLS13",
+		ProtectKernelDefaults:          true,
+		StreamingConnectionIdleTimeout: metav1.Duration{Duration: 5 * time.Minute},
+		TLSMinVersion:                  "VersionTLS13",
 	}
 }
