@@ -33,7 +33,7 @@ with a single `--mode` flag that can take the following values:
         description="""\
 * Linux: 5.15.23
 * Kubernetes: 1.23.3
-* CoreDNS: 1.8.7
+* CoreDNS: 1.9.0
 * etcd: 3.5.2
 * containerd: 1.6.0
 * runc: 1.1.0

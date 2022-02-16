@@ -1319,7 +1319,7 @@ Examples:
 
 ``` yaml
 coreDNS:
-    image: docker.io/coredns/coredns:1.8.7 # The `image` field is an override to the default coredns image.
+    image: docker.io/coredns/coredns:1.9.0 # The `image` field is an override to the default coredns image.
 ```
 
 
@@ -2702,7 +2702,7 @@ Appears in:
 
 
 ``` yaml
-image: docker.io/coredns/coredns:1.8.7 # The `image` field is an override to the default coredns image.
+image: docker.io/coredns/coredns:1.9.0 # The `image` field is an override to the default coredns image.
 ```
 
 <hr />

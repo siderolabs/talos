@@ -257,7 +257,7 @@ const (
 	CoreDNSImage = "docker.io/coredns/coredns"
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
-	DefaultCoreDNSVersion = "1.8.7"
+	DefaultCoreDNSVersion = "1.9.0"
 
 	// LabelNodeRoleMaster is the node label required by a control plane node.
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
