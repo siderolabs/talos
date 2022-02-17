@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	stdtime "time"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -221,6 +222,7 @@ func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconf
 		Logging: v1alpha1.LoggingConfiguration{
 			Format: "json",
 		},
-		TLSMinVersion: "VersionTLS13",
+		TLSMinVersion:                  "VersionTLS13",
+		StreamingConnectionIdleTimeout: metav1.Duration{Duration: 5 * stdtime.Minute},
 	}
 }
