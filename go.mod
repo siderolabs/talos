@@ -17,15 +17,15 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.23.3
-	k8s.io/apimachinery v0.23.3
-	k8s.io/apiserver v0.23.3 // indirect
-	k8s.io/cli-runtime v0.23.3 // indirect
-	k8s.io/client-go v0.23.3
-	k8s.io/component-base v0.23.3
-	k8s.io/cri-api v0.23.3
-	k8s.io/kubectl v0.23.3
-	k8s.io/kubelet v0.23.3
+	k8s.io/api v0.23.4
+	k8s.io/apimachinery v0.23.4
+	k8s.io/apiserver v0.23.4 // indirect
+	k8s.io/cli-runtime v0.23.4 // indirect
+	k8s.io/client-go v0.23.4
+	k8s.io/component-base v0.23.4
+	k8s.io/cri-api v0.23.4
+	k8s.io/kubectl v0.23.4
+	k8s.io/kubelet v0.23.4
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.3
-	github.com/containerd/containerd v1.6.0-rc.4
+	github.com/containerd/containerd v1.6.0
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
@@ -153,7 +153,7 @@ require (
 	github.com/cilium/ebpf v0.8.0 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
-	github.com/containerd/go-cni v1.1.2 // indirect
+	github.com/containerd/go-cni v1.1.3 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
