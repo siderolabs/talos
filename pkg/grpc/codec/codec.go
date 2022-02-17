@@ -2,13 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package proto
+// Package codec registers the gRPC for optimized marshaling.
+//
+// Package should be dummy imported to enable.
+package codec
 
 import (
 	"fmt"
 
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/encoding/proto"
+
+	talosproto "github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // gogoMessage is the interface for gogoproto additions.
@@ -33,8 +38,8 @@ func (Codec) Marshal(v interface{}) ([]byte, error) {
 	}
 
 	// our types implement Message (with or without vtproto additions depending on build configuration)
-	if m, ok := v.(Message); ok {
-		return Marshal(m)
+	if m, ok := v.(talosproto.Message); ok {
+		return talosproto.Marshal(m)
 	}
 
 	// no types implement protobuf API v1 only, so don't check for it
@@ -50,8 +55,8 @@ func (Codec) Unmarshal(data []byte, v interface{}) error {
 	}
 
 	// our types implement Message (with or without vtproto additions depending on build configuration)
-	if m, ok := v.(Message); ok {
-		return Unmarshal(data, m)
+	if m, ok := v.(talosproto.Message); ok {
+		return talosproto.Unmarshal(data, m)
 	}
 
 	// no types implement protobuf API v1 only, so don't check for it
