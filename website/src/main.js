@@ -39,4 +39,25 @@ export default function(Vue, { router, head, isClient, appOptions }) {
     src: "/js/asciinema-player.js",
     body: true,
   });
+
+  head.link.push({
+    rel: 'stylesheet',
+    href: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css'
+  })
+  head.script.push({
+    type: 'text/javascript',
+    body: true,
+    src: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js'
+  })
+  head.script.push({
+    type: 'text/javascript',
+    body: true,
+    innerHTML: `algoliasearchNetlify({
+    appId: 'W8IEQZJ792',
+    apiKey: 'b16fa302b5c8c43816d11ecc7da702d2',
+    siteId: '4ce8d530-06a7-45d7-bc2a-0484644882df',
+    branch: 'master',
+    selector: 'div#search',
+  });`
+  })
 }
