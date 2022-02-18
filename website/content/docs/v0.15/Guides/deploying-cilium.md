@@ -3,25 +3,25 @@ title: "Deploying Cilium CNI"
 description: "In this guide you will learn how to set up Cilium CNI on Talos."
 ---
 
-From v1.9 onwards cilium doesn't provide a one liner install manifest that can be used to install cilium on a node via `kubectl apply -f` or passing in as extra `urls` in Talos machine configuration.
+From v1.9 onwards Cilium does no longer provide a one-liner install manifest that can be used to install Cilium on a node via `kubectl apply -f` or passing it in as an extra url in the `urls` part in the Talos machine configuration.
 
-> installing Cilium via `cilium` cli is [broken](https://github.com/cilium/cilium-cli/issues/505), so we'll be using `helm` to install cilium.
+> Installing Cilium the new way via the `cilium` cli is broken, so we'll be using `helm` to install Cilium. For more information: [Install with CLI fails, works with Helm](https://github.com/cilium/cilium-cli/issues/505)
 
-Refer [Installing with Helm](https://docs.cilium.io/en/v1.11/gettingstarted/k8s-install-helm/) for more information.
+Refer to [Installing with Helm](https://docs.cilium.io/en/v1.11/gettingstarted/k8s-install-helm/) for more information.
 
-First we'll need to add the helm repo for cilium.
+First we'll need to add the helm repo for Cilium.
 
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update
 ```
 
-This documentation will outline installing Cilium CNI on Talos in two different ways.
+This documentation will outline installing Cilium CNI v1.11.1 on Talos in four different ways. Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.11/gettingstarted/kubeproxy-free/)
 
-## With Kube Proxy enabled
 
-When generating the machine config for a node add the following config patch.
-An example usage is shown below:
+## Machine config preparation
+
+When generating the machine config for a node set the CNI to none. For example using a config patch:
 
 ```bash
 talosctl gen config \
@@ -29,32 +29,7 @@ talosctl gen config \
     --config-patch '[{"op":"add", "path": "/cluster/network/cni", "value": {"name": "none"}}]'
 ```
 
-Now we can move onto installing cilium.
-
-If you want to install with helm run the following:
-
-```bash
-helm install cilium cilium/cilium \
-    --version 1.11.0 \
-    --namespace kube-system
-```
-
-If you want to generate a manifest and apply manually run the following:
-
-```bash
-helm template cilium cilium/cilium \
-    --version 1.11.0 \
-    --namespace kube-system > cilium.yaml
-
-kubectl apply -f cilium.yaml
-```
-
-## Without Kube Proxy
-
-If you want to deploy Cilium in strict mode without kube-proxy, you can use the following config patch when generating a machine config.
-This will create the Talos cluster with no CNI and *kube-proxy* disabled.
-
-An example usage is shown below:
+Or if you want to deploy Cilium in strict mode without kube-proxy, you also need to disable kube proxy:
 
 ```bash
 talosctl gen config \
@@ -62,30 +37,56 @@ talosctl gen config \
     --config-patch '[{"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}, {"op":"add", "path": "/cluster/network/cni", "value": {"name": "none"}}]'
 ```
 
-You need to pass in the Kubernetes API server address to the `helm` commands.
-Refer [Kube Proxy free](https://docs.cilium.io/en/v1.11/gettingstarted/kubeproxy-free/#quick-start) for more information.
+
+## Method 1: Helm install
+
+After applying the machine config and bootstrapping Talos will appear to hang on phase 18/19 with the message: retrying error: node not ready. This happens because nodes in Kubernetes are only marked as ready once the CNI is up. As there is no CNI defined, the boot process is stuck and will reboot the node to retry after 10 minutes from every boot. This is expected.
+
+During this windows you can install Cilium manually by running the following:
+
+```bash
+helm install cilium cilium/cilium \
+    --version 1.11.1 \
+    --namespace kube-system
+```
+
+Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
 
 ```bash
 export KUBERNETES_API_SERVER_ADDRESS=<>
 export KUBERNETES_API_SERVER_PORT=6443
-```
 
-If you want to install with helm run the following:
-
-```bash
 helm install cilium cilium/cilium \
-    --version 1.11.0 \
+    --version 1.11.1 \
     --namespace kube-system \
     --set kubeProxyReplacement=strict \
     --set k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
     --set k8sServicePort="${KUBERNETES_API_SERVER_PORT}"
 ```
 
-If you want to generate a manifest and apply manually run the following:
+After Cilium is installed the boot process should continue and complete successfully.
+
+
+## Method 2: Helm manifests install
+
+Instead of directly installing Cilium you can instead first generate the manifest and then apply it:
 
 ```bash
 helm template cilium cilium/cilium \
-    --version 1.11.0 \
+    --version 1.11.1 \
+    --namespace kube-system > cilium.yaml
+
+kubectl apply -f cilium.yaml
+```
+
+Without kube-proxy:
+
+```bash
+export KUBERNETES_API_SERVER_ADDRESS=<>
+export KUBERNETES_API_SERVER_PORT=6443
+
+helm template cilium cilium/cilium \
+    --version 1.11.1 \
     --namespace kube-system \
     --set kubeProxyReplacement=strict \
     --set k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
@@ -93,3 +94,80 @@ helm template cilium cilium/cilium \
 
 kubectl apply -f cilium.yaml
 ```
+
+
+## Method 3: Helm manifests hosted install
+
+After generating `cilium.yaml` using `helm template`, instead of applying this manifest directly during the Talos boot window (before the reboot timeout). You can also host this file somewhere and patch the machine config to apply this manifest automatically during bootstrap. To do this patch your machine configuration to include this config instead of the above:
+
+```bash
+talosctl gen config \
+    my-cluster https://mycluster.local:6443 \
+    --config-patch '[{"op":"add", "path": "/cluster/network/cni", "value": {"name": "custom", "urls": ["https://server.yourdomain.tld/some/path/cilium.yaml"]}}]'
+```
+
+Resulting in a config that look like this:
+
+``` yaml
+name: custom # Name of CNI to use.
+# URLs containing manifests to apply for the CNI.
+urls:
+    - https://server.yourdomain.tld/some/path/cilium.yaml
+```
+
+However, beware of the fact that the helm generated Cilium manifest contains sensitive key material. As such you should definitely not host this somewhere publicly accessible.
+
+
+## Method 4: Helm manifests inline install
+
+A more secure option would be to include the `helm template` output manifest inside the machine configuration. To do so patch this into your machine configuration:
+
+``` yaml
+inlineManifests:
+    - name: cilium
+      contents: |
+        --
+        # Source: cilium/templates/cilium-agent/serviceaccount.yaml
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: "cilium"
+          namespace: kube-system
+        ---
+        # Source: cilium/templates/cilium-operator/serviceaccount.yaml
+        apiVersion: v1
+        kind: ServiceAccount
+        -> Your cilium.yaml file will be pretty long....
+```
+
+This will install the Cilium manifests at just the right time during bootstrap.
+
+Beware though:
+- Changing the namespace when templating with Helm does not generate a manifest containing the yaml to create that namespace. As the inline manifest is processed from top to bottom make sure to manually put the namespace yaml at the start of the inline manifest.
+- Only add the Cilium inline manifest to the control plane nodes machine configuration.
+- Make sure all control plane nodes have an identical configuration.
+- If you delete any of the generated resources they will be restored whenever a control plane node reboots.
+- As a safety messure Talos only creates missing resources from inline manifests, it never deletes or updates anything.
+- If you need to update a manifest make sure to first edit all control plane machine configurations and then run `talosctl upgrade-k8s` as it will take care of updating inline manifests.
+
+
+## Known issues
+
+- Talos uses the `podSubnets` and `serviceSubnets` settings under the control plane `cluster` config to determine some network settings. Cilium by default (Cluster Scope IPAM) uses its own configuration. Until Talos is more aware of this it would be best to keep these CIDR ranges manually in sync. For more details: [add Node.PodCIDRs to the k8s nodeadress filter](https://github.com/talos-systems/talos/issues/4212)
+
+- Currently there is an interaction between a Kubespan enabled Talos cluster and Cilium that results in the cluster going down during bootstrap after applying the Cilium manifests. For more details: [Kubespan and Cilium compatiblity: etcd is failing](https://github.com/talos-systems/talos/issues/4836)
+
+- There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers. For more details: [GCP ILB support / support scope local routes to be configured](https://github.com/talos-systems/talos/issues/4109)
+
+
+## Other things to know
+- Talos has full kernel module support for eBPF. See:
+  - https://docs.cilium.io/en/v1.11/operations/system_requirements/
+  - https://github.com/talos-systems/pkgs/blob/master/kernel/build/config-amd64
+  - https://github.com/talos-systems/pkgs/blob/master/kernel/build/config-arm64 \
+  Talos also includes the modules:\
+  `CONFIG_NETFILTER_XT_TARGET_TPROXY=m`\
+  `CONFIG_NETFILTER_XT_TARGET_CT=m`\
+  `CONFIG_NETFILTER_XT_MATCH_MARK=m`\
+  `CONFIG_NETFILTER_XT_MATCH_SOCKET=m`\
+  This allows you to set `--set enableXTSocketFallback=false` on the helm install/template command preventing Cilium from disabling the `ip_early_demux` kernel feature. This will win back some performance.
