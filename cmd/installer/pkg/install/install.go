@@ -7,7 +7,6 @@ package install
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -272,8 +271,6 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	if !i.options.Bootloader {
 		return nil
 	}
-
-	i.cmdline.Append("initrd", filepath.Join("/", string(i.Next), constants.InitramfsAsset))
 
 	var conf *grub.Config
 	if i.bootloader == nil {
