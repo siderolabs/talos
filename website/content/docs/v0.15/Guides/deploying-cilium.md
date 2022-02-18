@@ -42,7 +42,7 @@ talosctl gen config \
 
 After applying the machine config and bootstrapping Talos will appear to hang on phase 18/19 with the message: retrying error: node not ready. This happens because nodes in Kubernetes are only marked as ready once the CNI is up. As there is no CNI defined, the boot process is stuck and will reboot the node to retry after 10 minutes from every boot. This is expected.
 
-During this windows you can install Cilium manually by running the following:
+During this window you can install Cilium manually by running the following:
 
 ```bash
 helm install cilium cilium/cilium \
