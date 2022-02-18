@@ -66,8 +66,9 @@ var (
 //
 //nolint:gocyclo
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
-	if spec.Logical != other.Logical {
-		return fmt.Errorf("mismatch on logical for %q: %v != %v", spec.Name, spec.Logical, other.Logical)
+	// prefer Logical, as it is defined for bonds/vlans, etc.
+	if other.Logical {
+		spec.Logical = other.Logical
 	}
 
 	if other.Up {

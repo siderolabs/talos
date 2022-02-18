@@ -8,21 +8,21 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb3
 
 require (
 	github.com/AlekSi/pointer v1.2.0
-	github.com/containerd/go-cni v1.1.1
+	github.com/containerd/go-cni v1.1.3
 	github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink v1.1.0
-	github.com/mdlayher/ethtool v0.0.0-20220131212354-81c2608dd90e
+	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/stretchr/testify v1.7.0
 	github.com/talos-systems/crypto v0.3.5-0.20211220133734-6fa2d93d0382
 	github.com/talos-systems/go-blockdevice v0.2.6-0.20220125134504-7b9de26bc6bc
 	github.com/talos-systems/go-debug v0.2.1
-	github.com/talos-systems/net v0.3.1
-	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e
+	github.com/talos-systems/net v0.3.2-0.20220207192449-409926aec1c3
+	google.golang.org/genproto v0.0.0-20220211171837-173942840c17
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

@@ -31,14 +31,14 @@ with a single `--mode` flag that can take the following values:
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.21
-* Kubernetes: 1.23.3
-* CoreDNS: 1.8.7
+* Linux: 5.15.23
+* Kubernetes: 1.23.4
+* CoreDNS: 1.9.0
 * etcd: 3.5.2
-* containerd: 1.6.0-rc.0
+* containerd: 1.6.0
 * runc: 1.1.0
 
-Talos is built with Go 1.17.6
+Talos is built with Go 1.17.7
 """
 
     [notes.wipe]
@@ -71,11 +71,39 @@ even if Talos is booted in maintenance mode (without machine configuration is pl
 Talos now supports Jetson Nano SBC.
 """
 
+    [notes.system_extensions]
+        title = "System Extensions"
+        description="""\
+System extensions allow extending Talos root filesystem, which enables a set of different features, including custom
+container runtimes, additional firmware, etc.
+
+System extensions are only activated during Talos installation (or upgrade), and with system extensions installed, Talos
+root filesystem is still immutable and read-only.
+
+Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation](https://www.talos.dev/docs/v0.15/guides/system-extensions/) for more information.
+"""
+
     [notes.patching]
         title = "Machine Configuration Patching"
         description="""\
 `talosctl` commands which accept JSON patches (`gen config`, `cluster create`, `patch machineconfig`) now support multiple patches, loading patches
 from files with `@file.json` syntax, and support loading from YAML format.
+"""
+
+    [notes.staticpods]
+        title = "Static Pods in the Machine Configuration"
+        description="""\
+Talos now accepts static pod definitions in the `.machine.pods` key of the machine configuration.
+Please note that static pod definitions are not validated by Talos.
+Static pod definitions can be updated without a node reboot.
+"""
+
+    [notes.k8sversion]
+        title = "Pinned Kubernets Version"
+        description="""\
+Command `talosctl gen config` now defaults to Kubernetes version pinning in the generate machine configuration.
+Previously default was to omit explicit Kubernetes version, so Talos picked up the default version it was built against.
+Old behavior can be achieved by specifiying empty flag value: `--kubernetes-version=`.
 """
 
 [make_deps]

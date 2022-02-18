@@ -682,37 +682,6 @@ func StopAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 	}, "stopAllServices"
 }
 
-// VerifyInstallation represents the VerifyInstallation task.
-func VerifyInstallation(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var (
-			current string
-			next    string
-			disk    string
-		)
-
-		disk, err = r.Config().Machine().Install().Disk()
-		if err != nil {
-			return err
-		}
-
-		grub := &grub.Grub{
-			BootDisk: disk,
-		}
-
-		current, next, err = grub.Labels()
-		if err != nil {
-			return err
-		}
-
-		if current == "" && next == "" {
-			return fmt.Errorf("bootloader is not configured")
-		}
-
-		return err
-	}, "verifyInstallation"
-}
-
 // MountOverlayFilesystems represents the MountOverlayFilesystems task.
 func MountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -1731,30 +1700,31 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			}
 		}
 
+		// disable kexec due to initramfs corruption: see https://github.com/talos-systems/talos/issues/4947
+		if true {
+			return nil
+		}
+
 		if r.Config() == nil {
 			return nil
 		}
 
-		disk, err := r.Config().Machine().Install().Disk()
+		conf, err := grub.Read(grub.ConfigPath)
 		if err != nil {
 			return err
 		}
 
-		grub := &grub.Grub{
-			BootDisk: disk,
-		}
-
-		entry, err := grub.GetCurrentEntry()
-		if err != nil {
-			return err
-		}
-
-		if entry == nil {
+		if conf == nil {
 			return nil
 		}
 
-		kernelPath := filepath.Join(constants.BootMountPoint, entry.Linux)
-		initrdPath := filepath.Join(constants.BootMountPoint, entry.Initrd)
+		defaultEntry, ok := conf.Entries[conf.Default]
+		if !ok {
+			return nil
+		}
+
+		kernelPath := filepath.Join(constants.BootMountPoint, defaultEntry.Linux)
+		initrdPath := filepath.Join(constants.BootMountPoint, defaultEntry.Initrd)
 
 		kernel, err := os.Open(kernelPath)
 		if err != nil {
@@ -1770,7 +1740,7 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		defer initrd.Close() //nolint:errcheck
 
-		cmdline := strings.TrimSpace(entry.Cmdline)
+		cmdline := strings.TrimSpace(defaultEntry.Cmdline)
 
 		if err = unix.KexecFileLoad(int(kernel.Fd()), int(initrd.Fd()), cmdline, 0); err != nil {
 			switch {

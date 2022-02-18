@@ -5,6 +5,7 @@
 package extensions_test
 
 import (
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -15,7 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/version"
 )
 
-func TestLoadValidateCompress(t *testing.T) {
+func TestLoadValidate(t *testing.T) {
 	ext, err := extensions.Load("testdata/good/extension1")
 	require.NoError(t, err)
 
@@ -30,11 +31,23 @@ func TestLoadValidateCompress(t *testing.T) {
 	})
 
 	assert.NoError(t, ext.Validate())
+}
 
-	dest := t.TempDir()
-	_, err = ext.Compress(dest)
+func TestCompress(t *testing.T) {
+	// Compress is going to change contents of the extension, copy to some temporary directory
+	extDir := t.TempDir()
 
+	require.NoError(t, exec.Command("cp", "-r", "testdata/good/extension1", extDir).Run())
+
+	ext, err := extensions.Load(filepath.Join(extDir, "extension1"))
+	require.NoError(t, err)
+
+	squashDest, initramfsDest := t.TempDir(), t.TempDir()
+	squashFile, err := ext.Compress(squashDest, initramfsDest)
 	assert.NoError(t, err)
+
+	assert.FileExists(t, squashFile)
+	assert.FileExists(t, filepath.Join(initramfsDest, "lib", "firmware", "amd", "cpu"))
 }
 
 func TestValidateFailures(t *testing.T) {

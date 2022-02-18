@@ -71,7 +71,7 @@ func (r *StaticPodStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodStatusType,
 		Aliases:          []resource.Type{"podstatus"},
-		DefaultNamespace: ControlPlaneNamespaceName,
+		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Ready",

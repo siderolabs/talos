@@ -279,7 +279,7 @@ certSANs:
 </div>
 <div class="dt">
 
-Provides machine specific contolplane configuration options.
+Provides machine specific control plane configuration options.
 
 
 
@@ -316,7 +316,7 @@ Examples:
 
 ``` yaml
 kubelet:
-    image: ghcr.io/talos-systems/kubelet:v1.23.3 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/talos-systems/kubelet:v1.23.4 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -343,6 +343,42 @@ kubelet:
     #         - 10.0.0.0/8
     #         - '!10.0.0.3/32'
     #         - fdc7::/16
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>pods</code>  <i>[]Unstructured</i>
+
+</div>
+<div class="dt">
+
+Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
+
+Static pods can be used to run components which should be started before the Kubernetes control plane is up.
+Talos doesn't validate the pod definition.
+Updates to this field can be applied without a reboot.
+
+See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
+
+
+
+Examples:
+
+
+``` yaml
+pods:
+    - apiVersion: v1
+      kind: pod
+      metadata:
+        name: nginx
+      spec:
+        containers:
+            - image: nginx
+              name: nginx
 ```
 
 
@@ -1110,7 +1146,7 @@ Examples:
 
 ``` yaml
 apiServer:
-    image: k8s.gcr.io/kube-apiserver:v1.23.3 # The container image used in the API server manifest.
+    image: k8s.gcr.io/kube-apiserver:v1.23.4 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -1141,7 +1177,7 @@ Examples:
 
 ``` yaml
 controllerManager:
-    image: k8s.gcr.io/kube-controller-manager:v1.23.3 # The container image used in the controller manager manifest.
+    image: k8s.gcr.io/kube-controller-manager:v1.23.4 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -1167,7 +1203,7 @@ Examples:
 
 ``` yaml
 proxy:
-    image: k8s.gcr.io/kube-proxy:v1.23.3 # The container image used in the kube-proxy manifest.
+    image: k8s.gcr.io/kube-proxy:v1.23.4 # The container image used in the kube-proxy manifest.
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
@@ -1194,7 +1230,7 @@ Examples:
 
 ``` yaml
 scheduler:
-    image: k8s.gcr.io/kube-scheduler:v1.23.3 # The container image used in the scheduler manifest.
+    image: k8s.gcr.io/kube-scheduler:v1.23.4 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
         feature-gates: AllBeta=true
@@ -1283,7 +1319,7 @@ Examples:
 
 ``` yaml
 coreDNS:
-    image: docker.io/coredns/coredns:1.8.7 # The `image` field is an override to the default coredns image.
+    image: docker.io/coredns/coredns:1.9.0 # The `image` field is an override to the default coredns image.
 ```
 
 
@@ -1573,7 +1609,7 @@ Appears in:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.23.3 # The `image` field is an optional reference to an alternative kubelet image.
+image: ghcr.io/talos-systems/kubelet:v1.23.4 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -1619,7 +1655,7 @@ Examples:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.23.3
+image: ghcr.io/talos-systems/kubelet:v1.23.4
 ```
 
 
@@ -2666,7 +2702,7 @@ Appears in:
 
 
 ``` yaml
-image: docker.io/coredns/coredns:1.8.7 # The `image` field is an override to the default coredns image.
+image: docker.io/coredns/coredns:1.9.0 # The `image` field is an override to the default coredns image.
 ```
 
 <hr />
@@ -2791,7 +2827,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-apiserver:v1.23.3 # The container image used in the API server manifest.
+image: k8s.gcr.io/kube-apiserver:v1.23.4 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -2819,7 +2855,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-apiserver:v1.23.3
+image: k8s.gcr.io/kube-apiserver:v1.23.4
 ```
 
 
@@ -2886,7 +2922,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-controller-manager:v1.23.3 # The container image used in the controller manager manifest.
+image: k8s.gcr.io/kube-controller-manager:v1.23.4 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -2909,7 +2945,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-controller-manager:v1.23.3
+image: k8s.gcr.io/kube-controller-manager:v1.23.4
 ```
 
 
@@ -2952,7 +2988,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-proxy:v1.23.3 # The container image used in the kube-proxy manifest.
+image: k8s.gcr.io/kube-proxy:v1.23.4 # The container image used in the kube-proxy manifest.
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
@@ -2998,7 +3034,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-proxy:v1.23.3
+image: k8s.gcr.io/kube-proxy:v1.23.4
 ```
 
 
@@ -3042,7 +3078,7 @@ Appears in:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-scheduler:v1.23.3 # The container image used in the scheduler manifest.
+image: k8s.gcr.io/kube-scheduler:v1.23.4 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
     feature-gates: AllBeta=true
@@ -3065,7 +3101,7 @@ Examples:
 
 
 ``` yaml
-image: k8s.gcr.io/kube-scheduler:v1.23.3
+image: k8s.gcr.io/kube-scheduler:v1.23.4
 ```
 
 

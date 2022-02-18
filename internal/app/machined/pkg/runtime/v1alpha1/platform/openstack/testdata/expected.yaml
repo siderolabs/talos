@@ -5,7 +5,13 @@ addresses:
       scope: global
       flags: permanent
       layer: platform
-    - address: 2000:0:ff00::/56
+    - address: 10.184.0.244/20
+      linkName: eth1
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2001:db8::3257:9652/64
       linkName: eth1
       family: inet6
       scope: global
@@ -51,10 +57,34 @@ routes:
       flags: ""
       protocol: static
       layer: platform
+    - family: inet4
+      dst: 192.168.0.0/16
+      src: ""
+      gateway: 10.184.0.1
+      outLinkName: eth1
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 10.184.0.1
+      outLinkName: eth1
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
     - family: inet6
       dst: ""
       src: ""
-      gateway: '2000:0:ff00::'
+      gateway: fd00::1
       outLinkName: eth1
       table: main
       priority: 1024
@@ -76,12 +106,6 @@ timeServers: []
 operators:
     - operator: dhcp4
       linkName: eth0
-      requireUp: true
-      dhcp4:
-        routeMetric: 1024
-      layer: platform
-    - operator: dhcp4
-      linkName: eth1
       requireUp: true
       dhcp4:
         routeMetric: 1024
