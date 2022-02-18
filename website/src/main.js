@@ -5,59 +5,62 @@ import "~/assets/css/main.css";
 import Vuex from "vuex";
 import DefaultLayout from "~/layouts/Default.vue";
 
-export default function(Vue, { router, head, isClient, appOptions }) {
-  // Set default layout as a global component
-  Vue.component("Layout", DefaultLayout);
+export default function (Vue, {router, head, isClient, appOptions}) {
+    // Set default layout as a global component
+    Vue.component("Layout", DefaultLayout);
 
-  Vue.use(Vuex);
+    Vue.use(Vuex);
 
-  appOptions.store = new Vuex.Store({
-    state: {
-      sidebarIsOpen: false,
-    },
+    appOptions.store = new Vuex.Store({
+        state: {
+            sidebarIsOpen: false,
+        },
 
-    mutations: {
-      setSidebarIsOpen(state, val) {
-        state.sidebarIsOpen = val;
-      },
-      toggleSidebarIsOpen(state) {
-        state.sidebarIsOpen = !state.sidebarIsOpen;
-      },
-    },
-  });
-
-  router.beforeEach((to, _from, next) => {
-    head.meta.push({
-      key: "og:url",
-      name: "og:url",
-      content: process.env.GRIDSOME_BASE_PATH + to.path,
+        mutations: {
+            setSidebarIsOpen(state, val) {
+                state.sidebarIsOpen = val;
+            },
+            toggleSidebarIsOpen(state) {
+                state.sidebarIsOpen = !state.sidebarIsOpen;
+            },
+        },
     });
-    next();
-  });
 
-  head.script.push({
-    src: "/js/asciinema-player.js",
-    body: true,
-  });
+    router.beforeEach((to, _from, next) => {
+        head.meta.push({
+            key: "og:url",
+            name: "og:url",
+            content: process.env.GRIDSOME_BASE_PATH + to.path,
+        });
+        next();
+    });
 
-  head.link.push({
-    rel: 'stylesheet',
-    href: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css'
-  })
-  head.script.push({
-    type: 'text/javascript',
-    body: true,
-    src: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js'
-  })
-  head.script.push({
-    type: 'text/javascript',
-    body: true,
-    innerHTML: `algoliasearchNetlify({
-    appId: 'W8IEQZJ792',
-    apiKey: 'b16fa302b5c8c43816d11ecc7da702d2',
-    siteId: '4ce8d530-06a7-45d7-bc2a-0484644882df',
+    head.script.push({
+        src: "/js/asciinema-player.js",
+        body: true,
+    });
+
+
+    head.link.push({
+        rel: 'stylesheet',
+        href: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css'
+    })
+
+    head.script.push({
+        type: 'text/javascript',
+        body: true,
+        src: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js'
+    })
+
+    head.script.push({
+        type: 'text/javascript',
+        body: true,
+        innerHTML: `algoliasearchNetlify({
+    appId: ${process.env.GRIDSOME_ALGOLIA_APP_ID},
+    apiKey: ${process.env.GRIDSOME_ALGOLIA_API_KEY}',
+    siteId: ${process.env.GRIDSOME_ALGOLIA_SITE_ID}',
     branch: 'master',
     selector: 'div#search',
   });`
-  })
+    })
 }
