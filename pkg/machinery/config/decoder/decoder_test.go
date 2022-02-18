@@ -30,6 +30,10 @@ type MockV3 struct {
 	Omit bool `yaml:"omit,omitempty"`
 }
 
+type MockUnstructured struct {
+	Pods []v1alpha1.Unstructured `yaml:"pods,omitempty"`
+}
+
 func init() {
 	config.Register("mock", func(version string) interface{} {
 		switch version {
@@ -44,6 +48,10 @@ func init() {
 
 	config.Register("kubelet", func(string) interface{} {
 		return &v1alpha1.KubeletConfig{}
+	})
+
+	config.Register("unstructured", func(string) interface{} {
+		return &MockUnstructured{}
 	})
 }
 
@@ -262,6 +270,32 @@ spec:
 			source:      []byte(":   \xea"),
 			expected:    nil,
 			expectedErr: "recovered: internal error: attempted to parse unknown event (please report): none",
+		},
+		{
+			name: "unstructured config",
+			source: []byte(`---
+kind: unstructured
+version: v1alpha1
+spec:
+  pods:
+   - destination: /var/local
+     options:
+       - rbind
+       - rw
+     source: /var/local
+     something: 1.34
+`),
+			expected:    nil,
+			expectedErr: "",
+		},
+		{
+			name: "omit empty test",
+			source: []byte(`---
+kind: mock
+version: v1alpha3
+spec:
+  omit: false
+`),
 		},
 	}
 

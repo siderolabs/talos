@@ -32,11 +32,13 @@ The list of config changes allowed to be applied immediately in talos v0.15:
 * `.cluster`
 * `.machine.time`
 * `.machine.certCANs`
+* `.machine.install` (configuration is only applied during install/upgrade)
 * `.machine.network`
 * `.machine.sysctls`
 * `.machine.logging`
 * `.machine.controlplane`
 * `.machine.kubelet`
+* `.machine.pods`
 * `.machine.kernel`
 * `.machine.registries` (CRI containerd plugin will not pick up the registry authentication settings without a reboot)
 

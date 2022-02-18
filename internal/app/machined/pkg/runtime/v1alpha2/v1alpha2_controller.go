@@ -122,6 +122,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.NodeIPConfigController{},
 		&k8s.NodenameController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&k8s.StaticPodConfigController{},
 		&kubespan.ConfigController{},
 		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},

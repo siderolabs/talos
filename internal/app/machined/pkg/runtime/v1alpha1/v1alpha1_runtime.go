@@ -83,6 +83,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .cluster
 	// * .machine.time
 	// * .machine.certCANs
+	// * .machine.install
 	// * .machine.network
 	// * .machine.sysctls
 	// * .machine.logging
@@ -90,12 +91,14 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.kubelet
 	// * .machine.kernel
 	// * .machine.registries (note that auth is not applied immediately, containerd limitation)
+	// * .machine.pods
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
+		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork
 		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
@@ -103,6 +106,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
 		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
 		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries
+		newConfig.MachineConfig.MachinePods = currentConfig.MachineConfig.MachinePods
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {

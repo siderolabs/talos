@@ -728,7 +728,7 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 	for _, cidr := range k.KubeletNodeIP.KubeletNodeIPValidSubnets {
 		cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, _, err := net.ParseCIDR(cidr); err != nil {
+		if _, err := talosnet.ParseCIDR(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
 		}
 	}

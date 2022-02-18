@@ -126,38 +126,38 @@ func (i *Input) GetAPIServerSANs() []string {
 
 // Certs holds the base64 encoded keys and certificates.
 type Certs struct {
-	Admin             *x509.PEMEncodedCertificateAndKey
-	Etcd              *x509.PEMEncodedCertificateAndKey
-	K8s               *x509.PEMEncodedCertificateAndKey
-	K8sAggregator     *x509.PEMEncodedCertificateAndKey
-	K8sServiceAccount *x509.PEMEncodedKey
-	OS                *x509.PEMEncodedCertificateAndKey
+	Admin             *x509.PEMEncodedCertificateAndKey `json:"Admin,omitempty"`
+	Etcd              *x509.PEMEncodedCertificateAndKey `json:"Etcd"`
+	K8s               *x509.PEMEncodedCertificateAndKey `json:"K8s"`
+	K8sAggregator     *x509.PEMEncodedCertificateAndKey `json:"K8sAggregator"`
+	K8sServiceAccount *x509.PEMEncodedKey               `json:"K8sServiceAccount"`
+	OS                *x509.PEMEncodedCertificateAndKey `json:"OS"`
 }
 
 // Cluster holds Talos cluster-wide secrets.
 type Cluster struct {
-	ID     string
-	Secret string
+	ID     string `json:"Id"`
+	Secret string `json:"Secret"`
 }
 
 // Secrets holds the sensitive kubeadm data.
 type Secrets struct {
-	BootstrapToken         string
-	AESCBCEncryptionSecret string
+	BootstrapToken         string `json:"BootstrapToken"`
+	AESCBCEncryptionSecret string `json:"AESCBCEncryptionSecret"`
 }
 
 // TrustdInfo holds the trustd credentials.
 type TrustdInfo struct {
-	Token string
+	Token string `json:"Token"`
 }
 
 // SecretsBundle holds trustd, kubeadm and certs information.
 type SecretsBundle struct {
-	Clock      Clock `yaml:"-" json:"-"`
-	Cluster    *Cluster
-	Secrets    *Secrets
-	TrustdInfo *TrustdInfo
-	Certs      *Certs
+	Clock      Clock       `yaml:"-" json:"-"`
+	Cluster    *Cluster    `json:"Cluster"`
+	Secrets    *Secrets    `json:"Secrets"`
+	TrustdInfo *TrustdInfo `json:"TrustdInfo"`
+	Certs      *Certs      `json:"Certs"`
 }
 
 // Clock system clock.

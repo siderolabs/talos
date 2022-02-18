@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	_ "github.com/talos-systems/talos/pkg/grpc/codec" //nolint:gci // register codec
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"

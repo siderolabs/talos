@@ -91,7 +91,7 @@ talosctl cluster create [flags]
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.15.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/talos-systems/talos/releases/download/v0.15.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
@@ -122,7 +122,7 @@ talosctl cluster create [flags]
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                          the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string                desired kubernetes version to run (default "1.23.3")
+      --kubernetes-version string                desired kubernetes version to run (default "1.23.4")
       --masters int                              the number of masters to create (default 1)
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
@@ -1092,7 +1092,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/talos-systems/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run
+      --kubernetes-version string                desired kubernetes version to run (default "1.23.4")
   -o, --output-dir string                        destination to output generated files
   -p, --persist                                  the desired persist value for configs (default true)
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
@@ -1998,7 +1998,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
-      --to string         the Kubernetes control plane version to upgrade to (default "1.23.3")
+      --to string         the Kubernetes control plane version to upgrade to (default "1.23.4")
       --upgrade-kubelet   upgrade kubelet service (default true)
 ```
 

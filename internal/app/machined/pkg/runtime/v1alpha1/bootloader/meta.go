@@ -112,9 +112,18 @@ func (m *Meta) Revert() (err error) {
 		return m.Write()
 	}
 
-	g := &grub.Grub{}
+	conf, err := grub.Read(grub.ConfigPath)
+	if err != nil {
+		return err
+	}
 
-	if err = g.Default(label); err != nil {
+	bootEntry, err := grub.ParseBootLabel(label)
+	if err != nil {
+		return err
+	}
+
+	conf.Default = bootEntry
+	if err = conf.Write(grub.ConfigPath); err != nil {
 		return err
 	}
 

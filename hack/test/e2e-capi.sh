@@ -5,8 +5,6 @@ set -eou pipefail
 source ./hack/test/e2e.sh
 
 export CAPI_VERSION="${CAPI_VERSION:-1.0.4}"
-export CABPT_VERSION="${CABPT_VERSION:-0.5.0}"
-export CACPPT_VERSION="${CACPPT_VERSION:-0.4.2}"
 export CAPA_VERSION="${CAPA_VERSION:-1.2.0}"
 export CAPG_VERSION="${CAPG_VERSION:-1.0.0}"
 
@@ -27,9 +25,9 @@ set -x
 
 ${CLUSTERCTL} init \
     --core "cluster-api:v${CAPI_VERSION}" \
-    --control-plane "talos:v${CACPPT_VERSION}" \
+    --control-plane "talos" \
     --infrastructure "aws:v${CAPA_VERSION},gcp:v${CAPG_VERSION}" \
-    --bootstrap "talos:v${CABPT_VERSION}"
+    --bootstrap "talos"
 
 # Wait for the talosconfig
 timeout=$(($(date +%s) + ${TIMEOUT}))

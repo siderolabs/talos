@@ -77,7 +77,7 @@ func (puller *Puller) PullAndMount(ctx context.Context, registryConfig config.Re
 			return err
 		}
 
-		mounts, err := snapshotService.View(ctx, path, chainID.String())
+		mounts, err := snapshotService.Prepare(ctx, path, chainID.String())
 		if err != nil {
 			return err
 		}
