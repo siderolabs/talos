@@ -13,117 +13,32 @@ There are two options to upload your own.
 1. Run an instance in rescue mode and replace the system OS with the Talos image
 2. Use [Hashicorp packer](https://www.packer.io/docs/builders/hetzner-cloud) to prepare an image
 
-### Rescue mode
+### CLI
 
-Create a new Server in the Hetzner console.
-Enable the Hetzner Rescue System for this server and reboot.
-Upon a reboot, the server will boot a special minimal Linux distribution designed for repair and reinstall.
-Once running, login to the server using ```ssh``` to prepare the system disk by doing the following:
+Create a new node from existing talos configuration files by issuing the commands shown below.
 
 ```bash
-# Check that you in Rescue mode
-df
+hcloud ssh-key create \
+  --name ${SSH_KEY_NAME} \
+  --public-key-from-file ${PATH_TO_SSH_KEY_FILE}
+hcloud server create \
+  --image debian-11  \
+  --name ${NODE_NAME} \
+  --type ${SERVER_TYPE} \
+  --ssh-key ${SSH_KEY_NAME} \
+  --user-data-from-file ${PATH_TO_TALOS_CONFIG_FILE} \
+  --start-after-create=false
+hcloud server enable-rescue ${NODE_NAME} \
+  --ssh-key ${SSH_KEY_NAME}
 
-### Result is like:
-# udev                   987432         0    987432   0% /dev
-# 213.133.99.101:/nfs 308577696 247015616  45817536  85% /root/.oldroot/nfs
-# overlay                995672      8340    987332   1% /
-# tmpfs                  995672         0    995672   0% /dev/shm
-# tmpfs                  398272       572    397700   1% /run
-# tmpfs                    5120         0      5120   0% /run/lock
-# tmpfs                  199132         0    199132   0% /run/user/0
-
-# Download the Talos image
+hcloud server poweron ${NODE_NAME}
+cat << EOF | hcloud server ssh ${NODE_NAME}
 cd /tmp
-wget -O /tmp/talos.raw.xz https://github.com/talos-systems/talos/releases/download/v0.13.0/hcloud-amd64.raw.xz
-# Replace system
+wget -O /tmp/talos.raw.xz https://github.com/talos-systems/talos/releases/download/v${TALOS_VERSION}/hcloud-amd64.raw.xz
 xz -d -c /tmp/talos.raw.xz | dd of=/dev/sda && sync
-# shutdown the instance
-shutdown -h now
-```
-
-To make sure disk content is consistent, it is recommended to shut the server down before taking an image (snapshot).
-Once shutdown, simply create an image (snapshot) from the console.
-You can now use this snapshot to run Talos on the cloud.
-
-### Packer
-
-Install [packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli) to the local machine.
-
-Create a config file for packer to use:
-
-```hcl
-# hcloud.pkr.hcl
-
-packer {
-  required_plugins {
-    hcloud = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/hcloud"
-    }
-  }
-}
-
-variable "talos_version" {
-  type    = string
-  default = "v0.13.0"
-}
-
-locals {
-  image = "https://github.com/talos-systems/talos/releases/download/${var.talos_version}/hcloud-amd64.raw.xz"
-}
-
-source "hcloud" "talos" {
-  rescue       = "linux64"
-  image        = "debian-11"
-  location     = "hel1"
-  server_type  = "cx11"
-  ssh_username = "root"
-
-  snapshot_name = "talos system disk"
-  snapshot_labels = {
-    type    = "infra",
-    os      = "talos",
-    version = "${var.talos_version}",
-  }
-}
-
-build {
-  sources = ["source.hcloud.talos"]
-
-  provisioner "shell" {
-    inline = [
-      "apt-get install -y wget",
-      "wget -O /tmp/talos.raw.xz ${local.image}",
-      "xz -d -c /tmp/talos.raw.xz | dd of=/dev/sda && sync",
-    ]
-  }
-}
-```
-
-Create a new image by issuing the commands shown below.
-Note that to create a new API token for your Project, switch into the Hetzner Cloud Console choose a Project, go to Access → Security, and create a new token.
-
-```bash
-# First you need set API Token
-export HCLOUD_TOKEN=${TOKEN}
-
-# Upload image
-packer init .
-packer build .
-# Save the image ID
-export IMAGE_ID=<image-id-in-packer-output>
-```
-
-After doing this, you can find the snapshot in the console interface.
-
-## Creating a Cluster via the CLI
-
-This section assumes you have the [hcloud console utility](https://community.hetzner.com/tutorials/howto-hcloud-cli) on your local machine.
-
-```bash
-# Set hcloud context and api key
-hcloud context create talos-tutorial
+EOF
+hcloud server shutdown ${NODE_NAME}
+hcloud server poweron ${NODE_NAME}
 ```
 
 ### Create a Load Balancer
