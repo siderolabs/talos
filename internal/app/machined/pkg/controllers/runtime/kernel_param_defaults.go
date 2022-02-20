@@ -114,8 +114,16 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Value: "60",
 		},
 		{
+			Key:   "kernel.panic",
+			Value: "10",
+		},
+		{
 			Key:   "kernel.pid_max",
 			Value: "262144",
+		},
+		{
+			Key:   "vm.overcommit_memory",
+			Value: "1",
 		},
 	}...)
 
