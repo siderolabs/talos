@@ -32,14 +32,20 @@ FROM --platform=arm64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-arm64
 FROM --platform=amd64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-arm64
 
+FROM --platform=amd64 ghcr.io/talos-systems/libinih:${PKGS} AS pkg-libinih-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/libinih:${PKGS} AS pkg-libinih-arm64
+
 FROM --platform=amd64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-arm64
 
 FROM --platform=amd64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libressl:${PKGS} AS pkg-libressl-arm64
+FROM --platform=amd64 ghcr.io/talos-systems/liburcu:${PKGS} AS pkg-liburcu-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/liburcu:${PKGS} AS pkg-liburcu-arm64
+
+FROM --platform=amd64 ghcr.io/talos-systems/openssl:${PKGS} AS pkg-openssl-amd64
+FROM --platform=arm64 ghcr.io/talos-systems/openssl:${PKGS} AS pkg-openssl-arm64
 
 FROM --platform=amd64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-arm64
@@ -355,9 +361,11 @@ COPY --from=pkg-containerd-amd64 / /rootfs
 COPY --from=pkg-dosfstools-amd64 / /rootfs
 COPY --from=pkg-eudev-amd64 / /rootfs
 COPY --from=pkg-iptables-amd64 / /rootfs
+COPY --from=pkg-libinih-amd64 / /rootfs
 COPY --from=pkg-libjson-c-amd64 / /rootfs
 COPY --from=pkg-libpopt-amd64 / /rootfs
-COPY --from=pkg-libressl-amd64 / /rootfs
+COPY --from=pkg-liburcu-amd64 / /rootfs
+COPY --from=pkg-openssl-amd64 / /rootfs
 COPY --from=pkg-libseccomp-amd64 / /rootfs
 COPY --from=pkg-lvm2-amd64 / /rootfs
 COPY --from=pkg-libaio-amd64 / /rootfs
@@ -398,9 +406,11 @@ COPY --from=pkg-containerd-arm64 / /rootfs
 COPY --from=pkg-dosfstools-arm64 / /rootfs
 COPY --from=pkg-eudev-arm64 / /rootfs
 COPY --from=pkg-iptables-arm64 / /rootfs
+COPY --from=pkg-libinih-arm64 / /rootfs
 COPY --from=pkg-libjson-c-arm64 / /rootfs
 COPY --from=pkg-libpopt-arm64 / /rootfs
-COPY --from=pkg-libressl-arm64 / /rootfs
+COPY --from=pkg-liburcu-arm64 / /rootfs
+COPY --from=pkg-openssl-arm64 / /rootfs
 COPY --from=pkg-libseccomp-arm64 / /rootfs
 COPY --from=pkg-lvm2-arm64 / /rootfs
 COPY --from=pkg-libaio-arm64 / /rootfs
