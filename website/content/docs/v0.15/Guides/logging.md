@@ -181,3 +181,132 @@ Also note the `hostNetwork: true` in the `daemonSet` configuration.
 This ensures filebeat uses the host network, and listens on `127.0.0.1:12345`
 (UDP) on every machine, which can then be specified as a logging endpoint in
 the machine configuration.
+
+### Fluent-bit example
+
+This example shows to us, how to collect Talos and pod logs in the cluster.
+
+First, we'll create a value file for fluentd-bit helm-chart.
+
+```yaml
+# fluentd-bit.yaml
+
+extraPorts:
+  - port: 12345
+    containerPort: 12345
+    protocol: TCP
+    name: talos
+
+config:
+  service: |
+    [SERVICE]
+      Flush         5
+      Daemon        Off
+      Log_Level     warn
+      Parsers_File  custom_parsers.conf
+
+  inputs: |
+    [INPUT]
+      Name          tcp
+      Listen        0.0.0.0
+      Port          12345
+      Format        json
+      Tag           talos.*
+
+    [INPUT]
+      Name          tail
+      Alias         kubernetes
+      Path          /var/log/containers/*.log
+      Parser        containerd
+      Tag           kubernetes.*
+
+    [INPUT]
+      Name          tail
+      Alias         audit
+      Path          /var/log/audit/kube/*.log
+      Parser        audit
+      Tag           audit.*
+
+  filters: |
+    [FILTER]
+      Name                kubernetes
+      Alias               kubernetes
+      Match               kubernetes.*
+      Kube_Tag_Prefix     kubernetes.var.log.containers.
+      Use_Kubelet         Off
+      Merge_Log           On
+      Merge_Log_Trim      On
+      Keep_Log            Off
+      K8S-Logging.Parser  Off
+      K8S-Logging.Exclude On
+      Annotations         Off
+      Labels              On
+
+    [FILTER]
+      Name          modify
+      Match         kubernetes.*
+      Add           source kubernetes
+      Remove        logtag
+
+  customParsers: |
+    [PARSER]
+      Name          audit
+      Format        json
+      Time_Key      requestReceivedTimestamp
+      Time_Format   %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+      Name          containerd
+      Format        regex
+      Regex         ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
+      Time_Key      time
+      Time_Format   %Y-%m-%dT%H:%M:%S.%L%z
+
+  outputs: |
+    [OUTPUT]
+      Name    stdout
+      Alias   stdout
+      Match   *
+      Format  json_lines
+
+daemonSetVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+
+daemonSetVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+
+tolerations:
+  - operator: Exists
+    effect: NoSchedule
+```
+
+Next, we will add the helm repo for FluentBit, and deploy it to the cluster.
+
+```shell
+$ helm repo add fluent https://fluent.github.io/helm-charts
+$ helm upgrade -i --namespace=kube-system -f fluentd-bit.yaml fluent-bit fluent/fluent-bit
+```
+
+Then, we need to know the service IP.
+
+```shell
+$ kube -n kube-system get svc -l app.kubernetes.io/name=fluent-bit
+
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)             AGE
+fluent-bit   ClusterIP   10.200.0.138   <none>        2020/TCP,5170/TCP   108m
+```
+
+Finally, we will change talos log destination by command ```talosctl edit mc --immediate```.
+
+```yaml
+machine:
+  logging:
+    destinations:
+      - endpoint: "tcp://10.200.0.138:5170"
+        format: "json_lines"
+```
+
+This example well tested with cilium, and has to works with iptables/ipvs based cni plugins too.
