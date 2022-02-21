@@ -74,8 +74,9 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
-			CertSANs:       certSANs,
-			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
+			CertSANs:                       certSANs,
+			ContainerImage:                 emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
+			DisablePodSecurityPolicyConfig: !in.VersionContract.PodSecurityPolicyEnabled(),
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
 			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),

@@ -53,6 +53,20 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.SupportsDynamicCertSANs())
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.False(t, contract.PodSecurityPolicyEnabled())
+}
+
+func TestContract0_15(t *testing.T) {
+	contract := config.TalosVersion0_15
+
+	assert.True(t, contract.SupportsAggregatorCA())
+	assert.True(t, contract.SupportsECDSAKeys())
+	assert.True(t, contract.SupportsServiceAccount())
+	assert.True(t, contract.SupportsRBACFeature())
+	assert.True(t, contract.SupportsDynamicCertSANs())
+	assert.True(t, contract.SupportsECDSASHA256())
+	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.False(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_14(t *testing.T) {
@@ -65,6 +79,7 @@ func TestContract0_14(t *testing.T) {
 	assert.True(t, contract.SupportsDynamicCertSANs())
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -77,6 +92,7 @@ func TestContract0_13(t *testing.T) {
 	assert.True(t, contract.SupportsDynamicCertSANs())
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -89,6 +105,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.SupportsDynamicCertSANs())
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -101,6 +118,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.SupportsDynamicCertSANs())
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -113,6 +131,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.SupportsDynamicCertSANs())
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -125,6 +144,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.SupportsDynamicCertSANs())
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -137,4 +157,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.SupportsDynamicCertSANs())
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
+	assert.True(t, contract.PodSecurityPolicyEnabled())
 }

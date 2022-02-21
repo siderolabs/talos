@@ -124,6 +124,13 @@ Previously default was to omit explicit Kubernetes version, so Talos picked up t
 Old behavior can be achieved by specifiying empty flag value: `--kubernetes-version=`.
 """
 
+    [notes.psp]
+        title = "Pod Security Policy"
+        description="""\
+Pod Security Policy Kubernetes feature is deprecated and is going to be removed in Kubernetes 1.25.
+Talos by default skips setting up PSP now (see machine configuration `.cluster.apiServer.disablePodSecurityPolicy`).
+"""
+
 [make_deps]
 
     [make_deps.tools]
