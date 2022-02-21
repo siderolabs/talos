@@ -240,7 +240,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 }
 
 func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex uint32, ip netaddr.IP) error {
-	etherBrodcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	etherBroadcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
 	if !ip.Is4() {
 		return nil
@@ -268,7 +268,7 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 		return fmt.Errorf("error building packet: %w", err)
 	}
 
-	if err = cli.WriteTo(packet, etherBrodcast); err != nil {
+	if err = cli.WriteTo(packet, etherBroadcast); err != nil {
 		return fmt.Errorf("error sending gratuitous ARP: %w", err)
 	}
 
