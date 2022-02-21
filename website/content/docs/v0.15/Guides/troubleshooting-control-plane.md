@@ -14,64 +14,94 @@ Kubernetes client configuration can be pulled from control plane nodes with `tal
 
 ### What is a control plane node?
 
-Talos nodes which have `.machine.type` of `init` and `controlplane` are control plane nodes.
+A control plane node is a node which:
 
-The only difference between `init` and `controlplane` nodes is that `init` node automatically
-bootstraps a single-node `etcd` cluster on a first boot if the etcd data directory is empty.
-A node with type `init` can be replaced with a `controlplane` node which is triggered to run etcd bootstrap
-with `talosctl --nodes <IP> bootstrap` command.
+- runs etcd, the Kubernetes database
+- runs the Kubernetes control plane
+  - kube-apiserver
+  - kube-controller-manager
+  - kube-scheduler
+- serves as an administrative proxy to the worker nodes
 
-Use of `init` type nodes is discouraged, as it might lead to split-brain scenario if one node in
-existing cluster is reinstalled while config type is still `init`.
+These nodes are critical to the operation of your cluster.
+Without control plane nodes, Kubernetes will not respond to changes in the
+system, and certain central services may not be available.
 
-It is critical to make sure only one control plane runs in bootstrap mode (either with node type `init` or
-via bootstrap API/`talosctl bootstrap`), as having more than node in bootstrap mode leads to split-brain
-scenario (multiple etcd clusters are built instead of a single cluster).
-
-### What is special about control plane node?
-
-Control plane nodes in Talos run `etcd` which provides data store for Kubernetes and Kubernetes control plane
-components (`kube-apiserver`, `kube-controller-manager` and `kube-scheduler`).
+Talos nodes which have `.machine.type` of `controlplane` are control plane nodes.
 
 Control plane nodes are tainted by default to prevent workloads from being scheduled to control plane nodes.
 
 ### How many control plane nodes should be deployed?
 
-With a single control plane node, cluster is not HA: if that single node experiences hardware failure, cluster
-control plane is broken and can't be recovered.
-Single control plane node clusters are still used as test clusters and in edge deployments, but it should be noted that this setup is not HA.
+Because control plane nodes are so important, it is important that they be
+deployed with redundancy to ensure consistent, reliable operation of the cluster
+during upgrades, reboots, hardware failures, and other such events.
+This is also known as high-availability or just HA.
+Non-HA clusters are sometimes used as test clusters, CI clusters, or in specific scenarios
+which warrant the loss of redundancy, but they should almost never be used in production.
 
-Number of control plane should be odd (1, 3, 5, ...), as with even number of nodes, etcd quorum doesn't tolerate
-failures correctly: e.g. with 2 control plane nodes quorum is 2, so failure of any node breaks quorum, so this
-setup is almost equivalent to single control plane node cluster.
+Maintaining the proper count of control plane nodes is also critical.
+The etcd database operates on the principles of membership and quorum, so
+membership should always be an odd number, and there is exponentially-increasing
+overhead for each additional member.
+Therefore, the number of control plane nodes should almost always be 3.
+In some particularly large or distributed clusters, the count may be 5, but this
+is very rare.
 
-With three control plane nodes cluster can tolerate a failure of any single control plane node.
-With five control plane nodes cluster can tolerate failure of any two control plane nodes.
+See [this document](../../learn-more/concepts/#control-planes-are-not-linear-replicas) on the topic for more information.
 
-### What is control plane endpoint?
+### What is the control plane endpoint?
 
-Kubernetes requires having a control plane endpoint which points to any healthy API server running on a control plane node.
-Control plane endpoint is specified as URL like `https://endpoint:6443/`.
-At any point in time, even during failures control plane endpoint should point to a healthy API server instance.
-As `kube-apiserver` runs with host network, control plane endpoint should point to one of the control plane node IPs: `node1:6443`, `node2:6443`, ...
+The Kubernetes control plane endpoint is the single canonical URL by which the
+Kubernetes API is accessed.
+Especially with high-availability (HA) control planes, it is common that this endpoint may not point to the Kubernetes API server
+directly, but may be instead point to a load balancer or a DNS name which may
+have multiple `A` and `AAAA` records.
 
-For single control plane node clusters, control plane endpoint might be `https://IP:6443/` or `https://DNS:6443/`, where `IP` is the IP of the control plane node and `DNS` points to `IP`.
-DNS form of the endpoint allows to change the IP address of the control plane if that IP changes over time.
+Like Talos' own API, the Kubernetes API is constructed with mutual TLS, client
+certs, and a common Certificate Authority (CA).
+Unlike general-purpose websites, there is no need for an upstream CA, so tools
+such as cert-manager, services such as Let's Encrypt, or purchased products such
+as validated TLS certificates are not required.
+Encryption, however, _is_, and hence the URL scheme will always be `https://`.
 
-For HA clusters, control plane can be implemented as:
+By default, the Kubernetes API server in Talos runs on port 6443.
+As such, the control plane endpoint URLs for Talos will almost always be of the form
+`https://endpoint:6443`, noting that the port, since it is not the `https`
+default of `443` is _required_.
+The `endpoint` above may be a DNS name or IP address, but it should be
+ultimately be directed to the _set_ of all controlplane nodes, as opposed to a
+single one.
 
-* TCP L7 loadbalancer with active health checks against port 6443
-* round-robin DNS with active health checks against port 6443
-* BGP anycast IP with health checks
-* virtual shared L2 IP
-<!-- TODO link to the guide -->
+As mentioned above, this can be achieved by a number of strategies, including:
+
+- an external load balancer
+- DNS records
+- Talos-builtin shared IP ([VIP](../vip/)
+- BGP peering of a shared IP (such as with [kube-vip](https://kube-vip.io))
+
+Using a DNS name here is usually a good idea, it being the most flexible
+option, since it allows the combination with any _other_ option, while offering
+a layer of abstraction.
+It allows the underlying IP addresses to change over time without impacting the
+canonical URL.
+
+Unlike most services in Kubernetes, the API server runs with host networking,
+meaning that it shares the network namespace with the host.
+This means you can use the IP address(es) of the host to refer to the Kubernetes
+API server.
+
+For availability of the API, it is important that any load balancer be aware of
+the health of the backend API servers.
+This makes a load balancer-based system valuable to minimize disruptions during
+common node lifecycle operations like reboots and upgrades.
 
 It is critical that control plane endpoint works correctly during cluster bootstrap phase, as nodes discover
 each other using control plane endpoint.
 
 ### kubelet is not running on control plane node
 
-Service `kubelet` should be running on control plane node as soon as networking is configured:
+The `kubelet` service should be running on control plane nodes as soon as networking is configured:
 
 ```bash
 $ talosctl -n <IP> service kubelet
@@ -89,8 +119,8 @@ EVENTS   [Running]: Health check successful (2m54s ago)
          [Waiting]: Waiting for service "cri" to be "up", service "networkd" to be "up", service "timed" to be "up" (3m18s ago)
 ```
 
-If `kubelet` is not running, it might be caused by wrong configuration, check `kubelet` logs
-with `talosctl logs`:
+If the `kubelet` is not running, it may be due to invalid configuration.
+Check `kubelet` logs with the `talosctl logs` command:
 
 ```bash
 $ talosctl -n <IP> logs kubelet
@@ -99,12 +129,21 @@ $ talosctl -n <IP> logs kubelet
 172.20.0.2: I0305 20:45:07.757000    2334 fsstore.go:59] kubelet config controller: initializing config checkpoints directory "/etc/kubernetes/kubelet/store"
 ```
 
-### etcd is not running on bootstrap node
+### etcd is not running
 
-`etcd` should be running on bootstrap node immediately (bootstrap node is either `init` node or `controlplane` node
-after `talosctl bootstrap` command was issued).
-When node boots for the first time, `etcd` data directory `/var/lib/etcd` directory is empty and Talos launches `etcd` in a mode to build the initial cluster of a single node.
-At this time `/var/lib/etcd` directory becomes non-empty and `etcd` runs as usual.
+By far the most likely cause of `etcd` not running is because the cluster has
+not yet been bootstrapped or because bootstrapping is currently in progress.
+The `talosctl bootstrap` command must be run manually and only _once_ per
+cluster, and this step is commonly missed.
+Once a node is bootstrapped, it will start `etcd` and, over the course of a
+minute or two (depending on the download speed of the control plane nodes), the
+other control plane nodes should discover it and join themselves to the cluster.
+
+Also, `etcd` will only run on control plane nodes.
+If a node is designated as a worker node, you should not expect `etcd` to be
+running on it.
+
+When node boots for the first time, the `etcd` data directory (`/var/lib/etcd`) is empty, and it will only be populated when `etcd` is launched.
 
 If `etcd` is not running, check service `etcd` state:
 
@@ -122,23 +161,25 @@ EVENTS   [Running]: Health check successful (3m21s ago)
 ```
 
 If service is stuck in `Preparing` state for bootstrap node, it might be related to slow network - at this stage
-Talos pulls `etcd` image from the container registry.
+Talos pulls the `etcd` image from the container registry.
 
-If `etcd` service is crashing and restarting, check service logs with `talosctl -n <IP> logs etcd`.
-Most common reasons for crashes are:
+If the `etcd` service is crashing and restarting, check its logs with `talosctl -n <IP> logs etcd`.
+The most common reasons for crashes are:
 
-* wrong arguments passed via `extraArgs` in the configuration;
-* booting Talos on non-empty disk with previous Talos installation, `/var/lib/etcd` contains data from old cluster.
+- wrong arguments passed via `extraArgs` in the configuration;
+- booting Talos on non-empty disk with previous Talos installation, `/var/lib/etcd` contains data from old cluster.
 
 ### etcd is not running on non-bootstrap control plane node
 
-Service `etcd` on non-bootstrap control plane node waits for Kubernetes to boot successfully on bootstrap node to find
-other peers to build a cluster.
-As soon as bootstrap node boots Kubernetes control plane components, and `kubectl get endpoints` returns IP of bootstrap control plane node, other control plane nodes will start joining the cluster followed by Kubernetes control plane components on each control plane node.
+The `etcd` service on control plane nodes which were not the target of the cluster bootstrap will wait until the bootstrapped control plane node has completed.
+The bootstrap and discovery processes may take a few minutes to complete.
+As soon as the bootstrapped node starts its Kubernetes control plane components, `kubectl get endpoints` will return the IP of bootstrapped control plane node.
+At this point, the other control plane nodes will start their `etcd` services, join the cluster, and then start their own Kubernetes control plane components.
 
 ### Kubernetes static pod definitions are not generated
 
-Talos should write down static pod definitions for the Kubernetes control plane:
+Talos should write the static pod definitions for the Kubernetes control plane
+in `/etc/kubernetes/manifests`:
 
 ```bash
 $ talosctl -n <IP> ls /etc/kubernetes/manifests
@@ -149,8 +190,8 @@ NODE         NAME
 172.20.0.2   talos-kube-scheduler.yaml
 ```
 
-If static pod definitions are not rendered, check `etcd` and `kubelet` service health (see above),
-and controller runtime logs (`talosctl logs controller-runtime`).
+If the static pod definitions are not rendered, check `etcd` and `kubelet` service health (see above)
+and the controller runtime logs (`talosctl logs controller-runtime`).
 
 ### Talos prints error `an error on the server ("") has prevented the request from succeeding`
 
@@ -163,11 +204,12 @@ This is expected during initial cluster bootstrap and sometimes after a reboot:
 
 Initially `kube-apiserver` component is not running yet, and it takes some time before it becomes fully up
 during bootstrap (image should be pulled from the Internet, etc.)
-Once control plane endpoint is up Talos should proceed.
+Once the control plane endpoint is up, Talos should continue with its boot
+process.
 
-If Talos doesn't proceed further, it might be a configuration issue.
+If Talos doesn't proceed, it may be due to a configuration issue.
 
-In any case, status of control plane components can be checked with `talosctl containers -k`:
+In any case, the status of the control plane components on each control plane nodes can be checked with `talosctl containers -k`:
 
 ```bash
 $ talosctl -n <IP> containers --kubernetes
@@ -190,16 +232,21 @@ $ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-master-1:kub
 
 ### Talos prints error `nodes "talos-default-master-1" not found`
 
-This error means that `kube-apiserver` is up, and control plane endpoint is healthy, but `kubelet` hasn't got
-its client certificate yet and wasn't able to register itself.
+This error means that `kube-apiserver` is up and the control plane endpoint is healthy, but the `kubelet` hasn't received
+its client certificate yet, and it wasn't able to register itself to Kubernetes.
+The Kubernetes controller manager (`kube-controller-manager`)is responsible for monitoring the certificate
+signing requests (CSRs) and issuing certificates for each of them.
+The kubelet is responsible for generating and submitting the CSRs for its
+associated node.
 
-For the `kubelet` to get its client certificate, following conditions should apply:
+For the `kubelet` to get its client certificate, then, the Kubernetes control plane
+must be healthy:
 
-* control plane endpoint is healthy (`kube-apiserver` is running)
-* bootstrap manifests got successfully deployed (for CSR auto-approval)
-* `kube-controller-manager` is running
+- the API server is running and available at the Kubernetes control plane
+  endpoint URL
+- the controller manager is running and a leader has been elected
 
-CSR state can be checked with `kubectl get csr`:
+The states of any CSRs can be checked with `kubectl get csr`:
 
 ```bash
 $ kubectl get csr
@@ -212,10 +259,11 @@ csr-vlghg   14m   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap
 
 ### Talos prints error `node not ready`
 
-Node in Kubernetes is marked as `Ready` once CNI is up.
+A Node in Kubernetes is marked as `Ready` only once its CNI is up.
 It takes a minute or two for the CNI images to be pulled and for the CNI to start.
-If the node is stuck in this state for too long, check CNI pods and logs with `kubectl`, usually
-CNI resources are created in `kube-system` namespace.
+If the node is stuck in this state for too long, check CNI pods and logs with `kubectl`.
+Usually, CNI-related resources are created in `kube-system` namespace.
+
 For example, for Talos default Flannel CNI:
 
 ```bash
@@ -231,14 +279,18 @@ kube-flannel-jknt9                               1/1     Running   0          23
 
 ### Talos prints error `x509: certificate signed by unknown authority`
 
-Full error might look like:
+The full error might look like:
 
 ```bash
 x509: certificate signed by unknown authority (possiby because of crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes"
 ```
 
-Commonly, the control plane endpoint points to a different cluster, as the client certificate
-generated by Talos doesn't match CA of the cluster at control plane endpoint.
+Usually, this occurs because the control plane endpoint points to a different
+cluster than the client certificate was generated for.
+If a node was recycled between clusters, make sure it was properly wiped between
+uses.
+If a client has multiple client configurations, make sure you are matching the correct `talosconfig` with the
+correct cluster.
 
 ### etcd is running on bootstrap node, but stuck in `pre` state on non-bootstrap nodes
 
@@ -246,7 +298,7 @@ Please see question `etcd is not running on non-bootstrap control plane node`.
 
 ### Checking `kube-controller-manager` and `kube-scheduler`
 
-If control plane endpoint is up, status of the pods can be performed with `kubectl`:
+If the control plane endpoint is up, the status of the pods can be ascertained with `kubectl`:
 
 ```bash
 $ kubectl get pods -n kube-system -l k8s-app=kube-controller-manager
@@ -256,7 +308,7 @@ kube-controller-manager-talos-default-master-2   1/1     Running   0          28
 kube-controller-manager-talos-default-master-3   1/1     Running   0          28m
 ```
 
-If control plane endpoint is not up yet, container status can be queried with
+If the control plane endpoint is not yet up, the container status of the control plane components can be queried with
 `talosctl containers --kubernetes`:
 
 ```bash
@@ -271,7 +323,8 @@ NODE         NAMESPACE   ID                                                     
 ```
 
 If some of the containers are not running, it could be that image is still being pulled.
-Otherwise process might crashing, in that case logs can be checked with `talosctl logs --kubernetes <containerID>`:
+Otherwise the process might crashing.
+The logs can be checked with `talosctl logs --kubernetes <containerID>`:
 
 ```bash
 $ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager
@@ -287,7 +340,7 @@ $ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-mas
 
 ### Checking controller runtime logs
 
-Talos runs a set of controllers which work on resources to build and support Kubernetes control plane.
+Talos runs a set of controllers which operate on resources to build and support the Kubernetes control plane.
 
 Some debugging information can be queried from the controller logs with `talosctl logs controller-runtime`:
 
@@ -301,7 +354,9 @@ $ talosctl -n <IP> logs controller-runtime
 ...
 ```
 
-Controllers run reconcile loop, so they might be starting, failing and restarting, that is expected behavior.
+Controllers continuously run a reconcile loop, so at any time, they may be starting, failing, or restarting.
+This is expected behavior.
+
 Things to look for:
 
 `v1alpha1.BootstrapStatusController: bootkube initialized status not found`: control plane is not self-hosted, running with static pods.
@@ -319,12 +374,12 @@ is going to retry.
 automatically.
 If this cluster was bootstrapped with version 0.9, machine configuration should be regenerated with 0.9 talosctl.
 
-If there are no new messages in `controller-runtime` log, it means that controllers finished reconciling successfully.
+If there are no new messages in the `controller-runtime` log, it means that the controllers have successfully finished reconciling, and that the current system state is the desired system state.
 
 ### Checking static pod definitions
 
-Talos generates static pod definitions for `kube-apiserver`, `kube-controller-manager`, and `kube-scheduler`
-components based on machine configuration.
+Talos generates static pod definitions for the `kube-apiserver`, `kube-controller-manager`, and `kube-scheduler`
+components based on its machine configuration.
 These definitions can be checked as resources with `talosctl get staticpods`:
 
 ```bash
@@ -355,7 +410,7 @@ spec:
 ...
 ```
 
-Status of the static pods can queried with `talosctl get staticpodstatus`:
+The status of the static pods can queried with `talosctl get staticpodstatus`:
 
 ```bash
 $ talosctl -n <IP> get staticpodstatus
@@ -365,12 +420,13 @@ NODE         NAMESPACE      TYPE              ID                                
 172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-master-1            1         True
 ```
 
-Most important status is `Ready` printed as last column, complete status can be fetched by adding `-o yaml` flag.
+The most important status field is `READY`, which is the last column printed.
+The complete status can be fetched by adding `-o yaml` flag.
 
 ### Checking bootstrap manifests
 
-As part of bootstrap process, Talos injects bootstrap manifests into Kubernetes API server.
-There are two kinds of manifests: system manifests built-in into Talos and extra manifests downloaded (custom CNI, extra manifests in the machine config):
+As part of the bootstrap process, Talos injects bootstrap manifests into Kubernetes API server.
+There are two kinds of these manifests: system manifests built-in into Talos and extra manifests downloaded (custom CNI, extra manifests in the machine config):
 
 ```bash
 $ talosctl -n <IP> get manifests
@@ -388,7 +444,7 @@ NODE         NAMESPACE      TYPE       ID                               VERSION
 172.20.0.2   controlplane   Manifest   11-kube-config-in-cluster        1
 ```
 
-Details of each manifests can be queried by adding `-o yaml`:
+Details of each manifest can be queried by adding `-o yaml`:
 
 ```bash
 $ talosctl -n <IP> get manifests 01-csr-approver-role-binding --namespace=controlplane -o yaml
@@ -418,10 +474,12 @@ spec:
 
 Control plane nodes have enough secret material to generate `apid` server certificates, but worker nodes
 depend on control plane `trustd` services to generate certificates.
-Worker nodes wait for `kubelet` to join the cluster, then `apid` queries Kubernetes endpoints via control plane
-endpoint to find `trustd` endpoints, and use `trustd` to issue the certficiate.
+Worker nodes wait for their `kubelet` to join the cluster.
+Then the Talos `apid` queries the Kubernetes endpoints via control plane
+endpoint to find `trustd` endpoints.
+They then use `trustd` to request and receive their certificate.
 
-So if `apid` health checks is failing on worker node:
+So if `apid` health checks are failing on worker node:
 
-* make sure control plane endpoint is healthy
-* check that worker node `kubelet` joined the cluster
+- make sure control plane endpoint is healthy
+- check that worker node `kubelet` joined the cluster
