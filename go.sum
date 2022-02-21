@@ -1040,8 +1040,8 @@ github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuh
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/orangecms/go-framebuffer v0.0.0-20200613202404-a0700d90c330/go.mod h1:3Myb/UszJY32F2G7yGkUtcW/ejHpjlGfYLim7cv2uKA=
-github.com/packethost/packngo v0.21.0 h1:Q9j3+/1kijXDwIg71523U6FaT/1CG90CgtVwz+15HDk=
-github.com/packethost/packngo v0.21.0/go.mod h1:/UHguFdPs6Lf6FOkkSEPnRY5tgS0fsVM+Zv/bvBrmt0=
+github.com/packethost/packngo v0.22.0 h1:7syZ1jDN5rbdkkrh9A5rA/ijXe0AHNovNqlUUf0L+uM=
+github.com/packethost/packngo v0.22.0/go.mod h1:/UHguFdPs6Lf6FOkkSEPnRY5tgS0fsVM+Zv/bvBrmt0=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pborman/getopt/v2 v2.1.0/go.mod h1:4NtW75ny4eBw9fO1bhtNdYTlZKYX5/tBLtsOpwKIKd0=
