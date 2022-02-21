@@ -41,7 +41,7 @@ If your kubelet fails to start after the upgrade, please check the `kubelet` log
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.23
+* Linux: 5.15.24
 * Kubernetes: 1.23.4
 * CoreDNS: 1.9.0
 * etcd: 3.5.2
