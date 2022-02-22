@@ -133,7 +133,7 @@ local setup_ci = {
 
   commands: [
     'setup-ci',
-    'make ./_out/kubectl',
+    'make ./_out/kubectl ./_out/kubestr ./_out/clusterctl',
   ],
   environment: {
     "BUILDKIT_FLAVOR": "cross",
