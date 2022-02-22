@@ -36,7 +36,7 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   Talos will use the configuration supplied via the kernel parameter as the initial network configuration.
   This parameter is useful in the environments where DHCP doesn't provide IP addresses or when default DNS and NTP servers should be overridden
   before loading machine configuration.
-  Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DHCP and DNS servers.
+  Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DNS and NTP servers.
 
   IPv6 addresses can be specified by enclosing them in the square brackets, e.g. `ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]`.
 

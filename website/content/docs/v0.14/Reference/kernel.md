@@ -36,7 +36,7 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   Talos will use the configuration supplied via the kernel parameter as the initial network configuration.
   This parameter is useful in the environments where DHCP doesn't provide IP addresses or when default DNS and NTP servers should be overridden
   before loading machine configuration.
-  Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DHCP and DNS servers.
+  Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DNS and NTP servers.
 #### `panic`
 
   The amount of time to wait after a panic before a reboot is issued.
