@@ -101,6 +101,7 @@ func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) confi
 		func() error {
 			return suite.assertK8sControlPlanes(
 				[]string{
+					config.K8sAdmissionControlID,
 					config.K8sExtraManifestsID,
 					config.K8sControlPlaneAPIServerID,
 					config.K8sControlPlaneControllerManagerID,

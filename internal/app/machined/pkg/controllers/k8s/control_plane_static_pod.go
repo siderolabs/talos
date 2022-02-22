@@ -52,6 +52,12 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.ConfigStatusType,
+			ID:        pointer.ToString(k8s.ConfigStatusStaticPodID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        pointer.ToString("etcd"),
@@ -114,10 +120,25 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).TypedSpec().Version
 
+		configStatusResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusType, k8s.ConfigStatusStaticPodID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				if err = ctrl.teardownAll(ctx, r); err != nil {
+					return fmt.Errorf("error tearing down: %w", err)
+				}
+
+				continue
+			}
+
+			return err
+		}
+
+		configVersion := configStatusResource.(*k8s.ConfigStatus).TypedSpec().Version
+
 		touchedIDs := map[string]struct{}{}
 
 		for _, pod := range []struct {
-			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string) (string, error)
+			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string, string) (string, error)
 			id resource.ID
 		}{
 			{
@@ -144,7 +165,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 			var podID string
 
-			if podID, err = pod.f(ctx, r, logger, res.(*config.K8sControlPlane), secretsVersion); err != nil {
+			if podID, err = pod.f(ctx, r, logger, res.(*config.K8sControlPlane), secretsVersion, configVersion); err != nil {
 				return fmt.Errorf("error updating static pod for %q: %w", pod.id, err)
 			}
 
@@ -228,7 +249,7 @@ func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
+	configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
 	cfg := configResource.APIServer()
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
@@ -242,13 +263,14 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"enable-admission-plugins":           strings.Join(enabledAdmissionPlugins, ","),
+		"admission-control-config-file":      filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml"),
 		"advertise-address":                  "$(POD_IP)",
 		"allow-privileged":                   "true",
 		"api-audiences":                      cfg.ControlPlaneEndpoint,
 		"authorization-mode":                 "Node,RBAC",
 		"bind-address":                       "0.0.0.0",
 		"client-ca-file":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt"),
+		"enable-admission-plugins":           strings.Join(enabledAdmissionPlugins, ","),
 		"requestheader-client-ca-file":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt"),
 		"requestheader-allowed-names":        "front-proxy-client",
 		"requestheader-extra-headers-prefix": "X-Remote-Extra-",
@@ -289,6 +311,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	mergePolicies := argsbuilder.MergePolicies{
 		"enable-admission-plugins": argsbuilder.MergeAdditive,
+		"feature-gates":            argsbuilder.MergeAdditive,
 		"authorization-mode":       argsbuilder.MergeAdditive,
 		"tls-cipher-suites":        argsbuilder.MergeAdditive,
 
@@ -325,8 +348,9 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				Name:      "kube-apiserver",
 				Namespace: "kube-system",
 				Annotations: map[string]string{
-					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
-					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
+					constants.AnnotationStaticPodSecretsVersion:    secretsVersion,
+					constants.AnnotationStaticPodConfigFileVersion: configVersion,
+					constants.AnnotationStaticPodConfigVersion:     configResource.Metadata().Version().String(),
 				},
 				Labels: map[string]string{
 					"tier":    "control-plane",
@@ -354,6 +378,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 							{
 								Name:      "secrets",
 								MountPath: constants.KubernetesAPIServerSecretsDir,
+								ReadOnly:  true,
+							},
+							{
+								Name:      "config",
+								MountPath: constants.KubernetesAPIServerConfigDir,
 								ReadOnly:  true,
 							},
 							{
@@ -385,6 +414,14 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 						},
 					},
 					{
+						Name: "config",
+						VolumeSource: v1.VolumeSource{
+							HostPath: &v1.HostPathVolumeSource{
+								Path: constants.KubernetesAPIServerConfigDir,
+							},
+						},
+					},
+					{
 						Name: "audit",
 						VolumeSource: v1.VolumeSource{
 							HostPath: &v1.HostPathVolumeSource{
@@ -399,7 +436,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
 	cfg := configResource.ControllerManager()
 
 	if !cfg.Enabled {
@@ -527,7 +564,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion string) (string, error) {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
 	cfg := configResource.Scheduler()
 
 	if !cfg.Enabled {

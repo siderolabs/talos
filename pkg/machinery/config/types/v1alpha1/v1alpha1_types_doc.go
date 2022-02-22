@@ -32,6 +32,7 @@ var (
 	EndpointDoc                       encoder.Doc
 	ControlPlaneConfigDoc             encoder.Doc
 	APIServerConfigDoc                encoder.Doc
+	AdmissionPluginConfigDoc          encoder.Doc
 	ControllerManagerConfigDoc        encoder.Doc
 	ProxyConfigDoc                    encoder.Doc
 	SchedulerConfigDoc                encoder.Doc
@@ -982,7 +983,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 5)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 6)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -1010,6 +1011,36 @@ func init() {
 	APIServerConfigDoc.Fields[4].Note = ""
 	APIServerConfigDoc.Fields[4].Description = "Disable PodSecurityPolicy in the API server and default manifests."
 	APIServerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Disable PodSecurityPolicy in the API server and default manifests."
+	APIServerConfigDoc.Fields[5].Name = "admissionControl"
+	APIServerConfigDoc.Fields[5].Type = "[]AdmissionPluginConfig"
+	APIServerConfigDoc.Fields[5].Note = ""
+	APIServerConfigDoc.Fields[5].Description = "Configure the API server admission plugins."
+	APIServerConfigDoc.Fields[5].Comments[encoder.LineComment] = "Configure the API server admission plugins."
+
+	APIServerConfigDoc.Fields[5].AddExample("", admissionControlConfigExample)
+
+	AdmissionPluginConfigDoc.Type = "AdmissionPluginConfig"
+	AdmissionPluginConfigDoc.Comments[encoder.LineComment] = "AdmissionPluginConfig represents the API server admission plugin configuration."
+	AdmissionPluginConfigDoc.Description = "AdmissionPluginConfig represents the API server admission plugin configuration."
+
+	AdmissionPluginConfigDoc.AddExample("", admissionControlConfigExample)
+	AdmissionPluginConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "APIServerConfig",
+			FieldName: "admissionControl",
+		},
+	}
+	AdmissionPluginConfigDoc.Fields = make([]encoder.Doc, 2)
+	AdmissionPluginConfigDoc.Fields[0].Name = "name"
+	AdmissionPluginConfigDoc.Fields[0].Type = "string"
+	AdmissionPluginConfigDoc.Fields[0].Note = ""
+	AdmissionPluginConfigDoc.Fields[0].Description = "Name is the name of the admission controller.\nIt must match the registered admission plugin name."
+	AdmissionPluginConfigDoc.Fields[0].Comments[encoder.LineComment] = "Name is the name of the admission controller."
+	AdmissionPluginConfigDoc.Fields[1].Name = "configuration"
+	AdmissionPluginConfigDoc.Fields[1].Type = "Unstructured"
+	AdmissionPluginConfigDoc.Fields[1].Note = ""
+	AdmissionPluginConfigDoc.Fields[1].Description = "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration."
+	AdmissionPluginConfigDoc.Fields[1].Comments[encoder.LineComment] = "Configuration is an embedded configuration object to be used as the plugin's"
 
 	ControllerManagerConfigDoc.Type = "ControllerManagerConfig"
 	ControllerManagerConfigDoc.Comments[encoder.LineComment] = "ControllerManagerConfig represents the kube controller manager configuration options."
@@ -2466,6 +2497,10 @@ func (_ APIServerConfig) Doc() *encoder.Doc {
 	return &APIServerConfigDoc
 }
 
+func (_ AdmissionPluginConfig) Doc() *encoder.Doc {
+	return &AdmissionPluginConfigDoc
+}
+
 func (_ ControllerManagerConfig) Doc() *encoder.Doc {
 	return &ControllerManagerConfigDoc
 }
@@ -2668,6 +2703,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&EndpointDoc,
 			&ControlPlaneConfigDoc,
 			&APIServerConfigDoc,
+			&AdmissionPluginConfigDoc,
 			&ControllerManagerConfigDoc,
 			&ProxyConfigDoc,
 			&SchedulerConfigDoc,

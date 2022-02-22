@@ -103,3 +103,8 @@ func (contract *VersionContract) ClusterDiscoveryEnabled() bool {
 func (contract *VersionContract) PodSecurityPolicyEnabled() bool {
 	return !contract.Greater(TalosVersion0_14)
 }
+
+// PodSecurityAdmissionEnabled returns true if pod security admission should be enabled by default.
+func (contract *VersionContract) PodSecurityAdmissionEnabled() bool {
+	return false // TODO: enable by default once Talos support Kubernetes 1.22+ only
+}

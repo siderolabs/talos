@@ -66,6 +66,35 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		return config, err
 	}
 
+	var admissionControlConfig []*v1alpha1.AdmissionPluginConfig
+
+	if in.VersionContract.PodSecurityAdmissionEnabled() {
+		admissionControlConfig = append(admissionControlConfig,
+			&v1alpha1.AdmissionPluginConfig{
+				PluginName: "PodSecurity",
+				PluginConfiguration: v1alpha1.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
+						"kind":       "PodSecurityConfiguration",
+						"defaults": map[string]interface{}{
+							"enforce":         "baseline",
+							"enforce-version": "latest",
+							"audit":           "restricted",
+							"audit-version":   "latest",
+							"warn":            "restricted",
+							"warn-version":    "latest",
+						},
+						"exemptions": map[string]interface{}{
+							"usernames":      []interface{}{},
+							"runtimeClasses": []interface{}{},
+							"namespaces":     []interface{}{"kube-system"},
+						},
+					},
+				},
+			},
+		)
+	}
+
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterID:     in.ClusterID,
 		ClusterName:   in.ClusterName,
@@ -77,6 +106,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			CertSANs:                       certSANs,
 			ContainerImage:                 emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
 			DisablePodSecurityPolicyConfig: !in.VersionContract.PodSecurityPolicyEnabled(),
+			AdmissionControlConfig:         admissionControlConfig,
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
 			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),

@@ -124,6 +124,15 @@ Previously default was to omit explicit Kubernetes version, so Talos picked up t
 Old behavior can be achieved by specifiying empty flag value: `--kubernetes-version=`.
 """
 
+    [notes.admission]
+        title = "Admission Plugin Configuration"
+        description="""\
+Talos now supports Kubernetes API server admission plugin configuration via the `.cluster.apiServer.admissonControl` machine configuration field.
+
+This configuration can be used to enable [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/) plugin and
+define cluster-wide default [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
+"""
+
     [notes.psp]
         title = "Pod Security Policy"
         description="""\

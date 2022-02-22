@@ -98,10 +98,12 @@ func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests 
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	configAPIServer := config.NewK8sControlPlaneAPIServer()
 	configControllerManager := config.NewK8sControlPlaneControllerManager()
 	configScheduler := config.NewK8sControlPlaneScheduler()
 
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
@@ -140,6 +142,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	configAPIServer := config.NewK8sControlPlaneAPIServer()
 	configAPIServer.SetAPIServer(config.K8sControlPlaneAPIServerSpec{
 		ExtraVolumes: []config.K8sExtraVolume{
@@ -155,6 +158,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	configControllerManager := config.NewK8sControlPlaneControllerManager()
 	configScheduler := config.NewK8sControlPlaneScheduler()
 
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
@@ -178,8 +182,8 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
 	suite.Require().NoError(err)
 
-	suite.Assert().Len(apiServerPod.Spec.Volumes, 3)
-	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 3)
+	suite.Assert().Len(apiServerPod.Spec.Volumes, 4)
+	suite.Assert().Len(apiServerPod.Spec.Containers[0].VolumeMounts, 4)
 
 	suite.Assert().Equal(v1.Volume{
 		Name: "secrets",
@@ -191,13 +195,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	}, apiServerPod.Spec.Volumes[0])
 
 	suite.Assert().Equal(v1.Volume{
+		Name: "config",
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: constants.KubernetesAPIServerConfigDir,
+			},
+		},
+	}, apiServerPod.Spec.Volumes[1])
+
+	suite.Assert().Equal(v1.Volume{
 		Name: "audit",
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: constants.KubernetesAuditLogDir,
 			},
 		},
-	}, apiServerPod.Spec.Volumes[1])
+	}, apiServerPod.Spec.Volumes[2])
 
 	suite.Assert().Equal(v1.Volume{
 		Name: "foo",
@@ -206,7 +219,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 				Path: "/var/lib",
 			},
 		},
-	}, apiServerPod.Spec.Volumes[2])
+	}, apiServerPod.Spec.Volumes[3])
 
 	suite.Assert().Equal(v1.VolumeMount{
 		Name:      "secrets",
@@ -215,16 +228,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	}, apiServerPod.Spec.Containers[0].VolumeMounts[0])
 
 	suite.Assert().Equal(v1.VolumeMount{
+		Name:      "config",
+		MountPath: constants.KubernetesAPIServerConfigDir,
+		ReadOnly:  true,
+	}, apiServerPod.Spec.Containers[0].VolumeMounts[1])
+
+	suite.Assert().Equal(v1.VolumeMount{
 		Name:      "audit",
 		MountPath: constants.KubernetesAuditLogDir,
 		ReadOnly:  false,
-	}, apiServerPod.Spec.Containers[0].VolumeMounts[1])
+	}, apiServerPod.Spec.Containers[0].VolumeMounts[2])
 
 	suite.Assert().Equal(v1.VolumeMount{
 		Name:      "foo",
 		MountPath: "/var/foo",
 		ReadOnly:  true,
-	}, apiServerPod.Spec.Containers[0].VolumeMounts[2])
+	}, apiServerPod.Spec.Containers[0].VolumeMounts[3])
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
@@ -255,6 +274,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 		},
 	}
 	for _, test := range tests {
+		configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 		secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 		configAPIServer := config.NewK8sControlPlaneAPIServer()
 
@@ -262,6 +282,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 			ExtraArgs: test.args,
 		})
 
+		suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 		suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
 		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
 
@@ -307,6 +328,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 			assertArg(k, v)
 		}
 
+		suite.Require().NoError(suite.state.Destroy(suite.ctx, configStatus.Metadata()))
 		suite.Require().NoError(suite.state.Destroy(suite.ctx, secretStatus.Metadata()))
 		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
 
@@ -328,11 +350,13 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExeptScheduler() {
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configAPIServer := config.NewK8sControlPlaneAPIServer()
 	configControllerManager := config.NewK8sControlPlaneControllerManager()
 	configScheduler := config.NewK8sControlPlaneScheduler()
 
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
 	suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))

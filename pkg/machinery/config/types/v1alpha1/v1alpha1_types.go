@@ -524,6 +524,31 @@ metadata:
 			},
 		},
 	}
+
+	admissionControlConfigExample = []*AdmissionPluginConfig{
+		{
+			PluginName: "PodSecurity",
+			PluginConfiguration: Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
+					"kind":       "PodSecurityConfiguration",
+					"defaults": map[string]interface{}{
+						"enforce":         "baseline",
+						"enforce-version": "latest",
+						"audit":           "restricted",
+						"audit-version":   "latest",
+						"warn":            "restricted",
+						"warn-version":    "latest",
+					},
+					"exemptions": map[string]interface{}{
+						"usernames":      []interface{}{},
+						"runtimeClasses": []interface{}{},
+						"namespaces":     []interface{}{"kube-system"},
+					},
+				},
+			},
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -1353,6 +1378,23 @@ type APIServerConfig struct {
 	//   description: |
 	//     Disable PodSecurityPolicy in the API server and default manifests.
 	DisablePodSecurityPolicyConfig bool `yaml:"disablePodSecurityPolicy,omitempty"`
+	//   description: |
+	//     Configure the API server admission plugins.
+	//   examples:
+	//     - value: admissionControlConfigExample
+	AdmissionControlConfig []*AdmissionPluginConfig `yaml:"admissionControl,omitempty"`
+}
+
+// AdmissionPluginConfig represents the API server admission plugin configuration.
+type AdmissionPluginConfig struct {
+	//   description: |
+	//     Name is the name of the admission controller.
+	//     It must match the registered admission plugin name.
+	PluginName string `yaml:"name"`
+	//   description: |
+	//     Configuration is an embedded configuration object to be used as the plugin's
+	//     configuration.
+	PluginConfiguration Unstructured `yaml:"configuration"`
 }
 
 // ControllerManagerConfig represents the kube controller manager configuration options.

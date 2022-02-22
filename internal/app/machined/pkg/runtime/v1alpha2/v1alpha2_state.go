@@ -88,6 +88,7 @@ func NewState() (*State, error) {
 		&config.K8sControlPlane{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&k8s.ConfigStatus{},
 		&k8s.Endpoint{},
 		&k8s.KubeletConfig{},
 		&k8s.KubeletSpec{},

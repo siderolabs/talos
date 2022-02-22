@@ -201,11 +201,17 @@ const (
 	// KubebernetesStaticSecretsDir defines ephemeral directory which contains rendered secrets for controlplane components.
 	KubebernetesStaticSecretsDir = "/system/secrets/kubernetes"
 
+	// KubebernetesStaticConfigDir defines ephemeral directory which contains rendered configs for controlplane components.
+	KubebernetesStaticConfigDir = "/system/config/kubernetes"
+
 	// KubernetesAuditLogDir defines the ephemeral directory where the kube-apiserver will store its audit logs.
 	KubernetesAuditLogDir = EphemeralMountPoint + "/" + "log" + "/" + "audit" + "/" + "kube"
 
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
+
+	// KubernetesAPIServerConfigDir defines directory with kube-apiserver configs.
+	KubernetesAPIServerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-apiserver"
 
 	// KubernetesControllerManagerSecretsDir defines ephemeral directory with kube-controller-manager secrets.
 	KubernetesControllerManagerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-controller-manager"
@@ -514,6 +520,9 @@ const (
 
 	// AnnotationStaticPodConfigVersion is the annotation key for the static pod config version.
 	AnnotationStaticPodConfigVersion = "talos.dev/config-version"
+
+	// AnnotationStaticPodConfigFileVersion is the annotation key for the static pod configuration file version.
+	AnnotationStaticPodConfigFileVersion = "talos.dev/config-file-version"
 
 	// DefaultNTPServer is the NTP server to use if not configured explicitly.
 	//

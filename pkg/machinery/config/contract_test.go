@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//nolint:dupl
 package config_test
 
 import (
@@ -54,6 +55,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_15(t *testing.T) {
@@ -67,6 +69,7 @@ func TestContract0_15(t *testing.T) {
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_14(t *testing.T) {
@@ -80,6 +83,7 @@ func TestContract0_14(t *testing.T) {
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -93,6 +97,7 @@ func TestContract0_13(t *testing.T) {
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -106,6 +111,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -119,6 +125,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -132,6 +139,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -145,6 +153,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -158,4 +167,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.SupportsECDSASHA256())
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
+	assert.False(t, contract.PodSecurityAdmissionEnabled())
 }

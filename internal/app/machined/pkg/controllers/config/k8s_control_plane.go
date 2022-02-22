@@ -107,6 +107,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 
 		for _, f := range []func(context.Context, controller.Runtime, *zap.Logger, talosconfig.Provider) error{
 			ctrl.manageAPIServerConfig,
+			ctrl.manageAdmissonControlConfig,
 			ctrl.manageControllerManagerConfig,
 			ctrl.manageSchedulerConfig,
 			ctrl.manageManifestsConfig,
@@ -152,6 +153,25 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 		})
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageAdmissonControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+	spec := config.K8sAdmissionControlSpec{}
+
+	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
+		spec.Config = append(spec.Config,
+			config.AdmissionPluginSpec{
+				Name:          cfg.Name(),
+				Configuration: cfg.Configuration(),
+			},
+		)
+	}
+
+	return r.Modify(ctx, config.NewK8sAdmissionControlSpec(), func(r resource.Resource) error {
+		r.(*config.K8sControlPlane).SetAdmissionControl(spec)
 
 		return nil
 	})

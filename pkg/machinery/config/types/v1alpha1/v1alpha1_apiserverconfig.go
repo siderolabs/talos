@@ -42,3 +42,18 @@ func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
 func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
 	return a.DisablePodSecurityPolicyConfig
 }
+
+// AdmissionControl implements the config.APIServer interface.
+func (a *APIServerConfig) AdmissionControl() []config.AdmissionPlugin {
+	if a.AdmissionControlConfig == nil {
+		return nil
+	}
+
+	res := make([]config.AdmissionPlugin, 0, len(a.AdmissionControlConfig))
+
+	for _, c := range a.AdmissionControlConfig {
+		res = append(res, c)
+	}
+
+	return res
+}

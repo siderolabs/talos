@@ -17,6 +17,9 @@ const K8sControlPlaneType = resource.Type("KubernetesControlPlaneConfigs.config.
 // K8sControlPlaneAPIServerID is an ID of kube-apiserver config.
 const K8sControlPlaneAPIServerID = resource.ID("kube-apiserver")
 
+// K8sAdmissionControlID is an ID of kube-apiserver admission control config.
+const K8sAdmissionControlID = resource.ID("apiserver-admission-control")
+
 // K8sControlPlaneControllerManagerID is an ID of kube-controller-manager config.
 const K8sControlPlaneControllerManagerID = resource.ID("kube-controller-manager")
 
@@ -55,6 +58,17 @@ type K8sControlPlaneAPIServerSpec struct {
 	ExtraArgs                map[string]string `yaml:"extraArgs"`
 	ExtraVolumes             []K8sExtraVolume  `yaml:"extraVolumes"`
 	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
+}
+
+// K8sAdmissionControlSpec is a kube-apiserver admission control configuration.
+type K8sAdmissionControlSpec struct {
+	Config []AdmissionPluginSpec `yaml:"config"`
+}
+
+// AdmissionPluginSpec is a single admission plugin configuration.
+type AdmissionPluginSpec struct {
+	Name          string                 `yaml:"name"`
+	Configuration map[string]interface{} `yaml:"configuration"`
 }
 
 // K8sControlPlaneControllerManagerSpec is configuration for kube-controller-manager.
@@ -121,6 +135,18 @@ func NewK8sControlPlaneAPIServer() *K8sControlPlane {
 	r := &K8sControlPlane{
 		md:   resource.NewMetadata(NamespaceName, K8sControlPlaneType, K8sControlPlaneAPIServerID, resource.VersionUndefined),
 		spec: K8sControlPlaneAPIServerSpec{},
+	}
+
+	r.md.BumpVersion()
+
+	return r
+}
+
+// NewK8sAdmissionControlSpec initializes a K8sControlPlane resource.
+func NewK8sAdmissionControlSpec() *K8sControlPlane {
+	r := &K8sControlPlane{
+		md:   resource.NewMetadata(NamespaceName, K8sControlPlaneType, K8sAdmissionControlID, resource.VersionUndefined),
+		spec: K8sAdmissionControlSpec{},
 	}
 
 	r.md.BumpVersion()
@@ -214,6 +240,16 @@ func (r *K8sControlPlane) APIServer() K8sControlPlaneAPIServerSpec {
 
 // SetAPIServer sets K8sControlPlaneApiServerSpec.
 func (r *K8sControlPlane) SetAPIServer(spec K8sControlPlaneAPIServerSpec) {
+	r.spec = spec
+}
+
+// AdmissionControl returns K8sAdmissionControlSpec.
+func (r *K8sControlPlane) AdmissionControl() K8sAdmissionControlSpec {
+	return r.spec.(K8sAdmissionControlSpec)
+}
+
+// SetAdmissionControl sets K8sAdmissionControlSpec.
+func (r *K8sControlPlane) SetAdmissionControl(spec K8sAdmissionControlSpec) {
 	r.spec = spec
 }
 

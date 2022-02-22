@@ -1155,6 +1155,26 @@ apiServer:
     certSANs:
         - 1.2.3.4
         - 4.5.6.7
+
+    # # Configure the API server admission plugins.
+    # admissionControl:
+    #     - name: PodSecurity # Name is the name of the admission controller.
+    #       # Configuration is an embedded configuration object to be used as the plugin's
+    #       configuration:
+    #         apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    #         defaults:
+    #             audit: restricted
+    #             audit-version: latest
+    #             enforce: baseline
+    #             enforce-version: latest
+    #             warn: restricted
+    #             warn-version: latest
+    #         exemptions:
+    #             namespaces:
+    #                 - kube-system
+    #             runtimeClasses: []
+    #             usernames: []
+    #         kind: PodSecurityConfiguration
 ```
 
 
@@ -2836,6 +2856,26 @@ extraArgs:
 certSANs:
     - 1.2.3.4
     - 4.5.6.7
+
+# # Configure the API server admission plugins.
+# admissionControl:
+#     - name: PodSecurity # Name is the name of the admission controller.
+#       # Configuration is an embedded configuration object to be used as the plugin's
+#       configuration:
+#         apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+#         defaults:
+#             audit: restricted
+#             audit-version: latest
+#             enforce: baseline
+#             enforce-version: latest
+#             warn: restricted
+#             warn-version: latest
+#         exemptions:
+#             namespaces:
+#                 - kube-system
+#             runtimeClasses: []
+#             usernames: []
+#         kind: PodSecurityConfiguration
 ```
 
 <hr />
@@ -2906,6 +2946,104 @@ Extra certificate subject alternative names for the API server's certificate.
 <div class="dt">
 
 Disable PodSecurityPolicy in the API server and default manifests.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>admissionControl</code>  <i>[]<a href="#admissionpluginconfig">AdmissionPluginConfig</a></i>
+
+</div>
+<div class="dt">
+
+Configure the API server admission plugins.
+
+
+
+Examples:
+
+
+``` yaml
+admissionControl:
+    - name: PodSecurity # Name is the name of the admission controller.
+      # Configuration is an embedded configuration object to be used as the plugin's
+      configuration:
+        apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+        defaults:
+            audit: restricted
+            audit-version: latest
+            enforce: baseline
+            enforce-version: latest
+            warn: restricted
+            warn-version: latest
+        exemptions:
+            namespaces:
+                - kube-system
+            runtimeClasses: []
+            usernames: []
+        kind: PodSecurityConfiguration
+```
+
+
+</div>
+
+<hr />
+
+
+
+## AdmissionPluginConfig
+AdmissionPluginConfig represents the API server admission plugin configuration.
+
+Appears in:
+
+- <code><a href="#apiserverconfig">APIServerConfig</a>.admissionControl</code>
+
+
+``` yaml
+- name: PodSecurity # Name is the name of the admission controller.
+  # Configuration is an embedded configuration object to be used as the plugin's
+  configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    defaults:
+        audit: restricted
+        audit-version: latest
+        enforce: baseline
+        enforce-version: latest
+        warn: restricted
+        warn-version: latest
+    exemptions:
+        namespaces:
+            - kube-system
+        runtimeClasses: []
+        usernames: []
+    kind: PodSecurityConfiguration
+```
+
+<hr />
+
+<div class="dd">
+
+<code>name</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Name is the name of the admission controller.
+It must match the registered admission plugin name.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>configuration</code>  <i>Unstructured</i>
+
+</div>
+<div class="dt">
+
+Configuration is an embedded configuration object to be used as the plugin's
+configuration.
 
 </div>
 

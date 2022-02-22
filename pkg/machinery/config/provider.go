@@ -378,6 +378,13 @@ type APIServer interface {
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
 	DisablePodSecurityPolicy() bool
+	AdmissionControl() []AdmissionPlugin
+}
+
+// AdmissionPlugin defines the API server Admission Plugin configuration.
+type AdmissionPlugin interface {
+	Name() string
+	Configuration() map[string]interface{}
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related
