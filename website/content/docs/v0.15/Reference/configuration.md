@@ -336,6 +336,10 @@ kubelet:
     #         - rshared
     #         - rw
 
+    # # The `extraConfig` field is used to provide kubelet configuration overrides.
+    # extraConfig:
+    #     serverTLSBootstrap: true
+
     # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
     # nodeIP:
     #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
@@ -1649,6 +1653,10 @@ extraArgs:
 #         - rshared
 #         - rw
 
+# # The `extraConfig` field is used to provide kubelet configuration overrides.
+# extraConfig:
+#     serverTLSBootstrap: true
+
 # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
 # nodeIP:
 #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
@@ -1753,6 +1761,32 @@ extraMounts:
         - bind
         - rshared
         - rw
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>extraConfig</code>  <i>Unstructured</i>
+
+</div>
+<div class="dt">
+
+The `extraConfig` field is used to provide kubelet configuration overrides.
+
+Some fields are not allowed to be overridden: authentication and authorization, cgroups
+configuration, ports, etc.
+
+
+
+Examples:
+
+
+``` yaml
+extraConfig:
+    serverTLSBootstrap: true
 ```
 
 

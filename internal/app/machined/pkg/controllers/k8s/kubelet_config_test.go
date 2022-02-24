@@ -89,6 +89,11 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 						},
 					},
 				},
+				KubeletExtraConfig: v1alpha1.Unstructured{
+					Object: map[string]interface{}{
+						"serverTLSBootstrap": true,
+					},
+				},
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
@@ -138,6 +143,12 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					},
 				},
 				spec.ExtraMounts)
+			suite.Assert().Equal(
+				map[string]interface{}{
+					"serverTLSBootstrap": true,
+				},
+				spec.ExtraConfig,
+			)
 			suite.Assert().True(spec.CloudProviderExternal)
 
 			return nil

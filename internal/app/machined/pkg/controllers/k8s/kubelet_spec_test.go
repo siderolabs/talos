@@ -12,18 +12,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/component-base/config/v1alpha1"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -173,6 +181,55 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 	))
 }
 
+func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v2.0.0"
+	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
+	cfg.TypedSpec().ClusterDomain = "some.local"
+	cfg.TypedSpec().ExtraConfig = map[string]interface{}{
+		"serverTLSBootstrap": true,
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "foo.com"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
+
+	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
+	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.3")}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			kubeletSpec, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+			if err != nil {
+				if state.IsNotFoundError(err) {
+					return retry.ExpectedError(err)
+				}
+
+				return err
+			}
+
+			spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+
+			var kubeletConfiguration kubeletconfig.KubeletConfiguration
+
+			if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(spec.Config, &kubeletConfiguration); err != nil {
+				return err
+			}
+
+			suite.Assert().Equal("/", kubeletConfiguration.CgroupRoot)
+			suite.Assert().Equal(cfg.TypedSpec().ClusterDomain, kubeletConfiguration.ClusterDomain)
+			suite.Assert().True(kubeletConfiguration.ServerTLSBootstrap)
+
+			return nil
+		},
+	))
+}
+
 func (suite *KubeletSpecSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
@@ -183,4 +240,103 @@ func (suite *KubeletSpecSuite) TearDownTest() {
 
 func TestKubeletSpecSuite(t *testing.T) {
 	suite.Run(t, new(KubeletSpecSuite))
+}
+
+func TestNewKubeletConfigurationFail(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		extraConfig map[string]interface{}
+		expectedErr string
+	}{
+		{
+			name: "wrong fields",
+			extraConfig: map[string]interface{}{
+				"API":  "v1",
+				"foo":  "bar",
+				"Port": "xyz",
+			},
+			expectedErr: "error unmarshalling extra kubelet configuration: strict decoding error: unknown field \"API\", unknown field \"Port\", unknown field \"foo\"",
+		},
+		{
+			name: "wrong field type",
+			extraConfig: map[string]interface{}{
+				"oomScoreAdj": "v1",
+			},
+			expectedErr: "error unmarshalling extra kubelet configuration: unrecognized type: int32",
+		},
+		{
+			name: "not overridable",
+			extraConfig: map[string]interface{}{
+				"oomScoreAdj":    -300,
+				"port":           81,
+				"authentication": nil,
+			},
+			expectedErr: "2 errors occurred:\n\t* field \"authentication\" can't be overridden\n\t* field \"port\" can't be overridden\n\n",
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig)
+			require.Error(t, err)
+
+			assert.EqualError(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestNewKubeletConfigurationSuccess(t *testing.T) {
+	config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", map[string]interface{}{
+		"oomScoreAdj":             -300,
+		"enableDebuggingHandlers": true,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, &kubeletconfig.KubeletConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
+			Kind:       "KubeletConfiguration",
+		},
+		StaticPodPath: constants.ManifestsDirectory,
+		Port:          constants.KubeletPort,
+		Authentication: kubeletconfig.KubeletAuthentication{
+			X509: kubeletconfig.KubeletX509Authentication{
+				ClientCAFile: constants.KubernetesCACert,
+			},
+			Webhook: kubeletconfig.KubeletWebhookAuthentication{
+				Enabled: pointer.ToBool(true),
+			},
+			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
+				Enabled: pointer.ToBool(false),
+			},
+		},
+		Authorization: kubeletconfig.KubeletAuthorization{
+			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
+		},
+		CgroupRoot:            "/",
+		SystemCgroups:         constants.CgroupSystem,
+		KubeletCgroups:        constants.CgroupKubelet,
+		RotateCertificates:    true,
+		ProtectKernelDefaults: true,
+		Address:               "0.0.0.0",
+		OOMScoreAdj:           pointer.ToInt32(-300),
+		ClusterDomain:         "cluster.local",
+		ClusterDNS:            []string{"10.0.0.5"},
+		SerializeImagePulls:   pointer.ToBool(false),
+		FailSwapOn:            pointer.ToBool(false),
+		SystemReserved: map[string]string{
+			"cpu":               constants.KubeletSystemReservedCPU,
+			"memory":            constants.KubeletSystemReservedMemory,
+			"pid":               constants.KubeletSystemReservedPid,
+			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
+		},
+		Logging: v1alpha1.LoggingConfiguration{
+			Format: "json",
+		},
+
+		StreamingConnectionIdleTimeout: metav1.Duration{Duration: 5 * time.Minute},
+		TLSMinVersion:                  "VersionTLS13",
+		EnableDebuggingHandlers:        pointer.ToBool(true),
+	},
+		config)
 }

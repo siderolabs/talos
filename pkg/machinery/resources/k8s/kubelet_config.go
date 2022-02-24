@@ -10,6 +10,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/opencontainers/runtime-spec/specs-go"
+
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // KubeletConfigType is type of KubeletConfig resource.
@@ -26,12 +28,13 @@ type KubeletConfig struct {
 
 // KubeletConfigSpec holds the source of kubelet configuration.
 type KubeletConfigSpec struct {
-	Image                 string            `yaml:"image"`
-	ClusterDNS            []string          `yaml:"clusterDNS"`
-	ClusterDomain         string            `yaml:"clusterDomain"`
-	ExtraArgs             map[string]string `yaml:"extraArgs,omitempty"`
-	ExtraMounts           []specs.Mount     `yaml:"extraMounts,omitempty"`
-	CloudProviderExternal bool              `yaml:"cloudProviderExternal"`
+	Image                 string                 `yaml:"image"`
+	ClusterDNS            []string               `yaml:"clusterDNS"`
+	ClusterDomain         string                 `yaml:"clusterDomain"`
+	ExtraArgs             map[string]string      `yaml:"extraArgs,omitempty"`
+	ExtraMounts           []specs.Mount          `yaml:"extraMounts,omitempty"`
+	ExtraConfig           map[string]interface{} `yaml:"extraConfig,omitempty"`
+	CloudProviderExternal bool                   `yaml:"cloudProviderExternal"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.
@@ -68,6 +71,9 @@ func (r *KubeletConfig) DeepCopy() resource.Resource {
 		extraArgs[k] = v
 	}
 
+	extraConfig := &v1alpha1.Unstructured{Object: r.spec.ExtraConfig}
+	extraConfig = extraConfig.DeepCopy()
+
 	return &KubeletConfig{
 		md: r.md,
 		spec: &KubeletConfigSpec{
@@ -76,6 +82,7 @@ func (r *KubeletConfig) DeepCopy() resource.Resource {
 			ClusterDomain:         r.spec.ClusterDomain,
 			ExtraArgs:             extraArgs,
 			ExtraMounts:           append([]specs.Mount(nil), r.spec.ExtraMounts...),
+			ExtraConfig:           extraConfig.Object,
 			CloudProviderExternal: r.spec.CloudProviderExternal,
 		},
 	}

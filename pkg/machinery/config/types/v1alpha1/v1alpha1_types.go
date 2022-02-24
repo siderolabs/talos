@@ -480,6 +480,12 @@ metadata:
 		},
 	}
 
+	kubeletExtraConfigExample = Unstructured{
+		Object: map[string]interface{}{
+			"serverTLSBootstrap": true,
+		},
+	}
+
 	loggingEndpointExample1 = &Endpoint{
 		mustParseURL("udp://127.0.0.1:12345"),
 	}
@@ -978,6 +984,14 @@ type KubeletConfig struct {
 	//   examples:
 	//     - value: kubeletExtraMountsExample
 	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
+	//   description: |
+	//     The `extraConfig` field is used to provide kubelet configuration overrides.
+	//
+	//     Some fields are not allowed to be overridden: authentication and authorization, cgroups
+	//     configuration, ports, etc.
+	//   examples:
+	//     - value: kubeletExtraConfigExample
+	KubeletExtraConfig Unstructured `yaml:"extraConfig,omitempty"`
 	//   description: |
 	//     The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
 	//     This is required in clouds like AWS.

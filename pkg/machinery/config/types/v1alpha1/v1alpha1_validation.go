@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
@@ -730,6 +731,12 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 
 		if _, err := talosnet.ParseCIDR(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
+		}
+	}
+
+	for _, field := range kubelet.ProtectedConfigurationFields {
+		if _, exists := k.KubeletExtraConfig.Object[field]; exists {
+			result = multierror.Append(result, fmt.Errorf("kubelet configuration field %q can't be overridden", field))
 		}
 	}
 

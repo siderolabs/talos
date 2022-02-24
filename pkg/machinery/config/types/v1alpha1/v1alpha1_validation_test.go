@@ -926,6 +926,30 @@ func TestValidate(t *testing.T) {
 				"\t* kubelet nodeIP subnet is not valid: \"[fd00::169:254:2:53]:344\"\n" +
 				"\n",
 		},
+		{
+			name: "BadKubeletExtraConfig",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletExtraConfig: v1alpha1.Unstructured{
+							Object: map[string]interface{}{
+								"port": 345,
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* kubelet configuration field \"port\" can't be overridden\n\n",
+		},
 	} {
 		test := test
 

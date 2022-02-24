@@ -14,15 +14,16 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/component-base/config/v1alpha1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -158,7 +159,10 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error merging arguments: %w", err)
 		}
 
-		kubeletConfig := newKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain, cfgSpec.ExtraConfig)
+		if err != nil {
+			return fmt.Errorf("error creating kubelet configuration: %w", err)
+		}
 
 		// If our platform is container, we cannot rely on the ability to change kernel parameters.
 		// Therefore, we need to NOT attempt to enforce the kernel parameter checking done by the kubelet
@@ -191,49 +195,112 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func newKubeletConfiguration(clusterDNS []string, dnsDomain string) *kubeletconfig.KubeletConfiguration {
-	return &kubeletconfig.KubeletConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "kubelet.config.k8s.io/v1beta1",
-			Kind:       "KubeletConfiguration",
+func prepareExtraConfig(extraConfig map[string]interface{}) (*kubeletconfig.KubeletConfiguration, error) {
+	// check for fields that can't be overridden via extraConfig
+	var multiErr *multierror.Error
+
+	for _, field := range kubelet.ProtectedConfigurationFields {
+		if _, exists := extraConfig[field]; exists {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("field %q can't be overridden", field))
+		}
+	}
+
+	if err := multiErr.ErrorOrNil(); err != nil {
+		return nil, err
+	}
+
+	var config kubeletconfig.KubeletConfiguration
+
+	// unmarshal extra config into the config structure
+	// as unmarshalling zeroes the missing fields, we can't do that after setting the defaults
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(extraConfig, &config, true); err != nil {
+		return nil, fmt.Errorf("error unmarshalling extra kubelet configuration: %w", err)
+	}
+
+	return &config, nil
+}
+
+// NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
+//
+//nolint:gocyclo
+func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig map[string]interface{}) (*kubeletconfig.KubeletConfiguration, error) {
+	config, err := prepareExtraConfig(extraConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// required fields (always set)
+	config.TypeMeta = metav1.TypeMeta{
+		APIVersion: kubeletconfig.SchemeGroupVersion.String(),
+		Kind:       "KubeletConfiguration",
+	}
+	config.StaticPodPath = constants.ManifestsDirectory
+	config.Port = constants.KubeletPort
+	config.Authentication = kubeletconfig.KubeletAuthentication{
+		X509: kubeletconfig.KubeletX509Authentication{
+			ClientCAFile: constants.KubernetesCACert,
 		},
-		StaticPodPath:      constants.ManifestsDirectory,
-		Address:            "0.0.0.0",
-		Port:               constants.KubeletPort,
-		OOMScoreAdj:        pointer.ToInt32(constants.KubeletOOMScoreAdj),
-		RotateCertificates: true,
-		Authentication: kubeletconfig.KubeletAuthentication{
-			X509: kubeletconfig.KubeletX509Authentication{
-				ClientCAFile: constants.KubernetesCACert,
-			},
-			Webhook: kubeletconfig.KubeletWebhookAuthentication{
-				Enabled: pointer.ToBool(true),
-			},
-			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-				Enabled: pointer.ToBool(false),
-			},
+		Webhook: kubeletconfig.KubeletWebhookAuthentication{
+			Enabled: pointer.ToBool(true),
 		},
-		Authorization: kubeletconfig.KubeletAuthorization{
-			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
+		Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
+			Enabled: pointer.ToBool(false),
 		},
-		ClusterDomain:       dnsDomain,
-		ClusterDNS:          clusterDNS,
-		SerializeImagePulls: pointer.ToBool(false),
-		FailSwapOn:          pointer.ToBool(false),
-		CgroupRoot:          "/",
-		SystemCgroups:       constants.CgroupSystem,
-		SystemReserved: map[string]string{
+	}
+	config.Authorization = kubeletconfig.KubeletAuthorization{
+		Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
+	}
+	config.CgroupRoot = "/"
+	config.SystemCgroups = constants.CgroupSystem
+	config.KubeletCgroups = constants.CgroupKubelet
+	config.RotateCertificates = true
+	config.ProtectKernelDefaults = true
+
+	// fields which can be overridden
+	if config.Address == "" {
+		config.Address = "0.0.0.0"
+	}
+
+	if config.OOMScoreAdj == nil {
+		config.OOMScoreAdj = pointer.ToInt32(constants.KubeletOOMScoreAdj)
+	}
+
+	if config.ClusterDomain == "" {
+		config.ClusterDomain = dnsDomain
+	}
+
+	if len(config.ClusterDNS) == 0 {
+		config.ClusterDNS = clusterDNS
+	}
+
+	if config.SerializeImagePulls == nil {
+		config.SerializeImagePulls = pointer.ToBool(false)
+	}
+
+	if config.FailSwapOn == nil {
+		config.FailSwapOn = pointer.ToBool(false)
+	}
+
+	if len(config.SystemReserved) == 0 {
+		config.SystemReserved = map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
 			"memory":            constants.KubeletSystemReservedMemory,
 			"pid":               constants.KubeletSystemReservedPid,
 			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-		},
-		KubeletCgroups: constants.CgroupKubelet,
-		Logging: v1alpha1.LoggingConfiguration{
-			Format: "json",
-		},
-		ProtectKernelDefaults:          true,
-		StreamingConnectionIdleTimeout: metav1.Duration{Duration: 5 * time.Minute},
-		TLSMinVersion:                  "VersionTLS13",
+		}
 	}
+
+	if config.Logging.Format == "" {
+		config.Logging.Format = "json"
+	}
+
+	if config.StreamingConnectionIdleTimeout.Duration == 0 {
+		config.StreamingConnectionIdleTimeout = metav1.Duration{Duration: 5 * time.Minute}
+	}
+
+	if config.TLSMinVersion == "" {
+		config.TLSMinVersion = "VersionTLS13"
+	}
+
+	return config, nil
 }

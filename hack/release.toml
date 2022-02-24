@@ -16,7 +16,7 @@ preface = """\
 [notes]
 
     [notes.equinixMetal]
-        title = "Rename packer to equinixMetal in talos.platform"
+        title = "Equinix Metal Platform"
         description="""\
 `talos.platform` for Equinix Metal is renamed from `packet` to `equinixMetal`, the older name is still supported for backwards compatibility.
 """
@@ -35,8 +35,12 @@ with a single `--mode` flag that can take the following values:
 """
 
     [notes.kubelet]
-        title = "Kubelet conformance tweaks"
+        title = "Kubelet"
         description="""\
+Kubelet configuration can now be overridden with the `.machine.kubelet.extraConfig` machine configuration field.
+As most of the kubelet command line arguments are being depreacted, it is recommended to migrate to `extraConfig`
+instead of using `extraArgs`.
+
 A number of conformance tweaks have been made to the `kubelet` to allow it to run without
 `protectKernelDefaults`.
 This includes both kubelet configuration options and sysctls.
@@ -45,7 +49,7 @@ If your kubelet fails to start after the upgrade, please check the `kubelet` log
 """
 
     [notes.auditlog]
-        title = "API Server audit logs"
+        title = "API Server Audit Logs"
         description="""\
 `kube-apiserver` is now configured to store its audit logs separately from the `kube-apiserver` standard logs and directly to file.
 The `kube-apiserver` will maintain the rotation and retirement of these logs, which are stored in `/var/log/audit/`.

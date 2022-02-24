@@ -275,6 +275,7 @@ type Kubelet interface {
 	ClusterDNS() []string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
+	ExtraConfig() map[string]interface{}
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP
 }
