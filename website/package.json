@@ -9,6 +9,7 @@
   "dependencies": {
     "@gridsome/source-graphql": "^0.1.0",
     "gridsome": "^0.7.23",
+    "gridsome-plugin-algolia": "^2.1.4",
     "gridsome-source-docs": "github:andrewrynhard/gridsome-source-docs#main",
     "slugify": "^1.4.5",
     "tailwindcss-grid": "^1.2.1",

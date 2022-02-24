@@ -51,16 +51,4 @@ export default function (Vue, {router, head, isClient, appOptions}) {
         body: true,
         src: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js'
     })
-
-    head.script.push({
-        type: 'text/javascript',
-        body: true,
-        innerHTML: `algoliasearchNetlify({
-    appId: ${process.env.GRIDSOME_ALGOLIA_APP_ID},
-    apiKey: ${process.env.GRIDSOME_ALGOLIA_API_KEY}',
-    siteId: ${process.env.GRIDSOME_ALGOLIA_SITE_ID}',
-    branch: 'master',
-    selector: 'div#search',
-  });`
-    })
 }
