@@ -240,7 +240,7 @@ module.exports = {
             use: `gridsome-plugin-algolia`,
             options: {
                 appId: process.env.ALGOLIA_APP_ID ? process.env.ALGOLIA_APP_ID : 'xxxxxxxxxxx',
-                apiKey: process.env.ALGOLIA_ADMIN_KEY ? process.env.ALGOLIA_ADMIN_KEY : 'xxxxxxxxxxx',
+                apiKey: process.env.ALGOLIA_API_KEY ? process.env.ALGOLIA_API_KEY : 'xxxxxxxxxxx',
                 siteId: process.env.ALGOLIA_SITE_ID ? process.env.ALGOLIA_SITE_ID : 'xxxxxxxxxxx',
                 branch: 'master',
                 selector: 'div#search'
