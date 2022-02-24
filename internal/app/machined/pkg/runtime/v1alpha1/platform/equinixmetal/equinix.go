@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package packet
+package equinixmetal
 
 import (
 	"context"
@@ -23,33 +23,33 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
-// Metadata holds packet metadata info.
+// Metadata holds equinixmetal metadata info.
 type Metadata struct {
 	Hostname       string   `json:"hostname"`
 	Network        Network  `json:"network"`
 	PrivateSubnets []string `json:"private_subnets"`
 }
 
-// Network holds network info from the packet metadata.
+// Network holds network info from the equinixmetal metadata.
 type Network struct {
 	Bonding    Bonding     `json:"bonding"`
 	Interfaces []Interface `json:"interfaces"`
 	Addresses  []Address   `json:"addresses"`
 }
 
-// Bonding holds bonding info from the packet metadata.
+// Bonding holds bonding info from the equinixmetal metadata.
 type Bonding struct {
 	Mode int `json:"mode"`
 }
 
-// Interface holds interface info from the packet metadata.
+// Interface holds interface info from the equinixmetal metadata.
 type Interface struct {
 	Name string `json:"name"`
 	MAC  string `json:"mac"`
 	Bond string `json:"bond"`
 }
 
-// Address holds address info from the packet metadata.
+// Address holds address info from the equinixmetal metadata.
 type Address struct {
 	Public     bool   `json:"public"`
 	Management bool   `json:"management"`
@@ -63,51 +63,51 @@ type Address struct {
 }
 
 const (
-	// PacketUserDataEndpoint is the local metadata endpoint for Packet.
-	PacketUserDataEndpoint = "https://metadata.platformequinix.com/userdata"
-	// PacketMetaDataEndpoint is the local endpoint for machine info like networking.
-	PacketMetaDataEndpoint = "https://metadata.platformequinix.com/metadata"
+	// EquinixMetalUserDataEndpoint is the local metadata endpoint for Equinix.
+	EquinixMetalUserDataEndpoint = "https://metadata.platformequinix.com/userdata"
+	// EquinixMetalMetaDataEndpoint is the local endpoint for machine info like networking.
+	EquinixMetalMetaDataEndpoint = "https://metadata.platformequinix.com/metadata"
 )
 
-// Packet is a platform for Equinix Metal cloud.
-type Packet struct{}
+// EquinixMetal is a platform for EquinixMetal Metal cloud.
+type EquinixMetal struct{}
 
 // Name implements the platform.Platform interface.
-func (p *Packet) Name() string {
-	return "packet"
+func (p *EquinixMetal) Name() string {
+	return "equinix"
 }
 
 // Configuration implements the platform.Platform interface.
-func (p *Packet) Configuration(ctx context.Context) ([]byte, error) {
-	log.Printf("fetching machine config from: %q", PacketUserDataEndpoint)
+func (p *EquinixMetal) Configuration(ctx context.Context) ([]byte, error) {
+	log.Printf("fetching machine config from: %q", EquinixMetalUserDataEndpoint)
 
-	return download.Download(ctx, PacketUserDataEndpoint,
+	return download.Download(ctx, EquinixMetalUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Mode implements the platform.Platform interface.
-func (p *Packet) Mode() runtime.Mode {
+func (p *EquinixMetal) Mode() runtime.Mode {
 	return runtime.ModeMetal
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (p *Packet) KernelArgs() procfs.Parameters {
+func (p *EquinixMetal) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS1,115200n8"),
 	}
 }
 
-// ParseMetadata converts Equinix Metal (Packet) metadata into Talos network configuration.
+// ParseMetadata converts Equinix Metal metadata into Talos network configuration.
 //
 //nolint:gocyclo,cyclop
-func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetworkConfig, error) {
+func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	// 1. Links
 
 	// translate the int returned from bond mode metadata to the type needed by network resources
-	bondMode := nethelpers.BondMode(uint8(packetMetadata.Network.Bonding.Mode))
+	bondMode := nethelpers.BondMode(uint8(equinixMetadata.Network.Bonding.Mode))
 
 	// determine bond name and build list of interfaces enslaved by the bond
 	bondName := ""
@@ -117,7 +117,7 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
-	for _, iface := range packetMetadata.Network.Interfaces {
+	for _, iface := range equinixMetadata.Network.Interfaces {
 		if iface.Bond == "" {
 			continue
 		}
@@ -181,7 +181,7 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 
 	// 2. addresses
 
-	for _, addr := range packetMetadata.Network.Addresses {
+	for _, addr := range equinixMetadata.Network.Addresses {
 		if !(addr.Enabled && addr.Management) {
 			continue
 		}
@@ -210,7 +210,7 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 
 	// 3. routes
 
-	for _, addr := range packetMetadata.Network.Addresses {
+	for _, addr := range equinixMetadata.Network.Addresses {
 		if !(addr.Enabled && addr.Management) {
 			continue
 		}
@@ -252,7 +252,7 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 			networkConfig.Routes = append(networkConfig.Routes, route)
 		} else {
 			// for "Private" addresses, we add a route that goes out the gateway for the private subnets.
-			for _, privSubnet := range packetMetadata.PrivateSubnets {
+			for _, privSubnet := range equinixMetadata.PrivateSubnets {
 				gw, err := netaddr.ParseIP(addr.Gateway)
 				if err != nil {
 					return nil, err
@@ -283,12 +283,12 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 
 	// 4. hostname
 
-	if packetMetadata.Hostname != "" {
+	if equinixMetadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(packetMetadata.Hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(equinixMetadata.Hostname); err != nil {
 			return nil, err
 		}
 
@@ -299,20 +299,20 @@ func (p *Packet) ParseMetadata(packetMetadata *Metadata) (*runtime.PlatformNetwo
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (p *Packet) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
-	log.Printf("fetching equinix network config from: %q", PacketMetaDataEndpoint)
+func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching equinix network config from: %q", EquinixMetalMetaDataEndpoint)
 
-	metadataConfig, err := download.Download(ctx, PacketMetaDataEndpoint)
+	metadataConfig, err := download.Download(ctx, EquinixMetalMetaDataEndpoint)
 	if err != nil {
 		return err
 	}
 
-	var packetMetadata Metadata
-	if err = json.Unmarshal(metadataConfig, &packetMetadata); err != nil {
+	var equinixMetadata Metadata
+	if err = json.Unmarshal(metadataConfig, &equinixMetadata); err != nil {
 		return err
 	}
 
-	networkConfig, err := p.ParseMetadata(&packetMetadata)
+	networkConfig, err := p.ParseMetadata(&equinixMetadata)
 	if err != nil {
 		return err
 	}

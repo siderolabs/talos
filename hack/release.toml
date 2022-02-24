@@ -15,6 +15,12 @@ preface = """\
 
 [notes]
 
+    [notes.equinixMetal]
+        title = "Rename packer to equinixMetal in talos.platform"
+        description="""\
+`talos.platform` for Equinix Metal is renamed from `packet` to `equinixMetal`, the older name is still supported for backwards compatibility.
+"""
+
     [notes.applyconfig]
         title = "Apply Config Enhancements"
         description="""\

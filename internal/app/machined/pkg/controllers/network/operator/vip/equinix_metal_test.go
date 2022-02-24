@@ -18,7 +18,7 @@ import (
 )
 
 func TestEquinixMetalHandler(t *testing.T) {
-	// WARNING: this test requires interaction with Packet API with real device IDs and API token
+	// WARNING: this test requires interaction with Equinix Metal API with real device IDs and API token
 	// it is skipped by default unless following variables are set:
 	//   TALOS_EM_API_TOKEN
 	//   TALOS_EM_PROJECT_ID

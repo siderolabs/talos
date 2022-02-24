@@ -16,13 +16,13 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/digitalocean"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/gcp"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/oracle"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/scaleway"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/upcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
@@ -77,8 +77,9 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &oracle.Oracle{}
 	case "nocloud":
 		p = &nocloud.Nocloud{}
-	case "packet":
-		p = &packet.Packet{}
+	// "packet" kept for backwards compatibility
+	case "equinixMetal", "packet":
+		p = &equinixmetal.EquinixMetal{}
 	case "scaleway":
 		p = &scaleway.Scaleway{}
 	case "upcloud":

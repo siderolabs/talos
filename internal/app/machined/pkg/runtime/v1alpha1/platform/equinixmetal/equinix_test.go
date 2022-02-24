@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package packet_test
+package equinixmetal_test
 
 import (
 	_ "embed"
@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/packet"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
 )
 
 //go:embed testdata/metadata.json
@@ -23,9 +23,9 @@ var rawMetadata []byte
 var expectedNetworkConfig string
 
 func TestParseMetadata(t *testing.T) {
-	p := &packet.Packet{}
+	p := &equinixmetal.EquinixMetal{}
 
-	var m packet.Metadata
+	var m equinixmetal.Metadata
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 

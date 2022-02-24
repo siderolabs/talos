@@ -5,7 +5,7 @@ description: "Creating Talos cluster using Equinix Metal."
 
 ## Prerequisites
 
-This guide assumes the user has a working API token, the Equinix Metal CLI installed, and some familiarity with the CLI.
+This guide assumes the user has a working API token, the [Equinix Metal CLI](https://github.com/equinix/metal-cli/) installed, and some familiarity with the CLI.
 
 ## Network Booting
 
@@ -76,7 +76,7 @@ talosctl validate --config worker.yaml --mode metal
 #### Create the Control Plane Nodes
 
 ```bash
-packet device create \
+metal device create \
   --project-id $PROJECT_ID \
   --facility $FACILITY \
   --ipxe-script-url $PXE_SERVER \
@@ -91,7 +91,7 @@ packet device create \
 #### Create the Worker Nodes
 
 ```bash
-packet device create \
+metal device create \
   --project-id $PROJECT_ID \
   --facility $FACILITY \
   --ipxe-script-url $PXE_SERVER \

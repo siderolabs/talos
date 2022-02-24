@@ -97,12 +97,12 @@ func (handler *EquinixMetalHandler) Release(ctx context.Context) error {
 	return nil
 }
 
-// PacketMetaDataEndpoint is the local endpoint for machine info like networking.
-const PacketMetaDataEndpoint = "https://metadata.platformequinix.com/metadata"
+// EquinixMetalMetaDataEndpoint is the local endpoint for machine info like networking.
+const EquinixMetalMetaDataEndpoint = "https://metadata.platformequinix.com/metadata"
 
 // GetProjectAndDeviceIDs fills in parts of the spec based on the API token and instance metadata.
 func GetProjectAndDeviceIDs(ctx context.Context, spec *network.VIPEquinixMetalSpec) error {
-	metadataConfig, err := download.Download(ctx, PacketMetaDataEndpoint)
+	metadataConfig, err := download.Download(ctx, EquinixMetalMetaDataEndpoint)
 	if err != nil {
 		return fmt.Errorf("error downloading metadata: %w", err)
 	}
