@@ -114,7 +114,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.KubeletServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
 		},
-		&k8s.KubeletSpecController{},
+		&k8s.KubeletSpecController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&k8s.KubeletStaticPodController{},
 		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
