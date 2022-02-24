@@ -39,16 +39,4 @@ export default function (Vue, {router, head, isClient, appOptions}) {
         src: "/js/asciinema-player.js",
         body: true,
     });
-
-
-    head.link.push({
-        rel: 'stylesheet',
-        href: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.css'
-    })
-
-    head.script.push({
-        type: 'text/javascript',
-        body: true,
-        src: 'https://cdn.jsdelivr.net/npm/@algolia/algoliasearch-netlify-frontend@1/dist/algoliasearchNetlify.js'
-    })
 }
