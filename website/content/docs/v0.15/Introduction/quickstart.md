@@ -3,22 +3,34 @@ title: Quickstart
 weight: 2
 ---
 
-The easiest way to try Talos is by using the CLI (`talosctl`) to create a cluster on a machine with `docker` installed.
+There are two easy ways to try out Talos Linux.
+Instructions for each are detailed below.
 
-## Prerequisites
+## Katacoda Sandbox
 
-### `talosctl`
+First, you can explore a sandbox environment hosted on Katacoda.
+This approach has the benefit of having no prerequisites and being a bit more guided, so you can quickly learn how to interact with a cluster.
+
+Please visit Katacoda [here](https://katacoda.com/siderolabs/scenarios/talos-intro) to try it out.
+
+## Local Docker Cluster
+
+Another easy way to try Talos is by using the CLI (`talosctl`) to create a cluster on a machine with `docker` installed.
+
+### Prerequisites
+
+#### `talosctl`
 
 Download `talosctl`:
 
-#### `amd64`
+##### `amd64`
 
 ```bash
 curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
-#### `arm64`
+##### `arm64`
 
 For `linux` and `darwin` operating systems `talosctl` is also available for the `arm64` processor architecture.
 
@@ -27,11 +39,11 @@ curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases
 chmod +x /usr/local/bin/talosctl
 ```
 
-### `kubectl`
+#### `kubectl`
 
 Download `kubectl` via one of methods outlined in the [documentation](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 
-## Create the Cluster
+### Create the Cluster
 
 Now run the following:
 
@@ -48,7 +60,7 @@ talos-default-master-1   Ready    master   115s   v1.20.2   10.5.0.2      <none>
 talos-default-worker-1   Ready    <none>   115s   v1.20.2   10.5.0.3      <none>        Talos (v0.15.0)   <host kernel>    containerd://1.5.5
 ```
 
-## Destroy the Cluster
+### Destroy the Cluster
 
 When you are all done, remove the cluster:
 
