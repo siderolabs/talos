@@ -97,6 +97,7 @@ func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runti
 				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()
 				kubeletConfig.ExtraArgs = cfgProvider.Machine().Kubelet().ExtraArgs()
 				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
+				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()
 				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()
 
 				return nil

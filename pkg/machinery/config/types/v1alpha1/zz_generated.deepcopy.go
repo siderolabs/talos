@@ -947,6 +947,7 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	in.KubeletExtraConfig.DeepCopyInto(&out.KubeletExtraConfig)
 	in.KubeletNodeIP.DeepCopyInto(&out.KubeletNodeIP)
 	return
 }

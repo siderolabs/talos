@@ -335,6 +335,11 @@ func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 	return out
 }
 
+// ExtraConfig implements the config.Provider interface.
+func (k *KubeletConfig) ExtraConfig() map[string]interface{} {
+	return k.KubeletExtraConfig.Object
+}
+
 // RegisterWithFQDN implements the config.Provider interface.
 func (k *KubeletConfig) RegisterWithFQDN() bool {
 	return k.KubeletRegisterWithFQDN

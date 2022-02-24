@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -167,6 +169,55 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 					"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
 					"--node-ip=10.0.0.1",
 				}, spec.Args)
+
+			return nil
+		},
+	))
+}
+
+func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v2.0.0"
+	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
+	cfg.TypedSpec().ClusterDomain = "some.local"
+	cfg.TypedSpec().ExtraConfig = map[string]interface{}{
+		"serverTLSBootstrap": true,
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "foo.com"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
+
+	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
+	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.3")}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
+
+	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			kubeletSpec, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+			if err != nil {
+				if state.IsNotFoundError(err) {
+					return retry.ExpectedError(err)
+				}
+
+				return err
+			}
+
+			spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+
+			var kubeletConfiguration kubeletconfig.KubeletConfiguration
+
+			if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(spec.Config, &kubeletConfiguration); err != nil {
+				return err
+			}
+
+			suite.Assert().Equal("/", kubeletConfiguration.CgroupRoot)
+			suite.Assert().Equal(cfg.TypedSpec().ClusterDomain, kubeletConfiguration.ClusterDomain)
+			suite.Assert().True(kubeletConfiguration.ServerTLSBootstrap)
 
 			return nil
 		},

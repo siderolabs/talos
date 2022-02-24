@@ -551,7 +551,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 6)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 7)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -582,24 +582,31 @@ func init() {
 	KubeletConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `extraMounts` field is used to add additional mounts to the kubelet container."
 
 	KubeletConfigDoc.Fields[3].AddExample("", kubeletExtraMountsExample)
-	KubeletConfigDoc.Fields[4].Name = "registerWithFQDN"
-	KubeletConfigDoc.Fields[4].Type = "bool"
+	KubeletConfigDoc.Fields[4].Name = "extraConfig"
+	KubeletConfigDoc.Fields[4].Type = "Unstructured"
 	KubeletConfigDoc.Fields[4].Note = ""
-	KubeletConfigDoc.Fields[4].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
-	KubeletConfigDoc.Fields[4].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
-	KubeletConfigDoc.Fields[4].Values = []string{
+	KubeletConfigDoc.Fields[4].Description = "The `extraConfig` field is used to provide kubelet configuration overrides."
+	KubeletConfigDoc.Fields[4].Comments[encoder.LineComment] = "The `extraConfig` field is used to provide kubelet configuration overrides."
+
+	KubeletConfigDoc.Fields[4].AddExample("", kubeletExtraConfigExample)
+	KubeletConfigDoc.Fields[5].Name = "registerWithFQDN"
+	KubeletConfigDoc.Fields[5].Type = "bool"
+	KubeletConfigDoc.Fields[5].Note = ""
+	KubeletConfigDoc.Fields[5].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
+	KubeletConfigDoc.Fields[5].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
+	KubeletConfigDoc.Fields[5].Values = []string{
 		"true",
 		"yes",
 		"false",
 		"no",
 	}
-	KubeletConfigDoc.Fields[5].Name = "nodeIP"
-	KubeletConfigDoc.Fields[5].Type = "KubeletNodeIPConfig"
-	KubeletConfigDoc.Fields[5].Note = ""
-	KubeletConfigDoc.Fields[5].Description = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
-	KubeletConfigDoc.Fields[5].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
+	KubeletConfigDoc.Fields[6].Name = "nodeIP"
+	KubeletConfigDoc.Fields[6].Type = "KubeletNodeIPConfig"
+	KubeletConfigDoc.Fields[6].Note = ""
+	KubeletConfigDoc.Fields[6].Description = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
+	KubeletConfigDoc.Fields[6].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
 
-	KubeletConfigDoc.Fields[5].AddExample("", kubeletNodeIPExample)
+	KubeletConfigDoc.Fields[6].AddExample("", kubeletNodeIPExample)
 
 	KubeletNodeIPConfigDoc.Type = "KubeletNodeIPConfig"
 	KubeletNodeIPConfigDoc.Comments[encoder.LineComment] = "KubeletNodeIPConfig represents the kubelet node IP configuration."
