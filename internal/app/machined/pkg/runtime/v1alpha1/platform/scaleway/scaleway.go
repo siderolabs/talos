@@ -67,6 +67,21 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 		ConfigLayer: network.ConfigPlatform,
 	})
 
+	gw, _ := netaddr.ParseIPPrefix("169.254.42.42/32") //nolint:errcheck
+	route := network.RouteSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		OutLinkName: "eth0",
+		Destination: gw,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Family:      nethelpers.FamilyInet4,
+		Priority:    1024,
+	}
+
+	route.Normalize()
+	networkConfig.Routes = []network.RouteSpecSpec{route}
+
 	networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
 		Operator:  network.OperatorDHCP4,
 		LinkName:  "eth0",
