@@ -179,5 +179,16 @@ func (s *Scaleway) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.
 		return err
 	}
 
+	networkConfig, err := s.ParseMetadata(metadata)
+	if err != nil {
+		return err
+	}
+
+	select {
+	case ch <- networkConfig:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
 	return nil
 }
