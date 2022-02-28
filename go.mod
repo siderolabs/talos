@@ -19,7 +19,7 @@ replace (
 require (
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
-	k8s.io/apiserver v0.23.4 // indirect
+	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4 // indirect
 	k8s.io/client-go v0.23.4
 	k8s.io/component-base v0.23.4
@@ -29,10 +29,10 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.3.0
+	cloud.google.com/go/compute v1.5.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.0.0
-	github.com/aws/aws-sdk-go v1.43.2
+	github.com/aws/aws-sdk-go v1.43.8
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.3
@@ -40,7 +40,7 @@ require (
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
-	github.com/containernetworking/plugins v1.0.1
+	github.com/containernetworking/plugins v1.1.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f
@@ -55,7 +55,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-cmp v0.5.7
-	github.com/google/nftables v0.0.0-20220219195722-8aa05f01eafc
+	github.com/google/nftables v0.0.0-20220221214239-211824995dcb
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -113,11 +113,11 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.2
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
-	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8
+	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
 	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
@@ -272,9 +272,9 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
-	google.golang.org/api v0.67.0 // indirect
+	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c // indirect
+	google.golang.org/genproto v0.0.0-20220228155957-1da8797a5878 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

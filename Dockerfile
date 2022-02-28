@@ -683,7 +683,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:17.5.0-alpine AS lint-markdown
+FROM node:17.6.0-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
