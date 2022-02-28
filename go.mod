@@ -19,7 +19,7 @@ replace (
 require (
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
-	k8s.io/apiserver v0.23.4 // indirect
+	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4 // indirect
 	k8s.io/client-go v0.23.4
 	k8s.io/component-base v0.23.4
@@ -29,7 +29,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.3.0
+	cloud.google.com/go/compute v1.5.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.0.0
 	github.com/aws/aws-sdk-go v1.43.2
@@ -272,9 +272,9 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
-	google.golang.org/api v0.67.0 // indirect
+	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220218161850-94dd64e39d7c // indirect
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
