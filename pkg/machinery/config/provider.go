@@ -379,6 +379,7 @@ type APIServer interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
+	Env() Env
 	DisablePodSecurityPolicy() bool
 	AdmissionControl() []AdmissionPlugin
 }
@@ -395,6 +396,7 @@ type ControllerManager interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
+	Env() Env
 }
 
 // Proxy defines the requirements for a config that pertains to the kube-proxy
@@ -417,6 +419,7 @@ type Scheduler interface {
 	Image() string
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
+	Env() Env
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related

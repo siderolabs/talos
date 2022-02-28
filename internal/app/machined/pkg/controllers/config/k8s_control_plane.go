@@ -151,6 +151,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
 			ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
 			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+			EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 		})
 
@@ -185,13 +186,14 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 
 	return r.Modify(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
-			Enabled:       !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
-			Image:         cfgProvider.Cluster().ControllerManager().Image(),
-			CloudProvider: cloudProvider,
-			PodCIDRs:      cfgProvider.Cluster().Network().PodCIDRs(),
-			ServiceCIDRs:  cfgProvider.Cluster().Network().ServiceCIDRs(),
-			ExtraArgs:     cfgProvider.Cluster().ControllerManager().ExtraArgs(),
-			ExtraVolumes:  convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
+			Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
+			Image:                cfgProvider.Cluster().ControllerManager().Image(),
+			CloudProvider:        cloudProvider,
+			PodCIDRs:             cfgProvider.Cluster().Network().PodCIDRs(),
+			ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
+			ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
+			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
+			EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
 		})
 
 		return nil
@@ -201,10 +203,11 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Modify(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
 		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
-			Enabled:      !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
-			Image:        cfgProvider.Cluster().Scheduler().Image(),
-			ExtraArgs:    cfgProvider.Cluster().Scheduler().ExtraArgs(),
-			ExtraVolumes: convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
+			Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
+			Image:                cfgProvider.Cluster().Scheduler().Image(),
+			ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
+			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
+			EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
 		})
 
 		return nil

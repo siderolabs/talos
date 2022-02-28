@@ -1397,6 +1397,9 @@ type APIServerConfig struct {
 	//     Extra volumes to mount to the API server static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 	//   description: |
+	//     The `env` field allows for the addition of environment variables for the control plane component.
+	EnvConfig Env `yaml:"env,omitempty"`
+	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
 	CertSANs []string `yaml:"certSANs,omitempty"`
 	//   description: |
@@ -1434,6 +1437,9 @@ type ControllerManagerConfig struct {
 	//   description: |
 	//     Extra volumes to mount to the controller manager static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
+	//   description: |
+	//     The `env` field allows for the addition of environment variables for the control plane component.
+	EnvConfig Env `yaml:"env,omitempty"`
 }
 
 // ProxyConfig represents the kube proxy configuration options.
@@ -1470,6 +1476,9 @@ type SchedulerConfig struct {
 	//   description: |
 	//     Extra volumes to mount to the scheduler static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
+	//   description: |
+	//     The `env` field allows for the addition of environment variables for the control plane component.
+	EnvConfig Env `yaml:"env,omitempty"`
 }
 
 // EtcdConfig represents the etcd configuration options.

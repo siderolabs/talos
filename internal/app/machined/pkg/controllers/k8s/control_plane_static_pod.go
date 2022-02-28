@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -248,6 +249,32 @@ func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
 	return result
 }
 
+func envVars(environment map[string]string) []v1.EnvVar {
+	if len(environment) == 0 {
+		return nil
+	}
+
+	keys := make([]string, 0, len(environment))
+
+	for k := range environment {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	result := make([]v1.EnvVar, 0, len(environment))
+
+	for _, k := range keys {
+		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
+		result = append(result, v1.EnvVar{
+			Name:  k,
+			Value: strings.ReplaceAll(environment[k], "$", "$$"),
+		})
+	}
+
+	return result
+}
+
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
 	cfg := configResource.APIServer()
@@ -364,16 +391,18 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 						Name:    "kube-apiserver",
 						Image:   cfg.Image,
 						Command: args,
-						Env: []v1.EnvVar{
-							{
-								Name: "POD_IP",
-								ValueFrom: &v1.EnvVarSource{
-									FieldRef: &v1.ObjectFieldSelector{
-										FieldPath: "status.podIP",
+						Env: append(
+							[]v1.EnvVar{
+								{
+									Name: "POD_IP",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "status.podIP",
+										},
 									},
 								},
 							},
-						},
+							envVars(cfg.EnvironmentVariables)...),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
@@ -516,6 +545,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						Name:    "kube-controller-manager",
 						Image:   cfg.Image,
 						Command: args,
+						Env:     envVars(cfg.EnvironmentVariables),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
@@ -625,6 +655,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						Name:    "kube-scheduler",
 						Image:   cfg.Image,
 						Command: args,
+						Env:     envVars(cfg.EnvironmentVariables),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",

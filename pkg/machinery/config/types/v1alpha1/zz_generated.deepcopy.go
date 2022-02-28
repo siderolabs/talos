@@ -24,6 +24,13 @@ func (in *APIServerConfig) DeepCopyInto(out *APIServerConfig) {
 		*out = make([]VolumeMountConfig, len(*in))
 		copy(*out, *in)
 	}
+	if in.EnvConfig != nil {
+		in, out := &in.EnvConfig, &out.EnvConfig
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.CertSANs != nil {
 		in, out := &in.CertSANs, &out.CertSANs
 		*out = make([]string, len(*in))
@@ -398,6 +405,13 @@ func (in *ControllerManagerConfig) DeepCopyInto(out *ControllerManagerConfig) {
 		in, out := &in.ExtraVolumesConfig, &out.ExtraVolumesConfig
 		*out = make([]VolumeMountConfig, len(*in))
 		copy(*out, *in)
+	}
+	if in.EnvConfig != nil {
+		in, out := &in.EnvConfig, &out.EnvConfig
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	return
 }
@@ -1548,6 +1562,13 @@ func (in *SchedulerConfig) DeepCopyInto(out *SchedulerConfig) {
 		in, out := &in.ExtraVolumesConfig, &out.ExtraVolumesConfig
 		*out = make([]VolumeMountConfig, len(*in))
 		copy(*out, *in)
+	}
+	if in.EnvConfig != nil {
+		in, out := &in.EnvConfig, &out.EnvConfig
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
 	}
 	return
 }

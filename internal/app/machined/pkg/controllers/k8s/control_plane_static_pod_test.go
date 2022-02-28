@@ -349,7 +349,104 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 	}
 }
 
-func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExeptScheduler() {
+func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
+	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+
+	tests := []struct {
+		env      map[string]string
+		expected []v1.EnvVar
+	}{
+		{
+			env: nil,
+			expected: []v1.EnvVar{
+				{
+					Name: "POD_IP",
+					ValueFrom: &v1.EnvVarSource{
+						FieldRef: &v1.ObjectFieldSelector{
+							FieldPath: "status.podIP",
+						},
+					},
+				},
+			},
+		},
+		{
+			env: map[string]string{
+				"foo": "bar",
+				"baz": "$(foo)",
+			},
+			expected: []v1.EnvVar{
+				{
+					Name: "POD_IP",
+					ValueFrom: &v1.EnvVarSource{
+						FieldRef: &v1.ObjectFieldSelector{
+							FieldPath: "status.podIP",
+						},
+					},
+				},
+				{
+					Name:  "baz",
+					Value: "$$(foo)",
+				},
+				{
+					Name:  "foo",
+					Value: "bar",
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		configAPIServer := config.NewK8sControlPlaneAPIServer()
+
+		configAPIServer.SetAPIServer(config.K8sControlPlaneAPIServerSpec{
+			EnvironmentVariables: test.env,
+		})
+
+		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+
+		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertControlPlaneStaticPods(
+					[]string{
+						"kube-apiserver",
+					},
+				)
+			},
+		))
+
+		r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined))
+		suite.Require().NoError(err)
+
+		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+		suite.Require().NoError(err)
+
+		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
+
+		suite.Assert().Equal(test.expected, apiServerPod.Spec.Containers[0].Env)
+
+		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
+
+		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				list, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+				if err != nil {
+					return err
+				}
+
+				if len(list.Items) > 0 {
+					return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
+				}
+
+				return nil
+			},
+		))
+	}
+}
+
+func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptScheduler() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configAPIServer := config.NewK8sControlPlaneAPIServer()

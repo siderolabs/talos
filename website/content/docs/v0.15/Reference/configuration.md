@@ -2985,6 +2985,18 @@ Extra volumes to mount to the API server static pod.
 <hr />
 <div class="dd">
 
+<code>env</code>  <i>Env</i>
+
+</div>
+<div class="dt">
+
+The `env` field allows for the addition of environment variables for the control plane component.
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>certSANs</code>  <i>[]string</i>
 
 </div>
@@ -3171,6 +3183,18 @@ Extra volumes to mount to the controller manager static pod.
 </div>
 
 <hr />
+<div class="dd">
+
+<code>env</code>  <i>Env</i>
+
+</div>
+<div class="dt">
+
+The `env` field allows for the addition of environment variables for the control plane component.
+
+</div>
+
+<hr />
 
 
 
@@ -3323,6 +3347,18 @@ Extra arguments to supply to the scheduler.
 <div class="dt">
 
 Extra volumes to mount to the scheduler static pod.
+
+</div>
+
+<hr />
+<div class="dd">
+
+<code>env</code>  <i>Env</i>
+
+</div>
+<div class="dt">
+
+The `env` field allows for the addition of environment variables for the control plane component.
 
 </div>
 

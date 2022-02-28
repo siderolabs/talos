@@ -997,7 +997,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 6)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 7)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -1015,23 +1015,28 @@ func init() {
 	APIServerConfigDoc.Fields[2].Note = ""
 	APIServerConfigDoc.Fields[2].Description = "Extra volumes to mount to the API server static pod."
 	APIServerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the API server static pod."
-	APIServerConfigDoc.Fields[3].Name = "certSANs"
-	APIServerConfigDoc.Fields[3].Type = "[]string"
+	APIServerConfigDoc.Fields[3].Name = "env"
+	APIServerConfigDoc.Fields[3].Type = "Env"
 	APIServerConfigDoc.Fields[3].Note = ""
-	APIServerConfigDoc.Fields[3].Description = "Extra certificate subject alternative names for the API server's certificate."
-	APIServerConfigDoc.Fields[3].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
-	APIServerConfigDoc.Fields[4].Name = "disablePodSecurityPolicy"
-	APIServerConfigDoc.Fields[4].Type = "bool"
+	APIServerConfigDoc.Fields[3].Description = "The `env` field allows for the addition of environment variables for the control plane component."
+	APIServerConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables for the control plane component."
+	APIServerConfigDoc.Fields[4].Name = "certSANs"
+	APIServerConfigDoc.Fields[4].Type = "[]string"
 	APIServerConfigDoc.Fields[4].Note = ""
-	APIServerConfigDoc.Fields[4].Description = "Disable PodSecurityPolicy in the API server and default manifests."
-	APIServerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Disable PodSecurityPolicy in the API server and default manifests."
-	APIServerConfigDoc.Fields[5].Name = "admissionControl"
-	APIServerConfigDoc.Fields[5].Type = "[]AdmissionPluginConfig"
+	APIServerConfigDoc.Fields[4].Description = "Extra certificate subject alternative names for the API server's certificate."
+	APIServerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Extra certificate subject alternative names for the API server's certificate."
+	APIServerConfigDoc.Fields[5].Name = "disablePodSecurityPolicy"
+	APIServerConfigDoc.Fields[5].Type = "bool"
 	APIServerConfigDoc.Fields[5].Note = ""
-	APIServerConfigDoc.Fields[5].Description = "Configure the API server admission plugins."
-	APIServerConfigDoc.Fields[5].Comments[encoder.LineComment] = "Configure the API server admission plugins."
+	APIServerConfigDoc.Fields[5].Description = "Disable PodSecurityPolicy in the API server and default manifests."
+	APIServerConfigDoc.Fields[5].Comments[encoder.LineComment] = "Disable PodSecurityPolicy in the API server and default manifests."
+	APIServerConfigDoc.Fields[6].Name = "admissionControl"
+	APIServerConfigDoc.Fields[6].Type = "[]AdmissionPluginConfig"
+	APIServerConfigDoc.Fields[6].Note = ""
+	APIServerConfigDoc.Fields[6].Description = "Configure the API server admission plugins."
+	APIServerConfigDoc.Fields[6].Comments[encoder.LineComment] = "Configure the API server admission plugins."
 
-	APIServerConfigDoc.Fields[5].AddExample("", admissionControlConfigExample)
+	APIServerConfigDoc.Fields[6].AddExample("", admissionControlConfigExample)
 
 	AdmissionPluginConfigDoc.Type = "AdmissionPluginConfig"
 	AdmissionPluginConfigDoc.Comments[encoder.LineComment] = "AdmissionPluginConfig represents the API server admission plugin configuration."
@@ -1067,7 +1072,7 @@ func init() {
 			FieldName: "controllerManager",
 		},
 	}
-	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 3)
+	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 4)
 	ControllerManagerConfigDoc.Fields[0].Name = "image"
 	ControllerManagerConfigDoc.Fields[0].Type = "string"
 	ControllerManagerConfigDoc.Fields[0].Note = ""
@@ -1085,6 +1090,11 @@ func init() {
 	ControllerManagerConfigDoc.Fields[2].Note = ""
 	ControllerManagerConfigDoc.Fields[2].Description = "Extra volumes to mount to the controller manager static pod."
 	ControllerManagerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the controller manager static pod."
+	ControllerManagerConfigDoc.Fields[3].Name = "env"
+	ControllerManagerConfigDoc.Fields[3].Type = "Env"
+	ControllerManagerConfigDoc.Fields[3].Note = ""
+	ControllerManagerConfigDoc.Fields[3].Description = "The `env` field allows for the addition of environment variables for the control plane component."
+	ControllerManagerConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables for the control plane component."
 
 	ProxyConfigDoc.Type = "ProxyConfig"
 	ProxyConfigDoc.Comments[encoder.LineComment] = "ProxyConfig represents the kube proxy configuration options."
@@ -1134,7 +1144,7 @@ func init() {
 			FieldName: "scheduler",
 		},
 	}
-	SchedulerConfigDoc.Fields = make([]encoder.Doc, 3)
+	SchedulerConfigDoc.Fields = make([]encoder.Doc, 4)
 	SchedulerConfigDoc.Fields[0].Name = "image"
 	SchedulerConfigDoc.Fields[0].Type = "string"
 	SchedulerConfigDoc.Fields[0].Note = ""
@@ -1152,6 +1162,11 @@ func init() {
 	SchedulerConfigDoc.Fields[2].Note = ""
 	SchedulerConfigDoc.Fields[2].Description = "Extra volumes to mount to the scheduler static pod."
 	SchedulerConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra volumes to mount to the scheduler static pod."
+	SchedulerConfigDoc.Fields[3].Name = "env"
+	SchedulerConfigDoc.Fields[3].Type = "Env"
+	SchedulerConfigDoc.Fields[3].Note = ""
+	SchedulerConfigDoc.Fields[3].Description = "The `env` field allows for the addition of environment variables for the control plane component."
+	SchedulerConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables for the control plane component."
 
 	EtcdConfigDoc.Type = "EtcdConfig"
 	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."

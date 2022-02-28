@@ -57,6 +57,7 @@ type K8sControlPlaneAPIServerSpec struct {
 	ServiceCIDRs             []string          `yaml:"serviceCIDR"`
 	ExtraArgs                map[string]string `yaml:"extraArgs"`
 	ExtraVolumes             []K8sExtraVolume  `yaml:"extraVolumes"`
+	EnvironmentVariables     map[string]string `yaml:"environmentVariables"`
 	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
 }
 
@@ -73,21 +74,23 @@ type AdmissionPluginSpec struct {
 
 // K8sControlPlaneControllerManagerSpec is configuration for kube-controller-manager.
 type K8sControlPlaneControllerManagerSpec struct {
-	Enabled       bool              `yaml:"enabled"`
-	Image         string            `yaml:"image"`
-	CloudProvider string            `yaml:"cloudProvider"`
-	PodCIDRs      []string          `yaml:"podCIDRs"`
-	ServiceCIDRs  []string          `yaml:"serviceCIDRs"`
-	ExtraArgs     map[string]string `yaml:"extraArgs"`
-	ExtraVolumes  []K8sExtraVolume  `yaml:"extraVolumes"`
+	Enabled              bool              `yaml:"enabled"`
+	Image                string            `yaml:"image"`
+	CloudProvider        string            `yaml:"cloudProvider"`
+	PodCIDRs             []string          `yaml:"podCIDRs"`
+	ServiceCIDRs         []string          `yaml:"serviceCIDRs"`
+	ExtraArgs            map[string]string `yaml:"extraArgs"`
+	ExtraVolumes         []K8sExtraVolume  `yaml:"extraVolumes"`
+	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
 }
 
 // K8sControlPlaneSchedulerSpec is configuration for kube-scheduler.
 type K8sControlPlaneSchedulerSpec struct {
-	Enabled      bool              `yaml:"enabled"`
-	Image        string            `yaml:"image"`
-	ExtraArgs    map[string]string `yaml:"extraArgs"`
-	ExtraVolumes []K8sExtraVolume  `yaml:"extraVolumes"`
+	Enabled              bool              `yaml:"enabled"`
+	Image                string            `yaml:"image"`
+	ExtraArgs            map[string]string `yaml:"extraArgs"`
+	ExtraVolumes         []K8sExtraVolume  `yaml:"extraVolumes"`
+	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
 }
 
 // K8sManifestsSpec is configuration for manifests.

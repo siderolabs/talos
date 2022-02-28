@@ -37,3 +37,8 @@ func (c *ControllerManagerConfig) ExtraVolumes() []config.VolumeMount {
 
 	return volumes
 }
+
+// Env implements the config.ControllerManager interface.
+func (c *ControllerManagerConfig) Env() Env {
+	return c.EnvConfig
+}

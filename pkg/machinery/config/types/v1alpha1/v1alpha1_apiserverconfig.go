@@ -38,6 +38,11 @@ func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
 	return volumes
 }
 
+// Env implements the config.APIServer interface.
+func (a *APIServerConfig) Env() Env {
+	return a.EnvConfig
+}
+
 // DisablePodSecurityPolicy implements the config.APIServer interface.
 func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
 	return a.DisablePodSecurityPolicyConfig

@@ -37,3 +37,8 @@ func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
 
 	return volumes
 }
+
+// Env implements the config.Scheduler interface.
+func (s *SchedulerConfig) Env() Env {
+	return s.EnvConfig
+}

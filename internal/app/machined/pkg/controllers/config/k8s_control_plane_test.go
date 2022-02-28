@@ -180,6 +180,33 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 	}, apiServerCfg.ExtraVolumes)
 }
 
+func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+			APIServerConfig: &v1alpha1.APIServerConfig{
+				EnvConfig: v1alpha1.Env{
+					"HTTP_PROXY": "foo",
+				},
+			},
+		},
+	})
+
+	apiServerCfg := suite.setupMachine(cfg)
+	suite.Assert().Equal(map[string]string{
+		"HTTP_PROXY": "foo",
+	}, apiServerCfg.EnvironmentVariables)
+}
+
 func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
