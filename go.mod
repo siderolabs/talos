@@ -19,7 +19,7 @@ replace (
 require (
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
-	k8s.io/apiserver v0.23.4 // indirect
+	k8s.io/apiserver v0.23.4
 	k8s.io/cli-runtime v0.23.4 // indirect
 	k8s.io/client-go v0.23.4
 	k8s.io/component-base v0.23.4
@@ -32,7 +32,7 @@ require (
 	cloud.google.com/go/compute v1.3.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.0.0
-	github.com/aws/aws-sdk-go v1.43.2
+	github.com/aws/aws-sdk-go v1.43.7
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.3
