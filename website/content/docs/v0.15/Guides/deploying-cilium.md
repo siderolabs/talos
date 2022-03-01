@@ -17,7 +17,8 @@ helm repo add cilium https://helm.cilium.io/
 helm repo update
 ```
 
-This documentation will outline installing Cilium CNI v1.11.1 on Talos in four different ways.
+This documentation will outline installing Cilium CNI v1.11.2 on Talos in four different ways.
+Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes.
 Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.11/gettingstarted/kubeproxy-free/)
 
 ## Machine config preparation
@@ -49,8 +50,9 @@ During this window you can install Cilium manually by running the following:
 
 ```bash
 helm install cilium cilium/cilium \
-    --version 1.11.1 \
-    --namespace kube-system
+    --version 1.11.2 \
+    --namespace kube-system \
+    --set ipam.mode=kubernetes
 ```
 
 Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
@@ -60,8 +62,9 @@ export KUBERNETES_API_SERVER_ADDRESS=<>
 export KUBERNETES_API_SERVER_PORT=6443
 
 helm install cilium cilium/cilium \
-    --version 1.11.1 \
+    --version 1.11.2 \
     --namespace kube-system \
+    --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=strict \
     --set k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
     --set k8sServicePort="${KUBERNETES_API_SERVER_PORT}"
@@ -75,8 +78,9 @@ Instead of directly installing Cilium you can instead first generate the manifes
 
 ```bash
 helm template cilium cilium/cilium \
-    --version 1.11.1 \
-    --namespace kube-system > cilium.yaml
+    --version 1.11.2 \
+    --namespace kube-system \
+    --set ipam.mode=kubernetes > cilium.yaml
 
 kubectl apply -f cilium.yaml
 ```
@@ -88,8 +92,9 @@ export KUBERNETES_API_SERVER_ADDRESS=<>
 export KUBERNETES_API_SERVER_PORT=6443
 
 helm template cilium cilium/cilium \
-    --version 1.11.1 \
+    --version 1.11.2 \
     --namespace kube-system \
+    --set ipam.mode=kubernetes \
     --set kubeProxyReplacement=strict \
     --set k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
     --set k8sServicePort="${KUBERNETES_API_SERVER_PORT}" > cilium.yaml
@@ -157,11 +162,6 @@ As the inline manifest is processed from top to bottom make sure to manually put
 - If you need to update a manifest make sure to first edit all control plane machine configurations and then run `talosctl upgrade-k8s` as it will take care of updating inline manifests.
 
 ## Known issues
-
-- Talos uses the `podSubnets` and `serviceSubnets` settings under the control plane `cluster` config to determine some network settings.
-Cilium by default (Cluster Scope IPAM) uses its own configuration.
-Until Talos is more aware of this it would be best to keep these CIDR ranges manually in sync.
-For more details: [add Node.PodCIDRs to the k8s nodeadress filter](https://github.com/talos-systems/talos/issues/4212)
 
 - Currently there is an interaction between a Kubespan enabled Talos cluster and Cilium that results in the cluster going down during bootstrap after applying the Cilium manifests.
 For more details: [Kubespan and Cilium compatiblity: etcd is failing](https://github.com/talos-systems/talos/issues/4836)
