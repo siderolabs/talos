@@ -46,6 +46,10 @@ var lsCmd = &cobra.Command{
 		return completePathFromNode(toComplete), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if recurse && recursionDepth != 1 {
+			return fmt.Errorf("only one of flags --recurse and --depth can be specified at the same time")
+		}
+
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			rootDir := "/"
 
@@ -71,9 +75,13 @@ var lsCmd = &cobra.Command{
 				}
 			}
 
+			if recurse {
+				recursionDepth = -1
+			}
+
 			stream, err := c.LS(ctx, &machineapi.ListRequest{
 				Root:           rootDir,
-				Recurse:        recurse,
+				Recurse:        recursionDepth > 1 || recurse,
 				RecursionDepth: recursionDepth,
 				Types:          reqTypes,
 			})
@@ -211,7 +219,7 @@ func init() {
 	lsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
 	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
 	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
-	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
+	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 1, "maximum recursion depth")
 	lsCmd.Flags().StringSliceVarP(&types, "type", "t", nil, typesHelp)
 	addCommand(lsCmd)
 }

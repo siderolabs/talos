@@ -41,7 +41,7 @@ var duCmd = &cobra.Command{
 			}
 
 			stream, err := c.DiskUsage(ctx, &machineapi.DiskUsageRequest{
-				RecursionDepth: recursionDepth,
+				RecursionDepth: recursionDepth + 1,
 				All:            all,
 				Threshold:      threshold,
 				Paths:          paths,
