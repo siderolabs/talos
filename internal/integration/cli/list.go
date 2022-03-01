@@ -87,25 +87,14 @@ func (suite *ListSuite) TestDepth() {
 		{separators: 0},
 
 		{separators: 0, flags: []string{"--recurse=false"}},
-		{separators: 5, flags: []string{"--recurse=true"}},
 
 		{separators: 0, flags: []string{"--depth=-1"}},
 		{separators: 0, flags: []string{"--depth=0"}},
 		{separators: 0, flags: []string{"--depth=1"}},
-		{separators: 0, flags: []string{"--depth=2"}},
-		{separators: 0, flags: []string{"--depth=3"}},
+		{separators: 1, flags: []string{"--depth=2"}},
+		{separators: 2, flags: []string{"--depth=3"}},
 
-		{separators: 0, flags: []string{"--recurse=false", "--depth=-1"}},
-		{separators: 0, flags: []string{"--recurse=false", "--depth=0"}},
-		{separators: 0, flags: []string{"--recurse=false", "--depth=1"}},
-		{separators: 0, flags: []string{"--recurse=false", "--depth=2"}},
-		{separators: 0, flags: []string{"--recurse=false", "--depth=3"}},
-
-		{separators: 5, flags: []string{"--recurse=true", "--depth=-1"}},
-		{separators: 5, flags: []string{"--recurse=true", "--depth=0"}},
-		{separators: 0, flags: []string{"--recurse=true", "--depth=1"}},
-		{separators: 1, flags: []string{"--recurse=true", "--depth=2"}},
-		{separators: 2, flags: []string{"--recurse=true", "--depth=3"}},
+		{separators: 5, flags: []string{"--recurse=true"}},
 	} {
 		test := test
 		suite.Run(strings.Join(test.flags, ","), func() {

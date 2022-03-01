@@ -95,7 +95,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 		}))
 
 	// check total calculation
-	suite.RunCLI([]string{"usage", "--nodes", node, folder, "-d2", "--all"},
+	suite.RunCLI([]string{"usage", "--nodes", node, folder, "-d1", "--all"},
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Split(strings.TrimSpace(stdout), "\n")
 			if len(lines) == 1 {

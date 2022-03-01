@@ -1470,7 +1470,7 @@ talosctl list [path] [flags]
 ### Options
 
 ```
-  -d, --depth int32    maximum recursion depth
+  -d, --depth int32    maximum recursion depth (default 1)
   -h, --help           help for list
   -H, --humanize       humanize size and time in the output
   -l, --long           display additional file details
