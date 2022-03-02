@@ -127,7 +127,7 @@ Static pod definitions can be updated without a node reboot.
 """
 
     [notes.k8sversion]
-        title = "Pinned Kubernets Version"
+        title = "Pinned Kubernetes Version"
         description="""\
 Command `talosctl gen config` now defaults to Kubernetes version pinning in the generate machine configuration.
 Previously default was to omit explicit Kubernetes version, so Talos picked up the default version it was built against.
