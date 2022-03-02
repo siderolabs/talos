@@ -62,12 +62,6 @@ FROM --platform=arm64 ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio-arm64
 FROM --platform=amd64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/open-iscsi:${PKGS} AS pkg-open-iscsi-arm64
-
-FROM --platform=amd64 ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/open-isns:${PKGS} AS pkg-open-isns-arm64
-
 FROM --platform=amd64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-amd64
 FROM --platform=arm64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-arm64
 
@@ -371,8 +365,6 @@ COPY --from=pkg-libseccomp-amd64 / /rootfs
 COPY --from=pkg-lvm2-amd64 / /rootfs
 COPY --from=pkg-libaio-amd64 / /rootfs
 COPY --from=pkg-musl-amd64 / /rootfs
-COPY --from=pkg-open-iscsi-amd64 / /rootfs
-COPY --from=pkg-open-isns-amd64 / /rootfs
 COPY --from=pkg-runc-amd64 / /rootfs
 COPY --from=pkg-xfsprogs-amd64 / /rootfs
 COPY --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
@@ -416,8 +408,6 @@ COPY --from=pkg-libseccomp-arm64 / /rootfs
 COPY --from=pkg-lvm2-arm64 / /rootfs
 COPY --from=pkg-libaio-arm64 / /rootfs
 COPY --from=pkg-musl-arm64 / /rootfs
-COPY --from=pkg-open-iscsi-arm64 / /rootfs
-COPY --from=pkg-open-isns-arm64 / /rootfs
 COPY --from=pkg-runc-arm64 / /rootfs
 COPY --from=pkg-xfsprogs-arm64 / /rootfs
 COPY --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
