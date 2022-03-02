@@ -29,9 +29,11 @@ case "${CUSTOM_CNI_URL:-false}" in
     ;;
 esac
 
-case "${WITH_UEFI:-false}" in
-  true)
-    QEMU_FLAGS="${QEMU_FLAGS} --with-uefi"
+case "${WITH_UEFI:-none}" in
+  none)
+    ;;
+  *)
+    QEMU_FLAGS="${QEMU_FLAGS} --with-uefi=${WITH_UEFI}"
     ;;
 esac
 

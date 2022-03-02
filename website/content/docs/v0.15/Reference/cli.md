@@ -145,7 +145,7 @@ talosctl cluster create [flags]
       --with-debug                               enable debug in Talos config to send service logs to the console
       --with-init-node                           create the cluster with an init node
       --with-kubespan                            enable KubeSpan system
-      --with-uefi                                enable UEFI on x86_64 architecture (always enabled for arm64)
+      --with-uefi                                enable UEFI on x86_64 architecture (default true)
       --workers int                              the number of workers to create (default 1)
 ```
 

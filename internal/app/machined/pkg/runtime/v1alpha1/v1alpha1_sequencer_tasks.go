@@ -1758,11 +1758,6 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 			}
 		}
 
-		// disable kexec due to initramfs corruption: see https://github.com/talos-systems/talos/issues/4947
-		if true {
-			return nil
-		}
-
 		if r.Config() == nil {
 			return nil
 		}
