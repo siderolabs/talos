@@ -370,9 +370,9 @@ local integration_cilium = Step("e2e-cilium-1.9.10", target="e2e-qemu", privileg
         "WITH_CONFIG_PATCH": '[{"op": "replace", "path": "/cluster/network/podSubnets", "value": ["10.0.0.0/8"]}]', # use Pod CIDRs as hardcoded in Cilium's quick-install
         "IMAGE_REGISTRY": local_registry,
 });
-local integration_uefi = Step("e2e-uefi", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
+local integration_uefi = Step("e2e-bios", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "SHORT_INTEGRATION_TEST": "yes",
-        "WITH_UEFI": "true",
+        "WITH_UEFI": "false",
         "IMAGE_REGISTRY": local_registry,
 });
 local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privileged=true, depends_on=[integration_uefi], environment={

@@ -414,7 +414,11 @@ func (suite *UpgradeSuite) setupCluster() {
 			})
 	}
 
-	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request, provision.WithBootlader(true), provision.WithTalosConfig(suite.configBundle.TalosConfig()))
+	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request,
+		provision.WithBootlader(true),
+		provision.WithUEFI(true),
+		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
+	)
 	suite.Require().NoError(err)
 
 	defaultTalosConfig, err := clientconfig.GetDefaultPath()
