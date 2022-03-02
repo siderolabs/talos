@@ -26,7 +26,7 @@ Each of these commands can operate in one of four modes:
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
 
-The list of config changes allowed to be applied immediately in talos v0.15:
+The list of config changes allowed to be applied immediately in Talos v1.0:
 
 * `.debug`
 * `.cluster`

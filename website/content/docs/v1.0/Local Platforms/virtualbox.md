@@ -1,22 +1,26 @@
 ---
-title: Proxmox
-description: "Creating Talos Kubernetes cluster using Proxmox."
+title: VirtualBox
+description: "Creating Talos Kubernetes cluster using VurtualBox VMs."
 ---
 
-In this guide we will create a Kubernetes cluster using Proxmox.
+In this guide we will create a Kubernetes cluster using VirtualBox.
 
 ## Video Walkthrough
 
 To see a live demo of this writeup, visit Youtube here:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/MyxigW4_QFM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/bIszwavcBiU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Installation
 
-### How to Get Proxmox
+### How to Get VirtualBox
 
-It is assumed that you have already installed Proxmox onto the server you wish to create Talos VMs on.
-Visit the [Proxmox](https://www.proxmox.com/en/downloads) downloads page if necessary.
+Install VirtualBox with your operating system package manager or from the [website](https://www.virtualbox.org/).
+For example, on Ubuntu for x86:
+
+```bash
+apt install virtualbox
+```
 
 ### Install talosctl
 
@@ -27,7 +31,7 @@ You can download `talosctl` via
 curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v0.15.0` for `linux` platform:
+For example version `v1.0.0` for `linux` platform:
 
 ```bash
 curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
@@ -37,7 +41,7 @@ sudo chmod +x /usr/local/bin/talosctl
 
 ### Download ISO Image
 
-In order to install Talos in Proxmox, you will need the ISO image from the Talos release page.
+In order to install Talos in VirtualBox, you will need the ISO image from the Talos release page.
 You can download `talos-amd64.iso` via
 [github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
 
@@ -46,55 +50,45 @@ mkdir -p _out/
 curl https://github.com/talos-systems/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
 ```
 
-For example version `v0.15.0` for `linux` platform:
+For example version `v1.0.0` for `linux` platform:
 
 ```bash
 mkdir -p _out/
 curl https://github.com/talos-systems/talos/releases/latest/download/talos-amd64.iso -L -o _out/talos-amd64.iso
 ```
 
-## Upload ISO
-
-From the Proxmox UI, select the "local" storage and enter the "Content" section.
-Click the "Upload" button:
-
-<img src="/images/proxmox-guide/click-upload.png" width="500px">
-
-Select the ISO you downloaded previously, then hit "Upload"
-
-<img src="/images/proxmox-guide/select-iso.png" width="500px">
-
 ## Create VMs
 
-Start by creating a new VM by clicking the "Create VM" button in the Proxmox UI:
+Start by creating a new VM by clicking the "New" button in the VirtualBox UI:
 
-<img src="/images/proxmox-guide/create-vm.png" width="500px">
+<img src="/images/vbox-guide/new-vm.png" width="500px">
 
-Fill out a name for the new VM:
+Supply a name for this VM, and specify the Type and Version:
 
-<img src="/images/proxmox-guide/edit-vm-name.png" width="500px">
+<img src="/images/vbox-guide/vm-name.png" width="500px">
 
-In the OS tab, select the ISO we uploaded earlier:
+Edit the memory to supply at least 2GB of RAM for the VM:
 
-<img src="/images/proxmox-guide/edit-os.png" width="500px">
+<img src="/images/vbox-guide/vm-memory.png" width="500px">
 
-Keep the defaults set in the "System" tab.
+Proceed through the disk settings, keeping the defaults.
+You can increase the disk space if desired.
 
-Keep the defaults in the "Hard Disk" tab as well, only changing the size if desired.
+Once created, select the VM and hit "Settings":
 
-In the "CPU" section, give at least 2 cores to the VM:
+<img src="/images/vbox-guide/edit-settings.png" width="500px">
 
-<img src="/images/proxmox-guide/edit-cpu.png" width="500px">
+In the "System" section, supply at least 2 CPUs:
 
-Verify that the RAM is set to at least 2GB:
+<img src="/images/vbox-guide/edit-cpu.png" width="500px">
 
-<img src="/images/proxmox-guide/edit-ram.png" width="500px">
+In the "Network" section, switch the network "Attached To" section to "Bridged Adapter":
 
-Keep the default values for networking, verifying that the VM is set to come up on the bridge interface:
+<img src="/images/vbox-guide/edit-nic.png" width="500px">
 
-<img src="/images/proxmox-guide/edit-nic.png" width="500px">
+Finally, in the "Storage" section, select the optical drive and, on the right, select the ISO by browsing your filesystem:
 
-Finish creating the VM by clicking through the "Confirm" tab and then "Finish".
+<img src="/images/vbox-guide/add-iso.png" width="500px">
 
 Repeat this process for a second VM to use as a worker node.
 You can also repeat this for additional nodes desired.
@@ -103,39 +97,11 @@ You can also repeat this for additional nodes desired.
 
 Once the VMs have been created and updated, start the VM that will be the first control plane node.
 This VM will boot the ISO image specified earlier and enter "maintenance mode".
-
-### With DHCP server
-
 Once the machine has entered maintenance mode, there will be a console log that details the IP address that the node received.
 Take note of this IP address, which will be referred to as `$CONTROL_PLANE_IP` for the rest of this guide.
 If you wish to export this IP as a bash variable, simply issue a command like `export CONTROL_PLANE_IP=1.2.3.4`.
 
-<img src="/images/proxmox-guide/maintenance-mode.png" width="500px">
-
-### Without DHCP server
-
-To apply the machine configurations in maintenance mode, VM has to have IP on the network.
-So you can set it on boot time manually.
-
-<img src="/images/proxmox-guide/maintenance-mode-grub-menu.png" width="600px">
-
-Press `e` on the boot time.
-And set the IP parameters for the VM.
-[Format is](https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt):
-
-```bash
-ip=<client-ip>:<srv-ip>:<gw-ip>:<netmask>:<host>:<device>:<autoconf>
-```
-
-For example $CONTROL_PLANE_IP will be 192.168.0.100 and gateway 192.168.0.1
-
-```bash
-linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal ip=192.168.0.100::192.168.0.1:255.255.255.0::eth0:off
-```
-
-<img src="/images/proxmox-guide/maintenance-mode-grub-menu-ip.png" width="630px">
-
-Then press Ctrl-x or F10
+<img src="/images/vbox-guide/maintenance-mode.png" width="500px">
 
 ## Generate Machine Configurations
 
@@ -157,7 +123,7 @@ Issue:
 talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file _out/controlplane.yaml
 ```
 
-You should now see some action in the Proxmox console for this VM.
+You should now see some action in the VirtualBox console for this VM.
 Talos will be installed to disk, the VM will reboot, and then Talos will configure the Kubernetes control plane on this VM.
 
 > Note: This process can be repeated multiple times to create an HA control plane.
@@ -213,6 +179,12 @@ At this point we can retrieve the admin `kubeconfig` by running:
 talosctl --talosconfig talosconfig kubeconfig .
 ```
 
+You can then use kubectl in this fashion:
+
+```bash
+kubectl get nodes
+```
+
 ## Cleaning Up
 
-To cleanup, simply stop and delete the virtual machines from the Proxmox UI.
+To cleanup, simply stop and delete the virtual machines from the VirtualBox UI.

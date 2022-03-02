@@ -70,7 +70,7 @@ spec:
             This system extension provides Intel microcode binaries.
         compatibility:
             talos:
-                version: '> v0.15.0-alpha.1'
+                version: '>= v1.0.0'
 ```
 
 ## Example: gVisor

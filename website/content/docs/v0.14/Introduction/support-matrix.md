@@ -6,7 +6,7 @@ weight: 6
 | Talos Version                                                                                                  | 0.14                               | 0.13                               |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
 | Release Date                                                                                                   | 2021-12-21                         | 2021-10-11 (0.13.0)                |
-| End of Community Support                                                                                       | 0.15.0 release (2022-03-01, TBD)   | 0.14.0 release (2021-12-21)        |
+| End of Community Support                                                                                       | 1.0.0 release (2022-03-27, TBD)    | 0.14.0 release (2021-12-21)        |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/)      |
 | Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.22, 1.21, 1.20                   |
 | Architecture                                                                                                   | amd64, arm64                                                            |

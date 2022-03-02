@@ -74,7 +74,7 @@ Talos is built with Go 1.17.7
         description="""\
 Added new kernel parameter `talos.experimental.wipe=system` which can help resetting system disk for the machine
 and start over with a fresh installation.
-See [Resetting a Machine](https://www.talos.dev/docs/v0.15/guides/resetting-a-machine/#kernel-parameter) on how to use it.
+See [Resetting a Machine](https://www.talos.dev/docs/v1.0/guides/resetting-a-machine/#kernel-parameter) on how to use it.
 """
 
     [notes.machine_config]
@@ -108,7 +108,7 @@ container runtimes, additional firmware, etc.
 System extensions are only activated during Talos installation (or upgrade), and with system extensions installed, Talos
 root filesystem is still immutable and read-only.
 
-Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation](https://www.talos.dev/docs/v0.15/guides/system-extensions/) for more information.
+Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation](https://www.talos.dev/docs/v1.0/guides/system-extensions/) for more information.
 """
 
     [notes.patching]

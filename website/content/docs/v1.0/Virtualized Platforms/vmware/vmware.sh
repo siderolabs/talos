@@ -2,7 +2,7 @@
 
 set -e
 
-## The following commented environment variables should be set 
+## The following commented environment variables should be set
 ## before running this script
 
 # export GOVC_USERNAME='administrator@vsphere.local'
@@ -12,7 +12,7 @@ set -e
 # export GOVC_DATASTORE='xxx'
 
 CLUSTER_NAME=${CLUSTER_NAME:=vmware-test}
-TALOS_VERSION=v0.15.0
+TALOS_VERSION=v1.0.0
 OVA_PATH=${OVA_PATH:="https://github.com/talos-systems/talos/releases/download/${TALOS_VERSION}/vmware-amd64.ova"}
 
 CONTROL_PLANE_COUNT=${CONTROL_PLANE_COUNT:=3}
@@ -54,7 +54,7 @@ create () {
         -vm ${CLUSTER_NAME}-control-plane-${i}
 
         govc vm.disk.change -vm ${CLUSTER_NAME}-control-plane-${i} -disk.name disk-1000-0 -size ${CONTROL_PLANE_DISK}
-        
+
         govc vm.power -on ${CLUSTER_NAME}-control-plane-${i}
     done
 
@@ -63,7 +63,7 @@ create () {
         echo ""
         echo "launching worker node: ${CLUSTER_NAME}-worker-${i}"
         echo ""
-        
+
         govc library.deploy ${CLUSTER_NAME}/talos-${TALOS_VERSION} ${CLUSTER_NAME}-worker-${i}
 
         govc vm.change \

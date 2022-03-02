@@ -56,8 +56,8 @@ Verify that you can reach Kubernetes:
 ```bash
 $ kubectl get nodes -o wide
 NAME                     STATUS   ROLES    AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE         KERNEL-VERSION   CONTAINER-RUNTIME
-talos-default-master-1   Ready    master   115s   v1.20.2   10.5.0.2      <none>        Talos (v0.15.0)   <host kernel>    containerd://1.5.5
-talos-default-worker-1   Ready    <none>   115s   v1.20.2   10.5.0.3      <none>        Talos (v0.15.0)   <host kernel>    containerd://1.5.5
+talos-default-master-1   Ready    master   115s   v1.20.2   10.5.0.2      <none>        Talos (v1.0.0)   <host kernel>    containerd://1.5.5
+talos-default-worker-1   Ready    <none>   115s   v1.20.2   10.5.0.3      <none>        Talos (v1.0.0)   <host kernel>    containerd://1.5.5
 ```
 
 ### Destroy the Cluster

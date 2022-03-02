@@ -36,12 +36,12 @@ To upgrade a Talos node, specify the node's IP address and the
 installer container image for the version of Talos to upgrade to.
 
 For instance, if your Talos node has the IP address `10.20.30.40` and you want
-to install the official version `v0.15.0`, you would enter a command such
+to install the official version `v1.0.0`, you would enter a command such
 as:
 
 ```sh
   $ talosctl upgrade --nodes 10.20.30.40 \
-      --image ghcr.io/talos-systems/installer:v0.15.0
+      --image ghcr.io/talos-systems/installer:v1.0.0
 ```
 
 There is an option to this command: `--preserve`, which will explicitly tell Talos to keep ephemeral data intact.

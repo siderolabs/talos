@@ -22,8 +22,8 @@ module.exports = {
     },
     dropdownOptions: [
       {
-        version: "v0.15",
-        url: "/docs/v0.15/",
+        version: "v1.0",
+        url: "/docs/v1.0/",
         latest: false,
         prerelease: true,
       },
@@ -198,7 +198,7 @@ module.exports = {
             { title: "Reference", method: "alphabetical" },
             { title: "Learn More", method: "weighted" },
           ],
-          "v0.15": [
+          "v1.0": [
             { title: "Introduction", method: "weighted" },
             { title: "Bare Metal Platforms", method: "alphabetical" },
             { title: "Virtualized Platforms", method: "alphabetical" },

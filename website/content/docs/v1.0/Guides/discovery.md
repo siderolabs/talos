@@ -107,9 +107,9 @@ The members of the cluster can be obtained with:
 ```sh
 $ talosctl get members
 ID                       VERSION   HOSTNAME                 MACHINE TYPE   OS                ADDRESSES
-talos-default-master-1   2         talos-default-master-1   controlplane   Talos (v0.15.0)   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
-talos-default-master-2   1         talos-default-master-2   controlplane   Talos (v0.15.0)   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-talos-default-master-3   1         talos-default-master-3   controlplane   Talos (v0.15.0)   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
-talos-default-worker-1   1         talos-default-worker-1   worker         Talos (v0.15.0)   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-talos-default-worker-2   1         talos-default-worker-2   worker         Talos (v0.15.0)   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+talos-default-master-1   2         talos-default-master-1   controlplane   Talos (v1.0.0)   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
+talos-default-master-2   1         talos-default-master-2   controlplane   Talos (v1.0.0)   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+talos-default-master-3   1         talos-default-master-3   controlplane   Talos (v1.0.0)   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+talos-default-worker-1   1         talos-default-worker-1   worker         Talos (v1.0.0)   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+talos-default-worker-2   1         talos-default-worker-2   worker         Talos (v1.0.0)   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
 ```

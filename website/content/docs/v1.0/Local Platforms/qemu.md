@@ -46,7 +46,7 @@ You can download `talosctl` and all required binaries via
 curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v0.15.0` for `linux` platform:
+For example version `v1.0.0` for `linux` platform:
 
 ```bash
 curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
@@ -65,11 +65,11 @@ curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz-
 curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
 ```
 
-For example version `v0.15.0`:
+For example version `v1.0.0`:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
-curl https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
+curl https://github.com/talos-systems/talos/releases/download/v1.0.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
+curl https://github.com/talos-systems/talos/releases/download/v1.0.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
 ```
 
 ## Create the Cluster

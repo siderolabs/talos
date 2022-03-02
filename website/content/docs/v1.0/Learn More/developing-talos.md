@@ -47,7 +47,7 @@ make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
 
 Record the image name output in the step above.
 
-> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer IMAGE_REGISTRY=127.0.0.1:5005 TAG=v0.15.0-alpha.1 PUSH=true`.
+> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer IMAGE_REGISTRY=127.0.0.1:5005 TAG=v1.0.0-alpha.1 PUSH=true`.
 
 ## Running Talos cluster
 

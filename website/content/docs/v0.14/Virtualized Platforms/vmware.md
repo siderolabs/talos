@@ -22,7 +22,7 @@ This can be done with the `talosctl gen config ...` command.
 Take note that we will also use a JSON6902 patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
 
 First, download `the cp.patch` to your local machine and edit the VIP to match your chosen IP.
-You can do this by issuing `https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.15/Virtualized%20Platforms/vmware/cp.patch`.
+You can do this by issuing `https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v1.0/Virtualized%20Platforms/vmware/cp.patch`.
 It's contents should look like the following:
 
 ```yaml
@@ -91,7 +91,7 @@ If you wish to carry out the manual approach, simply skip ahead to the "Manual A
 ### Scripted Install
 
 Download the `vmware.sh` script to your local machine.
-You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.15/Virtualized%20Platforms/vmware/vmware.sh"`.
+You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v1.0/Virtualized%20Platforms/vmware/vmware.sh"`.
 This script has default variables for things like Talos version and cluster name that may be interesting to tweak before deploying.
 
 #### Import OVA
