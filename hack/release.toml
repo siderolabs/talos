@@ -6,7 +6,7 @@ github_repo = "talos-systems/talos"
 match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v0.14.0"
+previous = "v0.14.1"
 
 pre_release = false
 
@@ -18,9 +18,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.23
-
-Talos is built with Go 1.17.7
+* containerd: 1.5.10
 """
 
 [make_deps]
