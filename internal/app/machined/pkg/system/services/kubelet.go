@@ -2,11 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 package services
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -57,6 +60,39 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	}
 	//nolint:errcheck
 	defer client.Close()
+
+	// Import kubelet and Kubernetes images from cache if available.
+	ic := r.Config().Cluster().ImageCaches()
+
+	if len(ic) != 0 {
+		for _, archive := range ic {
+			if archive.Namespace() == constants.SystemContainerdNamespace {
+				// Load Kubelet image from container image archive.
+				err = image.LoadImagesFromCache(
+					ctx,
+					client,
+					archive,
+					spec.Image)
+
+				if err != nil {
+					log.Printf("failed to import image %s from archive: %s", spec.Image, err)
+				}
+			}
+
+			if archive.Namespace() == constants.KubernetesContainerdNamespace {
+				// Load k8s.io namespace images from container image archive.
+				err = image.LoadImagesFromCache(
+					ctx,
+					client,
+					archive,
+					"")
+
+				if err != nil {
+					log.Printf("failed to import images in the archive with namespace %s: %s", archive.Namespace(), err)
+				}
+			}
+		}
+	}
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)

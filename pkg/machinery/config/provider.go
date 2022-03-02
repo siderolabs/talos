@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 package config
 
 import (
@@ -348,6 +350,7 @@ type ClusterConfig interface {
 	ExtraManifestURLs() []string
 	ExtraManifestHeaderMap() map[string]string
 	InlineManifests() []InlineManifest
+	ImageCaches() []ImageCache
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnMasters() bool
 	Discovery() Discovery
@@ -505,6 +508,12 @@ type VolumeMount interface {
 type InlineManifest interface {
 	Name() string
 	Contents() string
+}
+
+// ImageCache describes a cache for Kubernetes images.
+type ImageCache interface {
+	Namespace() string
+	Path() string
 }
 
 // Discovery describes cluster membership discovery.

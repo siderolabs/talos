@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 package services
 
 import (
@@ -98,6 +100,25 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	}
 	//nolint:errcheck
 	defer client.Close()
+
+	// Import etcd image from cache if available.
+	ic := r.Config().Cluster().ImageCaches()
+
+	if len(ic) != 0 {
+		for _, archive := range ic {
+			if archive.Namespace() == constants.SystemContainerdNamespace {
+				err = image.LoadImagesFromCache(
+					ctx,
+					client,
+					archive,
+					r.Config().Cluster().Etcd().Image())
+
+				if err != nil {
+					log.Printf("failed to import image %s from archive: %s", r.Config().Cluster().Etcd().Image(), err)
+				}
+			}
+		}
+	}
 
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)

@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 /*
 Package v1alpha1 configuration file contains all the options available for configuring a machine.
 
@@ -463,6 +465,17 @@ metadata:
 		},
 	}
 
+	clusterImageCacheExample = []*ClusterImageCache{
+		{
+			CacheNamespace: constants.SystemContainerdNamespace,
+			CachePath:      "/var/image-archive/system",
+		},
+		{
+			CacheNamespace: constants.KubernetesContainerdNamespace,
+			CachePath:      "/var/image-archive/k8s",
+		},
+	}
+
 	networkKubeSpanExample = NetworkKubeSpan{
 		KubeSpanEnabled: true,
 	}
@@ -906,6 +919,11 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterInlineManifestsExample
 	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
+	//   description: |
+	//     Settings for Kubernetes images caches.
+	//   examples:
+	//     - value: clusterImageCacheExample
+	ClusterImageCaches []*ClusterImageCache `yaml:"imageCaches,omitempty"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
 	//     Certificate lifetime can be configured.
@@ -2158,6 +2176,22 @@ type ClusterInlineManifest struct {
 	//   examples:
 	//     - value: '"/etc/kubernetes/auth"'
 	InlineManifestContents string `yaml:"contents"`
+}
+
+// ClusterImageCache describes a cache for providing necessary Kubernetes images in a specified namespace.
+type ClusterImageCache struct {
+	//   description: |
+	//     The namespace of the kubernetes images.
+	//   values:
+	//     - system
+	//     - k8s.io
+	CacheNamespace string `yaml:"namespace"`
+	//   description: |
+	//     The path of the kubernetes images cache.
+	//   examples:
+	//     - value: '"/var/image-archive/system"'
+	//     - value: '"/var/image-archive/k8s"'
+	CachePath string `yaml:"path"`
 }
 
 // NetworkKubeSpan struct describes KubeSpan configuration.

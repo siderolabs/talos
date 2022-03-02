@@ -1480,6 +1480,32 @@ inlineManifests:
 <hr />
 <div class="dd">
 
+<code>imageCaches</code>  <i>[]<a href="#clusterimagecache">ClusterImageCache</a></i>
+
+</div>
+<div class="dt">
+
+Settings for Kubernetes images caches.
+
+
+
+Examples:
+
+
+``` yaml
+imageCaches:
+    - namespace: system # The namespace of the kubernetes images.
+      path: /var/image-archive/system # The path of the kubernetes images cache.
+    - namespace: k8s.io # The namespace of the kubernetes images.
+      path: /var/image-archive/k8s # The path of the kubernetes images cache.
+```
+
+
+</div>
+
+<hr />
+<div class="dd">
+
 <code>adminKubeconfig</code>  <i><a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a></i>
 
 </div>
@@ -5900,6 +5926,71 @@ Examples:
 
 ``` yaml
 contents: /etc/kubernetes/auth
+```
+
+
+</div>
+
+<hr />
+
+
+
+## ClusterImageCache
+ClusterImageCache describes a cache for providing necessary Kubernetes images in a specified namespace.
+
+Appears in:
+
+- <code><a href="#clusterconfig">ClusterConfig</a>.imageCaches</code>
+
+
+``` yaml
+- namespace: system # The namespace of the kubernetes images.
+  path: /var/image-archive/system # The path of the kubernetes images cache.
+- namespace: k8s.io # The namespace of the kubernetes images.
+  path: /var/image-archive/k8s # The path of the kubernetes images cache.
+```
+
+<hr />
+
+<div class="dd">
+
+<code>namespace</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+The namespace of the kubernetes images.
+
+
+Valid values:
+
+
+  - <code>system</code>
+
+  - <code>k8s.io</code>
+</div>
+
+<hr />
+<div class="dd">
+
+<code>path</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+The path of the kubernetes images cache.
+
+
+
+Examples:
+
+
+``` yaml
+path: /var/image-archive/system
+```
+
+``` yaml
+path: /var/image-archive/k8s
 ```
 
 

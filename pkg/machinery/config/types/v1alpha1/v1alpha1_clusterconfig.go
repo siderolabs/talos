@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 package v1alpha1
 
 import (
@@ -18,7 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-// ClusterConfig implements config.ClusterConfig, config.Token, and config.ClusterNetwork interfaces.
+// ClusterConfig implements config.ClusterConfig, config.Token, config.ImageCache, and config.ClusterNetwork interfaces.
 
 // Name implements the config.ClusterConfig interface.
 func (c *ClusterConfig) Name() string {
@@ -167,6 +169,17 @@ func (c *ClusterConfig) InlineManifests() []config.InlineManifest {
 	return manifests
 }
 
+// ImageCaches implements the config.ClusterConfig interface.
+func (c *ClusterConfig) ImageCaches() []config.ImageCache {
+	archives := make([]config.ImageCache, len(c.ClusterImageCaches))
+
+	for i := range archives {
+		archives[i] = c.ClusterImageCaches[i]
+	}
+
+	return archives
+}
+
 // AdminKubeconfig implements the config.ClusterConfig interface.
 func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	if c.AdminKubeconfigConfig == nil {
@@ -284,4 +297,14 @@ func (t clusterToken) Secret() string {
 	}
 
 	return parts[1]
+}
+
+// Namespace implements config.ImageCache interface.
+func (c *ClusterImageCache) Namespace() string {
+	return c.CacheNamespace
+}
+
+// Path implements the config.ImagesCache interface.
+func (c *ClusterImageCache) Path() string {
+	return c.CachePath
 }

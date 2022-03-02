@@ -67,6 +67,7 @@ var (
 	FeaturesConfigDoc                 encoder.Doc
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
+	ClusterImageCacheDoc              encoder.Doc
 	NetworkKubeSpanDoc                encoder.Doc
 	ClusterDiscoveryConfigDoc         encoder.Doc
 	DiscoveryRegistriesConfigDoc      encoder.Doc
@@ -312,7 +313,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 23)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 24)
 	ClusterConfigDoc.Fields[0].Name = "id"
 	ClusterConfigDoc.Fields[0].Type = "string"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -460,19 +461,26 @@ func init() {
 	ClusterConfigDoc.Fields[20].Comments[encoder.LineComment] = "A list of inline Kubernetes manifests."
 
 	ClusterConfigDoc.Fields[20].AddExample("", clusterInlineManifestsExample)
-	ClusterConfigDoc.Fields[21].Name = "adminKubeconfig"
-	ClusterConfigDoc.Fields[21].Type = "AdminKubeconfigConfig"
+	ClusterConfigDoc.Fields[21].Name = "imageCaches"
+	ClusterConfigDoc.Fields[21].Type = "[]ClusterImageCache"
 	ClusterConfigDoc.Fields[21].Note = ""
-	ClusterConfigDoc.Fields[21].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
-	ClusterConfigDoc.Fields[21].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+	ClusterConfigDoc.Fields[21].Description = "Settings for Kubernetes images caches."
+	ClusterConfigDoc.Fields[21].Comments[encoder.LineComment] = "Settings for Kubernetes images caches."
 
-	ClusterConfigDoc.Fields[21].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[22].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[22].Type = "bool"
+	ClusterConfigDoc.Fields[21].AddExample("", clusterImageCacheExample)
+	ClusterConfigDoc.Fields[22].Name = "adminKubeconfig"
+	ClusterConfigDoc.Fields[22].Type = "AdminKubeconfigConfig"
 	ClusterConfigDoc.Fields[22].Note = ""
-	ClusterConfigDoc.Fields[22].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[22].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[22].Values = []string{
+	ClusterConfigDoc.Fields[22].Description = "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+	ClusterConfigDoc.Fields[22].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
+
+	ClusterConfigDoc.Fields[22].AddExample("", clusterAdminKubeconfigExample)
+	ClusterConfigDoc.Fields[23].Name = "allowSchedulingOnMasters"
+	ClusterConfigDoc.Fields[23].Type = "bool"
+	ClusterConfigDoc.Fields[23].Note = ""
+	ClusterConfigDoc.Fields[23].Description = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[23].Comments[encoder.LineComment] = "Allows running workload on master nodes."
+	ClusterConfigDoc.Fields[23].Values = []string{
 		"true",
 		"yes",
 		"false",
@@ -2241,6 +2249,37 @@ func init() {
 
 	ClusterInlineManifestDoc.Fields[1].AddExample("", "/etc/kubernetes/auth")
 
+	ClusterImageCacheDoc.Type = "ClusterImageCache"
+	ClusterImageCacheDoc.Comments[encoder.LineComment] = "ClusterImageCache describes a cache for providing necessary Kubernetes images in a specified namespace."
+	ClusterImageCacheDoc.Description = "ClusterImageCache describes a cache for providing necessary Kubernetes images in a specified namespace."
+
+	ClusterImageCacheDoc.AddExample("", clusterImageCacheExample)
+	ClusterImageCacheDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "ClusterConfig",
+			FieldName: "imageCaches",
+		},
+	}
+	ClusterImageCacheDoc.Fields = make([]encoder.Doc, 2)
+	ClusterImageCacheDoc.Fields[0].Name = "namespace"
+	ClusterImageCacheDoc.Fields[0].Type = "string"
+	ClusterImageCacheDoc.Fields[0].Note = ""
+	ClusterImageCacheDoc.Fields[0].Description = "The namespace of the kubernetes images."
+	ClusterImageCacheDoc.Fields[0].Comments[encoder.LineComment] = "The namespace of the kubernetes images."
+	ClusterImageCacheDoc.Fields[0].Values = []string{
+		"system",
+		"k8s.io",
+	}
+	ClusterImageCacheDoc.Fields[1].Name = "path"
+	ClusterImageCacheDoc.Fields[1].Type = "string"
+	ClusterImageCacheDoc.Fields[1].Note = ""
+	ClusterImageCacheDoc.Fields[1].Description = "The path of the kubernetes images cache."
+	ClusterImageCacheDoc.Fields[1].Comments[encoder.LineComment] = "The path of the kubernetes images cache."
+
+	ClusterImageCacheDoc.Fields[1].AddExample("", "/var/image-archive/system")
+
+	ClusterImageCacheDoc.Fields[1].AddExample("", "/var/image-archive/k8s")
+
 	NetworkKubeSpanDoc.Type = "NetworkKubeSpan"
 	NetworkKubeSpanDoc.Comments[encoder.LineComment] = "NetworkKubeSpan struct describes KubeSpan configuration."
 	NetworkKubeSpanDoc.Description = "NetworkKubeSpan struct describes KubeSpan configuration."
@@ -2666,6 +2705,10 @@ func (_ ClusterInlineManifest) Doc() *encoder.Doc {
 	return &ClusterInlineManifestDoc
 }
 
+func (_ ClusterImageCache) Doc() *encoder.Doc {
+	return &ClusterImageCacheDoc
+}
+
 func (_ NetworkKubeSpan) Doc() *encoder.Doc {
 	return &NetworkKubeSpanDoc
 }
@@ -2767,6 +2810,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&FeaturesConfigDoc,
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
+			&ClusterImageCacheDoc,
 			&NetworkKubeSpanDoc,
 			&ClusterDiscoveryConfigDoc,
 			&DiscoveryRegistriesConfigDoc,

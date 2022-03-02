@@ -621,6 +621,9 @@ const (
 
 	// ExtensionServicesRootfsPath is the path to the extracted rootfs files of extension services.
 	ExtensionServicesRootfsPath = "/usr/local/lib/containers"
+
+	// KubernetesContainerdNamespace is the Containerd namespace for Kubernetes containers.
+	KubernetesContainerdNamespace = "k8s.io"
 )
 
 // See https://linux.die.net/man/3/klogctl

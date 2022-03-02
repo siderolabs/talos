@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Copyright 2022 Nokia
+
 package v1alpha1
 
 import (
@@ -277,6 +279,10 @@ func (c *ClusterConfig) Validate() error {
 		}
 	}
 
+	if c.ClusterImageCaches != nil {
+		result = multierror.Append(result, ValidateImageCache(c.ClusterImageCaches))
+	}
+
 	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate(c))
 
 	return result.ErrorOrNil()
@@ -352,6 +358,33 @@ func (manifests ClusterInlineManifests) Validate() error {
 		}
 
 		manifestNames[manifest.InlineManifestName] = struct{}{}
+	}
+
+	return result.ErrorOrNil()
+}
+
+// ValidateImageCache validates Kubernetes images caches.
+func ValidateImageCache(archives []*ClusterImageCache) error {
+	var result *multierror.Error
+
+	directories := map[string]struct{}{}
+
+	for _, archive := range archives {
+		namespace := archive.CacheNamespace
+		if !((namespace == constants.KubernetesContainerdNamespace) || (namespace == constants.SystemContainerdNamespace)) {
+			err := fmt.Errorf("namespace for images should be one of [%q, %q]", constants.KubernetesContainerdNamespace, constants.SystemContainerdNamespace)
+			result = multierror.Append(result, err)
+		}
+
+		if archive.CachePath == "" {
+			result = multierror.Append(result, fmt.Errorf("cache path can't be empty"))
+		}
+
+		if _, ok := directories[archive.CachePath]; ok {
+			result = multierror.Append(result, fmt.Errorf("cache directory (%q) is already used for another namespace", archive.CachePath))
+		}
+
+		directories[archive.CachePath] = struct{}{}
 	}
 
 	return result.ErrorOrNil()
