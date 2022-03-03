@@ -14,6 +14,8 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	netconfig "github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 type CmdlineSuite struct {
@@ -37,6 +39,42 @@ func (suite *CmdlineSuite) TestParse() {
 		break
 	}
 
+	defaultBondSettings := network.CmdlineNetworking{
+		NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+			{
+				Name:        "bond0",
+				Kind:        "bond",
+				Type:        nethelpers.LinkEther,
+				Logical:     true,
+				Up:          true,
+				ConfigLayer: netconfig.ConfigCmdline,
+				BondMaster: netconfig.BondMasterSpec{
+					Mode:            nethelpers.BondModeRoundrobin,
+					ResendIGMP:      1,
+					LPInterval:      1,
+					PacketsPerSlave: 1,
+					NumPeerNotif:    1,
+					TLBDynamicLB:    1,
+					UseCarrier:      true,
+				},
+			},
+			{
+				Name:        "eth0",
+				Up:          true,
+				Logical:     false,
+				ConfigLayer: netconfig.ConfigCmdline,
+				MasterName:  "bond0",
+			},
+			{
+				Name:        "eth1",
+				Up:          true,
+				Logical:     false,
+				ConfigLayer: netconfig.ConfigCmdline,
+				MasterName:  "bond0",
+			},
+		},
+	}
+
 	for _, test := range []struct {
 		name    string
 		cmdline string
@@ -56,6 +94,13 @@ func (suite *CmdlineSuite) TestParse() {
 				Address:  netaddr.MustParseIPPrefix("172.20.0.2/24"),
 				Gateway:  netaddr.MustParseIP("172.20.0.1"),
 				LinkName: "eth1",
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
 			},
 		},
 		{
@@ -66,6 +111,13 @@ func (suite *CmdlineSuite) TestParse() {
 				Address:  netaddr.MustParseIPPrefix("172.20.0.2/32"),
 				Gateway:  netaddr.MustParseIP("172.20.0.1"),
 				LinkName: defaultIfaceName,
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        defaultIfaceName,
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
 			},
 		},
 		{
@@ -79,6 +131,13 @@ func (suite *CmdlineSuite) TestParse() {
 				LinkName:     "eth1",
 				DNSAddresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.1"), netaddr.MustParseIP("10.0.0.2")},
 				NTPAddresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.1")},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
 			},
 		},
 		{
@@ -91,6 +150,13 @@ func (suite *CmdlineSuite) TestParse() {
 				LinkName:     "eth1",
 				DNSAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4860::6464"), netaddr.MustParseIP("2001:4860:4860::64")},
 				NTPAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4806::")},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
 			},
 		},
 		{
@@ -106,6 +172,13 @@ func (suite *CmdlineSuite) TestParse() {
 			expectedSettings: network.CmdlineNetworking{
 				Hostname: "master2",
 				LinkName: "eth1",
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
 			},
 		},
 		{
@@ -123,6 +196,102 @@ func (suite *CmdlineSuite) TestParse() {
 			expectedSettings: network.CmdlineNetworking{
 				IgnoreInterfaces: []string{"eth2", "eth3"},
 			},
+		},
+		{
+			name:             "bond with no interfaces and no options set",
+			cmdline:          "bond=bond0",
+			expectedSettings: defaultBondSettings,
+		},
+		{
+			name:             "bond with no interfaces and empty options set",
+			cmdline:          "bond=bond0:::",
+			expectedSettings: defaultBondSettings,
+		},
+		{
+			name:    "bond with interfaces and no options set",
+			cmdline: "bond=bond1:eth3,eth4",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "bond1",
+						Kind:        "bond",
+						Type:        nethelpers.LinkEther,
+						Logical:     true,
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+						BondMaster: netconfig.BondMasterSpec{
+							ResendIGMP:      1,
+							LPInterval:      1,
+							PacketsPerSlave: 1,
+							NumPeerNotif:    1,
+							TLBDynamicLB:    1,
+							UseCarrier:      true,
+						},
+					},
+					{
+						Name:        "eth3",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						MasterName:  "bond1",
+					},
+					{
+						Name:        "eth4",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						MasterName:  "bond1",
+					},
+				},
+			},
+		},
+		{
+			name:    "bond with interfaces, options and mtu set",
+			cmdline: "bond=bond1:eth3,eth4:mode=802.3ad,xmit_hash_policy=layer2+3:1450",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "bond1",
+						Kind:        "bond",
+						Type:        nethelpers.LinkEther,
+						Logical:     true,
+						Up:          true,
+						MTU:         1450,
+						ConfigLayer: netconfig.ConfigCmdline,
+						BondMaster: netconfig.BondMasterSpec{
+							Mode:            nethelpers.BondMode8023AD,
+							HashPolicy:      nethelpers.BondXmitPolicyLayer23,
+							ADActorSysPrio:  65535,
+							ResendIGMP:      1,
+							LPInterval:      1,
+							PacketsPerSlave: 1,
+							NumPeerNotif:    1,
+							TLBDynamicLB:    1,
+							UseCarrier:      true,
+						},
+					},
+					{
+						Name:        "eth3",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						MasterName:  "bond1",
+					},
+					{
+						Name:        "eth4",
+						Up:          true,
+						Logical:     false,
+						ConfigLayer: netconfig.ConfigCmdline,
+						MasterName:  "bond1",
+					},
+				},
+			},
+		},
+		{
+			name:    "unparseable bond options",
+			cmdline: "bond=bond0:eth1,eth2:mod=balance-rr",
+
+			expectedError: "unknown bond option: mod",
 		},
 	} {
 		test := test

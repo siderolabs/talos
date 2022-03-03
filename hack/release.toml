@@ -15,6 +15,13 @@ preface = """\
 
 [notes]
 
+    [notes.kernelParam]
+        title = "Kernel Parameters"
+        description = """\
+Talos now supports setting bond interface from Kernel cmdline using the `bond=` option.
+Reference: https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html
+"""
+
     [notes.equinixMetal]
         title = "Equinix Metal Platform"
         description="""\

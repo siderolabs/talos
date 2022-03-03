@@ -7,7 +7,6 @@ package network
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -17,7 +16,6 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
@@ -117,18 +115,20 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		// parse kernel cmdline for the interface name
-		cmdlineLink, cmdlineIgnored := ctrl.parseCmdline(logger)
-		if cmdlineLink.Name != "" {
-			if _, ignored := ignoredInterfaces[cmdlineLink.Name]; !ignored {
-				var ids []string
+		cmdlineLinks, cmdlineIgnored := ctrl.parseCmdline(logger)
+		for _, cmdlineLink := range cmdlineLinks {
+			if cmdlineLink.Name != "" {
+				if _, ignored := ignoredInterfaces[cmdlineLink.Name]; !ignored {
+					var ids []string
 
-				ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{cmdlineLink})
-				if err != nil {
-					return fmt.Errorf("error applying cmdline route: %w", err)
-				}
+					ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{cmdlineLink})
+					if err != nil {
+						return fmt.Errorf("error applying cmdline route: %w", err)
+					}
 
-				for _, id := range ids {
-					touchedIDs[id] = struct{}{}
+					for _, id := range ids {
+						touchedIDs[id] = struct{}{}
+					}
 				}
 			}
 		}
@@ -156,8 +156,10 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			configuredLinks[linkName] = struct{}{}
 		}
 
-		if cmdlineLink.Name != "" {
-			configuredLinks[cmdlineLink.Name] = struct{}{}
+		for _, cmdlineLink := range cmdlineLinks {
+			if cmdlineLink.Name != "" {
+				configuredLinks[cmdlineLink.Name] = struct{}{}
+			}
 		}
 
 		if cfgProvider != nil {
@@ -249,23 +251,19 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 	return ids, nil
 }
 
-func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) (network.LinkSpecSpec, []string) {
+func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) ([]network.LinkSpecSpec, []string) {
 	if ctrl.Cmdline == nil {
-		return network.LinkSpecSpec{}, nil
+		return []network.LinkSpecSpec{}, nil
 	}
 
 	settings, err := ParseCmdlineNetwork(ctrl.Cmdline)
 	if err != nil {
 		logger.Info("ignoring error", zap.Error(err))
 
-		return network.LinkSpecSpec{}, nil
+		return []network.LinkSpecSpec{}, nil
 	}
 
-	return network.LinkSpecSpec{
-		Name:        settings.LinkName,
-		Up:          true,
-		ConfigLayer: network.ConfigCmdline,
-	}, settings.IgnoreInterfaces
+	return settings.NetworkLinkSpecs, settings.IgnoreInterfaces
 }
 
 //nolint:gocyclo
@@ -311,7 +309,7 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 		}
 
 		if device.Bond() != nil {
-			if err := bondMaster(linkMap[device.Interface()], device.Bond()); err != nil {
+			if err := SetBondMaster(linkMap[device.Interface()], device.Bond()); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
 			}
 		}
@@ -342,7 +340,7 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 			}
 		}
 
-		bondSlave(linkMap[slaveName], bondName)
+		SetBondSlave(linkMap[slaveName], bondName)
 	}
 
 	links := make([]network.LinkSpecSpec, 0, len(linkMap))
@@ -352,100 +350,6 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 	}
 
 	return links
-}
-
-func bondSlave(link *network.LinkSpecSpec, bondName string) {
-	link.MasterName = bondName
-}
-
-//nolint:gocyclo
-func bondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
-	link.Logical = true
-	link.Kind = network.LinkKindBond
-	link.Type = nethelpers.LinkEther
-
-	bondMode, err := nethelpers.BondModeByName(bond.Mode())
-	if err != nil {
-		return err
-	}
-
-	hashPolicy, err := nethelpers.BondXmitHashPolicyByName(bond.HashPolicy())
-	if err != nil {
-		return err
-	}
-
-	lacpRate, err := nethelpers.LACPRateByName(bond.LACPRate())
-	if err != nil {
-		return err
-	}
-
-	arpValidate, err := nethelpers.ARPValidateByName(bond.ARPValidate())
-	if err != nil {
-		return err
-	}
-
-	arpAllTargets, err := nethelpers.ARPAllTargetsByName(bond.ARPAllTargets())
-	if err != nil {
-		return err
-	}
-
-	var primary uint32
-
-	if bond.Primary() != "" {
-		var iface *net.Interface
-
-		iface, err = net.InterfaceByName(bond.Primary())
-		if err != nil {
-			return err
-		}
-
-		primary = uint32(iface.Index)
-	}
-
-	primaryReselect, err := nethelpers.PrimaryReselectByName(bond.PrimaryReselect())
-	if err != nil {
-		return err
-	}
-
-	failOverMAC, err := nethelpers.FailOverMACByName(bond.FailOverMac())
-	if err != nil {
-		return err
-	}
-
-	adSelect, err := nethelpers.ADSelectByName(bond.ADSelect())
-	if err != nil {
-		return err
-	}
-
-	link.BondMaster = network.BondMasterSpec{
-		Mode:            bondMode,
-		HashPolicy:      hashPolicy,
-		LACPRate:        lacpRate,
-		ARPValidate:     arpValidate,
-		ARPAllTargets:   arpAllTargets,
-		PrimaryIndex:    primary,
-		PrimaryReselect: primaryReselect,
-		FailOverMac:     failOverMAC,
-		ADSelect:        adSelect,
-		MIIMon:          bond.MIIMon(),
-		UpDelay:         bond.UpDelay(),
-		DownDelay:       bond.DownDelay(),
-		ARPInterval:     bond.ARPInterval(),
-		ResendIGMP:      bond.ResendIGMP(),
-		MinLinks:        bond.MinLinks(),
-		LPInterval:      bond.LPInterval(),
-		PacketsPerSlave: bond.PacketsPerSlave(),
-		NumPeerNotif:    bond.NumPeerNotif(),
-		TLBDynamicLB:    bond.TLBDynamicLB(),
-		AllSlavesActive: bond.AllSlavesActive(),
-		UseCarrier:      bond.UseCarrier(),
-		ADActorSysPrio:  bond.ADActorSysPrio(),
-		ADUserPortKey:   bond.ADUserPortKey(),
-		PeerNotifyDelay: bond.PeerNotifyDelay(),
-	}
-	networkadapter.BondMasterSpec(&link.BondMaster).FillDefaults()
-
-	return nil
 }
 
 func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {

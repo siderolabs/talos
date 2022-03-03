@@ -40,6 +40,34 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
   IPv6 addresses can be specified by enclosing them in the square brackets, e.g. `ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]`.
 
+#### `bond`
+
+  Bond interface configuration.
+
+  Full documentation is available in the [Dracut kernel docs](https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html).
+
+  `bond=<bondname>:<bondslaves>:<options>:<mtu>`
+
+  Talos will use the `bond=` kernel parameter if supplied to set the initial bond configuration.
+  This parameter is useful in environments where the switch ports are suspended if the machine doesn't setup a LACP bond.
+
+  If only the bond name is supplied, the bond will be created with `eth0` and `eth1` as slaves and bond mode set as `balance-rr`
+
+  All these below configurations are equivalent:
+
+  * `bond=bond0`
+  * `bond=bond0:`
+  * `bond=bond0::`
+  * `bond=bond0:::`
+  * `bond=bond0:eth0:eth1`
+  * `bond=bond0:eth0:eth1:balance-rr`
+
+  An example of a bond configuration with all options specified:
+
+  `bond=bond1:eth3,eth4:mode=802.3ad,xmit_hash_policy=layer2+3:1450`
+
+  This will create a bond interface named `bond1` with `eth3` and `eth4` as slaves and set the bond mode to `802.3ad`, the transmit hash policy to `layer2+3` and bond interface MTU to 1450.
+
 #### `panic`
 
   The amount of time to wait after a panic before a reboot is issued.
