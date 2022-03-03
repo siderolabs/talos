@@ -36,7 +36,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
-	github.com/containerd/containerd v1.6.0
+	github.com/containerd/containerd v1.6.1
 	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
@@ -86,10 +86,10 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
-	github.com/talos-systems/crypto v0.3.5-0.20220209123851-510b0d2753a8
+	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
-	github.com/talos-systems/go-blockdevice v0.2.6-0.20220125134504-7b9de26bc6bc
+	github.com/talos-systems/go-blockdevice v0.3.0
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
@@ -98,7 +98,7 @@ require (
 	github.com/talos-systems/go-retry v0.3.1
 	github.com/talos-systems/go-smbios v0.1.1
 	github.com/talos-systems/grpc-proxy v0.2.0
-	github.com/talos-systems/net v0.3.2-0.20220207192449-409926aec1c3
+	github.com/talos-systems/net v0.3.2
 	github.com/talos-systems/siderolink v0.1.0
 	github.com/talos-systems/talos/pkg/machinery v0.15.0-alpha.2
 	github.com/u-root/u-root v0.8.0
