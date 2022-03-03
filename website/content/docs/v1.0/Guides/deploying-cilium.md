@@ -129,6 +129,22 @@ As such you should definitely not host this somewhere publicly accessible.
 ## Method 4: Helm manifests inline install
 
 A more secure option would be to include the `helm template` output manifest inside the machine configuration.
+The machine config should be generated with CNI set to `none`
+
+```bash
+talosctl gen config \
+    my-cluster https://mycluster.local:6443 \
+    --config-patch '[{"op":"add", "path": "/cluster/network/cni", "value": {"name": "none"}}]'
+```
+
+if deploying Cilium with `kube-proxy` disabled, you can also include the following:
+
+```bash
+talosctl gen config \
+    my-cluster https://mycluster.local:6443 \
+    --config-patch '[{"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}, {"op":"add", "path": "/cluster/network/cni", "value": {"name": "none"}}]'
+```
+
 To do so patch this into your machine configuration:
 
 ``` yaml
