@@ -1,3 +1,46 @@
+## [Talos 0.14.3](https://github.com/talos-systems/talos/releases/tag/v0.14.3) (2022-03-03)
+
+Welcome to the v0.14.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/talos-systems/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.26
+* containerd: 1.5.10
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>2 commits</summary>
+<p>
+
+* [`58b7c1907`](https://github.com/talos-systems/talos/commit/58b7c19071a0258974c5c3104c88b356db94bc5f) feat: update Linux to 5.15.26
+* [`a289c95fe`](https://github.com/talos-systems/talos/commit/a289c95fe1ca87643b1edcc1a14f51f3d80287b1) feat: update containerd to 1.5.10
+</p>
+</details>
+
+### Changes from talos-systems/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`bfcc795`](https://github.com/talos-systems/pkgs/commit/bfcc795987e26e376248e05d29a0bb58d29f20d7) feat: update Linux to 5.15.26 (backport for Talos 0.14)
+* [`a025ad8`](https://github.com/talos-systems/pkgs/commit/a025ad8f960d65ecf2b1966cc7d00cd273e1f1f9) feat: update containerd to 1.5.10
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/talos-systems/pkgs**  v0.9.0-4-gc875fbe -> v0.9.0-6-gbfcc795
+
+Previous release can be found at [v0.14.2](https://github.com/talos-systems/talos/releases/tag/v0.14.2)
+
 ## [Talos 0.14.2](https://github.com/talos-systems/talos/releases/tag/v0.14.2) (2022-02-11)
 
 Welcome to the v0.14.2 release of Talos!
