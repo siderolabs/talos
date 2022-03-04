@@ -43,7 +43,7 @@ func (ext *Extension) validateConstraints() error {
 			return fmt.Errorf("error parsing Talos version constraint: %w", err)
 		}
 
-		if !versionConstraint.Check(talosVersion) {
+		if !versionConstraint.Check(talosVersion.Core()) {
 			return fmt.Errorf("version constraint %s can't be satisfied with Talos version %s", versionConstraint, talosVersion)
 		}
 	}
