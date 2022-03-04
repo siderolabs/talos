@@ -141,7 +141,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	mode := in.Mode.String()
 	modeDetails := ""
 
-	// TODO: remove in v0.16
+	// TODO: remove in v1.1
 	switch {
 	case in.Immediate: //nolint:staticcheck
 		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT

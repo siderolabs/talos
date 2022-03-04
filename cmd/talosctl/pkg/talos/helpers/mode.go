@@ -101,7 +101,7 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 		command.Flags().MarkDeprecated(flag, deprecationWarning) //nolint:errcheck
 	}
 
-	// TODO: remove in v0.16
+	// TODO: remove in v1.1
 	deprecatedFlag(&mode.OnReboot, "on-reboot", "apply the config on reboot", "Use --mode=staged instead")
 	deprecatedFlag(&mode.Immediate, "immediate", "apply the config immediately (without a reboot)", "Use --mode=no-reboot instead")
 
