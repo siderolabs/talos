@@ -62,3 +62,9 @@ See [Contributing](CONTRIBUTING.md) for our guidelines.
 <a href="https://github.com/talos-systems/talos/blob/master/LICENSE">
   <img alt="GitHub" src="https://img.shields.io/github/license/talos-systems/talos?style=flat-square">
 </a>
+
+Some software we distribute is under the General Public License family
+of licenses or other licenses that require we provide you with the
+source code.
+If you would like a copy of the source code for this
+software, please contact via email: info at SideroLabs.com.

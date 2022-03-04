@@ -73,7 +73,7 @@ Previously, the audit logs were sent to `kube-apiserver`'s `stdout`, along with 
 * containerd: 1.6.1
 * runc: 1.1.0
 
-Talos is built with Go 1.17.7
+Talos is built with Go 1.17.8
 """
 
     [notes.wipe]
