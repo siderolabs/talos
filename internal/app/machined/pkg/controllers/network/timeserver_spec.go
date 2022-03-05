@@ -89,6 +89,14 @@ func (ctrl *TimeServerSpecController) Run(ctx context.Context, r controller.Runt
 					return fmt.Errorf("error removing finalizer: %w", err)
 				}
 			case resource.PhaseRunning:
+				ntps := make([]string, len(spec.TypedSpec().NTPServers))
+
+				for i := range ntps {
+					ntps[i] = spec.TypedSpec().NTPServers[i]
+				}
+
+				logger.Info("setting time servers", zap.Strings("addresses", ntps))
+
 				if err = r.Modify(ctx, network.NewTimeServerStatus(network.NamespaceName, spec.Metadata().ID()), func(r resource.Resource) error {
 					status := r.(*network.TimeServerStatus) //nolint:forcetypeassert,errcheck
 

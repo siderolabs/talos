@@ -41,6 +41,7 @@ type DHCP4OperatorSpec struct {
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
 type DHCP6OperatorSpec struct {
+	DUID        string `yaml:"DUID,omitempty"`
 	RouteMetric uint32 `yaml:"routeMetric"`
 }
 

@@ -1848,6 +1848,8 @@ type DHCPOptions struct {
 	DHCPIPv4 *bool `yaml:"ipv4,omitempty"`
 	//   description: Enables DHCPv6 protocol for the interface (default is disabled).
 	DHCPIPv6 *bool `yaml:"ipv6,omitempty"`
+	//   description: Set client DUID (hex string).
+	DHCPDUIDv6 string `yaml:"duidv6,omitempty"`
 }
 
 // DeviceWireguardConfig contains settings for configuring Wireguard network interface.

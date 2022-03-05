@@ -1656,7 +1656,7 @@ func init() {
 			FieldName: "dhcpOptions",
 		},
 	}
-	DHCPOptionsDoc.Fields = make([]encoder.Doc, 3)
+	DHCPOptionsDoc.Fields = make([]encoder.Doc, 4)
 	DHCPOptionsDoc.Fields[0].Name = "routeMetric"
 	DHCPOptionsDoc.Fields[0].Type = "uint32"
 	DHCPOptionsDoc.Fields[0].Note = ""
@@ -1672,6 +1672,11 @@ func init() {
 	DHCPOptionsDoc.Fields[2].Note = ""
 	DHCPOptionsDoc.Fields[2].Description = "Enables DHCPv6 protocol for the interface (default is disabled)."
 	DHCPOptionsDoc.Fields[2].Comments[encoder.LineComment] = "Enables DHCPv6 protocol for the interface (default is disabled)."
+	DHCPOptionsDoc.Fields[3].Name = "duidv6"
+	DHCPOptionsDoc.Fields[3].Type = "string"
+	DHCPOptionsDoc.Fields[3].Note = ""
+	DHCPOptionsDoc.Fields[3].Description = "Set client DUID (hex string)."
+	DHCPOptionsDoc.Fields[3].Comments[encoder.LineComment] = "Set client DUID (hex string)."
 
 	DeviceWireguardConfigDoc.Type = "DeviceWireguardConfig"
 	DeviceWireguardConfigDoc.Comments[encoder.LineComment] = "DeviceWireguardConfig contains settings for configuring Wireguard network interface."
