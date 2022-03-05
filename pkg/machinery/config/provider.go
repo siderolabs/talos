@@ -170,6 +170,7 @@ type DHCPOptions interface {
 	RouteMetric() uint32
 	IPv4() bool
 	IPv6() bool
+	DUIDv6() string
 }
 
 // VIPConfig contains settings for the Virtual (shared) IP setup.

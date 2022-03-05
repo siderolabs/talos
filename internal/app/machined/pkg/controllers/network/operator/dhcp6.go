@@ -6,6 +6,7 @@ package operator
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -30,18 +31,23 @@ type DHCP6 struct {
 	logger *zap.Logger
 
 	linkName string
+	duid     []byte
 
-	mu        sync.Mutex
-	addresses []network.AddressSpecSpec
-	hostname  []network.HostnameSpecSpec
-	resolvers []network.ResolverSpecSpec
+	mu          sync.Mutex
+	addresses   []network.AddressSpecSpec
+	hostname    []network.HostnameSpecSpec
+	resolvers   []network.ResolverSpecSpec
+	timeservers []network.TimeServerSpecSpec
 }
 
 // NewDHCP6 creates DHCPv6 operator.
-func NewDHCP6(logger *zap.Logger, linkName string) *DHCP6 {
+func NewDHCP6(logger *zap.Logger, linkName string, duid string) *DHCP6 {
+	duidBin, _ := hex.DecodeString(duid) //nolint:errcheck
+
 	return &DHCP6{
 		logger:   logger,
 		linkName: linkName,
+		duid:     duidBin,
 	}
 }
 
@@ -133,7 +139,10 @@ func (d *DHCP6) ResolverSpecs() []network.ResolverSpecSpec {
 
 // TimeServerSpecs implements Operator interface.
 func (d *DHCP6) TimeServerSpecs() []network.TimeServerSpecSpec {
-	return nil
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	return d.timeservers
 }
 
 func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
@@ -188,6 +197,24 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
 	} else {
 		d.hostname = nil
 	}
+
+	if len(reply.Options.NTPServers()) > 0 {
+		ntp := make([]string, len(reply.Options.NTPServers()))
+
+		for i := range ntp {
+			ip, _ := netaddr.FromStdIP(reply.Options.NTPServers()[i])
+			ntp[i] = ip.String()
+		}
+
+		d.timeservers = []network.TimeServerSpecSpec{
+			{
+				NTPServers:  ntp,
+				ConfigLayer: network.ConfigOperator,
+			},
+		}
+	} else {
+		d.timeservers = nil
+	}
 }
 
 func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
@@ -198,7 +225,18 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 
 	defer cli.Close() //nolint:errcheck
 
-	reply, err := cli.RapidSolicit(ctx)
+	var modifiers []dhcpv6.Modifier
+
+	if len(d.duid) > 0 {
+		duid, derr := dhcpv6.DuidFromBytes(d.duid)
+		if derr != nil {
+			d.logger.Error("Fail to parce DUID, continuing", zap.String("link", d.linkName))
+		}
+
+		modifiers = []dhcpv6.Modifier{dhcpv6.WithClientID(*duid)}
+	}
+
+	reply, err := cli.RapidSolicit(ctx, modifiers...)
 	if err != nil {
 		return 0, err
 	}

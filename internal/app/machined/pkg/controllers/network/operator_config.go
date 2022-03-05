@@ -149,6 +149,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 						RequireUp: true,
 						DHCP6: network.DHCP6OperatorSpec{
 							RouteMetric: routeMetric,
+							DUID:        device.DHCPOptions().DUIDv6(),
 						},
 						ConfigLayer: network.ConfigMachineConfiguration,
 					})

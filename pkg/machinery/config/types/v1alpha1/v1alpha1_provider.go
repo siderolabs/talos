@@ -684,6 +684,11 @@ func (d *DHCPOptions) IPv6() bool {
 	return *d.DHCPIPv6
 }
 
+// DUIDv6 implements the DHCPOptions interface.
+func (d *DHCPOptions) DUIDv6() string {
+	return d.DHCPDUIDv6
+}
+
 // PrivateKey implements the MachineNetwork interface.
 func (wc *DeviceWireguardConfig) PrivateKey() string {
 	return wc.WireguardPrivateKey

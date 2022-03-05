@@ -4622,6 +4622,18 @@ Enables DHCPv6 protocol for the interface (default is disabled).
 </div>
 
 <hr />
+<div class="dd">
+
+<code>duidv6</code>  <i>string</i>
+
+</div>
+<div class="dt">
+
+Set client DUID (hex string).
+
+</div>
+
+<hr />
 
 
 
