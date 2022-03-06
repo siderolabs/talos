@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -95,15 +96,22 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 		}...)
 	}
 
+	// Apply IPv6 defaults only if IPv6 is enabled.
+	_, err := os.Stat("/proc/sys/net/ipv6/conf/default/accept_ra")
+	if err == nil {
+		res = append(res, []*kernel.Param{
+			{
+				Key:   "proc.sys.net.ipv6.conf.default.forwarding",
+				Value: "1",
+			},
+			{
+				Key:   "proc.sys.net.ipv6.conf.default.accept_ra",
+				Value: "2",
+			},
+		}...)
+	}
+
 	res = append(res, []*kernel.Param{
-		{
-			Key:   "proc.sys.net.ipv6.conf.default.forwarding",
-			Value: "1",
-		},
-		{
-			Key:   "proc.sys.net.ipv6.conf.default.accept_ra",
-			Value: "2",
-		},
 		// ipvs/conntrack tcp keepalive refresh.
 		{
 			Key:   "proc.sys.net.ipv4.tcp_keepalive_time",
