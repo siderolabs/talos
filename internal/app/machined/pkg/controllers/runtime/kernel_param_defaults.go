@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -100,10 +101,6 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Key:   "proc.sys.net.ipv6.conf.default.forwarding",
 			Value: "1",
 		},
-		{
-			Key:   "proc.sys.net.ipv6.conf.default.accept_ra",
-			Value: "2",
-		},
 		// ipvs/conntrack tcp keepalive refresh.
 		{
 			Key:   "proc.sys.net.ipv4.tcp_keepalive_time",
@@ -126,6 +123,15 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 			Value: "1",
 		},
 	}...)
+
+	// If IPv6 is enabled, make sure accept_ra is set to 2 instead of 1.
+	_, err := os.Stat("/proc/sys/net/ipv6/conf/default/accept_ra")
+	if err == nil {
+		res = append(res, &kernel.Param{
+			Key:   "proc.sys.net.ipv6.conf.default.accept_ra",
+			Value: "2",
+		})
+	}
 
 	// kernel optimization for kubernetes workloads.
 	res = append(res, []*kernel.Param{
