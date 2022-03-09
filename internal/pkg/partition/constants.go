@@ -32,7 +32,7 @@ const (
 
 	EFISize      = 100 * MiB
 	BIOSGrubSize = 1 * MiB
-	BootSize     = 300 * MiB
+	BootSize     = 1000 * MiB
 	MetaSize     = 1 * MiB
 	StateSize    = 100 * MiB
 )
