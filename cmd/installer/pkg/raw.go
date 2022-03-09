@@ -12,7 +12,7 @@ import (
 
 const (
 	// RAWDiskSize is the minimum size disk we can create.
-	RAWDiskSize = 546
+	RAWDiskSize = 1246
 )
 
 // CreateRawDisk creates a raw disk by invoking the `dd` command.
