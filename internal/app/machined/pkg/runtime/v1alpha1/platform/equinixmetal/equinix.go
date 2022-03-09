@@ -74,7 +74,7 @@ type EquinixMetal struct{}
 
 // Name implements the platform.Platform interface.
 func (p *EquinixMetal) Name() string {
-	return "equinix"
+	return "equinixMetal"
 }
 
 // Configuration implements the platform.Platform interface.
