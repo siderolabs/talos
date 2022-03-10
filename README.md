@@ -34,8 +34,8 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
 - Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
 - Forum: [community](https://groups.google.com/a/SideroLabs.com/forum/#!forum/community)
-- Twitter: [@talossystems](https://twitter.com/SideroLabs)
-- Email: [info@talos-systems.com](mailto:info@SideroLabs.com)
+- Twitter: [@SideroLabs](https://twitter.com/SideroLabs)
+- Email: [info@SideroLabs.com](mailto:info@SideroLabs.com)
 
 If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
 We hold a weekly meeting that all audiences are welcome to attend.
