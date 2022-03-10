@@ -270,6 +270,16 @@ config:
       Match   *
       Format  json_lines
 
+  # If you wish to ship directly to Loki from Fluentbit,
+  # Uncomment the following output, updating the Host with your Loki DNS/IP info as necessary.
+  # [OUTPUT]
+  # Name loki
+  # Match *
+  # Host loki.loki.svc
+  # Port 3100
+  # Labels job=fluentbit
+  # Auto_Kubernetes_Labels on
+
 daemonSetVolumes:
   - name: varlog
     hostPath:
