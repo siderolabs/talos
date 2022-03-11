@@ -1237,6 +1237,15 @@ func StopAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 
 func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		logger.Printf("shutting down kubelet gracefully")
+
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, constants.KubeletShutdownGracePeriod*2)
+		defer shutdownCtxCancel()
+
+		if err = r.State().Machine().DBus().WaitShutdown(shutdownCtx); err != nil {
+			logger.Printf("failed waiting for inhibit shutdown lock: %s", err)
+		}
+
 		if err = system.Services(nil).Stop(ctx, "kubelet"); err != nil {
 			return err
 		}
@@ -1820,4 +1829,22 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		return nil
 	}, "kexecPrepare"
+}
+
+// StartDBus starts the D-Bus mock.
+func StartDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return r.State().Machine().DBus().Start()
+	}, "startDBus"
+}
+
+// StopDBus stops the D-Bus mock.
+func StopDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if err := r.State().Machine().DBus().Stop(); err != nil {
+			logger.Printf("error stopping D-Bus: %s, ignored", err)
+		}
+
+		return nil
+	}, "stopDBus"
 }

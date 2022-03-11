@@ -294,6 +294,14 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 		config.Logging.Format = "json"
 	}
 
+	if config.ShutdownGracePeriod.Duration == 0 {
+		config.ShutdownGracePeriod = metav1.Duration{Duration: constants.KubeletShutdownGracePeriod}
+	}
+
+	if config.ShutdownGracePeriodCriticalPods.Duration == 0 {
+		config.ShutdownGracePeriodCriticalPods = metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods}
+	}
+
 	if config.StreamingConnectionIdleTimeout.Duration == 0 {
 		config.StreamingConnectionIdleTimeout = metav1.Duration{Duration: 5 * time.Minute}
 	}

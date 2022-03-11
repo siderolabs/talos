@@ -192,6 +192,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"containerd",
 		StartContainerd,
+	).Append(
+		"dbus",
+		StartDBus,
 	).AppendWhen(
 		r.State().Platform().Mode() == runtime.ModeContainer,
 		"sharedFilesystems",
@@ -263,6 +266,9 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}.Append(
 		"cleanup",
 		StopAllPods,
+	).Append(
+		"dbus",
+		StopDBus,
 	).
 		AppendList(stopAllPhaselist(r, true)).
 		Append("reboot", Reboot)
@@ -294,6 +300,9 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			!in.GetGraceful(),
 			"cleanup",
 			StopAllPods,
+		).Append(
+			"dbus",
+			StopDBus,
 		).AppendWhen(
 			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
@@ -331,6 +340,9 @@ func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []
 	).Append(
 		"cleanup",
 		StopAllPods,
+	).Append(
+		"dbus",
+		StopDBus,
 	).
 		AppendList(stopAllPhaselist(r, false)).
 		Append("shutdown", Shutdown)
@@ -349,6 +361,9 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		phases = phases.Append(
 			"cleanup",
 			StopAllPods,
+		).Append(
+			"dbus",
+			StopDBus,
 		).AppendWhen(
 			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
@@ -383,6 +398,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			in.GetPreserve(),
 			"cleanup",
 			StopAllPods,
+		).Append(
+			"dbus",
+			StopDBus,
 		).AppendWhen(
 			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",

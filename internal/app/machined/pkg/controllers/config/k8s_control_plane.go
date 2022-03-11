@@ -107,7 +107,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 
 		for _, f := range []func(context.Context, controller.Runtime, *zap.Logger, talosconfig.Provider) error{
 			ctrl.manageAPIServerConfig,
-			ctrl.manageAdmissonControlConfig,
+			ctrl.manageAdmissionControlConfig,
 			ctrl.manageControllerManagerConfig,
 			ctrl.manageSchedulerConfig,
 			ctrl.manageManifestsConfig,
@@ -159,7 +159,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageAdmissonControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *K8sControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	spec := config.K8sAdmissionControlSpec{}
 
 	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {

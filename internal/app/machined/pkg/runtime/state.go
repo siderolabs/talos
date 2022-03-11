@@ -5,6 +5,8 @@
 package runtime
 
 import (
+	"context"
+
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -37,6 +39,7 @@ type MachineState interface {
 	StagedInstallOptions() []byte
 	KexecPrepared(bool)
 	IsKexecPrepared() bool
+	DBus() DBusState
 }
 
 // ClusterState defines the cluster state.
@@ -50,4 +53,11 @@ type V1Alpha2State interface {
 	ResourceRegistry() *registry.ResourceRegistry
 
 	SetConfig(config.Provider) error
+}
+
+// DBusState defines the D-Bus logind mock.
+type DBusState interface {
+	Start() error
+	Stop() error
+	WaitShutdown(ctx context.Context) error
 }
