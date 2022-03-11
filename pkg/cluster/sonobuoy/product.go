@@ -25,7 +25,7 @@ var talos = product{
 	WebsiteURL:       "https://www.siderolabs.com/",
 	RepoURL:          "https://github.com/talos-systems/talos",
 	DocumentationURL: "https://www.talos.dev",
-	ProductLogoURL:   "https://www.talos.dev/images/TalosSystems_Horizontal_Logo_FullColor_RGB-for-site.svg",
+	ProductLogoURL:   "https://www.talos.dev/images/SideroLabs_horizontal_darkbkgd_RGB.png",
 	Type:             "installer",
 	Description:      "Talos is a modern Kubernetes-focused OS designed to be secure, immutable, and minimal.",
 }

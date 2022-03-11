@@ -13,10 +13,20 @@
             </p>
 
             <p>
-              Talos Linux supports cloud platforms, bare metal, and virtualization platforms. All system management is done via an API: there is no ssh, shell or interactive console.
-            </p>
-            <p>
-              Talos Linux is production ready, and supports some of the largest Kubernetes clusters in the world.
+              <ul>
+                <li>
+                  Supports cloud platforms, bare metal, and virtualization platforms
+                </li>
+                <li>
+                  All system management is done via an API. No SSH, shell or console
+                </li>
+                <li>
+                  Production ready: supports some of the largest Kubernetes clusters in the world
+                </li>
+                <li>
+                  Open source project from the team at Sidero Labs
+                </li>
+              </ul>
             </p>
 
             <div class="py-4 flex">
