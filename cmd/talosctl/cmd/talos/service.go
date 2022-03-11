@@ -27,6 +27,16 @@ var serviceCmd = &cobra.Command{
 If service ID is specified, default action 'status' is executed which shows status of a single list service.
 With actions 'start', 'stop', 'restart', service state is updated respectively.`,
 	Args: cobra.MaximumNArgs(2),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		switch len(args) {
+		case 0:
+			return getServiceFromNode(), cobra.ShellCompDirectiveNoFileComp
+		case 1:
+			return []string{"start", "stop", "restart", "status"}, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		action := "status"
 		serviceID := ""

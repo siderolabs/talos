@@ -9,17 +9,23 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
+	criconstants "github.com/containerd/cri/pkg/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	_ "github.com/talos-systems/talos/pkg/grpc/codec" //nolint:gci // register codec
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var kubernetes bool
@@ -164,7 +170,7 @@ func completePathFromNode(inputPath string) []string {
 func getPathFromNode(path, filter string) map[string]struct{} {
 	paths := make(map[string]struct{})
 
-	if WithClient(func(ctx context.Context, c *client.Client) error {
+	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
@@ -218,11 +224,94 @@ func getPathFromNode(path, filter string) map[string]struct{} {
 				}
 			}
 		}
-	}) != nil {
-		return paths
-	}
+	})
 
 	return paths
+}
+
+func getServiceFromNode() []string {
+	var svcIds []string
+
+	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
+		var remotePeer peer.Peer
+
+		resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
+		if err != nil {
+			return err
+		}
+
+		for _, msg := range resp.Messages {
+			for _, s := range msg.Services {
+				svc := cli.ServiceInfoWrapper{ServiceInfo: s}
+				svcIds = append(svcIds, svc.Id)
+			}
+		}
+
+		return nil
+	})
+
+	return svcIds
+}
+
+func getContainersFromNode(kubernetes bool) []string {
+	var containerIds []string
+
+	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
+		var (
+			namespace string
+			driver    common.ContainerDriver
+		)
+
+		if kubernetes {
+			namespace = criconstants.K8sContainerdNamespace
+			driver = common.ContainerDriver_CRI
+		} else {
+			namespace = constants.SystemContainerdNamespace
+			driver = common.ContainerDriver_CONTAINERD
+		}
+
+		resp, err := c.Containers(ctx, namespace, driver)
+		if err != nil {
+			return err
+		}
+
+		for _, msg := range resp.Messages {
+			for _, p := range msg.Containers {
+				if p.Pid == 0 {
+					continue
+				}
+
+				if kubernetes && p.Id == p.PodId {
+					continue
+				}
+
+				containerIds = append(containerIds, p.Id)
+			}
+		}
+
+		return nil
+	})
+
+	return containerIds
+}
+
+func mergeSuggestions(a, b []string) []string {
+	merged := append(append([]string(nil), a...), b...)
+
+	sort.Strings(merged)
+
+	n := 1
+
+	for i := 1; i < len(merged); i++ {
+		if merged[i] != merged[i-1] {
+			merged[n] = merged[i]
+			n++
+		}
+	}
+
+	merged = merged[:n]
+
+	return merged
 }
 
 func relativeTo(fullPath string, filter string) bool {

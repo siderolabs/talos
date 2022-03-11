@@ -32,6 +32,16 @@ talosctl creates a directory if <local-path> doesn't exist. Command doesn't pres
 ownership and access mode for the files in extract mode, while  streamed .tar archive
 captures ownership and permission bits.`,
 	Args: cobra.ExactArgs(2),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		switch len(args) {
+		case 0:
+			return completePathFromNode(toComplete), cobra.ShellCompDirectiveNoFileComp
+		case 1:
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+
+		return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if err := helpers.FailIfMultiNodes(ctx, "copy"); err != nil {

@@ -30,6 +30,21 @@ var duCmd = &cobra.Command{
 	Aliases: []string{"du"},
 	Short:   "Retrieve a disk usage",
 	Long:    ``,
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+		}
+
+		var completeOnlyPaths []string
+
+		for _, path := range completePathFromNode(toComplete) {
+			if path[len(path)-1:] == "/" {
+				completeOnlyPaths = append(completeOnlyPaths, path)
+			}
+		}
+
+		return completeOnlyPaths, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			var paths []string
