@@ -241,6 +241,14 @@ const (
 	// SystemKubeletPKIDir is the path to the directory where Talos copies kubelet issued certificates and keys.
 	SystemKubeletPKIDir = "/system/secrets/kubelet"
 
+	// KubeletShutdownGracePeriod is the kubelet shutdown grace period.
+	KubeletShutdownGracePeriod = 30 * time.Second
+
+	// KubeletShutdownGracePeriodCriticalPods is the kubelet shutdown grace period for critical pods.
+	//
+	// Should be less than KubeletShutdownGracePeriod.
+	KubeletShutdownGracePeriodCriticalPods = 10 * time.Second
+
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.23.4"
 
@@ -636,6 +644,12 @@ const (
 
 	// ExtensionServicesRootfsPath is the path to the extracted rootfs files of extension services.
 	ExtensionServicesRootfsPath = "/usr/local/lib/containers"
+
+	// DBusServiceSocketPath is the path to the D-Bus socket for the logind mock to connect to.
+	DBusServiceSocketPath = SystemRunPath + "/dbus/service.socket"
+
+	// DBusClientSocketPath is the path to the D-Bus socket for the kubelet to connect to.
+	DBusClientSocketPath = SystemRunPath + "/dbus/client.socket"
 )
 
 // See https://linux.die.net/man/3/klogctl

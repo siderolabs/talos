@@ -333,10 +333,11 @@ func TestNewKubeletConfigurationSuccess(t *testing.T) {
 		Logging: v1alpha1.LoggingConfiguration{
 			Format: "json",
 		},
-
-		StreamingConnectionIdleTimeout: metav1.Duration{Duration: 5 * time.Minute},
-		TLSMinVersion:                  "VersionTLS13",
-		EnableDebuggingHandlers:        pointer.ToBool(true),
+		ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
+		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
+		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
+		TLSMinVersion:                   "VersionTLS13",
+		EnableDebuggingHandlers:         pointer.ToBool(true),
 	},
 		config)
 }
