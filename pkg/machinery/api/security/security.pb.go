@@ -21,12 +21,13 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// The request message containing the process name.
+// The request message containing the certificate signing request.
 type CertificateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Certificate Signing Request in PEM format.
 	Csr []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty"`
 }
 
@@ -69,13 +70,15 @@ func (x *CertificateRequest) GetCsr() []byte {
 	return nil
 }
 
-// The response message containing the requested logs.
+// The response message containing signed certificate.
 type CertificateResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Ca  []byte `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
+	// Certificate of the CA that signed the requested certificate in PEM format.
+	Ca []byte `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
+	// Signed X.509 requested certificate in PEM format.
 	Crt []byte `protobuf:"bytes,2,opt,name=crt,proto3" json:"crt,omitempty"`
 }
 

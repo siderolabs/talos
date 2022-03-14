@@ -3067,12 +3067,12 @@ ResourceService provides user-facing API for the Talos resources.
 <a name="securityapi.CertificateRequest"></a>
 
 ### CertificateRequest
-The request message containing the process name.
+The request message containing the certificate signing request.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| csr | [bytes](#bytes) |  |  |
+| csr | [bytes](#bytes) |  | Certificate Signing Request in PEM format. |
 
 
 
@@ -3082,13 +3082,13 @@ The request message containing the process name.
 <a name="securityapi.CertificateResponse"></a>
 
 ### CertificateResponse
-The response message containing the requested logs.
+The response message containing signed certificate.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ca | [bytes](#bytes) |  |  |
-| crt | [bytes](#bytes) |  |  |
+| ca | [bytes](#bytes) |  | Certificate of the CA that signed the requested certificate in PEM format. |
+| crt | [bytes](#bytes) |  | Signed X.509 requested certificate in PEM format. |
 
 
 
