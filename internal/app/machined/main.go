@@ -251,8 +251,13 @@ func run() error {
 		return err
 	}
 
-	// Start the machine API.
-	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
+	go func() {
+		// Start the machine API.
+		system.Services(c.Runtime()).LoadAndStart(
+			&services.Machined{Controller: c},
+			&services.APID{},
+		)
+	}()
 
 	// Boot the machine.
 	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {

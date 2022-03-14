@@ -521,7 +521,10 @@ const (
 	DefaultDNSDomain = "cluster.local"
 
 	// BootTimeout is the timeout to run all services.
-	BootTimeout = 35 * time.Minute
+	BootTimeout = 70 * time.Minute
+
+	// FailurePauseTimeout is the timeout for the sequencer failures which can be fixed by updating the machine config.
+	FailurePauseTimeout = 35 * time.Minute
 
 	// EtcdJoinTimeout is the timeout for etcd to join the existing cluster.
 	//
