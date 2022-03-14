@@ -220,10 +220,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"userDisks",
-		MountUserDisks,
+		pauseOnFailure(MountUserDisks, constants.FailurePauseTimeout),
 	).Append(
 		"userSetup",
-		WriteUserFiles,
+		pauseOnFailure(WriteUserFiles, constants.FailurePauseTimeout),
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"lvm",

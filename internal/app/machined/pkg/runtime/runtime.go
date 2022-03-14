@@ -18,4 +18,5 @@ type Runtime interface {
 	Events() EventStream
 	Logging() LoggingManager
 	NodeName() (string, error)
+	IsBootstrapAllowed() bool
 }

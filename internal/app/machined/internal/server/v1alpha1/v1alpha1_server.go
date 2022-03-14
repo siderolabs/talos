@@ -343,6 +343,10 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
+	if !s.Controller.Runtime().IsBootstrapAllowed() {
+		return nil, status.Error(codes.FailedPrecondition, "bootstrap is not available yet")
+	}
+
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
 		return nil, status.Error(codes.FailedPrecondition, "bootstrap can only be performed on a control plane node")
 	}
@@ -1891,7 +1895,16 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 }
 
 // EtcdRecover implements the machine.MachineServer interface.
+//nolint:gocyclo
 func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error {
+	if _, err := os.Stat(filepath.Dir(constants.EtcdRecoverySnapshotPath)); err != nil {
+		if os.IsNotExist(err) {
+			return status.Error(codes.FailedPrecondition, "etcd service is not ready for recovery yet")
+		}
+
+		return err
+	}
+
 	if err := s.checkControlplane("etcd recover"); err != nil {
 		return err
 	}

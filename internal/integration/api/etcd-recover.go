@@ -200,13 +200,18 @@ func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer)
 func (suite *EtcdRecoverSuite) recoverEtcd(recoverNode string, src io.Reader) error {
 	ctx := client.WithNodes(suite.ctx, recoverNode)
 
-	_, err := suite.Client.EtcdRecover(ctx, src)
-	if err != nil {
+	if err := retry.Constant(time.Minute, retry.WithUnits(time.Millisecond*200)).RetryWithContext(ctx, func(ctx context.Context) error {
+		_, err := suite.Client.EtcdRecover(ctx, src)
+
+		return retry.ExpectedError(err)
+	}); err != nil {
 		return fmt.Errorf("error uploading snapshot: %w", err)
 	}
 
-	return suite.Client.Bootstrap(ctx, &machineapi.BootstrapRequest{
-		RecoverEtcd: true,
+	return retry.Constant(time.Minute, retry.WithUnits(time.Millisecond*200)).RetryWithContext(ctx, func(ctx context.Context) error {
+		return retry.ExpectedError(suite.Client.Bootstrap(ctx, &machineapi.BootstrapRequest{
+			RecoverEtcd: true,
+		}))
 	})
 }
 

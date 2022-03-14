@@ -8,11 +8,14 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -143,4 +146,17 @@ func (r *Runtime) NodeName() (string, error) {
 	}
 
 	return nodenameResource.(*k8s.Nodename).TypedSpec().Nodename, nil
+}
+
+// IsBootstrapAllowed checks for CRI to be up, checked in the bootstrap method.
+func (r *Runtime) IsBootstrapAllowed() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	svc := &services.CRI{}
+	if err := system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
+		return false
+	}
+
+	return true
 }
