@@ -343,6 +343,10 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (reply *machine.BootstrapResponse, err error) {
 	log.Printf("bootstrap request received")
 
+	if !s.Controller.Runtime().IsBootstrapAllowed() {
+		return nil, status.Error(codes.FailedPrecondition, "bootstrap is not available yet")
+	}
+
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
 		return nil, status.Error(codes.FailedPrecondition, "bootstrap can only be performed on a control plane node")
 	}

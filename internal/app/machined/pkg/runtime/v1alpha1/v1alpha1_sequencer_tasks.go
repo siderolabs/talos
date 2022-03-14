@@ -672,7 +672,6 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		svcs := system.Services(r)
 
 		svcs.Load(
-			&services.APID{},
 			&services.CRI{},
 		)
 
@@ -1820,4 +1819,27 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		return nil
 	}, "kexecPrepare"
+}
+
+func pauseOnFailure(callback func(runtime.Sequence, interface{}) (runtime.TaskExecutionFunc, string),
+	timeout time.Duration) func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+		f, name := callback(seq, data)
+
+		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			err := f(ctx, logger, r)
+			if err != nil {
+				logger.Printf("%s failed, rebooting in %.0f minutes. You can use talosctl apply-config or talosctl edit mc to fix the issues, error:\n%s", name, timeout.Minutes(), err)
+
+				timer := time.NewTimer(time.Minute * 5)
+
+				select {
+				case <-timer.C:
+				case <-ctx.Done():
+				}
+			}
+
+			return err
+		}, name
+	}
 }
