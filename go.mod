@@ -65,7 +65,7 @@ require (
 	github.com/hashicorp/go-version v1.4.0
 	github.com/hetznercloud/hcloud-go v1.33.1
 	github.com/insomniacslk/dhcp v0.0.0-20220119180841-3c283ff8b7dd
-	github.com/jsimonetti/rtnetlink v1.1.0
+	github.com/jsimonetti/rtnetlink v1.1.1
 	github.com/jxskiss/base62 v1.1.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20220221190821-c37aaafac7f9
@@ -151,7 +151,7 @@ require (
 	github.com/briandowns/spinner v1.6.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
-	github.com/cilium/ebpf v0.8.0 // indirect
+	github.com/cilium/ebpf v0.8.1 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/go-cni v1.1.3 // indirect
