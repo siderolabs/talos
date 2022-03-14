@@ -66,7 +66,7 @@ Previously, the audit logs were sent to `kube-apiserver`'s `stdout`, along with 
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.26
+* Linux: 5.15.28
 * Kubernetes: 1.23.4
 * CoreDNS: 1.9.0
 * etcd: 3.5.2
