@@ -31,6 +31,7 @@ type APIBootstrapper struct {
 // Bootstrap the cluster via the API.
 //
 // Bootstrap implements Bootstrapper interface.
+//nolint:gocyclo
 func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	cli, err := s.Client()
 	if err != nil {
@@ -81,6 +82,9 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 				return retry.ExpectedError(err)
 			// connection refused, including proxied connection refused via the endpoint to the node
 			case strings.Contains(err.Error(), "connection refused"):
+				return retry.ExpectedError(err)
+			// connection timeout
+			case strings.Contains(err.Error(), "error reading from server: EOF"):
 				return retry.ExpectedError(err)
 			}
 

@@ -22,6 +22,7 @@ import (
 	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/net/http/httpproxy"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/apid"
@@ -241,6 +242,25 @@ func run() error {
 		log.Printf("controller runtime finished")
 	}()
 
+	var eg *errgroup.Group
+
+	eg, ctx = errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		svc := &services.Containerd{}
+		if err = system.WaitForService(system.StateEventUp, svc.ID(c.Runtime())).Wait(ctx); err != nil {
+			return err
+		}
+
+		// Start the machine API.
+		system.Services(c.Runtime()).LoadAndStart(
+			&services.Machined{Controller: c},
+			&services.APID{},
+		)
+
+		return nil
+	})
+
 	// Initialize the machine.
 	if err = c.Run(ctx, runtime.SequenceInitialize, nil); err != nil {
 		return err
@@ -251,11 +271,12 @@ func run() error {
 		return err
 	}
 
-	// Start the machine API.
-	system.Services(c.Runtime()).LoadAndStart(&services.Machined{Controller: c})
-
 	// Boot the machine.
 	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {
+		return err
+	}
+
+	if err = eg.Wait(); err != nil {
 		return err
 	}
 
