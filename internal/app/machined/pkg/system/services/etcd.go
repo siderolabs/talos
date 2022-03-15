@@ -88,10 +88,6 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		return err
 	}
 
-	if err = generatePKI(ctx, r); err != nil {
-		return fmt.Errorf("failed to generate etcd PKI: %w", err)
-	}
-
 	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
 		return err
@@ -112,9 +108,13 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 
 	switch t := r.Config().Machine().Type(); t {
 	case machine.TypeInit:
-		return e.argsForInit(ctx, r)
+		if err = e.argsForInit(ctx, r); err != nil {
+			return err
+		}
 	case machine.TypeControlPlane:
-		return e.argsForControlPlane(ctx, r)
+		if err = e.argsForControlPlane(ctx, r); err != nil {
+			return err
+		}
 	case machine.TypeWorker:
 		return fmt.Errorf("unexpected machine type: %v", t)
 	case machine.TypeUnknown:
@@ -122,6 +122,12 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	default:
 		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
+
+	if err = generatePKI(ctx, r); err != nil {
+		return fmt.Errorf("failed to generate etcd PKI: %w", err)
+	}
+
+	return nil
 }
 
 // PostFunc implements the Service interface.
@@ -275,6 +281,26 @@ func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
 		}
 	}
 
+	// wait for additional events with 500ms timeout and absorb new versions of the resource
+	const settleDownTimeout = 500 * time.Millisecond
+
+	timer := time.NewTimer(settleDownTimeout)
+	defer timer.Stop()
+
+waitLoop:
+	for {
+		select {
+		case event = <-watchCh:
+			if !timer.Stop() {
+				<-timer.C
+			}
+
+			timer.Reset(settleDownTimeout)
+		case <-timer.C:
+			break waitLoop
+		}
+	}
+
 	etcdCerts := event.Resource.(*secrets.Etcd).Certs()
 
 	for _, keypair := range []struct {
@@ -311,6 +337,11 @@ func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
+	// update PKI on each join attempt
+	if err := generatePKI(ctx, r); err != nil {
+		return nil, 0, fmt.Errorf("failed to generate etcd PKI: %w", err)
+	}
+
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 	if err != nil {
 		return nil, 0, err
