@@ -78,7 +78,7 @@ func TestValidateFailures(t *testing.T) {
 		},
 		{
 			name:          "symlinks",
-			validateError: "symlinks are not allowed: \"/usr/local/b\"",
+			validateError: "symlinks with path components are not allowed: \"/usr/local/b\"",
 		},
 		{
 			name:          "badpaths",
