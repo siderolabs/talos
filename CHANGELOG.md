@@ -24,7 +24,7 @@ with a single `--mode` flag that can take the following values:
 
 Command `talosctl gen config` now defaults to Kubernetes version pinning in the generate machine configuration.
 Previously default was to omit explicit Kubernetes version, so Talos picked up the default version it was built against.
-Old behavior can be achieved by specifiying empty flag value: `--kubernetes-version=`.
+Old behavior can be achieved by specifying empty flag value: `--kubernetes-version=`.
 
 
 ### Machine Configuration
@@ -2010,7 +2010,7 @@ cluster:
 
 
 
-### Windows Suport
+### Windows Support
 
 CLI tool talosctl is now built for Windows and published as part of the release.
 
@@ -2325,7 +2325,7 @@ cluster:
 
 
 
-### Windows Suport
+### Windows Support
 
 CLI tool talosctl is now built for Windows and published as part of the release.
 
@@ -2642,7 +2642,7 @@ cluster:
 
 
 
-### Windows Suport
+### Windows Support
 
 CLI tool talosctl is now built for Windows and published as part of the release.
 
@@ -2879,7 +2879,7 @@ This release of Talos provides some initial support for cluster membership disco
 These new features are not enabled by default.
 
 
-### Windows Suport
+### Windows Support
 
 CLI tool talosctl is now built for Windows and published as part of the release.
 

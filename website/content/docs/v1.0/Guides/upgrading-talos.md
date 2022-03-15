@@ -111,7 +111,7 @@ In this case, Talos will fail to download the upgraded image and will abort the 
 
 Sometimes, Talos is unable to successfully kill off all of the disk access points, in which case it cannot safely unmount all filesystems to effect the upgrade.
 In this case, it will abort the upgrade and reboot.
-(`upgrade --stage` can ensure that upgrades can occur even when the filesytems cannot be unmounted.)
+(`upgrade --stage` can ensure that upgrades can occur even when the filesystem cannot be unmounted.)
 
 It is possible (especially with test builds) that the upgraded Talos system will fail to start.
 In this case, the node will be rebooted, and the bootloader will automatically use the previous Talos kernel and image, thus effectively rolling back the upgrade.

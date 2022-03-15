@@ -585,7 +585,7 @@ The ControllerRuntimeDependency message contains the graph of controller-resourc
 ### InspectService
 The inspect service definition.
 
-InspectService provides auxilary API to inspect OS internals.
+InspectService provides auxiliary API to inspect OS internals.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|

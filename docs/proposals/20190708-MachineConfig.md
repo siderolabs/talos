@@ -11,7 +11,7 @@ This proposal will outline how we'll handle the passing of machine configuration
 I think the easiest way to background this is to take a look at the init node machine config that we currently have a template for, since it is our most verbose template with the most options.
 When looking it, it's somewhat self-explanatory on what is available to tweak, but it also gives a good starting point to view what is similar between the three types of Talos nodes: init (the first master), control plane (any other masters), and workers.
 I've also appended some additional fields that we use for certain platforms like Packet.
-Additionally, as some background around naming, we'll be referring to our configs only as "machine configs", since using terms like "userdata" interchangably led users to believe we supported cloud-init, which is not true.
+Additionally, as some background around naming, we'll be referring to our configs only as "machine configs", since using terms like "userdata" interchangeably led users to believe we supported cloud-init, which is not true.
 
 ### Init
 

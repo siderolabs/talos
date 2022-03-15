@@ -67,7 +67,7 @@ This provides a clean slate for upgrades.
 
 Once we enter the `rootfs` we have three high level tasks:
 
-- retreive the machineconfig
+- retrieve the machineconfig
 - create, format, and mount partitions per the builtin specifications
 - start system and k8s.io services
 

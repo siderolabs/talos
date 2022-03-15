@@ -244,7 +244,7 @@ kube-flannel-jknt9                               1/1     Running   0          23
 Full error might look like:
 
 ```bash
-x509: certificate signed by unknown authority (possiby because of crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes"
+x509: certificate signed by unknown authority (possibly because of crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes"
 ```
 
 Commonly, the control plane endpoint points to a different cluster, as the client certificate

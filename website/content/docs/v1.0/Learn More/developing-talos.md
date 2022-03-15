@@ -168,7 +168,7 @@ _out/integration-test-linux-amd64 \
 
 Whole test suite can be run removing `-test.short` flag.
 
-Specfic tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
+Specific tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
 
 ## Build Flavors
 

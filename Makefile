@@ -134,7 +134,7 @@ for applications using `img` tool.
 
 All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
 registry "$(IMAGE_REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
-The registry and username can be overriden by exporting REGISTRY, and USERNAME
+The registry and username can be overridden by exporting REGISTRY, and USERNAME
 respectively.
 
 ## Race Detector

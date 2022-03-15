@@ -49,7 +49,7 @@ With the help of [Rook](https://rook.io), the vast majority of the complexity of
 So if Ceph is so great, why not use it for everything?
 
 Ceph can be rather slow for small clusters.
-It relies heavily on CPUs and massive parallelisation to provide good cluster performance, so if you don't have much of those dedicated to Ceph, it is not going to be well-optimised for you.
+It relies heavily on CPUs and massive parallelisation to provide good cluster performance, so if you don't have much of those dedicated to Ceph, it is not going to be well-optimized for you.
 Also, if your cluster is small, just running Ceph may eat up a significant amount of the resources you have available.
 
 Troubleshooting Ceph can be difficult if you do not understand its architecture.
@@ -58,7 +58,7 @@ There are very good tools for inspection and debugging, but this is still freque
 
 ### Mayastor
 
-[Mayastor](https://github.com/openebs/Mayastor) is an OpenEBS project built in Rust utilising the modern NVMEoF system.
+[Mayastor](https://github.com/openebs/Mayastor) is an OpenEBS project built in Rust utilizing the modern NVMEoF system.
 (Despite the name, Mayastor does _not_ require you to have NVME drives.)
 It is fast and lean but still cluster-oriented and cloud native.
 Unlike most of the other OpenEBS project, it is _not_ built on the ancient iSCSI system.

@@ -30,7 +30,7 @@ For this discussion, we will point out two of these tiers:
 
 See [discovery service](../discovery) to learn more about the external service.
 
-The Kubernetes-based system utilises annotations on Kubernetes Nodes which describe each node's public key and local addresses.
+The Kubernetes-based system utilizes annotations on Kubernetes Nodes which describe each node's public key and local addresses.
 
 On top of this, we also route Pod subnets.
 This is often (maybe even usually) taken care of by the CNI, but there are many situations where the CNI fails to be able to do this itself, across networks.
@@ -70,9 +70,9 @@ However, there is a big problem with IPTables.
 It is a common namespace in which any number of other pieces of software may dump things.
 We have no surety that what we add will not be wiped out by something else (from Kubernetes itself, to the CNI, to some workload application), be rendered unusable by higher-priority rules, or just generally cause trouble and conflicts.
 
-Instead, we use a three-pronged system which is both more foundational and less centralised.
+Instead, we use a three-pronged system which is both more foundational and less centralized.
 
-NFTables offers a separately namespaced, decentralised way of marking packets for later processing based on IP sets.
+NFTables offers a separately namespaced, decentralized way of marking packets for later processing based on IP sets.
 Instead of a common set of well-known tables, NFTables uses hooks into the kernel's netfilter system, which are less vulnerable to being usurped, bypassed, or a source of interference than IPTables, but which are rendered down by the kernel to the same underlying XTables system.
 
 Our NFTables system is where we store the IP sets.

@@ -17,7 +17,7 @@ The recommended method to upgrade Kubernetes is to use the `talosctl upgrade-k8s
 This will automatically update the components needed to upgrade Kubernetes safely.
 Upgrading Kubernetes is non-disruptive to the cluster workloads.
 
-To trigger a Kubernetes upgrade, issue a command specifiying the version of Kubernetes to ugprade to, such as:
+To trigger a Kubernetes upgrade, issue a command specifying the version of Kubernetes to upgrade to, such as:
 
 `talosctl --nodes <master node> upgrade-k8s --to 1.23.0`
 

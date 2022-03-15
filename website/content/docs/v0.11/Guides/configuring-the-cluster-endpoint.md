@@ -25,7 +25,7 @@ This is not a requirement, but rather a document to explain some key settings.
 #### Endpoint
 
 To configure the `talosctl` endpoint, it is recommended you use a resolvable DNS name.
-This way, if you decide to upgrade to a multi-controlplane cluster you only have to add the ip adres to the hostname configuration.
+This way, if you decide to upgrade to a multi-controlplane cluster you only have to add the ip address to the hostname configuration.
 The configuration can either be done on a Loadbalancer, or simply trough DNS.
 
 For example:

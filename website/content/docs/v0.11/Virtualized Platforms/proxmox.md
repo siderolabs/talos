@@ -115,7 +115,7 @@ If you wish to export this IP as a bash variable, simply issue a command like `e
 ### Without DHCP server
 
 To apply the machine configurations in maintenance mode, VM has to have IP on the network.
-So you can set it on boot time manualy.
+So you can set it on boot time manually.
 
 <img src="/images/proxmox-guide/maintenance-mode-grub-menu.png" width="600px">
 

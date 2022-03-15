@@ -55,7 +55,7 @@ helm install cilium cilium/cilium \
     --set ipam.mode=kubernetes
 ```
 
-Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
+Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra parameters:
 
 ```bash
 export KUBERNETES_API_SERVER_ADDRESS=<>
@@ -180,7 +180,7 @@ As the inline manifest is processed from top to bottom make sure to manually put
 ## Known issues
 
 - Currently there is an interaction between a Kubespan enabled Talos cluster and Cilium that results in the cluster going down during bootstrap after applying the Cilium manifests.
-For more details: [Kubespan and Cilium compatiblity: etcd is failing](https://github.com/talos-systems/talos/issues/4836)
+For more details: [Kubespan and Cilium compatibility: etcd is failing](https://github.com/talos-systems/talos/issues/4836)
 
 - There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers.
 For more details: [GCP ILB support / support scope local routes to be configured](https://github.com/talos-systems/talos/issues/4109)

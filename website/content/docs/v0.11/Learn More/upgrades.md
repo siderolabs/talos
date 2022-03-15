@@ -98,7 +98,7 @@ Can I break my cluster by upgrading everything?
 **A.** No.
 
 Nothing prevents the user from sending any number of near-simultaneous upgrades to each node of the cluster.
-While most people would not attempt to do this, it may be the desired behaviour in certain situations.
+While most people would not attempt to do this, it may be the desired behavior in certain situations.
 
 If, however, multiple control plane nodes are asked to upgrade at the same time, Talos will protect itself by making sure only one control plane node upgrades at any time, through its checking of etcd quorum.
 A lease is taken out by the winning control plane node, and no other control plane node is allowed to execute the upgrade until the lease is released and the etcd cluster is healthy and _will_ be healthy when the next node performs its upgrade.

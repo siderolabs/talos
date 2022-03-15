@@ -19,7 +19,7 @@ CentOS is RHEL, but made license-free.
 
 Talos Linux _isn't_ based on any other distribution, so there's no help here.
 We often think of ourselves as being the second-generation of
-container-optimised operating systems, where things like CoreOS, Flatcar, and Rancher represent the first generation, but that implies heredity where there is none.
+container-optimized operating systems, where things like CoreOS, Flatcar, and Rancher represent the first generation, but that implies heredity where there is none.
 It does, though, allow a conceptual handle to the concept.
 
 Talos Linux is actually a ground-up rewrite of the userspace, from PID 1.
@@ -108,7 +108,7 @@ Luckily, the Talos API makes this easy.
 In the old days, Talos Linux had the idea of an `init` node.
 The `init` node was a "special" controlplane node which was designated as the
 founder of the cluster.
-It was the first, was guaranteed to be the elector, and was authorised to create
+It was the first, was guaranteed to be the elector, and was authorized to create
 a cluster...
 even if one already existed.
 This made the formation of a cluster cluster really easy, but it had a lot of

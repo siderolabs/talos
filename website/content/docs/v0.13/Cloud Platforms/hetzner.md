@@ -10,7 +10,7 @@ You can email their support to get a Talos ISO uploaded by following [issues:359
 
 There are two options to upload your own.
 
-1. Run an instance in rescue mode and replase the system OS with the Talos image
+1. Run an instance in rescue mode and replaces the system OS with the Talos image
 2. Use [Hashicorp packer](https://www.packer.io/docs/builders/hetzner-cloud) to prepare an image
 
 ### Rescue mode

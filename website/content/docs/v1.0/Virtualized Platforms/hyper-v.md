@@ -69,7 +69,7 @@ Apply the config to both nodes.
 Now that our nodes are ready, we are ready to bootstrap the Kubernetes cluster.
 
 ```powershell
-# Use following command to set node and endpoint permanantly in config so you dont have to type it everytime
+# Use following command to set node and endpoint permanently in config so you dont have to type it everytime
 talosctl config endpoint $CONTROL_PLANE_IP
 talosctl config node $CONTROL_PLANE_IP
 

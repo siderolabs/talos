@@ -9,7 +9,7 @@ import "google/protobuf/empty.proto";
 
 // The inspect service definition.
 //
-// InspectService provides auxilary API to inspect OS internals.
+// InspectService provides auxiliary API to inspect OS internals.
 service InspectService {
   rpc ControllerRuntimeDependencies(google.protobuf.Empty) returns (ControllerRuntimeDependenciesResponse);
 }

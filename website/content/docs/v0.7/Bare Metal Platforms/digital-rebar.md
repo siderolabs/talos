@@ -32,7 +32,7 @@ created talosconfig
 ```
 
 > The loadbalancer is used to distribute the load across multiple controlplane nodes.
-> This isn't covered in detail, because we asume some loadbalancing knowledge before hand.
+> This isn't covered in detail, because we assume some loadbalancing knowledge before hand.
 > If you think this should be added to the docs, please [create a issue](https://github.com/talos-systems/talos/issues).
 
 At this point, you can modify the generated configs to your liking.
