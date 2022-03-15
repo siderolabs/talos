@@ -77,10 +77,6 @@ func TestValidateFailures(t *testing.T) {
 			loadError: "extension rootfs is missing",
 		},
 		{
-			name:          "symlinks",
-			validateError: "symlinks are not allowed: \"/usr/local/b\"",
-		},
-		{
 			name:          "badpaths",
 			validateError: "path \"/boot/vmlinuz\" is not allowed in extensions",
 		},

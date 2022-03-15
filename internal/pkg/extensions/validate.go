@@ -70,11 +70,6 @@ func (ext *Extension) validateContents() error {
 			return fmt.Errorf("world-writeable files are not allowed: %q", itemPath)
 		}
 
-		// no symlinks
-		if d.Type().Type() == os.ModeSymlink {
-			return fmt.Errorf("symlinks are not allowed: %q", itemPath)
-		}
-
 		var st fs.FileInfo
 
 		st, err = d.Info()
@@ -88,22 +83,8 @@ func (ext *Extension) validateContents() error {
 		}
 
 		// no special files
-		if !d.IsDir() && !d.Type().IsRegular() {
+		if !d.IsDir() && !d.Type().IsRegular() && d.Type().Type() != os.ModeSymlink {
 			return fmt.Errorf("special files are not allowed: %q", itemPath)
-		}
-
-		// directories should be non-empty
-		if d.IsDir() {
-			var contents []fs.DirEntry
-
-			contents, err = os.ReadDir(path)
-			if err != nil {
-				return err
-			}
-
-			if len(contents) == 0 {
-				return fmt.Errorf("empty directories are not allowed: %q", itemPath)
-			}
 		}
 
 		// regular file: check for file path being whitelisted
