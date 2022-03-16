@@ -167,7 +167,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		// If our platform is container, we cannot rely on the ability to change kernel parameters.
 		// Therefore, we need to NOT attempt to enforce the kernel parameter checking done by the kubelet
 		// when the `ProtectKernelDefaults` setting is enabled.
-		if ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
+		if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 			kubeletConfig.ProtectKernelDefaults = false
 		}
 
