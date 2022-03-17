@@ -17,15 +17,15 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.23.4
-	k8s.io/apimachinery v0.23.4
-	k8s.io/apiserver v0.23.4
-	k8s.io/cli-runtime v0.23.4 // indirect
-	k8s.io/client-go v0.23.4
-	k8s.io/component-base v0.23.4
-	k8s.io/cri-api v0.23.4
-	k8s.io/kubectl v0.23.4
-	k8s.io/kubelet v0.23.4
+	k8s.io/api v0.23.5
+	k8s.io/apimachinery v0.23.5
+	k8s.io/apiserver v0.23.5
+	k8s.io/cli-runtime v0.23.5 // indirect
+	k8s.io/client-go v0.23.5
+	k8s.io/component-base v0.23.5
+	k8s.io/cri-api v0.23.5
+	k8s.io/kubectl v0.23.5
+	k8s.io/kubelet v0.23.5
 )
 
 require (
@@ -54,6 +54,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
+	github.com/godbus/dbus/v5 v5.0.6
 	github.com/google/go-cmp v0.5.7
 	github.com/google/nftables v0.0.0-20220221214239-211824995dcb
 	github.com/google/uuid v1.3.0
@@ -175,7 +176,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
-	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
