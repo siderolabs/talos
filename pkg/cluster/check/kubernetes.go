@@ -253,6 +253,8 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 }
 
 // K8sPodReadyAssertion checks whether all the pods matching label selector are Ready, and there is at least one.
+//
+//nolint:gocyclo
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
@@ -270,9 +272,13 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 		return fmt.Errorf("no pods found for namespace %q and label selector %q", namespace, labelSelector)
 	}
 
-	var notReadyPods []string
+	var notReadyPods, readyPods []string
 
 	for _, pod := range pods.Items {
+		if pod.Status.Phase == v1.PodFailed {
+			continue
+		}
+
 		ready := false
 
 		for _, cond := range pod.Status.Conditions {
@@ -287,7 +293,13 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 
 		if !ready {
 			notReadyPods = append(notReadyPods, pod.Name)
+		} else {
+			readyPods = append(readyPods, pod.Name)
 		}
+	}
+
+	if len(readyPods) == 0 {
+		return fmt.Errorf("no ready pods found for namespace %q and label selector %q", namespace, labelSelector)
 	}
 
 	if len(notReadyPods) == 0 {
