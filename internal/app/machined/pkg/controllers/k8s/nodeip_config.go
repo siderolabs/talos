@@ -89,6 +89,15 @@ func (ctrl *NodeIPConfigController) Run(ctx context.Context, r controller.Runtim
 
 				spec.ExcludeSubnets = nil
 
+				// filter out Pod & Service CIDRs, they can't be kubelet IPs
+				spec.ExcludeSubnets = append(
+					append(
+						spec.ExcludeSubnets,
+						cfgProvider.Cluster().Network().PodCIDRs()...,
+					),
+					cfgProvider.Cluster().Network().ServiceCIDRs()...,
+				)
+
 				// filter out any virtual IPs, they can't be node IPs either
 				for _, device := range cfgProvider.Machine().Network().Devices() {
 					if device.VIPConfig() != nil {
