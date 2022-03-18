@@ -125,7 +125,7 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 			spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
 
 			suite.Assert().Equal([]string{"10.0.0.0/24"}, spec.ValidSubnets)
-			suite.Assert().Equal([]string{"1.2.3.4", "5.6.7.8"}, spec.ExcludeSubnets)
+			suite.Assert().Equal([]string{"10.244.0.0/16", "10.96.0.0/12", "1.2.3.4", "5.6.7.8"}, spec.ExcludeSubnets)
 
 			return nil
 		},
@@ -168,7 +168,7 @@ func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 			spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
 
 			suite.Assert().Equal([]string{"0.0.0.0/0", "::/0"}, spec.ValidSubnets)
-			suite.Assert().Empty(spec.ExcludeSubnets)
+			suite.Assert().Equal([]string{"10.244.0.0/16", "fc00:db8:10::/56", "10.96.0.0/12", "fc00:db8:20::/112"}, spec.ExcludeSubnets)
 
 			return nil
 		},
