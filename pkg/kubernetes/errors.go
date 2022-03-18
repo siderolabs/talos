@@ -19,8 +19,10 @@ func IsRetryableError(err error) bool {
 		return true
 	}
 
-	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, syscall.ECONNREFUSED) {
-		return true
+	for _, retryableError := range []error{io.EOF, io.ErrUnexpectedEOF, syscall.ECONNREFUSED, syscall.ECONNRESET} {
+		if errors.Is(err, retryableError) {
+			return true
+		}
 	}
 
 	var netErr net.Error
