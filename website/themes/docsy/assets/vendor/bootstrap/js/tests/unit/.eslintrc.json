@@ -1,0 +1,34 @@
+{
+  "extends": [
+    "../../../.eslintrc.json",
+    "plugin:qunit/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 5,
+    "sourceType": "script"
+  },
+  "env": {
+    "es6": false,
+    "jquery": true,
+    "qunit": true
+  },
+  "globals": {
+    "bootstrap": false,
+    "sinon": false,
+    "Util": false,
+    "Alert": false,
+    "Button": false,
+    "Carousel": false,
+    "Simulator": false,
+    "Toast": false
+  },
+  "rules": {
+    "no-var": "off",
+    "object-shorthand": "off",
+    "prefer-arrow-callback": "off",
+    "prefer-rest-params": "off",
+    "prefer-template": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/prefer-spread": "off"
+  }
+}

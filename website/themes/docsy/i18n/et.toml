@@ -1,0 +1,48 @@
+
+# Translation into Estonian
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Eelmine"
+
+[ui_pager_next]
+other = "Järgmine"
+
+[ui_read_more]
+other = "Loe lähemalt"
+
+[ui_search]
+other = "Otsi lehelt…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "kohas" # not perfect. In Estonian this idea is represented by a suffix, not a separate word.
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Kõik õigused kaitstud"
+
+[footer_privacy_policy]
+other = "Privaatsuspoliitika"
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "järgi" # not perfect. In Estonian this idea is represented by a suffix, not a separate word.
+[post_created]
+other = "Loodud"
+[post_last_mod]
+other = "Viimati muudetud"
+[post_edit_this]
+other = "Täienda lehte"
+[post_create_child_page]
+other = "Loo alamleht"
+[post_create_issue]
+other = "Tõstata dokumentatsiooni kohta ülesanne" # perhaps there is a better translation for "issue"...
+[post_create_project_issue]
+other = "Tõstata projekti kohta ülesanne"
+[post_posts_in]
+other = "Postitused" # in Estonian this "in" should be the suffix of the next word, cannot include it to that phrase.
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"

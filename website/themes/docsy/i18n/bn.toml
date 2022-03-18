@@ -1,0 +1,57 @@
+# ইউআই স্ট্রিং বাটন এবং অনুরূপ। 
+
+[ui_pager_prev]
+other = "পূর্ববর্তী"
+
+[ui_pager_next]
+other = "পরবর্তী"
+
+[ui_read_more]
+other = "আরও পড়ুন"
+
+[ui_search]
+other = "এই সাইটে খোঁজ করুন…"
+
+# "পোস্ট করা নিউজ" এর মতো বাক্যে ব্যবহৃত
+[ui_in]
+other = "মধ্যে"
+
+# পাদচরণ
+[footer_all_rights_reserved]
+other = "সমস্ত অধিকার সংরক্ষিত"
+
+[footer_privacy_policy]
+other = "গোপনীয়তা নীতি"
+
+
+# পোস্ট (ব্লগ, নিবন্ধ ইত্যাদি)
+[post_byline_by]
+other = "দ্বারা"
+[post_created]
+other = "তৈরি"
+[post_last_mod]
+other = "সর্বশেষ পরিবর্তিত"
+[post_edit_this]
+other = "এই পৃষ্ঠাটি সম্পাদনা করুন"
+[post_create_child_page]
+other = "শাখা পৃষ্ঠা তৈরি করুন"
+[post_create_issue]
+other = "ডকুমেন্টেশন ইস্যু তৈরি করুন"
+[post_create_project_issue]
+other = "প্রকল্পের সমস্যা তৈরি করুন"
+[post_posts_in]
+other = "পোস্ট"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# মুদ্রণ সমর্থন
+[print_printable_section]
+other = "এটি এই বিভাগটির বহু পৃষ্ঠার মুদ্রণযোগ্য দর্শন।"
+[print_click_to_print]
+other = "মুদ্রণ করতে এখানে ক্লিক করুন"
+[print_show_regular]
+other = "এই পৃষ্ঠার নিয়মিত দৃশ্যে ফিরে আসুন"
+[print_entire_section]
+other = "পুরো বিভাগ মুদ্রণ করুন"

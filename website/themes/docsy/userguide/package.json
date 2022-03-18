@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "_build": "hugo --cleanDestinationDir -e dev -DFE --themesDir ../..",
+    "_serve": "hugo serve -DFE --themesDir ../..",
+    "build:preview": "hugo --cleanDestinationDir -e dev -DFE --minify --baseURL \"${DEPLOY_PRIME_URL:-/}\" --themesDir ../..",
+    "build:production": "hugo --cleanDestinationDir --minify --themesDir ../..",
+    "build": "npm run _build",
+    "prebuild:preview": "npm run submodule:get",
+    "prebuild:production": "npm run submodule:get",
+    "prebuild": "npm run submodule:get",
+    "preinstall": "npm run submodule:get",
+    "preserve": "npm run submodule:get",
+    "serve": "npm run _serve",
+    "submodule:get": "cd .. && npm run submodule:get",
+    "submodule:update": "cd .. && npm run submodule:update"
+  },
+  "devDependencies": {
+    "autoprefixer": "^9.5.0",
+    "postcss-cli": "^5.0.1"
+  }
+}

@@ -1,0 +1,76 @@
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+    integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js"
+    integrity="sha512-UR25UO94eTnCVwjbXozyeVd6ZqpaAE9naiEUBK/A+QDbfSTQFhPGj5lOR6d8tsgbBk84Ggb5A3EkjsOgPRPcKA=="
+    crossorigin="anonymous"></script>
+
+{{ if .Site.Params.mermaid.enable }}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@8.13.4/dist/mermaid.min.js" integrity="sha512-JERecFUBbsm75UpkVheAuDOE8NdHjQBrPACfEQYPwvPG+fjgCpHAz1Jw2ci9EXmd3DdfiWth3O3CQvcfEg8gsA==" crossorigin="anonymous"></script>
+{{ end }}
+
+{{ if .Site.Params.markmap.enable }}
+<style>
+.markmap > svg {
+  width: 100%;
+  height: 300px;
+}
+</style>
+<script>
+window.markmap = {
+  autoLoader: { manual: true },
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-autoloader"></script>
+{{ end }}
+
+<script src='{{ "/js/tabpane-persist.js" | relURL }}'></script>
+
+<!-- load the deflate.js for plantuml support -->
+{{ if .Site.Params.plantuml.enable }}
+<script src='{{ "/js/deflate.js" | relURL }}'></script>
+{{ end }}
+
+<!-- load stylesheet and scripts for KaTeX support -->
+{{ if .Site.Params.katex.enable }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css"
+    integrity="sha512-vJqxkZ+Sugf/6WRlpcxN01qVfX/29hF6qc33eHF1va3NgoV+U+wCi+uTAsQ10sDoGyBxHLdaHvGwDlV3yVYboA==" crossorigin="anonymous">
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"
+    integrity="sha512-5ufNcHqOYgilGEHPfuRIQ5B/vDS1M8+UC+DESZ5CwVgGTg+b2Ol/15rYL/GiCWJ/Sx8oVo0FPFok1dPk8U9INQ=="
+    crossorigin="anonymous"></script>
+<!-- check whether support of mhchem is enabled in config.toml -->
+{{ if .Site.Params.katex.mhchem.enable }}
+<!-- To add support for displaying chemical equations and physical units, load the mhchem extension: -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/mhchem.min.js"
+    integrity="sha512-HWb6LyQhO6UkmYLjdSblpgiOvvbdkoMRjln0POPhOVbZu3l4QdqwZnMJ/cuwKScU5pWARejB495TAAAz0WNsXQ=="
+    crossorigin="anonymous"></script>
+{{ end }}
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src='https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js'
+    integrity='sha512-ZA/RPrAo88DlwRnnoNVqKINnQNcWERzRK03PDaA4GIJiVZvGFIWQbdWCsUebMZfkWohnfngsDjXzU6PokO4jGw==' crossorigin='anonymous' 
+    {{ printf "onload='renderMathInElement(%s, %s);'" (( .Site.Params.katex.html_dom_element | default "document.body" ) | safeJS ) ( printf "%s" ( $.Site.Params.katex.options | jsonify )) | safeHTMLAttr }}></script>
+{{ end }}
+
+{{ $jsBase := resources.Get "js/base.js" }}
+{{ $jsAnchor := resources.Get "js/anchor.js" }}
+{{ $jsSearch := resources.Get "js/search.js" | resources.ExecuteAsTemplate "js/search.js" .Site.Home }}
+{{ $jsMermaid := resources.Get "js/mermaid.js" | resources.ExecuteAsTemplate "js/mermaid.js" . }}
+{{ $jsMarkmap := resources.Get "js/markmap.js" | resources.ExecuteAsTemplate "js/markmap.js" . }}
+{{ $jsPlantuml := resources.Get "js/plantuml.js" | resources.ExecuteAsTemplate "js/plantuml.js" . }}
+{{ $jsDrawio := resources.Get "js/drawio.js" | resources.ExecuteAsTemplate "js/plantuml.js" .}}
+{{ if .Site.Params.offlineSearch }}
+{{ $jsSearch = resources.Get "js/offline-search.js" }}
+{{ end }}
+{{ $js := (slice $jsBase $jsAnchor $jsSearch $jsMermaid $jsPlantuml $jsMarkmap $jsDrawio) | resources.Concat "js/main.js" }}
+{{ if not hugo.IsProduction }}
+<script src="{{ $js.RelPermalink }}"></script>
+{{ else }}
+{{ $js := $js | minify | fingerprint }}
+<script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" crossorigin="anonymous"></script>
+{{ end }}
+{{ if .Site.Params.prism_syntax_highlighting }}
+<!-- scripts for prism -->
+<script src='{{ "/js/prism.js" | relURL }}'></script>
+{{ end }}
+{{ partial "hooks/body-end.html" . }}

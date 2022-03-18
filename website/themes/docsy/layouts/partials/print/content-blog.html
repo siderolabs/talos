@@ -1,0 +1,14 @@
+{{ $break := cond .DoPageBreak "page-break-before: always" "" }}
+{{ with .Page }}
+<div class="td-content" style="{{ $break }}">
+    <h1 id="pg-{{ .Page.File.UniqueID }}">{{ .Title }}</h1>
+	{{ with .Params.description }}<div class="lead">{{ . | markdownify }}</div>{{ end }}
+	<div class="td-byline mb-4">
+		{{ with .Params.author }}{{ T "post_byline_by" }} <b>{{ . | markdownify }}</b> |{{ end}}
+        {{if .Date }}
+		<time datetime="{{  .Date.Format "2006-01-02" }}" class="text-muted">{{ .Date.Format .Site.Params.time_format_blog  }}</time>
+        {{ end }}
+	</div>
+	{{ .Content }}
+</div>
+{{ end }}

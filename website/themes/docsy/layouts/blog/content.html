@@ -1,0 +1,31 @@
+<div class="td-content">
+	<h1>{{ .Title }}</h1>
+	{{ with .Params.description }}<div class="lead">{{ . | markdownify }}</div>{{ end }}
+	<div class="td-byline mb-4">
+		{{ with .Params.author }}{{ T "post_byline_by" }} <b>{{ . | markdownify }}</b> |{{ end}}
+		<time datetime="{{  $.Date.Format "2006-01-02" }}" class="text-muted">{{ $.Date.Format $.Site.Params.time_format_blog  }}</time>
+	</div>
+	<header class="article-meta">
+		{{ $context := . }}
+		{{ if .Site.Params.Taxonomy.taxonomyPageHeader }}
+			{{ range $index, $taxo := .Site.Params.Taxonomy.taxonomyPageHeader }}
+				{{ partial "taxonomy_terms_article.html" (dict "context" $context "taxo" $taxo ) }}
+			{{ end }}
+		{{ else }}
+			{{ range $taxo, $taxo_map := .Site.Taxonomies }}
+				{{ partial "taxonomy_terms_article.html" (dict "context" $context "taxo" $taxo ) }}
+			{{ end }}
+		{{ end }}
+		{{ if (and (not .Params.hide_readingtime) (.Site.Params.ui.readingtime.enable)) }}
+			{{ partial "reading-time.html" . }}
+		{{ end }}
+	</header>
+	{{ .Content }}
+	{{ if (.Site.Params.DisqusShortname) }}
+		<br />
+		{{ partial "disqus-comment.html" . }}
+		<br />
+	{{ end }}
+
+	{{ partial "pager.html" . }}
+</div>

@@ -687,7 +687,8 @@ RUN markdownlint \
     --ignore '**/CODE_OF_CONDUCT.md' \
     --ignore '**/node_modules/**' \
     --ignore '**/hack/chglog/**' \
-    --ignore 'website/content/docs/*/Reference/*' \
+    --ignore 'website/content/*/reference/*' \
+    --ignore 'website/themes/**' \
     .
 RUN find . \
     -name '*.md' \
@@ -696,7 +697,8 @@ RUN find . \
     -not -path './CODE_OF_CONDUCT.md' \
     -not -path '*/node_modules/*' \
     -not -path './hack/chglog/**' \
-    -not -path './website/content/docs/*/Reference/*' \
+    -not -path './website/content/*/reference/*' \
+    -not -path './website/themes/**' \
     -print0 \
     | xargs -0 textlint
 
@@ -732,9 +734,9 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration.md /website/content/docs/v1.0/Reference/
-COPY --from=docs-build /tmp/cli.md /website/content/docs/v1.0/Reference/
-COPY --from=proto-docs-build /tmp/api.md /website/content/docs/v1.0/Reference/
+COPY --from=docs-build /tmp/configuration.md /website/content/v1.0/reference/
+COPY --from=docs-build /tmp/cli.md /website/content/v1.0/reference/
+COPY --from=proto-docs-build /tmp/api.md /website/content/v1.0/reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

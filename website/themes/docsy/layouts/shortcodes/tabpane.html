@@ -1,0 +1,46 @@
+<!-- Scratchpad gets populated through call to .Inner -->  
+{{- .Inner -}}
+
+<ul class="nav nav-tabs" id="tabs-{{- $.Ordinal -}}" role="tablist">
+  {{- range $index, $element := $.Scratch.Get "tabs" -}}
+    <li class="nav-item">
+      <!-- Generate the IDs for the <a> and the <div> elements -->
+      {{- $tabid := printf "tabs-%v-%v-tab" $.Ordinal $index | anchorize -}}
+      {{- $entryid := printf "tabs-%v-%v" $.Ordinal $index | anchorize -}}
+      <!-- Replace space and + from tabname to set class -->
+      {{- $tabname := replaceRE "(\\s)" "-" $element.header -}}
+      {{- $tabname := replaceRE "(\\+)" "-" $tabname -}}
+      <a class="nav-link{{ if eq $index "0" }} active{{ end }} tab-{{ $tabname }}"
+        id="{{ $tabid }}" data-toggle="tab" href="#{{ $entryid }}" role="tab" onclick="handleClick({{ $tabname }});"
+        aria-controls="{{ $entryid }}" aria-selected="{{- cond (eq $index "0") "true" "false" -}}">
+        {{ index . "header" }}
+      </a>
+    </li>
+  {{- end -}}
+</ul>
+
+<!-- Inner content -->
+<div class="tab-content" id="tabs-{{- $.Ordinal -}}-content">
+  {{- range $index, $element := $.Scratch.Get "tabs" -}}
+
+    {{- $lang := default $.Site.Language.Lang ($.Get "lang") -}}
+    {{with $.Get "langEqualsHeader"}}
+        {{ if $.Get "langEqualsHeader"}}
+          {{ $lang = $element.header }}
+        {{end}}
+    {{end}}
+    {{- $hloptions := default "" ($.Get "highlight") -}}
+    {{- with $element.language -}}
+      {{  $lang = $element.language }}
+    {{- end -}}
+    {{- with $element.highlight -}}
+      {{  $hloptions = $element.highlight }}
+    {{- end -}}
+    {{- $tabid := printf "tabs-%v-%v-tab" $.Ordinal $index | anchorize -}}
+    {{- $entryid := printf "tabs-%v-%v" $.Ordinal $index | anchorize -}}
+    <div class="tab-pane fade{{ if eq $index "0" }} show active{{ end }}"
+        id="{{ $entryid }}" role="tabpanel" aria-labelled-by="{{ $tabid }}">
+      {{- highlight (index . "content") $lang $hloptions -}}
+    </div>
+  {{ end }}
+</div>

@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build:preview": "cd userguide && npm run build:preview",
+    "build:production": "cd userguide && npm run build:production",
+    "build": "cd userguide && npm run build",
+    "install": "cd userguide && npm install",
+    "serve": "cd userguide && npm run serve",
+    "submodule:get": "git submodule update --init --recursive --depth 1",
+    "submodule:update": "git submodule update --remote --recursive --depth 1"
+  }
+}

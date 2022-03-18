@@ -1,14 +1,7 @@
 [build]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
+command = "cd website && hugo --gc --minify"
+publish = "website/public"
 
-[context.deploy-preview]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
-
-[context.branch-deploy]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
+[build.environment]
+HUGO_VERSION = "0.93.2"
+NODE_VERSION = "12.21.0"

@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Önceki"
+
+[ui_pager_next]
+other = "Sonraki"
+
+[ui_read_more]
+other = "Daha fazla oku"
+
+[ui_search]
+other = "Bu sitede arayın…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "içinde"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Bütün haklar saklıdır"
+
+[footer_privacy_policy]
+other = "Gizlilik Politikası"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "by"
+[post_created]
+other = "Oluşturuldu"
+[post_last_mod]
+other = "Son düzenleme"
+[post_edit_this]
+other = "Bu sayfayı düzenle"
+[post_create_child_page]
+other = "Çocuk sayfası oluştur"
+[post_create_issue]
+other = "Belge konusu oluştur"
+[post_create_project_issue]
+other = "Proje konusu oluştur"
+[post_posts_in]
+other = "Gönderiler in"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "Bu bölümün görüntüsü yazdırılabilir."
+[print_click_to_print]
+other = "Yazdırmak için tıklayın"
+[print_show_regular]
+other = "Bu sayfanın normal görüntüsüne dönün"
+[print_entire_section]
+other = "Bütün bölümü yazıdırın"

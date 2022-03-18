@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Предыдущая"
+
+[ui_pager_next]
+other = "Следующая"
+
+[ui_read_more]
+other = "Подробнее"
+
+[ui_search]
+other = "Поиск по сайту…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "в"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Все права защищены"
+
+[footer_privacy_policy]
+other = "Политика конфиденциальности"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "Автор"
+[post_created]
+other = "Создано"
+[post_last_mod]
+other = "Изменено"
+[post_edit_this]
+other = "Отредактировать страницу"
+[post_create_child_page]
+other = "Create child page"
+[post_create_issue]
+other = "Предложить изменения документации"
+[post_create_project_issue]
+other = "Предложить доработки по проекту"
+[post_posts_in]
+other = "Публикации в"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "This is the multi-page printable view of this section."
+[print_click_to_print]
+other = "Click here to print"
+[print_show_regular]
+other = "Return to the regular view of this page"
+[print_entire_section]
+other = "Print entire section"

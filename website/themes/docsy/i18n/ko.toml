@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "이전"
+
+[ui_pager_next]
+other = "다음"
+
+[ui_read_more]
+other = "더 읽기"
+
+[ui_search]
+other = "사이트에서 검색…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "in"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "All Rights Reserved"
+
+[footer_privacy_policy]
+other = "개인정보 보호 정책"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "By"
+[post_created]
+other = "작성"
+[post_last_mod]
+other = "최종 수정"
+[post_edit_this]
+other = "페이지 편집"
+[post_create_child_page]
+other = "하부 페이지 생성"
+[post_create_issue]
+other = "문서에 이슈 생성"
+[post_create_project_issue]
+other = "프로젝트에 이슈 생성"
+[post_posts_in]
+other = "Posts in"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "이 섹션의 다중 페이지 출력 화면임."
+[print_click_to_print]
+other = "여기를 클릭하여 프린트"
+[print_show_regular]
+other = "이 페이지의 일반 화면으로 돌아가기"
+[print_entire_section]
+other = "전체 섹션 프린트"

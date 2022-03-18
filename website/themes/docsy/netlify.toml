@@ -1,0 +1,13 @@
+# Hugo build configuration for Netlify
+# (https://gohugo.io/hosting-and-deployment/hosting-on-netlify/#configure-hugo-version-in-netlify)
+
+[build]
+publish = "userguide/public"
+command = "npm install && npm run build:preview"
+
+[build.environment]
+HUGO_VERSION = "0.89.4"
+HUGO_THEME = "repo"
+
+[context.production]
+command = "npm install && npm run build:production"

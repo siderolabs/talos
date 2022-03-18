@@ -4,6 +4,7 @@
 src/.temp
 node_modules
 dist
+public
 !.env.example
 .env
 .env.*

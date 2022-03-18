@@ -1,0 +1,57 @@
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "السابق"
+
+[ui_pager_next]
+other = "التالي"
+
+[ui_read_more]
+other = "إقرأ المزيد"
+
+[ui_search]
+other = "ابحث في هذا الموقع"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "في"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "كافة الحقوق محفوظة"
+
+[footer_privacy_policy]
+other = "سياسة الخصوصية"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "الكاتب"
+[post_created]
+other = "منشئة"
+[post_last_mod]
+other = "اخر تعديل"
+[post_edit_this]
+other = "عدل هذه الصفحة"
+[post_create_child_page]
+other = " أنشئ صفحة فرعية"
+[post_create_issue]
+other = "أنشئ مسألة حول الوثائق"
+[post_create_project_issue]
+other = "أنشئ مسألة حول المشروع"
+[post_posts_in]
+other = "منشور في"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "هذا العرض يتضمن عدة صفحات للطباعة ضمن هذا القسم."
+[print_click_to_print]
+other = "اضغط هنا للطباعة"
+[print_show_regular]
+other = "العودة للعرض العادي"
+[print_entire_section]
+other = "اطبع القسم كاملا"

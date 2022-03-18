@@ -1,0 +1,40 @@
+div.drawio {
+    display: inline-block;
+    position: relative;
+
+    button {
+        position: absolute;
+        font-size: 0.8em;
+        bottom: 5px;
+        right: 5px;
+        background-color: rgba($secondary, .8);
+        color: $primary-light;
+        padding: 0.4em 0.5em;
+        display: none;
+    }
+
+    &:hover button {
+        display: inline;
+    }
+} 
+
+div.drawioframe {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0px;
+    z-index: 1000;
+    background: #000b;
+    border: 0;
+
+    iframe {
+        position: absolute;
+        height: 90%;
+        width: 90%;
+        top: 5%;
+        left: 5%;
+        z-index: 1010;
+    }
+}
+

@@ -31,3 +31,7 @@ sha512sum.txt
 
 # Local Netlify folder
 .netlify
+
+*.lock
+package-lock.json
+node_modules

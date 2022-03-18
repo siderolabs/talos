@@ -1,0 +1,12 @@
+{{/* Return the current page outputformat */}}
+{{ $alts := newScratch }}
+{{ $format := "unknown" }}
+{{ range .AlternativeOutputFormats }}
+    {{ $alts.Set .Name true }}
+{{ end }}
+{{ range .OutputFormats }}
+    {{ if not ($alts.Get .Name) }}
+        {{ $format = .Name }}
+    {{ end }}
+{{ end }}
+{{ return $format }}

@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Предишен"
+
+[ui_pager_next]
+other = "Следващ"
+
+[ui_read_more]
+other = "Прочети повече"
+
+[ui_search]
+other = "Търси в тази страница…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "в"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Всички права запазени!"
+
+[footer_privacy_policy]
+other = "Политика за поверителност"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "От"
+[post_created]
+other = "Създаден"
+[post_last_mod]
+other = "Последна промяна"
+[post_edit_this]
+other = "Промени тази страница"
+[post_create_child_page]
+other = "Създай дъщерна страница"
+[post_create_issue]
+other = "Създаване на издаване на документ"
+[post_create_project_issue]
+other = "Създаване на издаване на проект"
+[post_posts_in]
+other = "Публикувано в"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "Изглед за печат на този раздел, в режим много страници"
+[print_click_to_print]
+other = "Натисни тук за отпечатване"
+[print_show_regular]
+other = "Върнете се към обичайния изглед на тази страница"
+[print_entire_section]
+other = "Отпечатайте цялата секция"

@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Anterior"
+
+[ui_pager_next]
+other = "Próximo"
+
+[ui_read_more]
+other = "Ler mais"
+
+[ui_search]
+other = "Buscar no site…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "em"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Todos os direitos reservados"
+
+[footer_privacy_policy]
+other = "Política de Privacidade"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "Por"
+[post_created]
+other = "Criado"
+[post_last_mod]
+other = "Última modificação"
+[post_edit_this]
+other = "Editar essa página"
+[post_create_child_page]
+other = "Criar uma subpágina"
+[post_create_issue]
+other = "Relatar um problema de documentação"
+[post_create_project_issue]
+other = "Relatar um problema no projeto"
+[post_posts_in]
+other = "Posts em"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "This is the multi-page printable view of this section."
+[print_click_to_print]
+other = "Click here to print"
+[print_show_regular]
+other = "Return to the regular view of this page"
+[print_entire_section]
+other = "Print entire section"

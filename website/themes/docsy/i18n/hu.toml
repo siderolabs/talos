@@ -1,0 +1,63 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Előző"
+
+[ui_pager_next]
+other = "Következő"
+
+[ui_read_more]
+other = "További olvasnivaló"
+
+[ui_search]
+other = "Keresés ezen az oldalon…"
+
+# Used in sentences such as "Posted in News"
+# TODO: this structure will not work in Hungarian
+#   so I left it as is
+[ui_in]
+other = "in"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Minden jog fenntartva"
+
+[footer_privacy_policy]
+other = "Adatvédelmi szabályzat"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "Készítette"
+[post_created]
+other = "Elkészítve"
+[post_last_mod]
+other = "Utolsó módosítás"
+[post_edit_this]
+other = "Oldal szerkesztése"
+[post_create_child_page]
+other = "Create child page"
+[post_create_issue]
+other = "Dokumentáció issue létrehozása"
+[post_create_project_issue]
+other = "Projekt issue létrehozása"
+# TODO: this structure will not work in Hungarian
+#   so I left it as is
+[post_posts_in]
+other = "Posts in"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "This is the multi-page printable view of this section."
+[print_click_to_print]
+other = "Click here to print"
+[print_show_regular]
+other = "Return to the regular view of this page"
+[print_entire_section]
+other = "Print entire section"

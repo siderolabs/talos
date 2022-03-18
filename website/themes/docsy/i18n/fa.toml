@@ -1,0 +1,60 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "قبلی"
+
+[ui_pager_next]
+other = "بعدی"
+
+[ui_read_more]
+other = "بیشتر بخوانید"
+
+[ui_search]
+other = "در این سایت جستجو کنید..."
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "در"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "تمام حقوق محفوظ است."
+
+[footer_privacy_policy]
+other = "سیاست حفظ حریم خصوصی"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "توسط"
+[post_created]
+other = "ساخته شده"
+[post_last_mod]
+other = "آخرین تغییرات"
+[post_edit_this]
+other = "این صفحه را ویرایش کنید"
+[post_create_child_page]
+other = "ایجاد زیر صفحه در این صفحه"
+[post_create_issue]
+other = "ساخت ایشو"
+[post_create_project_issue]
+other = "ساخت ایشو برای پوسته"
+[post_posts_in]
+other = "نوشته ها در"
+[post_reading_time]
+other = "دقیقه برای خواندن"
+[post_less_than_a_minute_read]
+other = "کمتر از یک دقیقه"
+
+
+# Print support
+[print_printable_section]
+other = "این حالت نمایش چند صفحه ای قابل پرینت این قسمت می‌باشد."
+[print_click_to_print]
+other = "برای پرینت کلیک کنید."
+[print_show_regular]
+other = "بازگشت به حالت نمایش عادی این قسمت"
+[print_entire_section]
+other = "پرینت کامل قسمت"

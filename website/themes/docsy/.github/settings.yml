@@ -1,0 +1,55 @@
+# These settings are synced to GitHub by https://probot.github.io/apps/settings/
+
+# repository: # See https://developer.github.com/v3/repos/#edit for all available settings.
+
+labels:
+  - name: analytics-and-seo
+    color: ffffff
+  - name: blocked
+    color: B60205
+  - name: cleanup/refactoring
+    color: 1ebcd8
+  - name: copyedit
+    color: fbca04
+  - name: design/style
+    description: Front-end site design / styling
+    color: c5def5
+
+  - name: e0-minutes
+    description: Effort < 60 min
+    color: e6ccb3
+  - name: e1-hours
+    description: Effort < 8 hrs
+    color: d9b38c
+  - name: e2-days
+    description: Effort < 5 days
+    color: cc9966
+  - name: e3-weeks
+    description: Effort < 4 weeks
+    color: bf8040
+  - name: e4-months
+    description: Effort 1+ months
+    color: 996633
+
+  - name: infrastructure
+    color: 696969
+  - name: mobile
+    color: da44d5
+  - name: needs-info
+    color: fef2c0
+
+  - name: p0-critical
+    color: B60205
+  - name: p1-high
+    color: D93F0B
+  - name: p2-medium
+    color: FBCA04
+  - name: p3-low
+    color: FEF2C0
+
+  - name: spam
+    color: f9e3ae
+  - name: upstream
+    color: f5a4df
+  - name: UX
+    color: 8719D2

@@ -1,0 +1,6 @@
+{{ $tpl := printf "print/toc-li-%s.html" .Page.Type }}
+{{ if templates.Exists (printf "partials/%s" $tpl) }}
+  {{ partial $tpl . }}
+{{ else -}}
+<li>{{ .sid}}: <a href="#pg-{{.Page.File.UniqueID}}">{{ .Page.Title }}</a></li>
+{{ end }}

@@ -1,0 +1,59 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "前へ"
+
+[ui_pager_next]
+other = "次へ"
+
+[ui_read_more]
+other = "続きを読む"
+
+[ui_search]
+other = "サイトを検索..."
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "in"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "All Rights Reserved"
+
+[footer_privacy_policy]
+other = "プライバシーポリシー"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "By"
+[post_created]
+other = "作成"
+[post_last_mod]
+other = "最終更新"
+[post_edit_this]
+other = "ページの編集"
+[post_create_child_page]
+other = "子ページを作成"
+[post_create_issue]
+other = "ドキュメントのissueを作成"
+[post_create_project_issue]
+other = "プロジェクトのissueを作成"
+[post_posts_in]
+other = "記事一覧"
+[post_reading_time]
+other = "minute read"
+[post_less_than_a_minute_read]
+other = "less than a minute"
+
+# Print support
+[print_printable_section]
+other = "これは、このセクションの複数ページの印刷可能なビューです。"
+[print_click_to_print]
+other = "印刷するには、ここをクリックしてください"
+[print_show_regular]
+other = "このページの通常のビューに戻る"
+[print_entire_section]
+other = "セクション全体を印刷"

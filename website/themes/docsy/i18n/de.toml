@@ -1,0 +1,63 @@
+
+
+# UI strings. Buttons and similar.
+
+[ui_pager_prev]
+other = "Zurück"
+
+[ui_pager_next]
+other = "Weiter"
+
+[ui_read_more]
+other = "Weiterlesen"
+
+[ui_search]
+other = "Diese Seite durchsuchen…"
+
+# Used in sentences such as "Posted in News"
+[ui_in]
+other = "in"
+
+# Used in sentences such as "All Tags"
+[ui_all]
+other = "alle"
+
+# Footer text
+[footer_all_rights_reserved]
+other = "Alle Rechte vorbehalten"
+
+[footer_privacy_policy]
+other = "Datenschutzrichtlinie"
+
+
+# Post (blog, articles etc.)
+[post_byline_by]
+other = "Von"
+[post_created]
+other = "Erstellt"
+[post_last_mod]
+other = "Zuletzt geändert"
+[post_edit_this]
+other = "Diese Seite bearbeiten"
+[post_create_child_page]
+other = "Unterseite anlegen"
+[post_create_issue]
+other = "Problem zu dieser Seite melden"
+[post_create_project_issue]
+other = "Problem melden"
+[post_posts_in]
+other = "Einträge in"
+[post_reading_time]
+other = "Minuten Lesezeit"
+[post_less_than_a_minute_read]
+other = "weniger als eine Minute"
+
+# Print support
+[print_printable_section]
+other = "Das ist eine für den Ausdruck optimierte Ansicht des gesamten Kapitels inkl. Unterseiten."
+[print_click_to_print]
+other = "Druckvorgang starten"
+[print_show_regular]
+other = "Zur Standardansicht zurückkehren"
+[print_entire_section]
+other = "Kapitel inkl. Unterseiten drucken"
