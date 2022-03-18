@@ -1,0 +1,88 @@
+baseURL = "https://talos.dev"
+disableKinds = ["taxonomy", "taxonomyTerm"]
+enableGitInfo = true
+enableRobotsTXT = true
+languageCode = "en-us"
+pluralizeListTitles = false
+pygmentsCodeFences = true
+pygmentsCodeFencesGuessSyntax = true
+title = "Talos Linux"
+
+[markup.highlight]
+style = "solarized-dark"
+
+[params]
+alpine_js_version = "2.2.5"
+description = "The Kubernetes Operating System"
+locale = "en_US"
+tagline = "In having less, Talos offers more. Security. Efficiency. Resiliency. Consistency."
+versions = ["v1.0", "v0.14", "v0.13", "v0.12", "v0.11", "v0.10", "v0.9", "v0.8", "v0.7", "v0.6"]
+
+[params.logos]
+footer = "Sidero_horizontal_lightbkgd_RGB.png"
+hero = "Sidero_mark_darkbkgd_RGB.png"
+navbar = "Sidero_horizontal_lightbkgd_RGB.png"
+
+[[params.what]]
+text = "- Supports cloud platforms, bare metal, and virtualization platforms"
+
+[[params.what]]
+text = "- All system management is done via an API. No SSH, shell or console"
+
+[[params.what]]
+text = "- Production ready: supports some of the largest Kubernetes clusters in the world"
+
+[[params.what]]
+text = "- Open source project from the team at Sidero Labs"
+
+[[params.why]]
+text = "Talos reduces your attack surface. It's minimal, hardened and immutable. All API access is secured with mutual TLS (mTLS) authentication."
+title = "Security"
+
+[[params.why]]
+text = "Talos eliminates configuration drift, reduces unknown factors by employing immutable infrastructure ideology, and delivers atomic updates."
+title = "Predictability"
+
+[[params.why]]
+text = "Talos simplifies your architecture, increases your agility, and makes always delivers current stable Kubernetes and Linux versions."
+title = "Evolvability"
+
+[outputs]
+home = ["HTML", "REDIRECTS", "RSS"]
+
+[privacy.twitter]
+disable = false
+enableDNT = false
+simple = true
+
+[[params.fonts]]
+name = "Fira Sans"
+sizes = [300, 400, 500, 700]
+type = "sans_serif"
+
+[[params.fonts]]
+name = "Roboto Mono"
+sizes = [300, 400, 600, 700]
+type = "monospace"
+
+[[menu.main]]
+name = "Sidero Metal"
+url = "https://sidero.dev"
+weight = 1
+
+[[menu.main]]
+name = "GitHub"
+url = "https://github.com/talos-systems/talos"
+weight = 2
+
+[[menu.main]]
+name = "Slack"
+url = "https://taloscommunity.slack.com"
+weight = 3
+
+[mediaTypes."text/netlify"]
+delimiter = ""
+
+[outputFormats.REDIRECTS]
+baseName = "_redirects"
+mediaType = "text/netlify"

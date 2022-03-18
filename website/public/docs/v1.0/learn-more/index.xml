@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Learn More on Talos Linux</title>
+    <link>https://talos.dev/docs/v1.0/learn-more/</link>
+    <description>Recent content in Learn More on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v1.0/learn-more/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Philosophy</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/philosophy/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/philosophy/</guid>
+      <description>Distributed Talos is intended to be operated in a distributed manner. That is, it is built for a high-availability dataplane first. Its etcd cluster is built in an ad-hoc manner, with each appointed node joining on its own directive (with proper security validations enforced, of course). Like as kubernetes itself, workloads are intended to be distributed across any number of compute nodes.
+There should be no single points of failure, and the level of required coordination is as low as each platform allows.</description>
+    </item>
+    
+    <item>
+      <title>Concepts</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/concepts/</guid>
+      <description>Platform Mode Endpoint Node </description>
+    </item>
+    
+    <item>
+      <title>Architecture</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/architecture/</guid>
+      <description>Talos is designed to be atomic in deployment and modular in composition.
+It is atomic in the sense that the entirety of Talos is distributed as a single, self-contained image, which is versioned, signed, and immutable.
+It is modular in the sense that it is composed of many separate components which have clearly defined gRPC interfaces which facilitate internal flexibility and external operational guarantees.
+There are a number of components which comprise Talos.</description>
+    </item>
+    
+    <item>
+      <title>Components</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/components/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/components/</guid>
+      <description>In this section, we discuss the various components that underpin Talos.
+Components    Component Description     apid When interacting with Talos, the gRPC API endpoint you interact with directly is provided by apid. apid acts as the gateway for all component interactions and forwards the requests to machined.   containerd An industry-standard container runtime with an emphasis on simplicity, robustness, and portability. To learn more, see the containerd website.</description>
+    </item>
+    
+    <item>
+      <title>Upgrades</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/upgrades/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/upgrades/</guid>
+      <description>Talos The upgrade process for Talos, like everything else, begins with an API call. This call tells a node the installer image to use to perform the upgrade. Each Talos version corresponds to an installer with the same version, such that the version of the installer is the version of Talos which will be installed.
+Because Talos is image based, even at run-time, upgrading Talos is almost exactly the same set of operations as installing Talos, with the difference that the system has already been initialized with a configuration.</description>
+    </item>
+    
+    <item>
+      <title>FAQs</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/faqs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/faqs/</guid>
+      <description>How is Talos different from other container optimized Linux distros? Talos shares a lot of attributes with other distros, but there are some important differences. Talos integrates tightly with Kubernetes, and is not meant to be a general-purpose operating system. The most important difference is that Talos is fully controlled by an API via a gRPC interface, instead of an ordinary shell. We don&amp;rsquo;t ship SSH, and there is no console access.</description>
+    </item>
+    
+    <item>
+      <title>talosctl</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/talosctl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/talosctl/</guid>
+      <description>The talosctl tool packs a lot of power into a small package. It acts as a reference implementation for the Talos API, but it also handles a lot of conveniences for the use of Talos and its clusters.
+Video Walkthrough To see some live examples of talosctl usage, view the following video:
+Client Configuration Talosctl configuration is located in $XDG_CONFIG_HOME/talos/config.yaml if $XDG_CONFIG_HOME is defined. Otherwise it is in $HOME/.talos/config. The location can always be overridden by the TALOSCONFIG environment variable or the --talosconfig parameter.</description>
+    </item>
+    
+    <item>
+      <title>Control Plane</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/control-plane/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/control-plane/</guid>
+      <description>This guide provides details on how Talos runs and bootstraps the Kubernetes control plane.
+High-level Overview Talos cluster bootstrap flow:
+ The etcd service is started on control plane nodes. Instances of etcd on control plane nodes build the etcd cluster. The kubelet service is started. Control plane components are started as static pods via the kubelet, and the kube-apiserver component connects to the local (running on the same node) etcd instance.</description>
+    </item>
+    
+    <item>
+      <title>Controllers and Resources</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/controllers-resources/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/controllers-resources/</guid>
+      <description>Talos implements concepts of resources and controllers to facilitate internal operations of the operating system. Talos resources and controllers are very similar to Kubernetes resources and controllers, but there are some differences. The content of this document is not required to operate Talos, but it is useful for troubleshooting.
+Starting with Talos 0.9, most of the Kubernetes control plane boostrapping and operations is implemented via controllers and resources which allows Talos to be reactive to configuration changes, environment changes (e.</description>
+    </item>
+    
+    <item>
+      <title>Networking Resources</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/networking-resources/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/networking-resources/</guid>
+      <description>Starting with version 0.11, a new implementation of the network configuration subsystem is powered by COSI. The new implementation is still using the same machine configuration file format and external sources to configure a node&amp;rsquo;s network, so there should be no difference in the way Talos works in 0.11.
+The most notable change in Talos 0.11 is that all changes to machine configuration .machine.network can be applied now in immediate mode (without a reboot) via talosctl edit mc --mode=no-reboot or talosctl apply-config --mode=no-reboot.</description>
+    </item>
+    
+    <item>
+      <title>Discovery</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/discovery/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/discovery/</guid>
+      <description>We maintain a public discovery service whereby members of your cluster can use a common and unique key to coordinate the most basic connection information (i.e. the set of possible &amp;ldquo;endpoints&amp;rdquo;, or IP:port pairs). We call this data &amp;ldquo;affiliate data.&amp;rdquo;
+ Note: If KubeSpan is enabled the data has the addition of the WireGuard public key.
+ Before sending data to the discovery service, Talos will encrypt the affiliate data with AES-GCM encryption and separately encrypt endpoints with AES in ECB mode so that endpoints coming from different sources can be deduplicated server-side.</description>
+    </item>
+    
+    <item>
+      <title>KubeSpan</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/kubespan/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/kubespan/</guid>
+      <description>WireGuard Peer Discovery The key pieces of information needed for WireGuard generally are:
+ the public key of the host you wish to connect to an IP address and port of the host you wish to connect to  The latter is really only required of one side of the pair. Once traffic is received, that information is known and updated by WireGuard automatically and internally.
+For Kubernetes, though, this is not quite sufficient.</description>
+    </item>
+    
+    <item>
+      <title>Developing Talos</title>
+      <link>https://talos.dev/docs/v1.0/learn-more/developing-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/learn-more/developing-talos/</guid>
+      <description>This guide outlines steps and tricks to develop Talos operating systems and related components. The guide assumes Linux operating system on the development host. Some steps might work under Mac OS X, but using Linux is highly advised.
+Prepare Check out the Talos repository.
+Try running make help to see available make commands. You would need Docker and buildx installed on the host.
+ Note: Usually it is better to install up to date Docker from Docker apt repositories, e.</description>
+    </item>
+    
+  </channel>
+</rss>

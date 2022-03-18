@@ -1,0 +1,100 @@
+{{ $fonts    := site.Params.fonts }}
+{{ $fontSlice := (slice) }}
+{{ range $fonts }}
+{{ $fontSlice = $fontSlice | append (printf "%s:%s" (replace .name " " "+") (delimit .sizes ",")) }}
+{{ end }}
+{{ $fontsUrl := printf "https://fonts.googleapis.com/css?family=%s" (delimit $fontSlice "|") }}
+{{ $sansSerifFont := (index (where site.Params.fonts ".type" "sans_serif") 0).name }}
+{{ $monospaceFont := (index (where site.Params.fonts ".type" "monospace") 0).name }}
+
+@charset "utf-8"
+@import url("{{ $fontsUrl }}")
+
+// Site-specific variables
+$sidero-curing-indigo: #281D49
+$sidero-red-heat: #F92A20
+$twitter-blue: rgb(29, 161, 242)
+
+@import "bulma/sass/utilities/initial-variables"
+@import "bulma/sass/utilities/functions"
+
+// Bulma variable overrides
+$primary: $sidero-curing-indigo
+$secondary: $sidero-red-heat
+$link: $primary
+$family-sans-serif: "{{ $sansSerifFont }}", BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif
+$family-monospace: "{{ $monospaceFont }}", monospace
+$navbar-dropdown-radius: 0
+$box-padding: 1.5rem
+$navbar-dropdown-border-top: none
+$navbar-dropdown-arrow: $secondary
+$input-color: $black
+$input-border-color: $grey-light
+
+@import "bulma/sass/utilities/derived-variables"
+
+// Expanded Bulma color map
+$colors: mergeColorMaps(("twitter-blue": ($twitter-blue, $white), "orange": ($orange, $white), "secondary": ($secondary, $white)), $colors)
+
+$code: $primary
+$code-background: $light
+
+@import "bulma/bulma"
+
+@import "helpers"
+@import "admonition"
+@import "dashboard"
+@import "drawer"
+@import "nav"
+
+.button
+  &.is-borderless
+    border: none
+
+.dropdown-content
+  max-width: 20rem
+
+.footer-hero
+  border-top: 1.25px solid $grey-lighter
+
+.content
+  a
+    font-weight: 600
+
+  ol, ul
+    ol, ul
+      margin-top: .3rem
+
+.under-nav
+  top: $navbar-height
+  position: fixed
+  display: block
+  width: 100%
+  z-index: 1
+
+=desktop-shrink
+  +desktop
+    width: 70%
+
+.docs-content, .pagination
+  +desktop-shrink
+
+.has-extra-bottom-padding
+  padding-bottom: 5rem
+
+.hero-logo
+  +logo(65%, 25%)
+
+.footer-logo
+  +logo(50%, 50%)
+
+.push-down
+  +desktop
+    margin-bottom: -12rem
+  +touch
+    margin-bottom: -5rem
+
+.content
+  ul, ol
+    li .highlight
+      margin-bottom: 1rem

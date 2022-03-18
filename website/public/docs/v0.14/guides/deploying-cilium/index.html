@@ -1,0 +1,2047 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<meta name="description" content="In this guide you will learn how to set up Cilium CNI on Talos.">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/guides/deploying-cilium/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v0.14/guides/deploying-cilium/">
+<meta property="og:title" content="Talos Linux | Deploying Cilium CNI">
+
+<meta property="og:description" content="In this guide you will learn how to set up Cilium CNI on Talos.">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+<meta name="robots" content="noindex">
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/what-is-new/">
+          What&#39;s New in Talos 0.14
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.14/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold is-spaced">
+          Deploying Cilium CNI
+        </p>
+
+        
+        <p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+          In this guide you will learn how to set up Cilium CNI on Talos.
+        </p>
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v0.14/Guides/deploying-cilium.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <p>From v1.9 onwards Cilium does no longer provide a one-liner install manifest that can be used to install Cilium on a node via <code>kubectl apply -f</code> or passing it in as an extra url in the <code>urls</code> part in the Talos machine configuration.</p>
+<blockquote>
+<p>Installing Cilium the new way via the <code>cilium</code> cli is broken, so we&rsquo;ll be using <code>helm</code> to install Cilium.
+For more information: <a href="https://github.com/cilium/cilium-cli/issues/505">Install with CLI fails, works with Helm</a></p>
+</blockquote>
+<p>Refer to <a href="https://docs.cilium.io/en/v1.11/gettingstarted/k8s-install-helm/">Installing with Helm</a> for more information.</p>
+<p>First we&rsquo;ll need to add the helm repo for Cilium.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>helm repo add cilium https://helm.cilium.io/
+</span></span><span style="display:flex;"><span>helm repo update
+</span></span></code></pre></div><p>This documentation will outline installing Cilium CNI v1.11.2 on Talos in four different ways.
+Adhering to Talos principles we&rsquo;ll deploy Cilium with IPAM mode set to Kubernetes.
+Each method can either install Cilium using kube proxy (default) or without: <a href="https://docs.cilium.io/en/v1.11/gettingstarted/kubeproxy-free/">Kubernetes Without kube-proxy</a></p>
+<h2 id="machine-config-preparation">Machine config preparation</h2>
+<p>When generating the machine config for a node set the CNI to none.
+For example using a config patch:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl gen config <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    my-cluster https://mycluster.local:6443 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --config-patch <span style="color:#2aa198">&#39;[{&#34;op&#34;:&#34;add&#34;, &#34;path&#34;: &#34;/cluster/network/cni&#34;, &#34;value&#34;: {&#34;name&#34;: &#34;none&#34;}}]&#39;</span>
+</span></span></code></pre></div><p>Or if you want to deploy Cilium in strict mode without kube-proxy, you also need to disable kube proxy:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl gen config <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    my-cluster https://mycluster.local:6443 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --config-patch <span style="color:#2aa198">&#39;[{&#34;op&#34;: &#34;add&#34;, &#34;path&#34;: &#34;/cluster/proxy&#34;, &#34;value&#34;: {&#34;disabled&#34;: true}}, {&#34;op&#34;:&#34;add&#34;, &#34;path&#34;: &#34;/cluster/network/cni&#34;, &#34;value&#34;: {&#34;name&#34;: &#34;none&#34;}}]&#39;</span>
+</span></span></code></pre></div><h2 id="method-1-helm-install">Method 1: Helm install</h2>
+<p>After applying the machine config and bootstrapping Talos will appear to hang on phase 18/19 with the message: retrying error: node not ready.
+This happens because nodes in Kubernetes are only marked as ready once the CNI is up.
+As there is no CNI defined, the boot process is pending and will reboot the node to retry after 10 minutes, this is expected behavior.</p>
+<p>During this window you can install Cilium manually by running the following:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>helm install cilium cilium/cilium <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --version 1.11.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set ipam.mode<span style="color:#719e07">=</span>kubernetes
+</span></span></code></pre></div><p>Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra parameters:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">KUBERNETES_API_SERVER_ADDRESS</span><span style="color:#719e07">=</span>&lt;&gt;
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">KUBERNETES_API_SERVER_PORT</span><span style="color:#719e07">=</span><span style="color:#2aa198">6443</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>helm install cilium cilium/cilium <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --version 1.11.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set ipam.mode<span style="color:#719e07">=</span>kubernetes <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">kubeProxyReplacement</span><span style="color:#719e07">=</span>strict <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">k8sServiceHost</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">KUBERNETES_API_SERVER_ADDRESS</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">k8sServicePort</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">KUBERNETES_API_SERVER_PORT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span>
+</span></span></code></pre></div><p>After Cilium is installed the boot process should continue and complete successfully.</p>
+<h2 id="method-2-helm-manifests-install">Method 2: Helm manifests install</h2>
+<p>Instead of directly installing Cilium you can instead first generate the manifest and then apply it:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>helm template cilium cilium/cilium <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --version 1.11.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --namespace kube-system
+</span></span><span style="display:flex;"><span>    --set ipam.mode<span style="color:#719e07">=</span>kubernetes &gt; cilium.yaml
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kubectl apply -f cilium.yaml
+</span></span></code></pre></div><p>Without kube-proxy:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">KUBERNETES_API_SERVER_ADDRESS</span><span style="color:#719e07">=</span>&lt;&gt;
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">KUBERNETES_API_SERVER_PORT</span><span style="color:#719e07">=</span><span style="color:#2aa198">6443</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>helm template cilium cilium/cilium <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --version 1.11.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set ipam.mode<span style="color:#719e07">=</span>kubernetes <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">kubeProxyReplacement</span><span style="color:#719e07">=</span>strict <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">k8sServiceHost</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">KUBERNETES_API_SERVER_ADDRESS</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --set <span style="color:#268bd2">k8sServicePort</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">KUBERNETES_API_SERVER_PORT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> &gt; cilium.yaml
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kubectl apply -f cilium.yaml
+</span></span></code></pre></div><h2 id="method-3-helm-manifests-hosted-install">Method 3: Helm manifests hosted install</h2>
+<p>After generating <code>cilium.yaml</code> using <code>helm template</code>, instead of applying this manifest directly during the Talos boot window (before the reboot timeout).
+You can also host this file somewhere and patch the machine config to apply this manifest automatically during bootstrap.
+To do this patch your machine configuration to include this config instead of the above:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl gen config <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    my-cluster https://mycluster.local:6443 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --config-patch <span style="color:#2aa198">&#39;[{&#34;op&#34;:&#34;add&#34;, &#34;path&#34;: &#34;/cluster/network/cni&#34;, &#34;value&#34;: {&#34;name&#34;: &#34;custom&#34;, &#34;urls&#34;: [&#34;https://server.yourdomain.tld/some/path/cilium.yaml&#34;]}}]&#39;</span>
+</span></span></code></pre></div><p>Resulting in a config that look like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#268bd2">name</span>: custom <span style="color:#586e75"># Name of CNI to use.</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># URLs containing manifests to apply for the CNI.</span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">urls</span>:
+</span></span><span style="display:flex;"><span>    - https://server.yourdomain.tld/some/path/cilium.yaml
+</span></span></code></pre></div><p>However, beware of the fact that the helm generated Cilium manifest contains sensitive key material.
+As such you should definitely not host this somewhere publicly accessible.</p>
+<h2 id="method-4-helm-manifests-inline-install">Method 4: Helm manifests inline install</h2>
+<p>This method requires that you have set your CNI to <code>none</code> as outlined <a href="#machine-config-preparation">above</a>.
+A more secure option would be to include the <code>helm template</code> output manifest inside the machine configuration.
+To do so patch this into your machine configuration:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#268bd2">inlineManifests</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#268bd2">name</span>: cilium
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">contents</span>: |<span style="color:#2aa198">
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        --
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        # Source: cilium/templates/cilium-agent/serviceaccount.yaml
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        apiVersion: v1
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        kind: ServiceAccount
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        metadata:
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">          name: &#34;cilium&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">          namespace: kube-system
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        ---
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        # Source: cilium/templates/cilium-operator/serviceaccount.yaml
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        apiVersion: v1
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        kind: ServiceAccount
+</span></span></span><span style="display:flex;"><span><span style="color:#2aa198">        -&gt; Your cilium.yaml file will be pretty long....</span>        
+</span></span></code></pre></div><p>This will install the Cilium manifests at just the right time during bootstrap.</p>
+<p>Beware though:</p>
+<ul>
+<li>Changing the namespace when templating with Helm does not generate a manifest containing the yaml to create that namespace.
+As the inline manifest is processed from top to bottom make sure to manually put the namespace yaml at the start of the inline manifest.</li>
+<li>Only add the Cilium inline manifest to the control plane nodes machine configuration.</li>
+<li>Make sure all control plane nodes have an identical configuration.</li>
+<li>If you delete any of the generated resources they will be restored whenever a control plane node reboots.</li>
+<li>As a safety measure Talos only creates missing resources from inline manifests, it never deletes or updates anything.</li>
+<li>If you need to update a manifest make sure to first edit all control plane machine configurations and then run <code>talosctl upgrade-k8s</code> as it will take care of updating inline manifests.</li>
+</ul>
+<h2 id="known-issues">Known issues</h2>
+<ul>
+<li>
+<p>Currently there is an interaction between a Kubespan enabled Talos cluster and Cilium that results in the cluster going down during bootstrap after applying the Cilium manifests.
+For more details: <a href="https://github.com/talos-systems/talos/issues/4836">Kubespan and Cilium compatibility: etcd is failing</a></p>
+</li>
+<li>
+<p>When running Cilium with a kube-proxy eBPF replacement (strict mode) there is a conflicting kernel module that results in locked tx queues.
+This can be fixed by blacklisting <code>aoe_init</code> with extraKernelArgs.
+For more details: <a href="https://github.com/talos-systems/talos/issues/4863">Cilium on talos &ldquo;aoe: packet could not be sent on *. consider increasing tx_queue_len&rdquo;</a></p>
+</li>
+<li>
+<p>There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers.
+For more details: <a href="https://github.com/talos-systems/talos/issues/4109">GCP ILB support / support scope local routes to be configured</a></p>
+</li>
+<li>
+<p>Some kernel values changed by kube-proxy are not set to good defaults when running the cilium kernel-proxy alternative.
+For more details: <a href="https://github.com/talos-systems/talos/issues/4654">Kernel default values (sysctl)</a></p>
+</li>
+</ul>
+<h2 id="other-things-to-know">Other things to know</h2>
+<ul>
+<li>
+<p>Talos has full kernel module support for eBPF, See:</p>
+<ul>
+<li><a href="https://docs.cilium.io/en/v1.11/operations/system_requirements/">Cilium System Requirements</a></li>
+<li><a href="https://github.com/talos-systems/pkgs/blob/master/kernel/build/config-amd64">Talos Kernel Config AMD64</a></li>
+<li><a href="https://github.com/talos-systems/pkgs/blob/master/kernel/build/config-arm64">Talos Kernel Config ARM64</a></li>
+</ul>
+</li>
+<li>
+<p>Talos also includes the modules:</p>
+<ul>
+<li><code>CONFIG_NETFILTER_XT_TARGET_TPROXY=m</code></li>
+<li><code>CONFIG_NETFILTER_XT_TARGET_CT=m</code></li>
+<li><code>CONFIG_NETFILTER_XT_MATCH_MARK=m</code></li>
+<li><code>CONFIG_NETFILTER_XT_MATCH_SOCKET=m</code></li>
+</ul>
+<p>This allows you to set <code>--set enableXTSocketFallback=false</code> on the helm install/template command preventing Cilium from disabling the <code>ip_early_demux</code> kernel feature.
+This will win back some performance.</p>
+</li>
+</ul>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v0.14/guides/customizing-the-root-filesystem/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          Customizing the Root Filesystem
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v0.14/guides/deploy-metrics-server/">
+        <span>
+          Deploying Metrics Server
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/what-is-new/">
+          What&#39;s New in Talos 0.14
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.14/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.14/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.14/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v0.14"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

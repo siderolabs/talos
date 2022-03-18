@@ -1,6 +1,6 @@
 ---
 title: "Developing Talos"
-weight: 130
+weight: 13
 ---
 
 This guide outlines steps and tricks to develop Talos operating systems and related components.
@@ -34,7 +34,7 @@ Make sure the following steps work:
 Set up a local docker registry:
 
 ```bash
-docker run -d -p 5005:5000 \
+docker run -d -p 5005:5005 \
     --restart always \
     --name local registry:2
 ```
@@ -47,7 +47,7 @@ make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
 
 Record the image name output in the step above.
 
-> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer IMAGE_REGISTRY=127.0.0.1:5005 TAG=v1.0.0-alpha.1 PUSH=true`.
+> Note: it is also possible to force a stable image tag by using `TAG` variable: `make installer IMAGE_REGISTRY=127.0.0.1:5005 TAG=v0.15.0-alpha.1 PUSH=true`.
 
 ## Running Talos cluster
 
@@ -127,7 +127,7 @@ You can edit machine config on the fly with `talosctl edit mc --immediate`, conf
 To reboot whole cluster quickly (e.g. to pick up a change made in the code):
 
 ```bash
-for socket in ~/.talos/clusters/talos-default/talos-default-*.monitor; do echo "q" | sudo socat - unix-connect:$socket; done
+for socket in ~/.talos/clusters/talos-default/talos-default-*.monitor; echo "q" | sudo socat - unix-connect:$socket; end
 ```
 
 Sending `q` to a single socket allows to reboot a single node.
@@ -168,7 +168,7 @@ _out/integration-test-linux-amd64 \
 
 Whole test suite can be run removing `-test.short` flag.
 
-Specific tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
+Specfic tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
 
 ## Build Flavors
 

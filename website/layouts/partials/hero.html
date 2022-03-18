@@ -1,0 +1,31 @@
+{{ $path := .File.Path }}
+{{ $title := .Title }}
+{{ $desc := .Params.description }}
+{{ $editUrl := printf "https://github.com/talos-systems/talos/edit/master/website/content/%s" $path }}
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold{{ if $desc }} is-spaced{{ end }}">
+          {{ $title }}
+        </p>
+
+        {{ with $desc }}
+        <p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+          {{ . | markdownify }}
+        </p>
+        {{ end }}
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="{{ $editUrl }}" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

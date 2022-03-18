@@ -1,0 +1,4 @@
+{{ $version := index (split .File.Path "/") 1 }}
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  {{ partial "docs/nav.html" (dict "drawer" true "here" .RelPermalink "version" $version) }}
+</div>

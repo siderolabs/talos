@@ -1,0 +1,23 @@
+$sidebar-width: 25rem
+
+.dashboard
+  &-panel
+    &.sidebar
+      +fixed
+      width: $sidebar-width
+      background-color: $white-bis
+      border-right: 1.25px solid $grey-lighter
+      bottom: 0px
+      top: $navbar-height
+      +column
+      overflow: auto
+    &.main
+      display: block
+      position: relative
+      overflow-y: auto
+      top: $navbar-height
+
+      +desktop
+        margin-left: $sidebar-width
+      +mobile
+        top: $navbar-height * 2

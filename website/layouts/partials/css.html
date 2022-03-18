@@ -1,0 +1,15 @@
+{{ $inServerMode := site.IsServer }}
+{{ $includePaths := (slice "node_modules") }}
+{{ $sass         := "sass/style.sass" }}
+{{ $cssOutput    := "css/style.css" }}
+{{ $devOpts      := (dict "targetPath" $cssOutput "includePaths" $includePaths "enableSourceMap" true) }}
+{{ $prodOpts     := (dict "targetPath" $cssOutput "includePaths" $includePaths "outputStyle" "compressed") }}
+{{ $cssOpts      := cond $inServerMode $devOpts $prodOpts }}
+{{ $css          := resources.Get $sass | resources.ExecuteAsTemplate $sass . | toCSS $cssOpts }}
+{{ if $inServerMode }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{ else }}
+{{ $prodCss      := $css | fingerprint }}
+<link rel="stylesheet" href="{{ $prodCss.RelPermalink }}" integrity="{{ $prodCss.Data.Integrity }}">
+{{ end }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />

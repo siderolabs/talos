@@ -1,0 +1,2431 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=description content="Talos gRPC API reference.">
+<link rel=canonical href=https://talos.dev/docs/latest/reference/api/>
+<meta name=twitter:card content="summary">
+<meta name=twitter:image content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name=twitter:image:alt content="Talos Linux color logo">
+<meta property="og:url" content="https://talos.dev/docs/v0.13/reference/api/">
+<meta property="og:title" content="Talos Linux | API">
+<meta property="og:description" content="Talos gRPC API reference.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+<meta name=robots content="noindex">
+<title>
+Talos Linux | Documentation
+</title><link rel=stylesheet href=/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+<link rel="shortcut icon" type=image/png sizes=32x32 href=/favicon.png>
+</head><body>
+<div class=canvas id=canvas x-data="{ drawer: false }">
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+<div class=navbar-brand>
+<a class=navbar-item href=https://talos.dev>
+<img src=/img/logos/Sidero_horizontal_lightbkgd_RGB.png alt="Talos Linux navbar logo">
+</a>
+<a role=button class=navbar-burger data-target=menu aria-label=menu aria-expanded=false :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+</a>
+</div><div class=navbar-menu id=menu :class="{ 'is-active': open }">
+<div class=navbar-end>
+<div class="navbar-item is-hidden-touch">
+<p class="control has-icons-left">
+<input class="input is-rounded" type=text placeholder=Search id=search-input>
+<span class="icon is-small is-left">
+<ion-icon name=search-outline></ion-icon>
+</span>
+</p></div><nav class=navbar role=navigation aria-label="dropdown navigation">
+<div class="navbar-item has-dropdown is-hoverable">
+<a class="navbar-link is-arrowless" href=/docs/v1.0>
+<span class=has-text-weight-bold>
+Docs
+</span>
+<span class="icon has-text-secondary">
+<ion-icon name=chevron-down-outline></ion-icon>
+</span>
+</a>
+<div class=navbar-dropdown>
+<a class=navbar-item href=/docs/v1.0>
+v1.0 (<strong>latest</strong>)
+</a>
+<a class=navbar-item href=/docs/v0.14>
+v0.14
+</a>
+<a class=navbar-item href=/docs/v0.13>
+v0.13
+</a>
+<a class=navbar-item href=/docs/v0.12>
+v0.12
+</a>
+<a class=navbar-item href=/docs/v0.11>
+v0.11
+</a>
+<a class=navbar-item href=/docs/v0.10>
+v0.10
+</a>
+<a class=navbar-item href=/docs/v0.9>
+v0.9
+</a>
+<a class=navbar-item href=/docs/v0.8>
+v0.8
+</a>
+<a class=navbar-item href=/docs/v0.7>
+v0.7
+</a>
+<a class=navbar-item href=/docs/v0.6>
+v0.6
+</a>
+</div></div></nav><a class="navbar-item has-text-weight-bold" href=https://sidero.dev target=_blank>
+<span>
+Sidero Metal
+</span>
+</a>
+<a class="navbar-item has-text-weight-bold" href=https://github.com/talos-systems/talos target=_blank>
+<span>
+GitHub
+</span>
+</a>
+<a class="navbar-item has-text-weight-bold" href=https://taloscommunity.slack.com target=_blank>
+<span>
+Slack
+</span>
+</a>
+<div class=navbar-item>
+<div class="buttons is-left">
+</div></div></div></div></nav><nav class="navbar is-black is-hidden-desktop under-nav">
+<div class=navbar-brand>
+<div class="navbar-item is-hidden-desktop">
+<a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+<span class=icon>
+<ion-icon name=list></ion-icon>
+</span>
+<span>
+Docs
+</span>
+</a>
+</div></div></nav><div class=dashboard>
+<div class="dashboard-panel sidebar is-hidden-touch">
+<aside class="nav is-sidebar">
+<div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/>
+Welcome
+</a>
+</div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/introduction/>
+Introduction
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/what-is-talos/>
+What is Talos?
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/quickstart/>
+Quickstart
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/getting-started/>
+Getting Started
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/system-requirements/>
+System Requirements
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/what-is-new/>
+What's New in Talos 0.13
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/support-matrix/>
+Support Matrix
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/bare-metal-platforms/>
+Bare Metal Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/digital-rebar/>
+Digital Rebar
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/equinix-metal/>
+Equinix Metal
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/matchbox/>
+Matchbox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/sidero/>
+Sidero
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/virtualized-platforms/>
+Virtualized Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/hyper-v/>
+Hyper-V
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/kvm/>
+KVM
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/proxmox/>
+Proxmox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/vmware/>
+VMware
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/xen/>
+Xen
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/cloud-platforms/>
+Cloud Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/aws/>
+AWS
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/azure/>
+Azure
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/digitalocean/>
+DigitalOcean
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/gcp/>
+GCP
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/hetzner/>
+Hetzner
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/nocloud/>
+Nocloud
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/openstack/>
+Openstack
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/scaleway/>
+Scaleway
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/upcloud/>
+UpCloud
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/vultr/>
+Vultr
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/local-platforms/>
+Local Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/docker/>
+Docker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/qemu/>
+QEMU
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/virtualbox/>
+VirtualBox
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/single-board-computers/>
+Single Board Computers
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/bananapi_m64/>
+Banana Pi M64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/libretech_all_h3_cc_h5/>
+Libre Computer Board ALL-H3-CC
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/pine64/>
+Pine64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rock64/>
+Pine64 Rock64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rockpi_4/>
+Radxa ROCK PI 4c
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rpi_4/>
+Raspberry Pi 4 Model B
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/guides/>
+Guides
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/advanced-networking/>
+Advanced Networking
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/air-gapped/>
+Air-gapped Environments
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-certificate-authorities/>
+Configuring Certificate Authorities
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-containerd/>
+Configuring Containerd
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-corporate-proxies/>
+Configuring Corporate Proxies
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-network-connectivity/>
+Configuring Network Connectivity
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-pull-through-cache/>
+Configuring Pull Through Cache
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-the-cluster-endpoint/>
+Configuring the Cluster Endpoint
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-wireguard-network/>
+Configuring Wireguard Network
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/customizing-the-kernel/>
+Customizing the Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/customizing-the-root-filesystem/>
+Customizing the Root Filesystem
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/deploy-metrics-server/>
+Deploying Metrics Server
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/disaster-recovery/>
+Disaster Recovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/discovery/>
+Discovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/disk-encryption/>
+Disk Encryption
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/editing-machine-configuration/>
+Editing Machine Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/kubespan/>
+KubeSpan
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/managing-pki/>
+Managing PKI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/resetting-a-machine/>
+Resetting a Machine
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/rbac/>
+Role-based access control (RBAC)
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/storage/>
+Storage
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/troubleshooting-control-plane/>
+Troubleshooting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/upgrading-kubernetes/>
+Upgrading Kubernetes
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/upgrading-talos/>
+Upgrading Talos
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/vip/>
+Virtual (shared) IP
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/reference/>
+Reference
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a class=is-active href=/docs/v0.13/reference/api/>
+API
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/cli/>
+CLI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/configuration/>
+Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/kernel/>
+Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/platform/>
+Platform
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/learn-more/>
+Learn More
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/philosophy/>
+Philosophy
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/concepts/>
+Concepts
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/architecture/>
+Architecture
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/components/>
+Components
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/upgrades/>
+Upgrades
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/faqs/>
+FAQs
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/talosctl/>
+talosctl
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/control-plane/>
+Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/controllers-resources/>
+Controllers and Resources
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/networking-resources/>
+Networking Resources
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/discovery/>
+Discovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/kubespan/>
+KubeSpan
+</a>
+</li></ul></div></aside></div><div class="dashboard-panel main">
+<section class="hero is-primary is-medium is-bold">
+<div class=hero-body>
+<div class=container>
+<div class=docs-content>
+<p class="title is-size-2 is-size-3-mobile has-text-weight-bold is-spaced">
+API
+</p><p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+Talos gRPC API reference.
+</p></div><div class=buttons>
+<a class="button is-small" href=https://github.com/longhorn/website/edit/master/content/docs/v0.13/Reference/api.md target=_blank>
+<span class=icon>
+<ion-icon name=logo-github></ion-icon>
+</span>
+<span>
+Edit this page
+</span>
+</a>
+</div></div></div></section><section class=section>
+<div class=container>
+<div class=docs-content>
+<div class="content has-extra-bottom-padding">
+<h2 id=table-of-contents>Table of Contents</h2><ul>
+<li>
+<p><a href=#common/common.proto>common/common.proto</a></p><ul>
+<li>
+<p><a href=#common.Data>Data</a></p></li><li>
+<p><a href=#common.DataResponse>DataResponse</a></p></li><li>
+<p><a href=#common.Empty>Empty</a></p></li><li>
+<p><a href=#common.EmptyResponse>EmptyResponse</a></p></li><li>
+<p><a href=#common.Error>Error</a></p></li><li>
+<p><a href=#common.Metadata>Metadata</a></p></li><li>
+<p><a href=#common.Code>Code</a></p></li><li>
+<p><a href=#common.ContainerDriver>ContainerDriver</a></p></li></ul></li><li>
+<p><a href=#inspect/inspect.proto>inspect/inspect.proto</a></p><ul>
+<li>
+<p><a href=#inspect.ControllerDependencyEdge>ControllerDependencyEdge</a></p></li><li>
+<p><a href=#inspect.ControllerRuntimeDependenciesResponse>ControllerRuntimeDependenciesResponse</a></p></li><li>
+<p><a href=#inspect.ControllerRuntimeDependency>ControllerRuntimeDependency</a></p></li><li>
+<p><a href=#inspect.DependencyEdgeType>DependencyEdgeType</a></p></li><li>
+<p><a href=#inspect.InspectService>InspectService</a></p></li></ul></li><li>
+<p><a href=#machine/machine.proto>machine/machine.proto</a></p><ul>
+<li>
+<p><a href=#machine.ApplyConfiguration>ApplyConfiguration</a></p></li><li>
+<p><a href=#machine.ApplyConfigurationRequest>ApplyConfigurationRequest</a></p></li><li>
+<p><a href=#machine.ApplyConfigurationResponse>ApplyConfigurationResponse</a></p></li><li>
+<p><a href=#machine.Bootstrap>Bootstrap</a></p></li><li>
+<p><a href=#machine.BootstrapRequest>BootstrapRequest</a></p></li><li>
+<p><a href=#machine.BootstrapResponse>BootstrapResponse</a></p></li><li>
+<p><a href=#machine.CNIConfig>CNIConfig</a></p></li><li>
+<p><a href=#machine.CPUInfo>CPUInfo</a></p></li><li>
+<p><a href=#machine.CPUInfoResponse>CPUInfoResponse</a></p></li><li>
+<p><a href=#machine.CPUStat>CPUStat</a></p></li><li>
+<p><a href=#machine.CPUsInfo>CPUsInfo</a></p></li><li>
+<p><a href=#machine.ClusterConfig>ClusterConfig</a></p></li><li>
+<p><a href=#machine.ClusterNetworkConfig>ClusterNetworkConfig</a></p></li><li>
+<p><a href=#machine.Container>Container</a></p></li><li>
+<p><a href=#machine.ContainerInfo>ContainerInfo</a></p></li><li>
+<p><a href=#machine.ContainersRequest>ContainersRequest</a></p></li><li>
+<p><a href=#machine.ContainersResponse>ContainersResponse</a></p></li><li>
+<p><a href=#machine.ControlPlaneConfig>ControlPlaneConfig</a></p></li><li>
+<p><a href=#machine.CopyRequest>CopyRequest</a></p></li><li>
+<p><a href=#machine.DHCPOptionsConfig>DHCPOptionsConfig</a></p></li><li>
+<p><a href=#machine.DiskStat>DiskStat</a></p></li><li>
+<p><a href=#machine.DiskStats>DiskStats</a></p></li><li>
+<p><a href=#machine.DiskStatsResponse>DiskStatsResponse</a></p></li><li>
+<p><a href=#machine.DiskUsageInfo>DiskUsageInfo</a></p></li><li>
+<p><a href=#machine.DiskUsageRequest>DiskUsageRequest</a></p></li><li>
+<p><a href=#machine.DmesgRequest>DmesgRequest</a></p></li><li>
+<p><a href=#machine.EtcdForfeitLeadership>EtcdForfeitLeadership</a></p></li><li>
+<p><a href=#machine.EtcdForfeitLeadershipRequest>EtcdForfeitLeadershipRequest</a></p></li><li>
+<p><a href=#machine.EtcdForfeitLeadershipResponse>EtcdForfeitLeadershipResponse</a></p></li><li>
+<p><a href=#machine.EtcdLeaveCluster>EtcdLeaveCluster</a></p></li><li>
+<p><a href=#machine.EtcdLeaveClusterRequest>EtcdLeaveClusterRequest</a></p></li><li>
+<p><a href=#machine.EtcdLeaveClusterResponse>EtcdLeaveClusterResponse</a></p></li><li>
+<p><a href=#machine.EtcdMember>EtcdMember</a></p></li><li>
+<p><a href=#machine.EtcdMemberListRequest>EtcdMemberListRequest</a></p></li><li>
+<p><a href=#machine.EtcdMemberListResponse>EtcdMemberListResponse</a></p></li><li>
+<p><a href=#machine.EtcdMembers>EtcdMembers</a></p></li><li>
+<p><a href=#machine.EtcdRecover>EtcdRecover</a></p></li><li>
+<p><a href=#machine.EtcdRecoverResponse>EtcdRecoverResponse</a></p></li><li>
+<p><a href=#machine.EtcdRemoveMember>EtcdRemoveMember</a></p></li><li>
+<p><a href=#machine.EtcdRemoveMemberRequest>EtcdRemoveMemberRequest</a></p></li><li>
+<p><a href=#machine.EtcdRemoveMemberResponse>EtcdRemoveMemberResponse</a></p></li><li>
+<p><a href=#machine.EtcdSnapshotRequest>EtcdSnapshotRequest</a></p></li><li>
+<p><a href=#machine.Event>Event</a></p></li><li>
+<p><a href=#machine.EventsRequest>EventsRequest</a></p></li><li>
+<p><a href=#machine.FeaturesInfo>FeaturesInfo</a></p></li><li>
+<p><a href=#machine.FileInfo>FileInfo</a></p></li><li>
+<p><a href=#machine.GenerateClientConfiguration>GenerateClientConfiguration</a></p></li><li>
+<p><a href=#machine.GenerateClientConfigurationRequest>GenerateClientConfigurationRequest</a></p></li><li>
+<p><a href=#machine.GenerateClientConfigurationResponse>GenerateClientConfigurationResponse</a></p></li><li>
+<p><a href=#machine.GenerateConfiguration>GenerateConfiguration</a></p></li><li>
+<p><a href=#machine.GenerateConfigurationRequest>GenerateConfigurationRequest</a></p></li><li>
+<p><a href=#machine.GenerateConfigurationResponse>GenerateConfigurationResponse</a></p></li><li>
+<p><a href=#machine.Hostname>Hostname</a></p></li><li>
+<p><a href=#machine.HostnameResponse>HostnameResponse</a></p></li><li>
+<p><a href=#machine.InstallConfig>InstallConfig</a></p></li><li>
+<p><a href=#machine.ListRequest>ListRequest</a></p></li><li>
+<p><a href=#machine.LoadAvg>LoadAvg</a></p></li><li>
+<p><a href=#machine.LoadAvgResponse>LoadAvgResponse</a></p></li><li>
+<p><a href=#machine.LogsRequest>LogsRequest</a></p></li><li>
+<p><a href=#machine.MachineConfig>MachineConfig</a></p></li><li>
+<p><a href=#machine.MemInfo>MemInfo</a></p></li><li>
+<p><a href=#machine.Memory>Memory</a></p></li><li>
+<p><a href=#machine.MemoryResponse>MemoryResponse</a></p></li><li>
+<p><a href=#machine.MountStat>MountStat</a></p></li><li>
+<p><a href=#machine.Mounts>Mounts</a></p></li><li>
+<p><a href=#machine.MountsResponse>MountsResponse</a></p></li><li>
+<p><a href=#machine.NetDev>NetDev</a></p></li><li>
+<p><a href=#machine.NetworkConfig>NetworkConfig</a></p></li><li>
+<p><a href=#machine.NetworkDeviceConfig>NetworkDeviceConfig</a></p></li><li>
+<p><a href=#machine.NetworkDeviceStats>NetworkDeviceStats</a></p></li><li>
+<p><a href=#machine.NetworkDeviceStatsResponse>NetworkDeviceStatsResponse</a></p></li><li>
+<p><a href=#machine.PhaseEvent>PhaseEvent</a></p></li><li>
+<p><a href=#machine.PlatformInfo>PlatformInfo</a></p></li><li>
+<p><a href=#machine.Process>Process</a></p></li><li>
+<p><a href=#machine.ProcessInfo>ProcessInfo</a></p></li><li>
+<p><a href=#machine.ProcessesResponse>ProcessesResponse</a></p></li><li>
+<p><a href=#machine.ReadRequest>ReadRequest</a></p></li><li>
+<p><a href=#machine.Reboot>Reboot</a></p></li><li>
+<p><a href=#machine.RebootResponse>RebootResponse</a></p></li><li>
+<p><a href=#machine.Reset>Reset</a></p></li><li>
+<p><a href=#machine.ResetPartitionSpec>ResetPartitionSpec</a></p></li><li>
+<p><a href=#machine.ResetRequest>ResetRequest</a></p></li><li>
+<p><a href=#machine.ResetResponse>ResetResponse</a></p></li><li>
+<p><a href=#machine.Restart>Restart</a></p></li><li>
+<p><a href=#machine.RestartEvent>RestartEvent</a></p></li><li>
+<p><a href=#machine.RestartRequest>RestartRequest</a></p></li><li>
+<p><a href=#machine.RestartResponse>RestartResponse</a></p></li><li>
+<p><a href=#machine.Rollback>Rollback</a></p></li><li>
+<p><a href=#machine.RollbackRequest>RollbackRequest</a></p></li><li>
+<p><a href=#machine.RollbackResponse>RollbackResponse</a></p></li><li>
+<p><a href=#machine.RouteConfig>RouteConfig</a></p></li><li>
+<p><a href=#machine.SequenceEvent>SequenceEvent</a></p></li><li>
+<p><a href=#machine.ServiceEvent>ServiceEvent</a></p></li><li>
+<p><a href=#machine.ServiceEvents>ServiceEvents</a></p></li><li>
+<p><a href=#machine.ServiceHealth>ServiceHealth</a></p></li><li>
+<p><a href=#machine.ServiceInfo>ServiceInfo</a></p></li><li>
+<p><a href=#machine.ServiceList>ServiceList</a></p></li><li>
+<p><a href=#machine.ServiceListResponse>ServiceListResponse</a></p></li><li>
+<p><a href=#machine.ServiceRestart>ServiceRestart</a></p></li><li>
+<p><a href=#machine.ServiceRestartRequest>ServiceRestartRequest</a></p></li><li>
+<p><a href=#machine.ServiceRestartResponse>ServiceRestartResponse</a></p></li><li>
+<p><a href=#machine.ServiceStart>ServiceStart</a></p></li><li>
+<p><a href=#machine.ServiceStartRequest>ServiceStartRequest</a></p></li><li>
+<p><a href=#machine.ServiceStartResponse>ServiceStartResponse</a></p></li><li>
+<p><a href=#machine.ServiceStateEvent>ServiceStateEvent</a></p></li><li>
+<p><a href=#machine.ServiceStop>ServiceStop</a></p></li><li>
+<p><a href=#machine.ServiceStopRequest>ServiceStopRequest</a></p></li><li>
+<p><a href=#machine.ServiceStopResponse>ServiceStopResponse</a></p></li><li>
+<p><a href=#machine.Shutdown>Shutdown</a></p></li><li>
+<p><a href=#machine.ShutdownResponse>ShutdownResponse</a></p></li><li>
+<p><a href=#machine.SoftIRQStat>SoftIRQStat</a></p></li><li>
+<p><a href=#machine.StartRequest>StartRequest</a></p></li><li>
+<p><a href=#machine.StartResponse>StartResponse</a></p></li><li>
+<p><a href=#machine.Stat>Stat</a></p></li><li>
+<p><a href=#machine.Stats>Stats</a></p></li><li>
+<p><a href=#machine.StatsRequest>StatsRequest</a></p></li><li>
+<p><a href=#machine.StatsResponse>StatsResponse</a></p></li><li>
+<p><a href=#machine.StopRequest>StopRequest</a></p></li><li>
+<p><a href=#machine.StopResponse>StopResponse</a></p></li><li>
+<p><a href=#machine.SystemStat>SystemStat</a></p></li><li>
+<p><a href=#machine.SystemStatResponse>SystemStatResponse</a></p></li><li>
+<p><a href=#machine.TaskEvent>TaskEvent</a></p></li><li>
+<p><a href=#machine.Upgrade>Upgrade</a></p></li><li>
+<p><a href=#machine.UpgradeRequest>UpgradeRequest</a></p></li><li>
+<p><a href=#machine.UpgradeResponse>UpgradeResponse</a></p></li><li>
+<p><a href=#machine.Version>Version</a></p></li><li>
+<p><a href=#machine.VersionInfo>VersionInfo</a></p></li><li>
+<p><a href=#machine.VersionResponse>VersionResponse</a></p></li><li>
+<p><a href=#machine.ListRequest.Type>ListRequest.Type</a></p></li><li>
+<p><a href=#machine.MachineConfig.MachineType>MachineConfig.MachineType</a></p></li><li>
+<p><a href=#machine.PhaseEvent.Action>PhaseEvent.Action</a></p></li><li>
+<p><a href=#machine.SequenceEvent.Action>SequenceEvent.Action</a></p></li><li>
+<p><a href=#machine.ServiceStateEvent.Action>ServiceStateEvent.Action</a></p></li><li>
+<p><a href=#machine.TaskEvent.Action>TaskEvent.Action</a></p></li><li>
+<p><a href=#machine.MachineService>MachineService</a></p></li></ul></li><li>
+<p><a href=#network/network.proto>network/network.proto</a></p><ul>
+<li>
+<p><a href=#network.Interface>Interface</a></p></li><li>
+<p><a href=#network.Interfaces>Interfaces</a></p></li><li>
+<p><a href=#network.InterfacesResponse>InterfacesResponse</a></p></li><li>
+<p><a href=#network.Route>Route</a></p></li><li>
+<p><a href=#network.Routes>Routes</a></p></li><li>
+<p><a href=#network.RoutesResponse>RoutesResponse</a></p></li><li>
+<p><a href=#network.AddressFamily>AddressFamily</a></p></li><li>
+<p><a href=#network.InterfaceFlags>InterfaceFlags</a></p></li><li>
+<p><a href=#network.RouteProtocol>RouteProtocol</a></p></li><li>
+<p><a href=#network.NetworkService>NetworkService</a></p></li></ul></li><li>
+<p><a href=#resource/resource.proto>resource/resource.proto</a></p><ul>
+<li>
+<p><a href=#resource.Get>Get</a></p></li><li>
+<p><a href=#resource.GetRequest>GetRequest</a></p></li><li>
+<p><a href=#resource.GetResponse>GetResponse</a></p></li><li>
+<p><a href=#resource.ListRequest>ListRequest</a></p></li><li>
+<p><a href=#resource.ListResponse>ListResponse</a></p></li><li>
+<p><a href=#resource.Metadata>Metadata</a></p></li><li>
+<p><a href=#resource.Resource>Resource</a></p></li><li>
+<p><a href=#resource.Spec>Spec</a></p></li><li>
+<p><a href=#resource.WatchRequest>WatchRequest</a></p></li><li>
+<p><a href=#resource.WatchResponse>WatchResponse</a></p></li><li>
+<p><a href=#resource.EventType>EventType</a></p></li><li>
+<p><a href=#resource.ResourceService>ResourceService</a></p></li></ul></li><li>
+<p><a href=#security/security.proto>security/security.proto</a></p><ul>
+<li>
+<p><a href=#securityapi.CertificateRequest>CertificateRequest</a></p></li><li>
+<p><a href=#securityapi.CertificateResponse>CertificateResponse</a></p></li><li>
+<p><a href=#securityapi.SecurityService>SecurityService</a></p></li></ul></li><li>
+<p><a href=#storage/storage.proto>storage/storage.proto</a></p><ul>
+<li>
+<p><a href=#storage.Disk>Disk</a></p></li><li>
+<p><a href=#storage.Disks>Disks</a></p></li><li>
+<p><a href=#storage.DisksResponse>DisksResponse</a></p></li><li>
+<p><a href=#storage.Disk.DiskType>Disk.DiskType</a></p></li><li>
+<p><a href=#storage.StorageService>StorageService</a></p></li></ul></li><li>
+<p><a href=#time/time.proto>time/time.proto</a></p><ul>
+<li>
+<p><a href=#time.Time>Time</a></p></li><li>
+<p><a href=#time.TimeRequest>TimeRequest</a></p></li><li>
+<p><a href=#time.TimeResponse>TimeResponse</a></p></li><li>
+<p><a href=#time.TimeService>TimeService</a></p></li></ul></li><li>
+<p><a href=#scalar-value-types>Scalar Value Types</a></p></li></ul><p></p><h2 id=commoncommonproto>common/common.proto</h2><p></p><h3 id=data>Data</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>Metadata</a></td><td></td><td></td></tr><tr>
+<td>bytes</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=dataresponse>DataResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#common.Data>Data</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=empty>Empty</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=emptyresponse>EmptyResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#common.Empty>Empty</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=error>Error</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>code</td><td><a href=#common.Code>Code</a></td><td></td><td></td></tr><tr>
+<td>message</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>details</td><td><a href=#google.protobuf.Any>google.protobuf.Any</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=metadata>Metadata</h3><p>Common metadata message nested in all reply message types</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>hostname</td><td><a href=#string>string</a></td><td></td><td>hostname of the server response comes from (injected by proxy)</td></tr><tr>
+<td>error</td><td><a href=#string>string</a></td><td></td><td>error is set if request failed to the upstream (rest of response is undefined)</td></tr><tr>
+<td>status</td><td><a href=#google.rpc.Status>google.rpc.Status</a></td><td></td><td>error as gRPC Status</td></tr></tbody></table><p></p><h3 id=code>Code</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>FATAL</td><td>0</td><td></td></tr><tr>
+<td>LOCKED</td><td>1</td><td></td></tr></tbody></table><p></p><h3 id=containerdriver>ContainerDriver</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>CONTAINERD</td><td>0</td><td></td></tr><tr>
+<td>CRI</td><td>1</td><td></td></tr></tbody></table><p></p><h2 id=inspectinspectproto>inspect/inspect.proto</h2><p></p><h3 id=controllerdependencyedge>ControllerDependencyEdge</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>controller_name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>edge_type</td><td><a href=#inspect.DependencyEdgeType>DependencyEdgeType</a></td><td></td><td></td></tr><tr>
+<td>resource_namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>resource_type</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>resource_id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=controllerruntimedependenciesresponse>ControllerRuntimeDependenciesResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#inspect.ControllerRuntimeDependency>ControllerRuntimeDependency</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=controllerruntimedependency>ControllerRuntimeDependency</h3><p>The ControllerRuntimeDependency message contains the graph of controller-resource dependencies.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>edges</td><td><a href=#inspect.ControllerDependencyEdge>ControllerDependencyEdge</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=dependencyedgetype>DependencyEdgeType</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>OUTPUT_EXCLUSIVE</td><td>0</td><td></td></tr><tr>
+<td>OUTPUT_SHARED</td><td>3</td><td></td></tr><tr>
+<td>INPUT_STRONG</td><td>1</td><td></td></tr><tr>
+<td>INPUT_WEAK</td><td>2</td><td></td></tr><tr>
+<td>INPUT_DESTROY_READY</td><td>4</td><td></td></tr></tbody></table><p></p><h3 id=inspectservice>InspectService</h3><p>The inspect service definition.</p><p>InspectService provides auxiliary API to inspect OS internals.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>ControllerRuntimeDependencies</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#inspect.ControllerRuntimeDependenciesResponse>ControllerRuntimeDependenciesResponse</a></td><td></td></tr></tbody></table><p></p><h2 id=machinemachineproto>machine/machine.proto</h2><p></p><h3 id=applyconfiguration>ApplyConfiguration</h3><p>ApplyConfigurationResponse describes the response to a configuration request.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>warnings</td><td><a href=#string>string</a></td><td>repeated</td><td>Configuration validation warnings.</td></tr></tbody></table><p></p><h3 id=applyconfigurationrequest>ApplyConfigurationRequest</h3><p>rpc applyConfiguration
+ApplyConfiguration describes a request to assert a new configuration upon a
+node.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>data</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr><tr>
+<td>on_reboot</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>immediate</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=applyconfigurationresponse>ApplyConfigurationResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.ApplyConfiguration>ApplyConfiguration</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=bootstrap>Bootstrap</h3><p>The bootstrap message containing the bootstrap status.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=bootstraprequest>BootstrapRequest</h3><p>rpc Bootstrap</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>recover_etcd</td><td><a href=#bool>bool</a></td><td></td><td>Enable etcd recovery from the snapshot.</td></tr></tbody></table><p>Snapshot should be uploaded before this call via EtcdRecover RPC. |
+| recover_skip_hash_check | <a href=#bool>bool</a> | | Skip hash check on the snapshot (etcd).</p><p>Enable this when recovering from data directory copy to skip integrity check. |</p><p></p><h3 id=bootstrapresponse>BootstrapResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Bootstrap>Bootstrap</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=cniconfig>CNIConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>urls</td><td><a href=#string>string</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=cpuinfo>CPUInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>processor</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>vendor_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cpu_family</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>model</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>model_name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>stepping</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>microcode</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cpu_mhz</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>cache_size</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>physical_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>siblings</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>core_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cpu_cores</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>apic_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>initial_apic_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>fpu</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>fpu_exception</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cpu_id_level</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>wp</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>flags</td><td><a href=#string>string</a></td><td>repeated</td><td></td></tr><tr>
+<td>bugs</td><td><a href=#string>string</a></td><td>repeated</td><td></td></tr><tr>
+<td>bogo_mips</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>cl_flush_size</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>cache_alignment</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>address_sizes</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>power_management</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=cpuinforesponse>CPUInfoResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.CPUsInfo>CPUsInfo</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=cpustat>CPUStat</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>user</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>nice</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>system</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>idle</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>iowait</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>irq</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>soft_irq</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>steal</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>guest</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>guest_nice</td><td><a href=#double>double</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=cpusinfo>CPUsInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>cpu_info</td><td><a href=#machine.CPUInfo>CPUInfo</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=clusterconfig>ClusterConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>control_plane</td><td><a href=#machine.ControlPlaneConfig>ControlPlaneConfig</a></td><td></td><td></td></tr><tr>
+<td>cluster_network</td><td><a href=#machine.ClusterNetworkConfig>ClusterNetworkConfig</a></td><td></td><td></td></tr><tr>
+<td>allow_scheduling_on_masters</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=clusternetworkconfig>ClusterNetworkConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>dns_domain</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cni_config</td><td><a href=#machine.CNIConfig>CNIConfig</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=container>Container</h3><p>The messages message containing the requested containers.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>containers</td><td><a href=#machine.ContainerInfo>ContainerInfo</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=containerinfo>ContainerInfo</h3><p>The messages message containing the requested containers.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>image</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>pid</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>status</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>pod_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=containersrequest>ContainersRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>driver</td><td><a href=#common.ContainerDriver>common.ContainerDriver</a></td><td></td><td>driver might be default &ldquo;containerd&rdquo; or &ldquo;cri&rdquo;</td></tr></tbody></table><p></p><h3 id=containersresponse>ContainersResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Container>Container</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=controlplaneconfig>ControlPlaneConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>endpoint</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=copyrequest>CopyRequest</h3><p>CopyRequest describes a request to copy data out of Talos node</p><p>Copy produces .tar.gz archive which is streamed back to the caller</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>root_path</td><td><a href=#string>string</a></td><td></td><td>Root path to start copying data out, it might be either a file or directory</td></tr></tbody></table><p></p><h3 id=dhcpoptionsconfig>DHCPOptionsConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>route_metric</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=diskstat>DiskStat</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>read_completed</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>read_merged</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>read_sectors</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>read_time_ms</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>write_completed</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>write_merged</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>write_sectors</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>write_time_ms</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>io_in_progress</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>io_time_ms</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>io_time_weighted_ms</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>discard_completed</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>discard_merged</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>discard_sectors</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>discard_time_ms</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=diskstats>DiskStats</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>total</td><td><a href=#machine.DiskStat>DiskStat</a></td><td></td><td></td></tr><tr>
+<td>devices</td><td><a href=#machine.DiskStat>DiskStat</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=diskstatsresponse>DiskStatsResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.DiskStats>DiskStats</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=diskusageinfo>DiskUsageInfo</h3><p>DiskUsageInfo describes a file or directory&rsquo;s information for du command</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td>Name is the name (including prefixed path) of the file or directory</td></tr><tr>
+<td>size</td><td><a href=#int64>int64</a></td><td></td><td>Size indicates the number of bytes contained within the file</td></tr><tr>
+<td>error</td><td><a href=#string>string</a></td><td></td><td>Error describes any error encountered while trying to read the file information.</td></tr><tr>
+<td>relative_name</td><td><a href=#string>string</a></td><td></td><td>RelativeName is the name of the file or directory relative to the RootPath</td></tr></tbody></table><p></p><h3 id=diskusagerequest>DiskUsageRequest</h3><p>DiskUsageRequest describes a request to list disk usage of directories and regular files</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>recursion_depth</td><td><a href=#int32>int32</a></td><td></td><td>RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced.</td></tr><tr>
+<td>all</td><td><a href=#bool>bool</a></td><td></td><td>All write sizes for all files, not just directories.</td></tr><tr>
+<td>threshold</td><td><a href=#int64>int64</a></td><td></td><td>Threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative.</td></tr><tr>
+<td>paths</td><td><a href=#string>string</a></td><td>repeated</td><td>DiskUsagePaths is the list of directories to calculate disk usage for.</td></tr></tbody></table><p></p><h3 id=dmesgrequest>DmesgRequest</h3><p>dmesg</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>follow</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>tail</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdforfeitleadership>EtcdForfeitLeadership</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>member</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdforfeitleadershiprequest>EtcdForfeitLeadershipRequest</h3><p></p><h3 id=etcdforfeitleadershipresponse>EtcdForfeitLeadershipResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.EtcdForfeitLeadership>EtcdForfeitLeadership</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=etcdleavecluster>EtcdLeaveCluster</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdleaveclusterrequest>EtcdLeaveClusterRequest</h3><p></p><h3 id=etcdleaveclusterresponse>EtcdLeaveClusterResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.EtcdLeaveCluster>EtcdLeaveCluster</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=etcdmember>EtcdMember</h3><p>EtcdMember describes a single etcd member.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#uint64>uint64</a></td><td></td><td>member ID.</td></tr><tr>
+<td>hostname</td><td><a href=#string>string</a></td><td></td><td>human-readable name of the member.</td></tr><tr>
+<td>peer_urls</td><td><a href=#string>string</a></td><td>repeated</td><td>the list of URLs the member exposes to clients for communication.</td></tr><tr>
+<td>client_urls</td><td><a href=#string>string</a></td><td>repeated</td><td>the list of URLs the member exposes to the cluster for communication.</td></tr><tr>
+<td>is_learner</td><td><a href=#bool>bool</a></td><td></td><td>learner flag</td></tr></tbody></table><p></p><h3 id=etcdmemberlistrequest>EtcdMemberListRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>query_local</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdmemberlistresponse>EtcdMemberListResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.EtcdMembers>EtcdMembers</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=etcdmembers>EtcdMembers</h3><p>EtcdMembers contains the list of members registered on the host.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>legacy_members</td><td><a href=#string>string</a></td><td>repeated</td><td>list of member hostnames.</td></tr><tr>
+<td>members</td><td><a href=#machine.EtcdMember>EtcdMember</a></td><td>repeated</td><td>the list of etcd members registered on the node.</td></tr></tbody></table><p></p><h3 id=etcdrecover>EtcdRecover</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdrecoverresponse>EtcdRecoverResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.EtcdRecover>EtcdRecover</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=etcdremovemember>EtcdRemoveMember</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdremovememberrequest>EtcdRemoveMemberRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>member</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=etcdremovememberresponse>EtcdRemoveMemberResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.EtcdRemoveMember>EtcdRemoveMember</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=etcdsnapshotrequest>EtcdSnapshotRequest</h3><p></p><h3 id=event>Event</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>data</td><td><a href=#google.protobuf.Any>google.protobuf.Any</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=eventsrequest>EventsRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>tail_events</td><td><a href=#int32>int32</a></td><td></td><td></td></tr><tr>
+<td>tail_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>tail_seconds</td><td><a href=#int32>int32</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=featuresinfo>FeaturesInfo</h3><p>FeaturesInfo describes individual Talos features that can be switched on or off.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>rbac</td><td><a href=#bool>bool</a></td><td></td><td>RBAC is true if role-based access control is enabled.</td></tr></tbody></table><p></p><h3 id=fileinfo>FileInfo</h3><p>FileInfo describes a file or directory&rsquo;s information</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td>Name is the name (including prefixed path) of the file or directory</td></tr><tr>
+<td>size</td><td><a href=#int64>int64</a></td><td></td><td>Size indicates the number of bytes contained within the file</td></tr><tr>
+<td>mode</td><td><a href=#uint32>uint32</a></td><td></td><td>Mode is the bitmap of UNIX mode/permission flags of the file</td></tr><tr>
+<td>modified</td><td><a href=#int64>int64</a></td><td></td><td>Modified indicates the UNIX timestamp at which the file was last modified</td></tr></tbody></table><p>TODO: unix timestamp or include proto&rsquo;s Date type |
+| is_dir | <a href=#bool>bool</a> | | IsDir indicates that the file is a directory |
+| error | <a href=#string>string</a> | | Error describes any error encountered while trying to read the file information. |
+| link | <a href=#string>string</a> | | Link is filled with symlink target |
+| relative_name | <a href=#string>string</a> | | RelativeName is the name of the file or directory relative to the RootPath |
+| uid | <a href=#uint32>uint32</a> | | Owner uid |
+| gid | <a href=#uint32>uint32</a> | | Owner gid |</p><p></p><h3 id=generateclientconfiguration>GenerateClientConfiguration</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>ca</td><td><a href=#bytes>bytes</a></td><td></td><td>PEM-encoded CA certificate.</td></tr><tr>
+<td>crt</td><td><a href=#bytes>bytes</a></td><td></td><td>PEM-encoded generated client certificate.</td></tr><tr>
+<td>key</td><td><a href=#bytes>bytes</a></td><td></td><td>PEM-encoded generated client key.</td></tr><tr>
+<td>talosconfig</td><td><a href=#bytes>bytes</a></td><td></td><td>Client configuration (talosconfig) file content.</td></tr></tbody></table><p></p><h3 id=generateclientconfigurationrequest>GenerateClientConfigurationRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>roles</td><td><a href=#string>string</a></td><td>repeated</td><td>Roles in the generated client certificate.</td></tr><tr>
+<td>crt_ttl</td><td><a href=#google.protobuf.Duration>google.protobuf.Duration</a></td><td></td><td>Client certificate TTL.</td></tr></tbody></table><p></p><h3 id=generateclientconfigurationresponse>GenerateClientConfigurationResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.GenerateClientConfiguration>GenerateClientConfiguration</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=generateconfiguration>GenerateConfiguration</h3><p>GenerateConfiguration describes the response to a generate configuration request.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>data</td><td><a href=#bytes>bytes</a></td><td>repeated</td><td></td></tr><tr>
+<td>talosconfig</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=generateconfigurationrequest>GenerateConfigurationRequest</h3><p>GenerateConfigurationRequest describes a request to generate a new configuration
+on a node.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>config_version</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cluster_config</td><td><a href=#machine.ClusterConfig>ClusterConfig</a></td><td></td><td></td></tr><tr>
+<td>machine_config</td><td><a href=#machine.MachineConfig>MachineConfig</a></td><td></td><td></td></tr><tr>
+<td>override_time</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=generateconfigurationresponse>GenerateConfigurationResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.GenerateConfiguration>GenerateConfiguration</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=hostname>Hostname</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>hostname</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=hostnameresponse>HostnameResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Hostname>Hostname</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=installconfig>InstallConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>install_disk</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>install_image</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=listrequest>ListRequest</h3><p>ListRequest describes a request to list the contents of a directory.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>root</td><td><a href=#string>string</a></td><td></td><td>Root indicates the root directory for the list. If not indicated, &lsquo;/&rsquo; is presumed.</td></tr><tr>
+<td>recurse</td><td><a href=#bool>bool</a></td><td></td><td>Recurse indicates that subdirectories should be recursed.</td></tr><tr>
+<td>recursion_depth</td><td><a href=#int32>int32</a></td><td></td><td>RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced.</td></tr><tr>
+<td>types</td><td><a href=#machine.ListRequest.Type>ListRequest.Type</a></td><td>repeated</td><td>Types indicates what file type should be returned. If not indicated, all files will be returned.</td></tr></tbody></table><p></p><h3 id=loadavg>LoadAvg</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>load1</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>load5</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>load15</td><td><a href=#double>double</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=loadavgresponse>LoadAvgResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.LoadAvg>LoadAvg</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=logsrequest>LogsRequest</h3><p>rpc logs
+The request message containing the process name.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>driver</td><td><a href=#common.ContainerDriver>common.ContainerDriver</a></td><td></td><td>driver might be default &ldquo;containerd&rdquo; or &ldquo;cri&rdquo;</td></tr><tr>
+<td>follow</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>tail_lines</td><td><a href=#int32>int32</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=machineconfig>MachineConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>type</td><td><a href=#machine.MachineConfig.MachineType>MachineConfig.MachineType</a></td><td></td><td></td></tr><tr>
+<td>install_config</td><td><a href=#machine.InstallConfig>InstallConfig</a></td><td></td><td></td></tr><tr>
+<td>network_config</td><td><a href=#machine.NetworkConfig>NetworkConfig</a></td><td></td><td></td></tr><tr>
+<td>kubernetes_version</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=meminfo>MemInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>memtotal</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>memfree</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>memavailable</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>buffers</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>cached</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>swapcached</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>active</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>inactive</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>activeanon</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>inactiveanon</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>activefile</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>inactivefile</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>unevictable</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>mlocked</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>swaptotal</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>swapfree</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>dirty</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>writeback</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>anonpages</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>mapped</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>shmem</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>slab</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>sreclaimable</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>sunreclaim</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>kernelstack</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>pagetables</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>nfsunstable</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>bounce</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>writebacktmp</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>commitlimit</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>committedas</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>vmalloctotal</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>vmallocused</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>vmallocchunk</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hardwarecorrupted</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>anonhugepages</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>shmemhugepages</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>shmempmdmapped</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>cmatotal</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>cmafree</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hugepagestotal</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hugepagesfree</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hugepagesrsvd</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hugepagessurp</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hugepagesize</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>directmap4k</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>directmap2m</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>directmap1g</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=memory>Memory</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>meminfo</td><td><a href=#machine.MemInfo>MemInfo</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=memoryresponse>MemoryResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Memory>Memory</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=mountstat>MountStat</h3><p>The messages message containing the requested processes.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>filesystem</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>size</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>available</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>mounted_on</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=mounts>Mounts</h3><p>The messages message containing the requested df stats.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>stats</td><td><a href=#machine.MountStat>MountStat</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=mountsresponse>MountsResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Mounts>Mounts</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=netdev>NetDev</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>rx_bytes</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_packets</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_errors</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_dropped</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_fifo</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_frame</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_compressed</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rx_multicast</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_bytes</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_packets</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_errors</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_dropped</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_fifo</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_collisions</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_carrier</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tx_compressed</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=networkconfig>NetworkConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>hostname</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>interfaces</td><td><a href=#machine.NetworkDeviceConfig>NetworkDeviceConfig</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=networkdeviceconfig>NetworkDeviceConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>interface</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>cidr</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>mtu</td><td><a href=#int32>int32</a></td><td></td><td></td></tr><tr>
+<td>dhcp</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>ignore</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>dhcp_options</td><td><a href=#machine.DHCPOptionsConfig>DHCPOptionsConfig</a></td><td></td><td></td></tr><tr>
+<td>routes</td><td><a href=#machine.RouteConfig>RouteConfig</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=networkdevicestats>NetworkDeviceStats</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>total</td><td><a href=#machine.NetDev>NetDev</a></td><td></td><td></td></tr><tr>
+<td>devices</td><td><a href=#machine.NetDev>NetDev</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=networkdevicestatsresponse>NetworkDeviceStatsResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.NetworkDeviceStats>NetworkDeviceStats</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=phaseevent>PhaseEvent</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>phase</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>action</td><td><a href=#machine.PhaseEvent.Action>PhaseEvent.Action</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=platforminfo>PlatformInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>mode</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=process>Process</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>processes</td><td><a href=#machine.ProcessInfo>ProcessInfo</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=processinfo>ProcessInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>pid</td><td><a href=#int32>int32</a></td><td></td><td></td></tr><tr>
+<td>ppid</td><td><a href=#int32>int32</a></td><td></td><td></td></tr><tr>
+<td>state</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>threads</td><td><a href=#int32>int32</a></td><td></td><td></td></tr><tr>
+<td>cpu_time</td><td><a href=#double>double</a></td><td></td><td></td></tr><tr>
+<td>virtual_memory</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>resident_memory</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>command</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>executable</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>args</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=processesresponse>ProcessesResponse</h3><p>rpc processes</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Process>Process</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=readrequest>ReadRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>path</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=reboot>Reboot</h3><p>rpc reboot
+The reboot message containing the reboot status.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=rebootresponse>RebootResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Reboot>Reboot</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=reset>Reset</h3><p>The reset message containing the restart status.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=resetpartitionspec>ResetPartitionSpec</h3><p>rpc reset</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>label</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>wipe</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=resetrequest>ResetRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>graceful</td><td><a href=#bool>bool</a></td><td></td><td>Graceful indicates whether node should leave etcd before the upgrade, it also enforces etcd checks before leaving.</td></tr><tr>
+<td>reboot</td><td><a href=#bool>bool</a></td><td></td><td>Reboot indicates whether node should reboot or halt after resetting.</td></tr><tr>
+<td>system_partitions_to_wipe</td><td><a href=#machine.ResetPartitionSpec>ResetPartitionSpec</a></td><td>repeated</td><td>System_partitions_to_wipe lists specific system disk partitions to be reset (wiped). If system_partitions_to_wipe is empty, all the partitions are erased.</td></tr></tbody></table><p></p><h3 id=resetresponse>ResetResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Reset>Reset</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=restart>Restart</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=restartevent>RestartEvent</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>cmd</td><td><a href=#int64>int64</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=restartrequest>RestartRequest</h3><p>rpc restart
+The request message containing the process to restart.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>driver</td><td><a href=#common.ContainerDriver>common.ContainerDriver</a></td><td></td><td>driver might be default &ldquo;containerd&rdquo; or &ldquo;cri&rdquo;</td></tr></tbody></table><p></p><h3 id=restartresponse>RestartResponse</h3><p>The messages message containing the restart status.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Restart>Restart</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=rollback>Rollback</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=rollbackrequest>RollbackRequest</h3><p>rpc rollback</p><p></p><h3 id=rollbackresponse>RollbackResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Rollback>Rollback</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=routeconfig>RouteConfig</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>network</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>gateway</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>metric</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=sequenceevent>SequenceEvent</h3><p>rpc events</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>sequence</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>action</td><td><a href=#machine.SequenceEvent.Action>SequenceEvent.Action</a></td><td></td><td></td></tr><tr>
+<td>error</td><td><a href=#common.Error>common.Error</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=serviceevent>ServiceEvent</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>msg</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>state</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>ts</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=serviceevents>ServiceEvents</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>events</td><td><a href=#machine.ServiceEvent>ServiceEvent</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=servicehealth>ServiceHealth</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>unknown</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>healthy</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>last_message</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>last_change</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=serviceinfo>ServiceInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>state</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>events</td><td><a href=#machine.ServiceEvents>ServiceEvents</a></td><td></td><td></td></tr><tr>
+<td>health</td><td><a href=#machine.ServiceHealth>ServiceHealth</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicelist>ServiceList</h3><p>rpc servicelist</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>services</td><td><a href=#machine.ServiceInfo>ServiceInfo</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=servicelistresponse>ServiceListResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.ServiceList>ServiceList</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=servicerestart>ServiceRestart</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>resp</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicerestartrequest>ServiceRestartRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicerestartresponse>ServiceRestartResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.ServiceRestart>ServiceRestart</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=servicestart>ServiceStart</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>resp</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicestartrequest>ServiceStartRequest</h3><p>rpc servicestart</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicestartresponse>ServiceStartResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.ServiceStart>ServiceStart</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=servicestateevent>ServiceStateEvent</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>service</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>action</td><td><a href=#machine.ServiceStateEvent.Action>ServiceStateEvent.Action</a></td><td></td><td></td></tr><tr>
+<td>message</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>health</td><td><a href=#machine.ServiceHealth>ServiceHealth</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicestop>ServiceStop</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>resp</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicestoprequest>ServiceStopRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=servicestopresponse>ServiceStopResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.ServiceStop>ServiceStop</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=shutdown>Shutdown</h3><p>rpc shutdown
+The messages message containing the shutdown status.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=shutdownresponse>ShutdownResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Shutdown>Shutdown</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=softirqstat>SoftIRQStat</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>hi</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>timer</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>net_tx</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>net_rx</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>block</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>block_io_poll</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>tasklet</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>sched</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>hrtimer</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>rcu</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=startrequest>StartRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=startresponse>StartResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>resp</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=stat>Stat</h3><p>The messages message containing the requested stat.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>memory_usage</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>cpu_usage</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>pod_id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=stats>Stats</h3><p>The messages message containing the requested stats.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>stats</td><td><a href=#machine.Stat>Stat</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=statsrequest>StatsRequest</h3><p>The request message containing the containerd namespace.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>driver</td><td><a href=#common.ContainerDriver>common.ContainerDriver</a></td><td></td><td>driver might be default &ldquo;containerd&rdquo; or &ldquo;cri&rdquo;</td></tr></tbody></table><p></p><h3 id=statsresponse>StatsResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Stats>Stats</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=stoprequest>StopRequest</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=stopresponse>StopResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>resp</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=systemstat>SystemStat</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>boot_time</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>cpu_total</td><td><a href=#machine.CPUStat>CPUStat</a></td><td></td><td></td></tr><tr>
+<td>cpu</td><td><a href=#machine.CPUStat>CPUStat</a></td><td>repeated</td><td></td></tr><tr>
+<td>irq_total</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>irq</td><td><a href=#uint64>uint64</a></td><td>repeated</td><td></td></tr><tr>
+<td>context_switches</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>process_created</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>process_running</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>process_blocked</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>soft_irq_total</td><td><a href=#uint64>uint64</a></td><td></td><td></td></tr><tr>
+<td>soft_irq</td><td><a href=#machine.SoftIRQStat>SoftIRQStat</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=systemstatresponse>SystemStatResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.SystemStat>SystemStat</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=taskevent>TaskEvent</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>task</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>action</td><td><a href=#machine.TaskEvent.Action>TaskEvent.Action</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=upgrade>Upgrade</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>ack</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=upgraderequest>UpgradeRequest</h3><p>rpc upgrade</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>image</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>preserve</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>stage</td><td><a href=#bool>bool</a></td><td></td><td></td></tr><tr>
+<td>force</td><td><a href=#bool>bool</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=upgraderesponse>UpgradeResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Upgrade>Upgrade</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=version>Version</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>version</td><td><a href=#machine.VersionInfo>VersionInfo</a></td><td></td><td></td></tr><tr>
+<td>platform</td><td><a href=#machine.PlatformInfo>PlatformInfo</a></td><td></td><td></td></tr><tr>
+<td>features</td><td><a href=#machine.FeaturesInfo>FeaturesInfo</a></td><td></td><td>Features describe individual Talos features that can be switched on or off.</td></tr></tbody></table><p></p><h3 id=versioninfo>VersionInfo</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>tag</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>sha</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>built</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>go_version</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>os</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>arch</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=versionresponse>VersionResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#machine.Version>Version</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=listrequesttype>ListRequest.Type</h3><p>File type.</p><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>REGULAR</td><td>0</td><td>Regular file (not directory, symlink, etc).</td></tr><tr>
+<td>DIRECTORY</td><td>1</td><td>Directory.</td></tr><tr>
+<td>SYMLINK</td><td>2</td><td>Symbolic link.</td></tr></tbody></table><p></p><h3 id=machineconfigmachinetype>MachineConfig.MachineType</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>TYPE_UNKNOWN</td><td>0</td><td></td></tr><tr>
+<td>TYPE_INIT</td><td>1</td><td></td></tr><tr>
+<td>TYPE_CONTROL_PLANE</td><td>2</td><td></td></tr><tr>
+<td>TYPE_WORKER</td><td>3</td><td></td></tr><tr>
+<td>TYPE_JOIN</td><td>3</td><td>Alias for TYPE_WORKER.</td></tr></tbody></table><p></p><h3 id=phaseeventaction>PhaseEvent.Action</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>START</td><td>0</td><td></td></tr><tr>
+<td>STOP</td><td>1</td><td></td></tr></tbody></table><p></p><h3 id=sequenceeventaction>SequenceEvent.Action</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>NOOP</td><td>0</td><td></td></tr><tr>
+<td>START</td><td>1</td><td></td></tr><tr>
+<td>STOP</td><td>2</td><td></td></tr></tbody></table><p></p><h3 id=servicestateeventaction>ServiceStateEvent.Action</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>INITIALIZED</td><td>0</td><td></td></tr><tr>
+<td>PREPARING</td><td>1</td><td></td></tr><tr>
+<td>WAITING</td><td>2</td><td></td></tr><tr>
+<td>RUNNING</td><td>3</td><td></td></tr><tr>
+<td>STOPPING</td><td>4</td><td></td></tr><tr>
+<td>FINISHED</td><td>5</td><td></td></tr><tr>
+<td>FAILED</td><td>6</td><td></td></tr><tr>
+<td>SKIPPED</td><td>7</td><td></td></tr></tbody></table><p></p><h3 id=taskeventaction>TaskEvent.Action</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>START</td><td>0</td><td></td></tr><tr>
+<td>STOP</td><td>1</td><td></td></tr></tbody></table><p></p><h3 id=machineservice>MachineService</h3><p>The machine service definition.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>ApplyConfiguration</td><td><a href=#machine.ApplyConfigurationRequest>ApplyConfigurationRequest</a></td><td><a href=#machine.ApplyConfigurationResponse>ApplyConfigurationResponse</a></td><td></td></tr><tr>
+<td>Bootstrap</td><td><a href=#machine.BootstrapRequest>BootstrapRequest</a></td><td><a href=#machine.BootstrapResponse>BootstrapResponse</a></td><td></td></tr><tr>
+<td>Containers</td><td><a href=#machine.ContainersRequest>ContainersRequest</a></td><td><a href=#machine.ContainersResponse>ContainersResponse</a></td><td></td></tr><tr>
+<td>Copy</td><td><a href=#machine.CopyRequest>CopyRequest</a></td><td><a href=#common.Data>.common.Data</a> stream</td><td></td></tr><tr>
+<td>CPUInfo</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#machine.CPUInfoResponse>CPUInfoResponse</a></td><td></td></tr><tr>
+<td>DiskStats</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#machine.DiskStatsResponse>DiskStatsResponse</a></td><td></td></tr><tr>
+<td>Dmesg</td><td><a href=#machine.DmesgRequest>DmesgRequest</a></td><td><a href=#common.Data>.common.Data</a> stream</td><td></td></tr><tr>
+<td>Events</td><td><a href=#machine.EventsRequest>EventsRequest</a></td><td><a href=#machine.Event>Event</a> stream</td><td></td></tr><tr>
+<td>EtcdMemberList</td><td><a href=#machine.EtcdMemberListRequest>EtcdMemberListRequest</a></td><td><a href=#machine.EtcdMemberListResponse>EtcdMemberListResponse</a></td><td></td></tr><tr>
+<td>EtcdRemoveMember</td><td><a href=#machine.EtcdRemoveMemberRequest>EtcdRemoveMemberRequest</a></td><td><a href=#machine.EtcdRemoveMemberResponse>EtcdRemoveMemberResponse</a></td><td></td></tr><tr>
+<td>EtcdLeaveCluster</td><td><a href=#machine.EtcdLeaveClusterRequest>EtcdLeaveClusterRequest</a></td><td><a href=#machine.EtcdLeaveClusterResponse>EtcdLeaveClusterResponse</a></td><td></td></tr><tr>
+<td>EtcdForfeitLeadership</td><td><a href=#machine.EtcdForfeitLeadershipRequest>EtcdForfeitLeadershipRequest</a></td><td><a href=#machine.EtcdForfeitLeadershipResponse>EtcdForfeitLeadershipResponse</a></td><td></td></tr><tr>
+<td>EtcdRecover</td><td><a href=#common.Data>.common.Data</a> stream</td><td><a href=#machine.EtcdRecoverResponse>EtcdRecoverResponse</a></td><td>EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot to the node.</td></tr></tbody></table><p>Snapshot can be later used to recover the cluster via Bootstrap method. |
+| EtcdSnapshot | <a href=#machine.EtcdSnapshotRequest>EtcdSnapshotRequest</a> | <a href=#common.Data>.common.Data</a> stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client.</p><p>This method is available only on control plane nodes (which run etcd). |
+| GenerateConfiguration | <a href=#machine.GenerateConfigurationRequest>GenerateConfigurationRequest</a> | <a href=#machine.GenerateConfigurationResponse>GenerateConfigurationResponse</a> | |
+| Hostname | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.HostnameResponse>HostnameResponse</a> | |
+| Kubeconfig | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#common.Data>.common.Data</a> stream | |
+| List | <a href=#machine.ListRequest>ListRequest</a> | <a href=#machine.FileInfo>FileInfo</a> stream | |
+| DiskUsage | <a href=#machine.DiskUsageRequest>DiskUsageRequest</a> | <a href=#machine.DiskUsageInfo>DiskUsageInfo</a> stream | |
+| LoadAvg | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.LoadAvgResponse>LoadAvgResponse</a> | |
+| Logs | <a href=#machine.LogsRequest>LogsRequest</a> | <a href=#common.Data>.common.Data</a> stream | |
+| Memory | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.MemoryResponse>MemoryResponse</a> | |
+| Mounts | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.MountsResponse>MountsResponse</a> | |
+| NetworkDeviceStats | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.NetworkDeviceStatsResponse>NetworkDeviceStatsResponse</a> | |
+| Processes | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.ProcessesResponse>ProcessesResponse</a> | |
+| Read | <a href=#machine.ReadRequest>ReadRequest</a> | <a href=#common.Data>.common.Data</a> stream | |
+| Reboot | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.RebootResponse>RebootResponse</a> | |
+| Restart | <a href=#machine.RestartRequest>RestartRequest</a> | <a href=#machine.RestartResponse>RestartResponse</a> | |
+| Rollback | <a href=#machine.RollbackRequest>RollbackRequest</a> | <a href=#machine.RollbackResponse>RollbackResponse</a> | |
+| Reset | <a href=#machine.ResetRequest>ResetRequest</a> | <a href=#machine.ResetResponse>ResetResponse</a> | |
+| ServiceList | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.ServiceListResponse>ServiceListResponse</a> | |
+| ServiceRestart | <a href=#machine.ServiceRestartRequest>ServiceRestartRequest</a> | <a href=#machine.ServiceRestartResponse>ServiceRestartResponse</a> | |
+| ServiceStart | <a href=#machine.ServiceStartRequest>ServiceStartRequest</a> | <a href=#machine.ServiceStartResponse>ServiceStartResponse</a> | |
+| ServiceStop | <a href=#machine.ServiceStopRequest>ServiceStopRequest</a> | <a href=#machine.ServiceStopResponse>ServiceStopResponse</a> | |
+| Shutdown | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.ShutdownResponse>ShutdownResponse</a> | |
+| Stats | <a href=#machine.StatsRequest>StatsRequest</a> | <a href=#machine.StatsResponse>StatsResponse</a> | |
+| SystemStat | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.SystemStatResponse>SystemStatResponse</a> | |
+| Upgrade | <a href=#machine.UpgradeRequest>UpgradeRequest</a> | <a href=#machine.UpgradeResponse>UpgradeResponse</a> | |
+| Version | <a href=#google.protobuf.Empty>.google.protobuf.Empty</a> | <a href=#machine.VersionResponse>VersionResponse</a> | |
+| GenerateClientConfiguration | <a href=#machine.GenerateClientConfigurationRequest>GenerateClientConfigurationRequest</a> | <a href=#machine.GenerateClientConfigurationResponse>GenerateClientConfigurationResponse</a> | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |</p><p></p><h2 id=networknetworkproto>network/network.proto</h2><p></p><h3 id=interface>Interface</h3><p>Interface represents a net.Interface</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>index</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>mtu</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>hardwareaddr</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>flags</td><td><a href=#network.InterfaceFlags>InterfaceFlags</a></td><td></td><td></td></tr><tr>
+<td>ipaddress</td><td><a href=#string>string</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=interfaces>Interfaces</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>interfaces</td><td><a href=#network.Interface>Interface</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=interfacesresponse>InterfacesResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#network.Interfaces>Interfaces</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=route>Route</h3><p>The messages message containing a route.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>interface</td><td><a href=#string>string</a></td><td></td><td>Interface is the interface over which traffic to this destination should be sent</td></tr><tr>
+<td>destination</td><td><a href=#string>string</a></td><td></td><td>Destination is the network prefix CIDR which this route provides</td></tr><tr>
+<td>gateway</td><td><a href=#string>string</a></td><td></td><td>Gateway is the gateway address to which traffic to this destination should be sent</td></tr><tr>
+<td>metric</td><td><a href=#uint32>uint32</a></td><td></td><td>Metric is the priority of the route, where lower metrics have higher priorities</td></tr><tr>
+<td>scope</td><td><a href=#uint32>uint32</a></td><td></td><td>Scope desribes the scope of this route</td></tr><tr>
+<td>source</td><td><a href=#string>string</a></td><td></td><td>Source is the source prefix CIDR for the route, if one is defined</td></tr><tr>
+<td>family</td><td><a href=#network.AddressFamily>AddressFamily</a></td><td></td><td>Family is the address family of the route. Currently, the only options are AF_INET (IPV4) and AF_INET6 (IPV6).</td></tr><tr>
+<td>protocol</td><td><a href=#network.RouteProtocol>RouteProtocol</a></td><td></td><td>Protocol is the protocol by which this route came to be in place</td></tr><tr>
+<td>flags</td><td><a href=#uint32>uint32</a></td><td></td><td>Flags indicate any special flags on the route</td></tr></tbody></table><p></p><h3 id=routes>Routes</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>routes</td><td><a href=#network.Route>Route</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=routesresponse>RoutesResponse</h3><p>The messages message containing the routes.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#network.Routes>Routes</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=addressfamily>AddressFamily</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>AF_UNSPEC</td><td>0</td><td></td></tr><tr>
+<td>AF_INET</td><td>2</td><td></td></tr><tr>
+<td>IPV4</td><td>2</td><td></td></tr><tr>
+<td>AF_INET6</td><td>10</td><td></td></tr><tr>
+<td>IPV6</td><td>10</td><td></td></tr></tbody></table><p></p><h3 id=interfaceflags>InterfaceFlags</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>FLAG_UNKNOWN</td><td>0</td><td></td></tr><tr>
+<td>FLAG_UP</td><td>1</td><td></td></tr><tr>
+<td>FLAG_BROADCAST</td><td>2</td><td></td></tr><tr>
+<td>FLAG_LOOPBACK</td><td>3</td><td></td></tr><tr>
+<td>FLAG_POINT_TO_POINT</td><td>4</td><td></td></tr><tr>
+<td>FLAG_MULTICAST</td><td>5</td><td></td></tr></tbody></table><p></p><h3 id=routeprotocol>RouteProtocol</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>RTPROT_UNSPEC</td><td>0</td><td></td></tr><tr>
+<td>RTPROT_REDIRECT</td><td>1</td><td>Route installed by ICMP redirects</td></tr><tr>
+<td>RTPROT_KERNEL</td><td>2</td><td>Route installed by kernel</td></tr><tr>
+<td>RTPROT_BOOT</td><td>3</td><td>Route installed during boot</td></tr><tr>
+<td>RTPROT_STATIC</td><td>4</td><td>Route installed by administrator</td></tr><tr>
+<td>RTPROT_GATED</td><td>8</td><td>Route installed by gated</td></tr><tr>
+<td>RTPROT_RA</td><td>9</td><td>Route installed by router advertisement</td></tr><tr>
+<td>RTPROT_MRT</td><td>10</td><td>Route installed by Merit MRT</td></tr><tr>
+<td>RTPROT_ZEBRA</td><td>11</td><td>Route installed by Zebra/Quagga</td></tr><tr>
+<td>RTPROT_BIRD</td><td>12</td><td>Route installed by Bird</td></tr><tr>
+<td>RTPROT_DNROUTED</td><td>13</td><td>Route installed by DECnet routing daemon</td></tr><tr>
+<td>RTPROT_XORP</td><td>14</td><td>Route installed by XORP</td></tr><tr>
+<td>RTPROT_NTK</td><td>15</td><td>Route installed by Netsukuku</td></tr><tr>
+<td>RTPROT_DHCP</td><td>16</td><td>Route installed by DHCP</td></tr><tr>
+<td>RTPROT_MROUTED</td><td>17</td><td>Route installed by Multicast daemon</td></tr><tr>
+<td>RTPROT_BABEL</td><td>42</td><td>Route installed by Babel daemon</td></tr></tbody></table><p></p><h3 id=networkservice>NetworkService</h3><p>The network service definition.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>Routes</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#network.RoutesResponse>RoutesResponse</a></td><td></td></tr><tr>
+<td>Interfaces</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#network.InterfacesResponse>InterfacesResponse</a></td><td></td></tr></tbody></table><p></p><h2 id=resourceresourceproto>resource/resource.proto</h2><p></p><h3 id=get>Get</h3><p>The GetResponse message contains the Resource returned.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>definition</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr><tr>
+<td>resource</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=getrequest>GetRequest</h3><p>rpc Get</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>type</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=getresponse>GetResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#resource.Get>Get</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=listrequest-1>ListRequest</h3><p>rpc List
+The ListResponse message contains the Resource returned.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>type</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=listresponse>ListResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>definition</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr><tr>
+<td>resource</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=metadata-1>Metadata</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>type</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>version</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>owner</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>phase</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>created</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr><tr>
+<td>updated</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr><tr>
+<td>finalizers</td><td><a href=#string>string</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=resource>Resource</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#resource.Metadata>Metadata</a></td><td></td><td></td></tr><tr>
+<td>spec</td><td><a href=#resource.Spec>Spec</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=spec>Spec</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>yaml</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=watchrequest>WatchRequest</h3><p>rpc Watch
+The WatchResponse message contains the Resource returned.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>namespace</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>type</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>id</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>tail_events</td><td><a href=#uint32>uint32</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=watchresponse>WatchResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>event_type</td><td><a href=#resource.EventType>EventType</a></td><td></td><td></td></tr><tr>
+<td>definition</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr><tr>
+<td>resource</td><td><a href=#resource.Resource>Resource</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=eventtype>EventType</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>CREATED</td><td>0</td><td></td></tr><tr>
+<td>UPDATED</td><td>1</td><td></td></tr><tr>
+<td>DESTROYED</td><td>2</td><td></td></tr></tbody></table><p></p><h3 id=resourceservice>ResourceService</h3><p>The resource service definition.</p><p>ResourceService provides user-facing API for the Talos resources.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>Get</td><td><a href=#resource.GetRequest>GetRequest</a></td><td><a href=#resource.GetResponse>GetResponse</a></td><td></td></tr><tr>
+<td>List</td><td><a href=#resource.ListRequest>ListRequest</a></td><td><a href=#resource.ListResponse>ListResponse</a> stream</td><td></td></tr><tr>
+<td>Watch</td><td><a href=#resource.WatchRequest>WatchRequest</a></td><td><a href=#resource.WatchResponse>WatchResponse</a> stream</td><td></td></tr></tbody></table><p></p><h2 id=securitysecurityproto>security/security.proto</h2><p></p><h3 id=certificaterequest>CertificateRequest</h3><p>The request message containing the process name.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>csr</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=certificateresponse>CertificateResponse</h3><p>The response message containing the requested logs.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>ca</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr><tr>
+<td>crt</td><td><a href=#bytes>bytes</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=securityservice>SecurityService</h3><p>The security service definition.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>Certificate</td><td><a href=#securityapi.CertificateRequest>CertificateRequest</a></td><td><a href=#securityapi.CertificateResponse>CertificateResponse</a></td><td></td></tr></tbody></table><p></p><h2 id=storagestorageproto>storage/storage.proto</h2><p></p><h3 id=disk>Disk</h3><p>Disk represents a disk.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>size</td><td><a href=#uint64>uint64</a></td><td></td><td>Size indicates the disk size in bytes.</td></tr><tr>
+<td>model</td><td><a href=#string>string</a></td><td></td><td>Model idicates the disk model.</td></tr><tr>
+<td>device_name</td><td><a href=#string>string</a></td><td></td><td>DeviceName indicates the disk name (e.g. <code>sda</code>).</td></tr><tr>
+<td>name</td><td><a href=#string>string</a></td><td></td><td>Name as in <code>/sys/block/&lt;dev>/device/name</code>.</td></tr><tr>
+<td>serial</td><td><a href=#string>string</a></td><td></td><td>Serial as in <code>/sys/block/&lt;dev>/device/serial</code>.</td></tr><tr>
+<td>modalias</td><td><a href=#string>string</a></td><td></td><td>Modalias as in <code>/sys/block/&lt;dev>/device/modalias</code>.</td></tr><tr>
+<td>uuid</td><td><a href=#string>string</a></td><td></td><td>Uuid as in <code>/sys/block/&lt;dev>/device/uuid</code>.</td></tr><tr>
+<td>wwid</td><td><a href=#string>string</a></td><td></td><td>Wwid as in <code>/sys/block/&lt;dev>/device/wwid</code>.</td></tr><tr>
+<td>type</td><td><a href=#storage.Disk.DiskType>Disk.DiskType</a></td><td></td><td>Type is a type of the disk: nvme, ssd, hdd, sd card.</td></tr></tbody></table><p></p><h3 id=disks>Disks</h3><p>DisksResponse represents the response of the <code>Disks</code> RPC.</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>disks</td><td><a href=#storage.Disk>Disk</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=disksresponse>DisksResponse</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#storage.Disks>Disks</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=diskdisktype>Disk.DiskType</h3><table>
+<thead>
+<tr>
+<th>Name</th><th>Number</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>UNKNOWN</td><td>0</td><td></td></tr><tr>
+<td>SSD</td><td>1</td><td></td></tr><tr>
+<td>HDD</td><td>2</td><td></td></tr><tr>
+<td>NVME</td><td>3</td><td></td></tr><tr>
+<td>SD</td><td>4</td><td></td></tr></tbody></table><p></p><h3 id=storageservice>StorageService</h3><p>StorageService represents the storage service.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>Disks</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#storage.DisksResponse>DisksResponse</a></td><td></td></tr></tbody></table><p></p><h2 id=timetimeproto>time/time.proto</h2><p></p><h3 id=time>Time</h3><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>metadata</td><td><a href=#common.Metadata>common.Metadata</a></td><td></td><td></td></tr><tr>
+<td>server</td><td><a href=#string>string</a></td><td></td><td></td></tr><tr>
+<td>localtime</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr><tr>
+<td>remotetime</td><td><a href=#google.protobuf.Timestamp>google.protobuf.Timestamp</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=timerequest>TimeRequest</h3><p>The response message containing the ntp server</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>server</td><td><a href=#string>string</a></td><td></td><td></td></tr></tbody></table><p></p><h3 id=timeresponse>TimeResponse</h3><p>The response message containing the ntp server, time, and offset</p><table>
+<thead>
+<tr>
+<th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>messages</td><td><a href=#time.Time>Time</a></td><td>repeated</td><td></td></tr></tbody></table><p></p><h3 id=timeservice>TimeService</h3><p>The time service definition.</p><table>
+<thead>
+<tr>
+<th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr></thead><tbody>
+<tr>
+<td>Time</td><td><a href=#google.protobuf.Empty>.google.protobuf.Empty</a></td><td><a href=#time.TimeResponse>TimeResponse</a></td><td></td></tr><tr>
+<td>TimeCheck</td><td><a href=#time.TimeRequest>TimeRequest</a></td><td><a href=#time.TimeResponse>TimeResponse</a></td><td></td></tr></tbody></table><h2 id=scalar-value-types>Scalar Value Types</h2><table>
+<thead>
+<tr>
+<th>.proto Type</th><th>Notes</th><th>C++</th><th>Java</th><th>Python</th><th>Go</th><th>C#</th><th>PHP</th><th>Ruby</th></tr></thead><tbody>
+<tr>
+<td> double</td><td></td><td>double</td><td>double</td><td>float</td><td>float64</td><td>double</td><td>float</td><td>Float</td></tr><tr>
+<td> float</td><td></td><td>float</td><td>float</td><td>float</td><td>float32</td><td>float</td><td>float</td><td>Float</td></tr><tr>
+<td> int32</td><td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> int64</td><td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr><tr>
+<td> uint32</td><td>Uses variable-length encoding.</td><td>uint32</td><td>int</td><td>int/long</td><td>uint32</td><td>uint</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> uint64</td><td>Uses variable-length encoding.</td><td>uint64</td><td>long</td><td>int/long</td><td>uint64</td><td>ulong</td><td>integer/string</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> sint32</td><td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> sint64</td><td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr><tr>
+<td> fixed32</td><td>Always four bytes. More efficient than uint32 if values are often greater than 2^28.</td><td>uint32</td><td>int</td><td>int</td><td>uint32</td><td>uint</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> fixed64</td><td>Always eight bytes. More efficient than uint64 if values are often greater than 2^56.</td><td>uint64</td><td>long</td><td>int/long</td><td>uint64</td><td>ulong</td><td>integer/string</td><td>Bignum</td></tr><tr>
+<td> sfixed32</td><td>Always four bytes.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr><tr>
+<td> sfixed64</td><td>Always eight bytes.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr><tr>
+<td> bool</td><td></td><td>bool</td><td>boolean</td><td>boolean</td><td>bool</td><td>bool</td><td>boolean</td><td>TrueClass/FalseClass</td></tr><tr>
+<td> string</td><td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td><td>string</td><td>String</td><td>str/unicode</td><td>string</td><td>string</td><td>string</td><td>String (UTF-8)</td></tr><tr>
+<td> bytes</td><td>May contain any arbitrary sequence of bytes.</td><td>string</td><td>ByteString</td><td>str</td><td>[]byte</td><td>ByteString</td><td>string</td><td>String (ASCII-8BIT)</td></tr></tbody></table></div></div></div></section><section class=section>
+<div class=container>
+<nav class=pagination role=navigation aria-label=pagination>
+<a class="pagination-next has-text-white has-background-primary" href=/docs/v0.13/reference/cli/>
+<span>
+CLI
+</span>
+<span class=icon>
+<ion-icon name=arrow-forward-outline></ion-icon>
+</span>
+</a>
+</nav></div></section><section class=hero>
+<div class=hero-body>
+<div class=container>
+<hr>
+<p class=has-text-weight-light>
+&copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+</p><br>
+<p class=has-text-weight-light>
+&copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href=https://www.linuxfoundation.org/trademark-usage/ target=_blank>Trademark Usage</a> page.
+</p></div></div></section></div></div><div class=drawer :class="{ 'is-visible': drawer }">
+<aside class="nav is-drawer">
+<span class="icon is-hoverable" @click="drawer = !drawer">
+<ion-icon size=large name=close-circle-outline></ion-icon>
+</span>
+<div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/>
+Welcome
+</a>
+</div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/introduction/>
+Introduction
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/what-is-talos/>
+What is Talos?
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/quickstart/>
+Quickstart
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/getting-started/>
+Getting Started
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/system-requirements/>
+System Requirements
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/what-is-new/>
+What's New in Talos 0.13
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/introduction/support-matrix/>
+Support Matrix
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/bare-metal-platforms/>
+Bare Metal Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/digital-rebar/>
+Digital Rebar
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/equinix-metal/>
+Equinix Metal
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/matchbox/>
+Matchbox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/bare-metal-platforms/sidero/>
+Sidero
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/virtualized-platforms/>
+Virtualized Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/hyper-v/>
+Hyper-V
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/kvm/>
+KVM
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/proxmox/>
+Proxmox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/vmware/>
+VMware
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/virtualized-platforms/xen/>
+Xen
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/cloud-platforms/>
+Cloud Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/aws/>
+AWS
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/azure/>
+Azure
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/digitalocean/>
+DigitalOcean
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/gcp/>
+GCP
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/hetzner/>
+Hetzner
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/nocloud/>
+Nocloud
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/openstack/>
+Openstack
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/scaleway/>
+Scaleway
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/upcloud/>
+UpCloud
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/cloud-platforms/vultr/>
+Vultr
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/local-platforms/>
+Local Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/docker/>
+Docker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/qemu/>
+QEMU
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/local-platforms/virtualbox/>
+VirtualBox
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/single-board-computers/>
+Single Board Computers
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/bananapi_m64/>
+Banana Pi M64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/libretech_all_h3_cc_h5/>
+Libre Computer Board ALL-H3-CC
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/pine64/>
+Pine64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rock64/>
+Pine64 Rock64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rockpi_4/>
+Radxa ROCK PI 4c
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/single-board-computers/rpi_4/>
+Raspberry Pi 4 Model B
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/guides/>
+Guides
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/advanced-networking/>
+Advanced Networking
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/air-gapped/>
+Air-gapped Environments
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-certificate-authorities/>
+Configuring Certificate Authorities
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-containerd/>
+Configuring Containerd
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-corporate-proxies/>
+Configuring Corporate Proxies
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-network-connectivity/>
+Configuring Network Connectivity
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-pull-through-cache/>
+Configuring Pull Through Cache
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-the-cluster-endpoint/>
+Configuring the Cluster Endpoint
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/configuring-wireguard-network/>
+Configuring Wireguard Network
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/customizing-the-kernel/>
+Customizing the Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/customizing-the-root-filesystem/>
+Customizing the Root Filesystem
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/deploy-metrics-server/>
+Deploying Metrics Server
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/disaster-recovery/>
+Disaster Recovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/discovery/>
+Discovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/disk-encryption/>
+Disk Encryption
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/editing-machine-configuration/>
+Editing Machine Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/kubespan/>
+KubeSpan
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/managing-pki/>
+Managing PKI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/resetting-a-machine/>
+Resetting a Machine
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/rbac/>
+Role-based access control (RBAC)
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/storage/>
+Storage
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/troubleshooting-control-plane/>
+Troubleshooting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/upgrading-kubernetes/>
+Upgrading Kubernetes
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/upgrading-talos/>
+Upgrading Talos
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/guides/vip/>
+Virtual (shared) IP
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/reference/>
+Reference
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a class=is-active href=/docs/v0.13/reference/api/>
+API
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/cli/>
+CLI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/configuration/>
+Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/kernel/>
+Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/reference/platform/>
+Platform
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.13/learn-more/>
+Learn More
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/philosophy/>
+Philosophy
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/concepts/>
+Concepts
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/architecture/>
+Architecture
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/components/>
+Components
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/upgrades/>
+Upgrades
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/faqs/>
+FAQs
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/talosctl/>
+talosctl
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/control-plane/>
+Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/controllers-resources/>
+Controllers and Resources
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/networking-resources/>
+Networking Resources
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/discovery/>
+Discovery
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.13/learn-more/kubespan/>
+KubeSpan
+</a>
+</li></ul></div></aside></div></div><script src=https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js defer></script>
+<script type=module src=https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js></script>
+<script nomodule src=https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js></script>
+<script src=https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js></script>
+<script src=/js/jquery.matchHeight.js></script>
+<script src=/js/scripts.js></script>
+<script>anchors.options={icon:"#"},document.addEventListener("DOMContentLoaded",function(){anchors.add(".content h1, .content h2, .content h3, .content h4, .content h5, .content h6")})</script>
+<script>const navbarHeight=document.getElementsByClassName("navbar")[0].offsetHeight,extraPadding=15,navbarOffset=-1*(navbarHeight+extraPadding);var shiftWindow=function(){scrollBy(0,navbarOffset)};window.addEventListener("hashchange",shiftWindow),window.addEventListener("pageshow",shiftWindow);function load(){window.location.hash&&shiftWindow()}</script>
+<script type=text/javascript src=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js></script>
+<script type=text/javascript>docsearch({apiKey:"3c4082e162be342fa20a794144b4a479",indexName:"longhorn",inputSelector:"#search-input",algoliaOptions:{facetFilters:["version:v0.13"]},debug:!1})</script>
+</body></html>

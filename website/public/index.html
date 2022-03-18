@@ -1,0 +1,462 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta name="generator" content="Hugo 0.93.2" />
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<meta name="description" content="The Kubernetes Operating System">
+
+
+
+
+<link rel="alternate" type="application/rss+xml" href="https://talos.dev/" title="Talos Linux" />
+
+<link rel="canonical" href="https://talos.dev/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/">
+<meta property="og:title" content="Talos Linux">
+
+<meta property="og:description" content="The Kubernetes Operating System">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+
+
+  <title>
+    
+    Talos Linux
+    
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body class="has-navbar-fixed-top" >
+  
+
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top" x-data="{ open: false }">
+  
+  <div class="container">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+  </div>
+  
+</nav>
+
+
+
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-vcentered is-variable is-8">
+        <div class="column is-one-quarter">
+          <img class="hero-logo" src="/img/logos/Sidero_mark_darkbkgd_RGB.png" alt="Talos Linux hero logo">
+        </div>
+
+        <div class="column">
+          <p class="title is-size-1 is-size-2-mobile has-text-weight-bold is-spaced">
+            Talos Linux
+          </p>
+
+          <p class="subtitle is-size-3 is-size-4-mobile">
+            The Kubernetes Operating System
+          </p>
+
+          <p class="subtitle is-size-5 is-size-6-mobile">
+            In having less, Talos offers more. Security. Efficiency. Resiliency. Consistency.
+          </p>
+
+          <a class="button is-secondary is-size-5 is-size-6-mobile" href="/docs/v1.0">
+            <span class="icon">
+              <ion-icon name="play"></ion-icon>
+            </span>
+            <span>
+              Learn more
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+<section class="section">
+  <div class="container">
+    <div class="columns is-centered is-variable is-8">
+      <div class="column is-half">
+        <p class="title has-text-centered is-size-2 is-size-3-mobile">
+          What is Talos Linux?
+        </p>
+
+        <div class="content">
+          Talos Linux is Linux designed for Kubernetes – secure, immutable, and minimal.
+        </div>
+
+        
+        <div class="content">
+          <ul>
+<li>Supports cloud platforms, bare metal, and virtualization platforms</li>
+</ul>
+
+        </div>
+        
+        <div class="content">
+          <ul>
+<li>All system management is done via an API. No SSH, shell or console</li>
+</ul>
+
+        </div>
+        
+        <div class="content">
+          <ul>
+<li>Production ready: supports some of the largest Kubernetes clusters in the world</li>
+</ul>
+
+        </div>
+        
+        <div class="content">
+          <ul>
+<li>Open source project from the team at Sidero Labs</li>
+</ul>
+
+        </div>
+        
+      </div>
+    </div>
+
+    <br />
+
+    <div class="columns is-centered is-variable is-8">
+      <div class="column is-three-quarters">
+        <p class="title has-text-centered is-size-2 is-size-3-mobile">
+          Why Talos Linux?
+        </p>
+
+        <div class="columns is-centered is-variable is-8">
+          
+          <div class="column">
+            <p class="title has-text-centered is-size-4 is-size-5-mobile">
+              Security
+            </p>
+            <div class="content">
+              Talos reduces your attack surface. It&rsquo;s minimal, hardened and immutable. All API access is secured with mutual TLS (mTLS) authentication.
+            </div>
+          </div>
+          
+          <div class="column">
+            <p class="title has-text-centered is-size-4 is-size-5-mobile">
+              Predictability
+            </p>
+            <div class="content">
+              Talos eliminates configuration drift, reduces unknown factors by employing immutable infrastructure ideology, and delivers atomic updates.
+            </div>
+          </div>
+          
+          <div class="column">
+            <p class="title has-text-centered is-size-4 is-size-5-mobile">
+              Evolvability
+            </p>
+            <div class="content">
+              Talos simplifies your architecture, increases your agility, and makes always delivers current stable Kubernetes and Linux versions.
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

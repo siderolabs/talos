@@ -3,10 +3,10 @@ title: Support Matrix
 weight: 6
 ---
 
-| Talos Version                                                                                                  | 1.0                                | 0.14                               |
+| Talos Version                                                                                                  | 0.15                               | 0.14                               |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2022-03-27, TBD                    | 2021-12-21 (0.14.0)                |
-| End of Community Support                                                                                       | 1.1.0 release (2022-06-01, TBD)    | 1.0.0 release (2022-03-27, TBD)    |
+| Release Date                                                                                                   | 2022-03-01, TBD                    | 2021-12-21 (0.14.0)                |
+| End of Community Support                                                                                       | 0.16.0 release (2022-06-01, TBD)   | 0.15.0 release (2022-03-01, TBD)   |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/)      |
 | Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.23, 1.22, 1.21                   |
 | Architecture                                                                                                   | amd64, arm64                                                            |

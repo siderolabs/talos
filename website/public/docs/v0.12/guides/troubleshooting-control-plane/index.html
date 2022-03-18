@@ -1,0 +1,2027 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<meta name="description" content="Troubleshoot control plane failures for running cluster and bootstrap process.">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/guides/troubleshooting-control-plane/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v0.12/guides/troubleshooting-control-plane/">
+<meta property="og:title" content="Talos Linux | Troubleshooting Control Plane">
+
+<meta property="og:description" content="Troubleshoot control plane failures for running cluster and bootstrap process.">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+<meta name="robots" content="noindex">
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/what-is-new/">
+          What&#39;s New in Talos 0.12
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/firecracker/">
+          Firecracker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.12/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold is-spaced">
+          Troubleshooting Control Plane
+        </p>
+
+        
+        <p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+          Troubleshoot control plane failures for running cluster and bootstrap process.
+        </p>
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v0.12/Guides/troubleshooting-control-plane.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <!-- raw HTML omitted -->
+<p>This guide is written as series of topics and detailed answers for each topic.
+It starts with basics of control plane and goes into Talos specifics.</p>
+<p>In this guide we assume that Talos client config is available and Talos API access is available.
+Kubernetes client configuration can be pulled from control plane nodes with <code>talosctl -n &lt;IP&gt; kubeconfig</code>
+(this command works before Kubernetes is fully booted).</p>
+<h3 id="what-is-a-control-plane-node">What is a control plane node?</h3>
+<p>Talos nodes which have <code>.machine.type</code> of <code>init</code> and <code>controlplane</code> are control plane nodes.</p>
+<p>The only difference between <code>init</code> and <code>controlplane</code> nodes is that <code>init</code> node automatically
+bootstraps a single-node <code>etcd</code> cluster on a first boot if the etcd data directory is empty.
+A node with type <code>init</code> can be replaced with a <code>controlplane</code> node which is triggered to run etcd bootstrap
+with <code>talosctl --nodes &lt;IP&gt; bootstrap</code> command.</p>
+<p>Use of <code>init</code> type nodes is discouraged, as it might lead to split-brain scenario if one node in
+existing cluster is reinstalled while config type is still <code>init</code>.</p>
+<p>It is critical to make sure only one control plane runs in bootstrap mode (either with node type <code>init</code> or
+via bootstrap API/<code>talosctl bootstrap</code>), as having more than node in bootstrap mode leads to split-brain
+scenario (multiple etcd clusters are built instead of a single cluster).</p>
+<h3 id="what-is-special-about-control-plane-node">What is special about control plane node?</h3>
+<p>Control plane nodes in Talos run <code>etcd</code> which provides data store for Kubernetes and Kubernetes control plane
+components (<code>kube-apiserver</code>, <code>kube-controller-manager</code> and <code>kube-scheduler</code>).</p>
+<p>Control plane nodes are tainted by default to prevent workloads from being scheduled to control plane nodes.</p>
+<h3 id="how-many-control-plane-nodes-should-be-deployed">How many control plane nodes should be deployed?</h3>
+<p>With a single control plane node, cluster is not HA: if that single node experiences hardware failure, cluster
+control plane is broken and can&rsquo;t be recovered.
+Single control plane node clusters are still used as test clusters and in edge deployments, but it should be noted that this setup is not HA.</p>
+<p>Number of control plane should be odd (1, 3, 5, &hellip;), as with even number of nodes, etcd quorum doesn&rsquo;t tolerate
+failures correctly: e.g. with 2 control plane nodes quorum is 2, so failure of any node breaks quorum, so this
+setup is almost equivalent to single control plane node cluster.</p>
+<p>With three control plane nodes cluster can tolerate a failure of any single control plane node.
+With five control plane nodes cluster can tolerate failure of any two control plane nodes.</p>
+<h3 id="what-is-control-plane-endpoint">What is control plane endpoint?</h3>
+<p>Kubernetes requires having a control plane endpoint which points to any healthy API server running on a control plane node.
+Control plane endpoint is specified as URL like <code>https://endpoint:6443/</code>.
+At any point in time, even during failures control plane endpoint should point to a healthy API server instance.
+As <code>kube-apiserver</code> runs with host network, control plane endpoint should point to one of the control plane node IPs: <code>node1:6443</code>, <code>node2:6443</code>, &hellip;</p>
+<p>For single control plane node clusters, control plane endpoint might be <code>https://IP:6443/</code> or <code>https://DNS:6443/</code>, where <code>IP</code> is the IP of the control plane node and <code>DNS</code> points to <code>IP</code>.
+DNS form of the endpoint allows to change the IP address of the control plane if that IP changes over time.</p>
+<p>For HA clusters, control plane can be implemented as:</p>
+<ul>
+<li>TCP L7 loadbalancer with active health checks against port 6443</li>
+<li>round-robin DNS with active health checks against port 6443</li>
+<li>BGP anycast IP with health checks</li>
+<li>virtual shared L2 IP</li>
+</ul>
+<!-- raw HTML omitted -->
+<p>It is critical that control plane endpoint works correctly during cluster bootstrap phase, as nodes discover
+each other using control plane endpoint.</p>
+<h3 id="kubelet-is-not-running-on-control-plane-node">kubelet is not running on control plane node</h3>
+<p>Service <code>kubelet</code> should be running on control plane node as soon as networking is configured:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; service kubelet
+</span></span><span style="display:flex;"><span>NODE     172.20.0.2
+</span></span><span style="display:flex;"><span>ID       kubelet
+</span></span><span style="display:flex;"><span>STATE    Running
+</span></span><span style="display:flex;"><span>HEALTH   OK
+</span></span><span style="display:flex;"><span>EVENTS   <span style="color:#719e07">[</span>Running<span style="color:#719e07">]</span>: Health check successful <span style="color:#719e07">(</span>2m54s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Running<span style="color:#719e07">]</span>: Health check failed: Get <span style="color:#2aa198">&#34;http://127.0.0.1:10248/healthz&#34;</span>: dial tcp 127.0.0.1:10248: connect: connection refused <span style="color:#719e07">(</span>3m4s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Running<span style="color:#719e07">]</span>: Started task kubelet <span style="color:#719e07">(</span>PID 2334<span style="color:#719e07">)</span> <span style="color:#719e07">for</span> container kubelet <span style="color:#719e07">(</span>3m6s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Preparing<span style="color:#719e07">]</span>: Creating service runner <span style="color:#719e07">(</span>3m6s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Preparing<span style="color:#719e07">]</span>: Running pre state <span style="color:#719e07">(</span>3m15s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Waiting<span style="color:#719e07">]</span>: Waiting <span style="color:#719e07">for</span> service <span style="color:#2aa198">&#34;timed&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span> <span style="color:#719e07">(</span>3m15s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Waiting<span style="color:#719e07">]</span>: Waiting <span style="color:#719e07">for</span> service <span style="color:#2aa198">&#34;cri&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span>, service <span style="color:#2aa198">&#34;timed&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span> <span style="color:#719e07">(</span>3m16s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Waiting<span style="color:#719e07">]</span>: Waiting <span style="color:#719e07">for</span> service <span style="color:#2aa198">&#34;cri&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span>, service <span style="color:#2aa198">&#34;networkd&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span>, service <span style="color:#2aa198">&#34;timed&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span> <span style="color:#719e07">(</span>3m18s ago<span style="color:#719e07">)</span>
+</span></span></code></pre></div><p>If <code>kubelet</code> is not running, it might be caused by wrong configuration, check <code>kubelet</code> logs
+with <code>talosctl logs</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; logs kubelet
+</span></span><span style="display:flex;"><span>172.20.0.2: I0305 20:45:07.756948    <span style="color:#2aa198">2334</span> controller.go:101<span style="color:#719e07">]</span> kubelet config controller: starting controller
+</span></span><span style="display:flex;"><span>172.20.0.2: I0305 20:45:07.756995    <span style="color:#2aa198">2334</span> controller.go:267<span style="color:#719e07">]</span> kubelet config controller: ensuring filesystem is <span style="color:#b58900">set</span> up correctly
+</span></span><span style="display:flex;"><span>172.20.0.2: I0305 20:45:07.757000    <span style="color:#2aa198">2334</span> fsstore.go:59<span style="color:#719e07">]</span> kubelet config controller: initializing config checkpoints directory <span style="color:#2aa198">&#34;/etc/kubernetes/kubelet/store&#34;</span>
+</span></span></code></pre></div><h3 id="etcd-is-not-running-on-bootstrap-node">etcd is not running on bootstrap node</h3>
+<p><code>etcd</code> should be running on bootstrap node immediately (bootstrap node is either <code>init</code> node or <code>controlplane</code> node
+after <code>talosctl bootstrap</code> command was issued).
+When node boots for the first time, <code>etcd</code> data directory <code>/var/lib/etcd</code> directory is empty and Talos launches <code>etcd</code> in a mode to build the initial cluster of a single node.
+At this time <code>/var/lib/etcd</code> directory becomes non-empty and <code>etcd</code> runs as usual.</p>
+<p>If <code>etcd</code> is not running, check service <code>etcd</code> state:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; service etcd
+</span></span><span style="display:flex;"><span>NODE     172.20.0.2
+</span></span><span style="display:flex;"><span>ID       etcd
+</span></span><span style="display:flex;"><span>STATE    Running
+</span></span><span style="display:flex;"><span>HEALTH   OK
+</span></span><span style="display:flex;"><span>EVENTS   <span style="color:#719e07">[</span>Running<span style="color:#719e07">]</span>: Health check successful <span style="color:#719e07">(</span>3m21s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Running<span style="color:#719e07">]</span>: Started task etcd <span style="color:#719e07">(</span>PID 2343<span style="color:#719e07">)</span> <span style="color:#719e07">for</span> container etcd <span style="color:#719e07">(</span>3m26s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Preparing<span style="color:#719e07">]</span>: Creating service runner <span style="color:#719e07">(</span>3m26s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Preparing<span style="color:#719e07">]</span>: Running pre state <span style="color:#719e07">(</span>3m26s ago<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>         <span style="color:#719e07">[</span>Waiting<span style="color:#719e07">]</span>: Waiting <span style="color:#719e07">for</span> service <span style="color:#2aa198">&#34;cri&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span>, service <span style="color:#2aa198">&#34;networkd&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span>, service <span style="color:#2aa198">&#34;timed&#34;</span> to be <span style="color:#2aa198">&#34;up&#34;</span> <span style="color:#719e07">(</span>3m26s ago<span style="color:#719e07">)</span>
+</span></span></code></pre></div><p>If service is stuck in <code>Preparing</code> state for bootstrap node, it might be related to slow network - at this stage
+Talos pulls <code>etcd</code> image from the container registry.</p>
+<p>If <code>etcd</code> service is crashing and restarting, check service logs with <code>talosctl -n &lt;IP&gt; logs etcd</code>.
+Most common reasons for crashes are:</p>
+<ul>
+<li>wrong arguments passed via <code>extraArgs</code> in the configuration;</li>
+<li>booting Talos on non-empty disk with previous Talos installation, <code>/var/lib/etcd</code> contains data from old cluster.</li>
+</ul>
+<h3 id="etcd-is-not-running-on-non-bootstrap-control-plane-node">etcd is not running on non-bootstrap control plane node</h3>
+<p>Service <code>etcd</code> on non-bootstrap control plane node waits for Kubernetes to boot successfully on bootstrap node to find
+other peers to build a cluster.
+As soon as bootstrap node boots Kubernetes control plane components, and <code>kubectl get endpoints</code> returns IP of bootstrap control plane node, other control plane nodes will start joining the cluster followed by Kubernetes control plane components on each control plane node.</p>
+<h3 id="kubernetes-static-pod-definitions-are-not-generated">Kubernetes static pod definitions are not generated</h3>
+<p>Talos should write down static pod definitions for the Kubernetes control plane:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; ls /etc/kubernetes/manifests
+</span></span><span style="display:flex;"><span>NODE         NAME
+</span></span><span style="display:flex;"><span>172.20.0.2   .
+</span></span><span style="display:flex;"><span>172.20.0.2   talos-kube-apiserver.yaml
+</span></span><span style="display:flex;"><span>172.20.0.2   talos-kube-controller-manager.yaml
+</span></span><span style="display:flex;"><span>172.20.0.2   talos-kube-scheduler.yaml
+</span></span></code></pre></div><p>If static pod definitions are not rendered, check <code>etcd</code> and <code>kubelet</code> service health (see above),
+and controller runtime logs (<code>talosctl logs controller-runtime</code>).</p>
+<h3 id="talos-prints-error-an-error-on-the-server--has-prevented-the-request-from-succeeding">Talos prints error <code>an error on the server (&quot;&quot;) has prevented the request from succeeding</code></h3>
+<p>This is expected during initial cluster bootstrap and sometimes after a reboot:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#719e07">[</span>   70.093289<span style="color:#719e07">]</span> <span style="color:#719e07">[</span>talos<span style="color:#719e07">]</span> task labelNodeAsMaster <span style="color:#719e07">(</span>1/1<span style="color:#719e07">)</span>: starting
+</span></span><span style="display:flex;"><span><span style="color:#719e07">[</span>   80.094038<span style="color:#719e07">]</span> <span style="color:#719e07">[</span>talos<span style="color:#719e07">]</span> retrying error: an error on the server <span style="color:#719e07">(</span><span style="color:#2aa198">&#34;&#34;</span><span style="color:#719e07">)</span> has prevented the request from succeeding <span style="color:#719e07">(</span>get nodes talos-default-master-1<span style="color:#719e07">)</span>
+</span></span></code></pre></div><p>Initially <code>kube-apiserver</code> component is not running yet, and it takes some time before it becomes fully up
+during bootstrap (image should be pulled from the Internet, etc.)
+Once control plane endpoint is up Talos should proceed.</p>
+<p>If Talos doesn&rsquo;t proceed further, it might be a configuration issue.</p>
+<p>In any case, status of control plane components can be checked with <code>talosctl containers -k</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; containers --kubernetes
+</span></span><span style="display:flex;"><span>NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         <span style="color:#2aa198">2539</span>   SANDBOX_READY
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-master-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v1.20.4            <span style="color:#2aa198">2572</span>   CONTAINER_RUNNING
+</span></span></code></pre></div><p>If <code>kube-apiserver</code> shows as <code>CONTAINER_EXITED</code>, it might have exited due to configuration error.
+Logs can be checked with <code>taloctl logs --kubernetes</code> (or with <code>-k</code> as a shorthand):</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; logs -k kube-system/kube-apiserver-talos-default-master-1:kube-apiserver
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021-03-05T20:46:13.133902064Z stderr F 2021/03/05 20:46:13 Running command:
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021-03-05T20:46:13.133933824Z stderr F Command env: <span style="color:#719e07">(</span>log-file<span style="color:#719e07">=</span>, also-stdout<span style="color:#719e07">=</span>false, redirect-stderr<span style="color:#719e07">=</span><span style="color:#b58900">true</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021-03-05T20:46:13.133938524Z stderr F Run from directory:
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021-03-05T20:46:13.13394154Z stderr F Executable path: /usr/local/bin/kube-apiserver
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h3 id="talos-prints-error-nodes-talos-default-master-1-not-found">Talos prints error <code>nodes &quot;talos-default-master-1&quot; not found</code></h3>
+<p>This error means that <code>kube-apiserver</code> is up, and control plane endpoint is healthy, but <code>kubelet</code> hasn&rsquo;t got
+its client certificate yet and wasn&rsquo;t able to register itself.</p>
+<p>For the <code>kubelet</code> to get its client certificate, following conditions should apply:</p>
+<ul>
+<li>control plane endpoint is healthy (<code>kube-apiserver</code> is running)</li>
+<li>bootstrap manifests got successfully deployed (for CSR auto-approval)</li>
+<li><code>kube-controller-manager</code> is running</li>
+</ul>
+<p>CSR state can be checked with <code>kubectl get csr</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get csr
+</span></span><span style="display:flex;"><span>NAME        AGE   SIGNERNAME                                    REQUESTOR                 CONDITION
+</span></span><span style="display:flex;"><span>csr-jcn9j   14m   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:q9pyzr   Approved,Issued
+</span></span><span style="display:flex;"><span>csr-p6b9q   14m   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:q9pyzr   Approved,Issued
+</span></span><span style="display:flex;"><span>csr-sw6rm   14m   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:q9pyzr   Approved,Issued
+</span></span><span style="display:flex;"><span>csr-vlghg   14m   kubernetes.io/kube-apiserver-client-kubelet   system:bootstrap:q9pyzr   Approved,Issued
+</span></span></code></pre></div><h3 id="talos-prints-error-node-not-ready">Talos prints error <code>node not ready</code></h3>
+<p>Node in Kubernetes is marked as <code>Ready</code> once CNI is up.
+It takes a minute or two for the CNI images to be pulled and for the CNI to start.
+If the node is stuck in this state for too long, check CNI pods and logs with <code>kubectl</code>, usually
+CNI resources are created in <code>kube-system</code> namespace.
+For example, for Talos default Flannel CNI:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n kube-system get pods
+</span></span><span style="display:flex;"><span>NAME                                             READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>kube-flannel-25drx                               1/1     Running   <span style="color:#2aa198">0</span>          23m
+</span></span><span style="display:flex;"><span>kube-flannel-8lmb6                               1/1     Running   <span style="color:#2aa198">0</span>          23m
+</span></span><span style="display:flex;"><span>kube-flannel-gl7nx                               1/1     Running   <span style="color:#2aa198">0</span>          23m
+</span></span><span style="display:flex;"><span>kube-flannel-jknt9                               1/1     Running   <span style="color:#2aa198">0</span>          23m
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h3 id="talos-prints-error-x509-certificate-signed-by-unknown-authority">Talos prints error <code>x509: certificate signed by unknown authority</code></h3>
+<p>Full error might look like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>x509: certificate signed by unknown authority <span style="color:#719e07">(</span>possibly because of crypto/rsa: verification error<span style="color:#2aa198">&#34; while trying to verify candidate authority certificate &#34;</span>kubernetes<span style="color:#2aa198">&#34;
+</span></span></span></code></pre></div><p>Commonly, the control plane endpoint points to a different cluster, as the client certificate
+generated by Talos doesn&rsquo;t match CA of the cluster at control plane endpoint.</p>
+<h3 id="etcd-is-running-on-bootstrap-node-but-stuck-in-pre-state-on-non-bootstrap-nodes">etcd is running on bootstrap node, but stuck in <code>pre</code> state on non-bootstrap nodes</h3>
+<p>Please see question <code>etcd is not running on non-bootstrap control plane node</code>.</p>
+<h3 id="checking-kube-controller-manager-and-kube-scheduler">Checking <code>kube-controller-manager</code> and <code>kube-scheduler</code></h3>
+<p>If control plane endpoint is up, status of the pods can be performed with <code>kubectl</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pods -n kube-system -l k8s-app<span style="color:#719e07">=</span>kube-controller-manager
+</span></span><span style="display:flex;"><span>NAME                                             READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>kube-controller-manager-talos-default-master-1   1/1     Running   <span style="color:#2aa198">0</span>          28m
+</span></span><span style="display:flex;"><span>kube-controller-manager-talos-default-master-2   1/1     Running   <span style="color:#2aa198">0</span>          28m
+</span></span><span style="display:flex;"><span>kube-controller-manager-talos-default-master-3   1/1     Running   <span style="color:#2aa198">0</span>          28m
+</span></span></code></pre></div><p>If control plane endpoint is not up yet, container status can be queried with
+<code>talosctl containers --kubernetes</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; c -k
+</span></span><span style="display:flex;"><span>NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-master-1                              k8s.gcr.io/pause:3.2                         <span style="color:#2aa198">2547</span>   SANDBOX_READY
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v1.20.4   <span style="color:#2aa198">2580</span>   CONTAINER_RUNNING
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         <span style="color:#2aa198">2638</span>   SANDBOX_READY
+</span></span><span style="display:flex;"><span>172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-master-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v1.20.4            <span style="color:#2aa198">2670</span>   CONTAINER_RUNNING
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><p>If some of the containers are not running, it could be that image is still being pulled.
+Otherwise process might crashing, in that case logs can be checked with <code>talosctl logs --kubernetes &lt;containerID&gt;</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; logs -k kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.291667526Z stderr F 2021/03/09 13:59:34 Running command:
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.291702262Z stderr F Command env: <span style="color:#719e07">(</span>log-file<span style="color:#719e07">=</span>, also-stdout<span style="color:#719e07">=</span>false, redirect-stderr<span style="color:#719e07">=</span><span style="color:#b58900">true</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.291707121Z stderr F Run from directory:
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.291710908Z stderr F Executable path: /usr/local/bin/kube-controller-manager
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.291719163Z stderr F Args <span style="color:#719e07">(</span>comma-delimited<span style="color:#719e07">)</span>: /usr/local/bin/kube-controller-manager,--allocate-node-cidrs<span style="color:#719e07">=</span>true,--cloud-provider<span style="color:#719e07">=</span>,--cluster-cidr<span style="color:#719e07">=</span>10.244.0.0/16,--service-cluster-ip-range<span style="color:#719e07">=</span>10.96.0.0/12,--cluster-signing-cert-file<span style="color:#719e07">=</span>/system/secrets/kubernetes/kube-controller-manager/ca.crt,--cluster-signing-key-file<span style="color:#719e07">=</span>/system/secrets/kubernetes/kube-controller-manager/ca.key,--configure-cloud-routes<span style="color:#719e07">=</span>false,--kubeconfig<span style="color:#719e07">=</span>/system/secrets/kubernetes/kube-controller-manager/kubeconfig,--leader-elect<span style="color:#719e07">=</span>true,--root-ca-file<span style="color:#719e07">=</span>/system/secrets/kubernetes/kube-controller-manager/ca.crt,--service-account-private-key-file<span style="color:#719e07">=</span>/system/secrets/kubernetes/kube-controller-manager/service-account.key,--profiling<span style="color:#719e07">=</span><span style="color:#b58900">false</span>
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.293870359Z stderr F 2021/03/09 13:59:34 Now listening <span style="color:#719e07">for</span> interrupts
+</span></span><span style="display:flex;"><span>172.20.0.3: 2021-03-09T13:59:34.761113762Z stdout F I0309 13:59:34.760982      <span style="color:#2aa198">10</span> serving.go:331<span style="color:#719e07">]</span> Generated self-signed cert in-memory
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h3 id="checking-controller-runtime-logs">Checking controller runtime logs</h3>
+<p>Talos runs a set of controllers which work on resources to build and support Kubernetes control plane.</p>
+<p>Some debugging information can be queried from the controller logs with <code>talosctl logs controller-runtime</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; logs controller-runtime
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021/03/09 13:57:11  secrets.EtcdController: controller starting
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021/03/09 13:57:11  config.MachineTypeController: controller starting
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021/03/09 13:57:11  k8s.ManifestApplyController: controller starting
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021/03/09 13:57:11  v1alpha1.BootstrapStatusController: controller starting
+</span></span><span style="display:flex;"><span>172.20.0.2: 2021/03/09 13:57:11  v1alpha1.TimeStatusController: controller starting
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><p>Controllers run reconcile loop, so they might be starting, failing and restarting, that is expected behavior.
+Things to look for:</p>
+<p><code>v1alpha1.BootstrapStatusController: bootkube initialized status not found</code>: control plane is not self-hosted, running with static pods.</p>
+<p><code>k8s.KubeletStaticPodController: writing static pod &quot;/etc/kubernetes/manifests/talos-kube-apiserver.yaml&quot;</code>: static pod definitions were rendered successfully.</p>
+<p><code>k8s.ManifestApplyController: controller failed: error creating mapping for object /v1/Secret/bootstrap-token-q9pyzr: an error on the server (&quot;&quot;) has prevented the request from succeeding</code>: control plane endpoint is not up yet, bootstrap manifests can&rsquo;t be injected, controller is going to retry.</p>
+<p><code>k8s.KubeletStaticPodController: controller failed: error refreshing pod status: error fetching pod status: an error on the server (&quot;Authorization error (user=apiserver-kubelet-client, verb=get, resource=nodes, subresource=proxy)&quot;) has prevented the request from succeeding</code>: kubelet hasn&rsquo;t been able to contact <code>kube-apiserver</code> yet to push pod status, controller
+is going to retry.</p>
+<p><code>k8s.ManifestApplyController: created rbac.authorization.k8s.io/v1/ClusterRole/psp:privileged</code>: one of the bootstrap manifests got successfully applied.</p>
+<p><code>secrets.KubernetesController: controller failed: missing cluster.aggregatorCA secret</code>: Talos is running with 0.8 configuration, if the cluster was upgraded from 0.8, this is expected, and conversion process will fix machine config
+automatically.
+If this cluster was bootstrapped with version 0.9, machine configuration should be regenerated with 0.9 talosctl.</p>
+<p>If there are no new messages in <code>controller-runtime</code> log, it means that controllers finished reconciling successfully.</p>
+<h3 id="checking-static-pod-definitions">Checking static pod definitions</h3>
+<p>Talos generates static pod definitions for <code>kube-apiserver</code>, <code>kube-controller-manager</code>, and <code>kube-scheduler</code>
+components based on machine configuration.
+These definitions can be checked as resources with <code>talosctl get staticpods</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; get staticpods -o yaml
+</span></span><span style="display:flex;"><span>get staticpods -o yaml
+</span></span><span style="display:flex;"><span>node: 172.20.0.2
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>    namespace: controlplane
+</span></span><span style="display:flex;"><span>    type: StaticPods.kubernetes.talos.dev
+</span></span><span style="display:flex;"><span>    id: kube-apiserver
+</span></span><span style="display:flex;"><span>    version: <span style="color:#2aa198">2</span>
+</span></span><span style="display:flex;"><span>    phase: running
+</span></span><span style="display:flex;"><span>    finalizers:
+</span></span><span style="display:flex;"><span>        - k8s.StaticPodStatus<span style="color:#719e07">(</span><span style="color:#2aa198">&#34;kube-apiserver&#34;</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>spec:
+</span></span><span style="display:flex;"><span>    apiVersion: v1
+</span></span><span style="display:flex;"><span>    kind: Pod
+</span></span><span style="display:flex;"><span>    metadata:
+</span></span><span style="display:flex;"><span>        annotations:
+</span></span><span style="display:flex;"><span>            talos.dev/config-version: <span style="color:#2aa198">&#34;1&#34;</span>
+</span></span><span style="display:flex;"><span>            talos.dev/secrets-version: <span style="color:#2aa198">&#34;1&#34;</span>
+</span></span><span style="display:flex;"><span>        creationTimestamp: null
+</span></span><span style="display:flex;"><span>        labels:
+</span></span><span style="display:flex;"><span>            k8s-app: kube-apiserver
+</span></span><span style="display:flex;"><span>            tier: control-plane
+</span></span><span style="display:flex;"><span>        name: kube-apiserver
+</span></span><span style="display:flex;"><span>        namespace: kube-system
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><p>Status of the static pods can queried with <code>talosctl get staticpodstatus</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; get staticpodstatus
+</span></span><span style="display:flex;"><span>NODE         NAMESPACE      TYPE              ID                                                           VERSION   READY
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-apiserver-talos-default-master-1            <span style="color:#2aa198">1</span>         True
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-controller-manager-talos-default-master-1   <span style="color:#2aa198">1</span>         True
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-master-1            <span style="color:#2aa198">1</span>         True
+</span></span></code></pre></div><p>Most important status is <code>Ready</code> printed as last column, complete status can be fetched by adding <code>-o yaml</code> flag.</p>
+<h3 id="checking-bootstrap-manifests">Checking bootstrap manifests</h3>
+<p>As part of bootstrap process, Talos injects bootstrap manifests into Kubernetes API server.
+There are two kinds of manifests: system manifests built-in into Talos and extra manifests downloaded (custom CNI, extra manifests in the machine config):</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; get manifests
+</span></span><span style="display:flex;"><span>NODE         NAMESPACE      TYPE       ID                               VERSION
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   00-kubelet-bootstrapping-token   <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   01-csr-approver-role-binding     <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   01-csr-node-bootstrap            <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   01-csr-renewal-role-binding      <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   02-kube-system-sa-role-binding   <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   03-default-pod-security-policy   <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   05-https://docs.projectcalico.org/manifests/calico.yaml   <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   10-kube-proxy                    <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   11-core-dns                      <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   11-core-dns-svc                  <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>172.20.0.2   controlplane   Manifest   11-kube-config-in-cluster        <span style="color:#2aa198">1</span>
+</span></span></code></pre></div><p>Details of each manifests can be queried by adding <code>-o yaml</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n &lt;IP&gt; get manifests 01-csr-approver-role-binding --namespace<span style="color:#719e07">=</span>controlplane -o yaml
+</span></span><span style="display:flex;"><span>node: 172.20.0.2
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>    namespace: controlplane
+</span></span><span style="display:flex;"><span>    type: Manifests.kubernetes.talos.dev
+</span></span><span style="display:flex;"><span>    id: 01-csr-approver-role-binding
+</span></span><span style="display:flex;"><span>    version: <span style="color:#2aa198">1</span>
+</span></span><span style="display:flex;"><span>    phase: running
+</span></span><span style="display:flex;"><span>spec:
+</span></span><span style="display:flex;"><span>    - apiVersion: rbac.authorization.k8s.io/v1
+</span></span><span style="display:flex;"><span>      kind: ClusterRoleBinding
+</span></span><span style="display:flex;"><span>      metadata:
+</span></span><span style="display:flex;"><span>        name: system-bootstrap-approve-node-client-csr
+</span></span><span style="display:flex;"><span>      roleRef:
+</span></span><span style="display:flex;"><span>        apiGroup: rbac.authorization.k8s.io
+</span></span><span style="display:flex;"><span>        kind: ClusterRole
+</span></span><span style="display:flex;"><span>        name: system:certificates.k8s.io:certificatesigningrequests:nodeclient
+</span></span><span style="display:flex;"><span>      subjects:
+</span></span><span style="display:flex;"><span>        - apiGroup: rbac.authorization.k8s.io
+</span></span><span style="display:flex;"><span>          kind: Group
+</span></span><span style="display:flex;"><span>          name: system:bootstrappers
+</span></span></code></pre></div><h3 id="worker-node-is-stuck-with-apid-health-check-failures">Worker node is stuck with <code>apid</code> health check failures</h3>
+<p>Control plane nodes have enough secret material to generate <code>apid</code> server certificates, but worker nodes
+depend on control plane <code>trustd</code> services to generate certificates.
+Worker nodes wait for <code>kubelet</code> to join the cluster, then <code>apid</code> queries Kubernetes endpoints via control plane
+endpoint to find <code>trustd</code> endpoints, and use <code>trustd</code> to issue the certficiate.</p>
+<p>So if <code>apid</code> health checks is failing on worker node:</p>
+<ul>
+<li>make sure control plane endpoint is healthy</li>
+<li>check that worker node <code>kubelet</code> joined the cluster</li>
+</ul>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v0.12/guides/storage/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          Storage
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v0.12/guides/upgrading-kubernetes/">
+        <span>
+          Upgrading Kubernetes
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/what-is-new/">
+          What&#39;s New in Talos 0.12
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/firecracker/">
+          Firecracker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.12/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.12/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.12/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v0.12"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

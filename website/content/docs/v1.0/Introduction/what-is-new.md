@@ -1,5 +1,5 @@
 ---
-title: What's New in Talos 0.14
+title: What's New in Talos 1.0
 weight: 5
 ---
 

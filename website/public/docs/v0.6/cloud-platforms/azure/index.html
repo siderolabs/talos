@@ -1,0 +1,1449 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/cloud-platforms/azure/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v0.6/cloud-platforms/azure/">
+<meta property="og:title" content="Talos Linux | Azure">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+<meta name="robots" content="noindex">
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.6/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/firecracker/">
+          Firecracker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/reference/">
+      Reference
+    </a>
+
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold">
+          Azure
+        </p>
+
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v0.6/Cloud%20Platforms/azure.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <h2 id="creating-a-cluster-via-the-cli">Creating a Cluster via the CLI</h2>
+<p>In this guide we will create an HA Kubernetes cluster with 1 worker node.
+We assume existing <a href="https://docs.microsoft.com/en-us/azure/storage/blobs/">Blob Storage</a>, and some familiarity with Azure.
+If you need more information on Azure specifics, please see the <a href="https://docs.microsoft.com/en-us/azure/">official Azure documentation</a>.</p>
+<h3 id="environment-setup">Environment Setup</h3>
+<p>We&rsquo;ll make use of the following environment variables throughout the setup.
+Edit the variables below with your correct information.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Storage account to use</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">STORAGE_ACCOUNT</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;StorageAccountName&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Storage container to upload to</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">STORAGE_CONTAINER</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;StorageContainerName&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Resource group name</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">GROUP</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;ResourceGroupName&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Location</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">LOCATION</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;centralus&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Get storage account connection string based on info above</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">CONNECTION</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>az storage account show-connection-string <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    -n <span style="color:#268bd2">$STORAGE_ACCOUNT</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    -o tsv<span style="color:#719e07">)</span>
+</span></span></code></pre></div><h3 id="create-the-image">Create the Image</h3>
+<p>First, download the Azure image from a <a href="https://github.com/talos-systems/talos/releases">Talos release</a>.
+Once downloaded, untar with <code>tar -xvf /path/to/azure.tar.gz</code></p>
+<h4 id="upload-the-vhd">Upload the VHD</h4>
+<p>Once you have pulled down the image, you can upload it to blob storage with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>az storage blob upload <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --connection-string <span style="color:#268bd2">$CONNECTION</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --container-name <span style="color:#268bd2">$STORAGE_CONTAINER</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -f /path/to/extracted/talos-azure.vhd <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -n talos-azure.vhd
+</span></span></code></pre></div><h4 id="register-the-image">Register the Image</h4>
+<p>Now that the image is present in our blob storage, we&rsquo;ll register it.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>az image create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --source https://<span style="color:#268bd2">$STORAGE_ACCOUNT</span>.blob.core.windows.net/<span style="color:#268bd2">$STORAGE_CONTAINER</span>/talos-azure.vhd <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --os-type linux <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span>
+</span></span></code></pre></div><h3 id="network-infrastructure">Network Infrastructure</h3>
+<h4 id="virtual-networks-and-security-groups">Virtual Networks and Security Groups</h4>
+<p>Once the image is prepared, we&rsquo;ll want to work through setting up the network.
+Issue the following to create a network security group and add rules to it.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Create vnet</span>
+</span></span><span style="display:flex;"><span>az network vnet create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --location <span style="color:#268bd2">$LOCATION</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-vnet <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --subnet-name talos-subnet
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create network security group</span>
+</span></span><span style="display:flex;"><span>az network nsg create -g <span style="color:#268bd2">$GROUP</span> -n talos-sg
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Client -&gt; apid</span>
+</span></span><span style="display:flex;"><span>az network nsg rule create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --nsg-name talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -n apid <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --priority <span style="color:#2aa198">1001</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --destination-port-ranges <span style="color:#2aa198">50000</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --direction inbound
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Trustd</span>
+</span></span><span style="display:flex;"><span>az network nsg rule create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --nsg-name talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -n trustd <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --priority <span style="color:#2aa198">1002</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --destination-port-ranges <span style="color:#2aa198">50001</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --direction inbound
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># etcd</span>
+</span></span><span style="display:flex;"><span>az network nsg rule create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --nsg-name talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -n etcd <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --priority <span style="color:#2aa198">1003</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --destination-port-ranges 2379-2380 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --direction inbound
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Kubernetes API Server</span>
+</span></span><span style="display:flex;"><span>az network nsg rule create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --nsg-name talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -n kube <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --priority <span style="color:#2aa198">1004</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --destination-port-ranges <span style="color:#2aa198">6443</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --direction inbound
+</span></span></code></pre></div><h4 id="load-balancer">Load Balancer</h4>
+<p>We will create a public ip, load balancer, and a health check that we will use for our control plane.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Create public ip</span>
+</span></span><span style="display:flex;"><span>az network public-ip create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-public-ip <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --allocation-method static
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create lb</span>
+</span></span><span style="display:flex;"><span>az network lb create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-lb <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --public-ip-address talos-public-ip <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --frontend-ip-name talos-fe <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --backend-pool-name talos-be-pool
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create health check</span>
+</span></span><span style="display:flex;"><span>az network lb probe create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --lb-name talos-lb <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-lb-health <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --protocol tcp <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --port <span style="color:#2aa198">6443</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create lb rule for 6443</span>
+</span></span><span style="display:flex;"><span>az network lb rule create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --lb-name talos-lb <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-6443 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --protocol tcp <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --frontend-ip-name talos-fe <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --frontend-port <span style="color:#2aa198">6443</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --backend-pool-name talos-be-pool <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --backend-port <span style="color:#2aa198">6443</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --probe-name talos-lb-health
+</span></span></code></pre></div><h4 id="network-interfaces">Network Interfaces</h4>
+<p>In Azure, we have to pre-create the NICs for our control plane so that they can be associated with our load balancer.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span> seq <span style="color:#2aa198">0</span> <span style="color:#2aa198">1</span> <span style="color:#2aa198">2</span> <span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#586e75"># Create public IP for each nic</span>
+</span></span><span style="display:flex;"><span>  az network public-ip create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --name talos-controlplane-public-ip-<span style="color:#268bd2">$i</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --allocation-method static
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#586e75"># Create nic</span>
+</span></span><span style="display:flex;"><span>  az network nic create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --name talos-controlplane-nic-<span style="color:#268bd2">$i</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --vnet-name talos-vnet <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --subnet talos-subnet <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --network-security-group talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --public-ip-address talos-controlplane-public-ip-<span style="color:#268bd2">$i</span><span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --lb-name talos-lb <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --lb-address-pools talos-be-pool
+</span></span><span style="display:flex;"><span><span style="color:#719e07">done</span>
+</span></span></code></pre></div><h3 id="cluster-configuration">Cluster Configuration</h3>
+<p>With our networking bits setup, we&rsquo;ll fetch the IP for our load balancer and create our configuration files.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#268bd2">LB_PUBLIC_IP</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>az network public-ip show <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>              --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>              --name talos-public-ip <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>              --query <span style="color:#719e07">[</span>ipAddress<span style="color:#719e07">]</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>              --output tsv<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>talosctl gen config talos-k8s-azure-tutorial https://<span style="color:#2aa198">${</span><span style="color:#268bd2">LB_PUBLIC_IP</span><span style="color:#2aa198">}</span>:6443
+</span></span></code></pre></div><h3 id="compute-creation">Compute Creation</h3>
+<p>We are now ready to create our azure nodes.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Create availability set</span>
+</span></span><span style="display:flex;"><span>az vm availability-set create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-controlplane-av-set <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create controlplane 0</span>
+</span></span><span style="display:flex;"><span>az vm create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --name talos-controlplane-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --image talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --custom-data ./init.yaml <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --admin-username talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --generate-ssh-keys <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --verbose <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --boot-diagnostics-storage <span style="color:#268bd2">$STORAGE_ACCOUNT</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --os-disk-size-gb <span style="color:#2aa198">20</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --nics talos-controlplane-nic-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --availability-set talos-controlplane-av-set <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --no-wait
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create 2 more controlplane nodes</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span> seq <span style="color:#2aa198">1</span> <span style="color:#2aa198">2</span> <span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>  az vm create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --name talos-controlplane-<span style="color:#268bd2">$i</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --custom-data ./controlplane.yaml <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --admin-username talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --generate-ssh-keys <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --verbose <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --boot-diagnostics-storage <span style="color:#268bd2">$STORAGE_ACCOUNT</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --os-disk-size-gb <span style="color:#2aa198">20</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --nics talos-controlplane-nic-<span style="color:#268bd2">$i</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --availability-set talos-controlplane-av-set <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --no-wait
+</span></span><span style="display:flex;"><span><span style="color:#719e07">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create worker node</span>
+</span></span><span style="display:flex;"><span>  az vm create <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --name talos-worker-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --vnet-name talos-vnet <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --subnet talos-subnet <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --custom-data ./join.yaml <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    -g <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --admin-username talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --generate-ssh-keys <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --verbose <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --boot-diagnostics-storage <span style="color:#268bd2">$STORAGE_ACCOUNT</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --nsg talos-sg <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --os-disk-size-gb <span style="color:#2aa198">20</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --no-wait
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># NOTES:</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># `--admin-username` and `--generate-ssh-keys` are required by the az cli,</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># but are not actually used by talos</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># `--os-disk-size-gb` is the backing disk for Kubernetes and any workload containers</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># `--boot-diagnostics-storage` is to enable console output which may be necessary</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># for troubleshooting</span>
+</span></span></code></pre></div><h3 id="retrieve-the-kubeconfig">Retrieve the <code>kubeconfig</code></h3>
+<p>You should now be able to interact with your cluster with <code>talosctl</code>.
+We will need to discover the public IP for our first control plane node first.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#268bd2">CONTROL_PLANE_0_IP</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>az network public-ip show <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    --resource-group <span style="color:#268bd2">$GROUP</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    --name talos-controlplane-public-ip-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    --query <span style="color:#719e07">[</span>ipAddress<span style="color:#719e07">]</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                    --output tsv<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>talosctl --talosconfig ./talosconfig config endpoint <span style="color:#268bd2">$CONTROL_PLANE_0_IP</span>
+</span></span><span style="display:flex;"><span>talosctl --talosconfig ./talosconfig config node <span style="color:#268bd2">$CONTROL_PLANE_0_IP</span>
+</span></span><span style="display:flex;"><span>talosctl --talosconfig ./talosconfig kubeconfig .
+</span></span><span style="display:flex;"><span>kubectl --kubeconfig ./kubeconfig get nodes
+</span></span></code></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v0.6/cloud-platforms/aws/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          AWS
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v0.6/cloud-platforms/digitalocean/">
+        <span>
+          DigitalOcean
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v0.6/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/firecracker/">
+          Firecracker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/reference/">
+      Reference
+    </a>
+
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v0.6/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v0.6/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v0.6"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

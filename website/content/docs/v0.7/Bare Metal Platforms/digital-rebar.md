@@ -4,10 +4,10 @@ title: "Digital Rebar"
 
 ## Prerequisites
 
-- 3 nodes (please see [hardware requirements](/v0.7/en/guides/getting-started#system-requirements))
+- 3 nodes (please see [hardware requirements](docs/v0.7/en/guides/getting-started#system-requirements))
 - Loadbalancer
 - Digital Rebar Server
-- Talosctl access (see [talosctl setup](/v0.7/en/guides/getting-started/talosctl))
+- Talosctl access (see [talosctl setup](docs/v0.7/en/guides/getting-started/talosctl))
 
 ## Creating a Cluster
 

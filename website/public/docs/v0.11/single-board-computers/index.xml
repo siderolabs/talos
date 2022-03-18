@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Single Board Computers on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.11/single-board-computers/</link>
+    <description>Recent content in Single Board Computers on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.11/single-board-computers/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Banana Pi M64</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/bananapi_m64/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/bananapi_m64/</guid>
+      <description>Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Download the Image Download the image and decompress it:
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-bananapi_m64-arm64.img.xz xz -d metal-bananapi_m64-arm64.img.xz Writing the Image The path to your SD card can be found using fdisk on Linux or diskutil on macOS. In this example, we will assume /dev/mmcblk0.
+Now dd the image to your SD card:</description>
+    </item>
+    
+    <item>
+      <title>Libre Computer Board ALL-H3-CC</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/libretech_all_h3_cc_h5/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/libretech_all_h3_cc_h5/</guid>
+      <description>Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Download the Image Download the image and decompress it:
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-libretech_all_h3_cc_h5-arm64.img.xz xz -d metal-libretech_all_h3_cc_h5-arm64.img.xz Writing the Image The path to your SD card can be found using fdisk on Linux or diskutil on macOS. In this example, we will assume /dev/mmcblk0.
+Now dd the image to your SD card:</description>
+    </item>
+    
+    <item>
+      <title>Pine64</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/pine64/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/pine64/</guid>
+      <description>Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Download the Image Download the image and decompress it:
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-pine64-arm64.img.xz xz -d metal-pine64-arm64.img.xz Writing the Image The path to your SD card can be found using fdisk on Linux or diskutil on macOS. In this example, we will assume /dev/mmcblk0.
+Now dd the image to your SD card:</description>
+    </item>
+    
+    <item>
+      <title>Pine64 Rock64</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/rock64/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/rock64/</guid>
+      <description>Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Download the Image Download the image and decompress it:
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rock64-arm64.img.xz xz -d metal-rock64-arm64.img.xz Writing the Image The path to your SD card can be found using fdisk on Linux or diskutil on macOS. In this example, we will assume /dev/mmcblk0.
+Now dd the image to your SD card:</description>
+    </item>
+    
+    <item>
+      <title>Radxa ROCK PI 4c</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/rockpi_4/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/rockpi_4/</guid>
+      <description>Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Download the Image Download the image and decompress it:
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.img.xz xz -d metal-rockpi_4-arm64.img.xz Writing the Image The path to your SD card can be found using fdisk on Linux or diskutil on macOS. In this example, we will assume /dev/mmcblk0.
+Now dd the image to your SD card:</description>
+    </item>
+    
+    <item>
+      <title>Raspberry Pi 4 Model B</title>
+      <link>https://talos.dev/docs/v0.11/single-board-computers/rpi_4/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.11/single-board-computers/rpi_4/</guid>
+      <description>Video Walkthrough To see a live demo of this writeup, see the video below:
+Prerequisites You will need
+ talosctl an SD card  Download the latest alpha talosctl.
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl Updating the EEPROM At least version v2020.09.03-138a1 of the bootloader (rpi-eeprom) is required. To update the bootloader we will need an SD card. Insert the SD card into your computer and use Raspberry Pi Imager to install the bootloader on it (select Operating System &amp;gt; Misc utility images &amp;gt; Bootloader &amp;gt; SD Card Boot).</description>
+    </item>
+    
+  </channel>
+</rss>

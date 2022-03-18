@@ -1,0 +1,14 @@
+{{ define "title" }}
+{{ site.Title }} | {{ .Title }}
+{{ end }}
+
+{{ define "main" }}
+{{ $title := .Title }}
+{{ $desc  := .Params.description }}
+{{ $path  := .File.Path }}
+
+{{ partial "navbar.html" . }}
+{{ partial "hero.html" . }}
+{{ partial "content.html" . }}
+{{ partial "footer.html" . }}
+{{ end }}

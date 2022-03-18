@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Introduction on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.6/introduction/</link>
+    <description>Recent content in Introduction on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.6/introduction/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>What is Talos?</title>
+      <link>https://talos.dev/docs/v0.6/introduction/what-is-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/introduction/what-is-talos/</guid>
+      <description>Talos is an open source platform to host and maintain Kubernetes clusters. It includes a purpose-built operating system and associated management tools. It can run on all major cloud providers, virtualization platforms, and bare metal hardware.
+All system management is done via an API, and there is no shell or interactive console. Some of the capabilities and benefits provided by Talos include:
+ Security: Talos reduces your attack surface by practicing the Principle of Least Privilege (PoLP) and by securing the API with mutual TLS (mTLS) authentication.</description>
+    </item>
+    
+    <item>
+      <title>Quickstart</title>
+      <link>https://talos.dev/docs/v0.6/introduction/quickstart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/introduction/quickstart/</guid>
+      <description>In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.
+Running Talos in Docker is intended to be used in CI pipelines, and local testing when you need a quick and easy cluster. Furthermore, if you are running Talos in production, it provides an excellent way for developers to develop against the same version of Talos.
+Requirements The follow are requirements for running Talos in Docker:</description>
+    </item>
+    
+    <item>
+      <title>System Requirements</title>
+      <link>https://talos.dev/docs/v0.6/introduction/system-requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/introduction/system-requirements/</guid>
+      <description>Minimum Requirements Recommended These requirements are similar to that of kubernetes.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Virtualized Platforms on Talos Linux</title>
+    <link>https://talos.dev/docs/v1.0/virtualized-platforms/</link>
+    <description>Recent content in Virtualized Platforms on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v1.0/virtualized-platforms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Hyper-V</title>
+      <link>https://talos.dev/docs/v1.0/virtualized-platforms/hyper-v/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/virtualized-platforms/hyper-v/</guid>
+      <description>Pre-requisities  Download the latest talos-amd64.iso ISO from github releases page Create a New-TalosVM folder in any of your PS Module Path folders $env:PSModulePath -split &#39;;&#39; and save the New-TalosVM.psm1 there  Plan Overview Here we will create a basic 3 node cluster with a single control-plane node and two worker nodes. The only difference between control plane and worker node is the amount of RAM and an additional storage VHD.</description>
+    </item>
+    
+    <item>
+      <title>KVM</title>
+      <link>https://talos.dev/docs/v1.0/virtualized-platforms/kvm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/virtualized-platforms/kvm/</guid>
+      <description>Talos is known to work on KVM; however, it is currently undocumented.</description>
+    </item>
+    
+    <item>
+      <title>Proxmox</title>
+      <link>https://talos.dev/docs/v1.0/virtualized-platforms/proxmox/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/virtualized-platforms/proxmox/</guid>
+      <description>In this guide we will create a Kubernetes cluster using Proxmox.
+Video Walkthrough To see a live demo of this writeup, visit Youtube here:
+Installation How to Get Proxmox It is assumed that you have already installed Proxmox onto the server you wish to create Talos VMs on. Visit the Proxmox downloads page if necessary.
+Install talosctl You can download talosctl via github.com/talos-systems/talos/releases
+curl https://github.com/talos-systems/talos/releases/download/&amp;lt;version&amp;gt;/talosctl-&amp;lt;platform&amp;gt;-&amp;lt;arch&amp;gt; -L -o talosctl For example version v0.</description>
+    </item>
+    
+    <item>
+      <title>VMware</title>
+      <link>https://talos.dev/docs/v1.0/virtualized-platforms/vmware/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/virtualized-platforms/vmware/</guid>
+      <description>Creating a Cluster via the govc CLI In this guide we will create an HA Kubernetes cluster with 2 worker nodes. We will use the govc cli which can be downloaded here.
+Prereqs/Assumptions This guide will use the virtual IP (&amp;ldquo;VIP&amp;rdquo;) functionality that is built into Talos in order to provide a stable, known IP for the Kubernetes control plane. This simply means the user should pick an IP on their &amp;ldquo;VM Network&amp;rdquo; to designate for this purpose and keep it handy for future steps.</description>
+    </item>
+    
+    <item>
+      <title>Xen</title>
+      <link>https://talos.dev/docs/v1.0/virtualized-platforms/xen/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v1.0/virtualized-platforms/xen/</guid>
+      <description>Talos is known to work on Xen; however, it is currently undocumented.</description>
+    </item>
+    
+  </channel>
+</rss>

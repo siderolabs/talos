@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Learn More on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.7/learn-more/</link>
+    <description>Recent content in Learn More on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.7/learn-more/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Philosophy</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/philosophy/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/philosophy/</guid>
+      <description>Distributed Talos is intended to be operated in a distributed manner. That is, it is built for a high-availability dataplane first. Its etcd cluster is built in an ad-hoc manner, with each appointed node joining on its own directive (with proper security validations enforced, of course). Like as kubernetes itself, workloads are intended to be distributed across any number of compute nodes.
+There should be no single points of failure, and the level of required coordination is as low as each platform allows.</description>
+    </item>
+    
+    <item>
+      <title>Concepts</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/concepts/</guid>
+      <description>Platform Mode Endpoint Node </description>
+    </item>
+    
+    <item>
+      <title>Architecture</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/architecture/</guid>
+      <description>Talos is designed to be atomic in deployment and modular in composition.
+It is atomic in the sense that the entirety of Talos is distributed as a single, self-contained image, which is versioned, signed, and immutable.
+It is modular in the sense that it is composed of many separate components which have clearly defined gRPC interfaces which facilitate internal flexibility and external operational guarantees.
+There are a number of components which comprise Talos.</description>
+    </item>
+    
+    <item>
+      <title>Components</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/components/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/components/</guid>
+      <description>In this section we will discuss the various components of which Talos is comprised.
+Components    Component Description     apid When interacting with Talos, the gRPC API endpoint you&amp;rsquo;re interact with directly is provided by apid. apid acts as the gateway for all component interactions and forwards the requests to routerd.   containerd An industry-standard container runtime with an emphasis on simplicity, robustness and portability.</description>
+    </item>
+    
+    <item>
+      <title>Upgrades</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/upgrades/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/upgrades/</guid>
+      <description>Talos The upgrade process for Talos, like everything else, begins with an API call. This call tells a node the installer image to use to perform the upgrade. Each Talos version corresponds to an installer with the same version, such that the version of the installer is the version of Talos which will be installed.
+Because Talos is image based, even at run-time, upgrading Talos is almost exactly the same set of operations as installing Talos, with the difference that the system has already been initialized with a configuration.</description>
+    </item>
+    
+    <item>
+      <title>FAQs</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/faqs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/faqs/</guid>
+      <description>How is Talos different from other container optimized Linux distros? Talos shares a lot of attributes with other distros, but there are some important differences. Talos integrates tightly with Kubernetes, and is not meant to be a general-purpose operating system. The most important difference is that Talos is fully controlled by an API via a gRPC interface, instead of an ordinary shell. We don&amp;rsquo;t ship SSH, and there is no console access.</description>
+    </item>
+    
+    <item>
+      <title>talosctl</title>
+      <link>https://talos.dev/docs/v0.7/learn-more/talosctl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/learn-more/talosctl/</guid>
+      <description>The talosctl tool packs a lot of power into a small package. It acts as a reference implementation for the Talos API, but it also handles a lot of conveniences for the use of Talos and its clusters.
+Video Walkthrough To see some live examples of talosctl usage, view the following video:
+Client Configuration Talosctl configuration is located in $XDG_CONFIG_HOME/talos/config.yaml if $XDG_CONFIG_HOME is defined. Otherwise it is in $HOME/.talos/config. The location can always be overridden by the TALOSCONFIG environment variable or the --talosconfig parameter.</description>
+    </item>
+    
+  </channel>
+</rss>

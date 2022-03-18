@@ -1,0 +1,2094 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<meta name="description" content="Creating a cluster via the CLI (hcloud) on Hetzner.">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/cloud-platforms/hetzner/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v1.0/cloud-platforms/hetzner/">
+<meta property="og:title" content="Talos Linux | Hetzner">
+
+<meta property="og:description" content="Creating a cluster via the CLI (hcloud) on Hetzner.">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold is-spaced">
+          Hetzner
+        </p>
+
+        
+        <p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+          Creating a cluster via the CLI (hcloud) on Hetzner.
+        </p>
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v1.0/Cloud%20Platforms/hetzner.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <h2 id="upload-image">Upload image</h2>
+<p>Hetzner Cloud does not support uploading custom images.
+You can email their support to get a Talos ISO uploaded by following <a href="https://github.com/talos-systems/talos/issues/3599#issuecomment-841172018">issues:3599</a> or you can prepare image snapshot by yourself.</p>
+<p>There are two options to upload your own.</p>
+<ol>
+<li>Run an instance in rescue mode and replace the system OS with the Talos image</li>
+<li>Use <a href="https://www.packer.io/docs/builders/hetzner-cloud">Hashicorp packer</a> to prepare an image</li>
+</ol>
+<h3 id="rescue-mode">Rescue mode</h3>
+<p>Create a new Server in the Hetzner console.
+Enable the Hetzner Rescue System for this server and reboot.
+Upon a reboot, the server will boot a special minimal Linux distribution designed for repair and reinstall.
+Once running, login to the server using <code>ssh</code> to prepare the system disk by doing the following:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Check that you in Rescue mode</span>
+</span></span><span style="display:flex;"><span>df
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75">### Result is like:</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># udev                   987432         0    987432   0% /dev</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># 213.133.99.101:/nfs 308577696 247015616  45817536  85% /root/.oldroot/nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># overlay                995672      8340    987332   1% /</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># tmpfs                  995672         0    995672   0% /dev/shm</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># tmpfs                  398272       572    397700   1% /run</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># tmpfs                    5120         0      5120   0% /run/lock</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># tmpfs                  199132         0    199132   0% /run/user/0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Download the Talos image</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">cd</span> /tmp
+</span></span><span style="display:flex;"><span>wget -O /tmp/talos.raw.xz https://github.com/talos-systems/talos/releases/download/v0.13.0/hcloud-amd64.raw.xz
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Replace system</span>
+</span></span><span style="display:flex;"><span>xz -d -c /tmp/talos.raw.xz | dd <span style="color:#268bd2">of</span><span style="color:#719e07">=</span>/dev/sda <span style="color:#719e07">&amp;&amp;</span> sync
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># shutdown the instance</span>
+</span></span><span style="display:flex;"><span>shutdown -h now
+</span></span></code></pre></div><p>To make sure disk content is consistent, it is recommended to shut the server down before taking an image (snapshot).
+Once shutdown, simply create an image (snapshot) from the console.
+You can now use this snapshot to run Talos on the cloud.</p>
+<h3 id="packer">Packer</h3>
+<p>Install <a href="https://learn.hashicorp.com/tutorials/packer/get-started-install-cli">packer</a> to the local machine.</p>
+<p>Create a config file for packer to use:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-hcl" data-lang="hcl"><span style="display:flex;"><span><span style="color:#586e75"># hcloud.pkr.hcl
+</span></span></span><span style="display:flex;"><span><span style="color:#586e75"></span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">packer</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#719e07">required_plugins</span> {
+</span></span><span style="display:flex;"><span>    hcloud <span style="color:#719e07">=</span> {
+</span></span><span style="display:flex;"><span>      version <span style="color:#719e07">=</span> &#34;&gt;<span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>.<span style="color:#2aa198">0</span>.<span style="color:#2aa198">0</span>&#34;
+</span></span><span style="display:flex;"><span>      source  <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;github.com/hashicorp/hcloud&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">variable</span> <span style="color:#2aa198">&#34;talos_version&#34;</span> {
+</span></span><span style="display:flex;"><span>  type    <span style="color:#719e07">=</span> <span style="color:#719e07">string</span>
+</span></span><span style="display:flex;"><span>  default <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;v0.13.0&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">locals</span> {
+</span></span><span style="display:flex;"><span>  image <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;https://github.com/talos-systems/talos/releases/download/${var.talos_version}/hcloud-amd64.raw.xz&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">source</span> <span style="color:#2aa198">&#34;hcloud&#34; &#34;talos&#34;</span> {
+</span></span><span style="display:flex;"><span>  rescue       <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;linux64&#34;</span>
+</span></span><span style="display:flex;"><span>  image        <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;debian-11&#34;</span>
+</span></span><span style="display:flex;"><span>  location     <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;hel1&#34;</span>
+</span></span><span style="display:flex;"><span>  server_type  <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;cx11&#34;</span>
+</span></span><span style="display:flex;"><span>  ssh_username <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;root&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  snapshot_name <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;talos system disk&#34;</span>
+</span></span><span style="display:flex;"><span>  snapshot_labels <span style="color:#719e07">=</span> {
+</span></span><span style="display:flex;"><span>    type    <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;infra&#34;</span>,
+</span></span><span style="display:flex;"><span>    os      <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;talos&#34;</span>,
+</span></span><span style="display:flex;"><span>    version <span style="color:#719e07">=</span> <span style="color:#2aa198">&#34;${var.talos_version}&#34;</span>,
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">build</span> {
+</span></span><span style="display:flex;"><span>  sources <span style="color:#719e07">=</span> [<span style="color:#2aa198">&#34;source.hcloud.talos&#34;</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#719e07">provisioner</span> <span style="color:#2aa198">&#34;shell&#34;</span> {
+</span></span><span style="display:flex;"><span>    inline <span style="color:#719e07">=</span> [
+</span></span><span style="display:flex;"><span>      <span style="color:#2aa198">&#34;apt-get install -y wget&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#2aa198">&#34;wget -O /tmp/talos.raw.xz ${local.image}&#34;</span>,
+</span></span><span style="display:flex;"><span>      &#34;xz -d -c /tmp/talos.raw.xz | dd of<span style="color:#719e07">=</span>/<span style="color:#719e07">dev</span>/<span style="color:#719e07">sda</span> &amp;&amp; <span style="color:#719e07">sync</span>&#34;,
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Create a new image by issuing the commands shown below.
+Note that to create a new API token for your Project, switch into the Hetzner Cloud Console choose a Project, go to Access → Security, and create a new token.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># First you need set API Token</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">HCLOUD_TOKEN</span><span style="color:#719e07">=</span><span style="color:#2aa198">${</span><span style="color:#268bd2">TOKEN</span><span style="color:#2aa198">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Upload image</span>
+</span></span><span style="display:flex;"><span>packer init .
+</span></span><span style="display:flex;"><span>packer build .
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Save the image ID</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">IMAGE_ID</span><span style="color:#719e07">=</span>&lt;image-id-in-packer-output&gt;
+</span></span></code></pre></div><p>After doing this, you can find the snapshot in the console interface.</p>
+<h2 id="creating-a-cluster-via-the-cli">Creating a Cluster via the CLI</h2>
+<p>This section assumes you have the <a href="https://community.hetzner.com/tutorials/howto-hcloud-cli">hcloud console utility</a> on your local machine.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Set hcloud context and api key</span>
+</span></span><span style="display:flex;"><span>hcloud context create talos-tutorial
+</span></span></code></pre></div><h3 id="create-a-load-balancer">Create a Load Balancer</h3>
+<p>Create a load balancer by issuing the commands shown below.
+Save the IP/DNS name, as this info will be used in the next step.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hcloud load-balancer create --name controlplane --network-zone eu-central --type lb11 --label <span style="color:#2aa198">&#39;type=controlplane&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75">### Result is like:</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># LoadBalancer 484487 created</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># IPv4: 49.12.X.X</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># IPv6: 2a01:4f8:X:X::1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>hcloud load-balancer add-service controlplane <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --listen-port <span style="color:#2aa198">6443</span> --destination-port <span style="color:#2aa198">6443</span> --protocol tcp
+</span></span><span style="display:flex;"><span>hcloud load-balancer add-target controlplane <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --label-selector <span style="color:#2aa198">&#39;type=controlplane&#39;</span>
+</span></span></code></pre></div><h3 id="create-the-machine-configuration-files">Create the Machine Configuration Files</h3>
+<h4 id="generating-base-configurations">Generating Base Configurations</h4>
+<p>Using the IP/DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines by issuing:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl gen config talos-k8s-hcloud-tutorial https://&lt;load balancer IP or DNS&gt;:6443
+</span></span><span style="display:flex;"><span>created controlplane.yaml
+</span></span><span style="display:flex;"><span>created worker.yaml
+</span></span><span style="display:flex;"><span>created talosconfig
+</span></span></code></pre></div><p>At this point, you can modify the generated configs to your liking.
+Optionally, you can specify <code>--config-patch</code> with RFC6902 jsonpatches which will be applied during the config generation.</p>
+<h4 id="validate-the-configuration-files">Validate the Configuration Files</h4>
+<p>Validate any edited machine configs with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl validate --config controlplane.yaml --mode cloud
+</span></span><span style="display:flex;"><span>controlplane.yaml is valid <span style="color:#719e07">for</span> cloud mode
+</span></span><span style="display:flex;"><span>$ talosctl validate --config worker.yaml --mode cloud
+</span></span><span style="display:flex;"><span>worker.yaml is valid <span style="color:#719e07">for</span> cloud mode
+</span></span></code></pre></div><h3 id="create-the-servers">Create the Servers</h3>
+<p>We can now create our servers.
+Note that you can find <code>IMAGE_ID</code> in the snapshot section of the console: <code>https://console.hetzner.cloud/projects/$PROJECT_ID/servers/snapshots</code>.</p>
+<h4 id="create-the-control-plane-nodes">Create the Control Plane Nodes</h4>
+<p>Create the control plane nodes with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">IMAGE_ID</span><span style="color:#719e07">=</span>&lt;your-image-id&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>hcloud server create --name talos-control-plane-1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image <span style="color:#2aa198">${</span><span style="color:#268bd2">IMAGE_ID</span><span style="color:#2aa198">}</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --type cx21 --location hel1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --label <span style="color:#2aa198">&#39;type=controlplane&#39;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --user-data-from-file controlplane.yaml
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>hcloud server create --name talos-control-plane-2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image <span style="color:#2aa198">${</span><span style="color:#268bd2">IMAGE_ID</span><span style="color:#2aa198">}</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --type cx21 --location fsn1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --label <span style="color:#2aa198">&#39;type=controlplane&#39;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --user-data-from-file controlplane.yaml
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>hcloud server create --name talos-control-plane-3 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image <span style="color:#2aa198">${</span><span style="color:#268bd2">IMAGE_ID</span><span style="color:#2aa198">}</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --type cx21 --location nbg1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --label <span style="color:#2aa198">&#39;type=controlplane&#39;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --user-data-from-file controlplane.yaml
+</span></span></code></pre></div><h4 id="create-the-worker-nodes">Create the Worker Nodes</h4>
+<p>Create the worker nodes with the following command, repeating (and incrementing the name counter) as many times as desired.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hcloud server create --name talos-worker-1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image <span style="color:#2aa198">${</span><span style="color:#268bd2">IMAGE_ID</span><span style="color:#2aa198">}</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --type cx21 --location hel1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --label <span style="color:#2aa198">&#39;type=worker&#39;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --user-data-from-file worker.yaml
+</span></span></code></pre></div><h3 id="bootstrap-etcd">Bootstrap Etcd</h3>
+<p>To configure <code>talosctl</code> we will need the first control plane node&rsquo;s IP.
+This can be found by issuing:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>hcloud server list | grep talos-control-plane
+</span></span></code></pre></div><p>Set the <code>endpoints</code> and <code>nodes</code> for your talosconfig with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig config endpoint &lt;control-plane-1-IP&gt;
+</span></span><span style="display:flex;"><span>talosctl --talosconfig talosconfig config node &lt;control-plane-1-IP&gt;
+</span></span></code></pre></div><p>Bootstrap <code>etcd</code> on the first control plane node with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig bootstrap
+</span></span></code></pre></div><h3 id="retrieve-the-kubeconfig">Retrieve the <code>kubeconfig</code></h3>
+<p>At this point we can retrieve the admin <code>kubeconfig</code> by running:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig kubeconfig .
+</span></span></code></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v1.0/cloud-platforms/gcp/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          GCP
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v1.0/cloud-platforms/nocloud/">
+        <span>
+          Nocloud
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v1.0"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Introduction on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.12/introduction/</link>
+    <description>Recent content in Introduction on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.12/introduction/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>What is Talos?</title>
+      <link>https://talos.dev/docs/v0.12/introduction/what-is-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/what-is-talos/</guid>
+      <description>Talos is a container optimized Linux distro; a reimagining of Linux for distributed systems such as Kubernetes. Designed to be as minimal as possible while still maintaining practicality. For these reasons, Talos has a number of features unique to it:
+ it is immutable it is atomic it is ephemeral it is minimal it is secure by default it is managed via a single declarative configuration file and gRPC API  Talos can be deployed on container, cloud, virtualized, and bare metal platforms.</description>
+    </item>
+    
+    <item>
+      <title>Quickstart</title>
+      <link>https://talos.dev/docs/v0.12/introduction/quickstart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/quickstart/</guid>
+      <description>The easiest way to try Talos is by using the CLI (talosctl) to create a cluster on a machine with docker installed.
+Prerequisites talosctl Download talosctl:
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl kubectl Download kubectl via one of methods outlined in the documentation.
+Create the Cluster Now run the following:
+talosctl cluster create Verify that you can reach Kubernetes:
+$ kubectl get nodes -o wide NAME STATUS ROLES AGE VERSION INTERNAL-IP EXTERNAL-IP OS-IMAGE KERNEL-VERSION CONTAINER-RUNTIME talos-default-master-1 Ready master 115s v1.</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>https://talos.dev/docs/v0.12/introduction/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/getting-started/</guid>
+      <description>This document will walk you through installing a full Talos Cluster. You may wish to read through the Quickstart first, to quickly create a local virtual cluster on your workstation.
+Regardless of where you run Talos, you will find that there is a pattern to deploying it.
+In general you will need to:
+ acquire the installation image decide on the endpoint for Kubernetes  optionally create a load balancer   configure Talos configure talosctl bootstrap Kubernetes  Prerequisites talosctl The talosctl tool provides a CLI tool which interfaces with the Talos API in an easy manner.</description>
+    </item>
+    
+    <item>
+      <title>System Requirements</title>
+      <link>https://talos.dev/docs/v0.12/introduction/system-requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/system-requirements/</guid>
+      <description>Minimum Requirements Recommended These requirements are similar to that of kubernetes.</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New in Talos 0.12</title>
+      <link>https://talos.dev/docs/v0.12/introduction/what-is-new/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/what-is-new/</guid>
+      <description>Security  etcd PKI moved to /system/secrets kubelet bootstrap CSR auto-signing scoped to kubelet bootstrap tokens only enforce default seccomp profile on all system containers run system services apid, trustd, and etcd as non-root users  Performance  machined uses less memory and CPU time more disk encryption options are exposed via the machine configuration disk partitions are now aligned properly with minimum I/O size Talos system processes are moved under proper cgroups, resource metrics are now available via the kubelet OOM score is set on the system processes making sure they are killed last under memory pressure  etcd New etcd cluster members are now joined in learner mode, which improves cluster resiliency to member join issues.</description>
+    </item>
+    
+    <item>
+      <title>Support Matrix</title>
+      <link>https://talos.dev/docs/v0.12/introduction/support-matrix/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.12/introduction/support-matrix/</guid>
+      <description>Talos Version 0.12 0.11     Release Date 2021-08-30 2021-07-08 (0.11.0)   End of Community Support 2021-10-12 2021-09-15   Enterprise Support offered by Talos Systems Inc.    Kubernetes 1.22, 1.21, 1.20 1.21, 1.20, 1.19   Architecture amd64, arm64    Platforms     - cloud AWS, GCP, Azure, Digital Ocean, OpenStack    - bare metal x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image    - virtualized VMware, Hyper-V, KVM, Proxmox, Xen    - SBCs Raspberry Pi4, Banana Pi M64, Pine64, and other    - local Docker, QEMU    Cluster API     CAPI Bootstrap Provider Talos &amp;gt;= 0.</description>
+    </item>
+    
+  </channel>
+</rss>

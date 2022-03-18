@@ -1,14 +1,7 @@
 [build]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
+base = "website"
+command = "hugo"
+publish = "dist"
 
-[context.deploy-preview]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
-
-[context.branch-deploy]
-  base = "website"
-  publish = "dist"
-  command = "gridsome build"
+[build.environment]
+HUGO_VERSION = "0.93.2"

@@ -1,6 +1,6 @@
 ---
 title: "Controllers and Resources"
-weight: 90
+weight: 9
 ---
 
 <!-- markdownlint-disable MD038 -->

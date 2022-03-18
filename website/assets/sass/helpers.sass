@@ -1,0 +1,28 @@
+=logo($d, $m)
+  +desktop
+    width: $d
+  +mobile
+    width: $m
+
+=panel-width($w)
+  flex: 0 0 $w
+
+=fixed
+  position: fixed
+
+=flex
+  display: flex
+
+=column
+  +flex
+  flex-direction: column
+
+=row
+  +flex
+  flex-direction: row
+
+.icon
+  &.is-hoverable
+    &:hover
+      cursor: pointer
+      color: $primary

@@ -26,20 +26,17 @@ Each of these commands can operate in one of four modes:
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
 
-The list of config changes allowed to be applied immediately in Talos v1.0:
+The list of config changes allowed to be applied immediately in talos v0.15:
 
 * `.debug`
 * `.cluster`
 * `.machine.time`
 * `.machine.certCANs`
-* `.machine.install` (configuration is only applied during install/upgrade)
 * `.machine.network`
-* `.machine.sysfs`
 * `.machine.sysctls`
 * `.machine.logging`
 * `.machine.controlplane`
 * `.machine.kubelet`
-* `.machine.pods`
 * `.machine.kernel`
 * `.machine.registries` (CRI containerd plugin will not pick up the registry authentication settings without a reboot)
 
@@ -102,7 +99,7 @@ talosctl -n <IP> edit machineconfig --mode=no-reboot
 
 ### `talosctl patch machineconfig`
 
-Command `talosctl patch` works similar to `talosctl edit` command - it loads current machine configuration, but instead of launching configured editor it applies a set of [JSON patches](http://jsonpatch.com/) to the configuration and writes the result back to the node.
+Command `talosctl patch` works similar to `talosctl edit` command - it loads current machine configuration, but instead of launching configured editor it applies [JSON patch](http://jsonpatch.com/) to the configuration and writes result back to the node.
 
 Example, updating kubelet version (in auto mode):
 
@@ -118,32 +115,14 @@ $ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "
 patched mc at the node <IP>
 ```
 
-A patch might be applied to multiple nodes when multiple IPs are specified:
+Patch might be applied to multiple nodes when multiple IPs are specified:
 
 ```bash
-talosctl -n <IP1>,<IP2>,... patch machineconfig -p '[{...}]'
-```
-
-Patches can also be sourced from files using `@file` syntax:
-
-```bash
-talosctl -n <IP> patch machineconfig -p @kubelet-patch.json -p @manifest-patch.json
-```
-
-It might be easier to store patches in YAML format vs. the default JSON format.
-Talos can detect file format automatically:
-
-```yaml
-# kubelet-patch.yaml
-- op: replace
-  path: /machine/kubelet/image
-  value: ghcr.io/talos-systems/kubelet:v1.23.3
-```
-
-```bash
-talosctl -n <IP> patch machineconfig -p @kubelet-patch.yaml
+taloctl -n <IP1>,<IP2>,... patch machineconfig -p '[{...}]'
 ```
 
 ### Recovering from Node Boot Failures
 
 If a Talos node fails to boot because of wrong configuration (for example, control plane endpoint is incorrect), configuration can be updated to fix the issue.
+If the boot sequence is still running, Talos might refuse applying config in default mode.
+In that case `--mode=staged` mode can be used coupled with `talosctl reboot` command to trigger a reboot and apply configuration update.

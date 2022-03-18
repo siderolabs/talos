@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cloud Platforms on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.6/cloud-platforms/</link>
+    <description>Recent content in Cloud Platforms on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.6/cloud-platforms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>AWS</title>
+      <link>https://talos.dev/docs/v0.6/cloud-platforms/aws/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/cloud-platforms/aws/</guid>
+      <description>Creating a Cluster via the AWS CLI In this guide we will create an HA Kubernetes cluster with 3 worker nodes. We assume an existing VPC, and some familiarity with AWS. If you need more information on AWS specifics, please see the official AWS documentation.
+Create the Subnet aws ec2 create-subnet \  --region $REGION \  --vpc-id $VPC \  --cidr-block ${CIDR_BLOCK} Create the AMI Prepare the Import Prerequisites Create the S3 Bucket aws s3api create-bucket \  --bucket $BUCKET \  --create-bucket-configuration LocationConstraint=$REGION \  --acl private Create the vmimport Role In order to create an AMI, ensure that the vmimport role exists as described in the official AWS documentation.</description>
+    </item>
+    
+    <item>
+      <title>Azure</title>
+      <link>https://talos.dev/docs/v0.6/cloud-platforms/azure/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/cloud-platforms/azure/</guid>
+      <description>Creating a Cluster via the CLI In this guide we will create an HA Kubernetes cluster with 1 worker node. We assume existing Blob Storage, and some familiarity with Azure. If you need more information on Azure specifics, please see the official Azure documentation.
+Environment Setup We&amp;rsquo;ll make use of the following environment variables throughout the setup. Edit the variables below with your correct information.
+# Storage account to use export STORAGE_ACCOUNT=&amp;#34;StorageAccountName&amp;#34;  # Storage container to upload to export STORAGE_CONTAINER=&amp;#34;StorageContainerName&amp;#34;  # Resource group name export GROUP=&amp;#34;ResourceGroupName&amp;#34;  # Location export LOCATION=&amp;#34;centralus&amp;#34;  # Get storage account connection string based on info above export CONNECTION=$(az storage account show-connection-string \  -n $STORAGE_ACCOUNT \  -g $GROUP \  -o tsv) Create the Image First, download the Azure image from a Talos release.</description>
+    </item>
+    
+    <item>
+      <title>DigitalOcean</title>
+      <link>https://talos.dev/docs/v0.6/cloud-platforms/digitalocean/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/cloud-platforms/digitalocean/</guid>
+      <description>Creating a Cluster via the CLI In this guide we will create an HA Kubernetes cluster with 1 worker node. We assume an existing Space, and some familiarity with DigitalOcean. If you need more information on DigitalOcean specifics, please see the official DigitalOcean documentation.
+Create the Image First, download the DigitalOcean image from a Talos release.
+Using an upload method of your choice (doctl does not have Spaces support), upload the image to a space.</description>
+    </item>
+    
+    <item>
+      <title>GCP</title>
+      <link>https://talos.dev/docs/v0.6/cloud-platforms/gcp/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/cloud-platforms/gcp/</guid>
+      <description>Creating a Cluster via the CLI In this guide, we will create an HA Kubernetes cluster in GCP with 1 worker node. We will assume an existing Cloud Storage bucket, and some familiarity with Google Cloud. If you need more information on Google Cloud specifics, please see the official Google documentation.
+Environment Setup We&amp;rsquo;ll make use of the following environment variables throughout the setup. Edit the variables below with your correct information.</description>
+    </item>
+    
+  </channel>
+</rss>

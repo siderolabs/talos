@@ -1,0 +1,59 @@
+{{ $url := .Permalink }}
+{{ $title := cond .IsHome site.Title (printf "%s | %s" site.Title .Title) }}
+{{ $author := site.Author }}
+{{ $type := cond .IsHome "website" "article" }}
+{{ $desc := cond .IsHome site.Params.description .Description }}
+{{ $twitter := site.Params.twitter_handle }}
+{{ $img := "img/logos/Sidero_mark_onecolor_RGB.png" | absURL }}
+{{ $imgAlt := printf "%s color logo" site.Title }}
+{{ $locale := site.Params.locale }}
+{{ $versions := site.Params.versions }}
+{{ $latestVersion := index $versions 0 }}
+{{ $currentVersion := index (split .Page.File.Dir "/" ) 1 }}
+{{ $latestURL := $url | replaceRE $currentVersion "latest" }}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{{ with $desc }}
+<meta name="description" content="{{ . }}">
+{{ end }}
+{{ with $author }}
+<meta name="author" content="{{ . }}">
+{{ end }}
+
+{{ with .OutputFormats.Get "rss" }}
+{{ printf `
+<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type $url site.Title | safeHTML }}
+{{ end -}}
+
+{{ if $currentVersion }}
+<link rel="canonical" href="{{ $latestURL }}">
+{{ else }}
+<link rel="canonical" href="{{ $url }}">
+{{ end }}
+
+{{/* Twitter Card metadata */}}
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="{{ $img }}">
+<meta name="twitter:image:alt" content="{{ $imgAlt }}">
+{{ with $twitter }}
+<meta name="twitter:site" content="{{ . }}">
+<meta name="twitter:creator" content="{{ . }}">
+{{ end }}
+
+{{/* OpenGraph metadata */}}
+<meta property="og:url" content="{{ $url }}">
+<meta property="og:title" content="{{ $title }}">
+{{ with $desc }}
+<meta property="og:description" content="{{ $desc }}">
+{{ end }}
+<meta property="og:type" content="{{ $type }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:image" content="{{ $img }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="{{ $imgAlt }}">
+<meta property="og:locale" content="{{ $locale }}">
+
+{{ if and ($currentVersion) (ne $latestVersion $currentVersion) }}
+<meta name="robots" content="noindex">
+{{ end }}

@@ -1,0 +1,2243 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/introduction/getting-started/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v1.0/introduction/getting-started/">
+<meta property="og:title" content="Talos Linux | Getting Started">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold">
+          Getting Started
+        </p>
+
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v1.0/Introduction/getting-started.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <p>This document will walk you through installing a full Talos Cluster.
+You may wish to read through the <a href="../quickstart/">Quickstart</a> first, to quickly create a local virtual cluster on your workstation.</p>
+<p>Regardless of where you run Talos, you will find that there is a pattern to deploying it.</p>
+<p>In general you will need to:</p>
+<ul>
+<li>acquire the installation image</li>
+<li>decide on the endpoint for Kubernetes
+<ul>
+<li>optionally create a load balancer</li>
+</ul>
+</li>
+<li>configure Talos</li>
+<li>configure <code>talosctl</code></li>
+<li>bootstrap Kubernetes</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="talosctl"><code>talosctl</code></h3>
+<p>The <code>talosctl</code> tool provides a CLI tool which interfaces with the Talos API in
+an easy manner.
+It also includes a number of useful tools for creating and managing your clusters.</p>
+<p>You should install <code>talosctl</code> before continuing:</p>
+<h4 id="amd64"><code>amd64</code></h4>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-<span style="color:#719e07">$(</span>uname -s | tr <span style="color:#2aa198">&#34;[:upper:]&#34;</span> <span style="color:#2aa198">&#34;[:lower:]&#34;</span><span style="color:#719e07">)</span>-amd64
+</span></span><span style="display:flex;"><span>chmod +x /usr/local/bin/talosctl
+</span></span></code></pre></div><h4 id="arm64"><code>arm64</code></h4>
+<p>For <code>linux</code> and <code>darwin</code> operating systems <code>talosctl</code> is also available for the <code>arm64</code> processor architecture.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-<span style="color:#719e07">$(</span>uname -s | tr <span style="color:#2aa198">&#34;[:upper:]&#34;</span> <span style="color:#2aa198">&#34;[:lower:]&#34;</span><span style="color:#719e07">)</span>-arm64
+</span></span><span style="display:flex;"><span>chmod +x /usr/local/bin/talosctl
+</span></span></code></pre></div><h2 id="acquire-the-installation-image">Acquire the installation image</h2>
+<p>The easiest way to install Talos is to use the ISO image.</p>
+<p>The latest ISO image can be found on the Github <a href="https://github.com/talos-systems/talos/releases">Releases</a> page:</p>
+<ul>
+<li>X86: <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-amd64.iso">https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-amd64.iso</a></li>
+<li>ARM64: <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-arm64.iso">https://github.com/talos-systems/talos/releases/download/v0.15.0/talos-arm64.iso</a></li>
+</ul>
+<p>For self-built media and network booting, you can use the kernel and initramfs:</p>
+<ul>
+<li>X86: <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-amd64">vmlinuz-amd64</a> <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-amd64.xz">initramfs-amd64.xz</a></li>
+<li>ARM64: <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/vmlinuz-arm64">vmlinuz-arm64</a> <a href="https://github.com/talos-systems/talos/releases/download/v0.15.0/initramfs-arm64.xz">initramfs-arm64.xz</a></li>
+</ul>
+<p>When booted from the ISO, Talos will run in RAM, and it will not install itself
+until it is provided a configuration.
+Thus, it is safe to boot the ISO onto any machine.</p>
+<h3 id="alternative-booting">Alternative Booting</h3>
+<p>If you wish to use a different boot mechanism (such as network boot or a custom ISO), there
+are a number of required kernel parameters.</p>
+<p>Please see the <a href="../../reference/kernel/">kernel</a> docs for more information.</p>
+<h2 id="decide-the-kubernetes-endpoint">Decide the Kubernetes Endpoint</h2>
+<p>In order to configure Kubernetes and bootstrap the cluster, Talos needs to know
+what the endpoint (DNS name or IP address) of the Kubernetes API Server will be.</p>
+<p>The endpoint should be the fully-qualified HTTP(S) URL for the Kubernetes API
+Server, which (by default) runs on port 6443 using HTTPS.</p>
+<p>Thus, the format of the endpoint may be something like:</p>
+<ul>
+<li><code>https://192.168.0.10:6443</code></li>
+<li><code>https://kube.mycluster.mydomain.com:6443</code></li>
+<li><code>https://[2001:db8:1234::80]:6443</code></li>
+</ul>
+<p>Because the Kubernetes controlplane is meant to be supplied in a high
+availability manner, we must also choose how to bind it to the servers
+themselves.
+There are three common ways to do this.</p>
+<h3 id="dedicated-load-balancer">Dedicated Load-balancer</h3>
+<p>If you are using a cloud provider or have your own load-balancer available (such
+as HAProxy, nginx reverse proxy, or an F5 load-balancer), using
+a dedicated load balancer is a natural choice.
+Just create an appropriate frontend matching the endpoint, and point the backends at each of the addresses of the Talos controlplane nodes.</p>
+<p>This is convenient if a load-balancer is available, but don&rsquo;t worry if that is
+not the case.</p>
+<h3 id="layer-2-shared-ip">Layer 2 Shared IP</h3>
+<p>Talos has integrated support for serving Kubernetes from a shared (sometimes
+called &ldquo;virtual&rdquo;) IP address.
+This method relies on OSI Layer 2 connectivity between controlplane Talos nodes.</p>
+<p>In this case, we may choose an IP address on the same subnet as the Talos
+controlplane nodes which is not otherwise assigned to any machine.
+For instance, if your controlplane node IPs are:</p>
+<ul>
+<li>192.168.0.10</li>
+<li>192.168.0.11</li>
+<li>192.168.0.12</li>
+</ul>
+<p>You could choose the ip <code>192.168.0.15</code> as your shared IP address.
+Just make sure that <code>192.168.0.15</code> is not used by any other machine and that your DHCP
+will not serve it to any other machine.</p>
+<p>Once chosen, form the full HTTPS URL from this IP:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>https://192.168.0.15:6443
+</span></span></code></pre></div><p>You are also free to set a DNS record to this IP address instead, but you will
+still need to use the IP address to set up the shared IP
+(<code>machine.network.interfaces[].vip.ip</code>) inside the Talos
+configuration.</p>
+<p>For more information about using a shared IP, see the related
+<a href="../../guides/vip/">Guide</a></p>
+<h3 id="dns-records">DNS records</h3>
+<p>If neither of the other methods work for you, you can instead use DNS records to
+provide a measure of redundancy.
+In this case, you would add multiple A or AAAA records for a DNS name.</p>
+<p>For instance, you could add:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>kube.cluster1.mydomain.com  IN  A  192.168.0.10
+</span></span><span style="display:flex;"><span>kube.cluster1.mydomain.com  IN  A  192.168.0.11
+</span></span><span style="display:flex;"><span>kube.cluster1.mydomain.com  IN  A  192.168.0.12
+</span></span></code></pre></div><p>Then, your endpoint would be:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>https://kube.cluster1.mydomain.com:6443
+</span></span></code></pre></div><h2 id="decide-how-to-access-the-talos-api">Decide how to access the Talos API</h2>
+<p>Since Talos is entirely API-driven, it is important to know how you are going to
+access that API.
+Talos comes with a number of mechanisms to make that easier.</p>
+<p>Controlplane nodes can proxy requests for worker nodes.
+This means that you only need access to the controlplane nodes in order to access
+the rest of the network.
+This is useful for security (your worker nodes do not need to have
+public IPs or be otherwise connected to the Internet), and it also makes working
+with highly-variable clusters easier, since you only need to know the
+controlplane nodes in advance.</p>
+<p>Even better, the <code>talosctl</code> tool will automatically load balance and fail over
+between all of your controlplane nodes, so long as it is informed of each of the
+controlplane node IPs.</p>
+<p>That does, of course, present the problem that you need to know how to talk to
+the controlplane nodes.
+In some environments, it is easy to be able to forecast, prescribe, or discover
+the controlplane node IP addresses.
+For others, though, even the controlplane nodes are dynamic, unpredictable, and
+undiscoverable.</p>
+<p>The dynamic options above for the Kubernetes API endpoint also apply to the
+Talos API endpoints.
+The difference is that the Talos API runs on port <code>50000/tcp</code>.</p>
+<p>Whichever way you wish to access the Talos API, be sure to note the IP(s) or
+hostname(s) so that you can configure your <code>talosctl</code> tool&rsquo;s <code>endpoints</code> below.</p>
+<h2 id="configure-talos">Configure Talos</h2>
+<p>When Talos boots without a configuration, such as when using the Talos ISO, it
+enters a limited maintenance mode and waits for a configuration to be provided.</p>
+<p>Alternatively, the Talos installer can be booted with the <code>talos.config</code> kernel
+commandline argument set to an HTTP(s) URL from which it should receive its
+configuration.
+In cases where a PXE server can be available, this is much more efficient than
+manually configuring each node.
+If you do use this method, just note that Talos does require a number of other
+kernel commandline parameters.
+See the <a href="../../reference/kernel/">required kernel parameters</a> for more information.</p>
+<p>In either case, we need to generate the configuration which is to be provided.
+Luckily, the <code>talosctl</code> tool comes with a configuration generator for exactly
+this purpose.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl gen config <span style="color:#2aa198">&#34;cluster-name&#34;</span> <span style="color:#2aa198">&#34;cluster-endpoint&#34;</span>
+</span></span></code></pre></div><p>Here, <code>cluster-name</code> is an arbitrary name for the cluster which will be used
+in your local client configuration as a label.
+It does not affect anything in the cluster itself.
+It is arbitrary, but it should be unique in the configuration on your local workstation.</p>
+<p>The <code>cluster-endpoint</code> is where you insert the Kubernetes Endpoint you
+selected from above.
+This is the Kubernetes API URL, and it should be a complete URL, with <code>https://</code>
+and port, if not <code>443</code>.
+The default port is <code>6443</code>, so the port is almost always required.</p>
+<p>When you run this command, you will receive a number of files in your current
+directory:</p>
+<ul>
+<li><code>controlplane.yaml</code></li>
+<li><code>worker.yaml</code></li>
+<li><code>talosconfig</code></li>
+</ul>
+<p>The three <code>.yaml</code> files are what we call Machine Configs.
+They are installed onto the Talos servers to act as their complete configuration,
+describing everything from what disk Talos should be installed to, to what
+sysctls to set, to what network settings it should have.
+In the case of the <code>controlplane.yaml</code>, it even describes how Talos should form its Kubernetes cluster.</p>
+<p>The <code>talosconfig</code> file (which is also YAML) is your local client configuration
+file.</p>
+<h3 id="controlplane-init-and-worker">Controlplane, Init, and Worker</h3>
+<p>The three types of Machine Configs correspond to the three roles of Talos nodes.
+For our purposes, you can ignore the Init type.
+It is a legacy type which will go away eventually.
+Its purpose was to self-bootstrap.
+Instead, we now use an API call to bootstrap the cluster, which is much more robust.</p>
+<p>That leaves us with Controlplane and Worker.</p>
+<p>The Controlplane Machine Config describes the configuration of a Talos server on
+which the Kubernetes Controlplane should run.
+The Worker Machine Config describes everything else: workload servers.</p>
+<p>The main difference between Controlplane Machine Config files and Worker Machine
+Config files is that the former contains information about how to form the
+Kubernetes cluster.</p>
+<h3 id="templates">Templates</h3>
+<p>The generated files can be thought of as templates.
+Individual machines may need specific settings (for instance, each may have a
+different static IP address).
+When different files are needed for machines of the same type, simply
+copy the source template (<code>controlplane.yaml</code> or <code>worker.yaml</code>) and make whatever
+modifications need to be done.</p>
+<p>For instance, if you had three controlplane nodes and three worker nodes, you
+may do something like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>  <span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span>seq <span style="color:#2aa198">0</span> 2<span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>    cp controlplane.yaml cp<span style="color:#268bd2">$i</span>.yaml
+</span></span><span style="display:flex;"><span>  end
+</span></span><span style="display:flex;"><span>  <span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span>seq <span style="color:#2aa198">0</span> 2<span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>    cp worker.yaml w<span style="color:#268bd2">$i</span>.yaml
+</span></span><span style="display:flex;"><span>  end
+</span></span></code></pre></div><p>In cases where there is no special configuration needed, you may use the same
+file for each machine of the same type.</p>
+<h3 id="apply-configuration">Apply Configuration</h3>
+<p>After you have generated each machine&rsquo;s Machine Config, you need to load them
+into the mahines themselves.
+For that, you need to know their IP addresses.</p>
+<p>If you have access to the console or console logs of the machines, you can read
+them to find the IP address(es).
+Talos will print them out during the boot process:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>[    4.605369] [talos] task loadConfig (1/1): this machine is reachable at:
+</span></span><span style="display:flex;"><span>[    4.607358] [talos] task loadConfig (1/1):   192.168.0.2
+</span></span><span style="display:flex;"><span>[    4.608766] [talos] task loadConfig (1/1): server certificate fingerprint:
+</span></span><span style="display:flex;"><span>[    4.611106] [talos] task loadConfig (1/1):   xA9a1t2dMxB0NJ0qH1pDzilWbA3+DK/DjVbFaJBYheE=
+</span></span><span style="display:flex;"><span>[    4.613822] [talos] task loadConfig (1/1):
+</span></span><span style="display:flex;"><span>[    4.614985] [talos] task loadConfig (1/1): upload configuration using talosctl:
+</span></span><span style="display:flex;"><span>[    4.616978] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --file &lt;config.yaml&gt;
+</span></span><span style="display:flex;"><span>[    4.620168] [talos] task loadConfig (1/1): or apply configuration using talosctl interactive installer:
+</span></span><span style="display:flex;"><span>[    4.623046] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --mode=interactive
+</span></span><span style="display:flex;"><span>[    4.626365] [talos] task loadConfig (1/1): optionally with node fingerprint check:
+</span></span><span style="display:flex;"><span>[    4.628692] [talos] task loadConfig (1/1):   talosctl apply-config --insecure --nodes 192.168.0.2 --cert-fingerprint &#39;xA9a1t2dMxB0NJ0qH1pDzilWbA3+DK/DjVbFaJBYheE=&#39; --file &lt;config.yaml&gt;
+</span></span></code></pre></div><p>If you do not have console access, the IP address may also be discoverable from
+your DHCP server.</p>
+<p>Once you have the IP address, you can then apply the correct configuration.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl apply-config --insecure <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --nodes 192.168.0.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --file cp0.yaml
+</span></span></code></pre></div><p>The insecure flag is necessary at this point because the PKI infrastructure has
+not yet been made available to the node.
+Note that the connection <em>will</em> be encrypted, it is just unauthenticated.</p>
+<p>If you have console access, though, you can extract the server
+certificate fingerprint and use it for an additional layer of validation:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl apply-config --insecure <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --nodes 192.168.0.2 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --cert-fingerprint xA9a1t2dMxB0NJ0qH1pDzilWbA3+DK/DjVbFaJBYheE<span style="color:#719e07">=</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --file cp0.yaml
+</span></span></code></pre></div><p>Using the fingerprint allows you to be sure you are sending the configuration to
+the right machine, but it is completely optional.</p>
+<p>After the configuration is applied to a node, it will reboot.</p>
+<p>You may repeat this process for each of the nodes in your cluster.</p>
+<h2 id="configure-your-talosctl-client">Configure your talosctl client</h2>
+<p>Now that the nodes are running Talos with its full PKI security suite, you need
+to use that PKI to talk to the machines.
+That means configuring your client, and that is what that <code>talosconfig</code> file is for.</p>
+<h3 id="endpoints">Endpoints</h3>
+<p>Endpoints are the communication endpoints to which the client directly talks.
+These can be load balancers, DNS hostnames, a list of IPs, etc.
+In general, it is recommended that these point to the set of control plane
+nodes, either directly or through a reverse proxy or load balancer.</p>
+<p>Each endpoint will automatically proxy requests destined to another node through
+it, so it is not necessary to change the endpoint configuration just because you
+wish to talk to a different node within the cluster.</p>
+<p>Endpoints <em>do</em>, however, need to be members of the same Talos cluster as the
+target node, because these proxied connections reply on certificate-based
+authentication.</p>
+<p>We need to set the <code>endpoints</code> in your <code>talosconfig</code>.
+<code>talosctl</code> will automatically load balance and fail over among the endpoints,
+so no external load balancer or DNS abstraction is required
+(though you are free to use them, if desired).</p>
+<p>As an example, if the IP addresses of our controlplane nodes are:</p>
+<ul>
+<li>192.168.0.2</li>
+<li>192.168.0.3</li>
+<li>192.168.0.4</li>
+</ul>
+<p>We would set those in the <code>talosconfig</code> with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl --talosconfig<span style="color:#719e07">=</span>./talosconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    config endpoint 192.168.0.2 192.168.0.3 192.168.0.4
+</span></span></code></pre></div><h3 id="nodes">Nodes</h3>
+<p>The node is the target node on which you wish to perform the API call.</p>
+<p>Keep in mind, when specifying nodes that their IPs and/or hostnames are as seen by the endpoint servers, not as from the client.
+This is because all connections are proxied first through the endpoints.</p>
+<p>Some people also like to set a default set of nodes in the <code>talosconfig</code>.
+This can be done in the same manner, replacing <code>endpoint</code> with <code>node</code>.
+If you do this, however, know that you could easily reboot the wrong machine
+by forgetting to declare the right one explicitly.
+Worse, if you set several nodes as defaults, you could, with one <code>talosctl upgrade</code>
+command upgrade your whole cluster all at the same time.
+It&rsquo;s a powerful tool, and with that comes great responsibility.</p>
+<p>The author of this document generally sets a single controlplane node to be the
+default node, which provides the most flexible default operation while limiting
+the scope of the disaster should a command be entered erroneously:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl --talosconfig<span style="color:#719e07">=</span>./talosconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    config node 192.168.0.2
+</span></span></code></pre></div><p>You may simply provide <code>-n</code> or <code>--nodes</code> to any <code>talosctl</code> command to
+supply the node or (comma-delimited) nodes on which you wish to perform the
+operation.
+Supplying the commandline parameter will override any default nodes
+in the configuration file.</p>
+<p>To verify default node(s) you&rsquo;re currently configured to use, you can run:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl version
+</span></span><span style="display:flex;"><span>Client:
+</span></span><span style="display:flex;"><span>        ...
+</span></span><span style="display:flex;"><span>Server:
+</span></span><span style="display:flex;"><span>        NODE:        &lt;node&gt;
+</span></span><span style="display:flex;"><span>        ...
+</span></span></code></pre></div><p>For a more in-depth discussion of Endpoints and Nodes, please see
+<a href="../../learn-more/talosctl/">talosctl</a>.</p>
+<h3 id="default-configuration-file">Default configuration file</h3>
+<p>You <em>can</em> reference which configuration file to use directly with the <code>--talosconfig</code> parameter:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl --talosconfig<span style="color:#719e07">=</span>./talosconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --nodes 192.168.0.2 version
+</span></span></code></pre></div><p>However, <code>talosctl</code> comes with tooling to help you integrate and merge this
+configuration into the default <code>talosctl</code> configuration file.
+This is done with the <code>merge</code> option.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl config merge ./talosconfig
+</span></span></code></pre></div><p>This will merge your new <code>talosconfig</code> into the default configuration file
+(<code>$XDG_CONFIG_HOME/talos/config.yaml</code>), creating it if necessary.
+Like Kubernetes, the <code>talosconfig</code> configuration files has multiple &ldquo;contexts&rdquo;
+which correspond to multiple clusters.
+The <code>&lt;cluster-name&gt;</code> you chose above will be used as the context name.</p>
+<h2 id="kubernetes-bootstrap">Kubernetes Bootstrap</h2>
+<p>All of your machines are configured, and your <code>talosctl</code> client is set up.
+Now, you are ready to bootstrap your Kubernetes cluster.
+If that sounds daunting, you haven&rsquo;t used Talos before.</p>
+<p>Bootstrapping your Kubernetes cluster with Talos is as simple as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl bootstrap --nodes 192.168.0.2
+</span></span></code></pre></div><p><strong>IMPORTANT</strong>: the bootstrap operation should only be called <strong>ONCE</strong> and only on a <strong>SINGLE</strong>
+controlplane node!</p>
+<p>The IP there can be any of your controlplanes (or the loadbalancer, if you have
+one).
+It should only be issued once.</p>
+<p>At this point, Talos will form an <code>etcd</code> cluster, generate all of the core
+Kubernetes assets, and start the Kubernetes controlplane components.</p>
+<p>After a few moments, you will be able to download your Kubernetes client
+configuration and get started:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl kubeconfig
+</span></span></code></pre></div><p>Running this command will add (merge) you new cluster into you local Kubernetes
+configuration in the same way as <code>talosctl config merge</code> merged the Talos client
+configuration into your local Talos client configuration file.</p>
+<p>If you would prefer for the configuration to <em>not</em> be merged into your default
+Kubernetes configuration file, simple tell it a filename:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  talosctl kubeconfig alternative-kubeconfig
+</span></span></code></pre></div><p>If all goes well, you should now be able to connect to Kubernetes and see your
+nodes:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>  kubectl get nodes
+</span></span></code></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v1.0/introduction/quickstart/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          Quickstart
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v1.0/introduction/system-requirements/">
+        <span>
+          System Requirements
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v1.0"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

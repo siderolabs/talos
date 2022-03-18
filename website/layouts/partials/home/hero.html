@@ -1,0 +1,39 @@
+{{ $title   := site.Title }}
+{{ $desc    := site.Params.description | markdownify }}
+{{ $logo    := printf "img/logos/%s" site.Params.logos.hero | relURL }}
+{{ $tagline := site.Params.tagline | markdownify }}
+{{ $latest  := index site.Params.versions 0 }}
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-vcentered is-variable is-8">
+        <div class="column is-one-quarter">
+          <img class="hero-logo" src="{{ $logo }}" alt="{{ $title }} hero logo">
+        </div>
+
+        <div class="column">
+          <p class="title is-size-1 is-size-2-mobile has-text-weight-bold is-spaced">
+            {{ $title }}
+          </p>
+
+          <p class="subtitle is-size-3 is-size-4-mobile">
+            {{ $desc }}
+          </p>
+
+          <p class="subtitle is-size-5 is-size-6-mobile">
+            {{ $tagline }}
+          </p>
+
+          <a class="button is-secondary is-size-5 is-size-6-mobile" href="/docs/{{ $latest }}">
+            <span class="icon">
+              <ion-icon name="play"></ion-icon>
+            </span>
+            <span>
+              Learn more
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,11 @@
+{{- $latest := index site.Params.versions 0 -}}
+{{- $docs   := where site.RegularPages "Section" "docs" -}}
+
+/docs     /docs/{{ $latest }}     200!
+/docs/latest     /docs/{{ $latest }}
+/docs/latest/*     /docs/{{ $latest }}/:splat
+
+{{- range $docs -}}
+{{- $version := index (split .File.Path "/") 1 }}
+{{ .RelPermalink | replaceRE (printf "/%s" $version) "" }}     {{ .RelPermalink }}
+{{- end -}}

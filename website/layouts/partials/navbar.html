@@ -1,0 +1,43 @@
+{{ $home     := site.BaseURL }}
+{{ $title    := site.Title }}
+{{ $logo     := printf "img/logos/%s" site.Params.logos.navbar | relURL }}
+{{ $menu     := site.Menus.main }}
+{{ $isDoc    := eq .Section "docs" }}
+{{ $versions := site.Params.versions }}
+{{ $latest   := index $versions 0 }}
+{{ $here     := .RelPermalink }}
+<nav class="navbar is-fixed-top{{ if $isDoc }} has-shadow{{ end }}" x-data="{ open: false }">
+  {{ if not $isDoc }}
+  <div class="container">
+  {{ end }}
+    <div class="navbar-brand">
+      <a class="navbar-item" href="{{ $home }}">
+        <img src="{{ $logo }}" alt="{{ $title }} navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        {{ partial "search-bar.html" . }}
+
+        {{ partial "version-dropdown.html" . }}
+
+        {{ with $menu }}
+        {{ partial "navbar-menu.html" (dict "menu" . "here" $here) }}
+        {{ end }}
+
+        <div class="navbar-item">
+          {{ partial "social-buttons.html" (dict "lean" false) }}
+        </div>
+      </div>
+    </div>
+  {{ if not $isDoc }}
+  </div>
+  {{ end }}
+</nav>

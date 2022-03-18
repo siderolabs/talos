@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Bare Metal Platforms on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.13/bare-metal-platforms/</link>
+    <description>Recent content in Bare Metal Platforms on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.13/bare-metal-platforms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Digital Rebar</title>
+      <link>https://talos.dev/docs/v0.13/bare-metal-platforms/digital-rebar/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.13/bare-metal-platforms/digital-rebar/</guid>
+      <description>Prerequisites  3 nodes (please see hardware requirements) Loadbalancer Digital Rebar Server Talosctl access (see talosctl setup)  Creating a Cluster In this guide we will create an Kubernetes cluster with 1 worker node, and 2 controlplane nodes. We assume an existing digital rebar deployment, and some familiarity with iPXE.
+We leave it up to the user to decide if they would like to use static networking, or DHCP. The setup and configuration of DHCP will not be covered.</description>
+    </item>
+    
+    <item>
+      <title>Equinix Metal</title>
+      <link>https://talos.dev/docs/v0.13/bare-metal-platforms/equinix-metal/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.13/bare-metal-platforms/equinix-metal/</guid>
+      <description>Prerequisites This guide assumes the user has a working API token, the Equinix Metal CLI installed, and some familiarity with the CLI.
+Network Booting To install Talos to a server a working TFTP and iPXE server are needed. How this is done varies and is left as an exercise for the user. In general this requires a Talos kernel vmlinuz and initramfs. These assets can be downloaded from a given release.</description>
+    </item>
+    
+    <item>
+      <title>Matchbox</title>
+      <link>https://talos.dev/docs/v0.13/bare-metal-platforms/matchbox/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.13/bare-metal-platforms/matchbox/</guid>
+      <description>Creating a Cluster In this guide we will create an HA Kubernetes cluster with 3 worker nodes. We assume an existing load balancer, matchbox deployment, and some familiarity with iPXE.
+We leave it up to the user to decide if they would like to use static networking, or DHCP. The setup and configuration of DHCP will not be covered.
+Create the Machine Configuration Files Generating Base Configurations Using the DNS name of the load balancer, generate the base configuration files for the Talos machines:</description>
+    </item>
+    
+    <item>
+      <title>Sidero</title>
+      <link>https://talos.dev/docs/v0.13/bare-metal-platforms/sidero/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.13/bare-metal-platforms/sidero/</guid>
+      <description>Sidero is a project created by the Talos team that has native support for Talos. The best way to get started with Sidero is to visit the website.</description>
+    </item>
+    
+  </channel>
+</rss>

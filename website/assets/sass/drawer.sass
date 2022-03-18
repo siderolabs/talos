@@ -1,0 +1,25 @@
+$width: 20rem
+
+.canvas
+  &.is-dark
+    opacity: 0.1
+
+.drawer
+  background-color: $white-bis
+  transition: all .1s
+  height: 100%
+  z-index: 1000
+  width: $width
+  position: fixed
+  left: -#{$width}
+  top: 0
+  overflow-y: scroll
+  padding: 0
+
+  .nav
+    ul.nav-list
+      margin: 1rem 0 1rem 2rem
+
+  &.is-visible
+    left: 0
+    width: 100%

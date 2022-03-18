@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Guides on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.8/guides/</link>
+    <description>Recent content in Guides on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.8/guides/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Advanced Networking</title>
+      <link>https://talos.dev/docs/v0.8/guides/advanced-networking/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/advanced-networking/</guid>
+      <description>Static Addressing Static addressing is comprised of specifying cidr, routes ( remember to add your default gateway ), and interface. Most likely you&amp;rsquo;ll also want to define the nameservers so you have properly functioning DNS.
+machine:  network:  hostname: talos  nameservers:  - 10.0.0.1  interfaces:  - interface: eth0  cidr: 10.0.0.201/8  mtu: 8765  routes:  - network: 0.0.0.0/0  gateway: 10.0.0.1  - interface: eth1  ignore: true  time:  servers:  - time.</description>
+    </item>
+    
+    <item>
+      <title>Air-gapped Environments</title>
+      <link>https://talos.dev/docs/v0.8/guides/air-gapped/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/air-gapped/</guid>
+      <description>In this guide we will create a Talos cluster running in an air-gapped environment with all the required images being pulled from an internal registry. We will use the QEMU provisioner available in talosctl to create a local cluster, but the same approach could be used to deploy Talos in bigger air-gapped networks.
+Requirements The follow are requirements for this guide:
+ Docker 18.03 or greater Requirements for the Talos QEMU cluster  Identifying Images In air-gapped environments, access to the public Internet is restricted, so Talos can&amp;rsquo;t pull images from public Docker registries (docker.</description>
+    </item>
+    
+    <item>
+      <title>Configuring Certificate Authorities</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-certificate-authorities/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-certificate-authorities/</guid>
+      <description>Appending the Certificate Authority Put into each machine the PEM encoded certificate:
+machine:  ...  files:  - content: |-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----  permissions: 0644  path: /etc/ssl/certs/ca-certificates  op: append </description>
+    </item>
+    
+    <item>
+      <title>Configuring Containerd</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-containerd/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-containerd/</guid>
+      <description>The base containerd configuration expects to merge in any additional configs present in /var/cri/conf.d/*.toml.
+An example of exposing metrics Into each machine config, add the following:
+machine:  ...  files:  - content: |[metrics] address = &amp;#34;0.0.0.0:11234&amp;#34;  path: /var/cri/conf.d/metrics.toml  op: create Create cluster like normal and see that metrics are now present on this port:
+$ curl 127.0.0.1:11234/v1/metrics # HELP container_blkio_io_service_bytes_recursive_bytes The blkio io service bytes recursive # TYPE container_blkio_io_service_bytes_recursive_bytes gauge container_blkio_io_service_bytes_recursive_bytes{container_id=&amp;#34;0677d73196f5f4be1d408aab1c4125cf9e6c458a4bea39e590ac779709ffbe14&amp;#34;,device=&amp;#34;/dev/dm-0&amp;#34;,major=&amp;#34;253&amp;#34;,minor=&amp;#34;0&amp;#34;,namespace=&amp;#34;k8s.</description>
+    </item>
+    
+    <item>
+      <title>Configuring Corporate Proxies</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-corporate-proxies/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-corporate-proxies/</guid>
+      <description>Appending the Certificate Authority of MITM Proxies Put into each machine the PEM encoded certificate:
+machine:  ...  files:  - content: |-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----  permissions: 0644  path: /etc/ssl/certs/ca-certificates  op: append Configuring a Machine to Use the Proxy To make use of a proxy:
+machine:  env:  http_proxy: &amp;lt;http proxy&amp;gt;  https_proxy: &amp;lt;https proxy&amp;gt;  no_proxy: &amp;lt;no proxy&amp;gt; Additionally, configure the DNS nameservers, and NTP servers:</description>
+    </item>
+    
+    <item>
+      <title>Configuring Network Connectivity</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-network-connectivity/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-network-connectivity/</guid>
+      <description>Configuring Network Connectivity The simplest way to deploy Talos is by ensuring that all the remote components of the system (talosctl, the control plane nodes, and worker nodes) all have layer 2 connectivity. This is not always possible, however, so this page lays out the minimal network access that is required to configure and operate a talos cluster.
+ Note: These are the ports required for Talos specifically, and should be configured in addition to the ports required by kuberenetes.</description>
+    </item>
+    
+    <item>
+      <title>Configuring Pull Through Cache</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-pull-through-cache/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-pull-through-cache/</guid>
+      <description>In this guide we will create a set of local caching Docker registry proxies to minimize local cluster startup time.
+When running Talos locally, pulling images from Docker registries might take a significant amount of time. We spin up local caching pass-through registries to cache images and configure a local Talos cluster to use those proxies. A similar approach might be used to run Talos in production in air-gapped environments. It can be also used to verify that all the images are available in local registries.</description>
+    </item>
+    
+    <item>
+      <title>Configuring the Cluster Endpoint</title>
+      <link>https://talos.dev/docs/v0.8/guides/configuring-the-cluster-endpoint/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/configuring-the-cluster-endpoint/</guid>
+      <description>In this section, we will step through the configuration of a Talos based Kubernetes cluster. There are three major components we will configure:
+ apid and talosctl the master nodes the worker nodes  Talos enforces a high level of security by using mutual TLS for authentication and authorization.
+We recommend that the configuration of Talos be performed by a cluster owner. A cluster owner should be a person of authority within an organization, perhaps a director, manager, or senior member of a team.</description>
+    </item>
+    
+    <item>
+      <title>Customizing the Kernel</title>
+      <link>https://talos.dev/docs/v0.8/guides/customizing-the-kernel/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/customizing-the-kernel/</guid>
+      <description>FROMscratch AS customization COPY --from=&amp;lt;custom kernel image&amp;gt; /lib/modules /lib/modules  FROMdocker.io/andrewrynhard/installer:latest COPY --from=&amp;lt;custom kernel image&amp;gt; /boot/vmlinuz /usr/install/vmlinuz docker build --build-arg RM=&amp;#34;/lib/modules&amp;#34; -t talos-installer .  Note: You can use the --squash flag to create smaller images.
+ Now that we have a custom installer we can build Talos for the specific platform we wish to deploy to.</description>
+    </item>
+    
+    <item>
+      <title>Customizing the Root Filesystem</title>
+      <link>https://talos.dev/docs/v0.8/guides/customizing-the-root-filesystem/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/customizing-the-root-filesystem/</guid>
+      <description>The installer image contains ONBUILD instructions that handle the following:
+ the decompression, and unpacking of the initramfs.xz the unsquashing of the rootfs the copying of new rootfs files the squashing of the new rootfs and the packing, and compression of the new initramfs.xz  When used as a base image, the installer will perform the above steps automatically with the requirement that a customization stage be defined in the Dockerfile.</description>
+    </item>
+    
+    <item>
+      <title>Managing PKI</title>
+      <link>https://talos.dev/docs/v0.8/guides/managing-pki/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/managing-pki/</guid>
+      <description>Generating an Administrator Key Pair In order to create a key pair, you will need the root CA.
+Save the the CA public key, and CA private key as ca.crt, and ca.key respectively. Now, run the following commands to generate a certificate:
+talosctl gen key --name admin talosctl gen csr --key admin.key --ip 127.0.0.1 talosctl gen crt --ca ca --csr admin.csr --name admin Now, base64 encode admin.crt, and admin.key:
+cat admin.</description>
+    </item>
+    
+    <item>
+      <title>Resetting a Machine</title>
+      <link>https://talos.dev/docs/v0.8/guides/resetting-a-machine/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/resetting-a-machine/</guid>
+      <description>From time to time, it may be beneficial to reset a Talos machine to its &amp;ldquo;original&amp;rdquo; state. Bear in mind that this is a destructive action for the given machine. Doing this means removing the machine from Kubernetes, Etcd (if applicable), and clears any data on the machine that would normally persist a reboot.
+The API command for doing this is talosctl reset. There are a couple of flags as part of this command:</description>
+    </item>
+    
+    <item>
+      <title>Storage</title>
+      <link>https://talos.dev/docs/v0.8/guides/storage/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/storage/</guid>
+      <description>Talos is known to work with Rook and NFS.
+Rook We recommend at least Rook v1.5.
+NFS The NFS client is part of the kubelet image maintained by the Talos team. This means that the version installed in your running kubelet is the version of NFS supported by Talos.</description>
+    </item>
+    
+    <item>
+      <title>Upgrading Kubernetes</title>
+      <link>https://talos.dev/docs/v0.8/guides/upgrading-kubernetes/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/upgrading-kubernetes/</guid>
+      <description>Video Walkthrough To see a live demo of this writeup, see the video below:
+Kubeconfig In order to edit the control plane, we will need a working kubectl config. If you don&amp;rsquo;t already have one, you can get one by running:
+talosctl --nodes &amp;lt;master node&amp;gt; kubeconfig Automated Kubernetes Upgrade To upgrade from Kubernetes v1.19.4 to v1.20.1 run:
+$ talosctl --nodes &amp;lt;master node&amp;gt; upgrade-k8s --from 1.19.4 --to 1.20.1 patched kube-apiserver secrets for &amp;#34;service-account.</description>
+    </item>
+    
+    <item>
+      <title>Upgrading Talos</title>
+      <link>https://talos.dev/docs/v0.8/guides/upgrading-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.8/guides/upgrading-talos/</guid>
+      <description>Talos upgrades are effected by an API call. The talosctl CLI utility will facilitate this, or you can use the automatic upgrade features provided by the talos controller manager.
+Video Walkthrough To see a live demo of this writeup, see the video below:
+talosctl Upgrade To manually upgrade a Talos node, you will specify the node&amp;rsquo;s IP address and the installer container image for the version of Talos to which you wish to upgrade.</description>
+    </item>
+    
+  </channel>
+</rss>

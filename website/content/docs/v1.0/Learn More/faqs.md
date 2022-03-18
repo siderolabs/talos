@@ -1,6 +1,6 @@
 ---
 title: "FAQs"
-weight: 60
+weight: 6
 ---
 
 <!-- markdownlint-disable MD026 -->

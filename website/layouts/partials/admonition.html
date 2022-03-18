@@ -1,0 +1,22 @@
+<div class="admonition is-{{ .type }}">
+  <div class="columns is-vcentered">
+    <div class="column is-1">
+      <span class="icon is-medium">
+        <ion-icon size="medium" name="{{ .icon }}"></ion-icon>
+      </span>
+    </div>
+
+    <div class="column">
+      <div class="content">
+        {{ with .title }}
+        <p class="title">
+          {{ . | markdownify }}
+        </p>
+        {{ end }}
+
+        {{ .content | markdownify }}
+      </div>
+    </div>
+  </div>
+</div>
+

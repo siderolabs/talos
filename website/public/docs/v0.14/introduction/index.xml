@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Introduction on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.14/introduction/</link>
+    <description>Recent content in Introduction on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.14/introduction/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>What is Talos?</title>
+      <link>https://talos.dev/docs/v0.14/introduction/what-is-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/what-is-talos/</guid>
+      <description>Talos is a container optimized Linux distro; a reimagining of Linux for distributed systems such as Kubernetes. Designed to be as minimal as possible while still maintaining practicality. For these reasons, Talos has a number of features unique to it:
+ it is immutable it is atomic it is ephemeral it is minimal it is secure by default it is managed via a single declarative configuration file and gRPC API  Talos can be deployed on container, cloud, virtualized, and bare metal platforms.</description>
+    </item>
+    
+    <item>
+      <title>Quickstart</title>
+      <link>https://talos.dev/docs/v0.14/introduction/quickstart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/quickstart/</guid>
+      <description>There are two easy ways to try out Talos Linux. Instructions for each are detailed below.
+Katacoda Sandbox First, you can explore a sandbox environment hosted on Katacoda. This approach has the benefit of having no prerequisites and being a bit more guided, so you can quickly learn how to interact with a cluster.
+Please visit Katacoda here to try it out.
+Local Docker Cluster Another easy way to try Talos is by using the CLI (talosctl) to create a cluster on a machine with docker installed.</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>https://talos.dev/docs/v0.14/introduction/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/getting-started/</guid>
+      <description>This document will walk you through installing a full Talos Cluster. You may wish to read through the Quickstart first, to quickly create a local virtual cluster on your workstation.
+Regardless of where you run Talos, you will find that there is a pattern to deploying it.
+In general you will need to:
+ acquire the installation image decide on the endpoint for Kubernetes  optionally create a load balancer   configure Talos configure talosctl bootstrap Kubernetes  Prerequisites talosctl The talosctl tool provides a CLI tool which interfaces with the Talos API in an easy manner.</description>
+    </item>
+    
+    <item>
+      <title>System Requirements</title>
+      <link>https://talos.dev/docs/v0.14/introduction/system-requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/system-requirements/</guid>
+      <description>Minimum Requirements Recommended These requirements are similar to that of kubernetes.</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New in Talos 0.14</title>
+      <link>https://talos.dev/docs/v0.14/introduction/what-is-new/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/what-is-new/</guid>
+      <description>Kubelet Kubelet configuration can be updated without node restart (.machine.kubelet section of machine configuration) with commands talosctl edit mc --immediate, talosctl apply-config --immediate, talosctl patch mc --immediate.
+Kubelet service can now be restarted with talosctl service kubelet restart.
+Kubelet node IP configuration (.machine.kubelet.nodeIP.validSubnets) can now include negative subnet matches (prefixed with !).
+Kubernetes Upgrade Enhancements talosctl upgrade-k8s was improved to:
+ sync all boostrap manifest resources in the Kubernetes cluster with versions bundled with current version Talos upgrade kubelet to the version of the control plane components (without node reboot)  So there is no need to update CoreDNS, Flannel container manually after running upgrade-k8s anymore.</description>
+    </item>
+    
+    <item>
+      <title>Support Matrix</title>
+      <link>https://talos.dev/docs/v0.14/introduction/support-matrix/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.14/introduction/support-matrix/</guid>
+      <description>Talos Version 0.14 0.13     Release Date 2021-12-21 2021-10-11 (0.13.0)   End of Community Support 1.0.0 release (2022-03-27, TBD) 0.14.0 release (2021-12-21)   Enterprise Support offered by Sidero Labs Inc.    Kubernetes 1.23, 1.22, 1.21 1.22, 1.21, 1.20   Architecture amd64, arm64    Platforms     - cloud AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud    - bare metal x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image    - virtualized VMware, Hyper-V, KVM, Proxmox, Xen    - SBCs Raspberry Pi4, Banana Pi M64, Pine64, and other    - local Docker, QEMU    Cluster API     CAPI Bootstrap Provider Talos &amp;gt;= 0.</description>
+    </item>
+    
+  </channel>
+</rss>

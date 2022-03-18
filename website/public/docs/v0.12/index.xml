@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Welcome on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.12/</link>
+    <description>Recent content in Welcome on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.12/index.xml" rel="self" type="application/rss+xml" />
+  </channel>
+</rss>

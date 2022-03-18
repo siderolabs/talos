@@ -1,0 +1,24 @@
+{{ $lang := site.LanguageCode | default "en-us" }}
+{{ $isDoc := eq .Section "docs" }}
+
+<!DOCTYPE html>
+<html lang="{{ $lang }}">
+
+<head>
+  {{ partial "meta.html" . }}
+
+  <title>
+    {{ block "title" . }}
+    {{ site.Title }}
+    {{ end }}
+  </title>
+
+  {{ partial "css.html" . }}
+  {{ partial "favicon.html" . }}
+</head>
+<body{{ if and (not $isDoc)}} class="has-navbar-fixed-top" {{ end }}>
+  {{ block "main" . }}{{ end }}
+  {{ partial "javascript.html" . }}
+  </body>
+
+</html>

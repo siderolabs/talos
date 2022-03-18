@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Learn More on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.6/learn-more/</link>
+    <description>Recent content in Learn More on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.6/learn-more/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Architecture</title>
+      <link>https://talos.dev/docs/v0.6/learn-more/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/learn-more/architecture/</guid>
+      <description>In this section we will discuss the various components of which Talos is comprised.
+Components    Component Description     apid When interacting with Talos, the gRPC API endpoint you&amp;rsquo;re interact with directly is provided by apid. apid acts as the gateway for all component interactions and forwards the requests to routerd.   containerd An industry-standard container runtime with an emphasis on simplicity, robustness and portability.</description>
+    </item>
+    
+    <item>
+      <title>FAQs</title>
+      <link>https://talos.dev/docs/v0.6/learn-more/faqs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/learn-more/faqs/</guid>
+      <description>How is Talos different from other container optimized Linux distros? Talos shares a lot of attributes with other distros, but there are some important differences. Talos integrates tightly with Kubernetes, and is not meant to be a general-purpose operating system. The most important difference is that Talos is fully controlled by an API via a gRPC interface, instead of an ordinary shell. We don&amp;rsquo;t ship SSH, and there is no console access.</description>
+    </item>
+    
+  </channel>
+</rss>

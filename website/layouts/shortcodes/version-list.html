@@ -1,0 +1,12 @@
+{{ $versions := site.Params.versions }}
+{{ $latest   := index $versions 0 }}
+<ul>
+  {{ range $versions }}
+  {{ $isLatest := eq . $latest }}
+  <li>
+    <a href="/docs/{{ . }}">
+      {{ . }}{{ if $isLatest }} (latest){{ end }}
+    </a>
+  </li>
+  {{ end }}
+</ul>

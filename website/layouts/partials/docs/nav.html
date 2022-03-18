@@ -1,0 +1,83 @@
+{{ $sections    := where site.Sections "Section" "docs" }}
+{{ $here        := .here }}
+{{ $docsVersion := .version }}
+<aside class="nav{{ if .drawer }} is-drawer{{ else }} is-sidebar{{ end }}">
+  {{ if .drawer }}
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  {{ end }}
+
+  {{ range $sections }}
+  {{ range .Sections }}
+  {{ $version := index (split .File.Path "/") 1 }}
+  {{ if eq $version $docsVersion }} <!-- display only the current docs version -->
+  {{ $isHere := eq $here .RelPermalink }}
+  <div class="nav-section">
+    <a class="nav-section-title{{ if $isHere }} is-active{{ end }}" href="{{ .RelPermalink }}">
+      {{ .Title }}
+    </a>
+
+    {{ with .RegularPages }}
+    <ul class="nav-section-pages">
+      {{ range . }}
+      {{ $isHere := eq $here .RelPermalink }}
+      <li class="nav-section-pages-link">
+        <a{{ if $isHere }} class="is-active"{{ end }} href="{{ .RelPermalink }}">
+          {{ .Title }}
+        </a>
+      </li>
+      {{ end }}
+    </ul>
+    {{ end }}
+  </div>
+
+  {{ range .Sections }}
+  {{ $isHere := eq $here .RelPermalink }}
+  <div class="nav-section">
+    <a class="nav-section-title{{ if $isHere }} is-active{{ end }}" href="{{ .RelPermalink }}">
+      {{ .Title }}
+    </a>
+
+    {{ with .RegularPages }}
+    <ul class="nav-section-pages">
+      {{ range . }}
+      {{ $isHere := eq $here .RelPermalink }}
+      <li class="nav-section-pages-link">
+        <a{{ if $isHere }} class="is-active"{{ end }} href="{{ .RelPermalink }}">
+          {{ .Title }}
+        </a>
+      </li>
+      {{ end }}
+    </ul>
+    {{ end }}
+
+    {{ with .Sections }}
+    <div class="nav-sub-section">
+      {{ range . }}
+      {{ $isHere := eq $here .RelPermalink }}
+      <a class="nav-sub-section-title{{ if $isHere }} is-active{{ end }}" href="{{ .RelPermalink }}">
+        {{ .Title }}
+      </a>
+
+      {{ with .RegularPages }}
+      <ul class="nav-sub-section-pages">
+        {{ range . }}
+        {{ $isHere := eq $here .RelPermalink }}
+        <li class="nav-sub-section-pages-link">
+          <a{{ if $isHere }} class="is-active"{{ end }} href="{{ .RelPermalink }}">
+            {{ .Title }}
+          </a>
+        </li>
+        {{ end }}
+      </ul>
+      {{ end }}
+      {{ end }}
+    </div>
+    {{ end }}
+  </div>
+  {{ end }}
+  {{ end }}
+  {{ end }}
+  {{ end }}
+</aside>

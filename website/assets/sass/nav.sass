@@ -1,0 +1,38 @@
+=x
+  border: 2px solid red
+
+.nav
+  margin: 2rem
+
+  li
+    line-height: 125%
+
+  a
+    &.is-active
+      color: $secondary
+      font-weight: 700
+
+    &:hover
+      color: $secondary
+
+  &-section
+    &-title
+      font-size: 1.25rem
+
+    &-pages
+      margin: 0.5rem 0 0 1rem
+
+      &-link
+        font-size: 1.1rem
+
+        & + &
+          margin-top: 0.25rem
+
+    & + &
+      margin-top: 1rem
+
+  &-sub-section
+    margin: 0.25rem 0 0 1rem
+
+    &-pages
+      margin: 0.25rem 0 0 1rem

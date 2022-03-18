@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Local Platforms on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.6/local-platforms/</link>
+    <description>Recent content in Local Platforms on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.6/local-platforms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Docker</title>
+      <link>https://talos.dev/docs/v0.6/local-platforms/docker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/local-platforms/docker/</guid>
+      <description>In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.
+Running Talos in Docker is intended to be used in CI pipelines, and local testing when you need a quick and easy cluster. Furthermore, if you are running Talos in production, it provides an excellent way for developers to develop against the same version of Talos.
+Requirements The follow are requirements for running Talos in Docker:</description>
+    </item>
+    
+    <item>
+      <title>Firecracker</title>
+      <link>https://talos.dev/docs/v0.6/local-platforms/firecracker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/local-platforms/firecracker/</guid>
+      <description>In this guide we will create a Kubernetes cluster using Firecracker.
+Requirements  Linux a kernel with  KVM enabled (/dev/kvm must exist) CONFIG_NET_SCH_NETEM enabled CONFIG_NET_SCH_INGRESS enabled   at least CAP_SYS_ADMIN and CAP_NET_ADMIN capabilities firecracker (v0.21.0 or higher) bridge, static and firewall CNI plugins from the standard CNI plugins, and tc-redirect-tap CNI plugin from the awslabs tc-redirect-tap installed to /opt/cni/bin iptables /etc/cni/conf.d directory should exist /var/run/netns directory should exist  Installation How to get firecracker (v0.</description>
+    </item>
+    
+    <item>
+      <title>QEMU</title>
+      <link>https://talos.dev/docs/v0.6/local-platforms/qemu/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.6/local-platforms/qemu/</guid>
+      <description>In this guide we will create a Kubernetes cluster using QEMU.
+Requirements  Linux a kernel with  KVM enabled (/dev/kvm must exist) CONFIG_NET_SCH_NETEM enabled CONFIG_NET_SCH_INGRESS enabled   at least CAP_SYS_ADMIN and CAP_NET_ADMIN capabilities QEMU bridge, static and firewall CNI plugins from the standard CNI plugins, and tc-redirect-tap CNI plugin from the awslabs tc-redirect-tap installed to /opt/cni/bin iptables /etc/cni/conf.d directory should exist /var/run/netns directory should exist  Installation How to get QEMU Install QEMU with your operating system package manager.</description>
+    </item>
+    
+  </channel>
+</rss>

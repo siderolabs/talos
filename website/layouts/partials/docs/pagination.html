@@ -1,0 +1,30 @@
+{{ if or .PrevInSection .NextInSection }}
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      {{ with .NextInSection }}
+      <a class="pagination-previous has-text-white has-background-primary" href="{{ .RelPermalink }}">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          {{ .Title }}
+        </span>
+      </a>
+      {{ end }}
+
+      {{ with .PrevInSection }}
+      <a class="pagination-next has-text-white has-background-primary" href="{{ .RelPermalink }}">
+        <span>
+          {{ .Title }}
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      {{ end }}
+    </nav>
+  </div>
+</section>
+{{ end }}

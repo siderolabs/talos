@@ -1,0 +1,2219 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<meta name="description" content="Creating a cluster via the CLI on Google Cloud Platform.">
+
+
+
+
+<link rel="canonical" href="https://talos.dev/docs/latest/cloud-platforms/gcp/">
+
+
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name="twitter:image:alt" content="Talos Linux color logo">
+
+
+
+<meta property="og:url" content="https://talos.dev/docs/v1.0/cloud-platforms/gcp/">
+<meta property="og:title" content="Talos Linux | GCP">
+
+<meta property="og:description" content="Creating a cluster via the CLI on Google Cloud Platform.">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+
+
+
+
+  <title>
+    
+Talos Linux | Documentation
+
+  </title>
+
+  
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css" integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+
+  <link rel="shortcut icon" type="image/png" sizes="32x32" href="/favicon.png">
+
+</head>
+<body>
+  
+
+
+
+
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  
+
+
+
+
+
+
+
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+  
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://talos.dev">
+        <img src="/img/logos/Sidero_horizontal_lightbkgd_RGB.png" alt="Talos Linux navbar logo">
+      </a>
+
+      <a role="button" class="navbar-burger" data-target="menu" aria-label="menu" aria-expanded="false" :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div class="navbar-menu" id="menu" :class="{ 'is-active': open }">
+      <div class="navbar-end">
+        <div class="navbar-item is-hidden-touch">
+  <p class="control has-icons-left">
+    <input class="input is-rounded" type="text" placeholder="Search" id="search-input">
+    <span class="icon is-small is-left">
+      <ion-icon name="search-outline"></ion-icon>
+    </span>
+  </p>
+</div>
+
+
+        
+
+
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-item has-dropdown is-hoverable">
+    <a class="navbar-link is-arrowless" href="/docs/v1.0">
+      <span class="has-text-weight-bold">
+        Docs
+      </span>
+      <span class="icon has-text-secondary">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </span>
+    </a>
+
+    <div class="navbar-dropdown">
+      
+      
+      
+      <a class="navbar-item" href="/docs/v1.0">
+        v1.0 (<strong>latest</strong>)
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.14">
+        v0.14
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.13">
+        v0.13
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.12">
+        v0.12
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.11">
+        v0.11
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.10">
+        v0.10
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.9">
+        v0.9
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.8">
+        v0.8
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.7">
+        v0.7
+      </a>
+      
+      
+      
+      <a class="navbar-item" href="/docs/v0.6">
+        v0.6
+      </a>
+      
+    </div>
+  </div>
+</nav>
+
+
+        
+        
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://sidero.dev"  target="_blank" >
+  <span>
+    Sidero Metal
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://github.com/talos-systems/talos"  target="_blank" >
+  <span>
+    GitHub
+  </span>
+</a>
+
+
+
+
+
+<a class="navbar-item has-text-weight-bold" href="https://taloscommunity.slack.com"  target="_blank" >
+  <span>
+    Slack
+  </span>
+</a>
+
+
+
+        
+
+        <div class="navbar-item">
+          
+
+
+
+<div class="buttons is-left">
+  
+
+  
+
+  
+</div>
+
+        </div>
+      </div>
+    </div>
+  
+</nav>
+
+  
+
+<nav class="navbar is-black is-hidden-desktop under-nav">
+  <div class="navbar-brand">
+    <div class="navbar-item is-hidden-desktop">
+      <a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+        <span class="icon">
+          <ion-icon name="list"></ion-icon>
+        </span>
+        <span>
+          Docs
+        </span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+  <div class="dashboard">
+    
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      
+
+
+<aside class="nav is-sidebar">
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+    </div>
+
+    <div class="dashboard-panel main">
+      
+
+
+
+<section class="hero is-primary is-medium is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <div class="docs-content">
+        <p class="title is-size-2 is-size-3-mobile has-text-weight-bold is-spaced">
+          GCP
+        </p>
+
+        
+        <p class="subtitle is-size-3 is-size-4-mobile has-text-weight-light">
+          Creating a cluster via the CLI on Google Cloud Platform.
+        </p>
+        
+      </div>
+      <div class="buttons">
+        <a class="button is-small" href="https://github.com/longhorn/website/edit/master/content/docs/v1.0/Cloud%20Platforms/gcp.md" target="_blank">
+          <span class="icon">
+            <ion-icon name="logo-github"></ion-icon>
+          </span>
+          <span>
+            Edit this page
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
+<section class="section">
+  <div class="container">
+    <div class="docs-content">
+      <div class="content has-extra-bottom-padding">
+        <h2 id="creating-a-cluster-via-the-cli">Creating a Cluster via the CLI</h2>
+<p>In this guide, we will create an HA Kubernetes cluster in GCP with 1 worker node.
+We will assume an existing <a href="https://cloud.google.com/storage/docs/creating-buckets">Cloud Storage bucket</a>, and some familiarity with Google Cloud.
+If you need more information on Google Cloud specifics, please see the <a href="https://cloud.google.com/docs/">official Google documentation</a>.</p>
+<p><a href="https://stedolan.github.io/jq/">jq</a> and <a href="../../introduction/quickstart/#talosctl">talosctl</a> also needs to be installed</p>
+<h2 id="manual-setup">Manual Setup</h2>
+<h3 id="environment-setup">Environment Setup</h3>
+<p>We&rsquo;ll make use of the following environment variables throughout the setup.
+Edit the variables below with your correct information.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Storage account to use</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">STORAGE_BUCKET</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;StorageBucketName&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Region</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">REGION</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;us-central1&#34;</span>
+</span></span></code></pre></div><h3 id="create-the-image">Create the Image</h3>
+<p>First, download the Google Cloud image from a Talos <a href="https://github.com/talos-systems/talos/releases">release</a>.
+These images are called <code>gcp-$ARCH.tar.gz</code>.</p>
+<h4 id="upload-the-image">Upload the Image</h4>
+<p>Once you have downloaded the image, you can upload it to your storage bucket with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gsutil cp /path/to/gcp-amd64.tar.gz gs://<span style="color:#268bd2">$STORAGE_BUCKET</span>
+</span></span></code></pre></div><h4 id="register-the-image">Register the image</h4>
+<p>Now that the image is present in our bucket, we&rsquo;ll register it.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gcloud compute images create talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span> --source-uri<span style="color:#719e07">=</span>gs://<span style="color:#268bd2">$STORAGE_BUCKET</span>/gcp-amd64.tar.gz <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span> --guest-os-features<span style="color:#719e07">=</span>VIRTIO_SCSI_MULTIQUEUE
+</span></span></code></pre></div><h3 id="network-infrastructure">Network Infrastructure</h3>
+<h4 id="load-balancers-and-firewalls">Load Balancers and Firewalls</h4>
+<p>Once the image is prepared, we&rsquo;ll want to work through setting up the network.
+Issue the following to create a firewall, load balancer, and their required components.</p>
+<p><code>130.211.0.0/22</code> and <code>35.191.0.0/16</code> are the GCP <a href="https://cloud.google.com/load-balancing/docs/health-checks#fw-rule">Load Balancer IP ranges</a></p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Create Instance Group</span>
+</span></span><span style="display:flex;"><span>gcloud compute instance-groups unmanaged create talos-ig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --zone <span style="color:#268bd2">$REGION</span>-b
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create port for IG</span>
+</span></span><span style="display:flex;"><span>gcloud compute instance-groups set-named-ports talos-ig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --named-ports tcp6443:6443 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --zone <span style="color:#268bd2">$REGION</span>-b
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create health check</span>
+</span></span><span style="display:flex;"><span>gcloud compute health-checks create tcp talos-health-check --port <span style="color:#2aa198">6443</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create backend</span>
+</span></span><span style="display:flex;"><span>gcloud compute backend-services create talos-be <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --global <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --protocol TCP <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --health-checks talos-health-check <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --timeout 5m <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --port-name tcp6443
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Add instance group to backend</span>
+</span></span><span style="display:flex;"><span>gcloud compute backend-services add-backend talos-be <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --global <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --instance-group talos-ig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --instance-group-zone <span style="color:#268bd2">$REGION</span>-b
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create tcp proxy</span>
+</span></span><span style="display:flex;"><span>gcloud compute target-tcp-proxies create talos-tcp-proxy <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --backend-service talos-be <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --proxy-header NONE
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create LB IP</span>
+</span></span><span style="display:flex;"><span>gcloud compute addresses create talos-lb-ip --global
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Forward 443 from LB IP to tcp proxy</span>
+</span></span><span style="display:flex;"><span>gcloud compute forwarding-rules create talos-fwd-rule <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --global <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --ports <span style="color:#2aa198">443</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --address talos-lb-ip <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --target-tcp-proxy talos-tcp-proxy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create firewall rule for health checks</span>
+</span></span><span style="display:flex;"><span>gcloud compute firewall-rules create talos-controlplane-firewall <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>     --source-ranges 130.211.0.0/22,35.191.0.0/16 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>     --target-tags talos-controlplane <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>     --allow tcp:6443
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create firewall rule to allow talosctl access</span>
+</span></span><span style="display:flex;"><span>gcloud compute firewall-rules create talos-controlplane-talosctl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --source-ranges 0.0.0.0/0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --target-tags talos-controlplane <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --allow tcp:50000
+</span></span></code></pre></div><h3 id="cluster-configuration">Cluster Configuration</h3>
+<p>With our networking bits setup, we&rsquo;ll fetch the IP for our load balancer and create our configuration files.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#268bd2">LB_PUBLIC_IP</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>gcloud compute forwarding-rules describe talos-fwd-rule <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>               --global <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>               --format json <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>               | jq -r .IPAddress<span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>talosctl gen config talos-k8s-gcp-tutorial https://<span style="color:#2aa198">${</span><span style="color:#268bd2">LB_PUBLIC_IP</span><span style="color:#2aa198">}</span>:443
+</span></span></code></pre></div><p>Additionally, you can specify <code>--config-patch</code> with RFC6902 jsonpatch which will be applied during the config generation.</p>
+<h3 id="compute-creation">Compute Creation</h3>
+<p>We are now ready to create our GCP nodes.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># Create the control plane nodes.</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span> seq <span style="color:#2aa198">1</span> <span style="color:#2aa198">3</span> <span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>  gcloud compute instances create talos-controlplane-<span style="color:#268bd2">$i</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --image talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --zone <span style="color:#268bd2">$REGION</span>-b <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --tags talos-controlplane <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --boot-disk-size 20GB <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --metadata-from-file<span style="color:#719e07">=</span>user-data<span style="color:#719e07">=</span>./controlplane.yaml
+</span></span><span style="display:flex;"><span><span style="color:#719e07">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Add control plane nodes to instance group</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">for</span> i in <span style="color:#719e07">$(</span> seq <span style="color:#2aa198">0</span> <span style="color:#2aa198">1</span> <span style="color:#2aa198">3</span> <span style="color:#719e07">)</span>; <span style="color:#719e07">do</span>
+</span></span><span style="display:flex;"><span>  gcloud compute instance-groups unmanaged add-instances talos-ig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>      --zone <span style="color:#268bd2">$REGION</span>-b <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>      --instances talos-controlplane-<span style="color:#268bd2">$i</span>
+</span></span><span style="display:flex;"><span><span style="color:#719e07">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># Create worker</span>
+</span></span><span style="display:flex;"><span>gcloud compute instances create talos-worker-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --image talos <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --zone <span style="color:#268bd2">$REGION</span>-b <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --boot-disk-size 20GB <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --metadata-from-file<span style="color:#719e07">=</span>user-data<span style="color:#719e07">=</span>./worker.yaml
+</span></span></code></pre></div><h3 id="bootstrap-etcd">Bootstrap Etcd</h3>
+<p>You should now be able to interact with your cluster with <code>talosctl</code>.
+We will need to discover the public IP for our first control plane node first.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#268bd2">CONTROL_PLANE_0_IP</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>gcloud compute instances describe talos-controlplane-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                     --zone <span style="color:#268bd2">$REGION</span>-b <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                     --format json <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>                     | jq -r <span style="color:#2aa198">&#39;.networkInterfaces[0].accessConfigs[0].natIP&#39;</span><span style="color:#719e07">)</span>
+</span></span></code></pre></div><p>Set the <code>endpoints</code> and <code>nodes</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig config endpoint <span style="color:#268bd2">$CONTROL_PLANE_0_IP</span>
+</span></span><span style="display:flex;"><span>talosctl --talosconfig talosconfig config node <span style="color:#268bd2">$CONTROL_PLANE_0_IP</span>
+</span></span></code></pre></div><p>Bootstrap <code>etcd</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig bootstrap
+</span></span></code></pre></div><h3 id="retrieve-the-kubeconfig">Retrieve the <code>kubeconfig</code></h3>
+<p>At this point we can retrieve the admin <code>kubeconfig</code> by running:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>talosctl --talosconfig talosconfig kubeconfig .
+</span></span></code></pre></div><h3 id="cleanup">Cleanup</h3>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># cleanup VM&#39;s</span>
+</span></span><span style="display:flex;"><span>gcloud compute instances delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-worker-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-controlplane-0 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-controlplane-1 <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-controlplane-2
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup firewall rules</span>
+</span></span><span style="display:flex;"><span>gcloud compute firewall-rules delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-controlplane-talosctl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-controlplane-firewall
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup forwarding rules</span>
+</span></span><span style="display:flex;"><span>gcloud compute forwarding-rules delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-fwd-rule
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup addresses</span>
+</span></span><span style="display:flex;"><span>gcloud compute addresses delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-lb-ip
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup proxies</span>
+</span></span><span style="display:flex;"><span>gcloud compute target-tcp-proxies delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-tcp-proxy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup backend services</span>
+</span></span><span style="display:flex;"><span>gcloud compute backend-services delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-be
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup health checks</span>
+</span></span><span style="display:flex;"><span>gcloud compute health-checks delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-health-check
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup unmanaged instance groups</span>
+</span></span><span style="display:flex;"><span>gcloud compute instance-groups unmanaged delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos-ig
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># cleanup Talos image</span>
+</span></span><span style="display:flex;"><span>gcloud compute images delete <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  talos
+</span></span></code></pre></div><h2 id="using-gcp-deployment-manager">Using GCP Deployment manager</h2>
+<p>Using GCP deployment manager automatically creates a Google Storage bucket and uploads the Talos image to it.
+Once the deployment is complete the generated <code>talosconfig</code> and <code>kubeconfig</code> files are uploaded to the bucket.</p>
+<p>By default this setup creates a three node control plane and a single worker in <code>us-west1-b</code></p>
+<p>First we need to create a folder to store our deployment manifests and perform all subsequent operations from that folder.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>mkdir -p talos-gcp-deployment
+</span></span><span style="display:flex;"><span><span style="color:#b58900">cd</span> talos-gcp-deployment
+</span></span></code></pre></div><h3 id="getting-the-deployment-manifests">Getting the deployment manifests</h3>
+<p>We need to download two deployment manifests for the deployment from the Talos github repository.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -fsSLO <span style="color:#2aa198">&#34;https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/config.yaml&#34;</span>
+</span></span><span style="display:flex;"><span>curl -fsSLO <span style="color:#2aa198">&#34;https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/talos-ha.jinja&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># if using ccm</span>
+</span></span><span style="display:flex;"><span>curl -fsSLO <span style="color:#2aa198">&#34;https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/gcp-ccm.yaml&#34;</span>
+</span></span></code></pre></div><h3 id="updating-the-config">Updating the config</h3>
+<p>Now we need to update the local <code>config.yaml</code> file with any required changes such as changing the default zone, Talos version, machine sizes, nodes count etc.</p>
+<p>An example <code>config.yaml</code> file is shown below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#268bd2">imports</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#268bd2">path</span>: talos-ha.jinja
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">resources</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#268bd2">name</span>: talos-ha
+</span></span><span style="display:flex;"><span>    <span style="color:#268bd2">type</span>: talos-ha.jinja
+</span></span><span style="display:flex;"><span>    <span style="color:#268bd2">properties</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">zone</span>: us-west1-b
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">talosVersion</span>: v0.13.2
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">externalCloudProvider</span>: <span style="color:#cb4b16">false</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">controlPlaneNodeCount</span>: <span style="color:#2aa198">5</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">controlPlaneNodeType</span>: n1-standard-1
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">workerNodeCount</span>: <span style="color:#2aa198">3</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#268bd2">workerNodeType</span>: n1-standard-1
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">outputs</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#268bd2">name</span>: bucketName
+</span></span><span style="display:flex;"><span>    <span style="color:#268bd2">value</span>: $(ref.talos-ha.bucketName)
+</span></span></code></pre></div><h4 id="enabling-external-cloud-provider">Enabling external cloud provider</h4>
+<p>Note: The <code>externalCloudProvider</code> property is set to <code>false</code> by default.
+The <a href="https://raw.githubusercontent.com/talos-systems/talos/master/website/content/docs/v0.14/Cloud%20Platforms/gcp/gcp-ccm.yaml#L256">manifest</a> used for deploying the ccm (cloud controller manager) is currently using the GCP ccm provided by openshift since there are no public images for the <a href="https://github.com/kubernetes/cloud-provider-gcp">ccm</a> yet.</p>
+<blockquote>
+<p>Since the routes controller is disabled while deploying the CCM, the CNI pods needs to be restarted after the CCM deployment is complete to remove the <code>node.kubernetes.io/network-unavailable</code> taint.
+See <a href="https://github.com/kubernetes/cloud-provider-gcp/issues/291">Nodes network-unavailable taint not removed after installing ccm</a> for more information</p>
+</blockquote>
+<p>Use a custom built image for the ccm deployment if required.</p>
+<h3 id="creating-the-deployment">Creating the deployment</h3>
+<p>Now we are ready to create the deployment.
+Confirm with <code>y</code> for any prompts.
+Run the following command to create the deployment:</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># use a unique name for the deployment, resources are prefixed with the deployment name</span>
+</span></span><span style="display:flex;"><span><span style="color:#b58900">export</span> <span style="color:#268bd2">DEPLOYMENT_NAME</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;&lt;deployment name&gt;&#34;</span>
+</span></span><span style="display:flex;"><span>gcloud deployment-manager deployments create <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">DEPLOYMENT_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> --config config.yaml
+</span></span></code></pre></div><h3 id="retrieving-the-outputs">Retrieving the outputs</h3>
+<p>First we need to get the deployment outputs.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># first get the outputs</span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">OUTPUTS</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>gcloud deployment-manager deployments describe <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">DEPLOYMENT_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> --format json | jq <span style="color:#2aa198">&#39;.outputs[]&#39;</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">BUCKET_NAME</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>jq -r <span style="color:#2aa198">&#39;. | select(.name == &#34;bucketName&#34;).finalValue&#39;</span> <span style="color:#719e07">&lt;&lt;&lt;</span> <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">OUTPUTS</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># used when cloud controller is enabled</span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>jq -r <span style="color:#2aa198">&#39;. | select(.name == &#34;serviceAccount&#34;).finalValue&#39;</span> <span style="color:#719e07">&lt;&lt;&lt;</span> <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">OUTPUTS</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span><span style="color:#719e07">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#268bd2">PROJECT</span><span style="color:#719e07">=</span><span style="color:#719e07">$(</span>jq -r <span style="color:#2aa198">&#39;. | select(.name == &#34;project&#34;).finalValue&#39;</span> <span style="color:#719e07">&lt;&lt;&lt;</span> <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">OUTPUTS</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span><span style="color:#719e07">)</span>
+</span></span></code></pre></div><p>Note: If cloud controller manager is enabled, the below command needs to be run to allow the controller custom role to access cloud resources</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gcloud projects add-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member <span style="color:#2aa198">&#34;serviceAccount:</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/iam.serviceAccountUser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gcloud projects add-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member serviceAccount:<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/compute.admin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gcloud projects add-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member serviceAccount:<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/compute.loadBalancerAdmin
+</span></span></code></pre></div><h3 id="downloading-talos-and-kube-config">Downloading talos and kube config</h3>
+<p>In addition to the <code>talosconfig</code> and <code>kubeconfig</code> files, the storage bucket contains the <code>controlplane.yaml</code> and <code>worker.yaml</code> files used to join additional nodes to the cluster.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gsutil cp <span style="color:#2aa198">&#34;gs://</span><span style="color:#2aa198">${</span><span style="color:#268bd2">BUCKET_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">/generated/talosconfig&#34;</span> .
+</span></span><span style="display:flex;"><span>gsutil cp <span style="color:#2aa198">&#34;gs://</span><span style="color:#2aa198">${</span><span style="color:#268bd2">BUCKET_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">/generated/kubeconfig&#34;</span> .
+</span></span></code></pre></div><h3 id="deploying-the-cloud-controller-manager">Deploying the cloud controller manager</h3>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --kubeconfig kubeconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  apply <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --filename gcp-ccm.yaml
+</span></span><span style="display:flex;"><span><span style="color:#586e75">#  wait for the ccm to be up</span>
+</span></span><span style="display:flex;"><span>kubectl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --kubeconfig kubeconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  rollout status <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  daemonset cloud-controller-manager
+</span></span></code></pre></div><p>If the cloud controller manager is enabled, we need to restart the CNI pods to remove the <code>node.kubernetes.io/network-unavailable</code> taint.</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># restart the CNI pods, in this case flannel</span>
+</span></span><span style="display:flex;"><span>kubectl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --kubeconfig kubeconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  rollout restart <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  daemonset kube-flannel
+</span></span><span style="display:flex;"><span><span style="color:#586e75"># wait for the pods to be restarted</span>
+</span></span><span style="display:flex;"><span>kubectl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --kubeconfig kubeconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --namespace kube-system <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  rollout status <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  daemonset kube-flannel
+</span></span></code></pre></div><h3 id="check-cluster-status">Check cluster status</h3>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kubectl <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  --kubeconfig kubeconfig <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>  get nodes
+</span></span></code></pre></div><h3 id="cleanup-deployment">Cleanup deployment</h3>
+<p>Warning: This will delete the deployment and all resources associated with it.</p>
+<p>Run below if cloud controller manager is enabled</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>gcloud projects remove-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member <span style="color:#2aa198">&#34;serviceAccount:</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/iam.serviceAccountUser
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gcloud projects remove-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member serviceAccount:<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/compute.admin
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gcloud projects remove-iam-policy-binding <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">PROJECT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --member serviceAccount:<span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">SERVICE_ACCOUNT</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> <span style="color:#cb4b16">\
+</span></span></span><span style="display:flex;"><span><span style="color:#cb4b16"></span>    --role roles/compute.loadBalancerAdmin
+</span></span></code></pre></div><p>Now we can finally remove the deployment</p>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#586e75"># delete the objects in the bucket first</span>
+</span></span><span style="display:flex;"><span>gsutil -m rm -r <span style="color:#2aa198">&#34;gs://</span><span style="color:#2aa198">${</span><span style="color:#268bd2">BUCKET_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span>
+</span></span><span style="display:flex;"><span>gcloud deployment-manager deployments delete <span style="color:#2aa198">&#34;</span><span style="color:#2aa198">${</span><span style="color:#268bd2">DEPLOYMENT_NAME</span><span style="color:#2aa198">}</span><span style="color:#2aa198">&#34;</span> --quiet
+</span></span></code></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+      
+<section class="section">
+  <div class="container">
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      
+      <a class="pagination-previous has-text-white has-background-primary" href="/docs/v1.0/cloud-platforms/digitalocean/">
+        <span class="icon">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+        </span>
+        <span>
+          DigitalOcean
+        </span>
+      </a>
+      
+
+      
+      <a class="pagination-next has-text-white has-background-primary" href="/docs/v1.0/cloud-platforms/hetzner/">
+        <span>
+          Hetzner
+        </span>
+
+        <span class="icon">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </span>
+      </a>
+      
+    </nav>
+  </div>
+</section>
+
+
+      
+
+
+
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+      </p>
+
+      <br />
+
+      <p class="has-text-weight-light">
+        &copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href="https://www.linuxfoundation.org/trademark-usage/" target="_blank">Trademark Usage</a> page.
+      </p>
+    </div>
+  </div>
+</section>
+
+    </div>
+    
+  </div>
+
+  
+<div class="drawer" :class="{ 'is-visible': drawer }">
+  
+
+
+<aside class="nav is-drawer">
+  
+  <span class="icon is-hoverable" @click="drawer = !drawer">
+    <ion-icon size="large" name="close-circle-outline"></ion-icon>
+  </span>
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+   
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/">
+      Welcome
+    </a>
+
+    
+  </div>
+
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/introduction/">
+      Introduction
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-talos/">
+          What is Talos?
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/quickstart/">
+          Quickstart
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/getting-started/">
+          Getting Started
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/system-requirements/">
+          System Requirements
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/what-is-new/">
+          What&#39;s New in Talos 1.0
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/introduction/support-matrix/">
+          Support Matrix
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/bare-metal-platforms/">
+      Bare Metal Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/digital-rebar/">
+          Digital Rebar
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/equinix-metal/">
+          Equinix Metal
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/matchbox/">
+          Matchbox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/bare-metal-platforms/sidero/">
+          Sidero
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/virtualized-platforms/">
+      Virtualized Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/hyper-v/">
+          Hyper-V
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/kvm/">
+          KVM
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/proxmox/">
+          Proxmox
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/vmware/">
+          VMware
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/virtualized-platforms/xen/">
+          Xen
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/cloud-platforms/">
+      Cloud Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/aws/">
+          AWS
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/azure/">
+          Azure
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/digitalocean/">
+          DigitalOcean
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a class="is-active" href="/docs/v1.0/cloud-platforms/gcp/">
+          GCP
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/hetzner/">
+          Hetzner
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/nocloud/">
+          Nocloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/openstack/">
+          Openstack
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/oracle/">
+          Oracle
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/scaleway/">
+          Scaleway
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/upcloud/">
+          UpCloud
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/cloud-platforms/vultr/">
+          Vultr
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/local-platforms/">
+      Local Platforms
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/docker/">
+          Docker
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/qemu/">
+          QEMU
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/local-platforms/virtualbox/">
+          VirtualBox
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/single-board-computers/">
+      Single Board Computers
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/bananapi_m64/">
+          Banana Pi M64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/jetson_nano/">
+          Jetson Nano
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/libretech_all_h3_cc_h5/">
+          Libre Computer Board ALL-H3-CC
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/pine64/">
+          Pine64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rock64/">
+          Pine64 Rock64
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rockpi_4/">
+          Radxa ROCK PI 4c
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/single-board-computers/rpi_4/">
+          Raspberry Pi 4 Model B
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/guides/">
+      Guides
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/adding-a-proprietary-kernel-module/">
+          Adding a proprietary kernel module to Talos Linux
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/advanced-networking/">
+          Advanced Networking
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/air-gapped/">
+          Air-gapped Environments
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-certificate-authorities/">
+          Configuring Certificate Authorities
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-containerd/">
+          Configuring Containerd
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-corporate-proxies/">
+          Configuring Corporate Proxies
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-network-connectivity/">
+          Configuring Network Connectivity
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-pull-through-cache/">
+          Configuring Pull Through Cache
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-the-cluster-endpoint/">
+          Configuring the Cluster Endpoint
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/configuring-wireguard-network/">
+          Configuring Wireguard Network
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-kernel/">
+          Customizing the Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/customizing-the-root-filesystem/">
+          Customizing the Root Filesystem
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploying-cilium/">
+          Deploying Cilium CNI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/deploy-metrics-server/">
+          Deploying Metrics Server
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disaster-recovery/">
+          Disaster Recovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/disk-encryption/">
+          Disk Encryption
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/editing-machine-configuration/">
+          Editing Machine Configuration
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/logging/">
+          Logging
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/managing-pki/">
+          Managing PKI
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/resetting-a-machine/">
+          Resetting a Machine
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/rbac/">
+          Role-based access control (RBAC)
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/storage/">
+          Storage
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/troubleshooting-control-plane/">
+          Troubleshooting Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-kubernetes/">
+          Upgrading Kubernetes
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/upgrading-talos/">
+          Upgrading Talos
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/guides/vip/">
+          Virtual (shared) IP
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/reference/">
+      Reference
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/kernel/">
+          Kernel
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/reference/platform/">
+          Platform
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  <div class="nav-section">
+    <a class="nav-section-title" href="/docs/v1.0/learn-more/">
+      Learn More
+    </a>
+
+    
+    <ul class="nav-section-pages">
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/philosophy/">
+          Philosophy
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/concepts/">
+          Concepts
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/architecture/">
+          Architecture
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/components/">
+          Components
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/upgrades/">
+          Upgrades
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/faqs/">
+          FAQs
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/talosctl/">
+          talosctl
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/control-plane/">
+          Control Plane
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/controllers-resources/">
+          Controllers and Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/networking-resources/">
+          Networking Resources
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/discovery/">
+          Discovery
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/kubespan/">
+          KubeSpan
+        </a>
+      </li>
+      
+      
+      <li class="nav-section-pages-link">
+        <a href="/docs/v1.0/learn-more/developing-talos/">
+          Developing Talos
+        </a>
+      </li>
+      
+    </ul>
+    
+
+    
+  </div>
+  
+  
+  
+  
+</aside>
+
+</div>
+
+</div>
+
+
+  
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js" defer></script>
+
+<script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="/js/jquery.matchHeight.js"></script>
+<script src="/js/scripts.js"></script>
+
+<script>
+  anchors.options = {
+    icon: '#'
+  }
+
+  document.addEventListener('DOMContentLoaded', function(event) {
+    anchors.add('.content h1, .content h2, .content h3, .content h4, .content h5, .content h6');
+  });
+</script>
+
+
+<script>
+  const navbarHeight = document.getElementsByClassName('navbar')[0].offsetHeight;
+  const extraPadding = 15;
+  const navbarOffset = -1 * (navbarHeight + extraPadding);
+  var shiftWindow = function() { scrollBy(0, navbarOffset) };
+  window.addEventListener("hashchange", shiftWindow);
+  window.addEventListener("pageshow", shiftWindow);
+  function load() { if (window.location.hash) shiftWindow(); }
+</script>
+
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+<script type="text/javascript">
+  docsearch({
+    apiKey: '3c4082e162be342fa20a794144b4a479',
+    indexName: 'longhorn',
+    inputSelector: '#search-input',
+    algoliaOptions: { 'facetFilters': ["version:v1.0"] },
+    debug: false
+  });
+</script>
+
+  </body>
+
+</html>

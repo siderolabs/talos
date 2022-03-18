@@ -1,0 +1,1737 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<link rel=canonical href=https://talos.dev/docs/latest/reference/configuration/>
+<meta name=twitter:card content="summary">
+<meta name=twitter:image content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta name=twitter:image:alt content="Talos Linux color logo">
+<meta property="og:url" content="https://talos.dev/docs/v0.9/reference/configuration/">
+<meta property="og:title" content="Talos Linux | Configuration">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Talos Linux">
+<meta property="og:image" content="https://talos.dev/img/logos/longhorn-icon-color.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Talos Linux color logo">
+<meta property="og:locale" content="en_US">
+<meta name=robots content="noindex">
+<title>
+Talos Linux | Documentation
+</title><link rel=stylesheet href=/css/style.d4f1ecd1424891e50994bf3612432659314faa7af1abc56b06aca280b90673fb.css integrity="sha256-1PHs0UJIkeUJlL82EkMmWTFPqnrxq8VrBqyigLkGc/s=">
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+<link rel="shortcut icon" type=image/png sizes=32x32 href=/favicon.png>
+</head><body>
+<div class=canvas id=canvas x-data="{ drawer: false }">
+<nav class="navbar is-fixed-top has-shadow" x-data="{ open: false }">
+<div class=navbar-brand>
+<a class=navbar-item href=https://talos.dev>
+<img src=/img/logos/Sidero_horizontal_lightbkgd_RGB.png alt="Talos Linux navbar logo">
+</a>
+<a role=button class=navbar-burger data-target=menu aria-label=menu aria-expanded=false :class="{ 'is-active': open }" @click="open = !open" @click.away="open = false">
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+</a>
+</div><div class=navbar-menu id=menu :class="{ 'is-active': open }">
+<div class=navbar-end>
+<div class="navbar-item is-hidden-touch">
+<p class="control has-icons-left">
+<input class="input is-rounded" type=text placeholder=Search id=search-input>
+<span class="icon is-small is-left">
+<ion-icon name=search-outline></ion-icon>
+</span>
+</p></div><nav class=navbar role=navigation aria-label="dropdown navigation">
+<div class="navbar-item has-dropdown is-hoverable">
+<a class="navbar-link is-arrowless" href=/docs/v1.0>
+<span class=has-text-weight-bold>
+Docs
+</span>
+<span class="icon has-text-secondary">
+<ion-icon name=chevron-down-outline></ion-icon>
+</span>
+</a>
+<div class=navbar-dropdown>
+<a class=navbar-item href=/docs/v1.0>
+v1.0 (<strong>latest</strong>)
+</a>
+<a class=navbar-item href=/docs/v0.14>
+v0.14
+</a>
+<a class=navbar-item href=/docs/v0.13>
+v0.13
+</a>
+<a class=navbar-item href=/docs/v0.12>
+v0.12
+</a>
+<a class=navbar-item href=/docs/v0.11>
+v0.11
+</a>
+<a class=navbar-item href=/docs/v0.10>
+v0.10
+</a>
+<a class=navbar-item href=/docs/v0.9>
+v0.9
+</a>
+<a class=navbar-item href=/docs/v0.8>
+v0.8
+</a>
+<a class=navbar-item href=/docs/v0.7>
+v0.7
+</a>
+<a class=navbar-item href=/docs/v0.6>
+v0.6
+</a>
+</div></div></nav><a class="navbar-item has-text-weight-bold" href=https://sidero.dev target=_blank>
+<span>
+Sidero Metal
+</span>
+</a>
+<a class="navbar-item has-text-weight-bold" href=https://github.com/talos-systems/talos target=_blank>
+<span>
+GitHub
+</span>
+</a>
+<a class="navbar-item has-text-weight-bold" href=https://taloscommunity.slack.com target=_blank>
+<span>
+Slack
+</span>
+</a>
+<div class=navbar-item>
+<div class="buttons is-left">
+</div></div></div></div></nav><nav class="navbar is-black is-hidden-desktop under-nav">
+<div class=navbar-brand>
+<div class="navbar-item is-hidden-desktop">
+<a class="button is-black is-borderless has-text-weight-light" @click="drawer = !drawer">
+<span class=icon>
+<ion-icon name=list></ion-icon>
+</span>
+<span>
+Docs
+</span>
+</a>
+</div></div></nav><div class=dashboard>
+<div class="dashboard-panel sidebar is-hidden-touch">
+<aside class="nav is-sidebar">
+<div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/>
+Welcome
+</a>
+</div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/introduction/>
+Introduction
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/what-is-talos/>
+What is Talos?
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/quickstart/>
+Quickstart
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/getting-started/>
+Getting Started
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/system-requirements/>
+System Requirements
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/what-is-new/>
+What's New in Talos 0.9
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/bare-metal-platforms/>
+Bare Metal Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/digital-rebar/>
+Digital Rebar
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/equinix-metal/>
+Equinix Metal
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/matchbox/>
+Matchbox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/sidero/>
+Sidero
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/virtualized-platforms/>
+Virtualized Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/hyper-v/>
+Hyper-V
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/kvm/>
+KVM
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/proxmox/>
+Proxmox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/vmware/>
+VMware
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/xen/>
+Xen
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/cloud-platforms/>
+Cloud Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/aws/>
+AWS
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/azure/>
+Azure
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/digitalocean/>
+DigitalOcean
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/gcp/>
+GCP
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/openstack/>
+Openstack
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/local-platforms/>
+Local Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/docker/>
+Docker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/firecracker/>
+Firecracker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/qemu/>
+QEMU
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/virtualbox/>
+VirtualBox
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/single-board-computers/>
+Single Board Computers
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/bananapi_m64/>
+Banana Pi M64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/libretech_all_h3_cc_h5/>
+Libre Computer Board ALL-H3-CC
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rock64/>
+Pine64 Rock64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rockpi_4/>
+Radxa ROCK PI 4c
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rpi_4/>
+Raspberry Pi 4 Model B
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/guides/>
+Guides
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/advanced-networking/>
+Advanced Networking
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/air-gapped/>
+Air-gapped Environments
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-certificate-authorities/>
+Configuring Certificate Authorities
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-containerd/>
+Configuring Containerd
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-corporate-proxies/>
+Configuring Corporate Proxies
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-network-connectivity/>
+Configuring Network Connectivity
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-pull-through-cache/>
+Configuring Pull Through Cache
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-the-cluster-endpoint/>
+Configuring the Cluster Endpoint
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-wireguard-network/>
+Configuring Wireguard Network
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/converting-control-plane/>
+Converting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/customizing-the-kernel/>
+Customizing the Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/customizing-the-root-filesystem/>
+Customizing the Root Filesystem
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/disk-encryption/>
+Disk Encryption
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/editing-machine-configuration/>
+Editing Machine Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/managing-pki/>
+Managing PKI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/resetting-a-machine/>
+Resetting a Machine
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/storage/>
+Storage
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/troubleshooting-control-plane/>
+Troubleshooting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/upgrading-kubernetes/>
+Upgrading Kubernetes
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/upgrading-talos/>
+Upgrading Talos
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/vip/>
+Virtual (shared) IP
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/reference/>
+Reference
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/api/>
+API
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/cli/>
+CLI
+</a>
+</li><li class=nav-section-pages-link>
+<a class=is-active href=/docs/v0.9/reference/configuration/>
+Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/kernel/>
+Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/platform/>
+Platform
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/learn-more/>
+Learn More
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/philosophy/>
+Philosophy
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/concepts/>
+Concepts
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/architecture/>
+Architecture
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/components/>
+Components
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/upgrades/>
+Upgrades
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/faqs/>
+FAQs
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/talosctl/>
+talosctl
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/control-plane/>
+Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/controllers-resources/>
+Controllers and Resources
+</a>
+</li></ul></div></aside></div><div class="dashboard-panel main">
+<section class="hero is-primary is-medium is-bold">
+<div class=hero-body>
+<div class=container>
+<div class=docs-content>
+<p class="title is-size-2 is-size-3-mobile has-text-weight-bold">
+Configuration
+</p></div><div class=buttons>
+<a class="button is-small" href=https://github.com/longhorn/website/edit/master/content/docs/v0.9/Reference/configuration.md target=_blank>
+<span class=icon>
+<ion-icon name=logo-github></ion-icon>
+</span>
+<span>
+Edit this page
+</span>
+</a>
+</div></div></div></section><section class=section>
+<div class=container>
+<div class=docs-content>
+<div class="content has-extra-bottom-padding">
+<p>Package v1alpha1 configuration file contains all the options available for configuring a machine.</p><p>To generate a set of basic configuration files, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>talosctl gen config --version v1alpha1 &lt;cluster name&gt; &lt;cluster endpoint&gt;
+</span></span></code></pre></div><p>This will generate a machine config for each node type, and a talosconfig for the CLI.</p><h2 id=config>Config</h2><p>Config defines the v1alpha1 configuration file.</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>version</span>: v1alpha1
+</span></span><span style=display:flex><span><span style=color:#268bd2>persist</span>: <span style=color:#cb4b16>true</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>machine</span>: <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>cluster</span>: <span style=color:#586e75># ...</span>
+</span></span></code></pre></div><p>version string</p><p>Indicates the schema used to decode the contents.</p><p>Valid values:</p><ul>
+<li>v1alpha1</li></ul><p>debug bool</p><p>Enable verbose logging to the console.
+All system containers logs will flow into serial console.</p><blockquote>
+<p>Note: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.</p></blockquote><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><p>persist bool</p><p>Indicates whether to pull the machine config upon every boot.</p><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><p>machine MachineConfig</p><p>Provides machine specific configuration options.</p><p>cluster ClusterConfig</p><p>Provides cluster specific configuration options.</p><h2 id=machineconfig>MachineConfig</h2><p>MachineConfig represents the machine-specific config values.</p><p>Appears in:</p><ul>
+<li>Config.machine</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>type</span>: controlplane
+</span></span><span style=display:flex><span><span style=color:#586e75># InstallConfig represents the installation options for preparing a node.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>install</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>disk</span>: /dev/sda <span style=color:#586e75># The disk used for installations.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Allows for supplying extra kernel args via the bootloader.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraKernelArgs</span>:
+</span></span><span style=display:flex><span>        - console=ttyS1
+</span></span><span style=display:flex><span>        - panic=10
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: ghcr.io/talos-systems/installer:latest <span style=color:#586e75># Allows for supplying the image used to perform the installation.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>bootloader</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Indicates if a bootloader should be installed.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>wipe</span>: <span style=color:#cb4b16>false</span> <span style=color:#586e75># Indicates if the installation disk should be wiped at installation time.</span>
+</span></span></code></pre></div><p>type string</p><p>Defines the role of the machine within the cluster.</p><h4 id=init>Init</h4><p>Init node type designates the first control plane node to come up.
+You can think of it like a bootstrap node.
+This node will perform the initial steps to bootstrap the cluster &ndash; generation of TLS assets, starting of the control plane, etc.</p><h4 id=control-plane>Control Plane</h4><p>Control Plane node type designates the node as a control plane member.
+This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.</p><h4 id=worker>Worker</h4><p>Worker node type designates the node as a worker node.
+This means it will be an available compute node for scheduling workloads.</p><p>Valid values:</p><ul>
+<li>
+<p>init</p></li><li>
+<p>controlplane</p></li><li>
+<p>join</p></li></ul><p>token string</p><p>The <code>token</code> is used by a machine to join the PKI of the cluster.
+Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its&rsquo; identity.</p><blockquote>
+<p>Warning: It is important to ensure that this token is correct since a machine&rsquo;s certificate has a short TTL by default.</p></blockquote><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>token</span>: 328hom.uqjzh6jnn2eie9oi
+</span></span></code></pre></div><p>ca PEMEncodedCertificateAndKey</p><p>The root certificate authority of the PKI.
+It is composed of a base64 encoded <code>crt</code> and <code>key</code>.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>ca</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>certSANs []string</p><p>Extra certificate subject alternative names for the machine&rsquo;s certificate.
+By default, all non-loopback interface IPs are automatically added to the certificate&rsquo;s SANs.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>certSANs</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>10.0.0.10</span>
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>172.16.0.10</span>
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>192.168.0.10</span>
+</span></span></code></pre></div><p>kubelet KubeletConfig</p><p>Used to provide additional options to the kubelet.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>kubelet</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: ghcr.io/talos-systems/kubelet:v1.20.5 <span style=color:#586e75># The `image` field is an optional reference to an alternative kubelet image.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The `extraArgs` field is used to provide additional flags to the kubelet.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># # The `extraMounts` field is used to add additional mounts to the kubelet container.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># extraMounts:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     - destination: /var/lib/example</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#       type: bind</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#       source: /var/lib/example</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#       options:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#         - rshared</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#         - rw</span>
+</span></span></code></pre></div><p>network NetworkConfig</p><p>Provides machine specific network configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>network</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>hostname</span>: worker-1 <span style=color:#586e75># Used to statically set the hostname for the machine.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># `interfaces` is used to define the network interface configuration.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>interfaces</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>interface</span>: eth0 <span style=color:#586e75># The interface name.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>cidr</span>: <span style=color:#2aa198>192.168.2.0</span>/24 <span style=color:#586e75># Assigns a static IP address to the interface.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># A list of routes associated with the interface.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>routes</span>:
+</span></span><span style=display:flex><span>            - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>              <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>192.168.2.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>              <span style=color:#268bd2>metric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The optional metric for the route.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>mtu</span>: <span style=color:#2aa198>1500</span> <span style=color:#586e75># The interface&#39;s MTU.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Bond specific options.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># bond:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     # The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     interfaces:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#         - eth0</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#         - eth1</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     mode: 802.3ad # A bond option.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     lacpRate: fast # A bond option.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Indicates if DHCP should be used to configure the interface.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># dhcp: true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # DHCP specific options.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># dhcpOptions:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     routeMetric: 1024 # The priority of all routes received via DHCP.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Wireguard specific configuration.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # wireguard server example</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     listenPort: 51111 # Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # wireguard peer example</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Virtual (shared) IP address configuration.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># vip:</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75>#     ip: 172.16.199.55 # Specifies the IP address to be used.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Used to statically set the nameservers for the machine.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>nameservers</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>9.8.7.6</span>
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>8.7.6.5</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># # Allows for extra entries to be added to the `/etc/hosts` file</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># extraHostEntries:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     - ip: 192.168.1.100 # The IP of the host.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#       # The host alias.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#       aliases:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#         - example</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#         - example.domain.tld</span>
+</span></span></code></pre></div><p>disks []MachineDisk</p><p>Used to partition, format and mount additional disks.
+Since the rootfs is read only with the exception of <code>/var</code>, mounts are only valid if they are under <code>/var</code>.
+Note that the partitioning and formating is done only once, if and only if no existing partitions are found.
+If <code>size:</code> is omitted, the partition is sized to occupy the full disk.</p><blockquote>
+<p>Note: <code>size</code> is in units of bytes.</p></blockquote><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disks</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>device</span>: /dev/sdb <span style=color:#586e75># The name of the disk to use.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># A list of partitions to create on the disk.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>partitions</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>mountpoint</span>: /var/mnt/extra <span style=color:#586e75># Where to mount the partition.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Human readable representation.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># size: 100 MB</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># # Precise value in bytes.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># size: 1073741824</span>
+</span></span></code></pre></div><p>install InstallConfig</p><p>Used to provide instructions for installations.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>install</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>disk</span>: /dev/sda <span style=color:#586e75># The disk used for installations.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Allows for supplying extra kernel args via the bootloader.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraKernelArgs</span>:
+</span></span><span style=display:flex><span>        - console=ttyS1
+</span></span><span style=display:flex><span>        - panic=10
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: ghcr.io/talos-systems/installer:latest <span style=color:#586e75># Allows for supplying the image used to perform the installation.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>bootloader</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Indicates if a bootloader should be installed.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>wipe</span>: <span style=color:#cb4b16>false</span> <span style=color:#586e75># Indicates if the installation disk should be wiped at installation time.</span>
+</span></span></code></pre></div><p>files []MachineFile</p><p>Allows the addition of user specified files.
+The value of <code>op</code> can be <code>create</code>, <code>overwrite</code>, or <code>append</code>.
+In the case of <code>create</code>, <code>path</code> must not exist.
+In the case of <code>overwrite</code>, and <code>append</code>, <code>path</code> must be a valid file.
+If an <code>op</code> value of <code>append</code> is used, the existing file will be appended.
+Note that the file contents are not required to be base64 encoded.</p><blockquote>
+<p>Note: The specified <code>path</code> is relative to <code>/var</code>.</p></blockquote><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>files</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>content</span>: <span style=color:#2aa198>&#39;...&#39;</span> <span style=color:#586e75># The contents of the file.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>permissions</span>: <span style=color:#2aa198>0o666</span> <span style=color:#586e75># The file&#39;s permissions in octal.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>path</span>: /tmp/file.txt <span style=color:#586e75># The path of the file.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>op</span>: append <span style=color:#586e75># The operation to use</span>
+</span></span></code></pre></div><p>env Env</p><p>The <code>env</code> field allows for the addition of environment variables.
+All environment variables are set on PID 1 in addition to every service.</p><p>Valid values:</p><ul>
+<li>
+<p><code>GRPC_GO_LOG_VERBOSITY_LEVEL</code></p></li><li>
+<p><code>GRPC_GO_LOG_SEVERITY_LEVEL</code></p></li><li>
+<p><code>http_proxy</code></p></li><li>
+<p><code>https_proxy</code></p></li><li>
+<p><code>no_proxy</code></p></li></ul><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>env</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>GRPC_GO_LOG_SEVERITY_LEVEL</span>: info
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>GRPC_GO_LOG_VERBOSITY_LEVEL</span>: <span style=color:#2aa198>&#34;99&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>https_proxy</span>: http://SERVER:PORT/
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>env</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>GRPC_GO_LOG_SEVERITY_LEVEL</span>: error
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>https_proxy</span>: https://USERNAME:PASSWORD@SERVER:PORT/
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>env</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>https_proxy</span>: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
+</span></span></code></pre></div><p>time TimeConfig</p><p>Used to configure the machine&rsquo;s time settings.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>time</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>disabled</span>: <span style=color:#cb4b16>false</span> <span style=color:#586e75># Indicates if the time service is disabled for the machine.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Specifies time (NTP) servers to use for setting the system time.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>servers</span>:
+</span></span><span style=display:flex><span>        - time.cloudflare.com
+</span></span></code></pre></div><p>sysctls map[string]string</p><p>Used to configure the machine&rsquo;s sysctls.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>sysctls</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>kernel.domainname</span>: talos.dev
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>net.ipv4.ip_forward</span>: <span style=color:#2aa198>&#34;0&#34;</span>
+</span></span></code></pre></div><p>registries RegistriesConfig</p><p>Used to configure the machine&rsquo;s container image registry mirrors.</p><p>Automatically generates matching CRI configuration for registry mirrors.</p><p>The <code>mirrors</code> section allows to redirect requests for images to non-default registry,
+which might be local registry or caching mirror.</p><p>The <code>config</code> section provides a way to authenticate to the registry with TLS client
+identity, provide registry CA, or authentication information.
+Authentication information has same meaning with the corresponding field in <code>.docker/config.json</code>.</p><p>See also matching configuration for <a href=https://github.com/containerd/cri/blob/master/docs/registry.md>CRI containerd plugin</a>.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>registries</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Specifies mirror configuration for each registry.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>mirrors</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>docker.io</span>:
+</span></span><span style=display:flex><span>            <span style=color:#586e75># List of endpoints (URLs) for registry mirrors to use.</span>
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>endpoints</span>:
+</span></span><span style=display:flex><span>                - https://registry.local
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Specifies TLS &amp; auth configuration for HTTPS image registries.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>config</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>registry.local</span>:
+</span></span><span style=display:flex><span>            <span style=color:#586e75># The TLS configuration for the registry.</span>
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>                <span style=color:#586e75># Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>                <span style=color:#268bd2>clientIdentity</span>:
+</span></span><span style=display:flex><span>                    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>                    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span><span style=display:flex><span>            <span style=color:#586e75># The auth configuration for this registry.</span>
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>auth</span>:
+</span></span><span style=display:flex><span>                <span style=color:#268bd2>username</span>: username <span style=color:#586e75># Optional registry authentication.</span>
+</span></span><span style=display:flex><span>                <span style=color:#268bd2>password</span>: password <span style=color:#586e75># Optional registry authentication.</span>
+</span></span></code></pre></div><p>systemDiskEncryption SystemDiskEncryptionConfig</p><p>Machine system disk encryption configuration.
+Defines each system partition encryption parameters.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>systemDiskEncryption</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Ephemeral partition encryption.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>ephemeral</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>provider</span>: luks2 <span style=color:#586e75># Encryption provider to use for the encryption.</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75># Defines the encryption keys generation and storage method.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>keys</span>:
+</span></span><span style=display:flex><span>            - <span style=color:#586e75># Deterministically generated key from the node UUID and PartitionLabel.</span>
+</span></span><span style=display:flex><span>              <span style=color:#268bd2>nodeID</span>: {}
+</span></span><span style=display:flex><span>              <span style=color:#268bd2>slot</span>: <span style=color:#2aa198>0</span> <span style=color:#586e75># Key slot number for luks2 encryption.</span>
+</span></span></code></pre></div><h2 id=clusterconfig>ClusterConfig</h2><p>ClusterConfig represents the cluster-wide config values.</p><p>Appears in:</p><ul>
+<li>Config.cluster</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># ControlPlaneConfig represents the control plane configuration options.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>controlPlane</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>endpoint</span>: https://1.2.3.4 <span style=color:#586e75># Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>localAPIServerPort</span>: <span style=color:#2aa198>443</span> <span style=color:#586e75># The port that the API server listens on internally.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>clusterName</span>: talos.local
+</span></span><span style=display:flex><span><span style=color:#586e75># ClusterNetworkConfig represents kube networking configuration options.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>network</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The CNI used.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>cni</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>name</span>: flannel <span style=color:#586e75># Name of CNI to use.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>dnsDomain</span>: cluster.local <span style=color:#586e75># The domain used by Kubernetes DNS.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The pod subnet CIDR.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>podSubnets</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>10.244.0.0</span>/16
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The service subnet CIDR.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>serviceSubnets</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>10.96.0.0</span>/12
+</span></span></code></pre></div><p>controlPlane ControlPlaneConfig</p><p>Provides control plane specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>controlPlane</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>endpoint</span>: https://1.2.3.4 <span style=color:#586e75># Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>localAPIServerPort</span>: <span style=color:#2aa198>443</span> <span style=color:#586e75># The port that the API server listens on internally.</span>
+</span></span></code></pre></div><p>clusterName string</p><p>Configures the cluster&rsquo;s name.</p><p>network ClusterNetworkConfig</p><p>Provides cluster specific network configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>network</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The CNI used.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>cni</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>name</span>: flannel <span style=color:#586e75># Name of CNI to use.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>dnsDomain</span>: cluster.local <span style=color:#586e75># The domain used by Kubernetes DNS.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The pod subnet CIDR.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>podSubnets</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>10.244.0.0</span>/16
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The service subnet CIDR.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>serviceSubnets</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>10.96.0.0</span>/12
+</span></span></code></pre></div><p>token string</p><p>The <a href=https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/>bootstrap token</a> used to join the cluster.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>token</span>: wlzjyw.bei2zfylhs2by0wd
+</span></span></code></pre></div><p>aescbcEncryptionSecret string</p><p>The key used for the <a href=https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/>encryption of secret data at rest</a>.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>aescbcEncryptionSecret</span>: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
+</span></span></code></pre></div><p>ca PEMEncodedCertificateAndKey</p><p>The base64 encoded root certificate authority used by Kubernetes.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>ca</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>aggregatorCA PEMEncodedCertificateAndKey</p><p>The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.</p><p>This CA can be self-signed.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>aggregatorCA</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>serviceAccount PEMEncodedKey</p><p>The base64 encoded private key for service account token generation.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>serviceAccount</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>apiServer APIServerConfig</p><p>API server specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>apiServer</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: k8s.gcr.io/kube-apiserver:v1.20.5 <span style=color:#586e75># The container image used in the API server manifest.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra arguments to supply to the API server.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>http2-max-streams-per-connection</span>: <span style=color:#2aa198>&#34;32&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra certificate subject alternative names for the API server&#39;s certificate.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>certSANs</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>1.2.3.4</span>
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>4.5.6.7</span>
+</span></span></code></pre></div><p>controllerManager ControllerManagerConfig</p><p>Controller manager server specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>controllerManager</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: k8s.gcr.io/kube-controller-manager:v1.20.5 <span style=color:#586e75># The container image used in the controller manager manifest.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra arguments to supply to the controller manager.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span></code></pre></div><p>proxy ProxyConfig</p><p>Kube-proxy server-specific configuration options</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>proxy</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: k8s.gcr.io/kube-proxy:v1.20.5 <span style=color:#586e75># The container image used in the kube-proxy manifest.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>mode</span>: ipvs <span style=color:#586e75># proxy mode of kube-proxy.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra arguments to supply to kube-proxy.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>proxy-mode</span>: iptables
+</span></span></code></pre></div><p>scheduler SchedulerConfig</p><p>Scheduler server specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>scheduler</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: k8s.gcr.io/kube-scheduler:v1.20.5 <span style=color:#586e75># The container image used in the scheduler manifest.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra arguments to supply to the scheduler.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>feature-gates</span>: AllBeta=true
+</span></span></code></pre></div><p>etcd EtcdConfig</p><p>Etcd specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>etcd</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: gcr.io/etcd-development/etcd:v3.4.15 <span style=color:#586e75># The container image used to create the etcd service.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The `ca` is the root certificate authority of the PKI.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>ca</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Extra arguments to supply to etcd.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>election-timeout</span>: <span style=color:#2aa198>&#34;5000&#34;</span>
+</span></span></code></pre></div><p>podCheckpointer PodCheckpointer</p><p>Pod Checkpointer specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>podCheckpointer</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: <span style=color:#2aa198>&#39;...&#39;</span> <span style=color:#586e75># The `image` field is an override to the default pod-checkpointer image.</span>
+</span></span></code></pre></div><p>coreDNS CoreDNS</p><p>Core DNS specific configuration options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>coreDNS</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>image</span>: docker.io/coredns/coredns:1.8.0 <span style=color:#586e75># The `image` field is an override to the default coredns image.</span>
+</span></span></code></pre></div><p>extraManifests []string</p><p>A list of urls that point to additional manifests.
+These will get automatically deployed as part of the bootstrap.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraManifests</span>:
+</span></span><span style=display:flex><span>    - https://www.example.com/manifest1.yaml
+</span></span><span style=display:flex><span>    - https://www.example.com/manifest2.yaml
+</span></span></code></pre></div><p>extraManifestHeaders map[string]string</p><p>A map of key value pairs that will be added while fetching the ExtraManifests.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraManifestHeaders</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>Token</span>: <span style=color:#2aa198>&#34;1234567&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>X-ExtraInfo</span>: info
+</span></span></code></pre></div><p>adminKubeconfig AdminKubeconfigConfig</p><p>Settings for admin kubeconfig generation.
+Certificate lifetime can be configured.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>adminKubeconfig</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>certLifetime</span>: 1h0m0s <span style=color:#586e75># Admin kubeconfig certificate lifetime (default is 1 year).</span>
+</span></span></code></pre></div><p>allowSchedulingOnMasters bool</p><p>Allows running workload on master nodes.</p><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><h2 id=kubeletconfig>KubeletConfig</h2><p>KubeletConfig represents the kubelet config values.</p><p>Appears in:</p><ul>
+<li>MachineConfig.kubelet</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: ghcr.io/talos-systems/kubelet:v1.20.5 <span style=color:#586e75># The `image` field is an optional reference to an alternative kubelet image.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># The `extraArgs` field is used to provide additional flags to the kubelet.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#586e75># # The `extraMounts` field is used to add additional mounts to the kubelet container.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># extraMounts:</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#     - destination: /var/lib/example</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#       type: bind</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#       source: /var/lib/example</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#       options:</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#         - rshared</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#         - rw</span>
+</span></span></code></pre></div><p>image string</p><p>The <code>image</code> field is an optional reference to an alternative kubelet image.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: ghcr.io/talos-systems/kubelet:v1.20.5
+</span></span></code></pre></div><p>extraArgs map[string]string</p><p>The <code>extraArgs</code> field is used to provide additional flags to the kubelet.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: value
+</span></span></code></pre></div><p>extraMounts []Mount</p><p>The <code>extraMounts</code> field is used to add additional mounts to the kubelet container.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraMounts</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>destination</span>: /var/lib/example
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>type</span>: bind
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>source</span>: /var/lib/example
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>options</span>:
+</span></span><span style=display:flex><span>        - rshared
+</span></span><span style=display:flex><span>        - rw
+</span></span></code></pre></div><p>registerWithFQDN bool</p><p>The <code>registerWithFQDN</code> field is used to force kubelet to use the node FQDN for registration.
+This is required in clouds like AWS.</p><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><h2 id=networkconfig>NetworkConfig</h2><p>NetworkConfig represents the machine&rsquo;s networking config values.</p><p>Appears in:</p><ul>
+<li>MachineConfig.network</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>hostname</span>: worker-1 <span style=color:#586e75># Used to statically set the hostname for the machine.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># `interfaces` is used to define the network interface configuration.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>interfaces</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>interface</span>: eth0 <span style=color:#586e75># The interface name.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>cidr</span>: <span style=color:#2aa198>192.168.2.0</span>/24 <span style=color:#586e75># Assigns a static IP address to the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># A list of routes associated with the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>routes</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>192.168.2.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>metric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The optional metric for the route.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>mtu</span>: <span style=color:#2aa198>1500</span> <span style=color:#586e75># The interface&#39;s MTU.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Bond specific options.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># bond:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     interfaces:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - eth0</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - eth1</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     mode: 802.3ad # A bond option.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     lacpRate: fast # A bond option.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Indicates if DHCP should be used to configure the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># dhcp: true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # DHCP specific options.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># dhcpOptions:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     routeMetric: 1024 # The priority of all routes received via DHCP.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Wireguard specific configuration.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # wireguard server example</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     listenPort: 51111 # Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # wireguard peer example</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Virtual (shared) IP address configuration.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># vip:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     ip: 172.16.199.55 # Specifies the IP address to be used.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Used to statically set the nameservers for the machine.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>nameservers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>9.8.7.6</span>
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>8.7.6.5</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#586e75># # Allows for extra entries to be added to the `/etc/hosts` file</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># extraHostEntries:</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#     - ip: 192.168.1.100 # The IP of the host.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#       # The host alias.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#       aliases:</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#         - example</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#         - example.domain.tld</span>
+</span></span></code></pre></div><p>hostname string</p><p>Used to statically set the hostname for the machine.</p><p>interfaces []Device</p><p><code>interfaces</code> is used to define the network interface configuration.
+By default all network interfaces will attempt a DHCP discovery.
+This can be further tuned through this configuration parameter.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>interfaces</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>interface</span>: eth0 <span style=color:#586e75># The interface name.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>cidr</span>: <span style=color:#2aa198>192.168.2.0</span>/24 <span style=color:#586e75># Assigns a static IP address to the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># A list of routes associated with the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>routes</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>192.168.2.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>metric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The optional metric for the route.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>mtu</span>: <span style=color:#2aa198>1500</span> <span style=color:#586e75># The interface&#39;s MTU.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Bond specific options.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># bond:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     interfaces:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - eth0</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - eth1</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     mode: 802.3ad # A bond option.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     lacpRate: fast # A bond option.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Indicates if DHCP should be used to configure the interface.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># dhcp: true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # DHCP specific options.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># dhcpOptions:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     routeMetric: 1024 # The priority of all routes received via DHCP.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Wireguard specific configuration.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # wireguard server example</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     listenPort: 51111 # Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # wireguard peer example</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Virtual (shared) IP address configuration.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># vip:</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75>#     ip: 172.16.199.55 # Specifies the IP address to be used.</span>
+</span></span></code></pre></div><p>nameservers []string</p><p>Used to statically set the nameservers for the machine.
+Defaults to <code>1.1.1.1</code> and <code>8.8.8.8</code></p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>nameservers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>8.8.8.8</span>
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>1.1.1.1</span>
+</span></span></code></pre></div><p>extraHostEntries []ExtraHost</p><p>Allows for extra entries to be added to the <code>/etc/hosts</code> file</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraHostEntries</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>ip</span>: <span style=color:#2aa198>192.168.1.100</span> <span style=color:#586e75># The IP of the host.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># The host alias.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>aliases</span>:
+</span></span><span style=display:flex><span>        - example
+</span></span><span style=display:flex><span>        - example.domain.tld
+</span></span></code></pre></div><h2 id=installconfig>InstallConfig</h2><p>InstallConfig represents the installation options for preparing a node.</p><p>Appears in:</p><ul>
+<li>MachineConfig.install</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disk</span>: /dev/sda <span style=color:#586e75># The disk used for installations.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Allows for supplying extra kernel args via the bootloader.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraKernelArgs</span>:
+</span></span><span style=display:flex><span>    - console=ttyS1
+</span></span><span style=display:flex><span>    - panic=10
+</span></span><span style=display:flex><span><span style=color:#268bd2>image</span>: ghcr.io/talos-systems/installer:latest <span style=color:#586e75># Allows for supplying the image used to perform the installation.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>bootloader</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Indicates if a bootloader should be installed.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>wipe</span>: <span style=color:#cb4b16>false</span> <span style=color:#586e75># Indicates if the installation disk should be wiped at installation time.</span>
+</span></span></code></pre></div><p>disk string</p><p>The disk used for installations.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disk</span>: /dev/sda
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disk</span>: /dev/nvme0
+</span></span></code></pre></div><p>extraKernelArgs []string</p><p>Allows for supplying extra kernel args via the bootloader.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>extraKernelArgs</span>:
+</span></span><span style=display:flex><span>    - talos.platform=metal
+</span></span><span style=display:flex><span>    - reboot=k
+</span></span></code></pre></div><p>image string</p><p>Allows for supplying the image used to perform the installation.
+Image reference for each Talos release can be found on
+<a href=https://github.com/talos-systems/talos/releases>GitHub releases page</a>.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: ghcr.io/talos-systems/installer:latest
+</span></span></code></pre></div><p>bootloader bool</p><p>Indicates if a bootloader should be installed.</p><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><p>wipe bool</p><p>Indicates if the installation disk should be wiped at installation time.
+Defaults to <code>true</code>.</p><p>Valid values:</p><ul>
+<li>
+<p>true</p></li><li>
+<p>yes</p></li><li>
+<p>false</p></li><li>
+<p>no</p></li></ul><h2 id=timeconfig>TimeConfig</h2><p>TimeConfig represents the options for configuring time on a machine.</p><p>Appears in:</p><ul>
+<li>MachineConfig.time</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disabled</span>: <span style=color:#cb4b16>false</span> <span style=color:#586e75># Indicates if the time service is disabled for the machine.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Specifies time (NTP) servers to use for setting the system time.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>servers</span>:
+</span></span><span style=display:flex><span>    - time.cloudflare.com
+</span></span></code></pre></div><p>disabled bool</p><p>Indicates if the time service is disabled for the machine.
+Defaults to <code>false</code>.</p><p>servers []string</p><p>Specifies time (NTP) servers to use for setting the system time.
+Defaults to <code>pool.ntp.org</code></p><blockquote>
+<p>This parameter only supports a single time server.</p></blockquote><h2 id=registriesconfig>RegistriesConfig</h2><p>RegistriesConfig represents the image pull options.</p><p>Appears in:</p><ul>
+<li>MachineConfig.registries</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># Specifies mirror configuration for each registry.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>mirrors</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>docker.io</span>:
+</span></span><span style=display:flex><span>        <span style=color:#586e75># List of endpoints (URLs) for registry mirrors to use.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>endpoints</span>:
+</span></span><span style=display:flex><span>            - https://registry.local
+</span></span><span style=display:flex><span><span style=color:#586e75># Specifies TLS &amp; auth configuration for HTTPS image registries.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>config</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>registry.local</span>:
+</span></span><span style=display:flex><span>        <span style=color:#586e75># The TLS configuration for the registry.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>            <span style=color:#586e75># Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>clientIdentity</span>:
+</span></span><span style=display:flex><span>                <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>                <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span><span style=display:flex><span>        <span style=color:#586e75># The auth configuration for this registry.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>auth</span>:
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>username</span>: username <span style=color:#586e75># Optional registry authentication.</span>
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>password</span>: password <span style=color:#586e75># Optional registry authentication.</span>
+</span></span></code></pre></div><p>mirrors map[string]RegistryMirrorConfig</p><p>Specifies mirror configuration for each registry.
+This setting allows to use local pull-through caching registires,
+air-gapped installations, etc.</p><p>Registry name is the first segment of image identifier, with &lsquo;docker.io&rsquo;
+being default one.
+To catch any registry names not specified explicitly, use &lsquo;*&rsquo;.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>mirrors</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>ghcr.io</span>:
+</span></span><span style=display:flex><span>        <span style=color:#586e75># List of endpoints (URLs) for registry mirrors to use.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>endpoints</span>:
+</span></span><span style=display:flex><span>            - https://registry.insecure
+</span></span><span style=display:flex><span>            - https://ghcr.io/v2/
+</span></span></code></pre></div><p>config map[string]RegistryConfig</p><p>Specifies TLS & auth configuration for HTTPS image registries.
+Mutual TLS can be enabled with &lsquo;clientIdentity&rsquo; option.</p><p>TLS configuration can be skipped if registry has trusted
+server certificate.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>config</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>registry.insecure</span>:
+</span></span><span style=display:flex><span>        <span style=color:#586e75># The TLS configuration for the registry.</span>
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>            <span style=color:#268bd2>insecureSkipVerify</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Skip TLS server certificate verification (not recommended).</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#586e75># # Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>            <span style=color:#586e75># clientIdentity:</span>
+</span></span><span style=display:flex><span>            <span style=color:#586e75>#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u</span>
+</span></span><span style=display:flex><span>            <span style=color:#586e75>#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75># # The auth configuration for this registry.</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75># auth:</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75>#     username: username # Optional registry authentication.</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75>#     password: password # Optional registry authentication.</span>
+</span></span></code></pre></div><h2 id=podcheckpointer>PodCheckpointer</h2><p>PodCheckpointer represents the pod-checkpointer config values.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.podCheckpointer</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: <span style=color:#2aa198>&#39;...&#39;</span> <span style=color:#586e75># The `image` field is an override to the default pod-checkpointer image.</span>
+</span></span></code></pre></div><p>image string</p><p>The <code>image</code> field is an override to the default pod-checkpointer image.</p><h2 id=coredns>CoreDNS</h2><p>CoreDNS represents the CoreDNS config values.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.coreDNS</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: docker.io/coredns/coredns:1.8.0 <span style=color:#586e75># The `image` field is an override to the default coredns image.</span>
+</span></span></code></pre></div><p>image string</p><p>The <code>image</code> field is an override to the default coredns image.</p><h2 id=endpoint>Endpoint</h2><p>Endpoint represents the endpoint URL parsed out of the machine config.</p><p>Appears in:</p><ul>
+<li>ControlPlaneConfig.endpoint</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>https://1.2.3.4:6443
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>https://cluster1.internal:6443
+</span></span></code></pre></div><h2 id=controlplaneconfig>ControlPlaneConfig</h2><p>ControlPlaneConfig represents the control plane configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.controlPlane</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>endpoint</span>: https://1.2.3.4 <span style=color:#586e75># Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>localAPIServerPort</span>: <span style=color:#2aa198>443</span> <span style=color:#586e75># The port that the API server listens on internally.</span>
+</span></span></code></pre></div><p>endpoint Endpoint</p><p>Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
+It is single-valued, and may optionally include a port number.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>endpoint</span>: https://1.2.3.4:6443
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>endpoint</span>: https://cluster1.internal:6443
+</span></span></code></pre></div><p>localAPIServerPort int</p><p>The port that the API server listens on internally.
+This may be different than the port portion listed in the endpoint field above.
+The default is <code>6443</code>.</p><h2 id=apiserverconfig>APIServerConfig</h2><p>APIServerConfig represents the kube apiserver configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.apiServer</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-apiserver:v1.20.5 <span style=color:#586e75># The container image used in the API server manifest.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra arguments to supply to the API server.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>http2-max-streams-per-connection</span>: <span style=color:#2aa198>&#34;32&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra certificate subject alternative names for the API server&#39;s certificate.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>certSANs</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>1.2.3.4</span>
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>4.5.6.7</span>
+</span></span></code></pre></div><p>image string</p><p>The container image used in the API server manifest.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-apiserver:v1.20.5
+</span></span></code></pre></div><p>extraArgs map[string]string</p><p>Extra arguments to supply to the API server.</p><p>extraVolumes []VolumeMountConfig</p><p>Extra volumes to mount to the API server static pod.</p><p>certSANs []string</p><p>Extra certificate subject alternative names for the API server&rsquo;s certificate.</p><h2 id=controllermanagerconfig>ControllerManagerConfig</h2><p>ControllerManagerConfig represents the kube controller manager configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.controllerManager</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-controller-manager:v1.20.5 <span style=color:#586e75># The container image used in the controller manager manifest.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra arguments to supply to the controller manager.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>feature-gates</span>: ServerSideApply=true
+</span></span></code></pre></div><p>image string</p><p>The container image used in the controller manager manifest.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-controller-manager:v1.20.5
+</span></span></code></pre></div><p>extraArgs map[string]string</p><p>Extra arguments to supply to the controller manager.</p><p>extraVolumes []VolumeMountConfig</p><p>Extra volumes to mount to the controller manager static pod.</p><h2 id=proxyconfig>ProxyConfig</h2><p>ProxyConfig represents the kube proxy configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.proxy</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-proxy:v1.20.5 <span style=color:#586e75># The container image used in the kube-proxy manifest.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>mode</span>: ipvs <span style=color:#586e75># proxy mode of kube-proxy.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra arguments to supply to kube-proxy.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>proxy-mode</span>: iptables
+</span></span></code></pre></div><p>disabled bool</p><p>Disable kube-proxy deployment on cluster bootstrap.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>disabled</span>: <span style=color:#cb4b16>false</span>
+</span></span></code></pre></div><p>image string</p><p>The container image used in the kube-proxy manifest.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-proxy:v1.20.5
+</span></span></code></pre></div><p>mode string</p><p>proxy mode of kube-proxy.
+The default is &lsquo;iptables&rsquo;.</p><p>extraArgs map[string]string</p><p>Extra arguments to supply to kube-proxy.</p><h2 id=schedulerconfig>SchedulerConfig</h2><p>SchedulerConfig represents the kube scheduler configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.scheduler</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-scheduler:v1.20.5 <span style=color:#586e75># The container image used in the scheduler manifest.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra arguments to supply to the scheduler.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>feature-gates</span>: AllBeta=true
+</span></span></code></pre></div><p>image string</p><p>The container image used in the scheduler manifest.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: k8s.gcr.io/kube-scheduler:v1.20.5
+</span></span></code></pre></div><p>extraArgs map[string]string</p><p>Extra arguments to supply to the scheduler.</p><p>extraVolumes []VolumeMountConfig</p><p>Extra volumes to mount to the scheduler static pod.</p><h2 id=etcdconfig>EtcdConfig</h2><p>EtcdConfig represents the etcd configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.etcd</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: gcr.io/etcd-development/etcd:v3.4.15 <span style=color:#586e75># The container image used to create the etcd service.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># The `ca` is the root certificate authority of the PKI.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>ca</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span><span style=display:flex><span><span style=color:#586e75># Extra arguments to supply to etcd.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>extraArgs</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>election-timeout</span>: <span style=color:#2aa198>&#34;5000&#34;</span>
+</span></span></code></pre></div><p>image string</p><p>The container image used to create the etcd service.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>image</span>: gcr.io/etcd-development/etcd:v3.4.15
+</span></span></code></pre></div><p>ca PEMEncodedCertificateAndKey</p><p>The <code>ca</code> is the root certificate authority of the PKI.
+It is composed of a base64 encoded <code>crt</code> and <code>key</code>.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>ca</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>extraArgs map[string]string</p><p>Extra arguments to supply to etcd.
+Note that the following args are not allowed:</p><ul>
+<li><code>name</code></li><li><code>data-dir</code></li><li><code>initial-cluster-state</code></li><li><code>listen-peer-urls</code></li><li><code>listen-client-urls</code></li><li><code>cert-file</code></li><li><code>key-file</code></li><li><code>trusted-ca-file</code></li><li><code>peer-client-cert-auth</code></li><li><code>peer-cert-file</code></li><li><code>peer-trusted-ca-file</code></li><li><code>peer-key-file</code></li></ul><h2 id=clusternetworkconfig>ClusterNetworkConfig</h2><p>ClusterNetworkConfig represents kube networking configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.network</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># The CNI used.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>cni</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>name</span>: flannel <span style=color:#586e75># Name of CNI to use.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>dnsDomain</span>: cluster.local <span style=color:#586e75># The domain used by Kubernetes DNS.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># The pod subnet CIDR.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>podSubnets</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>10.244.0.0</span>/16
+</span></span><span style=display:flex><span><span style=color:#586e75># The service subnet CIDR.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>serviceSubnets</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>10.96.0.0</span>/12
+</span></span></code></pre></div><p>cni CNIConfig</p><p>The CNI used.
+Composed of &ldquo;name&rdquo; and &ldquo;url&rdquo;.
+The &ldquo;name&rdquo; key only supports options of &ldquo;flannel&rdquo; or &ldquo;custom&rdquo;.
+URLs is only used if name is equal to &ldquo;custom&rdquo;.
+URLs should point to the set of YAML files to be deployed.
+An empty struct or any other name will default to Flannel CNI.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>cni</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>name</span>: custom <span style=color:#586e75># Name of CNI to use.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># URLs containing manifests to apply for the CNI.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>urls</span>:
+</span></span><span style=display:flex><span>        - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
+</span></span></code></pre></div><p>dnsDomain string</p><p>The domain used by Kubernetes DNS.
+The default is <code>cluster.local</code></p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>dnsDomain</span>: cluser.local
+</span></span></code></pre></div><p>podSubnets []string</p><p>The pod subnet CIDR.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>podSubnets</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>10.244.0.0</span>/16
+</span></span></code></pre></div><p>serviceSubnets []string</p><p>The service subnet CIDR.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>serviceSubnets</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#2aa198>10.96.0.0</span>/12
+</span></span></code></pre></div><h2 id=cniconfig>CNIConfig</h2><p>CNIConfig represents the CNI configuration options.</p><p>Appears in:</p><ul>
+<li>ClusterNetworkConfig.cni</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>name</span>: custom <span style=color:#586e75># Name of CNI to use.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># URLs containing manifests to apply for the CNI.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>urls</span>:
+</span></span><span style=display:flex><span>    - https://raw.githubusercontent.com/cilium/cilium/v1.8/install/kubernetes/quick-install.yaml
+</span></span></code></pre></div><p>name string</p><p>Name of CNI to use.</p><p>urls []string</p><p>URLs containing manifests to apply for the CNI.</p><h2 id=adminkubeconfigconfig>AdminKubeconfigConfig</h2><p>AdminKubeconfigConfig contains admin kubeconfig settings.</p><p>Appears in:</p><ul>
+<li>ClusterConfig.adminKubeconfig</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>certLifetime</span>: 1h0m0s <span style=color:#586e75># Admin kubeconfig certificate lifetime (default is 1 year).</span>
+</span></span></code></pre></div><p>certLifetime Duration</p><p>Admin kubeconfig certificate lifetime (default is 1 year).
+Field format accepts any Go time.Duration format (&lsquo;1h&rsquo; for one hour, &lsquo;10m&rsquo; for ten minutes).</p><h2 id=machinedisk>MachineDisk</h2><p>MachineDisk represents the options available for partitioning, formatting, and
+mounting extra disks.</p><p>Appears in:</p><ul>
+<li>MachineConfig.disks</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#268bd2>device</span>: /dev/sdb <span style=color:#586e75># The name of the disk to use.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># A list of partitions to create on the disk.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>partitions</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>mountpoint</span>: /var/mnt/extra <span style=color:#586e75># Where to mount the partition.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Human readable representation.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># size: 100 MB</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># # Precise value in bytes.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># size: 1073741824</span>
+</span></span></code></pre></div><p>device string</p><p>The name of the disk to use.</p><p>partitions []DiskPartition</p><p>A list of partitions to create on the disk.</p><h2 id=diskpartition>DiskPartition</h2><p>DiskPartition represents the options for a disk partition.</p><p>Appears in:</p><ul>
+<li>MachineDisk.partitions</li></ul><p>size DiskSize</p><p>The size of partition: either bytes or human readable representation. If <code>size:</code> is omitted, the partition is sized to occupy the full disk.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>size</span>: <span style=color:#2aa198>100</span> MB
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>size</span>: <span style=color:#2aa198>1073741824</span>
+</span></span></code></pre></div><p>mountpoint string</p><p>Where to mount the partition.</p><h2 id=encryptionconfig>EncryptionConfig</h2><p>EncryptionConfig represents partition encryption settings.</p><p>Appears in:</p><ul>
+<li>
+<p>SystemDiskEncryptionConfig.state</p></li><li>
+<p>SystemDiskEncryptionConfig.ephemeral</p></li></ul><p>provider string</p><p>Encryption provider to use for the encryption.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>provider</span>: luks2
+</span></span></code></pre></div><p>keys []EncryptionKey</p><p>Defines the encryption keys generation and storage method.</p><p>cipher string</p><p>Cipher kind to use for the encryption. Depends on the encryption provider.</p><h2 id=encryptionkey>EncryptionKey</h2><p>EncryptionKey represents configuration for disk encryption key.</p><p>Appears in:</p><ul>
+<li>EncryptionConfig.keys</li></ul><p>static EncryptionKeyStatic</p><p>Key which value is stored in the configuration file.</p><p>nodeID EncryptionKeyNodeID</p><p>Deterministically generated key from the node UUID and PartitionLabel.</p><p>slot int</p><p>Key slot number for luks2 encryption.</p><h2 id=encryptionkeystatic>EncryptionKeyStatic</h2><p>EncryptionKeyStatic represents throw away key type.</p><p>Appears in:</p><ul>
+<li>EncryptionKey.static</li></ul><p>passphrase string</p><p>Defines the static passphrase value.</p><h2 id=encryptionkeynodeid>EncryptionKeyNodeID</h2><p>EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.</p><p>Appears in:</p><ul>
+<li>EncryptionKey.nodeID</li></ul><h2 id=machinefile>MachineFile</h2><p>MachineFile represents a file to write to disk.</p><p>Appears in:</p><ul>
+<li>MachineConfig.files</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#268bd2>content</span>: <span style=color:#2aa198>&#39;...&#39;</span> <span style=color:#586e75># The contents of the file.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>permissions</span>: <span style=color:#2aa198>0o666</span> <span style=color:#586e75># The file&#39;s permissions in octal.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>path</span>: /tmp/file.txt <span style=color:#586e75># The path of the file.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>op</span>: append <span style=color:#586e75># The operation to use</span>
+</span></span></code></pre></div><p>content string</p><p>The contents of the file.</p><p>permissions FileMode</p><p>The file&rsquo;s permissions in octal.</p><p>path string</p><p>The path of the file.</p><p>op string</p><p>The operation to use</p><p>Valid values:</p><ul>
+<li>
+<p>create</p></li><li>
+<p>append</p></li><li>
+<p>overwrite</p></li></ul><h2 id=extrahost>ExtraHost</h2><p>ExtraHost represents a host entry in /etc/hosts.</p><p>Appears in:</p><ul>
+<li>NetworkConfig.extraHostEntries</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#268bd2>ip</span>: <span style=color:#2aa198>192.168.1.100</span> <span style=color:#586e75># The IP of the host.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># The host alias.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>aliases</span>:
+</span></span><span style=display:flex><span>    - example
+</span></span><span style=display:flex><span>    - example.domain.tld
+</span></span></code></pre></div><p>ip string</p><p>The IP of the host.</p><p>aliases []string</p><p>The host alias.</p><h2 id=device>Device</h2><p>Device represents a network interface.</p><p>Appears in:</p><ul>
+<li>NetworkConfig.interfaces</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#268bd2>interface</span>: eth0 <span style=color:#586e75># The interface name.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>cidr</span>: <span style=color:#2aa198>192.168.2.0</span>/24 <span style=color:#586e75># Assigns a static IP address to the interface.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># A list of routes associated with the interface.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>routes</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>192.168.2.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>metric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The optional metric for the route.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>mtu</span>: <span style=color:#2aa198>1500</span> <span style=color:#586e75># The interface&#39;s MTU.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # Bond specific options.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># bond:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     # The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     interfaces:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#         - eth0</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#         - eth1</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     mode: 802.3ad # A bond option.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     lacpRate: fast # A bond option.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # Indicates if DHCP should be used to configure the interface.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># dhcp: true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # DHCP specific options.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># dhcpOptions:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     routeMetric: 1024 # The priority of all routes received via DHCP.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # Wireguard specific configuration.</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # wireguard server example</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     listenPort: 51111 # Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           endpoint: 192.168.1.3 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # wireguard peer example</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># wireguard:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     # Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     peers:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#         - publicKey: ABCDEF... # Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#           allowedIPs:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#             - 192.168.1.0/24</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># # Virtual (shared) IP address configuration.</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75># vip:</span>
+</span></span><span style=display:flex><span>  <span style=color:#586e75>#     ip: 172.16.199.55 # Specifies the IP address to be used.</span>
+</span></span></code></pre></div><p>interface string</p><p>The interface name.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>interface</span>: eth0
+</span></span></code></pre></div><p>cidr string</p><p>Assigns a static IP address to the interface.
+This should be in proper CIDR notation.</p><blockquote>
+<p>Note: This option is mutually exclusive with DHCP option.</p></blockquote><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>cidr</span>: <span style=color:#2aa198>10.5.0.0</span>/16
+</span></span></code></pre></div><p>routes []Route</p><p>A list of routes associated with the interface.
+If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>routes</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>10.5.0.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>network</span>: <span style=color:#2aa198>10.2.0.0</span>/16 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>10.2.0.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span></code></pre></div><p>bond Bond</p><p>Bond specific options.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>bond</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>interfaces</span>:
+</span></span><span style=display:flex><span>        - eth0
+</span></span><span style=display:flex><span>        - eth1
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>mode</span>: <span style=color:#2aa198>802.</span>3ad <span style=color:#586e75># A bond option.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>lacpRate</span>: fast <span style=color:#586e75># A bond option.</span>
+</span></span></code></pre></div><p>vlans []Vlan</p><p>VLAN specific options.</p><p>mtu int</p><p>The interface&rsquo;s MTU.
+If used in combination with DHCP, this will override any MTU settings returned from DHCP server.</p><p>dhcp bool</p><p>Indicates if DHCP should be used to configure the interface.
+The following DHCP options are supported:</p><ul>
+<li><code>OptionClasslessStaticRoute</code></li><li><code>OptionDomainNameServer</code></li><li><code>OptionDNSDomainSearchList</code></li><li><code>OptionHostName</code></li></ul><blockquote>
+<p>Note: This option is mutually exclusive with CIDR.</p><p>Note: To configure an interface with <em>only</em> IPv6 SLAAC addressing, CIDR should be set to "" and DHCP to false
+in order for Talos to skip configuration of addresses.
+All other options will still apply.</p></blockquote><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>dhcp</span>: <span style=color:#cb4b16>true</span>
+</span></span></code></pre></div><p>ignore bool</p><p>Indicates if the interface should be ignored (skips configuration).</p><p>dummy bool</p><p>Indicates if the interface is a dummy interface.
+<code>dummy</code> is used to specify that this interface should be a virtual-only, dummy interface.</p><p>dhcpOptions DHCPOptions</p><p>DHCP specific options.
+<code>dhcp</code> <em>must</em> be set to true for these to take effect.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>dhcpOptions</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>routeMetric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The priority of all routes received via DHCP.</span>
+</span></span></code></pre></div><p>wireguard DeviceWireguardConfig</p><p>Wireguard specific configuration.
+Includes things like private key, listen port, peers.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>wireguard</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>privateKey</span>: ABCDEF... <span style=color:#586e75># Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>listenPort</span>: <span style=color:#2aa198>51111</span> <span style=color:#586e75># Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>peers</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>publicKey</span>: ABCDEF... <span style=color:#586e75># Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>endpoint</span>: <span style=color:#2aa198>192.168.1.3</span> <span style=color:#586e75># Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>allowedIPs</span>:
+</span></span><span style=display:flex><span>            - <span style=color:#2aa198>192.168.1.0</span>/24
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>wireguard</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>privateKey</span>: ABCDEF... <span style=color:#586e75># Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>peers</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#268bd2>publicKey</span>: ABCDEF... <span style=color:#586e75># Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>endpoint</span>: <span style=color:#2aa198>192.168.1.2</span> <span style=color:#586e75># Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>persistentKeepaliveInterval</span>: 10s <span style=color:#586e75># Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#586e75># AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>allowedIPs</span>:
+</span></span><span style=display:flex><span>            - <span style=color:#2aa198>192.168.1.0</span>/24
+</span></span></code></pre></div><p>vip DeviceVIPConfig</p><p>Virtual (shared) IP address configuration.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>vip</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>ip</span>: <span style=color:#2aa198>172.16.199.55</span> <span style=color:#586e75># Specifies the IP address to be used.</span>
+</span></span></code></pre></div><h2 id=dhcpoptions>DHCPOptions</h2><p>DHCPOptions contains options for configuring the DHCP settings for a given interface.</p><p>Appears in:</p><ul>
+<li>Device.dhcpOptions</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>routeMetric</span>: <span style=color:#2aa198>1024</span> <span style=color:#586e75># The priority of all routes received via DHCP.</span>
+</span></span></code></pre></div><p>routeMetric uint32</p><p>The priority of all routes received via DHCP.</p><p>ipv4 bool</p><p>Enables DHCPv4 protocol for the interface (default is enabled).</p><p>ipv6 bool</p><p>Enables DHCPv6 protocol for the interface (default is disabled).</p><h2 id=devicewireguardconfig>DeviceWireguardConfig</h2><p>DeviceWireguardConfig contains settings for configuring Wireguard network interface.</p><p>Appears in:</p><ul>
+<li>Device.wireguard</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>privateKey</span>: ABCDEF... <span style=color:#586e75># Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>listenPort</span>: <span style=color:#2aa198>51111</span> <span style=color:#586e75># Specifies a device&#39;s listening port.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>peers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>publicKey</span>: ABCDEF... <span style=color:#586e75># Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>endpoint</span>: <span style=color:#2aa198>192.168.1.3</span> <span style=color:#586e75># Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>allowedIPs</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>192.168.1.0</span>/24
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>privateKey</span>: ABCDEF... <span style=color:#586e75># Specifies a private key configuration (base64 encoded).</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># Specifies a list of peer configurations to apply to a device.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>peers</span>:
+</span></span><span style=display:flex><span>    - <span style=color:#268bd2>publicKey</span>: ABCDEF... <span style=color:#586e75># Specifies the public key of this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>endpoint</span>: <span style=color:#2aa198>192.168.1.2</span> <span style=color:#586e75># Specifies the endpoint of this peer entry.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>persistentKeepaliveInterval</span>: 10s <span style=color:#586e75># Specifies the persistent keepalive interval for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#586e75># AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</span>
+</span></span><span style=display:flex><span>      <span style=color:#268bd2>allowedIPs</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#2aa198>192.168.1.0</span>/24
+</span></span></code></pre></div><p>privateKey string</p><p>Specifies a private key configuration (base64 encoded).
+Can be generated by <code>wg genkey</code>.</p><p>listenPort int</p><p>Specifies a device&rsquo;s listening port.</p><p>firewallMark int</p><p>Specifies a device&rsquo;s firewall mark.</p><p>peers []DeviceWireguardPeer</p><p>Specifies a list of peer configurations to apply to a device.</p><h2 id=devicewireguardpeer>DeviceWireguardPeer</h2><p>DeviceWireguardPeer a WireGuard device peer configuration.</p><p>Appears in:</p><ul>
+<li>DeviceWireguardConfig.peers</li></ul><p>publicKey string</p><p>Specifies the public key of this peer.
+Can be extracted from private key by running <code>wg pubkey &lt; private.key > public.key && cat public.key</code>.</p><p>endpoint string</p><p>Specifies the endpoint of this peer entry.</p><p>persistentKeepaliveInterval Duration</p><p>Specifies the persistent keepalive interval for this peer.
+Field format accepts any Go time.Duration format (&lsquo;1h&rsquo; for one hour, &lsquo;10m&rsquo; for ten minutes).</p><p>allowedIPs []string</p><p>AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.</p><h2 id=devicevipconfig>DeviceVIPConfig</h2><p>DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.</p><p>Appears in:</p><ul>
+<li>Device.vip</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>ip</span>: <span style=color:#2aa198>172.16.199.55</span> <span style=color:#586e75># Specifies the IP address to be used.</span>
+</span></span></code></pre></div><p>ip string</p><p>Specifies the IP address to be used.</p><h2 id=bond>Bond</h2><p>Bond contains the various options for configuring a bonded interface.</p><p>Appears in:</p><ul>
+<li>Device.bond</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># The interfaces that make up the bond.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>interfaces</span>:
+</span></span><span style=display:flex><span>    - eth0
+</span></span><span style=display:flex><span>    - eth1
+</span></span><span style=display:flex><span><span style=color:#268bd2>mode</span>: <span style=color:#2aa198>802.</span>3ad <span style=color:#586e75># A bond option.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>lacpRate</span>: fast <span style=color:#586e75># A bond option.</span>
+</span></span></code></pre></div><p>interfaces []string</p><p>The interfaces that make up the bond.</p><p>arpIPTarget []string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>mode string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>xmitHashPolicy string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>lacpRate string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>adActorSystem string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>arpValidate string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>arpAllTargets string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>primary string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>primaryReselect string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>failOverMac string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>adSelect string</p><p>A bond option.
+Please see the official kernel documentation.</p><p>miimon uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>updelay uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>downdelay uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>arpInterval uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>resendIgmp uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>minLinks uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>lpInterval uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>packetsPerSlave uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><p>numPeerNotif uint8</p><p>A bond option.
+Please see the official kernel documentation.</p><p>tlbDynamicLb uint8</p><p>A bond option.
+Please see the official kernel documentation.</p><p>allSlavesActive uint8</p><p>A bond option.
+Please see the official kernel documentation.</p><p>useCarrier bool</p><p>A bond option.
+Please see the official kernel documentation.</p><p>adActorSysPrio uint16</p><p>A bond option.
+Please see the official kernel documentation.</p><p>adUserPortKey uint16</p><p>A bond option.
+Please see the official kernel documentation.</p><p>peerNotifyDelay uint32</p><p>A bond option.
+Please see the official kernel documentation.</p><h2 id=vlan>Vlan</h2><p>Vlan represents vlan settings for a device.</p><p>Appears in:</p><ul>
+<li>Device.vlans</li></ul><p>cidr string</p><p>The CIDR to use.</p><p>routes []Route</p><p>A list of routes associated with the VLAN.</p><p>dhcp bool</p><p>Indicates if DHCP should be used.</p><p>vlanId uint16</p><p>The VLAN&rsquo;s ID.</p><h2 id=route>Route</h2><p>Route represents a network route.</p><p>Appears in:</p><ul>
+<li>
+<p>Device.routes</p></li><li>
+<p>Vlan.routes</p></li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>- <span style=color:#268bd2>network</span>: <span style=color:#2aa198>0.0.0.0</span>/0 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>10.5.0.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span><span style=display:flex><span>- <span style=color:#268bd2>network</span>: <span style=color:#2aa198>10.2.0.0</span>/16 <span style=color:#586e75># The route&#39;s network.</span>
+</span></span><span style=display:flex><span>  <span style=color:#268bd2>gateway</span>: <span style=color:#2aa198>10.2.0.1</span> <span style=color:#586e75># The route&#39;s gateway.</span>
+</span></span></code></pre></div><p>network string</p><p>The route&rsquo;s network.</p><p>gateway string</p><p>The route&rsquo;s gateway.</p><p>metric uint32</p><p>The optional metric for the route.</p><h2 id=registrymirrorconfig>RegistryMirrorConfig</h2><p>RegistryMirrorConfig represents mirror configuration for a registry.</p><p>Appears in:</p><ul>
+<li>RegistriesConfig.mirrors</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>ghcr.io</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># List of endpoints (URLs) for registry mirrors to use.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>endpoints</span>:
+</span></span><span style=display:flex><span>        - https://registry.insecure
+</span></span><span style=display:flex><span>        - https://ghcr.io/v2/
+</span></span></code></pre></div><p>endpoints []string</p><p>List of endpoints (URLs) for registry mirrors to use.
+Endpoint configures HTTP/HTTPS access mode, host name,
+port and path (if path is not set, it defaults to <code>/v2</code>).</p><h2 id=registryconfig>RegistryConfig</h2><p>RegistryConfig specifies auth & TLS config per registry.</p><p>Appears in:</p><ul>
+<li>RegistriesConfig.config</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>registry.insecure</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># The TLS configuration for the registry.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>insecureSkipVerify</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Skip TLS server certificate verification (not recommended).</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75># # Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75># clientIdentity:</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75>#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u</span>
+</span></span><span style=display:flex><span>        <span style=color:#586e75>#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># # The auth configuration for this registry.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># auth:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     username: username # Optional registry authentication.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     password: password # Optional registry authentication.</span>
+</span></span></code></pre></div><p>tls RegistryTLSConfig</p><p>The TLS configuration for the registry.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>clientIdentity</span>:
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>        <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>tls</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>insecureSkipVerify</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Skip TLS server certificate verification (not recommended).</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># # Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># clientIdentity:</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75>#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u</span>
+</span></span></code></pre></div><p>auth RegistryAuthConfig</p><p>The auth configuration for this registry.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>auth</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>username</span>: username <span style=color:#586e75># Optional registry authentication.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>password</span>: password <span style=color:#586e75># Optional registry authentication.</span>
+</span></span></code></pre></div><h2 id=registryauthconfig>RegistryAuthConfig</h2><p>RegistryAuthConfig specifies authentication configuration for a registry.</p><p>Appears in:</p><ul>
+<li>RegistryConfig.auth</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>username</span>: username <span style=color:#586e75># Optional registry authentication.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>password</span>: password <span style=color:#586e75># Optional registry authentication.</span>
+</span></span></code></pre></div><p>username string</p><p>Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.</p><p>password string</p><p>Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.</p><p>auth string</p><p>Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.</p><p>identityToken string</p><p>Optional registry authentication.
+The meaning of each field is the same with the corresponding field in .docker/config.json.</p><h2 id=registrytlsconfig>RegistryTLSConfig</h2><p>RegistryTLSConfig specifies TLS config for HTTPS registries.</p><p>Appears in:</p><ul>
+<li>RegistryConfig.tls</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>clientIdentity</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>insecureSkipVerify</span>: <span style=color:#cb4b16>true</span> <span style=color:#586e75># Skip TLS server certificate verification (not recommended).</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#586e75># # Enable mutual TLS authentication with the registry.</span>
+</span></span><span style=display:flex><span><span style=color:#586e75># clientIdentity:</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u</span>
+</span></span><span style=display:flex><span><span style=color:#586e75>#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u</span>
+</span></span></code></pre></div><p>clientIdentity PEMEncodedCertificateAndKey</p><p>Enable mutual TLS authentication with the registry.
+Client certificate and key should be base64-encoded.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>clientIdentity</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>crt</span>: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>key</span>: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+</span></span></code></pre></div><p>ca Base64Bytes</p><p>CA registry certificate to add the list of trusted certificates.
+Certificate should be base64-encoded.</p><p>insecureSkipVerify bool</p><p>Skip TLS server certificate verification (not recommended).</p><h2 id=systemdiskencryptionconfig>SystemDiskEncryptionConfig</h2><p>SystemDiskEncryptionConfig specifies system disk partitions encryption settings.</p><p>Appears in:</p><ul>
+<li>MachineConfig.systemDiskEncryption</li></ul><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#586e75># Ephemeral partition encryption.</span>
+</span></span><span style=display:flex><span><span style=color:#268bd2>ephemeral</span>:
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>provider</span>: luks2 <span style=color:#586e75># Encryption provider to use for the encryption.</span>
+</span></span><span style=display:flex><span>    <span style=color:#586e75># Defines the encryption keys generation and storage method.</span>
+</span></span><span style=display:flex><span>    <span style=color:#268bd2>keys</span>:
+</span></span><span style=display:flex><span>        - <span style=color:#586e75># Deterministically generated key from the node UUID and PartitionLabel.</span>
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>nodeID</span>: {}
+</span></span><span style=display:flex><span>          <span style=color:#268bd2>slot</span>: <span style=color:#2aa198>0</span> <span style=color:#586e75># Key slot number for luks2 encryption.</span>
+</span></span></code></pre></div><p>state EncryptionConfig</p><p>State partition encryption.</p><p>ephemeral EncryptionConfig</p><p>Ephemeral partition encryption.</p><h2 id=volumemountconfig>VolumeMountConfig</h2><p>VolumeMountConfig struct describes extra volume mount for the static pods.</p><p>Appears in:</p><ul>
+<li>
+<p>APIServerConfig.extraVolumes</p></li><li>
+<p>ControllerManagerConfig.extraVolumes</p></li><li>
+<p>SchedulerConfig.extraVolumes</p></li></ul><p>hostPath string</p><p>Path on the host.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>hostPath</span>: /var/lib/auth
+</span></span></code></pre></div><p>mountPath string</p><p>Path in the container.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>mountPath</span>: /etc/kubernetes/auth
+</span></span></code></pre></div><p>readonly bool</p><p>Mount the volume read only.</p><p>Examples:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#268bd2>readonly</span>: <span style=color:#cb4b16>true</span>
+</span></span></code></pre></div></div></div></div></section><section class=section>
+<div class=container>
+<nav class=pagination role=navigation aria-label=pagination>
+<a class="pagination-previous has-text-white has-background-primary" href=/docs/v0.9/reference/cli/>
+<span class=icon>
+<ion-icon name=arrow-back-outline></ion-icon>
+</span>
+<span>
+CLI
+</span>
+</a>
+<a class="pagination-next has-text-white has-background-primary" href=/docs/v0.9/reference/kernel/>
+<span>
+Kernel
+</span>
+<span class=icon>
+<ion-icon name=arrow-forward-outline></ion-icon>
+</span>
+</a>
+</nav></div></section><section class=hero>
+<div class=hero-body>
+<div class=container>
+<hr>
+<p class=has-text-weight-light>
+&copy; 2019-2022 Longhorn Authors | Documentation Distributed under CC-BY-4.0
+</p><br>
+<p class=has-text-weight-light>
+&copy; 2022 The Linux Foundation. All rights reserved. The Linux Foundation has registered trademarks and uses trademarks. For a list of trademarks of The Linux Foundation, please see our <a href=https://www.linuxfoundation.org/trademark-usage/ target=_blank>Trademark Usage</a> page.
+</p></div></div></section></div></div><div class=drawer :class="{ 'is-visible': drawer }">
+<aside class="nav is-drawer">
+<span class="icon is-hoverable" @click="drawer = !drawer">
+<ion-icon size=large name=close-circle-outline></ion-icon>
+</span>
+<div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/>
+Welcome
+</a>
+</div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/introduction/>
+Introduction
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/what-is-talos/>
+What is Talos?
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/quickstart/>
+Quickstart
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/getting-started/>
+Getting Started
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/system-requirements/>
+System Requirements
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/introduction/what-is-new/>
+What's New in Talos 0.9
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/bare-metal-platforms/>
+Bare Metal Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/digital-rebar/>
+Digital Rebar
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/equinix-metal/>
+Equinix Metal
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/matchbox/>
+Matchbox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/bare-metal-platforms/sidero/>
+Sidero
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/virtualized-platforms/>
+Virtualized Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/hyper-v/>
+Hyper-V
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/kvm/>
+KVM
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/proxmox/>
+Proxmox
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/vmware/>
+VMware
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/virtualized-platforms/xen/>
+Xen
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/cloud-platforms/>
+Cloud Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/aws/>
+AWS
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/azure/>
+Azure
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/digitalocean/>
+DigitalOcean
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/gcp/>
+GCP
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/cloud-platforms/openstack/>
+Openstack
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/local-platforms/>
+Local Platforms
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/docker/>
+Docker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/firecracker/>
+Firecracker
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/qemu/>
+QEMU
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/local-platforms/virtualbox/>
+VirtualBox
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/single-board-computers/>
+Single Board Computers
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/bananapi_m64/>
+Banana Pi M64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/libretech_all_h3_cc_h5/>
+Libre Computer Board ALL-H3-CC
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rock64/>
+Pine64 Rock64
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rockpi_4/>
+Radxa ROCK PI 4c
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/single-board-computers/rpi_4/>
+Raspberry Pi 4 Model B
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/guides/>
+Guides
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/advanced-networking/>
+Advanced Networking
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/air-gapped/>
+Air-gapped Environments
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-certificate-authorities/>
+Configuring Certificate Authorities
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-containerd/>
+Configuring Containerd
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-corporate-proxies/>
+Configuring Corporate Proxies
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-network-connectivity/>
+Configuring Network Connectivity
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-pull-through-cache/>
+Configuring Pull Through Cache
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-the-cluster-endpoint/>
+Configuring the Cluster Endpoint
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/configuring-wireguard-network/>
+Configuring Wireguard Network
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/converting-control-plane/>
+Converting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/customizing-the-kernel/>
+Customizing the Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/customizing-the-root-filesystem/>
+Customizing the Root Filesystem
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/disk-encryption/>
+Disk Encryption
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/editing-machine-configuration/>
+Editing Machine Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/managing-pki/>
+Managing PKI
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/resetting-a-machine/>
+Resetting a Machine
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/storage/>
+Storage
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/troubleshooting-control-plane/>
+Troubleshooting Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/upgrading-kubernetes/>
+Upgrading Kubernetes
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/upgrading-talos/>
+Upgrading Talos
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/guides/vip/>
+Virtual (shared) IP
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/reference/>
+Reference
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/api/>
+API
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/cli/>
+CLI
+</a>
+</li><li class=nav-section-pages-link>
+<a class=is-active href=/docs/v0.9/reference/configuration/>
+Configuration
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/kernel/>
+Kernel
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/reference/platform/>
+Platform
+</a>
+</li></ul></div><div class=nav-section>
+<a class=nav-section-title href=/docs/v0.9/learn-more/>
+Learn More
+</a>
+<ul class=nav-section-pages>
+<li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/philosophy/>
+Philosophy
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/concepts/>
+Concepts
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/architecture/>
+Architecture
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/components/>
+Components
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/upgrades/>
+Upgrades
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/faqs/>
+FAQs
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/talosctl/>
+talosctl
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/control-plane/>
+Control Plane
+</a>
+</li><li class=nav-section-pages-link>
+<a href=/docs/v0.9/learn-more/controllers-resources/>
+Controllers and Resources
+</a>
+</li></ul></div></aside></div></div><script src=https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.2.5/dist/alpine.min.js defer></script>
+<script type=module src=https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js></script>
+<script nomodule src=https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.2.2/anchor.min.js></script>
+<script src=https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js></script>
+<script src=/js/jquery.matchHeight.js></script>
+<script src=/js/scripts.js></script>
+<script>anchors.options={icon:"#"},document.addEventListener("DOMContentLoaded",function(){anchors.add(".content h1, .content h2, .content h3, .content h4, .content h5, .content h6")})</script>
+<script>const navbarHeight=document.getElementsByClassName("navbar")[0].offsetHeight,extraPadding=15,navbarOffset=-1*(navbarHeight+extraPadding);var shiftWindow=function(){scrollBy(0,navbarOffset)};window.addEventListener("hashchange",shiftWindow),window.addEventListener("pageshow",shiftWindow);function load(){window.location.hash&&shiftWindow()}</script>
+<script type=text/javascript src=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js></script>
+<script type=text/javascript>docsearch({apiKey:"3c4082e162be342fa20a794144b4a479",indexName:"longhorn",inputSelector:"#search-input",algoliaOptions:{facetFilters:["version:v0.9"]},debug:!1})</script>
+</body></html>

@@ -1,0 +1,30 @@
+{{ $title   := .Title }}
+{{ $desc    := .Params.description }}
+{{ $version := index (split .File.Path "/") 1 }}
+{{ $isMain  := eq .File.Path "docs/_index.md" }}
+
+<div class="canvas" id="canvas" x-data="{ drawer: false }">
+  {{ partial "navbar.html" . }}
+  {{ partial "docs/under-nav.html" . }}
+
+  <div class="dashboard">
+    {{ if $isMain }}
+    {{ partial "hero.html" . }}
+    {{ partial "content.html" . }}
+    {{ partial "footer.html" . }}
+    {{ else }}
+    <div class="dashboard-panel sidebar is-hidden-touch">
+      {{ partial "docs/nav.html" (dict "drawer" false "here" .RelPermalink "version" $version) }}
+    </div>
+
+    <div class="dashboard-panel main">
+      {{ partial "hero.html" . }}
+      {{ partial "content.html" . }}
+      {{ partial "docs/pagination.html" . }}
+      {{ partial "footer.html" . }}
+    </div>
+    {{ end }}
+  </div>
+
+  {{ partial "docs/drawer.html" . }}
+</div>

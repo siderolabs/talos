@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Introduction on Talos Linux</title>
+    <link>https://talos.dev/docs/v0.7/introduction/</link>
+    <description>Recent content in Introduction on Talos Linux</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://talos.dev/docs/v0.7/introduction/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>What is Talos?</title>
+      <link>https://talos.dev/docs/v0.7/introduction/what-is-talos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/introduction/what-is-talos/</guid>
+      <description>Talos is a container optimized Linux distro; a reimagining of Linux for distributed systems such as Kubernetes. Designed to be as minimal as possible while still maintaining practicality. For these reasons, Talos has a number of features unique to it:
+ it is immutable it is atomic it is ephemeral it is minimal it is secure by default it is managed via a sigle declaritive configuration file and gRPC API  Talos can be deployed on container, cloud, virtualized, and bare metal platforms.</description>
+    </item>
+    
+    <item>
+      <title>Quickstart</title>
+      <link>https://talos.dev/docs/v0.7/introduction/quickstart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/introduction/quickstart/</guid>
+      <description>The easiest way to try Talos is by using the CLI (talosctl) to create a cluster on a machine with docker installed.
+Prerequisites talosctl Download talosctl:
+curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr &amp;#34;[:upper:]&amp;#34; &amp;#34;[:lower:]&amp;#34;)-amd64 chmod +x /usr/local/bin/talosctl kubectl Download kubectl via one of methods outlined in the documentation.
+Create the Cluster Now run the following:
+talosctl cluster create Verify that you can reach Kubernetes:
+$ kubectl get nodes -o wide NAME STATUS ROLES AGE VERSION INTERNAL-IP EXTERNAL-IP OS-IMAGE KERNEL-VERSION CONTAINER-RUNTIME talos-default-master-1 Ready master 115s v1.</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>https://talos.dev/docs/v0.7/introduction/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/introduction/getting-started/</guid>
+      <description>Regardless of where you run Talos, you will find that there is a pattern to deploying it.
+In general you will need to:
+ identity and create the image optionally create a load balancer for Kubernetes configure Talos create the nodes  Kernel Parameters The following is a list of kernel parameters required by Talos:
+ talos.config: the HTTP(S) URL at which the machine data can be found talos.platform: can be one of aws, azure, container, digitalocean, gcp, metal, packet, or vmware page_poison=1: required by KSPP slab_nomerge: required by KSPP slub_debug=P: required by KSPP pti=on: required by KSPP  CLI Installation curl -Lo /usr/local/bin/talosctl https://github.</description>
+    </item>
+    
+    <item>
+      <title>System Requirements</title>
+      <link>https://talos.dev/docs/v0.7/introduction/system-requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://talos.dev/docs/v0.7/introduction/system-requirements/</guid>
+      <description>Minimum Requirements Recommended These requirements are similar to that of kubernetes.</description>
+    </item>
+    
+  </channel>
+</rss>

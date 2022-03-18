@@ -1,0 +1,282 @@
+resources:
+- type: storage.v1.bucket
+  name: {{ env["deployment"] }}-talos-assets
+- name: create-talos-artifact
+  action: gcp-types/cloudbuild-v1:cloudbuild.projects.builds.create
+  metadata:
+    runtimePolicy:
+    - CREATE
+  properties:
+    steps:
+    - name: gcr.io/cloud-builders/curl
+      args:
+        - -fSLO
+        - https://github.com/talos-systems/talos/releases/download/{{ properties["talosVersion"] }}/gcp-amd64.tar.gz
+    - name: gcr.io/cloud-builders/gsutil
+      args:
+        - -m
+        - cp
+        - gcp-amd64.tar.gz
+        - gs://$(ref.{{ env["deployment"] }}-talos-assets.name)/gcp-amd64.tar.gz
+    timeout: 120s
+- type: compute.v1.image
+  name: {{ env["deployment"] }}-talos-image
+  metadata:
+    dependsOn:
+    - create-talos-artifact
+  properties:
+    rawDisk:
+      source: https://storage.cloud.google.com/$(ref.{{ env["deployment"] }}-talos-assets.name)/gcp-amd64.tar.gz
+    sourceType: RAW
+    description: Talos image
+    family: talos
+- type: compute.v1.instanceGroup
+  name: {{ env["deployment"] }}-talos-ig
+  properties:
+    zone: {{ properties["zone"] }}
+    description: Talos instance group
+    namedPorts:
+    - name: tcp6443
+      port: 6443
+- type: compute.v1.healthCheck
+  name: {{ env["deployment"] }}-talos-healthcheck
+  properties:
+    description: Talos health check
+    type: TCP
+    tcpHealthCheck:
+      port: 6443
+- type: compute.v1.backendService
+  name: {{ env["deployment"] }}-talos-backend
+  properties:
+    description: Talos backend service
+    protocol: TCP
+    healthChecks:
+    - $(ref.{{ env["deployment"] }}-talos-healthcheck.selfLink)
+    timeoutSec: 300
+    backends:
+    - description: Talos backend
+      group: $(ref.{{ env["deployment"] }}-talos-ig.selfLink)
+    portName: tcp6443
+- type: compute.v1.targetTcpProxy
+  name: {{ env["deployment"] }}-talos-tcp-proxy
+  properties:
+    description: Talos TCP proxy
+    service: $(ref.{{ env["deployment"] }}-talos-backend.selfLink)
+    proxyHeader: NONE
+- type: compute.v1.globalAddress
+  name: {{ env["deployment"] }}-talos-lb-ip
+  properties:
+    description: Talos LoadBalancer IP
+- type: compute.v1.globalForwardingRule
+  name: talos-fwd-rule
+  properties:
+    description: Talos Forwarding rule
+    target: $(ref.{{ env["deployment"] }}-talos-tcp-proxy.selfLink)
+    IPAddress: $(ref.{{ env["deployment"] }}-talos-lb-ip.address)
+    IPProtocol: TCP
+    portRange: 443
+- type: compute.v1.firewall
+  name: {{ env["deployment"] }}-talos-controlplane-firewall
+  properties:
+    description: Talos controlplane firewall
+    sourceRanges:
+    - 130.211.0.0/22
+    - 35.191.0.0/16
+    targetTags:
+    - talos-controlplane
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 6443
+- type: compute.v1.firewall
+  name: {{ env["deployment"] }}-talos-controlplane-talosctl
+  properties:
+    description: Talos controlplane talosctl firewall
+    sourceRanges:
+    - 0.0.0.0/0
+    targetTags:
+    - talos-controlplane
+    - talos-workers
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 50000
+{% if properties["externalCloudProvider"] %}
+- type: gcp-types/iam-v1:projects.serviceAccounts
+  name: {{ env["deployment"] }}-ccm-sa
+  properties:
+    displayName: Cloud Controller Manager
+    accountId: {{ env["deployment"] }}-ccm-sa
+{% endif %}
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+- type: compute.v1.instance
+  name: {{ env["deployment"] }}-talos-controlplane-{{ index }}
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties["controlPlaneNodeType"] }}
+{% if properties["externalCloudProvider"] %}
+    serviceAccounts:
+    - email: $(ref.{{ env["deployment"] }}-ccm-sa.email)
+      scopes:
+      - https://www.googleapis.com/auth/compute
+{% endif %}
+    tags:
+      items:
+      - talos-controlplane
+      - {{ env["deployment"] }}-talos-controlplane-{{ index }} # required for cloud controller-manager
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskSizeGb: 20
+        sourceImage: $(ref.{{ env["deployment"] }}-talos-image.selfLink)
+    networkInterfaces:
+    - network: global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+{% endfor %}
+{% for index in range(properties["workerNodeCount"]) %}
+- type: compute.v1.instance
+  name: {{ env["deployment"] }}-talos-worker-{{ index }}
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: zones/{{ properties["zone"] }}/machineTypes/{{ properties["workerNodeType"] }}
+{% if properties["externalCloudProvider"] %}
+    serviceAccounts:
+    - email: $(ref.{{ env["deployment"] }}-ccm-sa.email)
+      scopes:
+      - https://www.googleapis.com/auth/compute
+{% endif %}
+    tags:
+      items:
+      - talos-workers
+      - {{ env["deployment"] }}-talos-worker-{{ index }} # required for cloud controller-manager
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskSizeGb: 20
+        sourceImage: $(ref.{{ env["deployment"] }}-talos-image.selfLink)
+    networkInterfaces:
+    - network: global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+{% endfor %}
+- name: {{ env["deployment"] }}-talos-ig-members
+  action: gcp-types/compute-v1:compute.instanceGroups.addInstances
+  properties:
+    zone: {{ properties["zone"] }}
+    instanceGroup: $(ref.{{ env["deployment"] }}-talos-ig.name)
+    instances:
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+        - instance: $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.selfLink)
+{% endfor %}
+- name: generate-config-and-bootstrap
+  action: gcp-types/cloudbuild-v1:cloudbuild.projects.builds.create
+  metadata:
+    runtimePolicy:
+    - CREATE
+  properties:
+    steps:
+    - name: gcr.io/cloud-builders/curl
+      args:
+        - -fSLO
+        - https://github.com/talos-systems/talos/releases/download/{{ properties["talosVersion"] }}/talosctl-linux-amd64
+    - name: alpine
+      args:
+        - /bin/sh
+        - -ec
+        - |
+          chmod +x talosctl-linux-amd64 && \
+          mv talosctl-linux-amd64 /usr/local/bin/talosctl && \
+          mkdir -p generated && \
+          talosctl gen config \
+            {{ env["deployment"] }} \
+            https://$(ref.{{ env["deployment"] }}-talos-lb-ip.address):443 \
+            {% if properties["externalCloudProvider"] %} --config-patch '[{"op": "add", "path": "/cluster/externalCloudProvider", "value": {"enabled": true}}]' \{% endif %}
+            --output-dir generated/ && \
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+          echo "applying config for {{ env["deployment"] }}-talos-controlplane-{{ index }}" && \
+          talosctl apply-config \
+            --insecure \
+            --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+            --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+            --file generated/controlplane.yaml && \
+{% endfor %}
+{%  for index in range(properties["workerNodeCount"]) %}
+          echo "applying config for {{ env["deployment"] }}-talos-worker-{{ index }}" && \
+          talosctl apply-config \
+            --insecure \
+            --nodes $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+            --endpoints $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+            --file generated/worker.yaml && \
+{% endfor %}
+          # wait before bootstrapping
+          wait_count=120
+          until nc -vzw 3 $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) 50000; do
+            echo "Waiting for talos-controlplane-0 to be ready for bootstrap"
+            wait_count=$((wait_count=wait_count-1))
+            if [ "${wait_count}" -eq 0 ]; then
+              echo "Timeout waiting for talos-controlplane-0 to be ready for bootstrap"
+              # if failed just reset
+{% for index in range(properties["controlPlaneNodeCount"]) %}
+              echo "resetting config for {{ env["deployment"] }}-talos-controlplane-{{ index }}" && \
+              talosctl reset \
+                --talosconfig generated/talosconfig\
+                --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+                --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+                --graceful=false \
+                --system-labels-to-wipe SYSTEM \
+                --system-labels-to-wipe EPHEMERAL && \
+{% endfor %}
+{%  for index in range(properties["workerNodeCount"]) %}
+              talosctl reset \
+                --talosconfig generated/talosconfig\
+                --nodes $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+                --endpoints $(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP) \
+                --graceful=false \
+                --system-labels-to-wipe SYSTEM \
+                --system-labels-to-wipe EPHEMERAL && \
+{% endfor %}
+              exit 1
+            fi
+          done && \
+          talosctl \
+            --talosconfig generated/talosconfig \
+            --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) \
+            --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) \
+            bootstrap && \
+          talosctl \
+            --talosconfig generated/talosconfig \
+            --nodes $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) \
+            --endpoints $(ref.{{ env["deployment"] }}-talos-controlplane-0.networkInterfaces[0].accessConfigs[0].natIP) \
+            kubeconfig generated/ && \
+          talosctl \
+            --talosconfig generated/talosconfig \
+            config endpoint \
+            {% for index in range(properties["controlPlaneNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %} {% for index in range(properties["workerNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %} && \
+          talosctl \
+            --talosconfig generated/talosconfig \
+            config node \
+            {% for index in range(properties["controlPlaneNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-controlplane-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %} {% for index in range(properties["workerNodeCount"]) %}$(ref.{{ env["deployment"] }}-talos-worker-{{ index }}.networkInterfaces[0].accessConfigs[0].natIP){% if not loop.last %} {% endif %}{% endfor %}
+    - name: gcr.io/cloud-builders/gsutil
+      args:
+        - -m
+        - cp
+        - -r
+        - generated
+        - gs://$(ref.{{ env["deployment"] }}-talos-assets.name)/
+    timeout: 360s
+outputs:
+- name: bucketName
+  value: $(ref.{{ env["deployment"] }}-talos-assets.name)
+- name: serviceAccount
+  value: $(ref.{{ env["deployment"] }}-ccm-sa.email)
+- name: project
+  value: {{ env["project"] }}

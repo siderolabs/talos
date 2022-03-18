@@ -1,0 +1,18 @@
+{{ $title := site.Title }}
+{{ $logo := printf "img/logos/%s" site.Params.logos.footer | relURL }}
+{{ $firstYear := "2019" | int }}
+{{ $currentYear := now.Year | int }}
+{{ $yearString := cond (eq $firstYear $currentYear) $firstYear (printf "%d-%d" $firstYear $currentYear) }}
+{{ $menu := site.Menus.main }}
+{{ $latest := index site.Params.versions 0 }}
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <hr />
+
+      <p class="has-text-weight-light">
+        &copy; {{ $yearString }} Sidero Labs
+      </p>
+    </div>
+  </div>
+</section>
