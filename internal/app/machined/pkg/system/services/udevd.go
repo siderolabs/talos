@@ -89,7 +89,11 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		if !c.triggered {
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger"); err != nil {
+			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=devices", "--action=add"); err != nil {
+				return err
+			}
+
+			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=subsystems", "--action=add"); err != nil {
 				return err
 			}
 
