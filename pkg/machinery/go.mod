@@ -17,7 +17,7 @@ require (
 	github.com/jsimonetti/rtnetlink v1.1.1
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/go-blockdevice v0.3.0
 	github.com/talos-systems/go-debug v0.2.1
