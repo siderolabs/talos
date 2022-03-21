@@ -20,19 +20,19 @@ require (
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/apiserver v0.23.5
-	k8s.io/cli-runtime v0.23.4 // indirect
+	k8s.io/cli-runtime v0.23.5 // indirect
 	k8s.io/client-go v0.23.5
 	k8s.io/component-base v0.23.5
-	k8s.io/cri-api v0.23.4
-	k8s.io/kubectl v0.23.4
-	k8s.io/kubelet v0.23.4
+	k8s.io/cri-api v0.23.5
+	k8s.io/kubectl v0.23.5
+	k8s.io/kubelet v0.23.5
 )
 
 require (
 	cloud.google.com/go/compute v1.5.0
 	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.0.0
-	github.com/aws/aws-sdk-go v1.43.17
+	github.com/aws/aws-sdk-go v1.43.21
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
@@ -54,7 +54,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
-	github.com/godbus/dbus/v5 v5.0.6
+	github.com/godbus/dbus/v5 v5.1.0
 	github.com/google/go-cmp v0.5.7
 	github.com/google/nftables v0.0.0-20220221214239-211824995dcb
 	github.com/google/uuid v1.3.0
@@ -86,7 +86,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
@@ -104,9 +104,9 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v0.15.0-alpha.2
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
-	github.com/vmware-tanzu/sonobuoy v0.56.2
+	github.com/vmware-tanzu/sonobuoy v0.56.3
 	github.com/vmware/govmomi v0.27.4
-	github.com/vmware/vmw-guestinfo v0.0.0-20211006225857-cc1fd90d572c
+	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.0.3
 	go.etcd.io/etcd/api/v3 v3.5.2
 	go.etcd.io/etcd/client/pkg/v3 v3.5.2
@@ -116,7 +116,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
@@ -274,7 +274,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
 	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220310185008-1973136f34c6 // indirect
+	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

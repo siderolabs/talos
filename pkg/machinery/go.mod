@@ -17,12 +17,12 @@ require (
 	github.com/jsimonetti/rtnetlink v1.1.1
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/go-blockdevice v0.3.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
-	google.golang.org/genproto v0.0.0-20220310185008-1973136f34c6
+	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
