@@ -54,7 +54,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/gizak/termui/v3 v3.1.0
-	github.com/godbus/dbus/v5 v5.0.6
+	github.com/godbus/dbus/v5 v5.1.0
 	github.com/google/go-cmp v0.5.7
 	github.com/google/nftables v0.0.0-20220221214239-211824995dcb
 	github.com/google/uuid v1.3.0
