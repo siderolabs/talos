@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	hashiversion "github.com/hashicorp/go-version"
 
@@ -68,18 +67,6 @@ func (ext *Extension) validateContents() error {
 		// check for -------w-
 		if d.Type().Perm()&0o002 > 0 {
 			return fmt.Errorf("world-writeable files are not allowed: %q", itemPath)
-		}
-
-		var st fs.FileInfo
-
-		st, err = d.Info()
-		if err != nil {
-			return err
-		}
-
-		// no hardlinks
-		if !d.IsDir() && st.Sys().(*syscall.Stat_t).Nlink > 1 {
-			return fmt.Errorf("hardlinks are not allowed: %q", itemPath)
 		}
 
 		// no special files
