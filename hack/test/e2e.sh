@@ -242,3 +242,21 @@ function run_csi_tests {
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
   KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass rook-ceph-block --size 10G
 }
+
+function run_day_two_tests {
+  rm -rf "${TMP}/day-two-state"
+  ${D2CTL} up --state-path "${TMP}/day-two-state" --config-path "${PWD}/hack/test/day-two/config.yaml"
+
+  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{..availableReplicas}=1' deployment/loki-kube-state-metrics
+  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{..availableReplicas}=1' deployment/loki-prometheus-server
+  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{..availableReplicas}=1' deployment/loki-grafana
+  
+  ${KUBECTL} --namespace metallb wait --timeout 900s --for=jsonpath='{..availableReplicas}=1' deployment/metallb-controller
+
+  ${KUBECTL} --namespace ingress wait --timeout 900s --for=jsonpath='{..availableReplicas}=1' deployment/ingress-nginx-controller
+
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
+  KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G 
+}

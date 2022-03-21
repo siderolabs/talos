@@ -1,0 +1,31 @@
+charts:
+  loki:
+    namespace: loki
+    repo: https://grafana.github.io/helm-charts
+    chart: loki-stack
+    valuesPath: hack/test/day-two/loki-values.yaml      
+
+  metallb:
+    namespace: metallb
+    repo: https://metallb.github.io/metallb
+    chart: metallb
+    valuesPath: hack/test/day-two/metallb-values.yaml      
+
+  ingress-nginx:
+    namespace: ingress
+    repo: https://kubernetes.github.io/ingress-nginx
+    chart: ingress-nginx
+    depends:
+      - metallb
+
+  rook:
+    namespace: rook-ceph
+    repo: https://charts.rook.io/release
+    chart: rook-ceph
+
+  ceph:
+    namespace: rook-ceph
+    repo: https://charts.rook.io/release
+    chart: rook-ceph-cluster
+    depends:
+      - rook

@@ -31,6 +31,7 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.23.5
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.31/kubestr_0.4.31_Linux_amd64.tar.gz
 CLUSTERCTL_VERSION ?= 1.0.4
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
+D2CTL_URL ?= https://github.com/talos-systems/day-two/releases/download/v0.1.0-alpha.1/d2ctl-$(OPERATING_SYSTEM)-amd64
 TESTPKGS ?= github.com/talos-systems/talos/...
 RELEASES ?= v0.13.4 v0.14.1
 SHORT_INTEGRATION_TEST ?=
@@ -173,7 +174,7 @@ docker-%: ## Builds the specified target defined in the Dockerfile using the doc
 registry-%: ## Builds the specified target defined in the Dockerfile using the image/registry output type. The build result will be pushed to the registry if PUSH=true.
 	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(IMAGE_TAG) $(TARGET_ARGS)"
 
-hack-test-%: ## Runs the specied script in ./hack/test with well known environment variables.
+hack-test-%: ## Runs the specified script in ./hack/test with well known environment variables.
 	@./hack/test/$*.sh
 
 # Generators
@@ -318,7 +319,12 @@ $(ARTIFACTS)/clusterctl:
 	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
 	@chmod +x $(ARTIFACTS)/clusterctl
 
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+$(ARTIFACTS)/d2ctl:
+	@mkdir -p $(ARTIFACTS)
+	@curl -L -o $(ARTIFACTS)/d2ctl "$(D2CTL_URL)"
+	@chmod +x $(ARTIFACTS)/d2ctl
+
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/d2ctl ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
@@ -333,7 +339,8 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubect
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
-		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
+		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
+		D2CTL=$(PWD)/$(ARTIFACTS)/d2ctl
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
