@@ -907,7 +907,9 @@ func (c *Client) EtcdRecover(ctx context.Context, snapshot io.Reader, callOption
 		default:
 		}
 
-		n, err := snapshot.Read(buf)
+		var n int
+
+		n, err = snapshot.Read(buf)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				break
@@ -919,11 +921,21 @@ func (c *Client) EtcdRecover(ctx context.Context, snapshot io.Reader, callOption
 		if err = cli.Send(&common.Data{
 			Bytes: buf[:n],
 		}); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
 			return nil, err
 		}
 	}
 
-	return cli.CloseAndRecv()
+	resp, err := cli.CloseAndRecv()
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdRecoverResponse) //nolint:errcheck
+
+	return resp, err
 }
 
 // GenerateClientConfiguration implements proto.MachineServiceClient interface.

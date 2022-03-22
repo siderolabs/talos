@@ -98,7 +98,7 @@ require (
 	github.com/talos-systems/go-procfs v0.1.0
 	github.com/talos-systems/go-retry v0.3.1
 	github.com/talos-systems/go-smbios v0.1.1
-	github.com/talos-systems/grpc-proxy v0.2.0
+	github.com/talos-systems/grpc-proxy v0.3.0
 	github.com/talos-systems/net v0.3.2
 	github.com/talos-systems/siderolink v0.1.0
 	github.com/talos-systems/talos/pkg/machinery v0.15.0-alpha.2
