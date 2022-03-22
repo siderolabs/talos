@@ -13,7 +13,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/talos-systems/tools:v1.0.0-1-g4c77d96
-PKGS ?= v1.0.0-1-gcd86ab5
+PKGS ?= v1.0.0-2-g9d4e9ae
 EXTRAS ?= v1.0.0
 GO_VERSION ?= 1.17
 GOFUMPT_VERSION ?= v0.1.1
