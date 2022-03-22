@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/talos-systems/go-retry/retry"
+	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -156,7 +157,7 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 
 	suite.T().Logf("recovering etcd snapshot at node %q", recoverNode)
 
-	suite.Require().NoError(suite.recoverEtcd(recoverNode, &snapshot))
+	suite.Require().NoError(suite.recoverEtcd(recoverNode, bytes.NewReader(snapshot.Bytes())))
 
 	suite.AssertClusterHealthy(suite.ctx)
 
@@ -197,21 +198,40 @@ func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer)
 	return err
 }
 
-func (suite *EtcdRecoverSuite) recoverEtcd(recoverNode string, src io.Reader) error {
+func (suite *EtcdRecoverSuite) recoverEtcd(recoverNode string, src io.ReadSeeker) error {
 	ctx := client.WithNodes(suite.ctx, recoverNode)
 
-	if err := retry.Constant(time.Minute, retry.WithUnits(time.Millisecond*200)).RetryWithContext(ctx, func(ctx context.Context) error {
-		_, err := suite.Client.EtcdRecover(ctx, src)
+	suite.T().Log("uploading the snapshot")
 
-		return retry.ExpectedError(err)
+	if err := retry.Constant(time.Minute, retry.WithUnits(time.Millisecond*200)).RetryWithContext(ctx, func(ctx context.Context) error {
+		_, err := src.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+
+		_, err = suite.Client.EtcdRecover(ctx, src)
+
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return retry.ExpectedError(err)
+		}
+
+		return err
 	}); err != nil {
 		return fmt.Errorf("error uploading snapshot: %w", err)
 	}
 
+	suite.T().Log("bootstrapping from the snapshot")
+
 	return retry.Constant(time.Minute, retry.WithUnits(time.Millisecond*200)).RetryWithContext(ctx, func(ctx context.Context) error {
-		return retry.ExpectedError(suite.Client.Bootstrap(ctx, &machineapi.BootstrapRequest{
+		err := suite.Client.Bootstrap(ctx, &machineapi.BootstrapRequest{
 			RecoverEtcd: true,
-		}))
+		})
+
+		if client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded {
+			return retry.ExpectedError(err)
+		}
+
+		return err
 	})
 }
 
