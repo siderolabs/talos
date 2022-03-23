@@ -210,6 +210,11 @@ name = "GitHub"
 url = "https://github.com/talos-systems/talos"
 
 [[menu.main]]
+name = "Sidero Labs"
+url = "https://www.siderolabs.com"
+weight = 100
+
+[[menu.main]]
 name = "GitHub"
 url = "https://github.com/talos-systems/talos"
 weight = 99
@@ -218,3 +223,4 @@ weight = 99
 name = "Sidero Metal"
 url = "https://sidero.dev"
 weight = 98
+
