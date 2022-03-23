@@ -256,7 +256,7 @@ const (
 	DefaultControlPlanePort = 6443
 
 	// KubeletImage is the enforced kubelet image to use.
-	KubeletImage = "ghcr.io/talos-systems/kubelet"
+	KubeletImage = "ghcr.io/siderolabs/kubelet"
 
 	// KubeProxyImage is the enforced kube-proxy image to use for the control plane.
 	KubeProxyImage = "k8s.gcr.io/kube-proxy"

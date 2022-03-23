@@ -720,14 +720,14 @@ func init() {
 	InstallConfigDoc.Fields[3].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/talos-systems/talos/releases)."
 	InstallConfigDoc.Fields[3].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
 
-	InstallConfigDoc.Fields[3].AddExample("", "ghcr.io/talos-systems/installer:latest")
+	InstallConfigDoc.Fields[3].AddExample("", "ghcr.io/siderolabs/installer:latest")
 	InstallConfigDoc.Fields[4].Name = "extensions"
 	InstallConfigDoc.Fields[4].Type = "[]InstallExtensionConfig"
 	InstallConfigDoc.Fields[4].Note = ""
 	InstallConfigDoc.Fields[4].Description = "Allows for supplying additional system extension images to install on top of base Talos image."
 	InstallConfigDoc.Fields[4].Comments[encoder.LineComment] = "Allows for supplying additional system extension images to install on top of base Talos image."
 
-	InstallConfigDoc.Fields[4].AddExample("", "ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0")
+	InstallConfigDoc.Fields[4].AddExample("", "ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0")
 	InstallConfigDoc.Fields[5].Name = "bootloader"
 	InstallConfigDoc.Fields[5].Type = "bool"
 	InstallConfigDoc.Fields[5].Note = ""
@@ -834,7 +834,7 @@ func init() {
 	InstallExtensionConfigDoc.Comments[encoder.LineComment] = "InstallExtensionConfig represents a configuration for a system extension."
 	InstallExtensionConfigDoc.Description = "InstallExtensionConfig represents a configuration for a system extension."
 
-	InstallExtensionConfigDoc.AddExample("", "ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0")
+	InstallExtensionConfigDoc.AddExample("", "ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0")
 	InstallExtensionConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "InstallConfig",

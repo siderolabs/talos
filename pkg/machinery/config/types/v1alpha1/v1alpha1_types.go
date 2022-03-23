@@ -181,7 +181,7 @@ var (
 	machineInstallExample = &InstallConfig{
 		InstallDisk:            "/dev/sda",
 		InstallExtraKernelArgs: []string{"console=ttyS1", "panic=10"},
-		InstallImage:           "ghcr.io/talos-systems/installer:latest",
+		InstallImage:           "ghcr.io/siderolabs/installer:latest",
 		InstallBootloader:      true,
 		InstallWipe:            false,
 	}
@@ -1084,12 +1084,12 @@ type InstallConfig struct {
 	//     Image reference for each Talos release can be found on
 	//     [GitHub releases page](https://github.com/talos-systems/talos/releases).
 	//   examples:
-	//     - value: '"ghcr.io/talos-systems/installer:latest"'
+	//     - value: '"ghcr.io/siderolabs/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Allows for supplying additional system extension images to install on top of base Talos image.
 	//   examples:
-	//     - value: '"ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0"'
+	//     - value: '"ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0"'
 	InstallExtensions []InstallExtensionConfig `yaml:"extensions,omitempty"`
 	//   description: |
 	//     Indicates if a bootloader should be installed.

@@ -140,7 +140,7 @@ install:
     extraKernelArgs:
         - console=ttyS1
         - panic=10
-    image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
+    image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
@@ -151,7 +151,7 @@ install:
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+    # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
 ```
 
 <hr />
@@ -316,7 +316,7 @@ Examples:
 
 ``` yaml
 kubelet:
-    image: ghcr.io/talos-systems/kubelet:v1.23.5 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/siderolabs/kubelet:v1.23.5 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -545,7 +545,7 @@ install:
     extraKernelArgs:
         - console=ttyS1
         - panic=10
-    image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
+    image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
     bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
@@ -556,7 +556,7 @@ install:
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+    # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
 ```
 
 
@@ -1656,7 +1656,7 @@ Appears in:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.23.5 # The `image` field is an optional reference to an alternative kubelet image.
+image: ghcr.io/siderolabs/kubelet:v1.23.5 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -1706,7 +1706,7 @@ Examples:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/kubelet:v1.23.5
+image: ghcr.io/siderolabs/kubelet:v1.23.5
 ```
 
 
@@ -2178,7 +2178,7 @@ disk: /dev/sda # The disk used for installations.
 extraKernelArgs:
     - console=ttyS1
     - panic=10
-image: ghcr.io/talos-systems/installer:latest # Allows for supplying the image used to perform the installation.
+image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
 bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if the installation disk should be wiped at installation time.
 
@@ -2189,7 +2189,7 @@ wipe: false # Indicates if the installation disk should be wiped at installation
 #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
 # # Allows for supplying additional system extension images to install on top of base Talos image.
-# extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+# extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
 ```
 
 <hr />
@@ -2287,7 +2287,7 @@ Examples:
 
 
 ``` yaml
-image: ghcr.io/talos-systems/installer:latest
+image: ghcr.io/siderolabs/installer:latest
 ```
 
 
@@ -2309,7 +2309,7 @@ Examples:
 
 
 ``` yaml
-extensions: ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
 ```
 
 
@@ -2558,7 +2558,7 @@ Appears in:
 
 
 ``` yaml
-ghcr.io/talos-systems/gvisor:20220117.0-v1.0.0
+ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
 ```
 
 <hr />

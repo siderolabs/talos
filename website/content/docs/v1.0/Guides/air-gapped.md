@@ -55,7 +55,7 @@ All images are now stored in the Docker daemon store:
 
 ```bash
 $ docker images
-ghcr.io/talos-systems/install-cni    v0.3.0-12-g90722c3      980d36ee2ee1        5 days ago          79.7MB
+ghcr.io/siderolabs/install-cni    v0.3.0-12-g90722c3      980d36ee2ee1        5 days ago          79.7MB
 k8s.gcr.io/kube-proxy-amd64          v1.20.0                 33c60812eab8        2 weeks ago         118MB
 ...
 ```
@@ -99,7 +99,7 @@ The only required flag for this guide is `--registry-mirror '*'=http://10.5.0.1:
 The endpoint being used is `10.5.0.1`, as this is the default bridge interface address which will be routable from the QEMU VMs (`127.0.0.1` IP will be pointing to the VM itself).
 
 ```bash
-$ sudo -E talosctl cluster create --provisioner=qemu --registry-mirror '*'=http://10.5.0.1:6000 --install-image=ghcr.io/talos-systems/installer:v1.0.0
+$ sudo -E talosctl cluster create --provisioner=qemu --registry-mirror '*'=http://10.5.0.1:6000 --install-image=ghcr.io/siderolabs/installer:v1.0.0
 validating CIDR and reserving IPs
 generating PKI and tokens
 creating state directory in "/home/smira/.talos/clusters/talos-default"

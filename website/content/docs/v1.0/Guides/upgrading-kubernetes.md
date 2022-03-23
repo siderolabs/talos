@@ -333,7 +333,7 @@ kubectl apply -f manifests.yaml
 For every node, patch machine configuration with new kubelet version, wait for the kubelet to restart with new version:
 
 ```bash
-$ talosctl -n <IP> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.23.0"}]'
+$ talosctl -n <IP> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v1.23.0"}]'
 patched mc at the node 172.20.0.2
 ```
 
