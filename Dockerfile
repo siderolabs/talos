@@ -10,80 +10,80 @@ ARG INSTALLER_ARCH
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
-FROM ghcr.io/talos-systems/fhs:${PKGS} AS pkg-fhs
-FROM ghcr.io/talos-systems/ca-certificates:${PKGS} AS pkg-ca-certificates
+FROM ghcr.io/siderolabs/fhs:${PKGS} AS pkg-fhs
+FROM ghcr.io/siderolabs/ca-certificates:${PKGS} AS pkg-ca-certificates
 
-FROM --platform=amd64 ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/cryptsetup:${PKGS} AS pkg-cryptsetup-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/cryptsetup:${PKGS} AS pkg-cryptsetup-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/cryptsetup:${PKGS} AS pkg-cryptsetup-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/containerd:${PKGS} AS pkg-containerd-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/containerd:${PKGS} AS pkg-containerd-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/containerd:${PKGS} AS pkg-containerd-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/dosfstools:${PKGS} AS pkg-dosfstools-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/dosfstools:${PKGS} AS pkg-dosfstools-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/dosfstools:${PKGS} AS pkg-dosfstools-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/eudev:${PKGS} AS pkg-eudev-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/eudev:${PKGS} AS pkg-eudev-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/eudev:${PKGS} AS pkg-eudev-arm64
 
-FROM ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub
-FROM --platform=amd64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/grub:${PKGS} AS pkg-grub-arm64
+FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
+FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/iptables:${PKGS} AS pkg-iptables-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libinih:${PKGS} AS pkg-libinih-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libinih:${PKGS} AS pkg-libinih-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libjson-c:${PKGS} AS pkg-libjson-c-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/libjson-c:${PKGS} AS pkg-libjson-c-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/libjson-c:${PKGS} AS pkg-libjson-c-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libpopt:${PKGS} AS pkg-libpopt-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/libpopt:${PKGS} AS pkg-libpopt-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/libpopt:${PKGS} AS pkg-libpopt-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/liburcu:${PKGS} AS pkg-liburcu-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/liburcu:${PKGS} AS pkg-liburcu-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/liburcu:${PKGS} AS pkg-liburcu-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/liburcu:${PKGS} AS pkg-liburcu-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/openssl:${PKGS} AS pkg-openssl-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/openssl:${PKGS} AS pkg-openssl-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/openssl:${PKGS} AS pkg-openssl-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/openssl:${PKGS} AS pkg-openssl-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libseccomp:${PKGS} AS pkg-libseccomp-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/libseccomp:${PKGS} AS pkg-libseccomp-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/libseccomp:${PKGS} AS pkg-libseccomp-arm64
 
 # linux-firmware is not arch-specific
-FROM --platform=amd64 ghcr.io/talos-systems/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM --platform=amd64 ghcr.io/siderolabs/linux-firmware:${PKGS} AS pkg-linux-firmware
 
-FROM --platform=amd64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/lvm2:${PKGS} AS pkg-lvm2-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/lvm2:${PKGS} AS pkg-lvm2-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/lvm2:${PKGS} AS pkg-lvm2-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/libaio:${PKGS} AS pkg-libaio-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/libaio:${PKGS} AS pkg-libaio-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/libaio:${PKGS} AS pkg-libaio-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/musl:${PKGS} AS pkg-musl-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/musl:${PKGS} AS pkg-musl-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/musl:${PKGS} AS pkg-musl-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/runc:${PKGS} AS pkg-runc-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/runc:${PKGS} AS pkg-runc-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/runc:${PKGS} AS pkg-runc-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/xfsprogs:${PKGS} AS pkg-xfsprogs-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/xfsprogs:${PKGS} AS pkg-xfsprogs-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/xfsprogs:${PKGS} AS pkg-xfsprogs-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/util-linux:${PKGS} AS pkg-util-linux-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/util-linux:${PKGS} AS pkg-util-linux-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/util-linux:${PKGS} AS pkg-util-linux-arm64
 
-FROM --platform=amd64 ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/kmod:${PKGS} AS pkg-kmod-arm64
+FROM --platform=amd64 ghcr.io/siderolabs/kmod:${PKGS} AS pkg-kmod-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/kmod:${PKGS} AS pkg-kmod-arm64
 
-FROM ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel
-FROM --platform=amd64 ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel-amd64
-FROM --platform=arm64 ghcr.io/talos-systems/kernel:${PKGS} AS pkg-kernel-arm64
+FROM ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel
+FROM --platform=amd64 ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel-arm64
 
-FROM --platform=arm64 ghcr.io/talos-systems/u-boot:${PKGS} AS pkg-u-boot-arm64
-FROM --platform=arm64 ghcr.io/talos-systems/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware-arm64
+FROM --platform=arm64 ghcr.io/siderolabs/u-boot:${PKGS} AS pkg-u-boot-arm64
+FROM --platform=arm64 ghcr.io/siderolabs/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware-arm64
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
-FROM ghcr.io/talos-systems/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl-cni-bundle-install
+FROM ghcr.io/siderolabs/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl-cni-bundle-install
 
 # The tools target provides base toolchain for the build.
 
@@ -112,8 +112,8 @@ ARG VTPROTOBUF_VERSION
 RUN go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
-COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
-RUN cd /go/src/github.com/talos-systems/talos-hack-docgen \
+COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
+RUN cd /go/src/github.com/siderolabs/talos-hack-docgen \
     && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
@@ -191,17 +191,17 @@ RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_o
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
 # Gofumports generated files to adjust import order
-RUN gofumports -w -local github.com/talos-systems/talos /api/
+RUN gofumports -w -local github.com/siderolabs/talos /api/
 
 # run docgen for machinery config
 FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
-RUN gofumports -w -local github.com/talos-systems/talos ./pkg/
+RUN gofumports -w -local github.com/siderolabs/talos ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...
-RUN gofumports -w -local github.com/talos-systems/talos ./
+RUN gofumports -w -local github.com/siderolabs/talos ./
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
@@ -310,7 +310,7 @@ COPY --from=talosctl-linux /talosctl-linux-${TARGETARCH} /talosctl
 ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
-LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
+LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/talosctl"]
 
 FROM base AS talosctl-darwin-amd64-build
@@ -500,7 +500,7 @@ COPY --from=initramfs-archive /initramfs.xz /initramfs-${TARGETARCH}.xz
 
 FROM scratch AS talos
 COPY --from=rootfs / /
-LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
+LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
 # The installer target generates an image that can be used to install Talos to
@@ -561,7 +561,7 @@ RUN ln -s /bin/installer /bin/talosctl
 ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
-LABEL org.opencontainers.image.source https://github.com/talos-systems/talos
+LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 ONBUILD RUN apk add --no-cache --update \
     cpio \
@@ -659,9 +659,9 @@ RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
+RUN --mount=type=cache,target=/.cache importvet github.com/siderolabs/talos/...
 RUN find . -name '*.pb.go' -o -name '*_string_*.go' | xargs rm
-RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
+RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/siderolabs/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/siderolabs/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on protobuf files.
 
