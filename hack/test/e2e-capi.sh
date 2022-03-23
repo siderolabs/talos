@@ -24,6 +24,7 @@ export AWS_B64ENCODED_CREDENTIALS=${AWS_SVC_ACCT}
 set -x
 
 ${CLUSTERCTL} init \
+    --config hack/test/clusterctl.yaml \
     --core "cluster-api:v${CAPI_VERSION}" \
     --control-plane "talos" \
     --infrastructure "aws:v${CAPA_VERSION},gcp:v${CAPG_VERSION}" \
