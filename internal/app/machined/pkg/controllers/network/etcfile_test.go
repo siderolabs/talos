@@ -39,7 +39,7 @@ type EtcFileConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	cfg            *config.MachineConfig
@@ -65,30 +65,32 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	suite.cfg = config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				ExtraHostEntries: []*v1alpha1.ExtraHost{
-					{
-						HostIP:      "10.0.0.1",
-						HostAliases: []string{"a", "b"},
+	suite.cfg = config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					ExtraHostEntries: []*v1alpha1.ExtraHost{
+						{
+							HostIP:      "10.0.0.1",
+							HostAliases: []string{"a", "b"},
+						},
+						{
+							HostIP:      "10.0.0.2",
+							HostAliases: []string{"c", "d"},
+						},
 					},
-					{
-						HostIP:      "10.0.0.2",
-						HostAliases: []string{"c", "d"},
+				},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
 					},
 				},
 			},
 		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
-				},
-			},
-		},
-	})
+	)
 
 	suite.defaultAddress = network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
 	suite.defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
@@ -98,7 +100,12 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	suite.hostnameStatus.TypedSpec().Domainname = "example.com"
 
 	suite.resolverStatus = network.NewResolverStatus(network.NamespaceName, network.ResolverID)
-	suite.resolverStatus.TypedSpec().DNSServers = []netaddr.IP{netaddr.MustParseIP("1.1.1.1"), netaddr.MustParseIP("2.2.2.2"), netaddr.MustParseIP("3.3.3.3"), netaddr.MustParseIP("4.4.4.4")}
+	suite.resolverStatus.TypedSpec().DNSServers = []netaddr.IP{
+		netaddr.MustParseIP("1.1.1.1"),
+		netaddr.MustParseIP("2.2.2.2"),
+		netaddr.MustParseIP("3.3.3.3"),
+		netaddr.MustParseIP("4.4.4.4"),
+	}
 }
 
 func (suite *EtcFileConfigSuite) startRuntime() {
@@ -118,7 +125,10 @@ func (suite *EtcFileConfigSuite) assertEtcFiles(requiredIDs []string, check func
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -144,7 +154,10 @@ func (suite *EtcFileConfigSuite) assertEtcFiles(requiredIDs []string, check func
 }
 
 func (suite *EtcFileConfigSuite) assertNoEtcFile(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -177,41 +190,50 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, resolv
 		unexpectedIds = append(unexpectedIds, "hosts")
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertEtcFiles(
-				expectedIds,
-				func(r *files.EtcFileSpec) error {
-					switch r.Metadata().ID() {
-					case "hosts":
-						suite.Assert().Equal(hosts, string(r.TypedSpec().Contents))
-					case "resolv.conf":
-						suite.Assert().Equal(resolvConf, string(r.TypedSpec().Contents))
-					}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertEtcFiles(
+					expectedIds,
+					func(r *files.EtcFileSpec) error {
+						switch r.Metadata().ID() {
+						case "hosts":
+							suite.Assert().Equal(hosts, string(r.TypedSpec().Contents))
+						case "resolv.conf":
+							suite.Assert().Equal(resolvConf, string(r.TypedSpec().Contents))
+						}
 
-					return nil
-				})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	for _, id := range unexpectedIds {
 		id := id
 
-		suite.Assert().NoError(retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoEtcFile(id)
-			}))
+		suite.Assert().NoError(
+			retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+				func() error {
+					return suite.assertNoEtcFile(id)
+				},
+			),
+		)
 	}
 }
 
 func (suite *EtcFileConfigSuite) TestComplete() {
-	suite.testFiles([]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
+	suite.testFiles(
+		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
 		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters\n\n10.0.0.1 a b \n10.0.0.2 c d ", //nolint:lll
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
-	suite.testFiles([]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
+	suite.testFiles(
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
 		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
@@ -220,21 +242,24 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 func (suite *EtcFileConfigSuite) TestNoDomainname() {
 	suite.hostnameStatus.TypedSpec().Domainname = ""
 
-	suite.testFiles([]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
+	suite.testFiles(
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
 		"127.0.0.1       localhost\n33.11.22.44       foo \n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestOnlyResolvers() {
-	suite.testFiles([]resource.Resource{suite.resolverStatus},
+	suite.testFiles(
+		[]resource.Resource{suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
 		"",
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestOnlyHostname() {
-	suite.testFiles([]resource.Resource{suite.defaultAddress, suite.hostnameStatus},
+	suite.testFiles(
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus},
 		"",
 		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
@@ -248,19 +273,38 @@ func (suite *EtcFileConfigSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-	}))
+	err := suite.state.Create(
+		context.Background(), config.NewMachineConfig(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+			},
+		),
+	)
 	if state.IsConflictError(err) {
 		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
 	}
 
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameStatus(network.NamespaceName, "bar")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverStatus(network.NamespaceName, "bar")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewNodeAddress(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewHostnameStatus(network.NamespaceName, "bar"),
+		),
+	)
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewResolverStatus(network.NamespaceName, "bar"),
+		),
+	)
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewNodeAddress(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestEtcFileConfigSuite(t *testing.T) {

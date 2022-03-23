@@ -37,7 +37,7 @@ type KubeletSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -75,43 +75,55 @@ func (suite *KubeletSuite) TestReconcile() {
 
 	k8sCA := x509.NewCertificateAndKeyFromCertificateAuthority(ca)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
 				},
+				ClusterCA:      k8sCA,
+				BootstrapToken: "abc.def",
 			},
-			ClusterCA:      k8sCA,
-			BootstrapToken: "abc.def",
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletSecrets, err := suite.state.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubeletType, secrets.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletSecrets, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.KubeletType,
+						secrets.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := kubeletSecrets.(*secrets.Kubelet).TypedSpec()
 
-			spec := kubeletSecrets.(*secrets.Kubelet).TypedSpec()
+				suite.Assert().Equal("https://foo:6443", spec.Endpoint.String())
+				suite.Assert().Equal(k8sCA, spec.CA)
+				suite.Assert().Equal("abc", spec.BootstrapTokenID)
+				suite.Assert().Equal("def", spec.BootstrapTokenSecret)
 
-			suite.Assert().Equal("https://foo:6443", spec.Endpoint.String())
-			suite.Assert().Equal(k8sCA, spec.CA)
-			suite.Assert().Equal("abc", spec.BootstrapTokenID)
-			suite.Assert().Equal("def", spec.BootstrapTokenSecret)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubeletSuite) TearDownTest() {

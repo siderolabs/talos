@@ -47,7 +47,6 @@ func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *e
 		}
 
 		edges = append(edges, &inspectapi.ControllerDependencyEdge{
-
 			ControllerName: graph.Edges[i].ControllerName,
 
 			EdgeType: edgeType,

@@ -36,7 +36,7 @@ type NodeIPSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -75,7 +75,10 @@ func (suite *NodeIPSuite) TestReconcileIPv4() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	addresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
+	addresses := network.NewNodeAddress(
+		network.NamespaceName,
+		network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+	)
 
 	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
 		netaddr.MustParseIPPrefix("10.0.0.2/32"), // excluded explicitly
@@ -85,24 +88,29 @@ func (suite *NodeIPSuite) TestReconcileIPv4() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, addresses))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			NodeIP, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				NodeIP, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPType, k8s.KubeletID, resource.VersionUndefined),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := NodeIP.(*k8s.NodeIP).TypedSpec()
 
-			spec := NodeIP.(*k8s.NodeIP).TypedSpec()
+				suite.Assert().Equal("[10.0.0.5]", fmt.Sprintf("%s", spec.Addresses))
 
-			suite.Assert().Equal("[10.0.0.5]", fmt.Sprintf("%s", spec.Addresses))
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
@@ -114,7 +122,10 @@ func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	addresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
+	addresses := network.NewNodeAddress(
+		network.NamespaceName,
+		network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+	)
 
 	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
 		netaddr.MustParseIPPrefix("10.0.0.5/24"),
@@ -125,24 +136,29 @@ func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, addresses))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			NodeIP, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				NodeIP, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPType, k8s.KubeletID, resource.VersionUndefined),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := NodeIP.(*k8s.NodeIP).TypedSpec()
 
-			spec := NodeIP.(*k8s.NodeIP).TypedSpec()
+				suite.Assert().Equal("[10.0.0.5 2001:db8:85a3::8a2e:370:7334]", fmt.Sprintf("%s", spec.Addresses))
 
-			suite.Assert().Equal("[10.0.0.5 2001:db8:85a3::8a2e:370:7334]", fmt.Sprintf("%s", spec.Addresses))
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *NodeIPSuite) TearDownTest() {

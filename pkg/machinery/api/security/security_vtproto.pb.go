@@ -117,7 +117,6 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *CertificateRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -157,11 +156,9 @@ func (m *CertificateResponse) SizeVT() (n int) {
 func sov(x uint64) (n int) {
 	return (bits.Len64(x|1) + 6) / 7
 }
-
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *CertificateRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -247,7 +244,6 @@ func (m *CertificateRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CertificateResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -367,7 +363,6 @@ func (m *CertificateResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skip(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

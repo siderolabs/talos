@@ -184,9 +184,11 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 
 	options.Log(" > %q: waiting for node update", node)
 
-	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
-		return checkNodeKubeletVersion(ctx, cluster, node, "v"+options.ToVersion)
-	}); err != nil {
+	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(
+		func() error {
+			return checkNodeKubeletVersion(ctx, cluster, node, "v"+options.ToVersion)
+		},
+	); err != nil {
 		return err
 	}
 
@@ -195,7 +197,10 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 	return nil
 }
 
-func upgradeKubeletPatcher(options UpgradeOptions, kubeletSpec resource.Resource) func(config *v1alpha1config.Config) error {
+func upgradeKubeletPatcher(
+	options UpgradeOptions,
+	kubeletSpec resource.Resource,
+) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
 		if config.MachineConfig == nil {
 			config.MachineConfig = &v1alpha1config.MachineConfig{}
@@ -206,15 +211,15 @@ func upgradeKubeletPatcher(options UpgradeOptions, kubeletSpec resource.Resource
 		}
 
 		var (
-			any *resource.Any
-			ok  bool
+			anyResource *resource.Any
+			ok          bool
 		)
 
-		if any, ok = kubeletSpec.(*resource.Any); !ok {
+		if anyResource, ok = kubeletSpec.(*resource.Any); !ok {
 			return fmt.Errorf("unexpected resource type")
 		}
 
-		oldImage := any.Value().(map[string]interface{})["image"].(string) //nolint:errcheck,forcetypeassert
+		oldImage := anyResource.Value().(map[string]interface{})["image"].(string) //nolint:errcheck,forcetypeassert
 
 		logUpdate := func(oldImage string) {
 			parts := strings.Split(oldImage, ":")
@@ -287,7 +292,13 @@ func checkNodeKubeletVersion(ctx context.Context, cluster UpgradeProvider, nodeT
 		nodeFound = true
 
 		if node.Status.NodeInfo.KubeletVersion != version {
-			return retry.ExpectedError(fmt.Errorf("node version mismatch: got %q, expected %q", node.Status.NodeInfo.KubeletVersion, version))
+			return retry.ExpectedError(
+				fmt.Errorf(
+					"node version mismatch: got %q, expected %q",
+					node.Status.NodeInfo.KubeletVersion,
+					version,
+				),
+			)
 		}
 
 		ready := false

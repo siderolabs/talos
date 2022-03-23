@@ -36,7 +36,7 @@ type ResolverSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -66,7 +66,10 @@ func (suite *ResolverSpecSuite) startRuntime() {
 }
 
 func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netaddr.IP) error {
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(network.NamespaceName, network.ResolverStatusType, id, resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.ResolverStatusType, id, resource.VersionUndefined),
+	)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -95,10 +98,13 @@ func (suite *ResolverSpecSuite) TestSpec() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus("resolvers", netaddr.MustParseIP(constants.DefaultPrimaryResolver))
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus("resolvers", netaddr.MustParseIP(constants.DefaultPrimaryResolver))
+			},
+		),
+	)
 }
 
 func (suite *ResolverSpecSuite) TearDownTest() {
@@ -109,7 +115,12 @@ func (suite *ResolverSpecSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverSpec(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewResolverSpec(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestResolverSpecSuite(t *testing.T) {

@@ -40,7 +40,7 @@ type RouteSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -73,7 +73,11 @@ func (suite *RouteSpecSuite) startRuntime() {
 	}()
 }
 
-func (suite *RouteSpecSuite) assertRoute(destination netaddr.IPPrefix, gateway netaddr.IP, check func(rtnetlink.RouteMessage) error) error {
+func (suite *RouteSpecSuite) assertRoute(
+	destination netaddr.IPPrefix,
+	gateway netaddr.IP,
+	check func(rtnetlink.RouteMessage) error,
+) error {
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
 
@@ -150,14 +154,21 @@ func (suite *RouteSpecSuite) TestLoopback() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertRoute(netaddr.MustParseIPPrefix("127.0.11.0/24"), netaddr.MustParseIP("127.0.11.1"), func(route rtnetlink.RouteMessage) error {
-				suite.Assert().EqualValues(0, route.Attributes.Priority)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netaddr.MustParseIPPrefix("127.0.11.0/24"),
+					netaddr.MustParseIP("127.0.11.1"),
+					func(route rtnetlink.RouteMessage) error {
+						suite.Assert().EqualValues(0, route.Attributes.Priority)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	// teardown the route
 	for {
@@ -172,7 +183,12 @@ func (suite *RouteSpecSuite) TestLoopback() {
 	}
 
 	// torn down address should be removed immediately
-	suite.Assert().NoError(suite.assertNoRoute(netaddr.MustParseIPPrefix("127.0.11.0/24"), netaddr.MustParseIP("127.0.11.1")))
+	suite.Assert().NoError(
+		suite.assertNoRoute(
+			netaddr.MustParseIPPrefix("127.0.11.0/24"),
+			netaddr.MustParseIP("127.0.11.1"),
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
 }
@@ -197,38 +213,50 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertRoute(netaddr.IPPrefix{}, netaddr.MustParseIP("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
-				suite.Assert().Nil(route.Attributes.Dst)
-				suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netaddr.IPPrefix{}, netaddr.MustParseIP("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Dst)
+						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	// update the route metric
-	_, err := suite.state.UpdateWithConflicts(suite.ctx, def.Metadata(), func(r resource.Resource) error {
-		defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+	_, err := suite.state.UpdateWithConflicts(
+		suite.ctx, def.Metadata(), func(r resource.Resource) error {
+			defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
 
-		defR.TypedSpec().Priority = 1048577
+			defR.TypedSpec().Priority = 1048577
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Assert().NoError(err)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertRoute(netaddr.IPPrefix{}, netaddr.MustParseIP("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
-				suite.Assert().Nil(route.Attributes.Dst)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netaddr.IPPrefix{}, netaddr.MustParseIP("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Dst)
 
-				if route.Attributes.Priority != 1048577 {
-					return fmt.Errorf("route metric wasn't updated: %d", route.Attributes.Priority)
-				}
+						if route.Attributes.Priority != 1048577 {
+							return fmt.Errorf("route metric wasn't updated: %d", route.Attributes.Priority)
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	// teardown the route
 	for {
@@ -256,18 +284,22 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
-		Type:   unix.ARPHRD_ETHER,
-		Flags:  unix.IFF_UP,
-		Change: unix.IFF_UP,
-		Attributes: &rtnetlink.LinkAttributes{
-			Name: dummyInterface,
-			MTU:  1400,
-			Info: &rtnetlink.LinkInfo{
-				Kind: "dummy",
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type:   unix.ARPHRD_ETHER,
+				Flags:  unix.IFF_UP,
+				Change: unix.IFF_UP,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					MTU:  1400,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
 			},
-		},
-	}))
+		),
+	)
 
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
@@ -276,16 +308,20 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 
 	localIP := net.ParseIP("10.28.0.27").To4()
 
-	suite.Require().NoError(conn.Address.New(&rtnetlink.AddressMessage{
-		Family:       unix.AF_INET,
-		PrefixLength: 32,
-		Scope:        unix.RT_SCOPE_UNIVERSE,
-		Index:        uint32(iface.Index),
-		Attributes: &rtnetlink.AddressAttributes{
-			Address: localIP,
-			Local:   localIP,
-		},
-	}))
+	suite.Require().NoError(
+		conn.Address.New(
+			&rtnetlink.AddressMessage{
+				Family:       unix.AF_INET,
+				PrefixLength: 32,
+				Scope:        unix.RT_SCOPE_UNIVERSE,
+				Index:        uint32(iface.Index),
+				Attributes: &rtnetlink.AddressAttributes{
+					Address: localIP,
+					Local:   localIP,
+				},
+			},
+		),
+	)
 
 	def := network.NewRouteSpec(network.NamespaceName, "default")
 	*def.TypedSpec() = network.RouteSpecSpec{
@@ -321,24 +357,31 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			if err := suite.assertRoute(netaddr.IPPrefix{}, netaddr.MustParseIP("10.28.0.1"), func(route rtnetlink.RouteMessage) error {
-				suite.Assert().Nil(route.Attributes.Dst)
-				suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				if err := suite.assertRoute(
+					netaddr.IPPrefix{}, netaddr.MustParseIP("10.28.0.1"), func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Dst)
+						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
 
-				return nil
-			}); err != nil {
-				return err
-			}
+						return nil
+					},
+				); err != nil {
+					return err
+				}
 
-			return suite.assertRoute(netaddr.MustParseIPPrefix("10.28.0.1/32"), netaddr.IP{}, func(route rtnetlink.RouteMessage) error {
-				suite.Assert().Nil(route.Attributes.Gateway)
-				suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+				return suite.assertRoute(
+					netaddr.MustParseIPPrefix("10.28.0.1/32"), netaddr.IP{}, func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Gateway)
+						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	// teardown the routes
 	for {
@@ -378,18 +421,22 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
-		Type:   unix.ARPHRD_ETHER,
-		Flags:  unix.IFF_UP,
-		Change: unix.IFF_UP,
-		Attributes: &rtnetlink.LinkAttributes{
-			Name: dummyInterface,
-			MTU:  1500,
-			Info: &rtnetlink.LinkInfo{
-				Kind: "dummy",
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type:   unix.ARPHRD_ETHER,
+				Flags:  unix.IFF_UP,
+				Change: unix.IFF_UP,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					MTU:  1500,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
 			},
-		},
-	}))
+		),
+	)
 
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
@@ -398,16 +445,20 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 
 	localIP := net.ParseIP("10.28.0.27").To4()
 
-	suite.Require().NoError(conn.Address.New(&rtnetlink.AddressMessage{
-		Family:       unix.AF_INET,
-		PrefixLength: 24,
-		Scope:        unix.RT_SCOPE_UNIVERSE,
-		Index:        uint32(iface.Index),
-		Attributes: &rtnetlink.AddressAttributes{
-			Address: localIP,
-			Local:   localIP,
-		},
-	}))
+	suite.Require().NoError(
+		conn.Address.New(
+			&rtnetlink.AddressMessage{
+				Family:       unix.AF_INET,
+				PrefixLength: 24,
+				Scope:        unix.RT_SCOPE_UNIVERSE,
+				Index:        uint32(iface.Index),
+				Attributes: &rtnetlink.AddressAttributes{
+					Address: localIP,
+					Local:   localIP,
+				},
+			},
+		),
+	)
 
 	ll := network.NewRouteSpec(network.NamespaceName, "ll")
 	*ll.TypedSpec() = network.RouteSpecSpec{
@@ -428,14 +479,21 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertRoute(netaddr.MustParseIPPrefix("169.254.169.254/32"), netaddr.MustParseIP("10.28.0.1"), func(route rtnetlink.RouteMessage) error {
-				suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netaddr.MustParseIPPrefix("169.254.169.254/32"),
+					netaddr.MustParseIP("10.28.0.1"),
+					func(route rtnetlink.RouteMessage) error {
+						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	// teardown the routes
 	for {
@@ -450,7 +508,12 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 	}
 
 	// torn down route should be removed immediately
-	suite.Assert().NoError(suite.assertNoRoute(netaddr.MustParseIPPrefix("169.254.169.254/32"), netaddr.MustParseIP("10.28.0.1")))
+	suite.Assert().NoError(
+		suite.assertNoRoute(
+			netaddr.MustParseIPPrefix("169.254.169.254/32"),
+			netaddr.MustParseIP("10.28.0.1"),
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, ll.Metadata()))
 }

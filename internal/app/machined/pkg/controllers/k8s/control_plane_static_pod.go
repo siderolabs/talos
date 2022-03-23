@@ -276,7 +276,8 @@ func envVars(environment map[string]string) []v1.EnvVar {
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
+	configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+) (string, error) {
 	cfg := configResource.APIServer()
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
@@ -465,7 +466,8 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+) (string, error) {
 	cfg := configResource.ControllerManager()
 
 	if !cfg.Enabled {
@@ -594,7 +596,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string) (string, error) {
+	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+) (string, error) {
 	cfg := configResource.Scheduler()
 
 	if !cfg.Enabled {

@@ -29,7 +29,8 @@ import (
 
 type inspector struct {
 	client *containerd.Client
-	nsctx  context.Context
+	//nolint:containedctx
+	nsctx context.Context
 }
 
 type inspectorOptions struct {
@@ -97,7 +98,11 @@ func (i *inspector) Images() (map[string]string, error) {
 }
 
 //nolint:gocyclo,cyclop
-func (i *inspector) containerInfo(cntr containerd.Container, imageList map[string]string, singleLookup bool) (*ctrs.Container, error) {
+func (i *inspector) containerInfo(
+	cntr containerd.Container,
+	imageList map[string]string,
+	singleLookup bool,
+) (*ctrs.Container, error) {
 	cp := &ctrs.Container{}
 
 	info, err := cntr.Info(i.nsctx)
@@ -222,7 +227,11 @@ func (i *inspector) containerInfo(cntr containerd.Container, imageList map[strin
 		cp.IsPodSandbox = true
 	} else if singleLookup && cns != "" && cname != "" {
 		// try to find matching infrastructure container and pull sandbox from it
-		query := fmt.Sprintf("labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q", cns, cname)
+		query := fmt.Sprintf(
+			"labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q",
+			cns,
+			cname,
+		)
 
 		infraContainers, err := i.client.Containers(i.nsctx, query)
 		if err == nil {
@@ -274,7 +283,11 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 			pod = pod[:semicolonIdx]
 		}
 
-		query = fmt.Sprintf("labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q", namespace, pod)
+		query = fmt.Sprintf(
+			"labels.\"io.kubernetes.pod.namespace\"==%q,labels.\"io.kubernetes.pod.name\"==%q",
+			namespace,
+			pod,
+		)
 
 		if name != "" {
 			query += fmt.Sprintf(",labels.\"io.kubernetes.container.name\"==%q", name)

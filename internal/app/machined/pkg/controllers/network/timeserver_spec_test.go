@@ -35,7 +35,7 @@ type TimeServerSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -65,7 +65,10 @@ func (suite *TimeServerSpecSuite) startRuntime() {
 }
 
 func (suite *TimeServerSpecSuite) assertStatus(id string, servers ...string) error {
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, id, resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.TimeServerStatusType, id, resource.VersionUndefined),
+	)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -94,10 +97,13 @@ func (suite *TimeServerSpecSuite) TestSpec() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus("timeservers", constants.DefaultNTPServer)
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus("timeservers", constants.DefaultNTPServer)
+			},
+		),
+	)
 }
 
 func (suite *TimeServerSpecSuite) TearDownTest() {
@@ -108,7 +114,12 @@ func (suite *TimeServerSpecSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewTimeServerSpec(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewTimeServerSpec(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestTimeServerSpecSuite(t *testing.T) {

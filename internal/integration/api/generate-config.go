@@ -26,7 +26,7 @@ import (
 type GenerateConfigSuite struct {
 	base.K8sSuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -104,9 +104,18 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().EqualValues(request.ClusterConfig.Name, config.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, config.Cluster().Endpoint().String())
 	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, config.Cluster().Network().DNSDomain())
-	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.CniConfig.Name, config.Cluster().Network().CNI().Name())
-	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.CniConfig.Urls, config.Cluster().Network().CNI().URLs())
-	suite.Require().EqualValues(fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion), config.Machine().Kubelet().Image())
+	suite.Require().EqualValues(
+		request.ClusterConfig.ClusterNetwork.CniConfig.Name,
+		config.Cluster().Network().CNI().Name(),
+	)
+	suite.Require().EqualValues(
+		request.ClusterConfig.ClusterNetwork.CniConfig.Urls,
+		config.Cluster().Network().CNI().URLs(),
+	)
+	suite.Require().EqualValues(
+		fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion),
+		config.Machine().Kubelet().Image(),
+	)
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, disk)
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, config.Machine().Install().Image())
 	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, config.Machine().Network().Hostname())
@@ -149,15 +158,30 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().EqualValues(request.ConfigVersion, joinedConfig.Version())
 	suite.Require().EqualValues(request.ClusterConfig.Name, joinedConfig.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, joinedConfig.Cluster().Endpoint().String())
-	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, joinedConfig.Cluster().Network().DNSDomain())
-	suite.Require().EqualValues(fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion), joinedConfig.Machine().Kubelet().Image())
+	suite.Require().EqualValues(
+		request.ClusterConfig.ClusterNetwork.DnsDomain,
+		joinedConfig.Cluster().Network().DNSDomain(),
+	)
+	suite.Require().EqualValues(
+		fmt.Sprintf("%s:v%s", constants.KubeletImage, request.MachineConfig.KubernetesVersion),
+		joinedConfig.Machine().Kubelet().Image(),
+	)
 	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallDisk, disk)
-	suite.Require().EqualValues(request.MachineConfig.InstallConfig.InstallImage, joinedConfig.Machine().Install().Image())
-	suite.Require().EqualValues(request.MachineConfig.NetworkConfig.Hostname, joinedConfig.Machine().Network().Hostname())
+	suite.Require().EqualValues(
+		request.MachineConfig.InstallConfig.InstallImage,
+		joinedConfig.Machine().Install().Image(),
+	)
+	suite.Require().EqualValues(
+		request.MachineConfig.NetworkConfig.Hostname,
+		joinedConfig.Machine().Network().Hostname(),
+	)
 
 	suite.Require().EqualValues(config.Machine().Security().CA(), joinedConfig.Machine().Security().CA())
 	suite.Require().EqualValues(config.Machine().Security().Token(), joinedConfig.Machine().Security().Token())
-	suite.Require().EqualValues(config.Cluster().AESCBCEncryptionSecret(), joinedConfig.Cluster().AESCBCEncryptionSecret())
+	suite.Require().EqualValues(
+		config.Cluster().AESCBCEncryptionSecret(),
+		joinedConfig.Cluster().AESCBCEncryptionSecret(),
+	)
 	suite.Require().EqualValues(config.Cluster().CA(), joinedConfig.Cluster().CA())
 	suite.Require().EqualValues(config.Cluster().Token(), joinedConfig.Cluster().Token())
 	suite.Require().EqualValues(config.Cluster().Etcd().CA(), config.Cluster().Etcd().CA())

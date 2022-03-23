@@ -20,10 +20,10 @@ import (
 type EventsSuite struct {
 	base.APISuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	nodeCtx context.Context
+	nodeCtx context.Context //nolint:containedctx
 }
 
 // SuiteName ...
@@ -54,25 +54,29 @@ func (suite *EventsSuite) TestEventsWatch() {
 		watchCtx, watchCtxCancel := context.WithCancel(suite.nodeCtx)
 		defer watchCtxCancel()
 
-		suite.Assert().NoError(suite.Client.EventsWatch(watchCtx, func(ch <-chan client.Event) {
-			defer watchCtxCancel()
+		suite.Assert().NoError(
+			suite.Client.EventsWatch(
+				watchCtx, func(ch <-chan client.Event) {
+					defer watchCtxCancel()
 
-			timer := time.NewTimer(500 * time.Millisecond)
-			defer timer.Stop()
+					timer := time.NewTimer(500 * time.Millisecond)
+					defer timer.Stop()
 
-			for {
-				select {
-				case event, ok := <-ch:
-					if !ok {
-						return
+					for {
+						select {
+						case event, ok := <-ch:
+							if !ok {
+								return
+							}
+
+							result = append(result, event)
+						case <-timer.C:
+							return
+						}
 					}
-
-					result = append(result, event)
-				case <-timer.C:
-					return
-				}
-			}
-		}, opts...))
+				}, opts...,
+			),
+		)
 
 		return result
 	}
@@ -88,7 +92,10 @@ func (suite *EventsSuite) TestEventsWatch() {
 	// (as check excludes that event with picked ID)
 	id := allEvents[len(allEvents)-15].ID
 	eventsSinceID := receiveEvents(client.WithTailID(id))
-	suite.Require().GreaterOrEqual(len(eventsSinceID), 14) //  there might some new events since allEvents, but at least 15 should be received
+	suite.Require().GreaterOrEqual(
+		len(eventsSinceID),
+		14,
+	) //  there might some new events since allEvents, but at least 15 should be received
 }
 
 func init() {

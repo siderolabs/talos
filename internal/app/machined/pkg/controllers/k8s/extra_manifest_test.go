@@ -40,7 +40,7 @@ type ExtraManifestSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -71,7 +71,10 @@ func (suite *ExtraManifestSuite) startRuntime() {
 
 //nolint:dupl
 func (suite *ExtraManifestSuite) assertExtraManifests(manifests []string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -91,12 +94,14 @@ func (suite *ExtraManifestSuite) assertExtraManifests(manifests []string) error 
 
 func (suite *ExtraManifestSuite) TestReconcileInlineManifests() {
 	configExtraManifests := config.NewK8sExtraManifests()
-	configExtraManifests.SetExtraManifests(config.K8sExtraManifestsSpec{
-		ExtraManifests: []config.ExtraManifest{
-			{
-				Name:     "namespaces",
-				Priority: "99",
-				InlineManifest: strings.TrimSpace(`
+	configExtraManifests.SetExtraManifests(
+		config.K8sExtraManifestsSpec{
+			ExtraManifests: []config.ExtraManifest{
+				{
+					Name:     "namespaces",
+					Priority: "99",
+					InlineManifest: strings.TrimSpace(
+						`
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -106,10 +111,12 @@ apiVersion: v1
 kind: Namespace
 metadata:
     name: build
-`),
+`,
+					),
+				},
 			},
 		},
-	})
+	)
 
 	statusNetwork := network.NewStatus(network.NamespaceName, network.StatusID)
 	statusNetwork.TypedSpec().AddressReady = true
@@ -118,17 +125,27 @@ metadata:
 	suite.Require().NoError(suite.state.Create(suite.ctx, configExtraManifests))
 	suite.Require().NoError(suite.state.Create(suite.ctx, statusNetwork))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertExtraManifests(
-				[]string{
-					"99-namespaces",
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertExtraManifests(
+					[]string{
+						"99-namespaces",
+					},
+				)
+			},
+		),
+	)
 
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "99-namespaces", resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(
+			k8s.ControlPlaneNamespaceName,
+			k8s.ManifestType,
+			"99-namespaces",
+			resource.VersionUndefined,
+		),
+	)
 	suite.Require().NoError(err)
 
 	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert

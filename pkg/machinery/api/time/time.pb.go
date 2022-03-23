@@ -246,18 +246,15 @@ func file_time_time_proto_rawDescGZIP() []byte {
 	return file_time_time_proto_rawDescData
 }
 
-var (
-	file_time_time_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-	file_time_time_proto_goTypes  = []interface{}{
-		(*TimeRequest)(nil),           // 0: time.TimeRequest
-		(*Time)(nil),                  // 1: time.Time
-		(*TimeResponse)(nil),          // 2: time.TimeResponse
-		(*common.Metadata)(nil),       // 3: common.Metadata
-		(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
-		(*emptypb.Empty)(nil),         // 5: google.protobuf.Empty
-	}
-)
-
+var file_time_time_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_time_time_proto_goTypes = []interface{}{
+	(*TimeRequest)(nil),           // 0: time.TimeRequest
+	(*Time)(nil),                  // 1: time.Time
+	(*TimeResponse)(nil),          // 2: time.TimeResponse
+	(*common.Metadata)(nil),       // 3: common.Metadata
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 5: google.protobuf.Empty
+}
 var file_time_time_proto_depIdxs = []int32{
 	3, // 0: time.Time.metadata:type_name -> common.Metadata
 	4, // 1: time.Time.localtime:type_name -> google.protobuf.Timestamp

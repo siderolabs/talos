@@ -41,7 +41,7 @@ type APISuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -110,49 +110,65 @@ func (suite *APISuite) TestReconcileControlPlane() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, certSANs))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			certs, err := suite.state.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.APIType, secrets.APIID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				certs, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.APIType,
+						secrets.APIID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				apiCerts := certs.(*secrets.API).TypedSpec()
 
-			apiCerts := certs.(*secrets.API).TypedSpec()
+				suite.Assert().Equal(talosCA.CrtPEM, apiCerts.CA.Crt)
+				suite.Assert().Nil(apiCerts.CA.Key)
 
-			suite.Assert().Equal(talosCA.CrtPEM, apiCerts.CA.Crt)
-			suite.Assert().Nil(apiCerts.CA.Key)
+				serverCert, err := apiCerts.Server.GetCert()
+				suite.Require().NoError(err)
 
-			serverCert, err := apiCerts.Server.GetCert()
-			suite.Require().NoError(err)
+				suite.Assert().Equal([]string{"example.com", "foo", "foo.example.com"}, serverCert.DNSNames)
+				suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
 
-			suite.Assert().Equal([]string{"example.com", "foo", "foo.example.com"}, serverCert.DNSNames)
-			suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
+				suite.Assert().Equal("foo.example.com", serverCert.Subject.CommonName)
+				suite.Assert().Empty(serverCert.Subject.Organization)
 
-			suite.Assert().Equal("foo.example.com", serverCert.Subject.CommonName)
-			suite.Assert().Empty(serverCert.Subject.Organization)
+				suite.Assert().Equal(
+					stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+					serverCert.KeyUsage,
+				)
+				suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
 
-			suite.Assert().Equal(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment, serverCert.KeyUsage)
-			suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
+				clientCert, err := apiCerts.Client.GetCert()
+				suite.Require().NoError(err)
 
-			clientCert, err := apiCerts.Client.GetCert()
-			suite.Require().NoError(err)
+				suite.Assert().Empty(clientCert.DNSNames)
+				suite.Assert().Empty(clientCert.IPAddresses)
 
-			suite.Assert().Empty(clientCert.DNSNames)
-			suite.Assert().Empty(clientCert.IPAddresses)
+				suite.Assert().Equal("foo.example.com", clientCert.Subject.CommonName)
+				suite.Assert().Equal([]string{string(role.Impersonator)}, clientCert.Subject.Organization)
 
-			suite.Assert().Equal("foo.example.com", clientCert.Subject.CommonName)
-			suite.Assert().Equal([]string{string(role.Impersonator)}, clientCert.Subject.Organization)
+				suite.Assert().Equal(
+					stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+					clientCert.KeyUsage,
+				)
+				suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
 
-			suite.Assert().Equal(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment, clientCert.KeyUsage)
-			suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *APISuite) TearDownTest() {

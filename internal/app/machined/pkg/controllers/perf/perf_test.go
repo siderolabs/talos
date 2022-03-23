@@ -33,6 +33,7 @@ type PerfSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
+	//nolint:containedctx
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 }
@@ -65,36 +66,54 @@ func (suite *PerfSuite) TestReconcile() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			cpu, err := suite.state.Get(suite.ctx, resource.NewMetadata(perfresource.NamespaceName, perfresource.CPUType, perfresource.CPUID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				cpu, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						perfresource.NamespaceName,
+						perfresource.CPUType,
+						perfresource.CPUID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				mem, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						perfresource.NamespaceName,
+						perfresource.MemoryType,
+						perfresource.MemoryID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
 
-			mem, err := suite.state.Get(suite.ctx, resource.NewMetadata(perfresource.NamespaceName, perfresource.MemoryType, perfresource.MemoryID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+					return err
 				}
 
-				return err
-			}
+				cpuSpec := cpu.Spec().(*perfresource.CPUSpec)    //nolint:errcheck,forcetypeassert
+				memSpec := mem.Spec().(*perfresource.MemorySpec) //nolint:errcheck,forcetypeassert
 
-			cpuSpec := cpu.Spec().(*perfresource.CPUSpec)    //nolint:errcheck,forcetypeassert
-			memSpec := mem.Spec().(*perfresource.MemorySpec) //nolint:errcheck,forcetypeassert
+				if len(cpuSpec.CPU) == 0 || memSpec.MemTotal == 0 {
+					return retry.ExpectedError(fmt.Errorf("cpu spec does not contain any CPU or Total memory is zero"))
+				}
 
-			if len(cpuSpec.CPU) == 0 || memSpec.MemTotal == 0 {
-				return retry.ExpectedError(fmt.Errorf("cpu spec does not contain any CPU or Total memory is zero"))
-			}
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *PerfSuite) TearDownTest() {

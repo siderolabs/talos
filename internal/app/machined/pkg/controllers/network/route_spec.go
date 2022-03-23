@@ -149,7 +149,8 @@ func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, desti
 
 //nolint:gocyclo,cyclop
 func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
-	links []rtnetlink.LinkMessage, routes []rtnetlink.RouteMessage, route *network.RouteSpec) error {
+	links []rtnetlink.LinkMessage, routes []rtnetlink.RouteMessage, route *network.RouteSpec,
+) error {
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
 
 	destinationStr := route.TypedSpec().Destination.String()

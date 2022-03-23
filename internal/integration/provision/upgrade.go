@@ -87,8 +87,13 @@ func upgradePreviousToStable() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
 
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.InitramfsAsset)),
+		SourceKernelPath: helpers.ArtifactPath(filepath.Join(trimVersion(previousRelease), constants.KernelAsset)),
+		SourceInitramfsPath: helpers.ArtifactPath(
+			filepath.Join(
+				trimVersion(previousRelease),
+				constants.InitramfsAsset,
+			),
+		),
 		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", previousRelease),
 		SourceVersion:        previousRelease,
 		SourceK8sVersion:     previousK8sVersion,
@@ -116,9 +121,14 @@ func upgradeStableToCurrent() upgradeSpec {
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		TargetInstallerImage: fmt.Sprintf(
+			"%s/%s:%s",
+			DefaultSettings.TargetInstallImageRegistry,
+			images.DefaultInstallerImageName,
+			DefaultSettings.CurrentVersion,
+		),
+		TargetVersion:    DefaultSettings.CurrentVersion,
+		TargetK8sVersion: currentK8sVersion,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
@@ -127,7 +137,12 @@ func upgradeStableToCurrent() upgradeSpec {
 
 // upgradeCurrentToCurrent upgrades the current version to itself.
 func upgradeCurrentToCurrent() upgradeSpec {
-	installerImage := fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion)
+	installerImage := fmt.Sprintf(
+		"%s/%s:%s",
+		DefaultSettings.TargetInstallImageRegistry,
+		images.DefaultInstallerImageName,
+		DefaultSettings.CurrentVersion,
+	)
 
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
@@ -160,9 +175,14 @@ func upgradeStableToCurrentPreserve() upgradeSpec {
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		TargetInstallerImage: fmt.Sprintf(
+			"%s/%s:%s",
+			DefaultSettings.TargetInstallImageRegistry,
+			images.DefaultInstallerImageName,
+			DefaultSettings.CurrentVersion,
+		),
+		TargetVersion:    DefaultSettings.CurrentVersion,
+		TargetK8sVersion: currentK8sVersion,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -181,9 +201,14 @@ func upgradeStableToCurrentPreserveStage() upgradeSpec {
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s/%s:%s", DefaultSettings.TargetInstallImageRegistry, images.DefaultInstallerImageName, DefaultSettings.CurrentVersion),
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		TargetInstallerImage: fmt.Sprintf(
+			"%s/%s:%s",
+			DefaultSettings.TargetInstallImageRegistry,
+			images.DefaultInstallerImageName,
+			DefaultSettings.CurrentVersion,
+		),
+		TargetVersion:    DefaultSettings.CurrentVersion,
+		TargetK8sVersion: currentK8sVersion,
 
 		MasterNodes:     1,
 		WorkerNodes:     0,
@@ -209,6 +234,7 @@ type UpgradeSuite struct {
 	clusterAccess        *access.Adapter
 	controlPlaneEndpoint string
 
+	//nolint:containedctx
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 
@@ -333,55 +359,67 @@ func (suite *UpgradeSuite) setupCluster() {
 	}
 
 	if DefaultSettings.CustomCNIURL != "" {
-		genOptions = append(genOptions, generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-			CNIName: constants.CustomCNI,
-			CNIUrls: []string{DefaultSettings.CustomCNIURL},
-		}))
+		genOptions = append(
+			genOptions, generate.WithClusterCNIConfig(
+				&v1alpha1.CNIConfig{
+					CNIName: constants.CustomCNI,
+					CNIUrls: []string{DefaultSettings.CustomCNIURL},
+				},
+			),
+		)
 	}
 
 	if suite.spec.WithEncryption {
-		genOptions = append(genOptions, generate.WithSystemDiskEncryption(&v1alpha1.SystemDiskEncryptionConfig{
-			StatePartition: &v1alpha1.EncryptionConfig{
-				EncryptionProvider: encryption.LUKS2,
-				EncryptionKeys: []*v1alpha1.EncryptionKey{
-					{
-						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-						KeySlot:   0,
+		genOptions = append(
+			genOptions, generate.WithSystemDiskEncryption(
+				&v1alpha1.SystemDiskEncryptionConfig{
+					StatePartition: &v1alpha1.EncryptionConfig{
+						EncryptionProvider: encryption.LUKS2,
+						EncryptionKeys: []*v1alpha1.EncryptionKey{
+							{
+								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+								KeySlot:   0,
+							},
+						},
+					},
+					EphemeralPartition: &v1alpha1.EncryptionConfig{
+						EncryptionProvider: encryption.LUKS2,
+						EncryptionKeys: []*v1alpha1.EncryptionKey{
+							{
+								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+								KeySlot:   0,
+							},
+						},
 					},
 				},
-			},
-			EphemeralPartition: &v1alpha1.EncryptionConfig{
-				EncryptionProvider: encryption.LUKS2,
-				EncryptionKeys: []*v1alpha1.EncryptionKey{
-					{
-						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-						KeySlot:   0,
-					},
-				},
-			},
-		}))
+			),
+		)
 	}
 
 	versionContract, err := config.ParseContractFromVersion(suite.spec.SourceVersion)
 	suite.Require().NoError(err)
 
-	suite.configBundle, err = bundle.NewConfigBundle(bundle.WithInputOptions(
-		&bundle.InputOptions{
-			ClusterName: clusterName,
-			Endpoint:    suite.controlPlaneEndpoint,
-			KubeVersion: suite.spec.SourceK8sVersion,
-			GenOptions: append(
-				genOptions,
-				generate.WithEndpointList(masterEndpoints),
-				generate.WithInstallImage(suite.spec.SourceInstallerImage),
-				generate.WithDNSDomain("cluster.local"),
-				generate.WithVersionContract(versionContract),
-			),
-		}))
+	suite.configBundle, err = bundle.NewConfigBundle(
+		bundle.WithInputOptions(
+			&bundle.InputOptions{
+				ClusterName: clusterName,
+				Endpoint:    suite.controlPlaneEndpoint,
+				KubeVersion: suite.spec.SourceK8sVersion,
+				GenOptions: append(
+					genOptions,
+					generate.WithEndpointList(masterEndpoints),
+					generate.WithInstallImage(suite.spec.SourceInstallerImage),
+					generate.WithDNSDomain("cluster.local"),
+					generate.WithVersionContract(versionContract),
+				),
+			},
+		),
+	)
 	suite.Require().NoError(err)
 
 	for i := 0; i < suite.spec.MasterNodes; i++ {
-		request.Nodes = append(request.Nodes,
+		request.Nodes = append(
+			request.Nodes,
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("master-%d", i+1),
 				Type:     machine.TypeControlPlane,
@@ -394,11 +432,13 @@ func (suite *UpgradeSuite) setupCluster() {
 					},
 				},
 				Config: suite.configBundle.ControlPlane(),
-			})
+			},
+		)
 	}
 
 	for i := 1; i <= suite.spec.WorkerNodes; i++ {
-		request.Nodes = append(request.Nodes,
+		request.Nodes = append(
+			request.Nodes,
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("worker-%d", i),
 				Type:     machine.TypeWorker,
@@ -411,10 +451,12 @@ func (suite *UpgradeSuite) setupCluster() {
 					},
 				},
 				Config: suite.configBundle.Worker(),
-			})
+			},
+		)
 	}
 
-	suite.Cluster, err = suite.provisioner.Create(suite.ctx, request,
+	suite.Cluster, err = suite.provisioner.Create(
+		suite.ctx, request,
 		provision.WithBootlader(true),
 		provision.WithUEFI(true),
 		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
@@ -457,7 +499,14 @@ func (suite *UpgradeSuite) waitForClusterHealth() {
 		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
 		defer checkCtxCancel()
 
-		suite.Require().NoError(check.Wait(checkCtx, suite.clusterAccess, check.DefaultClusterChecks(), check.StderrReporter()))
+		suite.Require().NoError(
+			check.Wait(
+				checkCtx,
+				suite.clusterAccess,
+				check.DefaultClusterChecks(),
+				check.StderrReporter(),
+			),
+		)
 	}
 }
 
@@ -487,12 +536,14 @@ func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, 
 
 	err := retry.Constant(
 		time.Minute,
-	).Retry(func() error {
-		var e error
-		v, e = client.Version(ctx)
+	).Retry(
+		func() error {
+			var e error
+			v, e = client.Version(ctx)
 
-		return retry.ExpectedError(e)
-	})
+			return retry.ExpectedError(e)
+		},
+	)
 
 	suite.Require().NoError(err)
 
@@ -503,7 +554,10 @@ func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, 
 	}
 }
 
-func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (version string, err error) {
+func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (
+	version string,
+	err error,
+) {
 	var v *machineapi.VersionResponse
 
 	v, err = client.Version(nodeCtx)
@@ -526,22 +580,30 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 		err  error
 	)
 
-	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
-		resp, err = client.Upgrade(nodeCtx, suite.spec.TargetInstallerImage, suite.spec.UpgradePreserve, suite.spec.UpgradeStage, false)
-		if err != nil {
-			if strings.Contains(err.Error(), "leader changed") {
-				return retry.ExpectedError(err)
+	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(
+		func() error {
+			resp, err = client.Upgrade(
+				nodeCtx,
+				suite.spec.TargetInstallerImage,
+				suite.spec.UpgradePreserve,
+				suite.spec.UpgradeStage,
+				false,
+			)
+			if err != nil {
+				if strings.Contains(err.Error(), "leader changed") {
+					return retry.ExpectedError(err)
+				}
+
+				if strings.Contains(err.Error(), "failed to acquire upgrade lock") {
+					return retry.ExpectedError(err)
+				}
+
+				return err
 			}
 
-			if strings.Contains(err.Error(), "failed to acquire upgrade lock") {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		}
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	err = base.IgnoreGRPCUnavailable(err)
 	suite.Require().NoError(err)
@@ -554,22 +616,33 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 	time.Sleep(10 * time.Second)
 
 	// wait for the version to be equal to target version
-	suite.Require().NoError(retry.Constant(10 * time.Minute).Retry(func() error {
-		var version string
+	suite.Require().NoError(
+		retry.Constant(10 * time.Minute).Retry(
+			func() error {
+				var version string
 
-		version, err = suite.readVersion(nodeCtx, client)
-		if err != nil {
-			// API might be unresponsive during upgrade
-			return retry.ExpectedError(err)
-		}
+				version, err = suite.readVersion(nodeCtx, client)
+				if err != nil {
+					// API might be unresponsive during upgrade
+					return retry.ExpectedError(err)
+				}
 
-		if version != suite.spec.TargetVersion {
-			// upgrade not finished yet
-			return retry.ExpectedError(fmt.Errorf("node %q version doesn't match expected: expected %q, got %q", node.IPs[0].String(), suite.spec.TargetVersion, version))
-		}
+				if version != suite.spec.TargetVersion {
+					// upgrade not finished yet
+					return retry.ExpectedError(
+						fmt.Errorf(
+							"node %q version doesn't match expected: expected %q, got %q",
+							node.IPs[0].String(),
+							suite.spec.TargetVersion,
+							version,
+						),
+					)
+				}
 
-		return nil
-	}))
+				return nil
+			},
+		),
+	)
 
 	suite.waitForClusterHealth()
 }
@@ -622,7 +695,13 @@ func (suite *UpgradeSuite) untaint(name string) {
 	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
 	suite.Require().NoError(err)
 
-	_, err = client.CoreV1().Nodes().Patch(suite.ctx, n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+	_, err = client.CoreV1().Nodes().Patch(
+		suite.ctx,
+		n.Name,
+		types.StrategicMergePatchType,
+		patchBytes,
+		metav1.PatchOptions{},
+	)
 	suite.Require().NoError(err)
 }
 
@@ -670,7 +749,8 @@ func (suite *UpgradeSuite) SuiteName() string {
 }
 
 func init() {
-	allSuites = append(allSuites,
+	allSuites = append(
+		allSuites,
 		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},

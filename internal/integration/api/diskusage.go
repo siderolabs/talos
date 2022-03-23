@@ -23,10 +23,10 @@ import (
 type DiskUsageSuite struct {
 	base.APISuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	nodeCtx context.Context
+	nodeCtx context.Context //nolint:containedctx
 }
 
 // SuiteName ...

@@ -36,7 +36,7 @@ type StaticPodConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -65,7 +65,10 @@ func (suite *StaticPodConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *StaticPodConfigSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
+func (suite *StaticPodConfigSuite) assertResource(
+	md resource.Metadata,
+	check func(res resource.Resource) error,
+) func() error {
 	return func() error {
 		r, err := suite.state.Get(suite.ctx, md)
 		if err != nil {
@@ -96,47 +99,51 @@ func (suite *StaticPodConfigSuite) assertNoResource(md resource.Metadata) func()
 }
 
 func (suite *StaticPodConfigSuite) TestReconcile() {
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachinePods: []v1alpha1.Unstructured{
-				{
-					Object: map[string]interface{}{
-						"apiVersion": "v1",
-						"kind":       "pod",
-						"metadata": map[string]interface{}{
-							"name": "nginx",
-						},
-						"spec": map[string]interface{}{
-							"containers": []interface{}{
-								map[string]interface{}{
-									"name":  "nginx",
-									"image": "nginx",
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachinePods: []v1alpha1.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "pod",
+							"metadata": map[string]interface{}{
+								"name": "nginx",
+							},
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "nginx",
+										"image": "nginx",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
 		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			*k8s.NewStaticPod(k8s.NamespaceName, "default-nginx").Metadata(),
-			func(res resource.Resource) error {
-				v, ok, err := unstructured.NestedString(res.(*k8s.StaticPod).TypedSpec().Pod, "kind")
-				suite.Require().NoError(err)
-				suite.Assert().True(ok)
-				suite.Assert().Equal("pod", v)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertResource(
+				*k8s.NewStaticPod(k8s.NamespaceName, "default-nginx").Metadata(),
+				func(res resource.Resource) error {
+					v, ok, err := unstructured.NestedString(res.(*k8s.StaticPod).TypedSpec().Pod, "kind")
+					suite.Require().NoError(err)
+					suite.Assert().True(ok)
+					suite.Assert().Equal("pod", v)
 
-				return nil
-			},
+					return nil
+				},
+			),
 		),
-	))
+	)
 
 	// update the pod changing the namespace
 	cfg.Config().Raw().(*v1alpha1.Config).MachineConfig.MachinePods[0].Object["metadata"].(map[string]interface{})["namespace"] = "custom"
@@ -144,24 +151,32 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 	cfg.Metadata().BumpVersion()
 	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			*k8s.NewStaticPod(k8s.NamespaceName, "default-nginx").Metadata(),
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertNoResource(
+				*k8s.NewStaticPod(k8s.NamespaceName, "default-nginx").Metadata(),
+			),
 		),
-	))
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			*k8s.NewStaticPod(k8s.NamespaceName, "custom-nginx").Metadata(),
-			func(res resource.Resource) error {
-				v, ok, err := unstructured.NestedString(res.(*k8s.StaticPod).TypedSpec().Pod, "metadata", "namespace")
-				suite.Require().NoError(err)
-				suite.Assert().True(ok)
-				suite.Assert().Equal("custom", v)
+	)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertResource(
+				*k8s.NewStaticPod(k8s.NamespaceName, "custom-nginx").Metadata(),
+				func(res resource.Resource) error {
+					v, ok, err := unstructured.NestedString(
+						res.(*k8s.StaticPod).TypedSpec().Pod,
+						"metadata",
+						"namespace",
+					)
+					suite.Require().NoError(err)
+					suite.Assert().True(ok)
+					suite.Assert().Equal("custom", v)
 
-				return nil
-			},
+					return nil
+				},
+			),
 		),
-	))
+	)
 
 	// remove all pods
 	cfg.Config().Raw().(*v1alpha1.Config).MachineConfig.MachinePods = nil
@@ -169,11 +184,13 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 	cfg.Metadata().BumpVersion()
 	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			*k8s.NewStaticPod(k8s.NamespaceName, "custom-nginx").Metadata(),
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertNoResource(
+				*k8s.NewStaticPod(k8s.NamespaceName, "custom-nginx").Metadata(),
+			),
 		),
-	))
+	)
 }
 
 func (suite *StaticPodConfigSuite) TearDownTest() {

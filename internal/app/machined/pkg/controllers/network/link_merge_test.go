@@ -36,7 +36,7 @@ type LinkMergeSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -72,7 +72,10 @@ func (suite *LinkMergeSuite) assertLinks(requiredIDs []string, check func(*netwo
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -98,7 +101,10 @@ func (suite *LinkMergeSuite) assertLinks(requiredIDs []string, check func(*netwo
 }
 
 func (suite *LinkMergeSuite) assertNoLinks(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -140,51 +146,64 @@ func (suite *LinkMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinks([]string{
-				"lo",
-				"eth0",
-			}, func(r *network.LinkSpec) error {
-				switch r.Metadata().ID() {
-				case "lo":
-					suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
-				case "eth0":
-					suite.Assert().EqualValues(1500, r.TypedSpec().MTU) // static should override dhcp
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinks(
+					[]string{
+						"lo",
+						"eth0",
+					}, func(r *network.LinkSpec) error {
+						switch r.Metadata().ID() {
+						case "lo":
+							suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
+						case "eth0":
+							suite.Assert().EqualValues(1500, r.TypedSpec().MTU) // static should override dhcp
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinks([]string{
-				"lo",
-				"eth0",
-			}, func(r *network.LinkSpec) error {
-				switch r.Metadata().ID() {
-				case "lo":
-					suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
-				case "eth0":
-					// reconcile happens eventually, so give it some time
-					if r.TypedSpec().MTU != 1450 {
-						return retry.ExpectedErrorf("MTU %d != 1450", r.TypedSpec().MTU)
-					}
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinks(
+					[]string{
+						"lo",
+						"eth0",
+					}, func(r *network.LinkSpec) error {
+						switch r.Metadata().ID() {
+						case "lo":
+							suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
+						case "eth0":
+							// reconcile happens eventually, so give it some time
+							if r.TypedSpec().MTU != 1450 {
+								return retry.ExpectedErrorf("MTU %d != 1450", r.TypedSpec().MTU)
+							}
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertNoLinks("lo")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoLinks("lo")
+			},
+		),
+	)
 }
 
 func (suite *LinkMergeSuite) TestMergeLogicalLink() {
@@ -211,21 +230,26 @@ func (suite *LinkMergeSuite) TestMergeLogicalLink() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinks([]string{
-				"bond0",
-			}, func(r *network.LinkSpec) error {
-				if r.TypedSpec().MTU != 1450 {
-					return retry.ExpectedErrorf("not merged yet")
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinks(
+					[]string{
+						"bond0",
+					}, func(r *network.LinkSpec) error {
+						if r.TypedSpec().MTU != 1450 {
+							return retry.ExpectedErrorf("not merged yet")
+						}
 
-				suite.Assert().True(r.TypedSpec().Logical)
-				suite.Assert().EqualValues(1450, r.TypedSpec().MTU)
+						suite.Assert().True(r.TypedSpec().Logical)
+						suite.Assert().EqualValues(1450, r.TypedSpec().MTU)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 //nolint:gocyclo
@@ -271,49 +295,74 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 
 	eg.Go(flipflop(0))
 	eg.Go(flipflop(1))
-	eg.Go(func() error {
-		// add/remove finalizer to the merged resource
-		for i := 0; i < 1000; i++ {
-			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "eth0", resource.VersionUndefined), "foo"); err != nil {
-				if !state.IsNotFoundError(err) {
-					return err
+	eg.Go(
+		func() error {
+			// add/remove finalizer to the merged resource
+			for i := 0; i < 1000; i++ {
+				if err := suite.state.AddFinalizer(
+					suite.ctx,
+					resource.NewMetadata(
+						network.NamespaceName,
+						network.LinkSpecType,
+						"eth0",
+						resource.VersionUndefined,
+					),
+					"foo",
+				); err != nil {
+					if !state.IsNotFoundError(err) {
+						return err
+					}
+
+					continue
+				} else {
+					suite.T().Log("finalizer added")
 				}
 
-				continue
-			} else {
-				suite.T().Log("finalizer added")
-			}
+				time.Sleep(10 * time.Millisecond)
 
-			time.Sleep(10 * time.Millisecond)
-
-			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "eth0", resource.VersionUndefined), "foo"); err != nil {
-				if err != nil && !state.IsNotFoundError(err) {
-					return err
+				if err := suite.state.RemoveFinalizer(
+					suite.ctx,
+					resource.NewMetadata(
+						network.NamespaceName,
+						network.LinkSpecType,
+						"eth0",
+						resource.VersionUndefined,
+					),
+					"foo",
+				); err != nil {
+					if err != nil && !state.IsNotFoundError(err) {
+						return err
+					}
 				}
 			}
-		}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	suite.Require().NoError(eg.Wait())
 
-	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinks([]string{
-				"eth0",
-			}, func(r *network.LinkSpec) error {
-				if r.Metadata().Phase() != resource.PhaseRunning {
-					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
-				}
+	suite.Assert().NoError(
+		retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinks(
+					[]string{
+						"eth0",
+					}, func(r *network.LinkSpec) error {
+						if r.Metadata().Phase() != resource.PhaseRunning {
+							return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
+						}
 
-				if r.TypedSpec().MTU != 1500 {
-					return retry.ExpectedErrorf("MTU %d != 1500", r.TypedSpec().MTU)
-				}
+						if r.TypedSpec().MTU != 1500 {
+							return retry.ExpectedErrorf("MTU %d != 1500", r.TypedSpec().MTU)
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *LinkMergeSuite) TestMergeWireguard() {
@@ -352,41 +401,52 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinks([]string{
-				"kubespan",
-			}, func(r *network.LinkSpec) error {
-				suite.Assert().Equal("IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=", r.TypedSpec().Wireguard.PrivateKey)
-				suite.Assert().Equal(1234, r.TypedSpec().Wireguard.ListenPort)
-				suite.Assert().Len(r.TypedSpec().Wireguard.Peers, 2)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinks(
+					[]string{
+						"kubespan",
+					}, func(r *network.LinkSpec) error {
+						suite.Assert().Equal(
+							"IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=",
+							r.TypedSpec().Wireguard.PrivateKey,
+						)
+						suite.Assert().Equal(1234, r.TypedSpec().Wireguard.ListenPort)
+						suite.Assert().Len(r.TypedSpec().Wireguard.Peers, 2)
 
-				suite.Assert().Equal(
-					network.WireguardPeer{
-						PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
-						Endpoint:  "127.0.0.1:1234",
+						suite.Assert().Equal(
+							network.WireguardPeer{
+								PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
+								Endpoint:  "127.0.0.1:1234",
+							},
+							r.TypedSpec().Wireguard.Peers[0],
+						)
+
+						suite.Assert().Equal(
+							network.WireguardPeer{
+								PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
+								Endpoint:  "127.0.0.1:9999",
+							},
+							r.TypedSpec().Wireguard.Peers[1],
+						)
+
+						return nil
 					},
-					r.TypedSpec().Wireguard.Peers[0],
 				)
-
-				suite.Assert().Equal(
-					network.WireguardPeer{
-						PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
-						Endpoint:  "127.0.0.1:9999",
-					},
-					r.TypedSpec().Wireguard.Peers[1],
-				)
-
-				return nil
-			})
-		}))
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, kubespanOperator.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertNoLinks("kubespan")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoLinks("kubespan")
+			},
+		),
+	)
 }
 
 func (suite *LinkMergeSuite) TearDownTest() {
@@ -397,7 +457,12 @@ func (suite *LinkMergeSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkSpec(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewLinkSpec(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestLinkMergeSuite(t *testing.T) {

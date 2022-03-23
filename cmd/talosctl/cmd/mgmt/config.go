@@ -123,7 +123,8 @@ func GenV1Alpha1Config(genOptions []generate.GenOption,
 	kubernetesVersion string,
 	configPatch []string,
 	configPatchControlPlane []string,
-	configPatchWorker []string) (*v1alpha1.ConfigBundle, error) {
+	configPatchWorker []string,
+) (*v1alpha1.ConfigBundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{

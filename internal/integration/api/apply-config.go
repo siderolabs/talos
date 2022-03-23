@@ -51,7 +51,7 @@ const assertRebootedRebootTimeout = 10 * time.Minute
 type ApplyConfigSuite struct {
 	base.K8sSuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -109,30 +109,38 @@ func (suite *ApplyConfigSuite) TestApply() {
 	cfgDataOut, err := cfg.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
-	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: cfgDataOut,
-			Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-		})
-		if err != nil {
-			// It is expected that the connection will EOF here, so just log the error
-			suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
-		}
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			_, err = suite.Client.ApplyConfiguration(
+				nodeCtx, &machineapi.ApplyConfigurationRequest{
+					Data: cfgDataOut,
+					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
+				},
+			)
+			if err != nil {
+				// It is expected that the connection will EOF here, so just log the error
+				suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+			}
 
-		return nil
-	}, assertRebootedRebootTimeout)
+			return nil
+		}, assertRebootedRebootTimeout,
+	)
 
 	// Verify configuration change
 	var newProvider config.Provider
 
-	suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
-		newProvider, err = suite.ReadConfigFromNode(nodeCtx)
-		if err != nil {
-			return retry.ExpectedError(err)
-		}
+	suite.Require().Nilf(
+		retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(
+			func() error {
+				newProvider, err = suite.ReadConfigFromNode(nodeCtx)
+				if err != nil {
+					return retry.ExpectedError(err)
+				}
 
-		return nil
-	}), "failed to read updated configuration from node %q: %w", node, err)
+				return nil
+			},
+		), "failed to read updated configuration from node %q: %w", node, err,
+	)
 
 	suite.Assert().Equal(
 		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
@@ -168,10 +176,12 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		cfgDataOut, err := cfg.Bytes()
 		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
-		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: cfgDataOut,
-			Mode: mode,
-		})
+		_, err = suite.Client.ApplyConfiguration(
+			nodeCtx, &machineapi.ApplyConfigurationRequest{
+				Data: cfgDataOut,
+				Mode: mode,
+			},
+		)
 		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
 
 		// Verify configuration change
@@ -195,10 +205,12 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		cfgDataOut, err = cfg.Bytes()
 		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
-		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: cfgDataOut,
-			Mode: mode,
-		})
+		_, err = suite.Client.ApplyConfiguration(
+			nodeCtx, &machineapi.ApplyConfigurationRequest{
+				Data: cfgDataOut,
+				Mode: mode,
+			},
+		)
 		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
 	}
 }
@@ -295,32 +307,40 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		data, err := machineConfig.Bytes()
 		suite.Require().NoError(err)
 
-		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-			_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-				Data: data,
-				Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-			})
-			if err != nil {
-				// It is expected that the connection will EOF here, so just log the error
-				suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
-			}
+		suite.AssertRebooted(
+			suite.ctx, node, func(nodeCtx context.Context) error {
+				_, err = suite.Client.ApplyConfiguration(
+					nodeCtx, &machineapi.ApplyConfigurationRequest{
+						Data: data,
+						Mode: machineapi.ApplyConfigurationRequest_REBOOT,
+					},
+				)
+				if err != nil {
+					// It is expected that the connection will EOF here, so just log the error
+					suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+				}
 
-			return nil
-		}, assertRebootedRebootTimeout)
+				return nil
+			}, assertRebootedRebootTimeout,
+		)
 
 		suite.ClearConnectionRefused(suite.ctx, node)
 
 		// Verify configuration change
 		var newProvider config.Provider
 
-		suite.Require().Nilf(retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
-			newProvider, err = suite.ReadConfigFromNode(nodeCtx)
-			if err != nil {
-				return retry.ExpectedError(err)
-			}
+		suite.Require().Nilf(
+			retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(
+				func() error {
+					newProvider, err = suite.ReadConfigFromNode(nodeCtx)
+					if err != nil {
+						return retry.ExpectedError(err)
+					}
 
-			return nil
-		}), "failed to read updated configuration from node %q: %w", node, err)
+					return nil
+				},
+			), "failed to read updated configuration from node %q: %w", node, err,
+		)
 
 		e := newProvider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
 
@@ -370,10 +390,12 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	cfgDataOut, err := cfg.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
-	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		Data: cfgDataOut,
-		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-	})
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+		},
+	)
 	suite.Require().Error(err)
 
 	var (

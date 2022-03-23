@@ -35,7 +35,7 @@ type EtcFileSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	etcPath    string
@@ -57,10 +57,14 @@ func (suite *EtcFileSuite) SetupTest() {
 	suite.etcPath = suite.T().TempDir()
 	suite.shadowPath = suite.T().TempDir()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&filesctrl.EtcFileController{
-		EtcPath:    suite.etcPath,
-		ShadowPath: suite.shadowPath,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&filesctrl.EtcFileController{
+				EtcPath:    suite.etcPath,
+				ShadowPath: suite.shadowPath,
+			},
+		),
+	)
 }
 
 func (suite *EtcFileSuite) startRuntime() {
@@ -83,7 +87,10 @@ func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVers
 		return retry.ExpectedErrorf("contents don't match %q != %q", string(b), contents)
 	}
 
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined),
+	)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -118,10 +125,13 @@ func (suite *EtcFileSuite) TestFiles() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, etcFileSpec))
 
-	suite.Assert().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertEtcFile("test1", "foo", etcFileSpec.Metadata().Version())
-		}))
+	suite.Assert().NoError(
+		retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertEtcFile("test1", "foo", etcFileSpec.Metadata().Version())
+			},
+		),
+	)
 
 	for _, r := range []resource.Resource{etcFileSpec} {
 		for {

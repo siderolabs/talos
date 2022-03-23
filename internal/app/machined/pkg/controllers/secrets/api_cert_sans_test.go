@@ -37,7 +37,7 @@ type APICertSANsSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -78,30 +78,46 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 	hostnameStatus.TypedSpec().Domainname = "some.org"
 	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
 
-	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.2.1.3/24"), netaddr.MustParseIPPrefix("172.16.0.1/32")}
+	nodeAddresses := network.NewNodeAddress(
+		network.NamespaceName,
+		network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s),
+	)
+	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
+		netaddr.MustParseIPPrefix("10.2.1.3/24"),
+		netaddr.MustParseIPPrefix("172.16.0.1/32"),
+	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddresses))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			certSANs, err := suite.state.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANAPIID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				certSANs, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.CertSANType,
+						secrets.CertSANAPIID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := certSANs.(*secrets.CertSAN).TypedSpec()
 
-			spec := certSANs.(*secrets.CertSAN).TypedSpec()
+				suite.Assert().Equal([]string{"bar", "bar.some.org", "some.org"}, spec.DNSNames)
+				suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
+				suite.Assert().Equal("bar.some.org", spec.FQDN)
 
-			suite.Assert().Equal([]string{"bar", "bar.some.org", "some.org"}, spec.DNSNames)
-			suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
-			suite.Assert().Equal("bar.some.org", spec.FQDN)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *APICertSANsSuite) TearDownTest() {

@@ -178,14 +178,11 @@ func file_resource_secrets_secrets_proto_rawDescGZIP() []byte {
 	return file_resource_secrets_secrets_proto_rawDescData
 }
 
-var (
-	file_resource_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-	file_resource_secrets_secrets_proto_goTypes  = []interface{}{
-		(*CertAndKeyPEM)(nil), // 0: resource.secrets.CertAndKeyPEM
-		(*APISpec)(nil),       // 1: resource.secrets.APISpec
-	}
-)
-
+var file_resource_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_secrets_secrets_proto_goTypes = []interface{}{
+	(*CertAndKeyPEM)(nil), // 0: resource.secrets.CertAndKeyPEM
+	(*APISpec)(nil),       // 1: resource.secrets.APISpec
+}
 var file_resource_secrets_secrets_proto_depIdxs = []int32{
 	0, // 0: resource.secrets.APISpec.server:type_name -> resource.secrets.CertAndKeyPEM
 	0, // 1: resource.secrets.APISpec.client:type_name -> resource.secrets.CertAndKeyPEM

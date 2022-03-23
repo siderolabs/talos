@@ -253,17 +253,14 @@ func file_cluster_cluster_proto_rawDescGZIP() []byte {
 	return file_cluster_cluster_proto_rawDescData
 }
 
-var (
-	file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-	file_cluster_cluster_proto_goTypes  = []interface{}{
-		(*HealthCheckRequest)(nil),  // 0: cluster.HealthCheckRequest
-		(*ClusterInfo)(nil),         // 1: cluster.ClusterInfo
-		(*HealthCheckProgress)(nil), // 2: cluster.HealthCheckProgress
-		(*durationpb.Duration)(nil), // 3: google.protobuf.Duration
-		(*common.Metadata)(nil),     // 4: common.Metadata
-	}
-)
-
+var file_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_cluster_cluster_proto_goTypes = []interface{}{
+	(*HealthCheckRequest)(nil),  // 0: cluster.HealthCheckRequest
+	(*ClusterInfo)(nil),         // 1: cluster.ClusterInfo
+	(*HealthCheckProgress)(nil), // 2: cluster.HealthCheckProgress
+	(*durationpb.Duration)(nil), // 3: google.protobuf.Duration
+	(*common.Metadata)(nil),     // 4: common.Metadata
+}
 var file_cluster_cluster_proto_depIdxs = []int32{
 	3, // 0: cluster.HealthCheckRequest.wait_timeout:type_name -> google.protobuf.Duration
 	1, // 1: cluster.HealthCheckRequest.cluster_info:type_name -> cluster.ClusterInfo

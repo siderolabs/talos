@@ -41,7 +41,7 @@ type AddressConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -73,7 +73,10 @@ func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check fun
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -103,42 +106,60 @@ func (suite *AddressConfigSuite) TestLoopback() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				"default/lo/127.0.0.1/8",
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("lo", r.TypedSpec().LinkName)
-				suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						"default/lo/127.0.0.1/8",
+					}, func(r *network.AddressSpec) error {
+						suite.Assert().Equal("lo", r.TypedSpec().LinkName)
+						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *AddressConfigSuite) TestCmdline() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{
-		Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.AddressConfigController{
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
+			},
+		),
+	)
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				"cmdline/eth1/172.20.0.2/24",
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						"cmdline/eth1/172.20.0.2/24",
+					}, func(r *network.AddressSpec) error {
+						suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressConfigController{
-		Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1"),
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.AddressConfigController{
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1"),
+			},
+		),
+	)
 
 	suite.startRuntime()
 
@@ -160,17 +181,22 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 
 	suite.Assert().NotEmpty(ifaceName)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
-			}, func(r *network.AddressSpec) error {
-				suite.Assert().Equal(ifaceName, r.TypedSpec().LinkName)
-				suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
+					}, func(r *network.AddressSpec) error {
+						suite.Assert().Equal(ifaceName, r.TypedSpec().LinkName)
+						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *AddressConfigSuite) TestMachineConfiguration() {
@@ -181,78 +207,85 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceInterface: "eth3",
-						DeviceCIDR:      "192.168.0.24/28",
-					},
-					{
-						DeviceIgnore:    true,
-						DeviceInterface: "eth4",
-						DeviceCIDR:      "192.168.0.24/28",
-					},
-					{
-						DeviceInterface: "eth2",
-						DeviceCIDR:      "2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
-					},
-					{
-						DeviceInterface: "eth5",
-						DeviceCIDR:      "10.5.0.7",
-					},
-					{
-						DeviceInterface: "eth6",
-						DeviceAddresses: []string{
-							"10.5.0.8",
-							"2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					NetworkInterfaces: []*v1alpha1.Device{
+						{
+							DeviceInterface: "eth3",
+							DeviceCIDR:      "192.168.0.24/28",
 						},
-					},
-					{
-						DeviceInterface: "eth0",
-						DeviceVlans: []*v1alpha1.Vlan{
-							{
-								VlanID:   24,
-								VlanCIDR: "10.0.0.1/8",
+						{
+							DeviceIgnore:    true,
+							DeviceInterface: "eth4",
+							DeviceCIDR:      "192.168.0.24/28",
+						},
+						{
+							DeviceInterface: "eth2",
+							DeviceCIDR:      "2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
+						},
+						{
+							DeviceInterface: "eth5",
+							DeviceCIDR:      "10.5.0.7",
+						},
+						{
+							DeviceInterface: "eth6",
+							DeviceAddresses: []string{
+								"10.5.0.8",
+								"2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
 							},
-							{
-								VlanID: 25,
-								VlanAddresses: []string{
-									"11.0.0.1/8",
+						},
+						{
+							DeviceInterface: "eth0",
+							DeviceVlans: []*v1alpha1.Vlan{
+								{
+									VlanID:   24,
+									VlanCIDR: "10.0.0.1/8",
+								},
+								{
+									VlanID: 25,
+									VlanAddresses: []string{
+										"11.0.0.1/8",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
 				},
 			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{
-				"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
-				"configuration/eth3/192.168.0.24/28",
-				"configuration/eth5/10.5.0.7/32",
-				"configuration/eth6/10.5.0.8/32",
-				"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
-				"configuration/eth0.24/10.0.0.1/8",
-				"configuration/eth0.25/11.0.0.1/8",
-			}, func(r *network.AddressSpec) error {
-				return nil
-			})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
+						"configuration/eth3/192.168.0.24/28",
+						"configuration/eth5/10.5.0.7/32",
+						"configuration/eth6/10.5.0.8/32",
+						"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
+						"configuration/eth0.24/10.0.0.1/8",
+						"configuration/eth0.25/11.0.0.1/8",
+					}, func(r *network.AddressSpec) error {
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *AddressConfigSuite) TearDownTest() {
@@ -263,10 +296,14 @@ func (suite *AddressConfigSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-	}))
+	err := suite.state.Create(
+		context.Background(), config.NewMachineConfig(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+			},
+		),
+	)
 	if state.IsConflictError(err) {
 		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
 	}

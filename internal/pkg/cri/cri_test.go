@@ -47,7 +47,7 @@ type CRISuite struct {
 	containerdAddress string
 
 	client    *cri.Client
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -165,17 +165,22 @@ func (suite *CRISuite) TestRunSandboxContainer() {
 	suite.Require().NoError(err)
 	suite.Require().Len(podSandboxID, 64)
 
-	imageRef, err := suite.client.PullImage(suite.ctx, &runtimeapi.ImageSpec{
-		Image: busyboxImage,
-	}, podSandboxConfig)
+	imageRef, err := suite.client.PullImage(
+		suite.ctx, &runtimeapi.ImageSpec{
+			Image: busyboxImage,
+		}, podSandboxConfig,
+	)
 	suite.Require().NoError(err)
 
-	_, err = suite.client.ImageStatus(suite.ctx, &runtimeapi.ImageSpec{
-		Image: imageRef,
-	})
+	_, err = suite.client.ImageStatus(
+		suite.ctx, &runtimeapi.ImageSpec{
+			Image: imageRef,
+		},
+	)
 	suite.Require().NoError(err)
 
-	ctrID, err := suite.client.CreateContainer(suite.ctx, podSandboxID,
+	ctrID, err := suite.client.CreateContainer(
+		suite.ctx, podSandboxID,
 		&runtimeapi.ContainerConfig{
 			Metadata: &runtimeapi.ContainerMetadata{
 				Name: "etcd",
@@ -192,7 +197,8 @@ func (suite *CRISuite) TestRunSandboxContainer() {
 				Image: imageRef,
 			},
 			Command: []string{"/bin/sh", "-c", "sleep 3600"},
-		}, podSandboxConfig)
+		}, podSandboxConfig,
+	)
 	suite.Require().NoError(err)
 	suite.Require().Len(ctrID, 64)
 

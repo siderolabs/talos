@@ -374,19 +374,16 @@ func file_storage_storage_proto_rawDescGZIP() []byte {
 	return file_storage_storage_proto_rawDescData
 }
 
-var (
-	file_storage_storage_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-	file_storage_storage_proto_msgTypes  = make([]protoimpl.MessageInfo, 3)
-	file_storage_storage_proto_goTypes   = []interface{}{
-		(Disk_DiskType)(0),      // 0: storage.Disk.DiskType
-		(*Disk)(nil),            // 1: storage.Disk
-		(*Disks)(nil),           // 2: storage.Disks
-		(*DisksResponse)(nil),   // 3: storage.DisksResponse
-		(*common.Metadata)(nil), // 4: common.Metadata
-		(*emptypb.Empty)(nil),   // 5: google.protobuf.Empty
-	}
-)
-
+var file_storage_storage_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_storage_storage_proto_goTypes = []interface{}{
+	(Disk_DiskType)(0),      // 0: storage.Disk.DiskType
+	(*Disk)(nil),            // 1: storage.Disk
+	(*Disks)(nil),           // 2: storage.Disks
+	(*DisksResponse)(nil),   // 3: storage.DisksResponse
+	(*common.Metadata)(nil), // 4: common.Metadata
+	(*emptypb.Empty)(nil),   // 5: google.protobuf.Empty
+}
 var file_storage_storage_proto_depIdxs = []int32{
 	0, // 0: storage.Disk.type:type_name -> storage.Disk.DiskType
 	4, // 1: storage.Disks.metadata:type_name -> common.Metadata

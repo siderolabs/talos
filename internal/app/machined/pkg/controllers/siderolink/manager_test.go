@@ -40,7 +40,7 @@ type ManagerSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	s *grpc.Server
@@ -90,9 +90,13 @@ func (suite *ManagerSuite) SetupTest() {
 
 	cmdline := procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamSideroLink, lis.Addr().String()))
 
-	suite.Require().NoError(suite.runtime.RegisterController(&siderolinkctrl.ManagerController{
-		Cmdline: cmdline,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&siderolinkctrl.ManagerController{
+				Cmdline: cmdline,
+			},
+		),
+	)
 }
 
 func (suite *ManagerSuite) startRuntime() {
@@ -113,56 +117,76 @@ func (suite *ManagerSuite) TestReconcile() {
 
 	nodeAddress := netaddr.MustParseIPPrefix(mockNodeAddressPrefix)
 
-	suite.Assert().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			addressResource, err := suite.state.Get(suite.ctx, resource.NewMetadata(
-				network.ConfigNamespaceName,
-				network.AddressSpecType,
-				network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress)),
-				resource.VersionUndefined,
-			))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				addressResource, err := suite.state.Get(
+					suite.ctx, resource.NewMetadata(
+						network.ConfigNamespaceName,
+						network.AddressSpecType,
+						network.LayeredID(
+							network.ConfigOperator,
+							network.AddressID(constants.SideroLinkName, nodeAddress),
+						),
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				address := addressResource.(*network.AddressSpec).TypedSpec()
 
-			address := addressResource.(*network.AddressSpec).TypedSpec()
+				suite.Assert().Equal(nodeAddress, address.Address)
+				suite.Assert().Equal(network.ConfigOperator, address.ConfigLayer)
+				suite.Assert().Equal(nethelpers.FamilyInet6, address.Family)
+				suite.Assert().Equal(constants.SideroLinkName, address.LinkName)
 
-			suite.Assert().Equal(nodeAddress, address.Address)
-			suite.Assert().Equal(network.ConfigOperator, address.ConfigLayer)
-			suite.Assert().Equal(nethelpers.FamilyInet6, address.Family)
-			suite.Assert().Equal(constants.SideroLinkName, address.LinkName)
+				linkResource, err := suite.state.Get(
+					suite.ctx, resource.NewMetadata(
+						network.ConfigNamespaceName,
+						network.LinkSpecType,
+						network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)),
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
 
-			linkResource, err := suite.state.Get(suite.ctx, resource.NewMetadata(
-				network.ConfigNamespaceName,
-				network.LinkSpecType,
-				network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)),
-				resource.VersionUndefined,
-			))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+					return err
 				}
 
-				return err
-			}
+				link := linkResource.(*network.LinkSpec).TypedSpec()
 
-			link := linkResource.(*network.LinkSpec).TypedSpec()
+				suite.Assert().Equal("wireguard", link.Kind)
+				suite.Assert().Equal(network.ConfigOperator, link.ConfigLayer)
+				suite.Assert().NotEmpty(link.Wireguard.PrivateKey)
+				suite.Assert().Len(link.Wireguard.Peers, 1)
+				suite.Assert().Equal(mockServerEndpoint, link.Wireguard.Peers[0].Endpoint)
+				suite.Assert().Equal(mockServerPublicKey, link.Wireguard.Peers[0].PublicKey)
+				suite.Assert().Equal(
+					[]netaddr.IPPrefix{
+						netaddr.IPPrefixFrom(
+							netaddr.MustParseIP(mockServerAddress),
+							128,
+						),
+					}, link.Wireguard.Peers[0].AllowedIPs,
+				)
+				suite.Assert().Equal(
+					constants.SideroLinkDefaultPeerKeepalive,
+					link.Wireguard.Peers[0].PersistentKeepaliveInterval,
+				)
 
-			suite.Assert().Equal("wireguard", link.Kind)
-			suite.Assert().Equal(network.ConfigOperator, link.ConfigLayer)
-			suite.Assert().NotEmpty(link.Wireguard.PrivateKey)
-			suite.Assert().Len(link.Wireguard.Peers, 1)
-			suite.Assert().Equal(mockServerEndpoint, link.Wireguard.Peers[0].Endpoint)
-			suite.Assert().Equal(mockServerPublicKey, link.Wireguard.Peers[0].PublicKey)
-			suite.Assert().Equal([]netaddr.IPPrefix{netaddr.IPPrefixFrom(netaddr.MustParseIP(mockServerAddress), 128)}, link.Wireguard.Peers[0].AllowedIPs)
-			suite.Assert().Equal(constants.SideroLinkDefaultPeerKeepalive, link.Wireguard.Peers[0].PersistentKeepaliveInterval)
-
-			return nil
-		}))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *ManagerSuite) TearDownTest() {

@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	_ "github.com/talos-systems/talos/pkg/grpc/codec" //nolint:gci // register codec
+	_ "github.com/talos-systems/talos/pkg/grpc/codec" // register codec
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -44,90 +44,96 @@ const pathAutoCompleteLimit = 500
 //
 // WithClientNoNodes doesn't set any node information on request context.
 func WithClientNoNodes(action func(context.Context, *client.Client) error) error {
-	return cli.WithContext(context.Background(), func(ctx context.Context) error {
-		cfg, err := clientconfig.Open(Talosconfig)
-		if err != nil {
-			return fmt.Errorf("failed to open config file %q: %w", Talosconfig, err)
-		}
+	return cli.WithContext(
+		context.Background(), func(ctx context.Context) error {
+			cfg, err := clientconfig.Open(Talosconfig)
+			if err != nil {
+				return fmt.Errorf("failed to open config file %q: %w", Talosconfig, err)
+			}
 
-		opts := []client.OptionFunc{
-			client.WithConfig(cfg),
-		}
+			opts := []client.OptionFunc{
+				client.WithConfig(cfg),
+			}
 
-		if Cmdcontext != "" {
-			opts = append(opts, client.WithContextName(Cmdcontext))
-		}
+			if Cmdcontext != "" {
+				opts = append(opts, client.WithContextName(Cmdcontext))
+			}
 
-		if len(Endpoints) > 0 {
-			// override endpoints from command-line flags
-			opts = append(opts, client.WithEndpoints(Endpoints...))
-		}
+			if len(Endpoints) > 0 {
+				// override endpoints from command-line flags
+				opts = append(opts, client.WithEndpoints(Endpoints...))
+			}
 
-		c, err := client.New(ctx, opts...)
-		if err != nil {
-			return fmt.Errorf("error constructing client: %w", err)
-		}
-		//nolint:errcheck
-		defer c.Close()
+			c, err := client.New(ctx, opts...)
+			if err != nil {
+				return fmt.Errorf("error constructing client: %w", err)
+			}
+			//nolint:errcheck
+			defer c.Close()
 
-		return action(ctx, c)
-	})
+			return action(ctx, c)
+		},
+	)
 }
 
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func WithClient(action func(context.Context, *client.Client) error) error {
-	return WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
-		if len(Nodes) < 1 {
-			configContext := c.GetConfigContext()
-			if configContext == nil {
-				return fmt.Errorf("failed to resolve config context")
+	return WithClientNoNodes(
+		func(ctx context.Context, c *client.Client) error {
+			if len(Nodes) < 1 {
+				configContext := c.GetConfigContext()
+				if configContext == nil {
+					return fmt.Errorf("failed to resolve config context")
+				}
+
+				Nodes = configContext.Nodes
 			}
 
-			Nodes = configContext.Nodes
-		}
+			if len(Nodes) < 1 {
+				return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
+			}
 
-		if len(Nodes) < 1 {
-			return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
-		}
+			ctx = client.WithNodes(ctx, Nodes...)
 
-		ctx = client.WithNodes(ctx, Nodes...)
-
-		return action(ctx, c)
-	})
+			return action(ctx, c)
+		},
+	)
 }
 
 // WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
 func WithClientMaintenance(enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
-	return cli.WithContext(context.Background(), func(ctx context.Context) error {
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: true,
-		}
-
-		if len(enforceFingerprints) > 0 {
-			fingerprints := make([]x509.Fingerprint, len(enforceFingerprints))
-
-			for i, stringFingerprint := range enforceFingerprints {
-				var err error
-
-				fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
-				if err != nil {
-					return fmt.Errorf("error parsing certificate fingerprint %q: %v", stringFingerprint, err)
-				}
+	return cli.WithContext(
+		context.Background(), func(ctx context.Context) error {
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: true,
 			}
 
-			tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
-		}
+			if len(enforceFingerprints) > 0 {
+				fingerprints := make([]x509.Fingerprint, len(enforceFingerprints))
 
-		c, err := client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(Nodes...))
-		if err != nil {
-			return err
-		}
+				for i, stringFingerprint := range enforceFingerprints {
+					var err error
 
-		//nolint:errcheck
-		defer c.Close()
+					fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
+					if err != nil {
+						return fmt.Errorf("error parsing certificate fingerprint %q: %v", stringFingerprint, err)
+					}
+				}
 
-		return action(ctx, c)
-	})
+				tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
+			}
+
+			c, err := client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(Nodes...))
+			if err != nil {
+				return err
+			}
+
+			//nolint:errcheck
+			defer c.Close()
+
+			return action(ctx, c)
+		},
+	)
 }
 
 // Commands is a list of commands published by the package.
@@ -170,61 +176,66 @@ func completePathFromNode(inputPath string) []string {
 func getPathFromNode(path, filter string) map[string]struct{} {
 	paths := make(map[string]struct{})
 
-	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
+	//nolint:errcheck
+	WithClient(
+		func(ctx context.Context, c *client.Client) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
 
-		stream, err := c.LS(ctx, &machineapi.ListRequest{
-			Root: path,
-		})
-		if err != nil {
-			return err
-		}
-
-		for {
-			resp, err := stream.Recv()
+			stream, err := c.LS(
+				ctx, &machineapi.ListRequest{
+					Root: path,
+				},
+			)
 			if err != nil {
-				if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+				return err
+			}
+
+			for {
+				resp, err := stream.Recv()
+				if err != nil {
+					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+						return nil
+					}
+
+					return fmt.Errorf("error streaming results: %s", err)
+				}
+
+				if resp.Metadata != nil && resp.Metadata.Error != "" {
+					continue
+				}
+
+				if resp.Error != "" {
+					continue
+				}
+
+				// skip reference to the same directory
+				if resp.RelativeName == "." {
+					continue
+				}
+
+				// limit the results to a reasonable amount
+				if len(paths) > pathAutoCompleteLimit {
 					return nil
 				}
 
-				return fmt.Errorf("error streaming results: %s", err)
-			}
+				// directories have a trailing slash
+				if resp.IsDir {
+					fullPath := path + resp.RelativeName + "/"
 
-			if resp.Metadata != nil && resp.Metadata.Error != "" {
-				continue
-			}
+					if relativeTo(fullPath, filter) {
+						paths[fullPath] = struct{}{}
+					}
+				} else {
+					fullPath := path + resp.RelativeName
 
-			if resp.Error != "" {
-				continue
-			}
-
-			// skip reference to the same directory
-			if resp.RelativeName == "." {
-				continue
-			}
-
-			// limit the results to a reasonable amount
-			if len(paths) > pathAutoCompleteLimit {
-				return nil
-			}
-
-			// directories have a trailing slash
-			if resp.IsDir {
-				fullPath := path + resp.RelativeName + "/"
-
-				if relativeTo(fullPath, filter) {
-					paths[fullPath] = struct{}{}
-				}
-			} else {
-				fullPath := path + resp.RelativeName
-
-				if relativeTo(fullPath, filter) {
-					paths[fullPath] = struct{}{}
+					if relativeTo(fullPath, filter) {
+						paths[fullPath] = struct{}{}
+					}
 				}
 			}
-		}
-	})
+		},
+	)
 
 	return paths
 }
@@ -232,23 +243,26 @@ func getPathFromNode(path, filter string) map[string]struct{} {
 func getServiceFromNode() []string {
 	var svcIds []string
 
-	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
-		var remotePeer peer.Peer
+	//nolint:errcheck
+	WithClient(
+		func(ctx context.Context, c *client.Client) error {
+			var remotePeer peer.Peer
 
-		resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
-		if err != nil {
-			return err
-		}
-
-		for _, msg := range resp.Messages {
-			for _, s := range msg.Services {
-				svc := cli.ServiceInfoWrapper{ServiceInfo: s}
-				svcIds = append(svcIds, svc.Id)
+			resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
+			if err != nil {
+				return err
 			}
-		}
 
-		return nil
-	})
+			for _, msg := range resp.Messages {
+				for _, s := range msg.Services {
+					svc := cli.ServiceInfoWrapper{ServiceInfo: s}
+					svcIds = append(svcIds, svc.Id)
+				}
+			}
+
+			return nil
+		},
+	)
 
 	return svcIds
 }
@@ -256,41 +270,44 @@ func getServiceFromNode() []string {
 func getContainersFromNode(kubernetes bool) []string {
 	var containerIds []string
 
-	WithClient(func(ctx context.Context, c *client.Client) error { //nolint:errcheck
-		var (
-			namespace string
-			driver    common.ContainerDriver
-		)
+	//nolint:errcheck
+	WithClient(
+		func(ctx context.Context, c *client.Client) error {
+			var (
+				namespace string
+				driver    common.ContainerDriver
+			)
 
-		if kubernetes {
-			namespace = criconstants.K8sContainerdNamespace
-			driver = common.ContainerDriver_CRI
-		} else {
-			namespace = constants.SystemContainerdNamespace
-			driver = common.ContainerDriver_CONTAINERD
-		}
-
-		resp, err := c.Containers(ctx, namespace, driver)
-		if err != nil {
-			return err
-		}
-
-		for _, msg := range resp.Messages {
-			for _, p := range msg.Containers {
-				if p.Pid == 0 {
-					continue
-				}
-
-				if kubernetes && p.Id == p.PodId {
-					continue
-				}
-
-				containerIds = append(containerIds, p.Id)
+			if kubernetes {
+				namespace = criconstants.K8sContainerdNamespace
+				driver = common.ContainerDriver_CRI
+			} else {
+				namespace = constants.SystemContainerdNamespace
+				driver = common.ContainerDriver_CONTAINERD
 			}
-		}
 
-		return nil
-	})
+			resp, err := c.Containers(ctx, namespace, driver)
+			if err != nil {
+				return err
+			}
+
+			for _, msg := range resp.Messages {
+				for _, p := range msg.Containers {
+					if p.Pid == 0 {
+						continue
+					}
+
+					if kubernetes && p.Id == p.PodId {
+						continue
+					}
+
+					containerIds = append(containerIds, p.Id)
+				}
+			}
+
+			return nil
+		},
+	)
 
 	return containerIds
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
-	protobuf "google.golang.org/protobuf/proto" //nolint:depguard,gci
+	protobuf "google.golang.org/protobuf/proto" //nolint:depguard
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 
@@ -71,38 +71,45 @@ func (suite *APIDSuite) TestGetConnection() {
 	suite.Assert().Equal([]string{"127.0.0.2"}, mdOut1.Get("proxyfrom"))
 	suite.Assert().Equal([]string{"os:admin"}, mdOut1.Get("talos-role"))
 
-	suite.Run("Same context", func() {
-		ctx2 := ctx1
-		outCtx2, conn2, err2 := suite.b.GetConnection(ctx2)
-		suite.Require().NoError(err2)
-		suite.Assert().Equal(conn1, conn2) // connection is cached
-		suite.Assert().Equal(role.MakeSet(role.Admin), authz.GetRoles(outCtx2))
+	suite.Run(
+		"Same context", func() {
+			ctx2 := ctx1
+			outCtx2, conn2, err2 := suite.b.GetConnection(ctx2)
+			suite.Require().NoError(err2)
+			suite.Assert().Equal(conn1, conn2) // connection is cached
+			suite.Assert().Equal(role.MakeSet(role.Admin), authz.GetRoles(outCtx2))
 
-		mdOut2, ok2 := metadata.FromOutgoingContext(outCtx2)
-		suite.Require().True(ok2)
-		suite.Assert().Equal([]string{"value1", "value2"}, mdOut2.Get("key"))
-		suite.Assert().Equal([]string{"127.0.0.2"}, mdOut2.Get("proxyfrom"))
-		suite.Assert().Equal([]string{"os:admin"}, mdOut2.Get("talos-role"))
-	})
+			mdOut2, ok2 := metadata.FromOutgoingContext(outCtx2)
+			suite.Require().True(ok2)
+			suite.Assert().Equal([]string{"value1", "value2"}, mdOut2.Get("key"))
+			suite.Assert().Equal([]string{"127.0.0.2"}, mdOut2.Get("proxyfrom"))
+			suite.Assert().Equal([]string{"os:admin"}, mdOut2.Get("talos-role"))
+		},
+	)
 
-	suite.Run("Other context", func() {
-		md3 := metadata.New(nil)
-		md3.Set(":authority", "127.0.0.2")
-		md3.Set("nodes", "127.0.0.1")
-		md3.Set("key", "value3", "value4")
-		ctx3 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Reader)), md3)
+	suite.Run(
+		"Other context", func() {
+			md3 := metadata.New(nil)
+			md3.Set(":authority", "127.0.0.2")
+			md3.Set("nodes", "127.0.0.1")
+			md3.Set("key", "value3", "value4")
+			ctx3 := metadata.NewIncomingContext(
+				authz.ContextWithRoles(context.Background(), role.MakeSet(role.Reader)),
+				md3,
+			)
 
-		outCtx3, conn3, err3 := suite.b.GetConnection(ctx3)
-		suite.Require().NoError(err3)
-		suite.Assert().Equal(conn1, conn3) // connection is cached
-		suite.Assert().Equal(role.MakeSet(role.Reader), authz.GetRoles(outCtx3))
+			outCtx3, conn3, err3 := suite.b.GetConnection(ctx3)
+			suite.Require().NoError(err3)
+			suite.Assert().Equal(conn1, conn3) // connection is cached
+			suite.Assert().Equal(role.MakeSet(role.Reader), authz.GetRoles(outCtx3))
 
-		mdOut3, ok3 := metadata.FromOutgoingContext(outCtx3)
-		suite.Require().True(ok3)
-		suite.Assert().Equal([]string{"value3", "value4"}, mdOut3.Get("key"))
-		suite.Assert().Equal([]string{"127.0.0.2"}, mdOut3.Get("proxyfrom"))
-		suite.Assert().Equal([]string{"os:reader"}, mdOut3.Get("talos-role"))
-	})
+			mdOut3, ok3 := metadata.FromOutgoingContext(outCtx3)
+			suite.Require().True(ok3)
+			suite.Assert().Equal([]string{"value3", "value4"}, mdOut3.Get("key"))
+			suite.Assert().Equal([]string{"127.0.0.2"}, mdOut3.Get("proxyfrom"))
+			suite.Assert().Equal([]string{"os:reader"}, mdOut3.Get("talos-role"))
+		},
+	)
 }
 
 func (suite *APIDSuite) TestAppendInfoUnary() {
@@ -221,30 +228,37 @@ func TestAPIIdiosyncrasies(t *testing.T) {
 			for j := 0; j < methods.Len(); j++ {
 				method := methods.Get(j)
 
-				t.Run(string(method.FullName()), func(t *testing.T) {
-					response := method.Output()
-					responseFields := response.Fields()
+				t.Run(
+					string(method.FullName()), func(t *testing.T) {
+						response := method.Output()
+						responseFields := response.Fields()
 
-					if method.IsStreamingServer() {
-						metadata := responseFields.Get(0)
-						assert.Equal(t, "metadata", metadata.TextName())
-						assert.Equal(t, 1, int(metadata.Number()))
-					} else {
-						require.Equal(t, 1, responseFields.Len(), "unary responses should have exactly one field")
+						if method.IsStreamingServer() {
+							metadata := responseFields.Get(0)
+							assert.Equal(t, "metadata", metadata.TextName())
+							assert.Equal(t, 1, int(metadata.Number()))
+						} else {
+							require.Equal(t, 1, responseFields.Len(), "unary responses should have exactly one field")
 
-						messages := responseFields.Get(0)
-						assert.Equal(t, "messages", messages.TextName())
-						assert.Equal(t, 1, int(messages.Number()))
+							messages := responseFields.Get(0)
+							assert.Equal(t, "messages", messages.TextName())
+							assert.Equal(t, 1, int(messages.Number()))
 
-						reply := messages.Message()
-						replyFields := reply.Fields()
-						require.GreaterOrEqual(t, replyFields.Len(), 1, "unary replies should have at least one field")
+							reply := messages.Message()
+							replyFields := reply.Fields()
+							require.GreaterOrEqual(
+								t,
+								replyFields.Len(),
+								1,
+								"unary replies should have at least one field",
+							)
 
-						metadata := replyFields.Get(0)
-						assert.Equal(t, "metadata", metadata.TextName())
-						assert.Equal(t, 1, int(metadata.Number()))
-					}
-				})
+							metadata := replyFields.Get(0)
+							assert.Equal(t, "metadata", metadata.TextName())
+							assert.Equal(t, 1, int(metadata.Number()))
+						}
+					},
+				)
 			}
 		}
 	}
@@ -294,8 +308,10 @@ func getOptions(t *testing.T, descriptor protoreflect.Descriptor) (deprecated bo
 func testDeprecated(t *testing.T, descriptor protoreflect.Descriptor, currentVersion *config.VersionContract) {
 	deprecated, version := getOptions(t, descriptor)
 
-	assert.Equal(t, deprecated, version != "",
-		"%s: `deprecated` and `remove_deprecated_XXX_in` options should be used together", descriptor.FullName())
+	assert.Equal(
+		t, deprecated, version != "",
+		"%s: `deprecated` and `remove_deprecated_XXX_in` options should be used together", descriptor.FullName(),
+	)
 
 	if !deprecated || version == "" {
 		return

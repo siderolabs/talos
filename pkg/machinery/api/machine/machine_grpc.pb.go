@@ -746,164 +746,126 @@ type MachineServiceServer interface {
 }
 
 // UnimplementedMachineServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedMachineServiceServer struct{}
+type UnimplementedMachineServiceServer struct {
+}
 
 func (UnimplementedMachineServiceServer) ApplyConfiguration(context.Context, *ApplyConfigurationRequest) (*ApplyConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ApplyConfiguration not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Bootstrap(context.Context, *BootstrapRequest) (*BootstrapResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Bootstrap not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Containers(context.Context, *ContainersRequest) (*ContainersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Containers not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Copy(*CopyRequest, MachineService_CopyServer) error {
 	return status.Errorf(codes.Unimplemented, "method Copy not implemented")
 }
-
 func (UnimplementedMachineServiceServer) CPUInfo(context.Context, *emptypb.Empty) (*CPUInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CPUInfo not implemented")
 }
-
 func (UnimplementedMachineServiceServer) DiskStats(context.Context, *emptypb.Empty) (*DiskStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DiskStats not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Dmesg(*DmesgRequest, MachineService_DmesgServer) error {
 	return status.Errorf(codes.Unimplemented, "method Dmesg not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Events(*EventsRequest, MachineService_EventsServer) error {
 	return status.Errorf(codes.Unimplemented, "method Events not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdMemberList(context.Context, *EtcdMemberListRequest) (*EtcdMemberListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdMemberList not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdRemoveMember not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdLeaveCluster(context.Context, *EtcdLeaveClusterRequest) (*EtcdLeaveClusterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdLeaveCluster not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdForfeitLeadership not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdRecover(MachineService_EtcdRecoverServer) error {
 	return status.Errorf(codes.Unimplemented, "method EtcdRecover not implemented")
 }
-
 func (UnimplementedMachineServiceServer) EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error {
 	return status.Errorf(codes.Unimplemented, "method EtcdSnapshot not implemented")
 }
-
 func (UnimplementedMachineServiceServer) GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateConfiguration not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Hostname not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Kubeconfig(*emptypb.Empty, MachineService_KubeconfigServer) error {
 	return status.Errorf(codes.Unimplemented, "method Kubeconfig not implemented")
 }
-
 func (UnimplementedMachineServiceServer) List(*ListRequest, MachineService_ListServer) error {
 	return status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-
 func (UnimplementedMachineServiceServer) DiskUsage(*DiskUsageRequest, MachineService_DiskUsageServer) error {
 	return status.Errorf(codes.Unimplemented, "method DiskUsage not implemented")
 }
-
 func (UnimplementedMachineServiceServer) LoadAvg(context.Context, *emptypb.Empty) (*LoadAvgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoadAvg not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Logs(*LogsRequest, MachineService_LogsServer) error {
 	return status.Errorf(codes.Unimplemented, "method Logs not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Memory(context.Context, *emptypb.Empty) (*MemoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Memory not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Mounts(context.Context, *emptypb.Empty) (*MountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Mounts not implemented")
 }
-
 func (UnimplementedMachineServiceServer) NetworkDeviceStats(context.Context, *emptypb.Empty) (*NetworkDeviceStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NetworkDeviceStats not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Processes(context.Context, *emptypb.Empty) (*ProcessesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Processes not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Read(*ReadRequest, MachineService_ReadServer) error {
 	return status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Reboot(context.Context, *RebootRequest) (*RebootResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reboot not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Restart(context.Context, *RestartRequest) (*RestartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Rollback(context.Context, *RollbackRequest) (*RollbackResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Rollback not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Reset(context.Context, *ResetRequest) (*ResetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
 }
-
 func (UnimplementedMachineServiceServer) ServiceList(context.Context, *emptypb.Empty) (*ServiceListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceList not implemented")
 }
-
 func (UnimplementedMachineServiceServer) ServiceRestart(context.Context, *ServiceRestartRequest) (*ServiceRestartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceRestart not implemented")
 }
-
 func (UnimplementedMachineServiceServer) ServiceStart(context.Context, *ServiceStartRequest) (*ServiceStartResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceStart not implemented")
 }
-
 func (UnimplementedMachineServiceServer) ServiceStop(context.Context, *ServiceStopRequest) (*ServiceStopResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceStop not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Shutdown not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Stats(context.Context, *StatsRequest) (*StatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
 }
-
 func (UnimplementedMachineServiceServer) SystemStat(context.Context, *emptypb.Empty) (*SystemStatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SystemStat not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Upgrade(context.Context, *UpgradeRequest) (*UpgradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Upgrade not implemented")
 }
-
 func (UnimplementedMachineServiceServer) Version(context.Context, *emptypb.Empty) (*VersionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Version not implemented")
 }
-
 func (UnimplementedMachineServiceServer) GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateClientConfiguration not implemented")
 }

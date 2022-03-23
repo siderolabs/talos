@@ -5,7 +5,7 @@
 package rpi4
 
 import (
-	_ "embed" //nolint:gci
+	_ "embed"
 	"io/ioutil"
 
 	"github.com/talos-systems/go-procfs/procfs"

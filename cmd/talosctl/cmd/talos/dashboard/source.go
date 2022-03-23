@@ -22,7 +22,7 @@ type APISource struct {
 
 	Interval time.Duration
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	wg sync.WaitGroup

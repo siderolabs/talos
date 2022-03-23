@@ -60,7 +60,7 @@ type KmsgLogDeliverySuite struct {
 	drainer *talosruntime.Drainer
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	handler *logHandler
@@ -92,13 +92,23 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 		suite.srv.Serve() //nolint:errcheck
 	}()
 
-	suite.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamLoggingKernel, fmt.Sprintf("tcp://%s", listener.Addr())))
+	suite.cmdline = procfs.NewCmdline(
+		fmt.Sprintf(
+			"%s=%s",
+			constants.KernelParamLoggingKernel,
+			fmt.Sprintf("tcp://%s", listener.Addr()),
+		),
+	)
 	suite.drainer = talosruntime.NewDrainer()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&controllerruntime.KmsgLogDeliveryController{
-		Cmdline: suite.cmdline,
-		Drainer: suite.drainer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&controllerruntime.KmsgLogDeliveryController{
+				Cmdline: suite.cmdline,
+				Drainer: suite.drainer,
+			},
+		),
+	)
 
 	status := network.NewStatus(network.NamespaceName, network.StatusID)
 	status.TypedSpec().AddressReady = true
@@ -120,13 +130,15 @@ func (suite *KmsgLogDeliverySuite) TestDelivery() {
 	suite.startRuntime()
 
 	// controller should deliver some kernel logs from host's kmsg buffer
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(func() error {
-		if suite.handler.getCount() == 0 {
-			return retry.ExpectedErrorf("no logs received")
-		}
+	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+		func() error {
+			if suite.handler.getCount() == 0 {
+				return retry.ExpectedErrorf("no logs received")
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Require().NoError(err)
 }
 
@@ -134,13 +146,15 @@ func (suite *KmsgLogDeliverySuite) TestDrain() {
 	suite.startRuntime()
 
 	// wait for controller to start delivering some logs
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(func() error {
-		if suite.handler.getCount() == 0 {
-			return retry.ExpectedErrorf("no logs received")
-		}
+	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+		func() error {
+			if suite.handler.getCount() == 0 {
+				return retry.ExpectedErrorf("no logs received")
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Require().NoError(err)
 
 	// drain should be successful, i.e. controller should stop on its own before context is canceled

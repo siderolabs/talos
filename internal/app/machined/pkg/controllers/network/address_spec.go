@@ -146,7 +146,8 @@ func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix ne
 
 //nolint:gocyclo
 func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
-	links []rtnetlink.LinkMessage, addrs []rtnetlink.AddressMessage, address *network.AddressSpec) error {
+	links []rtnetlink.LinkMessage, addrs []rtnetlink.AddressMessage, address *network.AddressSpec,
+) error {
 	linkIndex := resolveLinkName(links, address.TypedSpec().LinkName)
 
 	switch address.Metadata().Phase() {

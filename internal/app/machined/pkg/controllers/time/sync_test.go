@@ -41,7 +41,7 @@ type SyncSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	syncerMu sync.Mutex
@@ -72,7 +72,15 @@ func (suite *SyncSuite) startRuntime() {
 }
 
 func (suite *SyncSuite) assertTimeStatus(spec timeresource.StatusSpec) error {
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(v1alpha1resource.NamespaceName, timeresource.StatusType, timeresource.StatusID, resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(
+			v1alpha1resource.NamespaceName,
+			timeresource.StatusType,
+			timeresource.StatusID,
+			resource.VersionUndefined,
+		),
+	)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -91,10 +99,14 @@ func (suite *SyncSuite) assertTimeStatus(spec timeresource.StatusSpec) error {
 }
 
 func (suite *SyncSuite) TestReconcileContainerMode() {
-	suite.Require().NoError(suite.runtime.RegisterController(&timectrl.SyncController{
-		V1Alpha1Mode: v1alpha1runtime.ModeContainer,
-		NewNTPSyncer: suite.newMockSyncer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeContainer,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
 
 	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
 	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
@@ -102,24 +114,30 @@ func (suite *SyncSuite) TestReconcileContainerMode() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        0,
-					SyncDisabled: true,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        0,
+						SyncDisabled: true,
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *SyncSuite) TestReconcileSyncDisabled() {
-	suite.Require().NoError(suite.runtime.RegisterController(&timectrl.SyncController{
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-		NewNTPSyncer: suite.newMockSyncer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
 
 	suite.startRuntime()
 
@@ -127,48 +145,58 @@ func (suite *SyncSuite) TestReconcileSyncDisabled() {
 	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       false,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
-
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineTime: &v1alpha1.TimeConfig{
-				TimeDisabled: true,
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
 			},
+		),
+	)
+
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineTime: &v1alpha1.TimeConfig{
+					TimeDisabled: true,
+				},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
 		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        0,
-					SyncDisabled: true,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        0,
+						SyncDisabled: true,
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *SyncSuite) TestReconcileSyncDefaultConfig() {
-	suite.Require().NoError(suite.runtime.RegisterController(&timectrl.SyncController{
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-		NewNTPSyncer: suite.newMockSyncer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
 
 	suite.startRuntime()
 
@@ -176,32 +204,40 @@ func (suite *SyncSuite) TestReconcileSyncDefaultConfig() {
 	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+		},
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       false,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
-	suite.Require().NoError(suite.runtime.RegisterController(&timectrl.SyncController{
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-		NewNTPSyncer: suite.newMockSyncer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
 
 	suite.startRuntime()
 
@@ -209,126 +245,150 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       false,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+		},
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	var mockSyncer *mockSyncer
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			mockSyncer = suite.getMockSyncer()
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				mockSyncer = suite.getMockSyncer()
 
-			if mockSyncer == nil {
-				return retry.ExpectedError(fmt.Errorf("syncer not created yet"))
-			}
+				if mockSyncer == nil {
+					return retry.ExpectedError(fmt.Errorf("syncer not created yet"))
+				}
 
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 
 	suite.Assert().Equal([]string{constants.DefaultNTPServer}, mockSyncer.getTimeServers())
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       false,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
 
 	close(mockSyncer.syncedCh)
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
+
+	_, err := suite.state.UpdateWithConflicts(
+		suite.ctx, timeServers.Metadata(), func(r resource.Resource) error {
+			r.(*network.TimeServerStatus).TypedSpec().NTPServers = []string{"127.0.0.1"}
+
+			return nil
 		},
-	))
-
-	_, err := suite.state.UpdateWithConflicts(suite.ctx, timeServers.Metadata(), func(r resource.Resource) error {
-		r.(*network.TimeServerStatus).TypedSpec().NTPServers = []string{"127.0.0.1"}
-
-		return nil
-	})
+	)
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			if !reflect.DeepEqual(mockSyncer.getTimeServers(), []string{"127.0.0.1"}) {
-				return retry.ExpectedError(fmt.Errorf("time servers not updated yet"))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				if !reflect.DeepEqual(mockSyncer.getTimeServers(), []string{"127.0.0.1"}) {
+					return retry.ExpectedError(fmt.Errorf("time servers not updated yet"))
+				}
+
+				return nil
+			},
+		),
+	)
+
+	mockSyncer.epochCh <- struct{}{}
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        1,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
+
+	_, err = suite.state.UpdateWithConflicts(
+		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
+			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
+				TimeDisabled: true,
 			}
 
 			return nil
 		},
-	))
-
-	mockSyncer.epochCh <- struct{}{}
-
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        1,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
-
-	_, err = suite.state.UpdateWithConflicts(suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-		r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
-			TimeDisabled: true,
-		}
-
-		return nil
-	})
+	)
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        1,
-					SyncDisabled: true,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        1,
+						SyncDisabled: true,
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
-	suite.Require().NoError(suite.runtime.RegisterController(&timectrl.SyncController{
-		V1Alpha1Mode: v1alpha1runtime.ModeMetal,
-		NewNTPSyncer: suite.newMockSyncer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
 
 	suite.startRuntime()
 
@@ -336,41 +396,47 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
 	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       false,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
-
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineTime: &v1alpha1.TimeConfig{
-				TimeBootTimeout: 5 * time.Second,
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
 			},
+		),
+	)
+
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineTime: &v1alpha1.TimeConfig{
+					TimeBootTimeout: 5 * time.Second,
+				},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
 		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeStatus(
-				timeresource.StatusSpec{
-					Synced:       true,
-					Epoch:        0,
-					SyncDisabled: false,
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       true,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *SyncSuite) TearDownTest() {
@@ -381,10 +447,14 @@ func (suite *SyncSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-	}))
+	err := suite.state.Create(
+		context.Background(), config.NewMachineConfig(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+			},
+		),
+	)
 	if state.IsConflictError(err) {
 		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
 	}

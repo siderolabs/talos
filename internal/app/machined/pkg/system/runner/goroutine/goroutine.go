@@ -25,7 +25,7 @@ type goroutineRunner struct {
 
 	opts *runner.Options
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
 	wg sync.WaitGroup

@@ -32,7 +32,7 @@ type Stream struct {
 	source  Source
 	options *Options
 
-	ctx context.Context
+	ctx context.Context //nolint:containedctx
 }
 
 // Source is an interface describing the source of a Stream.

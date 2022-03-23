@@ -35,7 +35,7 @@ type StatusSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -65,7 +65,10 @@ func (suite *StatusSuite) startRuntime() {
 }
 
 func (suite *StatusSuite) assertStatus(expected network.StatusSpec) error {
-	status, err := suite.state.Get(suite.ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+	status, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined),
+	)
 	if err != nil {
 		if !state.IsNotFoundError(err) {
 			suite.Require().NoError(err)
@@ -82,10 +85,13 @@ func (suite *StatusSuite) assertStatus(expected network.StatusSpec) error {
 }
 
 func (suite *StatusSuite) TestNone() {
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus(network.StatusSpec{})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus(network.StatusSpec{})
+			},
+		),
+	)
 }
 
 func (suite *StatusSuite) TestAddresses() {
@@ -94,10 +100,13 @@ func (suite *StatusSuite) TestAddresses() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddress))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus(network.StatusSpec{AddressReady: true})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus(network.StatusSpec{AddressReady: true})
+			},
+		),
+	)
 }
 
 func (suite *StatusSuite) TestRoutes() {
@@ -106,10 +115,13 @@ func (suite *StatusSuite) TestRoutes() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, route))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus(network.StatusSpec{ConnectivityReady: true})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus(network.StatusSpec{ConnectivityReady: true})
+			},
+		),
+	)
 }
 
 func (suite *StatusSuite) TestHostname() {
@@ -118,10 +130,13 @@ func (suite *StatusSuite) TestHostname() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, hostname))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus(network.StatusSpec{HostnameReady: true})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus(network.StatusSpec{HostnameReady: true})
+			},
+		),
+	)
 }
 
 func (suite *StatusSuite) TestEtcFiles() {
@@ -131,10 +146,13 @@ func (suite *StatusSuite) TestEtcFiles() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, hosts))
 	suite.Require().NoError(suite.state.Create(suite.ctx, resolv))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus(network.StatusSpec{EtcFilesReady: true})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus(network.StatusSpec{EtcFilesReady: true})
+			},
+		),
+	)
 }
 
 func (suite *StatusSuite) TearDownTest() {
@@ -145,9 +163,24 @@ func (suite *StatusSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewNodeAddress(network.NamespaceName, "bar")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverStatus(network.NamespaceName, "bar")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewNodeAddress(network.NamespaceName, "bar"),
+		),
+	)
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewResolverStatus(network.NamespaceName, "bar"),
+		),
+	)
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewHostnameStatus(network.NamespaceName, "bar"),
+		),
+	)
 	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileStatus(files.NamespaceName, "bar")))
 }
 

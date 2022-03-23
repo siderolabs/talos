@@ -36,7 +36,7 @@ type HardwareAddrSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -72,7 +72,10 @@ func (suite *HardwareAddrSuite) assertHWAddr(requiredIDs []string, check func(*n
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -98,7 +101,10 @@ func (suite *HardwareAddrSuite) assertHWAddr(requiredIDs []string, check func(*n
 }
 
 func (suite *HardwareAddrSuite) assertNoHWAddr(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -136,37 +142,50 @@ func (suite *HardwareAddrSuite) TestFirst() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, bond0))
 	suite.Require().NoError(suite.state.Create(suite.ctx, eth1))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertHWAddr([]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
-				if r.TypedSpec().Name != eth1.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "6a:2b:bd:b2:fc:e0" {
-					return retry.ExpectedErrorf("should be eth1")
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHWAddr(
+					[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
+						if r.TypedSpec().Name != eth1.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "6a:2b:bd:b2:fc:e0" {
+							return retry.ExpectedErrorf("should be eth1")
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, eth0))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertHWAddr([]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
-				if r.TypedSpec().Name != eth0.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "56:a0:a0:87:1c:fa" {
-					return retry.ExpectedErrorf("should be eth0")
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHWAddr(
+					[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
+						if r.TypedSpec().Name != eth0.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "56:a0:a0:87:1c:fa" {
+							return retry.ExpectedErrorf("should be eth0")
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, eth0.Metadata()))
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, eth1.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertNoHWAddr(network.FirstHardwareAddr)
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoHWAddr(network.FirstHardwareAddr)
+			},
+		),
+	)
 }
 
 func (suite *HardwareAddrSuite) TearDownTest() {
@@ -177,7 +196,12 @@ func (suite *HardwareAddrSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkStatus(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewLinkStatus(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestHardwareAddrSuite(t *testing.T) {

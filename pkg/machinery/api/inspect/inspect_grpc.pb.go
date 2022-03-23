@@ -53,7 +53,8 @@ type InspectServiceServer interface {
 }
 
 // UnimplementedInspectServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedInspectServiceServer struct{}
+type UnimplementedInspectServiceServer struct {
+}
 
 func (UnimplementedInspectServiceServer) ControllerRuntimeDependencies(context.Context, *emptypb.Empty) (*ControllerRuntimeDependenciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ControllerRuntimeDependencies not implemented")

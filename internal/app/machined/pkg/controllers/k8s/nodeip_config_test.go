@@ -37,7 +37,7 @@ type NodeIPConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -70,109 +70,139 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineKubelet: &v1alpha1.KubeletConfig{
-				KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
-					KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineKubelet: &v1alpha1.KubeletConfig{
+					KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
+						KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
+					},
 				},
-			},
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-							SharedIP: "1.2.3.4",
-						},
-						DeviceVlans: []*v1alpha1.Vlan{
-							{
-								VlanID: 100,
-								VlanVIP: &v1alpha1.DeviceVIPConfig{
-									SharedIP: "5.6.7.8",
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					NetworkInterfaces: []*v1alpha1.Device{
+						{
+							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+								SharedIP: "1.2.3.4",
+							},
+							DeviceVlans: []*v1alpha1.Vlan{
+								{
+									VlanID: 100,
+									VlanVIP: &v1alpha1.DeviceVIPConfig{
+										SharedIP: "5.6.7.8",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+					PodSubnet:     []string{constants.DefaultIPv4PodNet},
 				},
 			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
-				PodSubnet:     []string{constants.DefaultIPv4PodNet},
-			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			NodeIPConfig, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPConfigType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				NodeIPConfig, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.NodeIPConfigType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
 
-			spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
+				suite.Assert().Equal([]string{"10.0.0.0/24"}, spec.ValidSubnets)
+				suite.Assert().Equal(
+					[]string{"10.244.0.0/16", "10.96.0.0/12", "1.2.3.4", "5.6.7.8"},
+					spec.ExcludeSubnets,
+				)
 
-			suite.Assert().Equal([]string{"10.0.0.0/24"}, spec.ValidSubnets)
-			suite.Assert().Equal([]string{"10.244.0.0/16", "10.96.0.0/12", "1.2.3.4", "5.6.7.8"}, spec.ExcludeSubnets)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
+					PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
 				},
 			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
-				PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
-			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			NodeIPConfig, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPConfigType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				NodeIPConfig, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.NodeIPConfigType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
 
-			spec := NodeIPConfig.(*k8s.NodeIPConfig).TypedSpec()
+				suite.Assert().Equal([]string{"0.0.0.0/0", "::/0"}, spec.ValidSubnets)
+				suite.Assert().Equal(
+					[]string{"10.244.0.0/16", "fc00:db8:10::/56", "10.96.0.0/12", "fc00:db8:20::/112"},
+					spec.ExcludeSubnets,
+				)
 
-			suite.Assert().Equal([]string{"0.0.0.0/0", "::/0"}, spec.ValidSubnets)
-			suite.Assert().Equal([]string{"10.244.0.0/16", "fc00:db8:10::/56", "10.96.0.0/12", "fc00:db8:20::/112"}, spec.ExcludeSubnets)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *NodeIPConfigSuite) TearDownTest() {

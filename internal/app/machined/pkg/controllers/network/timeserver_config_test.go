@@ -39,7 +39,7 @@ type TimeServerConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -64,14 +64,20 @@ func (suite *TimeServerConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *TimeServerConfigSuite) assertTimeServers(requiredIDs []string, check func(*network.TimeServerSpec) error) error {
+func (suite *TimeServerConfigSuite) assertTimeServers(
+	requiredIDs []string,
+	check func(*network.TimeServerSpec) error,
+) error {
 	missingIDs := make(map[string]struct{}, len(requiredIDs))
 
 	for _, id := range requiredIDs {
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.ConfigNamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -97,7 +103,10 @@ func (suite *TimeServerConfigSuite) assertTimeServers(requiredIDs []string, chec
 }
 
 func (suite *TimeServerConfigSuite) assertNoTimeServer(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.ConfigNamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -116,36 +125,50 @@ func (suite *TimeServerConfigSuite) TestDefaults() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeServers([]string{
-				"default/timeservers",
-			}, func(r *network.TimeServerSpec) error {
-				suite.Assert().Equal([]string{constants.DefaultNTPServer}, r.TypedSpec().NTPServers)
-				suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeServers(
+					[]string{
+						"default/timeservers",
+					}, func(r *network.TimeServerSpec) error {
+						suite.Assert().Equal([]string{constants.DefaultNTPServer}, r.TypedSpec().NTPServers)
+						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *TimeServerConfigSuite) TestCmdline() {
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.TimeServerConfigController{
-		Cmdline: procfs.NewCmdline("ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1"),
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.TimeServerConfigController{
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1"),
+			},
+		),
+	)
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeServers([]string{
-				"cmdline/timeservers",
-			}, func(r *network.TimeServerSpec) error {
-				suite.Assert().Equal([]string{"10.0.0.1"}, r.TypedSpec().NTPServers)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeServers(
+					[]string{
+						"cmdline/timeservers",
+					}, func(r *network.TimeServerSpec) error {
+						suite.Assert().Equal([]string{"10.0.0.1"}, r.TypedSpec().NTPServers)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *TimeServerConfigSuite) TestMachineConfiguration() {
@@ -156,46 +179,58 @@ func (suite *TimeServerConfigSuite) TestMachineConfiguration() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineTime: &v1alpha1.TimeConfig{
-				TimeServers: []string{"za.pool.ntp.org", "pool.ntp.org"},
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineTime: &v1alpha1.TimeConfig{
+					TimeServers: []string{"za.pool.ntp.org", "pool.ntp.org"},
+				},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
 				},
 			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeServers([]string{
-				"configuration/timeservers",
-			}, func(r *network.TimeServerSpec) error {
-				suite.Assert().Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeServers(
+					[]string{
+						"configuration/timeservers",
+					}, func(r *network.TimeServerSpec) error {
+						suite.Assert().Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
-	_, err = suite.state.UpdateWithConflicts(suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-		r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = nil
+	_, err = suite.state.UpdateWithConflicts(
+		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
+			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = nil
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertNoTimeServer("configuration/timeservers")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoTimeServer("configuration/timeservers")
+			},
+		),
+	)
 }
 
 func (suite *TimeServerConfigSuite) TearDownTest() {
@@ -206,10 +241,14 @@ func (suite *TimeServerConfigSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-	}))
+	err := suite.state.Create(
+		context.Background(), config.NewMachineConfig(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+			},
+		),
+	)
 	if state.IsConflictError(err) {
 		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
 	}

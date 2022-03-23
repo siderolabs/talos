@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	_ "github.com/talos-systems/talos/pkg/grpc/codec" //nolint:gci // register codec
+	_ "github.com/talos-systems/talos/pkg/grpc/codec" // register codec
 	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
 )
 
@@ -150,19 +150,32 @@ func NewDefaultOptions(setters ...Option) *Options {
 
 	// Recovery is installed as the the first middleware in the chain to handle panics (via defer and recover()) in all subsequent middlewares.
 	recoveryOpt := grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))
-	opts.UnaryInterceptors = append([]grpc.UnaryServerInterceptor{grpc_recovery.UnaryServerInterceptor(recoveryOpt)}, opts.UnaryInterceptors...)
-	opts.StreamInterceptors = append([]grpc.StreamServerInterceptor{grpc_recovery.StreamServerInterceptor(recoveryOpt)}, opts.StreamInterceptors...)
+	opts.UnaryInterceptors = append(
+		[]grpc.UnaryServerInterceptor{grpc_recovery.UnaryServerInterceptor(recoveryOpt)},
+		opts.UnaryInterceptors...,
+	)
+	opts.StreamInterceptors = append(
+		[]grpc.StreamServerInterceptor{grpc_recovery.StreamServerInterceptor(recoveryOpt)},
+		opts.StreamInterceptors...,
+	)
 
 	if logger != nil {
 		// Logging is installed as the first middleware (even before recovery middleware) in the chain
 		// so that request in the form it was received and status sent on the wire is logged (error/success).
 		// It also tracks the whole duration of the request, including other middleware overhead.
 		logMiddleware := grpclog.NewMiddleware(logger)
-		opts.UnaryInterceptors = append([]grpc.UnaryServerInterceptor{logMiddleware.UnaryInterceptor()}, opts.UnaryInterceptors...)
-		opts.StreamInterceptors = append([]grpc.StreamServerInterceptor{logMiddleware.StreamInterceptor()}, opts.StreamInterceptors...)
+		opts.UnaryInterceptors = append(
+			[]grpc.UnaryServerInterceptor{logMiddleware.UnaryInterceptor()},
+			opts.UnaryInterceptors...,
+		)
+		opts.StreamInterceptors = append(
+			[]grpc.StreamServerInterceptor{logMiddleware.StreamInterceptor()},
+			opts.StreamInterceptors...,
+		)
 	}
 
-	opts.ServerOptions = append(opts.ServerOptions,
+	opts.ServerOptions = append(
+		opts.ServerOptions,
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(opts.UnaryInterceptors...)),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
 	)

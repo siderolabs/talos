@@ -34,7 +34,7 @@ type AddressStatusSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -70,7 +70,10 @@ func (suite *AddressStatusSuite) assertAddresses(requiredIDs []string, check fun
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -96,12 +99,17 @@ func (suite *AddressStatusSuite) assertAddresses(requiredIDs []string, check fun
 }
 
 func (suite *AddressStatusSuite) TestLoopback() {
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertAddresses([]string{"lo/127.0.0.1/8"}, func(r *network.AddressStatus) error {
-				return nil
-			})
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{"lo/127.0.0.1/8"}, func(r *network.AddressStatus) error {
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *AddressStatusSuite) TearDownTest() {

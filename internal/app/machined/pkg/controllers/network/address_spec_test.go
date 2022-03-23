@@ -40,7 +40,7 @@ type AddressSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -144,10 +144,13 @@ func (suite *AddressSpecSuite) TestLoopback() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinkAddress("lo", "127.11.0.1/32")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinkAddress("lo", "127.11.0.1/32")
+			},
+		),
+	)
 
 	// teardown the address
 	for {
@@ -191,26 +194,33 @@ func (suite *AddressSpecSuite) TestDummy() {
 	}
 
 	// create dummy interface
-	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
-		Type: unix.ARPHRD_ETHER,
-		Attributes: &rtnetlink.LinkAttributes{
-			Name: dummyInterface,
-			MTU:  1400,
-			Info: &rtnetlink.LinkInfo{
-				Kind: "dummy",
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					MTU:  1400,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
 			},
-		},
-	}))
+		),
+	)
 
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
 
 	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertLinkAddress(dummyInterface, "10.0.0.1/8")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertLinkAddress(dummyInterface, "10.0.0.1/8")
+			},
+		),
+	)
 
 	// delete dummy interface, address should be unassigned automatically
 	suite.Require().NoError(conn.Link.Delete(uint32(iface.Index)))
@@ -236,7 +246,12 @@ func (suite *AddressSpecSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewAddressSpec(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewAddressSpec(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestAddressSpecSuite(t *testing.T) {

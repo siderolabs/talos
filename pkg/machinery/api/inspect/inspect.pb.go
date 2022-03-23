@@ -334,19 +334,16 @@ func file_inspect_inspect_proto_rawDescGZIP() []byte {
 	return file_inspect_inspect_proto_rawDescData
 }
 
-var (
-	file_inspect_inspect_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-	file_inspect_inspect_proto_msgTypes  = make([]protoimpl.MessageInfo, 3)
-	file_inspect_inspect_proto_goTypes   = []interface{}{
-		(DependencyEdgeType)(0),                       // 0: inspect.DependencyEdgeType
-		(*ControllerRuntimeDependency)(nil),           // 1: inspect.ControllerRuntimeDependency
-		(*ControllerRuntimeDependenciesResponse)(nil), // 2: inspect.ControllerRuntimeDependenciesResponse
-		(*ControllerDependencyEdge)(nil),              // 3: inspect.ControllerDependencyEdge
-		(*common.Metadata)(nil),                       // 4: common.Metadata
-		(*emptypb.Empty)(nil),                         // 5: google.protobuf.Empty
-	}
-)
-
+var file_inspect_inspect_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_inspect_inspect_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_inspect_inspect_proto_goTypes = []interface{}{
+	(DependencyEdgeType)(0),                       // 0: inspect.DependencyEdgeType
+	(*ControllerRuntimeDependency)(nil),           // 1: inspect.ControllerRuntimeDependency
+	(*ControllerRuntimeDependenciesResponse)(nil), // 2: inspect.ControllerRuntimeDependenciesResponse
+	(*ControllerDependencyEdge)(nil),              // 3: inspect.ControllerDependencyEdge
+	(*common.Metadata)(nil),                       // 4: common.Metadata
+	(*emptypb.Empty)(nil),                         // 5: google.protobuf.Empty
+}
 var file_inspect_inspect_proto_depIdxs = []int32{
 	4, // 0: inspect.ControllerRuntimeDependency.metadata:type_name -> common.Metadata
 	3, // 1: inspect.ControllerRuntimeDependency.edges:type_name -> inspect.ControllerDependencyEdge

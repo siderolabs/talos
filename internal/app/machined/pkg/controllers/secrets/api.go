@@ -332,7 +332,8 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 }
 
 func (ctrl *APIController) generateJoin(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec) error {
+	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec,
+) error {
 	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.CA)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)

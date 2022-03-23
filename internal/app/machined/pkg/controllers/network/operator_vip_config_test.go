@@ -38,7 +38,7 @@ type OperatorVIPConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -63,14 +63,20 @@ func (suite *OperatorVIPConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *OperatorVIPConfigSuite) assertOperators(requiredIDs []string, check func(*network.OperatorSpec) error) error {
+func (suite *OperatorVIPConfigSuite) assertOperators(
+	requiredIDs []string,
+	check func(*network.OperatorSpec) error,
+) error {
 	missingIDs := make(map[string]struct{}, len(requiredIDs))
 
 	for _, id := range requiredIDs {
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -103,76 +109,86 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkInterfaces: []*v1alpha1.Device{
-					{
-						DeviceInterface: "eth1",
-						DeviceDHCP:      true,
-						DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-							SharedIP: "2.3.4.5",
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					NetworkInterfaces: []*v1alpha1.Device{
+						{
+							DeviceInterface: "eth1",
+							DeviceDHCP:      true,
+							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+								SharedIP: "2.3.4.5",
+							},
 						},
-					},
-					{
-						DeviceInterface: "eth2",
-						DeviceDHCP:      true,
-						DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-							SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+						{
+							DeviceInterface: "eth2",
+							DeviceDHCP:      true,
+							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+								SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+							},
 						},
-					},
-					{
-						DeviceInterface: "eth3",
-						DeviceDHCP:      true,
-						DeviceVlans: []*v1alpha1.Vlan{
-							{
-								VlanID: 26,
-								VlanVIP: &v1alpha1.DeviceVIPConfig{
-									SharedIP: "5.5.4.4",
+						{
+							DeviceInterface: "eth3",
+							DeviceDHCP:      true,
+							DeviceVlans: []*v1alpha1.Vlan{
+								{
+									VlanID: 26,
+									VlanVIP: &v1alpha1.DeviceVIPConfig{
+										SharedIP: "5.5.4.4",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
 				},
 			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertOperators([]string{
-				"configuration/vip/eth1",
-				"configuration/vip/eth2",
-				"configuration/vip/eth3.26",
-			}, func(r *network.OperatorSpec) error {
-				suite.Assert().Equal(network.OperatorVIP, r.TypedSpec().Operator)
-				suite.Assert().True(r.TypedSpec().RequireUp)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertOperators(
+					[]string{
+						"configuration/vip/eth1",
+						"configuration/vip/eth2",
+						"configuration/vip/eth3.26",
+					}, func(r *network.OperatorSpec) error {
+						suite.Assert().Equal(network.OperatorVIP, r.TypedSpec().Operator)
+						suite.Assert().True(r.TypedSpec().RequireUp)
 
-				switch r.Metadata().ID() {
-				case "configuration/vip/eth1":
-					suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
-					suite.Assert().EqualValues(netaddr.MustParseIP("2.3.4.5"), r.TypedSpec().VIP.IP)
-				case "configuration/vip/eth2":
-					suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
-					suite.Assert().EqualValues(netaddr.MustParseIP("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"), r.TypedSpec().VIP.IP)
-				case "configuration/vip/eth3.26":
-					suite.Assert().Equal("eth3.26", r.TypedSpec().LinkName)
-					suite.Assert().EqualValues(netaddr.MustParseIP("5.5.4.4"), r.TypedSpec().VIP.IP)
-				}
+						switch r.Metadata().ID() {
+						case "configuration/vip/eth1":
+							suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
+							suite.Assert().EqualValues(netaddr.MustParseIP("2.3.4.5"), r.TypedSpec().VIP.IP)
+						case "configuration/vip/eth2":
+							suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
+							suite.Assert().EqualValues(
+								netaddr.MustParseIP("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
+								r.TypedSpec().VIP.IP,
+							)
+						case "configuration/vip/eth3.26":
+							suite.Assert().Equal("eth3.26", r.TypedSpec().LinkName)
+							suite.Assert().EqualValues(netaddr.MustParseIP("5.5.4.4"), r.TypedSpec().VIP.IP)
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *OperatorVIPConfigSuite) TearDownTest() {
@@ -183,17 +199,26 @@ func (suite *OperatorVIPConfigSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(context.Background(), config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-	}))
+	err := suite.state.Create(
+		context.Background(), config.NewMachineConfig(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+			},
+		),
+	)
 	if state.IsConflictError(err) {
 		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
 	}
 
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewLinkStatus(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewLinkStatus(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestOperatorVIPConfigSuite(t *testing.T) {

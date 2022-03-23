@@ -847,26 +847,23 @@ func file_resource_resource_proto_rawDescGZIP() []byte {
 	return file_resource_resource_proto_rawDescData
 }
 
-var (
-	file_resource_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-	file_resource_resource_proto_msgTypes  = make([]protoimpl.MessageInfo, 10)
-	file_resource_resource_proto_goTypes   = []interface{}{
-		(EventType)(0),                // 0: resource.EventType
-		(*Resource)(nil),              // 1: resource.Resource
-		(*Metadata)(nil),              // 2: resource.Metadata
-		(*Spec)(nil),                  // 3: resource.Spec
-		(*GetRequest)(nil),            // 4: resource.GetRequest
-		(*Get)(nil),                   // 5: resource.Get
-		(*GetResponse)(nil),           // 6: resource.GetResponse
-		(*ListRequest)(nil),           // 7: resource.ListRequest
-		(*ListResponse)(nil),          // 8: resource.ListResponse
-		(*WatchRequest)(nil),          // 9: resource.WatchRequest
-		(*WatchResponse)(nil),         // 10: resource.WatchResponse
-		(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
-		(*common.Metadata)(nil),       // 12: common.Metadata
-	}
-)
-
+var file_resource_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_resource_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_resource_resource_proto_goTypes = []interface{}{
+	(EventType)(0),                // 0: resource.EventType
+	(*Resource)(nil),              // 1: resource.Resource
+	(*Metadata)(nil),              // 2: resource.Metadata
+	(*Spec)(nil),                  // 3: resource.Spec
+	(*GetRequest)(nil),            // 4: resource.GetRequest
+	(*Get)(nil),                   // 5: resource.Get
+	(*GetResponse)(nil),           // 6: resource.GetResponse
+	(*ListRequest)(nil),           // 7: resource.ListRequest
+	(*ListResponse)(nil),          // 8: resource.ListResponse
+	(*WatchRequest)(nil),          // 9: resource.WatchRequest
+	(*WatchResponse)(nil),         // 10: resource.WatchResponse
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*common.Metadata)(nil),       // 12: common.Metadata
+}
 var file_resource_resource_proto_depIdxs = []int32{
 	2,  // 0: resource.Resource.metadata:type_name -> resource.Metadata
 	3,  // 1: resource.Resource.spec:type_name -> resource.Spec

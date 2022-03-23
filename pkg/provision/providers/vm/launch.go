@@ -43,51 +43,55 @@ func ConfigureSignals() chan os.Signal {
 }
 
 func httpPostWrapper(f func() error) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
-			req.Body.Close()                         //nolint:errcheck
-		}
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			if req.Body != nil {
+				_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
+				req.Body.Close()                         //nolint:errcheck
+			}
 
-		if req.Method != http.MethodPost {
-			w.WriteHeader(http.StatusNotImplemented)
+			if req.Method != http.MethodPost {
+				w.WriteHeader(http.StatusNotImplemented)
 
-			return
-		}
+				return
+			}
 
-		err := f()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			err := f()
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
 
-			fmt.Fprint(w, err.Error())
+				fmt.Fprint(w, err.Error())
 
-			return
-		}
+				return
+			}
 
-		w.WriteHeader(http.StatusOK)
-	})
+			w.WriteHeader(http.StatusOK)
+		},
+	)
 }
 
 func httpGetWrapper(f func(w io.Writer)) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
-			req.Body.Close()                         //nolint:errcheck
-		}
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			if req.Body != nil {
+				_, _ = io.Copy(ioutil.Discard, req.Body) //nolint:errcheck
+				req.Body.Close()                         //nolint:errcheck
+			}
 
-		switch req.Method {
-		case http.MethodHead:
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-		case http.MethodGet:
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
+			switch req.Method {
+			case http.MethodHead:
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+			case http.MethodGet:
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
 
-			f(w)
-		default:
-			w.WriteHeader(http.StatusNotImplemented)
-		}
-	})
+				f(w)
+			default:
+				w.WriteHeader(http.StatusNotImplemented)
+			}
+		},
+	)
 }
 
 // NewHTTPServer creates new inmemhttp.Server and mounts config file into it.
@@ -126,9 +130,13 @@ func NewHTTPServer(gatewayAddr net.IP, port int, config []byte, controller Contr
 			httpServer.AddHandler(method.pattern, httpPostWrapper(method.f))
 		}
 
-		httpServer.AddHandler("/status", httpGetWrapper(func(w io.Writer) {
-			json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck
-		}))
+		httpServer.AddHandler(
+			"/status", httpGetWrapper(
+				func(w io.Writer) {
+					json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck,errchkjson
+				},
+			),
+		)
 	}
 
 	return httpServer, nil

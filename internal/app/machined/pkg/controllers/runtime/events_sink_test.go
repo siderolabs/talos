@@ -64,7 +64,7 @@ type EventsSinkSuite struct {
 	wg      sync.WaitGroup
 	eg      errgroup.Group
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -84,11 +84,15 @@ func (suite *EventsSinkSuite) SetupTest() {
 	suite.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamEventsSink, "localhost"))
 	suite.drainer = talosruntime.NewDrainer()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&controllerruntime.EventsSinkController{
-		V1Alpha1Events: suite.events,
-		Cmdline:        suite.cmdline,
-		Drainer:        suite.drainer,
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&controllerruntime.EventsSinkController{
+				V1Alpha1Events: suite.events,
+				Cmdline:        suite.cmdline,
+				Drainer:        suite.drainer,
+			},
+		),
+	)
 
 	suite.startRuntime()
 }
@@ -121,46 +125,56 @@ func (suite *EventsSinkSuite) startServer(ctx context.Context) {
 	suite.server = grpc.NewServer()
 	eventsapi.RegisterEventSinkServiceServer(suite.server, suite.sink)
 
-	suite.eg.Go(func() error {
-		<-ctx.Done()
+	suite.eg.Go(
+		func() error {
+			<-ctx.Done()
 
-		suite.server.Stop()
+			suite.server.Stop()
 
-		return nil
-	})
+			return nil
+		},
+	)
 
-	suite.eg.Go(func() error {
-		return suite.server.Serve(lis)
-	})
+	suite.eg.Go(
+		func() error {
+			return suite.server.Serve(lis)
+		},
+	)
 }
 
 func (suite *EventsSinkSuite) TestPublish() {
 	ctx, cancel := context.WithCancel(suite.ctx)
 	defer cancel()
 
-	suite.events.Publish(&machine.AddressEvent{
-		Hostname: "localhost",
-	})
+	suite.events.Publish(
+		&machine.AddressEvent{
+			Hostname: "localhost",
+		},
+	)
 
-	suite.events.Publish(&machine.PhaseEvent{
-		Phase:  "test",
-		Action: machine.PhaseEvent_START,
-	})
+	suite.events.Publish(
+		&machine.PhaseEvent{
+			Phase:  "test",
+			Action: machine.PhaseEvent_START,
+		},
+	)
 
 	suite.Require().Equal(0, len(suite.handler.events))
 
 	suite.startServer(ctx)
 
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(func() error {
-		suite.handler.eventsMu.Lock()
-		defer suite.handler.eventsMu.Unlock()
+	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+		func() error {
+			suite.handler.eventsMu.Lock()
+			defer suite.handler.eventsMu.Unlock()
 
-		if len(suite.handler.events) != 2 {
-			return retry.ExpectedErrorf("expected 2 events")
-		}
+			if len(suite.handler.events) != 2 {
+				return retry.ExpectedErrorf("expected 2 events")
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Require().NoError(err)
 }
 
@@ -169,14 +183,18 @@ func (suite *EventsSinkSuite) TestDrain() {
 	defer cancel()
 
 	for i := 0; i < 10; i++ {
-		suite.events.Publish(&machine.PhaseEvent{
-			Phase:  "test",
-			Action: machine.PhaseEvent_START,
-		})
-		suite.events.Publish(&machine.PhaseEvent{
-			Phase:  "test",
-			Action: machine.PhaseEvent_STOP,
-		})
+		suite.events.Publish(
+			&machine.PhaseEvent{
+				Phase:  "test",
+				Action: machine.PhaseEvent_START,
+			},
+		)
+		suite.events.Publish(
+			&machine.PhaseEvent{
+				Phase:  "test",
+				Action: machine.PhaseEvent_STOP,
+			},
+		)
 	}
 
 	suite.Require().Equal(0, len(suite.handler.events))
@@ -188,28 +206,34 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 	var eg errgroup.Group
 
-	eg.Go(func() error {
-		return suite.drainer.Drain(c)
-	})
+	eg.Go(
+		func() error {
+			return suite.drainer.Drain(c)
+		},
+	)
 
-	eg.Go(func() error {
-		time.Sleep(time.Millisecond * 300)
+	eg.Go(
+		func() error {
+			time.Sleep(time.Millisecond * 300)
 
-		suite.startServer(ctx)
+			suite.startServer(ctx)
 
-		return nil
-	})
+			return nil
+		},
+	)
 
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(func() error {
-		suite.handler.eventsMu.Lock()
-		defer suite.handler.eventsMu.Unlock()
+	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+		func() error {
+			suite.handler.eventsMu.Lock()
+			defer suite.handler.eventsMu.Unlock()
 
-		if len(suite.handler.events) != 20 {
-			return retry.ExpectedErrorf("expected 20 events, got %d", len(suite.handler.events))
-		}
+			if len(suite.handler.events) != 20 {
+				return retry.ExpectedErrorf("expected 20 events, got %d", len(suite.handler.events))
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(eg.Wait())

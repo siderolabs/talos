@@ -263,25 +263,32 @@ func run() error {
 	}
 
 	// Watch and handle runtime events.
-	_ = c.Runtime().Events().Watch(func(events <-chan runtime.EventInfo) { //nolint:errcheck
-		for {
-			for event := range events {
-				switch msg := event.Payload.(type) {
-				case *machine.SequenceEvent:
-					if msg.Error != nil {
-						if msg.Error.GetCode() == common.Code_LOCKED {
-							// ignore sequence lock errors, they're not fatal
-							continue
-						}
+	//nolint:errcheck
+	_ = c.Runtime().Events().Watch(
+		func(events <-chan runtime.EventInfo) {
+			for {
+				for event := range events {
+					switch msg := event.Payload.(type) {
+					case *machine.SequenceEvent:
+						if msg.Error != nil {
+							if msg.Error.GetCode() == common.Code_LOCKED {
+								// ignore sequence lock errors, they're not fatal
+								continue
+							}
 
-						errCh <- fmt.Errorf("fatal sequencer error in %q sequence: %v", msg.GetSequence(), msg.GetError().String())
+							errCh <- fmt.Errorf(
+								"fatal sequencer error in %q sequence: %v",
+								msg.GetSequence(),
+								msg.GetError().String(),
+							)
+						}
+					case *machine.RestartEvent:
+						errCh <- runtime.RebootError{Cmd: int(msg.Cmd)}
 					}
-				case *machine.RestartEvent:
-					errCh <- runtime.RebootError{Cmd: int(msg.Cmd)}
 				}
 			}
-		}
-	})
+		},
+	)
 
 	return <-errCh
 }

@@ -16,8 +16,9 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.1.0-alpha.0-1-g99be089
 PKGS ?= v1.1.0-alpha.0-5-g58603ba
 EXTRAS ?= v1.0.0
 GO_VERSION ?= 1.17
-GOFUMPT_VERSION ?= v0.1.1
-GOLANGCILINT_VERSION ?= v1.43.0
+GOIMPORTS_VERSION ?= v0.1.10
+GOFUMPT_VERSION ?= v0.3.0
+GOLANGCILINT_VERSION ?= v1.45.0
 STRINGER_VERSION ?= v0.1.5
 ENUMER_VERSION ?= v1.1.2
 DEEPCOPY_GEN_VERSION ?= v0.21.3
@@ -85,6 +86,7 @@ COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
+COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
 COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
 COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
@@ -272,7 +274,7 @@ api-descriptors: ## Generates API descriptors used to detect breaking API change
 	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/amd64
 
 fmt-go: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install mvdan.cc/gofumpt/gofumports@$(GOFUMPT_VERSION) && gofumports -w -local github.com/talos-systems/talos ."
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/talos-systems/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
 
 fmt-protobuf: ## Formats protobuf files.
 	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/amd64

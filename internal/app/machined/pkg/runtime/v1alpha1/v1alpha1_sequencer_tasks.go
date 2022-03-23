@@ -1845,7 +1845,8 @@ func StopDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, interface{}) (runtime.TaskExecutionFunc, string),
-	timeout time.Duration) func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	timeout time.Duration,
+) func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 		f, name := callback(seq, data)
 

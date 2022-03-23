@@ -5,7 +5,7 @@
 package proto
 
 import (
-	"google.golang.org/protobuf/proto" //nolint:depguard,gci
+	"google.golang.org/protobuf/proto" //nolint:depguard
 )
 
 // Message is the main interface for protobuf API v2 messages.

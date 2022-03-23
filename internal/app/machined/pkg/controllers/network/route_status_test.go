@@ -35,7 +35,7 @@ type RouteStatusSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -71,7 +71,10 @@ func (suite *RouteStatusSuite) assertRoutes(requiredIDs []string, check func(*ne
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -97,19 +100,24 @@ func (suite *RouteStatusSuite) assertRoutes(requiredIDs []string, check func(*ne
 }
 
 func (suite *RouteStatusSuite) TestRoutes() {
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertRoutes([]string{"local/inet4//127.0.0.0/8/0"}, func(r *network.RouteStatus) error {
-				suite.Assert().True(r.TypedSpec().Source.IsLoopback())
-				suite.Assert().Equal("lo", r.TypedSpec().OutLinkName)
-				suite.Assert().Equal(nethelpers.TableLocal, r.TypedSpec().Table)
-				suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
-				suite.Assert().Equal(nethelpers.TypeLocal, r.TypedSpec().Type)
-				suite.Assert().Equal(nethelpers.ProtocolKernel, r.TypedSpec().Protocol)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoutes(
+					[]string{"local/inet4//127.0.0.0/8/0"}, func(r *network.RouteStatus) error {
+						suite.Assert().True(r.TypedSpec().Source.IsLoopback())
+						suite.Assert().Equal("lo", r.TypedSpec().OutLinkName)
+						suite.Assert().Equal(nethelpers.TableLocal, r.TypedSpec().Table)
+						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
+						suite.Assert().Equal(nethelpers.TypeLocal, r.TypedSpec().Type)
+						suite.Assert().Equal(nethelpers.ProtocolKernel, r.TypedSpec().Protocol)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *RouteStatusSuite) TearDownTest() {

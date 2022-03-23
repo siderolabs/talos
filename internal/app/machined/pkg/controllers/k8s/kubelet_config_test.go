@@ -38,7 +38,7 @@ type KubeletConfigSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -71,139 +71,165 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineKubelet: &v1alpha1.KubeletConfig{
-				KubeletImage:      "kubelet",
-				KubeletClusterDNS: []string{"10.0.0.1"},
-				KubeletExtraArgs: map[string]string{
-					"enable-feature": "foo",
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineKubelet: &v1alpha1.KubeletConfig{
+					KubeletImage:      "kubelet",
+					KubeletClusterDNS: []string{"10.0.0.1"},
+					KubeletExtraArgs: map[string]string{
+						"enable-feature": "foo",
+					},
+					KubeletExtraMounts: []v1alpha1.ExtraMount{
+						{
+							Mount: specs.Mount{
+								Destination: "/tmp",
+								Source:      "/var",
+								Type:        "tmpfs",
+							},
+						},
+					},
+					KubeletExtraConfig: v1alpha1.Unstructured{
+						Object: map[string]interface{}{
+							"serverTLSBootstrap": true,
+						},
+					},
 				},
-				KubeletExtraMounts: []v1alpha1.ExtraMount{
-					{
-						Mount: specs.Mount{
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
+					ExternalEnabled: true,
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					DNSDomain: "service.svc",
+				},
+			},
+		},
+	)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletConfig, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletConfigType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
+				}
+
+				spec := kubeletConfig.(*k8s.KubeletConfig).TypedSpec()
+
+				suite.Assert().Equal("kubelet", spec.Image)
+				suite.Assert().Equal([]string{"10.0.0.1"}, spec.ClusterDNS)
+				suite.Assert().Equal("service.svc", spec.ClusterDomain)
+				suite.Assert().Equal(
+					map[string]string{
+						"enable-feature": "foo",
+					},
+					spec.ExtraArgs,
+				)
+				suite.Assert().Equal(
+					[]specs.Mount{
+						{
 							Destination: "/tmp",
 							Source:      "/var",
 							Type:        "tmpfs",
 						},
 					},
-				},
-				KubeletExtraConfig: v1alpha1.Unstructured{
-					Object: map[string]interface{}{
+					spec.ExtraMounts,
+				)
+				suite.Assert().Equal(
+					map[string]interface{}{
 						"serverTLSBootstrap": true,
 					},
-				},
+					spec.ExtraConfig,
+				)
+				suite.Assert().True(spec.CloudProviderExternal)
+
+				return nil
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
-				},
-			},
-			ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-				ExternalEnabled: true,
-			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				DNSDomain: "service.svc",
-			},
-		},
-	})
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
-
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletConfig, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletConfigType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
-				}
-
-				return err
-			}
-
-			spec := kubeletConfig.(*k8s.KubeletConfig).TypedSpec()
-
-			suite.Assert().Equal("kubelet", spec.Image)
-			suite.Assert().Equal([]string{"10.0.0.1"}, spec.ClusterDNS)
-			suite.Assert().Equal("service.svc", spec.ClusterDomain)
-			suite.Assert().Equal(
-				map[string]string{
-					"enable-feature": "foo",
-				},
-				spec.ExtraArgs)
-			suite.Assert().Equal(
-				[]specs.Mount{
-					{
-						Destination: "/tmp",
-						Source:      "/var",
-						Type:        "tmpfs",
-					},
-				},
-				spec.ExtraMounts)
-			suite.Assert().Equal(
-				map[string]interface{}{
-					"serverTLSBootstrap": true,
-				},
-				spec.ExtraConfig,
-			)
-			suite.Assert().True(spec.CloudProviderExternal)
-
-			return nil
-		},
-	))
+		),
+	)
 }
 
 func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineKubelet: &v1alpha1.KubeletConfig{
-				KubeletImage: "kubelet",
-			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineKubelet: &v1alpha1.KubeletConfig{
+					KubeletImage: "kubelet",
 				},
 			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+				},
 			},
 		},
-	})
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletConfig, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletConfigType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletConfig, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletConfigType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := kubeletConfig.(*k8s.KubeletConfig).TypedSpec()
 
-			spec := kubeletConfig.(*k8s.KubeletConfig).TypedSpec()
+				suite.Assert().Equal("kubelet", spec.Image)
+				suite.Assert().Equal([]string{"10.96.0.10"}, spec.ClusterDNS)
+				suite.Assert().Equal("", spec.ClusterDomain)
+				suite.Assert().Empty(spec.ExtraArgs)
+				suite.Assert().Empty(spec.ExtraMounts)
+				suite.Assert().False(spec.CloudProviderExternal)
 
-			suite.Assert().Equal("kubelet", spec.Image)
-			suite.Assert().Equal([]string{"10.96.0.10"}, spec.ClusterDNS)
-			suite.Assert().Equal("", spec.ClusterDomain)
-			suite.Assert().Empty(spec.ExtraArgs)
-			suite.Assert().Empty(spec.ExtraMounts)
-			suite.Assert().False(spec.CloudProviderExternal)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubeletConfigSuite) TearDownTest() {

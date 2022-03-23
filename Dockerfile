@@ -96,9 +96,12 @@ RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 ARG GOLANGCILINT_VERSION
 RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCILINT_VERSION}/install.sh | bash -s -- -b /toolchain/bin ${GOLANGCILINT_VERSION}
+ARG GOIMPORTS_VERSION
+RUN go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
+    && mv /go/bin/goimports /toolchain/go/bin/goimports
 ARG GOFUMPT_VERSION
-RUN go install mvdan.cc/gofumpt/gofumports@${GOFUMPT_VERSION} \
-    && mv /go/bin/gofumports /toolchain/go/bin/gofumports
+RUN go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
+    && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
 ARG STRINGER_VERSION
 RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
@@ -190,18 +193,21 @@ COPY ./api/resource/secrets/secrets.proto /api/resource/secrets/secrets.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/secrets/secrets.proto
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
-# Gofumports generated files to adjust import order
-RUN gofumports -w -local github.com/talos-systems/talos /api/
+# Goimports and gofumpt generated files to adjust import order
+RUN goimports -w -local github.com/talos-systems/talos /api/
+RUN gofumpt -w /api/
 
 # run docgen for machinery config
 FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
-RUN gofumports -w -local github.com/talos-systems/talos ./pkg/
+RUN goimports -w -local github.com/talos-systems/talos ./pkg/
+RUN gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...
-RUN gofumports -w -local github.com/talos-systems/talos ./
+RUN goimports -w -local github.com/talos-systems/talos ./
+RUN gofumpt -w ./
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
@@ -660,8 +666,6 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
-RUN find . -name '*.pb.go' -o -name '*_string_*.go' | xargs rm
-RUN --mount=type=cache,target=/.cache FILES="$(gofumports -l -local github.com/talos-systems/talos .)" && test -z "${FILES}" || (echo -e "Source code is not formatted with 'gofumports -w -local github.com/talos-systems/talos .':\n${FILES}"; exit 1)
 
 # The protolint target performs linting on protobuf files.
 

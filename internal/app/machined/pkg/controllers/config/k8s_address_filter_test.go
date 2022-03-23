@@ -38,6 +38,7 @@ type K8sAddressFilterSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
+	//nolint:containedctx
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 }
@@ -67,7 +68,10 @@ func (suite *K8sAddressFilterSuite) startRuntime() {
 	}()
 }
 
-func (suite *K8sAddressFilterSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
+func (suite *K8sAddressFilterSuite) assertResource(
+	md resource.Metadata,
+	check func(res resource.Resource) error,
+) func() error {
 	return func() error {
 		r, err := suite.state.Get(suite.ctx, md)
 		if err != nil {
@@ -86,56 +90,78 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
-				Endpoint: &v1alpha1.Endpoint{
-					URL: u,
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
 				},
-			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				ServiceSubnet: []string{
-					"10.200.0.0/22",
-					"fd40:10:200::/112",
-				},
-				PodSubnet: []string{
-					"10.32.0.0/12",
-					"fd00:10:32::/102",
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ServiceSubnet: []string{
+						"10.200.0.0/22",
+						"fd40:10:200::/112",
+					},
+					PodSubnet: []string{
+						"10.32.0.0/12",
+						"fd00:10:32::/102",
+					},
 				},
 			},
 		},
-	})
+	)
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			resource.NewMetadata(network.NamespaceName, network.NodeAddressFilterType, k8s.NodeAddressFilterOnlyK8s, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*network.NodeAddressFilter).TypedSpec()
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertResource(
+				resource.NewMetadata(
+					network.NamespaceName,
+					network.NodeAddressFilterType,
+					k8s.NodeAddressFilterOnlyK8s,
+					resource.VersionUndefined,
+				),
+				func(res resource.Resource) error {
+					spec := res.(*network.NodeAddressFilter).TypedSpec()
 
-				suite.Assert().Equal("[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]", fmt.Sprintf("%s", spec.IncludeSubnets))
-				suite.Assert().Empty(spec.ExcludeSubnets)
+					suite.Assert().Equal(
+						"[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]",
+						fmt.Sprintf("%s", spec.IncludeSubnets),
+					)
+					suite.Assert().Empty(spec.ExcludeSubnets)
 
-				return nil
-			},
+					return nil
+				},
+			),
 		),
-	))
+	)
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			resource.NewMetadata(network.NamespaceName, network.NodeAddressFilterType, k8s.NodeAddressFilterNoK8s, resource.VersionUndefined),
-			func(res resource.Resource) error {
-				spec := res.(*network.NodeAddressFilter).TypedSpec()
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			suite.assertResource(
+				resource.NewMetadata(
+					network.NamespaceName,
+					network.NodeAddressFilterType,
+					k8s.NodeAddressFilterNoK8s,
+					resource.VersionUndefined,
+				),
+				func(res resource.Resource) error {
+					spec := res.(*network.NodeAddressFilter).TypedSpec()
 
-				suite.Assert().Empty(spec.IncludeSubnets)
-				suite.Assert().Equal("[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]", fmt.Sprintf("%s", spec.ExcludeSubnets))
+					suite.Assert().Empty(spec.IncludeSubnets)
+					suite.Assert().Equal(
+						"[10.32.0.0/12 fd00:10:32::/102 10.200.0.0/22 fd40:10:200::/112]",
+						fmt.Sprintf("%s", spec.ExcludeSubnets),
+					)
 
-				return nil
-			},
+					return nil
+				},
+			),
 		),
-	))
+	)
 }
 
 func (suite *K8sAddressFilterSuite) TearDownTest() {

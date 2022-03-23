@@ -25,12 +25,15 @@ type Connection struct {
 	bootstrapEndpoint string
 	nodeClient        *client.Client
 	bootstrapClient   *client.Client
-	nodeCtx           context.Context
-	bootstrapCtx      context.Context
+	nodeCtx           context.Context //nolint:containedctx
+	bootstrapCtx      context.Context //nolint:containedctx
 }
 
 // NewConnection creates new installer connection.
-func NewConnection(ctx context.Context, nodeClient *client.Client, endpoint string, options ...Option) (*Connection, error) {
+func NewConnection(ctx context.Context, nodeClient *client.Client, endpoint string, options ...Option) (
+	*Connection,
+	error,
+) {
 	c := &Connection{
 		nodeEndpoint: endpoint,
 		nodeClient:   nodeClient,
@@ -48,7 +51,10 @@ func NewConnection(ctx context.Context, nodeClient *client.Client, endpoint stri
 }
 
 // GenerateConfiguration calls GenerateConfiguration on the target/bootstrap node.
-func (c *Connection) GenerateConfiguration(req *machine.GenerateConfigurationRequest, callOptions ...grpc.CallOption) (*machine.GenerateConfigurationResponse, error) {
+func (c *Connection) GenerateConfiguration(
+	req *machine.GenerateConfigurationRequest,
+	callOptions ...grpc.CallOption,
+) (*machine.GenerateConfigurationResponse, error) {
 	if c.bootstrapClient != nil {
 		return c.bootstrapClient.GenerateConfiguration(c.bootstrapCtx, req, callOptions...)
 	}
@@ -57,7 +63,10 @@ func (c *Connection) GenerateConfiguration(req *machine.GenerateConfigurationReq
 }
 
 // ApplyConfiguration calls ApplyConfiguration on the target node using appropriate node context.
-func (c *Connection) ApplyConfiguration(req *machine.ApplyConfigurationRequest, callOptions ...grpc.CallOption) (*machine.ApplyConfigurationResponse, error) {
+func (c *Connection) ApplyConfiguration(
+	req *machine.ApplyConfigurationRequest,
+	callOptions ...grpc.CallOption,
+) (*machine.ApplyConfigurationResponse, error) {
 	return c.nodeClient.ApplyConfiguration(c.nodeCtx, req, callOptions...)
 }
 

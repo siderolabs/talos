@@ -39,7 +39,7 @@ type ManifestSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -70,7 +70,10 @@ func (suite *ManifestSuite) startRuntime() {
 
 //nolint:dupl
 func (suite *ManifestSuite) assertManifests(manifests []string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -124,25 +127,27 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertManifests(
-				[]string{
-					"00-kubelet-bootstrapping-token",
-					"01-csr-approver-role-binding",
-					"01-csr-node-bootstrap",
-					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding",
-					"03-default-pod-security-policy",
-					"05-flannel",
-					"10-kube-proxy",
-					"11-core-dns",
-					"11-core-dns-svc",
-					"11-kube-config-in-cluster",
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertManifests(
+					[]string{
+						"00-kubelet-bootstrapping-token",
+						"01-csr-approver-role-binding",
+						"01-csr-node-bootstrap",
+						"01-csr-renewal-role-binding",
+						"02-kube-system-sa-role-binding",
+						"03-default-pod-security-policy",
+						"05-flannel",
+						"10-kube-proxy",
+						"11-core-dns",
+						"11-core-dns-svc",
+						"11-kube-config-in-cluster",
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
@@ -155,24 +160,26 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertManifests(
-				[]string{
-					"00-kubelet-bootstrapping-token",
-					"01-csr-approver-role-binding",
-					"01-csr-node-bootstrap",
-					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding",
-					"03-default-pod-security-policy",
-					"05-flannel",
-					"11-core-dns",
-					"11-core-dns-svc",
-					"11-kube-config-in-cluster",
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertManifests(
+					[]string{
+						"00-kubelet-bootstrapping-token",
+						"01-csr-approver-role-binding",
+						"01-csr-node-bootstrap",
+						"01-csr-renewal-role-binding",
+						"02-kube-system-sa-role-binding",
+						"03-default-pod-security-policy",
+						"05-flannel",
+						"11-core-dns",
+						"11-core-dns-svc",
+						"11-kube-config-in-cluster",
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
@@ -185,27 +192,37 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertManifests(
-				[]string{
-					"00-kubelet-bootstrapping-token",
-					"01-csr-approver-role-binding",
-					"01-csr-node-bootstrap",
-					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding",
-					"03-default-pod-security-policy",
-					"05-flannel",
-					"10-kube-proxy",
-					"11-core-dns",
-					"11-core-dns-svc",
-					"11-kube-config-in-cluster",
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertManifests(
+					[]string{
+						"00-kubelet-bootstrapping-token",
+						"01-csr-approver-role-binding",
+						"01-csr-node-bootstrap",
+						"01-csr-renewal-role-binding",
+						"02-kube-system-sa-role-binding",
+						"03-default-pod-security-policy",
+						"05-flannel",
+						"10-kube-proxy",
+						"11-core-dns",
+						"11-core-dns-svc",
+						"11-kube-config-in-cluster",
+					},
+				)
+			},
+		),
+	)
 
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "10-kube-proxy", resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(
+			k8s.ControlPlaneNamespaceName,
+			k8s.ManifestType,
+			"10-kube-proxy",
+			resource.VersionUndefined,
+		),
+	)
 	suite.Require().NoError(err)
 
 	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
@@ -230,24 +247,26 @@ func (suite *ManifestSuite) TestReconcileDisablePSP() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertManifests(
-				[]string{
-					"00-kubelet-bootstrapping-token",
-					"01-csr-approver-role-binding",
-					"01-csr-node-bootstrap",
-					"01-csr-renewal-role-binding",
-					"02-kube-system-sa-role-binding",
-					"05-flannel",
-					"10-kube-proxy",
-					"11-core-dns",
-					"11-core-dns-svc",
-					"11-kube-config-in-cluster",
-				},
-			)
-		},
-	))
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertManifests(
+					[]string{
+						"00-kubelet-bootstrapping-token",
+						"01-csr-approver-role-binding",
+						"01-csr-node-bootstrap",
+						"01-csr-renewal-role-binding",
+						"02-kube-system-sa-role-binding",
+						"05-flannel",
+						"10-kube-proxy",
+						"11-core-dns",
+						"11-core-dns-svc",
+						"11-kube-config-in-cluster",
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *ManifestSuite) TearDownTest() {

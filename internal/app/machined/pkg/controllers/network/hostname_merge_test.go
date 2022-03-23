@@ -34,7 +34,7 @@ type HostnameMergeSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -70,7 +70,10 @@ func (suite *HostnameMergeSuite) assertHostnames(requiredIDs []string, check fun
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.HostnameSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.HostnameSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -126,33 +129,43 @@ func (suite *HostnameMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertHostnames([]string{
-				"hostname",
-			}, func(r *network.HostnameSpec) error {
-				suite.Assert().Equal("bar.com", r.TypedSpec().FQDN())
-				suite.Assert().Equal("bar", r.TypedSpec().Hostname)
-				suite.Assert().Equal("com", r.TypedSpec().Domainname)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHostnames(
+					[]string{
+						"hostname",
+					}, func(r *network.HostnameSpec) error {
+						suite.Assert().Equal("bar.com", r.TypedSpec().FQDN())
+						suite.Assert().Equal("bar", r.TypedSpec().Hostname)
+						suite.Assert().Equal("com", r.TypedSpec().Domainname)
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertHostnames([]string{
-				"hostname",
-			}, func(r *network.HostnameSpec) error {
-				if r.TypedSpec().FQDN() != "eth-0" {
-					return retry.ExpectedErrorf("unexpected hostname %q", r.TypedSpec().FQDN())
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHostnames(
+					[]string{
+						"hostname",
+					}, func(r *network.HostnameSpec) error {
+						if r.TypedSpec().FQDN() != "eth-0" {
+							return retry.ExpectedErrorf("unexpected hostname %q", r.TypedSpec().FQDN())
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *HostnameMergeSuite) TearDownTest() {
@@ -163,7 +176,12 @@ func (suite *HostnameMergeSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameSpec(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewHostnameSpec(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestHostnameMergeSuite(t *testing.T) {

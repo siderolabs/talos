@@ -24,7 +24,7 @@ import (
 type RebootSuite struct {
 	base.APISuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -62,9 +62,11 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 	for _, node := range nodes {
 		suite.T().Log("rebooting node", node)
 
-		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, 10*time.Minute)
+		suite.AssertRebooted(
+			suite.ctx, node, func(nodeCtx context.Context) error {
+				return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+			}, 10*time.Minute,
+		)
 	}
 }
 
@@ -123,23 +125,32 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 
 				nodeCtx := client.WithNodes(suite.ctx, node)
 
-				return retry.Constant(10 * time.Minute).Retry(func() error {
-					requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
-					defer requestCtxCancel()
+				return retry.Constant(10 * time.Minute).Retry(
+					func() error {
+						requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
+						defer requestCtxCancel()
 
-					bootIDAfter, err := suite.ReadBootID(requestCtx)
-					if err != nil {
-						// API might be unresponsive during reboot
-						return retry.ExpectedError(fmt.Errorf("error reading bootID for node %q: %w", node, err))
-					}
+						bootIDAfter, err := suite.ReadBootID(requestCtx)
+						if err != nil {
+							// API might be unresponsive during reboot
+							return retry.ExpectedError(fmt.Errorf("error reading bootID for node %q: %w", node, err))
+						}
 
-					if bootIDAfter == bootIDBefore {
-						// bootID should be different after reboot
-						return retry.ExpectedError(fmt.Errorf("bootID didn't change for node %q: before %s, after %s", node, bootIDBefore, bootIDAfter))
-					}
+						if bootIDAfter == bootIDBefore {
+							// bootID should be different after reboot
+							return retry.ExpectedError(
+								fmt.Errorf(
+									"bootID didn't change for node %q: before %s, after %s",
+									node,
+									bootIDBefore,
+									bootIDAfter,
+								),
+							)
+						}
 
-					return nil
-				})
+						return nil
+					},
+				)
 			}()
 		}(node)
 	}

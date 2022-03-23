@@ -160,7 +160,8 @@ func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage
 //
 //nolint:gocyclo,cyclop
 func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn, wgClient *wgctrl.Client,
-	links *[]rtnetlink.LinkMessage, link *network.LinkSpec) error {
+	links *[]rtnetlink.LinkMessage, link *network.LinkSpec,
+) error {
 	logger = logger.With(zap.String("link", link.TypedSpec().Name))
 
 	switch link.Metadata().Phase() {

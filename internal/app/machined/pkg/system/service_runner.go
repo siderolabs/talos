@@ -41,7 +41,7 @@ type ServiceRunner struct {
 	stateSubscribers map[StateEvent][]chan<- struct{}
 
 	ctxMu     sync.Mutex
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -291,7 +291,12 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 			defer healthWg.Done()
 
 			//nolint:errcheck
-			health.Run(ctx, healthSvc.HealthSettings(svcrunner.runtime), &svcrunner.healthState, healthSvc.HealthFunc(svcrunner.runtime))
+			health.Run(
+				ctx,
+				healthSvc.HealthSettings(svcrunner.runtime),
+				&svcrunner.healthState,
+				healthSvc.HealthFunc(svcrunner.runtime),
+			)
 		}()
 
 		notifyCh := make(chan health.StateChange, 2)

@@ -37,7 +37,7 @@ type ResolverMergeSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -73,7 +73,10 @@ func (suite *ResolverMergeSuite) assertResolvers(requiredIDs []string, check fun
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.ResolverSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.ResolverSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -101,7 +104,10 @@ func (suite *ResolverMergeSuite) assertResolvers(requiredIDs []string, check fun
 func (suite *ResolverMergeSuite) TestMerge() {
 	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
 	*def.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP(constants.DefaultPrimaryResolver), netaddr.MustParseIP(constants.DefaultSecondaryResolver)},
+		DNSServers: []netaddr.IP{
+			netaddr.MustParseIP(constants.DefaultPrimaryResolver),
+			netaddr.MustParseIP(constants.DefaultSecondaryResolver),
+		},
 		ConfigLayer: network.ConfigDefault,
 	}
 
@@ -127,31 +133,44 @@ func (suite *ResolverMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertResolvers([]string{
-				"resolvers",
-			}, func(r *network.ResolverSpec) error {
-				suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertResolvers(
+					[]string{
+						"resolvers",
+					}, func(r *network.ResolverSpec) error {
+						suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertResolvers([]string{
-				"resolvers",
-			}, func(r *network.ResolverSpec) error {
-				if !reflect.DeepEqual(r.TypedSpec().DNSServers, []netaddr.IP{netaddr.MustParseIP("1.1.2.0"), netaddr.MustParseIP("1.1.2.1")}) {
-					return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().DNSServers)
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertResolvers(
+					[]string{
+						"resolvers",
+					}, func(r *network.ResolverSpec) error {
+						if !reflect.DeepEqual(
+							r.TypedSpec().DNSServers,
+							[]netaddr.IP{netaddr.MustParseIP("1.1.2.0"), netaddr.MustParseIP("1.1.2.1")},
+						) {
+							return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().DNSServers)
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *ResolverMergeSuite) TearDownTest() {
@@ -162,7 +181,12 @@ func (suite *ResolverMergeSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewResolverSpec(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewResolverSpec(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestResolverMergeSuite(t *testing.T) {

@@ -640,29 +640,26 @@ func file_common_common_proto_rawDescGZIP() []byte {
 	return file_common_common_proto_rawDescData
 }
 
-var (
-	file_common_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-	file_common_common_proto_msgTypes  = make([]protoimpl.MessageInfo, 6)
-	file_common_common_proto_goTypes   = []interface{}{
-		(Code)(0),                             // 0: common.Code
-		(ContainerDriver)(0),                  // 1: common.ContainerDriver
-		(*Error)(nil),                         // 2: common.Error
-		(*Metadata)(nil),                      // 3: common.Metadata
-		(*Data)(nil),                          // 4: common.Data
-		(*DataResponse)(nil),                  // 5: common.DataResponse
-		(*Empty)(nil),                         // 6: common.Empty
-		(*EmptyResponse)(nil),                 // 7: common.EmptyResponse
-		(*anypb.Any)(nil),                     // 8: google.protobuf.Any
-		(*status.Status)(nil),                 // 9: google.rpc.Status
-		(*descriptorpb.MessageOptions)(nil),   // 10: google.protobuf.MessageOptions
-		(*descriptorpb.FieldOptions)(nil),     // 11: google.protobuf.FieldOptions
-		(*descriptorpb.EnumOptions)(nil),      // 12: google.protobuf.EnumOptions
-		(*descriptorpb.EnumValueOptions)(nil), // 13: google.protobuf.EnumValueOptions
-		(*descriptorpb.MethodOptions)(nil),    // 14: google.protobuf.MethodOptions
-		(*descriptorpb.ServiceOptions)(nil),   // 15: google.protobuf.ServiceOptions
-	}
-)
-
+var file_common_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_common_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_common_common_proto_goTypes = []interface{}{
+	(Code)(0),                             // 0: common.Code
+	(ContainerDriver)(0),                  // 1: common.ContainerDriver
+	(*Error)(nil),                         // 2: common.Error
+	(*Metadata)(nil),                      // 3: common.Metadata
+	(*Data)(nil),                          // 4: common.Data
+	(*DataResponse)(nil),                  // 5: common.DataResponse
+	(*Empty)(nil),                         // 6: common.Empty
+	(*EmptyResponse)(nil),                 // 7: common.EmptyResponse
+	(*anypb.Any)(nil),                     // 8: google.protobuf.Any
+	(*status.Status)(nil),                 // 9: google.rpc.Status
+	(*descriptorpb.MessageOptions)(nil),   // 10: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),     // 11: google.protobuf.FieldOptions
+	(*descriptorpb.EnumOptions)(nil),      // 12: google.protobuf.EnumOptions
+	(*descriptorpb.EnumValueOptions)(nil), // 13: google.protobuf.EnumValueOptions
+	(*descriptorpb.MethodOptions)(nil),    // 14: google.protobuf.MethodOptions
+	(*descriptorpb.ServiceOptions)(nil),   // 15: google.protobuf.ServiceOptions
+}
 var file_common_common_proto_depIdxs = []int32{
 	0,  // 0: common.Error.code:type_name -> common.Code
 	8,  // 1: common.Error.details:type_name -> google.protobuf.Any

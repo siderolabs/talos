@@ -21,7 +21,7 @@ import (
 
 type inspector struct {
 	client *criclient.Client
-	ctx    context.Context
+	ctx    context.Context //nolint:containedctx
 }
 
 type inspectorOptions struct {
@@ -112,15 +112,17 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	}
 
 	if name == "" { // request for a pod sandbox
-		sandboxes, err := i.client.ListPodSandbox(i.ctx, &runtimeapi.PodSandboxFilter{
-			State: &runtimeapi.PodSandboxStateValue{
-				State: runtimeapi.PodSandboxState_SANDBOX_READY,
+		sandboxes, err := i.client.ListPodSandbox(
+			i.ctx, &runtimeapi.PodSandboxFilter{
+				State: &runtimeapi.PodSandboxStateValue{
+					State: runtimeapi.PodSandboxState_SANDBOX_READY,
+				},
+				LabelSelector: map[string]string{
+					"io.kubernetes.pod.name":      pod,
+					"io.kubernetes.pod.namespace": namespace,
+				},
 			},
-			LabelSelector: map[string]string{
-				"io.kubernetes.pod.name":      pod,
-				"io.kubernetes.pod.namespace": namespace,
-			},
-		})
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -138,13 +140,15 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	}
 
 	// request for a container
-	containers, err := i.client.ListContainers(i.ctx, &runtimeapi.ContainerFilter{
-		LabelSelector: map[string]string{
-			"io.kubernetes.pod.name":       pod,
-			"io.kubernetes.pod.namespace":  namespace,
-			"io.kubernetes.container.name": name,
+	containers, err := i.client.ListContainers(
+		i.ctx, &runtimeapi.ContainerFilter{
+			LabelSelector: map[string]string{
+				"io.kubernetes.pod.name":       pod,
+				"io.kubernetes.pod.namespace":  namespace,
+				"io.kubernetes.container.name": name,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -242,11 +246,13 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 //
 //nolint:gocyclo
 func (i *inspector) Pods() ([]*ctrs.Pod, error) {
-	sandboxes, err := i.client.ListPodSandbox(i.ctx, &runtimeapi.PodSandboxFilter{
-		State: &runtimeapi.PodSandboxStateValue{
-			State: runtimeapi.PodSandboxState_SANDBOX_READY,
+	sandboxes, err := i.client.ListPodSandbox(
+		i.ctx, &runtimeapi.PodSandboxFilter{
+			State: &runtimeapi.PodSandboxStateValue{
+				State: runtimeapi.PodSandboxState_SANDBOX_READY,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}

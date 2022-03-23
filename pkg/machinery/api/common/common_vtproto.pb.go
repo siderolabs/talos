@@ -354,7 +354,6 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *Error) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -491,11 +490,9 @@ func (m *EmptyResponse) SizeVT() (n int) {
 func sov(x uint64) (n int) {
 	return (bits.Len64(x|1) + 6) / 7
 }
-
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *Error) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -640,7 +637,6 @@ func (m *Error) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Metadata) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -800,7 +796,6 @@ func (m *Metadata) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Data) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -922,7 +917,6 @@ func (m *Data) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *DataResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1008,7 +1002,6 @@ func (m *DataResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Empty) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1096,7 +1089,6 @@ func (m *Empty) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *EmptyResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1182,7 +1174,6 @@ func (m *EmptyResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skip(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

@@ -22,6 +22,7 @@ import (
 type Reader struct {
 	source *os.File
 
+	//nolint:containedctx
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 

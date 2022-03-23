@@ -33,7 +33,7 @@ type HostnameSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -47,9 +47,13 @@ func (suite *HostnameSpecSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HostnameSpecController{
-		V1Alpha1Mode: v1alpha1runtime.ModeContainer, // run in container mode to skip _actually_ setting hostname
-	}))
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.HostnameSpecController{
+				V1Alpha1Mode: v1alpha1runtime.ModeContainer, // run in container mode to skip _actually_ setting hostname
+			},
+		),
+	)
 
 	suite.startRuntime()
 }
@@ -65,7 +69,10 @@ func (suite *HostnameSpecSuite) startRuntime() {
 }
 
 func (suite *HostnameSpecSuite) assertStatus(id string, fqdn string) error {
-	r, err := suite.state.Get(suite.ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, id, resource.VersionUndefined))
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, id, resource.VersionUndefined),
+	)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -95,10 +102,13 @@ func (suite *HostnameSpecSuite) TestSpec() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertStatus("hostname", "foo.bar")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertStatus("hostname", "foo.bar")
+			},
+		),
+	)
 }
 
 func (suite *HostnameSpecSuite) TearDownTest() {
@@ -109,7 +119,12 @@ func (suite *HostnameSpecSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewHostnameSpec(network.NamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewHostnameSpec(network.NamespaceName, "bar"),
+		),
+	)
 }
 
 func TestHostnameSpecSuite(t *testing.T) {

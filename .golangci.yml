@@ -119,7 +119,10 @@ linters-settings:
     range-loops: true # Report preallocation suggestions on range loops, true by default
     for-loops: false # Report preallocation suggestions on for loops, false by default
   gci:
-    local-prefixes: github.com/talos-systems/talos
+    sections:
+      - standard # Captures all standard packages if they do not match another section.
+      - default # Contains all imports that could not be matched to another section type.
+      - prefix(github.com/talos-systems/talos) # Groups all imports with the specified Prefix.
   cyclop:
     # the maximal code complexity to report
     max-complexity: 20
@@ -138,6 +141,7 @@ linters:
     - errorlint
     - exhaustivestruct
     - forbidigo
+    - forcetypeassert
     - funlen
     - gas
     - gochecknoglobals
@@ -148,6 +152,7 @@ linters:
     - gomnd
     - ifshort
     - ireturn # we return interfaces
+    - maintidx
     - nestif
     - nilnil # we return "nil, nil"
     - paralleltest
@@ -199,10 +204,10 @@ issues:
   exclude-use-default: false
 
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
-  max-per-linter: 0
+  max-issues-per-linter: 0
 
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
-  max-same: 0
+  max-same-issues: 0
 
   # Show only new issues: if there are unstaged changes or untracked files,
   # only those changes are analyzed, else only changes in HEAD~ are analyzed.

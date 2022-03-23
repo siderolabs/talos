@@ -36,7 +36,7 @@ type TimeServerMergeSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -65,14 +65,20 @@ func (suite *TimeServerMergeSuite) startRuntime() {
 	}()
 }
 
-func (suite *TimeServerMergeSuite) assertTimeServers(requiredIDs []string, check func(*network.TimeServerSpec) error) error {
+func (suite *TimeServerMergeSuite) assertTimeServers(
+	requiredIDs []string,
+	check func(*network.TimeServerSpec) error,
+) error {
 	missingIDs := make(map[string]struct{}, len(requiredIDs))
 
 	for _, id := range requiredIDs {
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -126,31 +132,41 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeServers([]string{
-				"timeservers",
-			}, func(r *network.TimeServerSpec) error {
-				suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeServers(
+					[]string{
+						"timeservers",
+					}, func(r *network.TimeServerSpec) error {
+						suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertTimeServers([]string{
-				"timeservers",
-			}, func(r *network.TimeServerSpec) error {
-				if !reflect.DeepEqual(r.TypedSpec().NTPServers, []string{"ntp.eth0", "ntp.eth1"}) {
-					return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().NTPServers)
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeServers(
+					[]string{
+						"timeservers",
+					}, func(r *network.TimeServerSpec) error {
+						if !reflect.DeepEqual(r.TypedSpec().NTPServers, []string{"ntp.eth0", "ntp.eth1"}) {
+							return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().NTPServers)
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *TimeServerMergeSuite) TearDownTest() {
@@ -161,7 +177,12 @@ func (suite *TimeServerMergeSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewTimeServerSpec(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewTimeServerSpec(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestTimeServerMergeSuite(t *testing.T) {

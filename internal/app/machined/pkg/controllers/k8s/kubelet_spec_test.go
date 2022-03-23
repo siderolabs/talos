@@ -43,7 +43,7 @@ type KubeletSpecSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -99,41 +99,52 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletSpec, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletSpec, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletSpecType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
 
-			spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+				suite.Assert().Equal(cfg.TypedSpec().Image, spec.Image)
+				suite.Assert().Equal(
+					[]string{
+						"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
+						"--cert-dir=/var/lib/kubelet/pki",
+						"--cloud-provider=external",
+						"--config=/etc/kubernetes/kubelet.yaml",
+						"--container-runtime=remote",
+						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
+						"--foo=bar",
+						"--hostname-override=example.com",
+						"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
+						"--node-ip=172.20.0.2",
+					}, spec.Args,
+				)
+				suite.Assert().Equal(cfg.TypedSpec().ExtraMounts, spec.ExtraMounts)
 
-			suite.Assert().Equal(cfg.TypedSpec().Image, spec.Image)
-			suite.Assert().Equal(
-				[]string{
-					"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
-					"--cert-dir=/var/lib/kubelet/pki",
-					"--cloud-provider=external",
-					"--config=/etc/kubernetes/kubelet.yaml",
-					"--container-runtime=remote",
-					"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
-					"--foo=bar",
-					"--hostname-override=example.com",
-					"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
-					"--node-ip=172.20.0.2",
-				}, spec.Args)
-			suite.Assert().Equal(cfg.TypedSpec().ExtraMounts, spec.ExtraMounts)
+				suite.Assert().Equal([]interface{}{"10.96.0.10"}, spec.Config["clusterDNS"])
+				suite.Assert().Equal("cluster.local", spec.Config["clusterDomain"])
 
-			suite.Assert().Equal([]interface{}{"10.96.0.10"}, spec.Config["clusterDNS"])
-			suite.Assert().Equal("cluster.local", spec.Config["clusterDomain"])
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
@@ -150,35 +161,46 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletSpec, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletSpec, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletSpecType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
 
-			spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+				suite.Assert().Equal(cfg.TypedSpec().Image, spec.Image)
+				suite.Assert().Equal(
+					[]string{
+						"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
+						"--cert-dir=/var/lib/kubelet/pki",
+						"--config=/etc/kubernetes/kubelet.yaml",
+						"--container-runtime=remote",
+						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
+						"--hostname-override=example.com",
+						"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
+						"--node-ip=10.0.0.1",
+					}, spec.Args,
+				)
 
-			suite.Assert().Equal(cfg.TypedSpec().Image, spec.Image)
-			suite.Assert().Equal(
-				[]string{
-					"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
-					"--cert-dir=/var/lib/kubelet/pki",
-					"--config=/etc/kubernetes/kubelet.yaml",
-					"--container-runtime=remote",
-					"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
-					"--hostname-override=example.com",
-					"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
-					"--node-ip=10.0.0.1",
-				}, spec.Args)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
@@ -202,32 +224,45 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			kubeletSpec, err := suite.state.Get(suite.ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					return retry.ExpectedError(err)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletSpec, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletSpecType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
 				}
 
-				return err
-			}
+				spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
 
-			spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+				var kubeletConfiguration kubeletconfig.KubeletConfiguration
 
-			var kubeletConfiguration kubeletconfig.KubeletConfiguration
+				if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(
+					spec.Config,
+					&kubeletConfiguration,
+				); err != nil {
+					return err
+				}
 
-			if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(spec.Config, &kubeletConfiguration); err != nil {
-				return err
-			}
+				suite.Assert().Equal("/", kubeletConfiguration.CgroupRoot)
+				suite.Assert().Equal(cfg.TypedSpec().ClusterDomain, kubeletConfiguration.ClusterDomain)
+				suite.Assert().True(kubeletConfiguration.ServerTLSBootstrap)
 
-			suite.Assert().Equal("/", kubeletConfiguration.CgroupRoot)
-			suite.Assert().Equal(cfg.TypedSpec().ClusterDomain, kubeletConfiguration.ClusterDomain)
-			suite.Assert().True(kubeletConfiguration.ServerTLSBootstrap)
-
-			return nil
-		},
-	))
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubeletSpecSuite) TearDownTest() {
@@ -276,68 +311,74 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 	} {
 		tt := tt
 
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig)
-			require.Error(t, err)
+		t.Run(
+			tt.name, func(t *testing.T) {
+				_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig)
+				require.Error(t, err)
 
-			assert.EqualError(t, err, tt.expectedErr)
-		})
+				assert.EqualError(t, err, tt.expectedErr)
+			},
+		)
 	}
 }
 
 func TestNewKubeletConfigurationSuccess(t *testing.T) {
-	config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", map[string]interface{}{
-		"oomScoreAdj":             -300,
-		"enableDebuggingHandlers": true,
-	})
+	config, err := k8sctrl.NewKubeletConfiguration(
+		[]string{"10.0.0.5"}, "cluster.local", map[string]interface{}{
+			"oomScoreAdj":             -300,
+			"enableDebuggingHandlers": true,
+		},
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, &kubeletconfig.KubeletConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
-			Kind:       "KubeletConfiguration",
-		},
-		StaticPodPath: constants.ManifestsDirectory,
-		Port:          constants.KubeletPort,
-		Authentication: kubeletconfig.KubeletAuthentication{
-			X509: kubeletconfig.KubeletX509Authentication{
-				ClientCAFile: constants.KubernetesCACert,
+	assert.Equal(
+		t, &kubeletconfig.KubeletConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: kubeletconfig.SchemeGroupVersion.String(),
+				Kind:       "KubeletConfiguration",
 			},
-			Webhook: kubeletconfig.KubeletWebhookAuthentication{
-				Enabled: pointer.ToBool(true),
+			StaticPodPath: constants.ManifestsDirectory,
+			Port:          constants.KubeletPort,
+			Authentication: kubeletconfig.KubeletAuthentication{
+				X509: kubeletconfig.KubeletX509Authentication{
+					ClientCAFile: constants.KubernetesCACert,
+				},
+				Webhook: kubeletconfig.KubeletWebhookAuthentication{
+					Enabled: pointer.ToBool(true),
+				},
+				Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
+					Enabled: pointer.ToBool(false),
+				},
 			},
-			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-				Enabled: pointer.ToBool(false),
+			Authorization: kubeletconfig.KubeletAuthorization{
+				Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
 			},
+			CgroupRoot:            "/",
+			SystemCgroups:         constants.CgroupSystem,
+			KubeletCgroups:        constants.CgroupKubelet,
+			RotateCertificates:    true,
+			ProtectKernelDefaults: true,
+			Address:               "0.0.0.0",
+			OOMScoreAdj:           pointer.ToInt32(-300),
+			ClusterDomain:         "cluster.local",
+			ClusterDNS:            []string{"10.0.0.5"},
+			SerializeImagePulls:   pointer.ToBool(false),
+			FailSwapOn:            pointer.ToBool(false),
+			SystemReserved: map[string]string{
+				"cpu":               constants.KubeletSystemReservedCPU,
+				"memory":            constants.KubeletSystemReservedMemory,
+				"pid":               constants.KubeletSystemReservedPid,
+				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
+			},
+			Logging: v1alpha1.LoggingConfiguration{
+				Format: "json",
+			},
+			ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
+			ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
+			StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
+			TLSMinVersion:                   "VersionTLS13",
+			EnableDebuggingHandlers:         pointer.ToBool(true),
 		},
-		Authorization: kubeletconfig.KubeletAuthorization{
-			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
-		},
-		CgroupRoot:            "/",
-		SystemCgroups:         constants.CgroupSystem,
-		KubeletCgroups:        constants.CgroupKubelet,
-		RotateCertificates:    true,
-		ProtectKernelDefaults: true,
-		Address:               "0.0.0.0",
-		OOMScoreAdj:           pointer.ToInt32(-300),
-		ClusterDomain:         "cluster.local",
-		ClusterDNS:            []string{"10.0.0.5"},
-		SerializeImagePulls:   pointer.ToBool(false),
-		FailSwapOn:            pointer.ToBool(false),
-		SystemReserved: map[string]string{
-			"cpu":               constants.KubeletSystemReservedCPU,
-			"memory":            constants.KubeletSystemReservedMemory,
-			"pid":               constants.KubeletSystemReservedPid,
-			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-		},
-		Logging: v1alpha1.LoggingConfiguration{
-			Format: "json",
-		},
-		ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
-		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
-		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
-		TLSMinVersion:                   "VersionTLS13",
-		EnableDebuggingHandlers:         pointer.ToBool(true),
-	},
-		config)
+		config,
+	)
 }

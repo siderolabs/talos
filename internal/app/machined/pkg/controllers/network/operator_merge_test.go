@@ -35,7 +35,7 @@ type OperatorMergeSuite struct {
 	runtime *runtime.Runtime
 	wg      sync.WaitGroup
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -71,7 +71,10 @@ func (suite *OperatorMergeSuite) assertOperators(requiredIDs []string, check fun
 		missingIDs[id] = struct{}{}
 	}
 
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -97,7 +100,10 @@ func (suite *OperatorMergeSuite) assertOperators(requiredIDs []string, check fun
 }
 
 func (suite *OperatorMergeSuite) assertNoOperator(id string) error {
-	resources, err := suite.state.List(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined))
+	resources, err := suite.state.List(
+		suite.ctx,
+		resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return err
 	}
@@ -139,37 +145,50 @@ func (suite *OperatorMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertOperators([]string{
-				"dhcp4/eth0",
-				"dhcp6/eth0",
-			}, func(r *network.OperatorSpec) error {
-				switch r.Metadata().ID() {
-				case "dhcp4/eth0":
-					suite.Assert().Equal(*dhcp2.TypedSpec(), *r.TypedSpec())
-				case "dhcp6/eth0":
-					suite.Assert().Equal(*dhcp6.TypedSpec(), *r.TypedSpec())
-				}
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertOperators(
+					[]string{
+						"dhcp4/eth0",
+						"dhcp6/eth0",
+					}, func(r *network.OperatorSpec) error {
+						switch r.Metadata().ID() {
+						case "dhcp4/eth0":
+							suite.Assert().Equal(*dhcp2.TypedSpec(), *r.TypedSpec())
+						case "dhcp6/eth0":
+							suite.Assert().Equal(*dhcp6.TypedSpec(), *r.TypedSpec())
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, dhcp6.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertOperators([]string{
-				"dhcp4/eth0",
-			}, func(r *network.OperatorSpec) error {
-				return nil
-			})
-		}))
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertNoOperator("dhcp6/eth0")
-		}))
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertOperators(
+					[]string{
+						"dhcp4/eth0",
+					}, func(r *network.OperatorSpec) error {
+						return nil
+					},
+				)
+			},
+		),
+	)
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoOperator("dhcp6/eth0")
+			},
+		),
+	)
 }
 
 //nolint:gocyclo
@@ -214,50 +233,75 @@ func (suite *OperatorMergeSuite) TestMergeFlapping() {
 
 	eg.Go(flipflop(0))
 	eg.Go(flipflop(1))
-	eg.Go(func() error {
-		// add/remove finalizer to the merged resource
-		for i := 0; i < 1000; i++ {
-			if err := suite.state.AddFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "dhcp4/eth0", resource.VersionUndefined), "foo"); err != nil {
-				if !state.IsNotFoundError(err) {
-					return err
+	eg.Go(
+		func() error {
+			// add/remove finalizer to the merged resource
+			for i := 0; i < 1000; i++ {
+				if err := suite.state.AddFinalizer(
+					suite.ctx,
+					resource.NewMetadata(
+						network.NamespaceName,
+						network.OperatorSpecType,
+						"dhcp4/eth0",
+						resource.VersionUndefined,
+					),
+					"foo",
+				); err != nil {
+					if !state.IsNotFoundError(err) {
+						return err
+					}
+
+					continue
+				} else {
+					suite.T().Log("finalizer added")
 				}
 
-				continue
-			} else {
-				suite.T().Log("finalizer added")
-			}
+				time.Sleep(10 * time.Millisecond)
 
-			time.Sleep(10 * time.Millisecond)
-
-			if err := suite.state.RemoveFinalizer(suite.ctx, resource.NewMetadata(network.NamespaceName, network.OperatorSpecType, "dhcp4/eth0", resource.VersionUndefined), "foo"); err != nil {
-				if err != nil && !state.IsNotFoundError(err) {
-					return err
+				if err := suite.state.RemoveFinalizer(
+					suite.ctx,
+					resource.NewMetadata(
+						network.NamespaceName,
+						network.OperatorSpecType,
+						"dhcp4/eth0",
+						resource.VersionUndefined,
+					),
+					"foo",
+				); err != nil {
+					if err != nil && !state.IsNotFoundError(err) {
+						return err
+					}
 				}
 			}
-		}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	suite.Require().NoError(eg.Wait())
 
-	suite.Assert().NoError(retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			return suite.assertOperators([]string{
-				"dhcp4/eth0",
-			}, func(r *network.OperatorSpec) error {
-				if r.Metadata().Phase() != resource.PhaseRunning {
-					return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
-				}
+	suite.Assert().NoError(
+		retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertOperators(
+					[]string{
+						"dhcp4/eth0",
+					}, func(r *network.OperatorSpec) error {
+						if r.Metadata().Phase() != resource.PhaseRunning {
+							return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
+						}
 
-				if *override.TypedSpec() != *r.TypedSpec() {
-					// using retry here, as it might not be reconciled immediately
-					return retry.ExpectedError(fmt.Errorf("not equal yet"))
-				}
+						if *override.TypedSpec() != *r.TypedSpec() {
+							// using retry here, as it might not be reconciled immediately
+							return retry.ExpectedError(fmt.Errorf("not equal yet"))
+						}
 
-				return nil
-			})
-		}))
+						return nil
+					},
+				)
+			},
+		),
+	)
 }
 
 func (suite *OperatorMergeSuite) TearDownTest() {
@@ -268,7 +312,12 @@ func (suite *OperatorMergeSuite) TearDownTest() {
 	suite.wg.Wait()
 
 	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), network.NewOperatorSpec(network.ConfigNamespaceName, "bar")))
+	suite.Assert().NoError(
+		suite.state.Create(
+			context.Background(),
+			network.NewOperatorSpec(network.ConfigNamespaceName, "bar"),
+		),
+	)
 }
 
 func TestOperatorMergeSuite(t *testing.T) {

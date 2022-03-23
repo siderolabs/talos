@@ -23,7 +23,7 @@ import (
 type ResetSuite struct {
 	base.APISuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
@@ -88,10 +88,12 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		preReset, err := suite.HashKubeletCert(suite.ctx, node)
 		suite.Require().NoError(err)
 
-		suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-			// force reboot after reset, as this is the only mode we can test
-			return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, true, true))
-		}, 10*time.Minute)
+		suite.AssertRebooted(
+			suite.ctx, node, func(nodeCtx context.Context) error {
+				// force reboot after reset, as this is the only mode we can test
+				return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, true, true))
+			}, 10*time.Minute,
+		)
 
 		suite.ClearConnectionRefused(suite.ctx, node)
 
@@ -118,10 +120,12 @@ func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
 	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		// force reboot after reset, as this is the only mode we can test
-		return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, false, true))
-	}, 5*time.Minute)
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			// force reboot after reset, as this is the only mode we can test
+			return base.IgnoreGRPCUnavailable(suite.Client.Reset(nodeCtx, false, true))
+		}, 5*time.Minute,
+	)
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 
@@ -162,19 +166,25 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		// force reboot after reset, as this is the only mode we can test
-		return base.IgnoreGRPCUnavailable(suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
-			Reboot:   true,
-			Graceful: true,
-			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-				{
-					Label: constants.EphemeralPartitionLabel,
-					Wipe:  true,
-				},
-			},
-		}))
-	}, 5*time.Minute)
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			// force reboot after reset, as this is the only mode we can test
+			return base.IgnoreGRPCUnavailable(
+				suite.Client.ResetGeneric(
+					nodeCtx, &machineapi.ResetRequest{
+						Reboot:   true,
+						Graceful: true,
+						SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+							{
+								Label: constants.EphemeralPartitionLabel,
+								Wipe:  true,
+							},
+						},
+					},
+				),
+			)
+		}, 5*time.Minute,
+	)
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 
@@ -205,19 +215,25 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
-		// force reboot after reset, as this is the only mode we can test
-		return base.IgnoreGRPCUnavailable(suite.Client.ResetGeneric(nodeCtx, &machineapi.ResetRequest{
-			Reboot:   true,
-			Graceful: true,
-			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-				{
-					Label: constants.StatePartitionLabel,
-					Wipe:  true,
-				},
-			},
-		}))
-	}, 5*time.Minute)
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			// force reboot after reset, as this is the only mode we can test
+			return base.IgnoreGRPCUnavailable(
+				suite.Client.ResetGeneric(
+					nodeCtx, &machineapi.ResetRequest{
+						Reboot:   true,
+						Graceful: true,
+						SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+							{
+								Label: constants.StatePartitionLabel,
+								Wipe:  true,
+							},
+						},
+					},
+				),
+			)
+		}, 5*time.Minute,
+	)
 
 	suite.ClearConnectionRefused(suite.ctx, node)
 

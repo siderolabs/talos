@@ -25,10 +25,10 @@ import (
 type LogsSuite struct {
 	base.APISuite
 
-	ctx       context.Context
+	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 
-	nodeCtx context.Context
+	nodeCtx context.Context //nolint:containedctx
 }
 
 // SuiteName ...
@@ -167,7 +167,11 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 		// invoke machined enough times to generate
 		// some logs
 		for i := int32(0); i < tailLines; i++ {
-			_, err := suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
+			_, err := suite.Client.Stats(
+				suite.nodeCtx,
+				constants.SystemContainerdNamespace,
+				common.ContainerDriver_CONTAINERD,
+			)
 			suite.Require().NoError(err)
 		}
 	}

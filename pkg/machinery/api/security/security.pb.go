@@ -165,14 +165,11 @@ func file_security_security_proto_rawDescGZIP() []byte {
 	return file_security_security_proto_rawDescData
 }
 
-var (
-	file_security_security_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-	file_security_security_proto_goTypes  = []interface{}{
-		(*CertificateRequest)(nil),  // 0: securityapi.CertificateRequest
-		(*CertificateResponse)(nil), // 1: securityapi.CertificateResponse
-	}
-)
-
+var file_security_security_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_security_security_proto_goTypes = []interface{}{
+	(*CertificateRequest)(nil),  // 0: securityapi.CertificateRequest
+	(*CertificateResponse)(nil), // 1: securityapi.CertificateResponse
+}
 var file_security_security_proto_depIdxs = []int32{
 	0, // 0: securityapi.SecurityService.Certificate:input_type -> securityapi.CertificateRequest
 	1, // 1: securityapi.SecurityService.Certificate:output_type -> securityapi.CertificateResponse
