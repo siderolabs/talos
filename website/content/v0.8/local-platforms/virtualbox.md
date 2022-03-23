@@ -28,13 +28,13 @@ You can download `talosctl` via
 [github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
 For example version `v0.8.0` for `linux` platform:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.8.0/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/v0.8.0/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -47,14 +47,14 @@ You can download `talos-amd64.iso` via
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
+curl https://github.com/siderolabs/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
 ```
 
 For example version `v0.8.0` for `linux` platform:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/v0.8.0/talos-amd64.iso -L -o _out/talos-amd64.iso
+curl https://github.com/siderolabs/talos/releases/download/v0.8.0/talos-amd64.iso -L -o _out/talos-amd64.iso
 ```
 
 ## Create VMs

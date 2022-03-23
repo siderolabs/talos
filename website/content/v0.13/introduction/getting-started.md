@@ -49,13 +49,13 @@ The easiest way to install Talos is to use the ISO image.
 
 The latest ISO image can be found on the Github [Releases](https://github.com/talos-systems/talos/releases) page:
 
-- X86: [https://github.com/talos-systems/talos/releases/download/v0.13.0/talos-amd64.iso](https://github.com/talos-systems/talos/releases/download/v0.13.0/talos-amd64.iso)
-- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.13.0/talos-arm64.iso](https://github.com/talos-systems/talos/releases/download/v0.13.0/talos-arm64.iso)
+- X86: [https://github.com/siderolabs/talos/releases/download/v0.13.0/talos-amd64.iso](https://github.com/siderolabs/talos/releases/download/v0.13.0/talos-amd64.iso)
+- ARM64: [https://github.com/siderolabs/talos/releases/download/v0.13.0/talos-arm64.iso](https://github.com/siderolabs/talos/releases/download/v0.13.0/talos-arm64.iso)
 
 For self-built media and network booting, you can use the kernel and initramfs:
 
-- X86: [https://github.com/talos-systems/talos/releases/download/v0.13.0/boot-amd64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.13.0/boot-amd64.tar.gz)
-- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.13.0/boot-ard64.tar.gz](https://github.com/talos-systems/talos/releases/download/v0.13.0/boot-ard64.tar.gz)
+- X86: [https://github.com/siderolabs/talos/releases/download/v0.13.0/boot-amd64.tar.gz](https://github.com/siderolabs/talos/releases/download/v0.13.0/boot-amd64.tar.gz)
+- ARM64: [https://github.com/siderolabs/talos/releases/download/v0.13.0/boot-ard64.tar.gz](https://github.com/siderolabs/talos/releases/download/v0.13.0/boot-ard64.tar.gz)
 
 When booted from the ISO, Talos will run in RAM, and it will not install itself
 until it is provided a configuration.

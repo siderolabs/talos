@@ -42,13 +42,13 @@ You can download `talosctl` and all required binaries via
 [github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
 For example version `v0.7.0` for `linux` platform:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.7.0/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/v0.7.0/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -60,15 +60,15 @@ These files can be downloaded from the Talos release:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz-<arch> -L -o _out/vmlinuz-<arch>
-curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
+curl https://github.com/siderolabs/talos/releases/download/<version>/vmlinuz-<arch> -L -o _out/vmlinuz-<arch>
+curl https://github.com/siderolabs/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
 ```
 
 For example version `v0.7.0`:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/v0.7.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
-curl https://github.com/talos-systems/talos/releases/download/v0.7.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
+curl https://github.com/siderolabs/talos/releases/download/v0.7.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
+curl https://github.com/siderolabs/talos/releases/download/v0.7.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
 ```
 
 ## Create the Cluster

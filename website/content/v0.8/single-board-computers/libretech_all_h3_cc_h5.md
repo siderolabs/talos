@@ -13,7 +13,7 @@ You will need
 Download the latest alpha `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/download/v0.8.4/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/v0.8.4/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/download/v0.8.4/metal-libretech_all_h3_cc_h5-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/v0.8.4/metal-libretech_all_h3_cc_h5-arm64.img.xz
 xz -d metal-libretech_all_h3_cc_h5-arm64.img.xz
 ```
 

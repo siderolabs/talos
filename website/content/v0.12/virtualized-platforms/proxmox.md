@@ -24,7 +24,7 @@ You can download `talosctl` via
 [github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
 For example version `v0.12.0` for `linux` platform:
@@ -43,7 +43,7 @@ You can download `talos-amd64.iso` via
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
+curl https://github.com/siderolabs/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
 ```
 
 For example version `v0.12.0` for `linux` platform:

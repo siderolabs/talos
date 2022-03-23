@@ -13,7 +13,7 @@ set -e
 
 CLUSTER_NAME=${CLUSTER_NAME:=vmware-test}
 TALOS_VERSION=v1.0.0
-OVA_PATH=${OVA_PATH:="https://github.com/talos-systems/talos/releases/download/${TALOS_VERSION}/vmware-amd64.ova"}
+OVA_PATH=${OVA_PATH:="https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/vmware-amd64.ova"}
 
 CONTROL_PLANE_COUNT=${CONTROL_PLANE_COUNT:=3}
 CONTROL_PLANE_CPU=${CONTROL_PLANE_CPU:=2}

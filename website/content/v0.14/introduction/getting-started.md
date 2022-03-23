@@ -49,13 +49,13 @@ The easiest way to install Talos is to use the ISO image.
 
 The latest ISO image can be found on the Github [Releases](https://github.com/talos-systems/talos/releases) page:
 
-- X86: [https://github.com/talos-systems/talos/releases/download/v0.14.0/talos-amd64.iso](https://github.com/talos-systems/talos/releases/download/v0.14.0/talos-amd64.iso)
-- ARM64: [https://github.com/talos-systems/talos/releases/download/v0.14.0/talos-arm64.iso](https://github.com/talos-systems/talos/releases/download/v0.14.0/talos-arm64.iso)
+- X86: [https://github.com/siderolabs/talos/releases/download/v0.14.0/talos-amd64.iso](https://github.com/siderolabs/talos/releases/download/v0.14.0/talos-amd64.iso)
+- ARM64: [https://github.com/siderolabs/talos/releases/download/v0.14.0/talos-arm64.iso](https://github.com/siderolabs/talos/releases/download/v0.14.0/talos-arm64.iso)
 
 For self-built media and network booting, you can use the kernel and initramfs:
 
-- X86: [vmlinuz-amd64](https://github.com/talos-systems/talos/releases/download/v0.14.0/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/talos-systems/talos/releases/download/v0.14.0/initramfs-amd64.xz)
-- ARM64: [vmlinuz-arm64](https://github.com/talos-systems/talos/releases/download/v0.14.0/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/talos-systems/talos/releases/download/v0.14.0/initramfs-arm64.xz)
+- X86: [vmlinuz-amd64](https://github.com/siderolabs/talos/releases/download/v0.14.0/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/siderolabs/talos/releases/download/v0.14.0/initramfs-amd64.xz)
+- ARM64: [vmlinuz-arm64](https://github.com/siderolabs/talos/releases/download/v0.14.0/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/siderolabs/talos/releases/download/v0.14.0/initramfs-arm64.xz)
 
 When booted from the ISO, Talos will run in RAM, and it will not install itself
 until it is provided a configuration.

@@ -8,7 +8,7 @@ description: "Creating a cluster via the AWS CLI."
 Official AMI image ID can be found in the `cloud-images.json` file attached to the Talos release:
 
 ```bash
-curl -sL https://github.com/talos-systems/talos/releases/download/v0.13.0/cloud-images.json | \
+curl -sL https://github.com/siderolabs/talos/releases/download/v0.13.0/cloud-images.json | \
     jq -r '.[] | select(.region == "us-east-1") | select (.arch == "amd64") | .id'
 ```
 

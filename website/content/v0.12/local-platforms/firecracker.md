@@ -46,7 +46,7 @@ You can download `talosctl` and all required binaries via
 [github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
 For example version `v0.12.0` for `linux` platform:
@@ -96,8 +96,8 @@ These files can be downloaded from the Talos release:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/download/<version>/vmlinuz -L -o _out/vmlinuz
-curl https://github.com/talos-systems/talos/releases/download/<version>/initramfs.xz -L -o _out/initramfs.xz
+curl https://github.com/siderolabs/talos/releases/download/<version>/vmlinuz -L -o _out/vmlinuz
+curl https://github.com/siderolabs/talos/releases/download/<version>/initramfs.xz -L -o _out/initramfs.xz
 ```
 
 For example version `v0.12.0`:
