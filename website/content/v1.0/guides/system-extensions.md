@@ -16,7 +16,7 @@ System extensions are configured in the `.machine.install` section:
 machine:
   install:
     extensions:
-      - image: ghcr.io/talos-systems/gvisor:33f613e
+      - image: ghcr.io/siderolabs/gvisor:33f613e
 ```
 
 During the initial install (e.g. when PXE booting or booting from an ISO), Talos will pull down container images for system extensions,

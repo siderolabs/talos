@@ -44,7 +44,7 @@ description: ""
         FROM scratch AS customization
         COPY --from=ghcr.io/your-username/kernel:<kernel version> /lib/modules /lib/modules
 
-        FROM ghcr.io/talos-systems/installer:<talos version>
+        FROM ghcr.io/siderolabs/installer:<talos version>
         COPY --from=ghcr.io/your-username/kernel:<kernel version> /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
         ```
 

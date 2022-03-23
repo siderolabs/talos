@@ -360,7 +360,7 @@ local integration_provision_tests_track_2 = Step("provision-tests-track-2", priv
 
 local integration_extensions = Step("e2e-extensions", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "SHORT_INTEGRATION_TEST": "yes",
-        "WITH_CONFIG_PATCH": '[{"op":"add","path":"/machine/install/extensions","value":[{"image":"ghcr.io/talos-systems/gvisor:54b831d"},{"image":"ghcr.io/talos-systems/intel-ucode:54b831d"},{"image":"ghcr.io/talos-systems/hello-world-service:a05f558"}]},{"op":"add","path":"/machine/sysctls","value":{"user.max_user_namespaces": "11255"}}]',
+        "WITH_CONFIG_PATCH": '[{"op":"add","path":"/machine/install/extensions","value":[{"image":"ghcr.io/siderolabs/gvisor:54b831d"},{"image":"ghcr.io/siderolabs/intel-ucode:54b831d"},{"image":"ghcr.io/siderolabs/hello-world-service:a05f558"}]},{"op":"add","path":"/machine/sysctls","value":{"user.max_user_namespaces": "11255"}}]',
         "WITH_TEST": "run_extensions_test",
         "IMAGE_REGISTRY": local_registry,
 });

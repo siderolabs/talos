@@ -27,7 +27,7 @@ Using a multi-stage `Dockerfile` we can define the `customization` stage and bui
 FROM scratch AS customization
 COPY --from=<name|index> <src> <dest>
 
-FROM ghcr.io/talos-systems/installer:latest
+FROM ghcr.io/siderolabs/installer:latest
 ```
 
 When building the image, the `customization` stage will automatically be copied into the rootfs.

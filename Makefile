@@ -1,5 +1,5 @@
 REGISTRY ?= ghcr.io
-USERNAME ?= talos-systems
+USERNAME ?= siderolabs
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\*)
 TAG_SUFFIX ?=
@@ -12,7 +12,7 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/talos-systems/tools:v1.1.0-alpha.0-1-g99be089
+TOOLS ?= ghcr.io/siderolabs/tools:v1.1.0-alpha.0-1-g99be089
 PKGS ?= v1.1.0-alpha.0-5-g58603ba
 EXTRAS ?= v1.0.0
 GO_VERSION ?= 1.17
@@ -22,7 +22,7 @@ STRINGER_VERSION ?= v0.1.5
 ENUMER_VERSION ?= v1.1.2
 DEEPCOPY_GEN_VERSION ?= v0.21.3
 VTPROTOBUF_VERSION ?= v0.2.0
-IMPORTVET ?= ghcr.io/talos-systems/importvet:c9424fe
+IMPORTVET ?= ghcr.io/siderolabs/importvet:c9424fe
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
@@ -31,7 +31,7 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.23.5
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.31/kubestr_0.4.31_Linux_amd64.tar.gz
 CLUSTERCTL_VERSION ?= 1.0.4
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
-D2CTL_URL ?= https://github.com/talos-systems/day-two/releases/download/v0.1.0-alpha.1/d2ctl-$(OPERATING_SYSTEM)-amd64
+D2CTL_URL ?= https://github.com/siderolabs/day-two/releases/download/v0.1.0-alpha.1/d2ctl-$(OPERATING_SYSTEM)-amd64
 PULUMI_URL ?= https://get.pulumi.com/releases/sdk/pulumi-v3.26.1-$(OPERATING_SYSTEM)-x64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
 RELEASES ?= v0.13.4 v0.14.1
@@ -377,10 +377,10 @@ $(ARTIFACTS)/$(TALOS_RELEASE)/%:
 	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
 	@case "$*" in \
 		vmlinuz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
 			;; \
 		initramfs.xz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/talos-systems/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
+			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
 			;; \
 	esac
 
@@ -394,7 +394,7 @@ release-artifacts:
 
 .PHONY: conformance
 conformance: ## Performs policy checks against the commit and source code.
-	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/talos-systems/conform:v0.1.0-alpha.22 enforce
+	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/siderolabs/conform:v0.1.0-alpha.22 enforce
 
 .PHONY: release-notes
 release-notes:

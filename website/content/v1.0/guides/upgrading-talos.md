@@ -41,7 +41,7 @@ as:
 
 ```sh
   $ talosctl upgrade --nodes 10.20.30.40 \
-      --image ghcr.io/talos-systems/installer:v1.0.0
+      --image ghcr.io/siderolabs/installer:v1.0.0
 ```
 
 There is an option to this command: `--preserve`, which will explicitly tell Talos to keep ephemeral data intact.

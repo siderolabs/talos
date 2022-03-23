@@ -107,7 +107,7 @@ Command `talosctl patch` works similar to `talosctl edit` command - it loads cur
 Example, updating kubelet version (in auto mode):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/talos-systems/kubelet:v1.20.5"}]'
+$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v1.20.5"}]'
 patched mc at the node <IP>
 ```
 
@@ -137,7 +137,7 @@ Talos can detect file format automatically:
 # kubelet-patch.yaml
 - op: replace
   path: /machine/kubelet/image
-  value: ghcr.io/talos-systems/kubelet:v1.23.3
+  value: ghcr.io/siderolabs/kubelet:v1.23.3
 ```
 
 ```bash

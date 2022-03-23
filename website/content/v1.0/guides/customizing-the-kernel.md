@@ -30,7 +30,7 @@ Using a multi-stage `Dockerfile` we can define the `customization` stage and bui
 FROM scratch AS customization
 COPY --from=<custom kernel image> /lib/modules /lib/modules
 
-FROM ghcr.io/talos-systems/installer:latest
+FROM ghcr.io/siderolabs/installer:latest
 COPY --from=<custom kernel image> /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
 ```
 

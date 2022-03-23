@@ -24,8 +24,9 @@ function create_cluster {
     --cpus=2.0 \
     --cidr=172.20.2.0/24 \
     --with-apply-config \
-    --install-image=${REGISTRY:-ghcr.io}/talos-systems/installer:${TAG} \
+    --install-image=${REGISTRY:-ghcr.io}/siderolabs/installer:${TAG} \
     --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
+    --crashdump \
     ${REGISTRY_MIRROR_FLAGS}
 
   "${TALOSCTL}" config node "${NODE}"

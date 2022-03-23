@@ -2,8 +2,8 @@
 commit = "HEAD"
 
 project_name = "Talos"
-github_repo = "talos-systems/talos"
-match_deps = "^github.com/(talos-systems/[a-zA-Z0-9-]+)$"
+github_repo = "siderolabs/talos"
+match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
 previous = "v0.14.0"
@@ -180,12 +180,12 @@ Use machine configuration field `.machine.sysfs` to set `sysfs` kernel parameter
 
     [make_deps.tools]
         variable = "TOOLS"
-        repository = "github.com/talos-systems/tools"
+        repository = "github.com/siderolabs/tools"
 
     [make_deps.pkgs]
         variable = "PKGS"
-        repository = "github.com/talos-systems/pkgs"
+        repository = "github.com/siderolabs/pkgs"
 
     [make_deps.extras]
         variable = "EXTRAS"
-        repository = "github.com/talos-systems/extras"
+        repository = "github.com/siderolabs/extras"

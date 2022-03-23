@@ -166,10 +166,10 @@ func TestValidate(t *testing.T) {
 						InstallDisk: "/dev/vda",
 						InstallExtensions: []v1alpha1.InstallExtensionConfig{
 							{
-								ExtensionImage: "ghcr.io/talos-systems/gvisor:v0.1.0",
+								ExtensionImage: "ghcr.io/siderolabs/gvisor:v0.1.0",
 							},
 							{
-								ExtensionImage: "ghcr.io/talos-systems/gvisor:v0.1.0",
+								ExtensionImage: "ghcr.io/siderolabs/gvisor:v0.1.0",
 							},
 						},
 					},
@@ -183,7 +183,7 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			requiresInstall: true,
-			expectedError:   "1 error occurred:\n\t* duplicate system extension \"ghcr.io/talos-systems/gvisor:v0.1.0\"\n\n",
+			expectedError:   "1 error occurred:\n\t* duplicate system extension \"ghcr.io/siderolabs/gvisor:v0.1.0\"\n\n",
 		},
 		{
 			name: "ExternalCloudProviderEnabled",

@@ -41,7 +41,7 @@ Container logs for Kubernetes pods can be retrieved with `talosctl logs -k` comm
 $ talosctl -n 172.20.1.2 containers -k
 NODE         NAMESPACE   ID                                                 IMAGE                                                         PID    STATUS
 172.20.1.2   k8s.io      kube-system/kube-flannel-dk6d5                     k8s.gcr.io/pause:3.5                                          1329   SANDBOX_READY
-172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-cni      ghcr.io/talos-systems/install-cni:v0.7.0-alpha.0-1-g2bb2efc   0      CONTAINER_EXITED
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-cni      ghcr.io/siderolabs/install-cni:v0.7.0-alpha.0-1-g2bb2efc      0      CONTAINER_EXITED
 172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-config   quay.io/coreos/flannel:v0.13.0                                0      CONTAINER_EXITED
 172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:kube-flannel     quay.io/coreos/flannel:v0.13.0                                1610   CONTAINER_RUNNING
 172.20.1.2   k8s.io      kube-system/kube-proxy-gfkqj                       k8s.gcr.io/pause:3.5                                          1311   SANDBOX_READY
