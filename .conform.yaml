@@ -5,7 +5,7 @@ policies:
       gpg:
         required: true
         identity:
-          gitHubOrganization: talos-systems
+          gitHubOrganization: siderolabs
       spellcheck:
         locale: US
       maximumOfOneCommit: true
