@@ -26,7 +26,13 @@ Further, when running on a Mac in docker,  due to networking limitations, VIPs a
 Creating a local cluster is as simple as:
 
 ```bash
-talosctl cluster create --wait
+talosctl cluster create
+```
+
+Note that if you are on MacOS or Windows you will need to add `--endpoint 127.0.0.1`:
+
+```bash
+talosctl cluster create --endpoint 127.0.0.1
 ```
 
 Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
