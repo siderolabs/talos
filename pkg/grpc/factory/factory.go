@@ -176,6 +176,8 @@ func NewDefaultOptions(setters ...Option) *Options {
 
 	opts.ServerOptions = append(
 		opts.ServerOptions,
+		grpc.InitialWindowSize(65535*32),
+		grpc.InitialConnWindowSize(65535*16),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(opts.UnaryInterceptors...)),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
 	)

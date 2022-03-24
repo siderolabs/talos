@@ -80,6 +80,8 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 	a.conn, err = grpc.DialContext(
 		ctx,
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
+		grpc.WithInitialWindowSize(65535*32),
+		grpc.WithInitialConnWindowSize(65535*16),
 		grpc.WithTransportCredentials(a.creds),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 	)

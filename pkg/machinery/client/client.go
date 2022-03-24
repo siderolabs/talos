@@ -211,6 +211,8 @@ func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 
 		dialOpts = append(dialOpts,
 			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+			grpc.WithInitialWindowSize(65535*32),
+			grpc.WithInitialConnWindowSize(65535*16),
 		)
 	}
 
