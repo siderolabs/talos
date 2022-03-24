@@ -71,11 +71,11 @@ Previously, the audit logs were sent to `kube-apiserver`'s `stdout`, along with 
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.30
+* Linux: 5.15.31
 * Kubernetes: 1.23.5
 * CoreDNS: 1.9.1
 * etcd: 3.5.2
-* containerd: 1.6.1
+* containerd: 1.6.2
 * runc: 1.1.0
 
 Talos is built with Go 1.17.8
