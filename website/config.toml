@@ -116,7 +116,7 @@ url_latest_version = "/v0.14"
 # gcs_engine_id = "d72aa9b2712488cc3"
 
 # Enable Algolia DocSearch
-algolia_docsearch = true
+algolia_docsearch = false
 
 # Enable Lunr.js offline search
 offlineSearch = false
@@ -223,4 +223,3 @@ weight = 99
 name = "Sidero Metal"
 url = "https://sidero.dev"
 weight = 98
-
