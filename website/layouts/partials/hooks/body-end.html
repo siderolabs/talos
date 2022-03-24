@@ -1,11 +1,17 @@
+{{ $currentVersionDir := index (split .Page.File.Dir "/" ) 0 | printf "/%s"}}
 <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
 
 <script>
-docsearch({
-  appId: "D72DGJBSSA",
-  apiKey: "49ca9541d72f7814b88a3a9204988360",
-  indexName: "talos",
-  container: '#algolia-search',
-  debug: true
-});
+  docsearch({
+    appId: "D72DGJBSSA",
+    apiKey: "49ca9541d72f7814b88a3a9204988360",
+    indexName: "talos",
+    container: '#algolia-search',
+    debug: true,
+  });
 </script>
+
+
+{{ if eq $currentVersionDir site.Params.url_latest_version }}
+<meta name="docsearch:version" content="latest" />
+{{ end }}
