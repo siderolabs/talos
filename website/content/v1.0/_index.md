@@ -4,6 +4,7 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
+preRelease: true
 ---
 
 ## Welcome
