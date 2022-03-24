@@ -30,10 +30,10 @@ In order to update the system extensions for a running instance, update `.machin
 
 ## Creating System Extensions
 
-A Talos system extension is a container image with the [specific folder structure](https://github.com/talos-systems/extensions#readme).
+A Talos system extension is a container image with the [specific folder structure](https://github.com/siderolabs/extensions#readme).
 System extensions can be built and managed using any tool that produces container images, e.g. `docker build`.
 
-Sidero Labs maintains a [repository of system extensions](https://github.com/talos-systems/extension).
+Sidero Labs maintains a [repository of system extensions](https://github.com/siderolabs/extensions).
 
 ## Resource Definitions
 
@@ -75,4 +75,4 @@ spec:
 
 ## Example: gVisor
 
-See [readme of the gVisor extension](https://github.com/talos-systems/extensions/tree/main/container-runtime/gvisor#readme).
+See [readme of the gVisor extension](https://github.com/siderolabs/extensions/tree/main/container-runtime/gvisor#readme).
