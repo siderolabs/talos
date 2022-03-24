@@ -8,6 +8,9 @@
     indexName: "talos",
     container: '#algolia-search',
     debug: true,
+    searchParameters: {
+      facetFilters: ['version:latest'],
+    },
   });
 </script>
 
