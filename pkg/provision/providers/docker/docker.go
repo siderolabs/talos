@@ -80,7 +80,7 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 	// docker doesn't provide internal LB, so return empty string
 	// external LB is always localhost for OS X where docker exposes ports
 	switch runtime.GOOS {
-	case "darwin":
+	case "darwin", "windows":
 		return "", "127.0.0.1"
 	default:
 		return "", ""
