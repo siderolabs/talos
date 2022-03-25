@@ -36,3 +36,4 @@ sha512sum.txt
 package-lock.json
 node_modules
 website/resources
+website/public

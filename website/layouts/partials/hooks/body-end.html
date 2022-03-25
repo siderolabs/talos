@@ -1,4 +1,6 @@
-{{ $currentVersionDir := index (split .Page.File.Dir "/" ) 0 | printf "/%s"}}
+{{ $currentVersion := index (split .Page.File.Dir "/" ) 0 }}
+{{ $currentVersionDir := $currentVersion | printf "/%s"}}
+
 <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
 
 <script>
@@ -15,6 +17,15 @@
 </script>
 
 
+<!--
+tag all content with its corresponding version.
+the "not equal" handles the case where there is no version on the main landing page 
+the "equal" handles whether we also tag this content as "latest"
+-->
+{{ if ne $currentVersion "" }}
 {{ if eq $currentVersionDir site.Params.url_latest_version }}
-<meta name="docsearch:version" content="latest" />
+<meta name="docsearch:version" content="latest,{{ $currentVersion }}" />
+{{else}}
+<meta name="docsearch:version" content="{{ $currentVersion }}" />
+{{end}}
 {{ end }}
