@@ -167,6 +167,23 @@ func (vip *VIP) waitForPreconditions(ctx context.Context) error {
 		return fmt.Errorf("etcd health wait failure: %w", err)
 	}
 
+	// wait for the kubelet lifecycle to be up, and not being torn down
+	_, err = vip.state.WatchFor(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletLifecycleType, k8s.KubeletLifecycleID, resource.VersionUndefined),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			if resource.IsTombstone(r) {
+				return false, nil
+			}
+
+			if r.Metadata().Phase() == resource.PhaseTearingDown {
+				return false, nil
+			}
+
+			return true, nil
+		}))
+	if err != nil {
+		return fmt.Errorf("kubelet lifecycle wait failure: %w", err)
+	}
+
 	return nil
 }
 
@@ -178,6 +195,16 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 	if err := vip.waitForPreconditions(ctx); err != nil {
 		return fmt.Errorf("error waiting for preconditions: %w", err)
 	}
+
+	// put a finalizer on the kubelet lifecycle and remove once the campaign is done
+	kubeletLifecycle := resource.NewMetadata(k8s.NamespaceName, k8s.KubeletLifecycleType, k8s.KubeletLifecycleID, resource.VersionUndefined)
+	if err := vip.state.AddFinalizer(ctx, kubeletLifecycle, vip.Prefix()); err != nil {
+		return fmt.Errorf("error adding kubelet lifecycle finalizer: %w", err)
+	}
+
+	defer func() {
+		vip.state.RemoveFinalizer(ctx, kubeletLifecycle, vip.Prefix()) //nolint:errcheck
+	}()
 
 	hostname, err := os.Hostname() // TODO: this should be etcd nodename
 	if err != nil {
@@ -258,6 +285,10 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 		return fmt.Errorf("error setting up etcd watch: %w", err)
 	}
 
+	if err = vip.state.Watch(ctx, kubeletLifecycle, watchCh); err != nil {
+		return fmt.Errorf("error setting up etcd watch: %w", err)
+	}
+
 	err = vip.state.WatchKind(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined), watchCh)
 	if err != nil {
 		return fmt.Errorf("kube-apiserver health wait failure: %w", err)
@@ -290,6 +321,11 @@ observeLoop:
 				if event.Resource.Metadata().ID() == "etcd" || strings.HasPrefix(event.Resource.Metadata().ID(), "kube-system/kube-apiserver-") {
 					break observeLoop
 				}
+			}
+
+			// break the loop if the kubelet lifecycle is entering teardown phase
+			if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
+				break observeLoop
 			}
 		}
 	}

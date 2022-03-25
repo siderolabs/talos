@@ -26,6 +26,8 @@ import (
 	"github.com/AlekSi/pointer"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
@@ -67,6 +69,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/version"
 )
@@ -1230,8 +1233,39 @@ func StopAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 	return stopAndRemoveAllPods(cri.StopOnly), "stopAllPods"
 }
 
+func waitForKubeletLifecycleFinalizers(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+	logger.Printf("waiting for kubelet lifecycle finalizers")
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	lifecycle := resource.NewMetadata(k8s.NamespaceName, k8s.KubeletLifecycleType, k8s.KubeletLifecycleID, resource.VersionUndefined)
+
+	for {
+		ok, err := r.State().V1Alpha2().Resources().Teardown(ctx, lifecycle)
+		if err != nil {
+			return err
+		}
+
+		if ok {
+			break
+		}
+
+		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, lifecycle, state.WithFinalizerEmpty())
+		if err != nil {
+			return err
+		}
+	}
+
+	return r.State().V1Alpha2().Resources().Destroy(ctx, lifecycle)
+}
+
 func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		if err = waitForKubeletLifecycleFinalizers(ctx, logger, r); err != nil {
+			logger.Printf("failed waiting for kubelet lifecycle finalizers: %s", err)
+		}
+
 		logger.Printf("shutting down kubelet gracefully")
 
 		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, constants.KubeletShutdownGracePeriod*2)
