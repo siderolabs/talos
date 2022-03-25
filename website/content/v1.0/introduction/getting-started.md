@@ -29,7 +29,7 @@ You should install `talosctl` before continuing:
 #### `amd64`
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -38,7 +38,7 @@ chmod +x /usr/local/bin/talosctl
 For `linux` and `darwin` operating systems `talosctl` is also available for the `arm64` processor architecture.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -46,10 +46,10 @@ chmod +x /usr/local/bin/talosctl
 
 The easiest way to install Talos is to use the ISO image.
 
-The latest ISO image can be found on the Github [Releases](https://github.com/talos-systems/talos/releases) page:
+The latest ISO image can be found on the Github [Releases](https://github.com/siderolabs/talos/releases) page:
 
-- X86: [https://github.com/siderolabs/talos/releases/download/v1.0.0/talos-amd64.iso](https://github.com/siderolabs/talos/releases/download/v1.0.0/talos-amd64.iso)
-- ARM64: [https://github.com/siderolabs/talos/releases/download/v1.0.0/talos-arm64.iso](https://github.com/siderolabs/talos/releases/download/v1.0.0/talos-arm64.iso)
+- X86: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso)
+- ARM64: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-arm64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-arm64.iso)
 
 When booted from the ISO, Talos will run in RAM, and it will not install itself
 until it is provided a configuration.
@@ -59,8 +59,8 @@ Thus, it is safe to boot the ISO onto any machine.
 
 For network booting and self-built media, you can use the published kernel and initramfs images:
 
-- X86: [vmlinuz-amd64](https://github.com/siderolabs/talos/releases/download/v1.0.0/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/siderolabs/talos/releases/download/v1.0.0/initramfs-amd64.xz)
-- ARM64: [vmlinuz-arm64](https://github.com/siderolabs/talos/releases/download/v1.0.0/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/siderolabs/talos/releases/download/v1.0.0/initramfs-arm64.xz)
+- X86: [vmlinuz-amd64](https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-amd64) [initramfs-amd64.xz](https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-amd64.xz)
+- ARM64: [vmlinuz-arm64](https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-arm64.xz)
 
 Note that to use alternate booting, there are a number of required kernel parameters.
 Please see the [kernel](../../reference/kernel/) docs for more information.

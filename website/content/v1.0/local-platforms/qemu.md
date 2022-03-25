@@ -40,16 +40,16 @@ apt install qemu-system-x86 qemu-kvm
 ### Install talosctl
 
 You can download `talosctl` and all required binaries via
-[github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
+[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
 curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v1.0.0` for `linux` platform:
+For example version `{{< release >}}` for `linux` platform:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -65,11 +65,11 @@ curl https://github.com/siderolabs/talos/releases/download/<version>/vmlinuz-<ar
 curl https://github.com/siderolabs/talos/releases/download/<version>/initramfs-<arch>.xz -L -o _out/initramfs-<arch>.xz
 ```
 
-For example version `v1.0.0`:
+For example version `{{< release >}}`:
 
 ```bash
-curl https://github.com/siderolabs/talos/releases/download/v1.0.0/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
-curl https://github.com/siderolabs/talos/releases/download/v1.0.0/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-amd64 -L -o _out/vmlinuz-amd64
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-amd64.xz -L -o _out/initramfs-amd64.xz
 ```
 
 ## Create the Cluster

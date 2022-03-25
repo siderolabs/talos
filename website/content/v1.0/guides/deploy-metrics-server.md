@@ -30,7 +30,7 @@ We can have Kubelet Serving Certificate Approver and metrics-server installed on
 cluster:
   extraManifests:
     - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
-    - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    - https://github.com/kubernetes-sigs/metrics-server/releases/{{< release >}}/download/components.yaml
 ```
 
 ## Install After Bootstrap
@@ -39,5 +39,5 @@ If you choose not to use `extraManifests` to install Kubelet Serving Certificate
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/{{< release >}}/download/components.yaml
 ```

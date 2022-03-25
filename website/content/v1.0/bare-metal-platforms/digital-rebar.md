@@ -33,7 +33,7 @@ created talosconfig
 
 > The loadbalancer is used to distribute the load across multiple controlplane nodes.
 > This isn't covered in detail, because we assume some loadbalancing knowledge before hand.
-> If you think this should be added to the docs, please [create a issue](https://github.com/talos-systems/talos/issues).
+> If you think this should be added to the docs, please [create a issue](https://github.com/siderolabs/talos/issues).
 
 At this point, you can modify the generated configs to your liking.
 Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
@@ -62,7 +62,7 @@ Replacing `<file>` with controlplane or worker.
 
 ### Download the boot files
 
-Download a recent version of `boot.tar.gz` from [github.](https://github.com/talos-systems/talos/releases/)
+Download a recent version of `boot.tar.gz` from [github.](https://github.com/siderolabs/talos/releases/)
 
 Upload to DRB:
 
@@ -74,7 +74,7 @@ $ drpcli isos upload boot.tar.gz as talos.tar.gz
 }
 ```
 
-We have some Digital Rebar [example files](https://github.com/talos-systems/talos/tree/master/hack/test/digitalrebar/) in the Git repo you can use to provision Digital Rebar with drpcli.
+We have some Digital Rebar [example files](https://github.com/siderolabs/talos/tree/master/hack/test/digitalrebar/) in the Git repo you can use to provision Digital Rebar with drpcli.
 
 To apply these configs you need to create them, and then apply them as follow:
 

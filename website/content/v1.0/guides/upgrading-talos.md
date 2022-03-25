@@ -26,7 +26,7 @@ To see a live demo of an upgrade of Talos Linux, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/AAF6WhX0USo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-### After Upgrade to 0.15
+### After Upgrade to {{< release >}}
 
 TBD
 
@@ -41,7 +41,7 @@ as:
 
 ```sh
   $ talosctl upgrade --nodes 10.20.30.40 \
-      --image ghcr.io/siderolabs/installer:v1.0.0
+      --image ghcr.io/siderolabs/installer:{{< release >}}
 ```
 
 There is an option to this command: `--preserve`, which will explicitly tell Talos to keep ephemeral data intact.
@@ -68,7 +68,7 @@ It also applies an upgrade flow which allows you to classify some machines as
 early adopters and others as getting only stable, tested versions.
 
 To find out more about the controller manager and to get it installed and
-configured, take a look at the [GitHub page](https://github.com/talos-systems/talos-controller-manager).
+configured, take a look at the [GitHub page](https://github.com/siderolabs/talos-controller-manager).
 Please note that the controller manager is still in fairly early development.
 More advanced features, such as time slot scheduling, will be coming in the
 future.

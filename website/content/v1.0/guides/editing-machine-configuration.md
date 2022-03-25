@@ -26,7 +26,7 @@ Each of these commands can operate in one of four modes:
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
 
-The list of config changes allowed to be applied immediately in Talos v1.0:
+The list of config changes allowed to be applied immediately in Talos {{< release >}}:
 
 * `.debug`
 * `.cluster`
@@ -107,14 +107,14 @@ Command `talosctl patch` works similar to `talosctl edit` command - it loads cur
 Example, updating kubelet version (in auto mode):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v1.20.5"}]'
+$ talosctl -n <IP> patch machineconfig -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v{{< k8s_release >}}"}]'
 patched mc at the node <IP>
 ```
 
 Updating kube-apiserver version in immediate mode (without a reboot):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.5"}]'
+$ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}"}]'
 patched mc at the node <IP>
 ```
 
@@ -137,7 +137,7 @@ Talos can detect file format automatically:
 # kubelet-patch.yaml
 - op: replace
   path: /machine/kubelet/image
-  value: ghcr.io/siderolabs/kubelet:v1.23.3
+  value: ghcr.io/siderolabs/kubelet:v{{< k8s_release >}}
 ```
 
 ```bash

@@ -46,7 +46,7 @@ This directory is automatically served by Matchbox.
 ### Create the Matchbox Configuration Files
 
 The profiles we will create will reference `vmlinuz`, and `initramfs.xz`.
-Download these files from the [release](https://github.com/talos-systems/talos/releases) of your choice, and place them in `/var/lib/matchbox/assets`.
+Download these files from the [release](https://github.com/siderolabs/talos/releases) of your choice, and place them in `/var/lib/matchbox/assets`.
 
 #### Profiles
 

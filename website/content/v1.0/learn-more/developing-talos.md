@@ -9,7 +9,7 @@ Some steps might work under Mac OS X, but using Linux is highly advised.
 
 ## Prepare
 
-Check out the [Talos repository](https://github.com/talos-systems/talos).
+Check out the [Talos repository](https://github.com/siderolabs/talos).
 
 Try running `make help` to see available `make` commands.
 You would need Docker and `buildx` installed on the host.
@@ -85,7 +85,7 @@ sudo -E _out/talosctl-linux-amd64 cluster create \
 
 > Note: as boot loader is not used, it's not necessary to  rebuild `installer` each time (old image is fine), but sometimes it's needed (when configuration changes are done and old installer doesn't validate the config).
 >
-> `talosctl cluster create` derives Talos machine configuration version from the install image tag, so sometimes early in the development cycle (when new minor tag is not released yet), machine config version can be overridden with `--talos-version=v0.14`.
+> `talosctl cluster create` derives Talos machine configuration version from the install image tag, so sometimes early in the development cycle (when new minor tag is not released yet), machine config version can be overridden with `--talos-version={{< version >}}`.
 
 If the `--with-bootloader=false` flag is not enabled, for Talos cluster to pick up new changes to the code (in `initramfs`), it will require a Talos upgrade (so new `installer` should be built).
 With `--with-bootloader=false` flag, Talos always boots from `initramfs` in `_out/` directory, so simple reboot is enough to pick up new code changes.

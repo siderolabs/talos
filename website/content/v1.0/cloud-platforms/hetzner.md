@@ -6,7 +6,7 @@ description: "Creating a cluster via the CLI (hcloud) on Hetzner."
 ## Upload image
 
 Hetzner Cloud does not support uploading custom images.
-You can email their support to get a Talos ISO uploaded by following [issues:3599](https://github.com/talos-systems/talos/issues/3599#issuecomment-841172018) or you can prepare image snapshot by yourself.
+You can email their support to get a Talos ISO uploaded by following [issues:3599](https://github.com/siderolabs/talos/issues/3599#issuecomment-841172018) or you can prepare image snapshot by yourself.
 
 There are two options to upload your own.
 

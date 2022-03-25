@@ -18,7 +18,7 @@ You will need
 Download the latest `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -53,7 +53,7 @@ Power off the Raspberry Pi and remove the SD card from it.
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rpi_4-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/{{< release >}}/download/metal-rpi_4-arm64.img.xz
 xz -d metal-rpi_4-arm64.img.xz
 ```
 

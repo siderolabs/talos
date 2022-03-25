@@ -1,0 +1,2 @@
+{{ $major_minor := split .Page.FirstSection.Params.lastRelease "." | first 2  -}}
+{{- delimit $major_minor "." -}}

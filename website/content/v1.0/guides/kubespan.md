@@ -54,7 +54,7 @@ cluster:
 
 ### Upgrading an Existing Cluster
 
-In order to enable KubeSpan for an existing cluster, upgrade to the latest v0.14.
+In order to enable KubeSpan for an existing cluster, upgrade to the latest version.
 Once your cluster is upgraded, the configuration of each node must contain the globally unique identifier, the shared secret for the cluster, and have KubeSpan and discovery enabled.
 
 > Note: Discovery can be used without KubeSpan, but KubeSpan requires at least one discovery registry.
