@@ -3,6 +3,24 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
 
+<!--
+this targets the facets of algolia search to only return the version you're actively looking at
+except in the case of not having a version (being on the main page) and then it'll return "latest".
+-->
+{{ if ne $currentVersion "" }}
+<script>
+  docsearch({
+    appId: "D72DGJBSSA",
+    apiKey: "49ca9541d72f7814b88a3a9204988360",
+    indexName: "talos",
+    container: '#algolia-search',
+    debug: true,
+    searchParameters: {
+      facetFilters: ['version:{{ $currentVersion}}'],
+    },
+  });
+</script>
+{{ else }}
 <script>
   docsearch({
     appId: "D72DGJBSSA",
@@ -15,6 +33,7 @@
     },
   });
 </script>
+{{ end }}
 
 
 <!--
