@@ -28,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 		&k8s.ConfigStatus{},
 		&k8s.Endpoint{},
 		&k8s.KubeletConfig{},
+		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},
 		&k8s.ManifestStatus{},
 		&k8s.Manifest{},

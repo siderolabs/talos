@@ -15,6 +15,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -63,6 +64,12 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.Image, image.WithSkipIfAlreadyPulled())
 	if err != nil {
+		return err
+	}
+
+	// Create lifecycle resource to signal that the kubelet is about to start.
+	err = r.State().V1Alpha2().Resources().Create(ctx, k8s.NewKubeletLifecycle(k8s.NamespaceName, k8s.KubeletLifecycleID))
+	if err != nil && !state.IsConflictError(err) { // ignore if the lifecycle resource already exists
 		return err
 	}
 

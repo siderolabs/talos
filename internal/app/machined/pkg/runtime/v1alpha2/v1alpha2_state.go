@@ -91,6 +91,7 @@ func NewState() (*State, error) {
 		&k8s.ConfigStatus{},
 		&k8s.Endpoint{},
 		&k8s.KubeletConfig{},
+		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},
 		&k8s.Manifest{},
 		&k8s.ManifestStatus{},
