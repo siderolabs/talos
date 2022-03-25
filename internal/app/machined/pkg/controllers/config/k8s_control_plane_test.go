@@ -172,6 +172,10 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 							VolumeHostPath:  "/var/lib",
 							VolumeMountPath: "/var/foo/",
 						},
+						{
+							VolumeHostPath:  "/var/lib/a.foo",
+							VolumeMountPath: "/var/foo/b.foo",
+						},
 					},
 				},
 			},
@@ -185,6 +189,12 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 				Name:      "var-foo",
 				HostPath:  "/var/lib",
 				MountPath: "/var/foo/",
+				ReadOnly:  false,
+			},
+			{
+				Name:      "var-foo-b-foo",
+				HostPath:  "/var/lib/a.foo",
+				MountPath: "/var/foo/b.foo",
 				ReadOnly:  false,
 			},
 		}, apiServerCfg.ExtraVolumes,
