@@ -31,7 +31,7 @@ container:
      - # OCI Mount Spec
 depends:
    - service: cri
-   - file: /run/machined/machined.sock
+   - path: /run/machined/machined.sock
    - network:
        - address
        - connectivity
@@ -77,7 +77,7 @@ The `depends` section describes extension service start dependencies: the servic
 Available dependencies:
 
 * `service: <name>`: wait for the service `<name>` to be running and healthy
-* `file: <path>`: wait for the `<path>` to exist
+* `path: <path>`: wait for the `<path>` to exist
 * `network: [address, connectivity, hostname, etcfiles]`: wait for the specified network readiness checks to succeed
 * `time: true`: wait for the NTP time sync
 
