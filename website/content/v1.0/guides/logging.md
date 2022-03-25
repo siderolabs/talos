@@ -45,7 +45,7 @@ NODE         NAMESPACE   ID                                                 IMAG
 172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-config   quay.io/coreos/flannel:v0.13.0                                0      CONTAINER_EXITED
 172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:kube-flannel     quay.io/coreos/flannel:v0.13.0                                1610   CONTAINER_RUNNING
 172.20.1.2   k8s.io      kube-system/kube-proxy-gfkqj                       k8s.gcr.io/pause:3.5                                          1311   SANDBOX_READY
-172.20.1.2   k8s.io      └─ kube-system/kube-proxy-gfkqj:kube-proxy         k8s.gcr.io/kube-proxy:v1.23.0                                 1379   CONTAINER_RUNNING
+172.20.1.2   k8s.io      └─ kube-system/kube-proxy-gfkqj:kube-proxy         k8s.gcr.io/kube-proxy:v{{< k8s_release >}}                                 1379   CONTAINER_RUNNING
 
 $ talosctl -n 172.20.1.2 logs -k kube-system/kube-proxy-gfkqj:kube-proxy
 172.20.1.2: 2021-11-30T19:13:20.567825192Z stderr F I1130 19:13:20.567737       1 server_others.go:138] "Detected node IP" address="172.20.0.3"

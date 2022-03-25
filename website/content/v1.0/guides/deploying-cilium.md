@@ -180,13 +180,13 @@ As the inline manifest is processed from top to bottom make sure to manually put
 ## Known issues
 
 - Currently there is an interaction between a Kubespan enabled Talos cluster and Cilium that results in the cluster going down during bootstrap after applying the Cilium manifests.
-For more details: [Kubespan and Cilium compatiblity: etcd is failing](https://github.com/talos-systems/talos/issues/4836)
+For more details: [Kubespan and Cilium compatiblity: etcd is failing](https://github.com/siderolabs/talos/issues/4836)
 
 - There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers.
-For more details: [GCP ILB support / support scope local routes to be configured](https://github.com/talos-systems/talos/issues/4109)
+For more details: [GCP ILB support / support scope local routes to be configured](https://github.com/siderolabs/talos/issues/4109)
 
 - Some kernel values changed by kube-proxy are not set to good defaults when running the cilium kernel-proxy alternative.
-For more details: [Kernel default values (sysctl)](https://github.com/talos-systems/talos/issues/4654)
+For more details: [Kernel default values (sysctl)](https://github.com/siderolabs/talos/issues/4654)
 
 ## Other things to know
 

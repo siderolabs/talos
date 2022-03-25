@@ -27,7 +27,7 @@ cluster:
 
 Disabling all registries effectively disables member discovery altogether.
 
-> As of v0.14, Talos supports the `kubernetes` and `service` registries.
+> Talos supports the `kubernetes` and `service` registries.
 
 `Kubernetes` registry uses Kubernetes `Node` resource data and additional Talos annotations:
 
@@ -43,7 +43,7 @@ Annotations:        cluster.talos.dev/node-id: Utoh3O0ZneV0kT2IUBrh7TgdouRcUW2yz
 
 ## Resource Definitions
 
-Talos v0.14 introduces seven new resources that can be used to introspect the new discovery and KubeSpan features.
+Talos provides seven resources that can be used to introspect the new discovery and KubeSpan features.
 
 ### Discovery
 
@@ -107,9 +107,9 @@ The members of the cluster can be obtained with:
 ```sh
 $ talosctl get members
 ID                       VERSION   HOSTNAME                 MACHINE TYPE   OS                ADDRESSES
-talos-default-master-1   2         talos-default-master-1   controlplane   Talos (v1.0.0)   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
-talos-default-master-2   1         talos-default-master-2   controlplane   Talos (v1.0.0)   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-talos-default-master-3   1         talos-default-master-3   controlplane   Talos (v1.0.0)   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
-talos-default-worker-1   1         talos-default-worker-1   worker         Talos (v1.0.0)   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-talos-default-worker-2   1         talos-default-worker-2   worker         Talos (v1.0.0)   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+talos-default-master-1   2         talos-default-master-1   controlplane   Talos ({{< release >}})   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
+talos-default-master-2   1         talos-default-master-2   controlplane   Talos ({{< release >}})   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+talos-default-master-3   1         talos-default-master-3   controlplane   Talos ({{< release >}})   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+talos-default-worker-1   1         talos-default-worker-1   worker         Talos ({{< release >}})   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+talos-default-worker-2   1         talos-default-worker-2   worker         Talos ({{< release >}})   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
 ```

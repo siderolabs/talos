@@ -12,7 +12,7 @@ This guide assumes the user has a working API token, the [Equinix Metal CLI](htt
 To install Talos to a server a working TFTP and iPXE server are needed.
 How this is done varies and is left as an exercise for the user.
 In general this requires a Talos kernel vmlinuz and initramfs.
-These assets can be downloaded from a given [release](https://github.com/talos-systems/talos/releases).
+These assets can be downloaded from a given [release](https://github.com/siderolabs/talos/releases).
 
 ## Special Considerations
 

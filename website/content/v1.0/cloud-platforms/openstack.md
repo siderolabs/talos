@@ -17,7 +17,7 @@ See [here](https://docs.openstack.org/newton/user-guide/common/cli-set-environme
 
 ### Create the Image
 
-First, download the Openstack image from a Talos [release](https://github.com/talos-systems/talos/releases).
+First, download the Openstack image from a Talos [release](https://github.com/siderolabs/talos/releases).
 These images are called `openstack-$ARCH.tar.gz`.
 Untar this file with `tar -xvf openstack-$ARCH.tar.gz`.
 The resulting file will be called `disk.raw`.

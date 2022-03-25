@@ -5,6 +5,9 @@ linkTitle: "Documentation"
 cascade:
   type: docs
 preRelease: true
+lastRelease: v1.0.0-beta.3
+kubernetesRelease: "1.23.5"
+prevKubernetesRelease: "1.23.1"
 ---
 
 ## Welcome
@@ -20,12 +23,12 @@ If you are just getting familiar with Talos, we recommend starting here:
 
 ### Community
 
-- GitHub: [repo](https://github.com/talos-systems/talos)
+- GitHub: [repo](https://github.com/siderolabs/talos)
 - Slack: Join our [slack channel](https://slack.dev.talos-systems.io)
 - Matrix: Join our Matrix channels:
   - Community: [#talos:matrix.org](https://matrix.to/#/#talos:matrix.org)
   - Support: [#talos-support:matrix.org](https://matrix.to/#/#talos-support:matrix.org)
-- Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/talos-systems/talos/discussions)
+- Support: Questions, bugs, feature requests [GitHub Discussions](https://github.com/siderolabs/talos/discussions)
 - Forum: [community](https://groups.google.com/a/siderolabs.com/forum/#!forum/community)
 - Twitter: [@SideroLabs](https://twitter.com/talossystems)
 - Email: [info@SideroLabs.com](mailto:info@SideroLabs.com)

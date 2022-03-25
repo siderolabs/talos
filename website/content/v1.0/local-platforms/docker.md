@@ -13,7 +13,7 @@ Furthermore, if you are running Talos in production, it provides an excellent wa
 The follow are requirements for running Talos in Docker:
 
 - Docker 18.03 or greater
-- a recent version of [`talosctl`](https://github.com/talos-systems/talos/releases)
+- a recent version of [`talosctl`](https://github.com/siderolabs/talos/releases)
 
 ## Caveats
 

@@ -8,7 +8,7 @@ description: "Creating a cluster via the AWS CLI."
 Official AMI image ID can be found in the `cloud-images.json` file attached to the Talos release:
 
 ```bash
-curl -sL https://github.com/siderolabs/talos/releases/download/v1.0.0/cloud-images.json | \
+curl -sL https://github.com/siderolabs/talos/releases/download/{{< release >}}/cloud-images.json | \
     jq -r '.[] | select(.region == "us-east-1") | select (.arch == "amd64") | .id'
 ```
 
@@ -53,7 +53,7 @@ Note that the role should be associated with the S3 bucket we created above.
 First, download the AWS image from a Talos release:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/aws-amd64.tar.gz | tar -xv
+curl -LO https://github.com/siderolabs/talos/releases/{{< release >}}/download/aws-amd64.tar.gz | tar -xv
 ```
 
 Copy the RAW disk to S3 and import it as a snapshot:

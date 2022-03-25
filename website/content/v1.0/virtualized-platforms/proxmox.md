@@ -21,16 +21,16 @@ Visit the [Proxmox](https://www.proxmox.com/en/downloads) downloads page if nece
 ### Install talosctl
 
 You can download `talosctl` via
-[github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
+[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
 curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
 ```
 
-For example version `v1.0.0` for `linux` platform:
+For example version `{{< release >}}` for `linux` platform:
 
 ```bash
-curl https://github.com/talos-systems/talos/releases/latest/download/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -39,18 +39,18 @@ sudo chmod +x /usr/local/bin/talosctl
 
 In order to install Talos in Proxmox, you will need the ISO image from the Talos release page.
 You can download `talos-amd64.iso` via
-[github.com/talos-systems/talos/releases](https://github.com/talos-systems/talos/releases)
+[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
 mkdir -p _out/
 curl https://github.com/siderolabs/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
 ```
 
-For example version `v1.0.0` for `linux` platform:
+For example version `{{< release >}}` for `linux` platform:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/talos-systems/talos/releases/latest/download/talos-amd64.iso -L -o _out/talos-amd64.iso
+curl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talos-amd64.iso -L -o _out/talos-amd64.iso
 ```
 
 ## Upload ISO

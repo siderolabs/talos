@@ -215,7 +215,7 @@ In any case, the status of the control plane components on each control plane no
 $ talosctl -n <IP> containers --kubernetes
 NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
 172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         2539   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-master-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v1.20.4            2572   CONTAINER_RUNNING
+172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-master-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}            2572   CONTAINER_RUNNING
 ```
 
 If `kube-apiserver` shows as `CONTAINER_EXITED`, it might have exited due to configuration error.
@@ -316,9 +316,9 @@ $ talosctl -n <IP> c -k
 NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
 ...
 172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-master-1                              k8s.gcr.io/pause:3.2                         2547   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v1.20.4   2580   CONTAINER_RUNNING
+172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
 172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         2638   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-master-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v1.20.4            2670   CONTAINER_RUNNING
+172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-master-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
 ...
 ```
 

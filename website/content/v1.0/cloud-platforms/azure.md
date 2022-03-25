@@ -36,7 +36,7 @@ export CONNECTION=$(az storage account show-connection-string \
 
 ### Create the Image
 
-First, download the Azure image from a [Talos release](https://github.com/talos-systems/talos/releases).
+First, download the Azure image from a [Talos release](https://github.com/siderolabs/talos/releases).
 Once downloaded, untar with `tar -xvf /path/to/azure-amd64.tar.gz`
 
 #### Upload the VHD

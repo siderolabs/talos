@@ -19,38 +19,38 @@ Upgrading Kubernetes is non-disruptive to the cluster workloads.
 
 To trigger a Kubernetes upgrade, issue a command specifiying the version of Kubernetes to ugprade to, such as:
 
-`talosctl --nodes <master node> upgrade-k8s --to 1.23.0`
+`talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}}`
 
 Note that the `--nodes` parameter specifies the control plane node to send the API call to, but all members of the cluster will be upgraded.
 
 To check what will be upgraded you can run `talosctl upgrade-k8s` with the `--dry-run` flag:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --to 1.23.0 --dry-run
-WARNING: found resources which are going to be deprecated/migrated in the version 1.22.0
+$ talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}} --dry-run
+WARNING: found resources which are going to be deprecated/migrated in the version {{< k8s_release >}}
 RESOURCE                                                               COUNT
 validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io   4
 mutatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io     3
 customresourcedefinitions.v1beta1.apiextensions.k8s.io                 25
 apiservices.v1beta1.apiregistration.k8s.io                             54
 leases.v1beta1.coordination.k8s.io                                     4
-automatically detected the lowest Kubernetes version 1.22.4
-checking for resource APIs to be deprecated in version 1.23.0
+automatically detected the lowest Kubernetes version {{< k8s_prev_release >}}
+checking for resource APIs to be deprecated in version {{< k8s_release >}}
 discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
 discovered worker nodes ["172.20.0.5" "172.20.0.6"]
-updating "kube-apiserver" to version "1.23.0"
+updating "kube-apiserver" to version "{{< k8s_release >}}"
  > "172.20.0.2": starting update
- > update kube-apiserver: v1.22.4 -> 1.23.0
+ > update kube-apiserver: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
  > skipped in dry-run
  > "172.20.0.3": starting update
- > update kube-apiserver: v1.22.4 -> 1.23.0
+ > update kube-apiserver: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
  > skipped in dry-run
  > "172.20.0.4": starting update
- > update kube-apiserver: v1.22.4 -> 1.23.0
+ > update kube-apiserver: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
  > skipped in dry-run
-updating "kube-controller-manager" to version "1.23.0"
+updating "kube-controller-manager" to version "{{< k8s_release >}}"
  > "172.20.0.2": starting update
- > update kube-controller-manager: v1.22.4 -> 1.23.0
+ > update kube-controller-manager: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
  > skipped in dry-run
  > "172.20.0.3": starting update
 
@@ -64,22 +64,22 @@ updating manifests
 <snip>
 ```
 
-To upgrade Kubernetes from v1.22.4 to v1.23.0 run:
+To upgrade Kubernetes from v{{< k8s_prev_release >}} to v{{< k8s_release >}} run:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --to 1.24.0
-automatically detected the lowest Kubernetes version 1.22.4
-checking for resource APIs to be deprecated in version 1.23.0
+$ talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}}
+automatically detected the lowest Kubernetes version {{< k8s_prev_release >}}
+checking for resource APIs to be deprecated in version {{< k8s_release >}}
 discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
 discovered worker nodes ["172.20.0.5" "172.20.0.6"]
-updating "kube-apiserver" to version "1.23.0"
+updating "kube-apiserver" to version "{{< k8s_release >}}"
  > "172.20.0.2": starting update
- > update kube-apiserver: v1.22.4 -> 1.23.0
+ > update kube-apiserver: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
  > "172.20.0.2": machine configuration patched
  > "172.20.0.2": waiting for API server state pod update
  < "172.20.0.2": successfully updated
  > "172.20.0.3": starting update
- > update kube-apiserver: v1.22.4 -> 1.23.0
+ > update kube-apiserver: v{{< k8s_prev_release >}} -> {{< k8s_release >}}
 <snip>
 ```
 
@@ -117,7 +117,7 @@ talosctl --nodes <master node> kubeconfig
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -137,7 +137,7 @@ metadata:
     version: 5
     phase: running
 spec:
-    image: k8s.gcr.io/kube-apiserver:v1.20.4
+    image: k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}
     cloudProvider: ""
     controlPlaneEndpoint: https://172.20.0.1:6443
     etcdServers:
@@ -171,7 +171,7 @@ Repeat this process for every control plane node, verifying that state got propa
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -189,7 +189,7 @@ metadata:
     version: 3
     phase: running
 spec:
-    image: k8s.gcr.io/kube-controller-manager:v1.20.4
+    image: k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}
     cloudProvider: ""
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
@@ -220,7 +220,7 @@ Repeat this process for every control plane node, verifying that state propagate
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v1.20.4"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -238,7 +238,7 @@ metadata:
     version: 3
     phase: running
 spec:
-    image: k8s.gcr.io/kube-scheduler:v1.20.4
+    image: k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}
     extraArgs: {}
     extraVolumes: []
 ```
@@ -275,7 +275,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v1.20.1
+          image: k8s.gcr.io/kube-proxy:v{{< k8s_release >}}
       tolerations:
         - ...
 ```
@@ -292,7 +292,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v1.20.4
+          image: k8s.gcr.io/kube-proxy:v{{< k8s_release >}}
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane
@@ -333,7 +333,7 @@ kubectl apply -f manifests.yaml
 For every node, patch machine configuration with new kubelet version, wait for the kubelet to restart with new version:
 
 ```bash
-$ talosctl -n <IP> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v1.23.0"}]'
+$ talosctl -n <IP> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/machine/kubelet/image", "value": "ghcr.io/siderolabs/kubelet:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -342,5 +342,5 @@ Once `kubelet` restarts with the new configuration, confirm upgrade with `kubect
 ```bash
 $ kubectl get nodes talos-default-master-1
 NAME                     STATUS   ROLES                  AGE    VERSION
-talos-default-master-1   Ready    control-plane,master   123m   v1.23.0
+talos-default-master-1   Ready    control-plane,master   123m   v{{< k8s_release >}}
 ```

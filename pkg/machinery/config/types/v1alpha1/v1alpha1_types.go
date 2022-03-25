@@ -1082,7 +1082,7 @@ type InstallConfig struct {
 	//   description: |
 	//     Allows for supplying the image used to perform the installation.
 	//     Image reference for each Talos release can be found on
-	//     [GitHub releases page](https://github.com/talos-systems/talos/releases).
+	//     [GitHub releases page](https://github.com/siderolabs/talos/releases).
 	//   examples:
 	//     - value: '"ghcr.io/siderolabs/installer:latest"'
 	InstallImage string `yaml:"image,omitempty"`

@@ -42,7 +42,7 @@ This is not always possible, however, so this page lays out the minimal network 
 </table>
 
 > Ports marked with a `*` are not currently configurable, but that may change in the future.
-> [Follow along here](https://github.com/talos-systems/talos/issues/1836).
+> [Follow along here](https://github.com/siderolabs/talos/issues/1836).
 
 ### Worker node(s)
 
@@ -68,4 +68,4 @@ This is not always possible, however, so this page lays out the minimal network 
 </table>
 
 > Ports marked with a `*` are not currently configurable, but that may change in the future.
-> [Follow along here](https://github.com/talos-systems/talos/issues/1836).
+> [Follow along here](https://github.com/siderolabs/talos/issues/1836).

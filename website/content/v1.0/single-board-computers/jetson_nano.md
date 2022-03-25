@@ -14,7 +14,7 @@ You will need
 Download the latest `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/talos-systems/talos/releases/latest/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -83,7 +83,7 @@ Once the flashing is done you can disconnect the USB cable and power off the Jet
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-jetson_nano-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/{{< release >}}/download/metal-jetson_nano-arm64.img.xz
 xz -d metal-jetson_nano-arm64.img.xz
 ```
 

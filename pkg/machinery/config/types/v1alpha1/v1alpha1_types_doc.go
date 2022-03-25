@@ -717,7 +717,7 @@ func init() {
 	InstallConfigDoc.Fields[3].Name = "image"
 	InstallConfigDoc.Fields[3].Type = "string"
 	InstallConfigDoc.Fields[3].Note = ""
-	InstallConfigDoc.Fields[3].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/talos-systems/talos/releases)."
+	InstallConfigDoc.Fields[3].Description = "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases)."
 	InstallConfigDoc.Fields[3].Comments[encoder.LineComment] = "Allows for supplying the image used to perform the installation."
 
 	InstallConfigDoc.Fields[3].AddExample("", "ghcr.io/siderolabs/installer:latest")
