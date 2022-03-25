@@ -164,20 +164,32 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 						VolumeHostPath:  "/var/lib",
 						VolumeMountPath: "/var/foo/",
 					},
+					{
+						VolumeHostPath:  "/var/lib/a.foo",
+						VolumeMountPath: "/var/foo/b.foo",
+					},
 				},
 			},
 		},
 	})
 
 	apiServerCfg := suite.setupMachine(cfg)
-	suite.Assert().Equal([]config.K8sExtraVolume{
-		{
-			Name:      "var-foo",
-			HostPath:  "/var/lib",
-			MountPath: "/var/foo/",
-			ReadOnly:  false,
-		},
-	}, apiServerCfg.ExtraVolumes)
+	suite.Assert().Equal(
+		[]config.K8sExtraVolume{
+			{
+				Name:      "var-foo",
+				HostPath:  "/var/lib",
+				MountPath: "/var/foo/",
+				ReadOnly:  false,
+			},
+			{
+				Name:      "var-foo-b-foo",
+				HostPath:  "/var/lib/a.foo",
+				MountPath: "/var/foo/b.foo",
+				ReadOnly:  false,
+			},
+		}, apiServerCfg.ExtraVolumes,
+	)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
