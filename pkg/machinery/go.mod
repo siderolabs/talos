@@ -8,7 +8,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb3
 
 require (
 	github.com/AlekSi/pointer v1.2.0
-	github.com/containerd/go-cni v1.1.3
+	github.com/containerd/go-cni v1.1.4
 	github.com/cosi-project/runtime v0.0.0-20211216175730-264f8fcd1a4f
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
@@ -22,9 +22,9 @@ require (
 	github.com/talos-systems/go-blockdevice v0.3.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
-	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
+	google.golang.org/genproto v0.0.0-20220324131243-acbaeb5b85eb
 	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 )
