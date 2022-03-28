@@ -5,7 +5,7 @@ weight: 6
 
 | Talos Version                                                                                                  | 1.0                                | 0.14                               |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2022-03-27, TBD                    | 2021-12-21 (0.14.0)                |
+| Release Date                                                                                                   | 2022-03-29                         | 2021-12-21 (0.14.0)                |
 | End of Community Support                                                                                       | 1.1.0 release (2022-06-01, TBD)    | 1.0.0 release (2022-03-27, TBD)    |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/)      |
 | Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.23, 1.22, 1.21                   |
@@ -17,11 +17,11 @@ weight: 6
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B                         |
 | - local                                                                                                        | Docker, QEMU                                                            |
 | **Cluster API**                                                                                                |                                    |                                    |
-| [CAPI Bootstrap Provider Talos](https://github.com/talos-systems/cluster-api-bootstrap-provider-talos)         | >= 0.4.3                           | >= 0.4.3                           |
-| [CAPI Control Plane Provider Talos](https://github.com/talos-systems/cluster-api-control-plane-provider-talos) | >= 0.4.1                           | >= 0.4.1                           |
-| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.4.1                           | >= 0.4.1                           |
+| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.2                           | >= 0.4.3                           |
+| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.5                           | >= 0.4.1                           |
+| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.0                           | >= 0.4.1                           |
 | **UI**                                                                                                         |                                    |                                    |
-| [Theila](https://github.com/talos-systems/theila)                                                              | ✓                                  | ✓                                  |
+| [Theila](https://github.com/siderolabs/theila)                                                                 | ✓                                  | ✓                                  |
 
 ## Platform Tiers
 
