@@ -15,6 +15,13 @@ preface = """\
 
 [notes]
 
+    [notes.gpu]
+        title = "NVIDIA GPU alpha support"
+        description = """\
+Talos now has alpha support for NVIDIA GPU based workloads.
+Check the NVIDA GPU support guide at https://www.talos.dev/v1.0/guides/nvidia-gpu/
+"""
+
     [notes.1orgrename]
         title = "GitHub Organization Change"
         description = """\

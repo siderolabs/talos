@@ -37,3 +37,4 @@ package-lock.json
 node_modules
 website/resources
 website/public
+website/.hugo_build.lock
