@@ -12,21 +12,23 @@ import (
 	"text/template"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/gendata"
 )
 
 var (
 	// Name is set at build time.
-	Name string
+	Name = gendata.VersionName
 	// Tag is set at build time.
-	Tag string
+	Tag = gendata.VersionTag
 	// SHA is set at build time.
-	SHA string
+	SHA = gendata.VersionSHA
 	// Built is set at build time.
+	// TODO: its not.
 	Built string
 	// PkgsVersion is set at build time.
-	PkgsVersion string
+	PkgsVersion = gendata.VersionPkgs
 	// ExtrasVersion is set at build time.
-	ExtrasVersion string
+	ExtrasVersion = gendata.VersionExtras
 )
 
 const versionTemplate = `	Tag:         {{ .Tag }}

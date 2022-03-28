@@ -137,6 +137,23 @@ ENV PROTOTOOL_CACHE_PATH /.cache/prototool
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 WORKDIR /src
+ARG EMBED_NAME
+ARG EMBED_SHA
+ARG EMBED_USERNAME
+ARG EMBED_REGISTRY
+ARG TAG
+ARG ARTIFACTS
+ARG PKGS
+ARG EXTRAS
+RUN mkdir -p pkg/machinery/gendata/data && \
+    echo -n ${EMBED_NAME} > pkg/machinery/gendata/data/name && \
+    echo -n ${EMBED_SHA} > pkg/machinery/gendata/data/sha && \
+    echo -n ${EMBED_USERNAME} > pkg/machinery/gendata/data/username && \
+    echo -n ${EMBED_REGISTRY} > pkg/machinery/gendata/data/registry && \
+    echo -n ${EXTRAS} > pkg/machinery/gendata/data/extras && \
+    echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
+    echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
+    echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
 
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
 
@@ -209,6 +226,11 @@ RUN --mount=type=cache,target=/.cache go generate ./...
 RUN goimports -w -local github.com/talos-systems/talos ./
 RUN gofumpt -w ./
 
+FROM build AS fix_embed
+ARG ABBREV_TAG
+RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
+    echo -n ${ABBREV_TAG} > pkg/machinery/gendata/data/tag
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
@@ -225,6 +247,7 @@ COPY --from=go-generate /src/pkg/machinery/resources/network/ /pkg/machinery/res
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
+COPY --from=fix_embed /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
 
 # The base target provides a container that can be used to build all Talos
 # assets.
@@ -234,6 +257,7 @@ COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
+COPY --from=build /src/pkg/machinery/gendata/data ./pkg/machinery/gendata/data
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go mod download
