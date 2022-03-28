@@ -192,6 +192,9 @@ docs: ## Generates the documentation for machine config, and talosctl.
 	@rm -rf docs/talosctl/*
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
+docs-preview: ## Starts a local preview of the documentation using Hugo
+	@hugo server -s website
+
 # Local Artifacts
 
 .PHONY: kernel
