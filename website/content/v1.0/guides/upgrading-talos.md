@@ -28,7 +28,7 @@ To see a live demo of an upgrade of Talos Linux, see the video below:
 
 ### After Upgrade to {{< release >}}
 
-TBD
+There are no specific actions to be taken after an upgrade.
 
 ## `talosctl upgrade`
 
@@ -76,7 +76,15 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+There are new machine configuration features which can be used after an upgrade:
+
+- `.machine.pods` to specify [static pods]({{< ref "static-pods">}})
+- `.machine.sysfs` to set `sysfs` (`/sys`) kernel parameters
+- `.machine.kernel` to load the kernel modules (Talos doesn't ship with kernel modules, only for custom builds)
+- `.machine.kubelet.extraConfig` to override `kubelet` configuration
+- `.machine.install.extension` to specify [system extensions]({{< ref "system-extensions">}}) to be installed
+- `.cluster.apiServer.env`, `.cluster.controllerManager.env` and `cluster.scheduler.env` to set the environment variables for the control plane components
+- `.cluster.apiServer.admissionControl` to specify admission plugin configuration
 
 ## Upgrade Sequence
 
