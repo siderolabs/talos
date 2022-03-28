@@ -81,7 +81,7 @@ require (
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.7.3
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
-	github.com/rs/xid v1.3.0
+	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
 	github.com/spf13/cobra v1.4.0
