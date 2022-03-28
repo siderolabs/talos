@@ -4,10 +4,14 @@
 
 package helpers
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/talos-systems/talos/pkg/machinery/gendata"
+)
 
 // ArtifactsPath is a path to artifacts output directory (set during the build).
-var ArtifactsPath = "default/"
+var ArtifactsPath = gendata.ArtifactsPath
 
 // ArtifactPath returns path to the artifact by name.
 func ArtifactPath(name string) string {

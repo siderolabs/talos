@@ -2,6 +2,7 @@ REGISTRY ?= ghcr.io
 USERNAME ?= siderolabs
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\*)
+ABBREV_TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\* --abbrev=0 )
 TAG_SUFFIX ?=
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
 IMAGE_REGISTRY ?= $(REGISTRY)
@@ -40,21 +41,9 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 
-VERSION_PKG = github.com/talos-systems/talos/pkg/version
-IMAGES_PKGS = github.com/talos-systems/talos/pkg/images
-MGMT_HELPERS_PKG = github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers
-
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
-GO_LDFLAGS ?= \
-	-X $(VERSION_PKG).Name=$(NAME) \
-	-X $(VERSION_PKG).SHA=$(SHA) \
-	-X $(VERSION_PKG).Tag=$(TAG) \
-	-X $(VERSION_PKG).PkgsVersion=$(PKGS) \
-	-X $(VERSION_PKG).ExtrasVersion=$(EXTRAS) \
-	-X $(IMAGES_PKGS).Username=$(USERNAME) \
-	-X $(IMAGES_PKGS).Registry=$(REGISTRY) \
-	-X $(MGMT_HELPERS_PKG).ArtifactsPath=$(ARTIFACTS)
+GO_LDFLAGS ?=
 
 WITH_RACE ?= false
 WITH_DEBUG ?= false
@@ -103,6 +92,11 @@ COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
+COMMON_ARGS += --build-arg=NAME=$(NAME)
+COMMON_ARGS += --build-arg=SHA=$(SHA)
+COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
+COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
+COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 
 CI_ARGS ?=
 

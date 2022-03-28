@@ -5,14 +5,17 @@
 // Package images provides some default images.
 package images
 
-import "github.com/talos-systems/talos/pkg/version"
+import (
+	"github.com/talos-systems/talos/pkg/machinery/gendata"
+	"github.com/talos-systems/talos/pkg/version"
+)
 
 var (
-	// Username the is the default registry username.
-	Username string
+	// Username is the default registry username.
+	Username = gendata.ImagesUsername
 
 	// Registry is the default registry.
-	Registry string
+	Registry = gendata.ImagesRegistry
 
 	// DefaultInstallerImageName is the default container image name for
 	// the installer.
