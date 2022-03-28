@@ -30,7 +30,7 @@ curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<p
 For example version `{{< release >}}` for `linux` platform:
 
 ```bash
-curl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-linux-amd64 -L -o talosctl
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-linux-amd64 -L -o talosctl
 sudo cp talosctl /usr/local/bin
 sudo chmod +x /usr/local/bin/talosctl
 ```
@@ -50,7 +50,7 @@ For example version `{{< release >}}` for `linux` platform:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talos-amd64.iso -L -o _out/talos-amd64.iso
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso -L -o _out/talos-amd64.iso
 ```
 
 ## Upload ISO

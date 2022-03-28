@@ -13,7 +13,7 @@ You will need
 Download the latest `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -22,7 +22,7 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/{{< release >}}/download/metal-rockpi_4-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.img.xz
 xz -d metal-rockpi_4-arm64.img.xz
 ```
 
@@ -81,7 +81,7 @@ sudo dd if=rkspi_loader-v20.11.2-trunk-v2.img of=/dev/mtdblock0 bs=4K
 - Optionally, you can also write Talos image to the SSD drive right from your Rock PI board:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/{{< release >}}/download/metal-rockpi_4-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.img.xz
 xz -d metal-rockpi_4-arm64.img.xz
 sudo dd if=metal-rockpi_4-arm64.img.xz of=/dev/nvme0n1
 ```

@@ -29,7 +29,7 @@ You should install `talosctl` before continuing:
 #### `amd64`
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/talosctl
 ```
 
@@ -38,7 +38,7 @@ chmod +x /usr/local/bin/talosctl
 For `linux` and `darwin` operating systems `talosctl` is also available for the `arm64` processor architecture.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/{{< release >}}/download/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
+curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
 chmod +x /usr/local/bin/talosctl
 ```
 
