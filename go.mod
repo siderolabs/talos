@@ -89,7 +89,7 @@ require (
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
-	github.com/talos-systems/go-blockdevice v0.3.0
+	github.com/talos-systems/go-blockdevice v0.3.1
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
