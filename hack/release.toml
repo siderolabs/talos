@@ -15,6 +15,22 @@ preface = """\
 
 [notes]
 
+    [notes.1orgrename]
+        title = "GitHub Organization Change"
+        description = """\
+Talos Linux and other repositories were migrated from the `talos-systems` GitHub organization
+to the `siderolabs` organization (github.com/talos-systems -> github.com/siderolabs).
+
+Existing Talos Linux container images (`installer`, `talos`, etc.) are mirrored across both organizations,
+but please use the new organization name going forward.
+
+For example, when upgrading Talos use `ghcr.io/siderolabs` instead of `ghcr.io/talos-systems`:
+
+```bash
+talosctl upgrade --image ghcr.io/siderolabs/installer:v1.0.0
+```
+"""
+
     [notes.kernelParam]
         title = "Kernel Parameters"
         description = """\
