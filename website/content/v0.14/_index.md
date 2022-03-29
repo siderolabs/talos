@@ -4,7 +4,6 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
-menu: main
 ---
 
 ## Welcome

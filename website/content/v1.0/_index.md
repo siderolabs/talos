@@ -4,10 +4,11 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
-preRelease: true
-lastRelease: v1.0.0-beta.3
+preRelease: false
+lastRelease: v1.0.0
 kubernetesRelease: "1.23.5"
 prevKubernetesRelease: "1.23.1"
+menu: main
 ---
 
 ## Welcome

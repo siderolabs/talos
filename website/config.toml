@@ -85,19 +85,19 @@ copyright = "Sidero Labs, Inc."
 # This menu appears only if you have at least one [params.versions] set.
 version_menu = "Releases"
 
-# Flag used in the "version-banner" partial to decide whether to display a 
+# Flag used in the "version-banner" partial to decide whether to display a
 # banner on every page indicating that this is an archived version of the docs.
 # Set this flag to "true" if you want to display the banner.
 # archived_version = false
 
 # The version number for the version of the docs represented in this doc set.
-# Used in the "version-banner" partial to display a version number for the 
+# Used in the "version-banner" partial to display a version number for the
 # current doc set.
 # version = "0.6"
 
 # A link to latest version of the docs. Used in the "version-banner" partial to
 # point people to the main doc site.
-url_latest_version = "/v0.14"
+url_latest_version = "/v1.0"
 
 # Repository configuration (URLs for in-page links to opening issues and suggesting changes)
 # github_repo = "https://github.com/googley-example"
@@ -126,11 +126,11 @@ prism_syntax_highlighting = false
 
 [[params.versions]]
 url = "/v1.0"
-version = "v1.0 (pre-release)"
+version = "v1.0 (latest)"
 
 [[params.versions]]
 url = "/v0.14"
-version = "v0.14 (latest)"
+version = "v0.14"
 
 [[params.versions]]
 url = "/v0.13"
@@ -190,7 +190,7 @@ no = 'Sorry to hear that. Please <a href="https://github.com/USERNAME/REPOSITORY
 yes = 'Glad to hear it! Please <a href="https://github.com/USERNAME/REPOSITORY/issues/new">tell us how we can improve</a>.'
 
 # Adds a reading time to the top of each doc.
-# If you want this feature, but occasionally need to remove the Reading time from a single page, 
+# If you want this feature, but occasionally need to remove the Reading time from a single page,
 # add "hide_readingtime: true" to the page's front matter
 [params.ui.readingtime]
 enable = false
