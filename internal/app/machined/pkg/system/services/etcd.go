@@ -486,20 +486,21 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 
 	// TODO(scm): see issue #2121 and description below in argsForControlPlane.
 	denyListArgs := argsbuilder.Args{
-		"name":                  hostname,
-		"auto-tls":              "false",
-		"peer-auto-tls":         "false",
-		"data-dir":              constants.EtcdDataPath,
-		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
-		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
-		"client-cert-auth":      "true",
-		"cert-file":             constants.KubernetesEtcdCert,
-		"key-file":              constants.KubernetesEtcdKey,
-		"trusted-ca-file":       constants.KubernetesEtcdCACert,
-		"peer-client-cert-auth": "true",
-		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-key-file":         constants.KubernetesEtcdPeerKey,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
+		"name":                               hostname,
+		"auto-tls":                           "false",
+		"peer-auto-tls":                      "false",
+		"data-dir":                           constants.EtcdDataPath,
+		"listen-peer-urls":                   "https://" + net.FormatAddress(listenAddress) + ":2380",
+		"listen-client-urls":                 "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"client-cert-auth":                   "true",
+		"cert-file":                          constants.KubernetesEtcdCert,
+		"key-file":                           constants.KubernetesEtcdKey,
+		"trusted-ca-file":                    constants.KubernetesEtcdCACert,
+		"peer-client-cert-auth":              "true",
+		"peer-cert-file":                     constants.KubernetesEtcdPeerCert,
+		"peer-key-file":                      constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":               constants.KubernetesEtcdCACert,
+		"experimental-initial-corrupt-check": "true",
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
@@ -571,20 +572,21 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 	}
 
 	denyListArgs := argsbuilder.Args{
-		"name":                  hostname,
-		"auto-tls":              "false",
-		"peer-auto-tls":         "false",
-		"data-dir":              constants.EtcdDataPath,
-		"listen-peer-urls":      "https://" + net.FormatAddress(listenAddress) + ":2380",
-		"listen-client-urls":    "https://" + net.FormatAddress(listenAddress) + ":2379",
-		"client-cert-auth":      "true",
-		"cert-file":             constants.KubernetesEtcdPeerCert,
-		"key-file":              constants.KubernetesEtcdPeerKey,
-		"trusted-ca-file":       constants.KubernetesEtcdCACert,
-		"peer-client-cert-auth": "true",
-		"peer-cert-file":        constants.KubernetesEtcdPeerCert,
-		"peer-key-file":         constants.KubernetesEtcdPeerKey,
-		"peer-trusted-ca-file":  constants.KubernetesEtcdCACert,
+		"name":                               hostname,
+		"auto-tls":                           "false",
+		"peer-auto-tls":                      "false",
+		"data-dir":                           constants.EtcdDataPath,
+		"listen-peer-urls":                   "https://" + net.FormatAddress(listenAddress) + ":2380",
+		"listen-client-urls":                 "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"client-cert-auth":                   "true",
+		"cert-file":                          constants.KubernetesEtcdPeerCert,
+		"key-file":                           constants.KubernetesEtcdPeerKey,
+		"trusted-ca-file":                    constants.KubernetesEtcdCACert,
+		"peer-client-cert-auth":              "true",
+		"peer-cert-file":                     constants.KubernetesEtcdPeerCert,
+		"peer-key-file":                      constants.KubernetesEtcdPeerKey,
+		"peer-trusted-ca-file":               constants.KubernetesEtcdCACert,
+		"experimental-initial-corrupt-check": "true",
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
