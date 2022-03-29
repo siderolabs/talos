@@ -13,7 +13,7 @@ These are the steps to enabling NVIDIA support in Talos.
 - Building NVIDIA container toolkit system extension which allows to register a custom runtime with containerd
 - Upgrading Talos with the custom installer and enabling NVIDIA modules and the system extension
 
-Both these components require that the user build and maintain their own Talos installer image and the NVIDIA container toolkit [Talos System Extension](../system-extensions).
+Both these components require that the user build and maintain their own Talos installer image and the NVIDIA container toolkit [Talos System Extension]({{< relref "system-extensions">}}).
 
 ## Prerequisites
 
@@ -123,7 +123,12 @@ Once the node reboots, the NVIDIA modules should be loaded and the system extens
 This can be confirmed by running:
 
 ```bash
-❯ talosctl read /proc/modules
+talosctl read /proc/modules
+```
+
+which should produce an output similar to below:
+
+```text
 nvidia_uvm 1146880 - - Live 0xffffffffc2733000 (PO)
 nvidia_drm 69632 - - Live 0xffffffffc2721000 (PO)
 nvidia_modeset 1142784 - - Live 0xffffffffc25ea000 (PO)
@@ -131,13 +136,23 @@ nvidia 39047168 - - Live 0xffffffffc00ac000 (PO)
 ```
 
 ```bash
-❯ talosctl get extensions
+talosctl get extensions
+```
+
+which should produce an output similar to below:
+
+```text
 NODE           NAMESPACE   TYPE              ID                                                                 VERSION   NAME                       VERSION
 172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-frezbo-nvidia-container-toolkit-510.60.02-v1.9.0       1         nvidia-container-toolkit   510.60.02-v1.9.0
 ```
 
 ```bash
-❯ talosctl read /proc/driver/nvidia/version
+talosctl read /proc/driver/nvidia/version
+```
+
+which should produce an output similar to below:
+
+```text
 NVRM version: NVIDIA UNIX x86_64 Kernel Module  510.60.02  Wed Mar 16 11:24:05 UTC 2022
 GCC version:  gcc version 11.2.0 (GCC)
 ```
@@ -167,7 +182,8 @@ helm install nvidia-device-plugin nvdp/nvidia-device-plugin --version=0.11.0 --s
 
 Apply the following manifest to run CUDA pod via nvidia runtime:
 
-```yaml
+```bash
+cat <<EOF | kubectl apply -f -
 ---
 apiVersion: v1
 kind: Pod
@@ -182,18 +198,29 @@ spec:
     resources:
       limits:
          nvidia.com/gpu: 1
+<<EOF
 ```
 
 The status can be viewed by running:
 
 ```bash
-❯ kubectl get pods
+kubectl get pods
+```
+
+which should produce an output similar to below:
+
+```text
 NAME                READY   STATUS      RESTARTS   AGE
 gpu-operator-test   0/1     Completed   0          13s
 ```
 
 ```bash
-❯ kubectl logs gpu-operator-test
+kubectl logs gpu-operator-test
+```
+
+which should produce an output similar to below:
+
+```text
 [Vector addition of 50000 elements]
 Copy input data from the host memory to the CUDA device
 CUDA kernel launch with 196 blocks of 256 threads

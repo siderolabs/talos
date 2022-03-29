@@ -207,19 +207,19 @@ url = "https://twitter.com/SideroLabs"
 desc = "Development takes place here!"
 icon = "fab fa-github"
 name = "GitHub"
-url = "https://github.com/talos-systems/talos"
+url = "https://github.com/siderolabs/talos"
 
 [[menu.main]]
 name = "Sidero Labs"
 url = "https://www.siderolabs.com"
-weight = 100
+weight = 98
 
 [[menu.main]]
 name = "GitHub"
-url = "https://github.com/talos-systems/talos"
-weight = 99
+url = "https://github.com/siderolabs/talos"
+weight = 100
 
 [[menu.main]]
 name = "Sidero Metal"
 url = "https://sidero.dev"
-weight = 98
+weight = 99
