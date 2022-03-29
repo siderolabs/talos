@@ -1,6 +1,7 @@
 ---
 title: System Requirements
-weight: 4
+weight: 40
+description: "Hardware requirements for running Talos Linux."
 ---
 
 ## Minimum Requirements

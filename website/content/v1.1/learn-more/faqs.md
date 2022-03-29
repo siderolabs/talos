@@ -1,6 +1,7 @@
 ---
 title: "FAQs"
-weight: 60
+weight: 999
+description: "Frequently Asked Questions about Talos Linux."
 ---
 
 <!-- markdownlint-disable MD026 -->

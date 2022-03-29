@@ -1,9 +1,10 @@
 ---
 title: "Networking Resources"
-weight: 100
+weight: 70
+description: "Delve deeper into networking of Talos Linux."
 ---
 
-Starting with version 0.11, a new implementation of the network configuration subsystem is powered by [COSI](../controllers-resources/).
+Starting with version 0.11, a new implementation of the network configuration subsystem is powered by [COSI]({{< relref "controllers-resources" >}}).
 The new implementation is still using the same machine configuration file format and external sources to configure a node's network, so there should be no difference
 in the way Talos works in 0.11.
 

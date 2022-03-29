@@ -3,3 +3,10 @@
 /docs/*		/:splat	302
 /latest		{{ .Site.Params.url_latest_version }}		302
 /latest/*	{{ .Site.Params.url_latest_version }}/:splat	302
+
+# Use netlify to redirect alias pages
+{{- range $p := .Site.Pages }}
+{{- range .Aliases }}
+{{ printf "%s %s %d" (cond (hasPrefix . "/") . (path.Join $p.RelPermalink .)) $p.RelPermalink ($p.Params.HTTPCode | default 301) }}
+{{- end }}
+{{- end }}

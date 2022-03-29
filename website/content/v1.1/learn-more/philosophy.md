@@ -1,6 +1,7 @@
 ---
 title: Philosophy
 weight: 10
+description: "Learn about the philosophy behind the need for Talos Linux."
 ---
 
 ## Distributed

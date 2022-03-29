@@ -1,6 +1,7 @@
 ---
 title: "Architecture"
-weight: 30
+weight: 20
+description: "Learn the system architecture of Talos Linux itself."
 ---
 
 Talos is designed to be **atomic** in _deployment_ and **modular** in _composition_.

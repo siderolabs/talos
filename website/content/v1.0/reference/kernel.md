@@ -1,6 +1,6 @@
 ---
-title: Kernel
-desription: Linux kernel reference.
+title: "Kernel"
+description: "Linux kernel reference."
 ---
 
 ## Commandline Parameters

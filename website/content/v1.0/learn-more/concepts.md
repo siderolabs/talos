@@ -1,6 +1,7 @@
 ---
 title: "Concepts"
-weight: 20
+weight: 30
+description: "Summary of Talos Linux."
 ---
 
 When people come across Talos, they frequently want a nice, bite-sized summary

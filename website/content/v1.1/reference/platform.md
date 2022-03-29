@@ -1,5 +1,6 @@
 ---
-title: Platform
+title: "Platform"
+description: "Visualization of the bootstrap process on bare metal machines."
 ---
 
 ### Metal

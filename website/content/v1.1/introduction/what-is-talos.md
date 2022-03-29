@@ -1,6 +1,7 @@
 ---
 title: What is Talos?
-weight: 1
+weight: 10
+description: "A quick introduction in to what Talos is and why it should be used."
 ---
 
 Talos is a container optimized Linux distro; a reimagining of Linux for distributed systems such as Kubernetes.

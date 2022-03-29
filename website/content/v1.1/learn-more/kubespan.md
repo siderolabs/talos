@@ -1,6 +1,7 @@
 ---
 title: "KubeSpan"
-weight: 120
+weight: 100
+description: "Understand more about KubeSpan for Talos Linux."
 ---
 
 ## WireGuard Peer Discovery
@@ -28,7 +29,7 @@ For this discussion, we will point out two of these tiers:
 - an external service
 - a Kubernetes-based system
 
-See [discovery service](../discovery) to learn more about the external service.
+See [discovery service]({{< relref "discovery" >}}) to learn more about the external service.
 
 The Kubernetes-based system utilises annotations on Kubernetes Nodes which describe each node's public key and local addresses.
 

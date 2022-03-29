@@ -1,6 +1,7 @@
 ---
 title: Quickstart
-weight: 2
+weight: 20
+description: "A short guide on setting up a simple Talos Linux cluster locally with Docker."
 ---
 
 There are two easy ways to try out Talos Linux.

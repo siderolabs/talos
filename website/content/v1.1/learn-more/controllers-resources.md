@@ -1,6 +1,7 @@
 ---
 title: "Controllers and Resources"
-weight: 90
+weight: 60
+description: "Discover how Talos Linux uses the concepts on Controllers and Resources."
 ---
 
 <!-- markdownlint-disable MD038 -->

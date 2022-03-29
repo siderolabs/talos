@@ -1,6 +1,7 @@
 ---
 title: "Components"
 weight: 40
+description: "Understand the system components that make up Talos Linux."
 ---
 
 In this section, we discuss the various components that underpin Talos.

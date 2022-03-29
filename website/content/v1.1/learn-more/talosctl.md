@@ -1,6 +1,7 @@
 ---
 title: "talosctl"
-weight: 70
+weight: 110
+description: "The design and use of the Talos Linux control application."
 ---
 
 The `talosctl` tool packs a lot of power into a small package.
@@ -59,4 +60,4 @@ number of kubernetes clusters from the same workstation.
 
 ## Commands
 
-Please see the [CLI reference](../../reference/cli/) for the entire list of commands which are available from `talosctl`.
+Please see the [CLI reference]({{< relref "../reference/cli" >}}) for the entire list of commands which are available from `talosctl`.

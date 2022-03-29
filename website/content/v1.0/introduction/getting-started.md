@@ -1,10 +1,11 @@
 ---
 title: Getting Started
-weight: 3
+weight: 30
+description: "A guide to setting up a Talos Linux cluster on multiple machines."
 ---
 
 This document will walk you through installing a full Talos Cluster.
-You may wish to try the [Quickstart](../quickstart/) first, to quickly create a local virtual cluster on your workstation.
+You may wish to try the [Quickstart]({{< relref "quickstart" >}}) first, to quickly create a local virtual cluster on your workstation.
 
 Regardless of where you run Talos, there is a pattern to deploying it.
 In general you need to:
@@ -63,7 +64,7 @@ For network booting and self-built media, you can use the published kernel and i
 - ARM64: [vmlinuz-arm64](https://github.com/siderolabs/talos/releases/download/{{< release >}}/vmlinuz-arm64) [initramfs-arm64.xz](https://github.com/siderolabs/talos/releases/download/{{< release >}}/initramfs-arm64.xz)
 
 Note that to use alternate booting, there are a number of required kernel parameters.
-Please see the [kernel](../../reference/kernel/) docs for more information.
+Please see the [kernel]({{< relref "../reference/kernel" >}}) docs for more information.
 
 ## Decide the Kubernetes Endpoint
 
@@ -118,7 +119,7 @@ https://192.168.0.15:6443
 You are free to set a DNS record to this IP address to identify the endpoint, but you will need to use the IP address itself, not the DNS name, to configure the shared IP (`machine.network.interfaces[].vip.ip`) in the Talos configuration.
 
 For more information about using a shared IP, see the related
-[Guide](../../guides/vip/)
+[Guide]({{< relref "../talos-guides/network/vip" >}})
 
 ### DNS records
 
@@ -176,7 +177,7 @@ In cases where a PXE server can be available, this is much more efficient than
 manually configuring each node.
 If you do use this method, just note that Talos does require a number of other
 kernel commandline parameters.
-See the [required kernel parameters](../../reference/kernel/) for more information.
+See the [required kernel parameters]({{< relref "../reference/kernel" >}}) for more information.
 
 In either case, we need to generate the configuration which is to be provided.
 Luckily, the `talosctl` tool comes with a configuration generator for exactly
@@ -385,7 +386,7 @@ Server:
 ```
 
 For a more in-depth discussion of Endpoints and Nodes, please see
-[talosctl](../../learn-more/talosctl/).
+[talosctl]({{< relref "../learn-more/talosctl" >}}).
 
 ### Default configuration file
 

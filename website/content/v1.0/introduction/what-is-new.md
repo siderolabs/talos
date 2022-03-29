@@ -1,6 +1,7 @@
 ---
 title: What's New in Talos 1.0
-weight: 5
+weight: 50
+description: "List of new and shiny features in Talos Linux."
 ---
 
 ## Announcements
@@ -29,16 +30,16 @@ container runtimes, additional firmware, among others.
 System extensions are only activated during Talos installation (or upgrade).
 Even with system extensions installed, the Talos root filesystem is still immutable and read-only.
 
-Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation]({{< relref "../guides/system-extensions/" >}}) for more information.
+Please see [extensions repository](https://github.com/talos-systems/extensions) and [documentation]({{< relref "../talos-guides/configuration/system-extensions/" >}}) for more information.
 
 ### Extension Services
 
-Talos now provides a way to extend the system services that Talos runs with [extension services]({{< relref "../learn-more/extension-services" >}}).
+Talos now provides a way to extend the system services that Talos runs with [extension services]({{< relref "../advanced/extension-services" >}}).
 Extension services should be included in the Talos root filesystem (i.e. via system extensions).
 
 ### Static Pods in the Machine Configuration
 
-Talos now accepts [static pod definitions]({{< relref "../guides/static-pods" >}}) in the `.machine.pods` key of the machine configuration.
+Talos now accepts [static pod definitions]({{< relref "../advanced/static-pods" >}}) in the `.machine.pods` key of the machine configuration.
 Please note that static pod definitions are not validated by Talos, and can be updated without a node reboot.
 
 ## Kubernetes
@@ -117,11 +118,11 @@ Talos now supports setting a bond interface from the kernel cmdline using the [`
 
 ### Equinix Metal
 
-`talos.platform` for [Equinix Metal]({{< relref "../bare-metal-platforms/equinix-metal" >}}) is renamed from `packet` to `equinixMetal`, the older name is still supported for backwards compatibility.
+`talos.platform` for [Equinix Metal]({{< relref "../talos-guides/install/bare-metal-platforms/equinix-metal" >}}) is renamed from `packet` to `equinixMetal`, the older name is still supported for backwards compatibility.
 
 ### Oracle Cloud
 
-Talos now supports [Oracle Cloud]({{< relref "../cloud-platforms/oracle" >}}).
+Talos now supports [Oracle Cloud]({{< relref "../talos-guides/install/cloud-platforms/oracle" >}}).
 
 ### Network Configuration
 
@@ -131,7 +132,7 @@ even if Talos is booted into maintenance mode, and without machine configuration
 
 ### SBCs
 
-Talos has added support for the [Jetson Nano SBC]({{< relref "../single-board-computers/jetson_nano" >}}).
+Talos now supports [Jetson Nano SBC]({{< relref "../talos-guides/install/single-board-computers/jetson_nano" >}}).
 
 ## Component Updates
 
@@ -149,7 +150,7 @@ Talos is built with Go 1.17.8
 ### NVIDIA GPU alpha Support
 
 Talos now has alpha support for NVIDIA GPU based workloads.
-Check the [NVIDA GPU support guide]({{< relref "../guides/nvidia-gpu" >}}) for details.
+Check the [NVIDA GPU support guide]({{< relref "../talos-guides/configuration/nvidia-gpu" >}}) for details.
 
 ## Miscellaneous
 
@@ -162,4 +163,4 @@ Use machine configuration field `.machine.sysfs` to set `sysfs` kernel parameter
 
 Talos added a new kernel parameter `talos.experimental.wipe=system` which can help resetting the system disk of the machine
 and start over with a fresh installation.
-See [Resetting a Machine]({{< relref "../guides/resetting-a-machine#kernel-parameter" >}}) on how to use it.
+See [Resetting a Machine]({{< relref "../talos-guides/resetting-a-machine#kernel-parameter" >}}) on how to use it.
