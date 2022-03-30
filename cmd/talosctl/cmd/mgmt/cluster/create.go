@@ -783,8 +783,8 @@ func getDisks() ([]*provision.Disk, error) {
 		}
 
 		disks = append(disks, &provision.Disk{
-			// add 1 MB to make extra room for GPT
-			Size:       diskSize + 1024*1024,
+			// add 1 MB to make extra room for GPT and alignment
+			Size:       diskSize + 2*1024*1024,
 			Partitions: diskPartitions,
 		})
 	}
