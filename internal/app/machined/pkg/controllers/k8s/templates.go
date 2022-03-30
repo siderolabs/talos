@@ -19,7 +19,7 @@ resources:
   - identity: {}
 `)
 
-var kubeSystemAuditPolicyTemplate = []byte(`apiVersion: audit.k8s.io/v1beta1
+var kubeSystemAuditPolicyTemplate = []byte(`apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
 - level: Metadata

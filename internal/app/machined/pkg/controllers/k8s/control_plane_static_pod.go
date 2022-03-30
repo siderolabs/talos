@@ -482,7 +482,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	builder := argsbuilder.Args{
 		"allocate-node-cidrs":              "true",
 		"bind-address":                     "127.0.0.1",
-		"port":                             "0",
 		"cluster-cidr":                     strings.Join(cfg.PodCIDRs, ","),
 		"service-cluster-ip-range":         strings.Join(cfg.ServiceCIDRs, ","),
 		"cluster-signing-cert-file":        filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
@@ -614,7 +613,6 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"authentication-kubeconfig":              filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
 		"authorization-kubeconfig":               filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
 		"bind-address":                           "127.0.0.1",
-		"port":                                   "0",
 		"leader-elect":                           "true",
 		"profiling":                              "false",
 		"tls-min-version":                        "VersionTLS13",

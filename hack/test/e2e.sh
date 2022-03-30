@@ -30,7 +30,7 @@ export TALOS_VERSION=v0.14
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.23.5}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.24.0-alpha.4}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -227,13 +227,13 @@ function run_extensions_test {
 
 function run_day_two_tests {
   rm -rf "${TMP}/day-two-state"
-  # pulumi needs to be in $PATH temporarily 
+  # pulumi needs to be in $PATH temporarily
   PATH="${PATH}:$(dirname ${PULUMI})" ${D2CTL} up --state-path "${TMP}/day-two-state" --config-path "${PWD}/hack/test/day-two/config.yaml"
 
   ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-kube-state-metrics
   ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-prometheus-server
   ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-grafana
-  
+
   ${KUBECTL} --namespace metallb wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/metallb-controller
 
   ${KUBECTL} --namespace ingress wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/ingress-nginx-controller
@@ -246,5 +246,5 @@ function run_day_two_tests {
   sleep 20
   ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
-  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G 
+  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G
 }

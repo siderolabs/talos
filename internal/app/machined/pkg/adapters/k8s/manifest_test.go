@@ -21,7 +21,7 @@ func TestManifestSetYAML(t *testing.T) {
 
 	require.NoError(t, adapter.SetYAML([]byte(strings.TrimSpace(`
 ---
-apiVersion: audit.k8s.io/v1beta1
+apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
 - level: Metadata
@@ -38,7 +38,7 @@ func TestManifestSetYAMLEmptyComments(t *testing.T) {
 
 	require.NoError(t, adapter.SetYAML([]byte(strings.TrimSpace(`
 ---
-apiVersion: audit.k8s.io/v1beta1
+apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
 - level: Metadata

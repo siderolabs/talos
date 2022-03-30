@@ -18,6 +18,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
+* Kubernetes: 1.24.0-alpha.4
 * Flannel: 0.17.0
 * runc: 1.1.1
 """
