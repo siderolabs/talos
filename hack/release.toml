@@ -19,6 +19,7 @@ preface = """\
         title = "Component Updates"
         description="""\
 * Flannel: 0.17.0
+* runc: 1.1.1
 """
 
 [make_deps]
