@@ -3,12 +3,12 @@ title: Support Matrix
 weight: 6
 ---
 
-| Talos Version                                                                                                  | 1.0                                | 0.14                               |
+| Talos Version                                                                                                  | 1.1                                | 1.0                                |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2022-03-29                         | 2021-12-21 (0.14.0)                |
-| End of Community Support                                                                                       | 1.1.0 release (2022-06-01, TBD)    | 1.0.0 release (2022-03-27, TBD)    |
+| Release Date                                                                                                   | 2022-06-01, T                      | 2022-03-29 (1.0.0)                 |
+| End of Community Support                                                                                       | 1.2.0 release (2022-09-01, TBD)    | 1.1.0 release (2022-06-01, TBD)    |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/)      |
-| Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.23, 1.22, 1.21                   |
+| Kubernetes                                                                                                     | 1.24, 1.23, 1.22                   | 1.23, 1.22, 1.21                   |
 | Architecture                                                                                                   | amd64, arm64                                                            |
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud  |
@@ -17,9 +17,9 @@ weight: 6
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B                         |
 | - local                                                                                                        | Docker, QEMU                                                            |
 | **Cluster API**                                                                                                |                                    |                                    |
-| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.3                           | >= 0.4.3                           |
-| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.5                           | >= 0.4.1                           |
-| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.0                           | >= 0.4.1                           |
+| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.3                           | >= 0.5.3                           |
+| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.5                           | >= 0.4.5                           |
+| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.0                           | >= 0.5.0                           |
 | **UI**                                                                                                         |                                    |                                    |
 | [Theila](https://github.com/siderolabs/theila)                                                                 | ✓                                  | ✓                                  |
 
