@@ -17,7 +17,7 @@ import (
 )
 
 func TestGenerateHosts(t *testing.T) {
-	cfg := &mockConfig{
+	cfgWithTLS := &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
 				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
@@ -48,7 +48,7 @@ func TestGenerateHosts(t *testing.T) {
 		},
 	}
 
-	result, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
+	resultWithTLS, err := containerd.GenerateHosts(cfgWithTLS, "/etc/cri/conf.d/hosts")
 	require.NoError(t, err)
 
 	assert.Equal(t, &containerd.HostsConfig{
@@ -96,5 +96,49 @@ func TestGenerateHosts(t *testing.T) {
 				},
 			},
 		},
-	}, result)
+	}, resultWithTLS)
+
+	cfgWithoutTLS := &mockConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+			"docker.io": {
+				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
+			},
+		},
+		config: map[string]*v1alpha1.RegistryConfig{
+			"some.host:123": {
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername:      "root",
+					RegistryPassword:      "secret",
+					RegistryAuth:          "auth",
+					RegistryIdentityToken: "token",
+				},
+			},
+		},
+	}
+
+	resultWithoutTLS, err := containerd.GenerateHosts(cfgWithoutTLS, "/etc/cri/conf.d/hosts")
+	require.NoError(t, err)
+
+	assert.Equal(t, &containerd.HostsConfig{
+		Directories: map[string]*containerd.HostsDirectory{
+			"docker.io": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
+					},
+				},
+			},
+			"some.host_123_": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("server = \"https://some.host:123\"\n\n[host]\n\n  [host.\"https://some.host:123\"]\n"),
+					},
+				},
+			},
+		},
+	}, resultWithoutTLS)
 }
