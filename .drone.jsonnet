@@ -482,6 +482,7 @@ local creds_env_vars = {
   // TODO(andrewrynhard): Rename this to the GCP convention.
   GCE_SVC_ACCT: {from_secret: "gce_svc_acct"},
   PACKET_AUTH_TOKEN: {from_secret: "packet_auth_token"},
+  GITHUB_TOKEN: { from_secret: 'ghcr_token' }, // Use GitHub API token to avoid rate limiting on CAPI -> GitHub calls.
 };
 
 local capi_docker = Step("e2e-docker", depends_on=[load_artifacts], target="e2e-docker", environment={
