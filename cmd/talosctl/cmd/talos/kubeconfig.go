@@ -50,7 +50,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				var err error
 
 				if merge {
-					localPath, err = kubeconfig.DefaultPath()
+					localPath, err = kubeconfig.SinglePath()
 					if err != nil {
 						return err
 					}

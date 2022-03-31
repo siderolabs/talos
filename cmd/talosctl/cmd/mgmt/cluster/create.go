@@ -670,7 +670,7 @@ func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 }
 
 func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
-	kubeconfigPath, err := kubeconfig.DefaultPath()
+	kubeconfigPath, err := kubeconfig.SinglePath()
 	if err != nil {
 		return err
 	}

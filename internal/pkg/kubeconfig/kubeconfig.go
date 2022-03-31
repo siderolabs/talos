@@ -6,6 +6,7 @@
 package kubeconfig
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -18,4 +19,18 @@ func DefaultPath() (string, error) {
 	}
 
 	return filepath.Join(home, ".kube/config"), nil
+}
+
+// SinglePath parses KUBECONFIG and the default kubeconfig file location
+// and ensures there is only one to return.
+func SinglePath() (string, error) {
+	envVarFilePaths := filepath.SplitList(os.Getenv("KUBECONFIG"))
+	switch len(envVarFilePaths) {
+	case 0:
+		return DefaultPath()
+	case 1:
+		return envVarFilePaths[0], nil
+	default:
+		return "", fmt.Errorf("multiple kubeconfig files defined")
+	}
 }
