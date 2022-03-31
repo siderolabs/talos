@@ -26,7 +26,7 @@ To see a live demo of an upgrade of Talos Linux, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/AAF6WhX0USo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-### After Upgrade to {{< release >}}
+## After Upgrade to {{% release %}}
 
 There are no specific actions to be taken after an upgrade.
 
@@ -108,7 +108,7 @@ We set the bootloader to boot _once_ with the new kernel and OS image, then we r
 After the node comes back up and Talos verifies itself, it will make
 the bootloader change permanent, rejoin the cluster, and finally uncordon itself to receive new workloads.
 
-### FAQs
+## FAQs
 
 **Q.** What happens if an upgrade fails?
 
