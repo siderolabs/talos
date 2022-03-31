@@ -53,46 +53,48 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			return
 		}
 
-		if tlsConfig.TLS().InsecureSkipVerify() {
-			hostToml.SkipVerify = true
-		}
+		if tlsConfig.TLS() != nil {
+			if tlsConfig.TLS().InsecureSkipVerify() {
+				hostToml.SkipVerify = true
+			}
 
-		if tlsConfig.TLS().CA() != nil {
-			relPath := fmt.Sprintf("%s-ca.crt", host)
+			if tlsConfig.TLS().CA() != nil {
+				relPath := fmt.Sprintf("%s-ca.crt", host)
 
-			directory.Files = append(directory.Files,
-				&HostsFile{
-					Name:     relPath,
-					Contents: tlsConfig.TLS().CA(),
-					Mode:     0o600,
-				},
-			)
+				directory.Files = append(directory.Files,
+					&HostsFile{
+						Name:     relPath,
+						Contents: tlsConfig.TLS().CA(),
+						Mode:     0o600,
+					},
+				)
 
-			hostToml.CACert = filepath.Join(basePath, directoryName, relPath)
-		}
+				hostToml.CACert = filepath.Join(basePath, directoryName, relPath)
+			}
 
-		if tlsConfig.TLS().ClientIdentity() != nil {
-			relPathCrt := fmt.Sprintf("%s-client.crt", host)
-			relPathKey := fmt.Sprintf("%s-client.key", host)
+			if tlsConfig.TLS().ClientIdentity() != nil {
+				relPathCrt := fmt.Sprintf("%s-client.crt", host)
+				relPathKey := fmt.Sprintf("%s-client.key", host)
 
-			directory.Files = append(directory.Files,
-				&HostsFile{
-					Name:     relPathCrt,
-					Contents: tlsConfig.TLS().ClientIdentity().Crt,
-					Mode:     0o600,
-				},
-				&HostsFile{
-					Name:     relPathKey,
-					Contents: tlsConfig.TLS().ClientIdentity().Key,
-					Mode:     0o600,
-				},
-			)
+				directory.Files = append(directory.Files,
+					&HostsFile{
+						Name:     relPathCrt,
+						Contents: tlsConfig.TLS().ClientIdentity().Crt,
+						Mode:     0o600,
+					},
+					&HostsFile{
+						Name:     relPathKey,
+						Contents: tlsConfig.TLS().ClientIdentity().Key,
+						Mode:     0o600,
+					},
+				)
 
-			hostToml.Client = [][2]string{
-				{
-					filepath.Join(basePath, directoryName, relPathCrt),
-					filepath.Join(basePath, directoryName, relPathKey),
-				},
+				hostToml.Client = [][2]string{
+					{
+						filepath.Join(basePath, directoryName, relPathCrt),
+						filepath.Join(basePath, directoryName, relPathKey),
+					},
+				}
 			}
 		}
 	}
@@ -151,9 +153,11 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			continue
 		}
 
-		if tlsConfig.TLS().CA() == nil && tlsConfig.TLS().ClientIdentity() == nil && !tlsConfig.TLS().InsecureSkipVerify() {
-			// skip, no specific config
-			continue
+		if tlsConfig.TLS() != nil {
+			if tlsConfig.TLS().CA() == nil && tlsConfig.TLS().ClientIdentity() == nil && !tlsConfig.TLS().InsecureSkipVerify() {
+				// skip, no specific config
+				continue
+			}
 		}
 
 		directory := &HostsDirectory{}
