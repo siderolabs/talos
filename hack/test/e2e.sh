@@ -25,7 +25,7 @@ mkdir -p "${TMP}"
 # Talos
 
 export TALOSCONFIG="${TMP}/talosconfig"
-export TALOS_VERSION=v0.14
+export TALOS_VERSION=v1.1
 
 # Kubernetes
 
