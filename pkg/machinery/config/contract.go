@@ -24,7 +24,8 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
-	TalosVersion0_15    = &VersionContract{0, 15}
+	TalosVersion1_1     = &VersionContract{1, 1}
+	TalosVersion1_0     = &VersionContract{1, 0}
 	TalosVersion0_14    = &VersionContract{0, 14}
 	TalosVersion0_13    = &VersionContract{0, 13}
 	TalosVersion0_12    = &VersionContract{0, 12}
@@ -106,5 +107,5 @@ func (contract *VersionContract) PodSecurityPolicyEnabled() bool {
 
 // PodSecurityAdmissionEnabled returns true if pod security admission should be enabled by default.
 func (contract *VersionContract) PodSecurityAdmissionEnabled() bool {
-	return false // TODO: enable by default once Talos support Kubernetes 1.22+ only
+	return contract.Greater(TalosVersion1_0)
 }

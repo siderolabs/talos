@@ -55,11 +55,25 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.SupportsECDSASHA256())
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
 }
 
-func TestContract0_15(t *testing.T) {
-	contract := config.TalosVersion0_15
+func TestContract1_1(t *testing.T) {
+	contract := config.TalosVersion1_1
+
+	assert.True(t, contract.SupportsAggregatorCA())
+	assert.True(t, contract.SupportsECDSAKeys())
+	assert.True(t, contract.SupportsServiceAccount())
+	assert.True(t, contract.SupportsRBACFeature())
+	assert.True(t, contract.SupportsDynamicCertSANs())
+	assert.True(t, contract.SupportsECDSASHA256())
+	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+}
+
+func TestContract1_0(t *testing.T) {
+	contract := config.TalosVersion1_0
 
 	assert.True(t, contract.SupportsAggregatorCA())
 	assert.True(t, contract.SupportsECDSAKeys())

@@ -46,6 +46,37 @@ If `talosctl cluster create` fails to work on Linux due to the lack of IPv6 supp
 please use the flag `--disable-docker-ipv6` to revert the change.
 """
 
+    [notes.pod-security]
+        title = "Pod Security Admission"
+        description="""\
+[Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/) controller is enabled by default with the following policy:
+
+```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    defaults:
+      audit: restricted
+      audit-version: latest
+      enforce: baseline
+      enforce-version: latest
+      warn: restricted
+      warn-version: latest
+    exemptions:
+      namespaces:
+      - kube-system
+      runtimeClasses: []
+      usernames: []
+    kind: PodSecurityConfiguration
+  name: PodSecurity
+  path: ""
+```
+
+The policy is part of the Talos machine configuration, and it can be modified to suite your needs.
+"""
+
 [make_deps]
 
     [make_deps.tools]
