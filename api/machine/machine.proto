@@ -82,12 +82,12 @@ message ApplyConfigurationRequest {
   bytes data = 1;
   // replaced by mode
   bool on_reboot = 2 [
-    (common.remove_deprecated_field) = "v1.1",
+    (common.remove_deprecated_field) = "v1.2",
     deprecated = true
   ];
   // replaced by mode
   bool immediate = 3 [
-    (common.remove_deprecated_field) = "v1.1",
+    (common.remove_deprecated_field) = "v1.2",
     deprecated = true
   ];
   Mode mode = 4;

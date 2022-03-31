@@ -91,7 +91,7 @@ talosctl cluster create [flags]
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v0.15.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.1.0-alpha.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file

@@ -34,7 +34,7 @@ policies:
           - talosctl
           - kernel
           - security
-          - ^v1.0
+          - ^v1.1
   - type: license
     spec:
       skipPaths:
