@@ -17,14 +17,14 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.24.0-alpha.4
-	k8s.io/apimachinery v0.24.0-alpha.4
-	k8s.io/apiserver v0.24.0-alpha.4
-	k8s.io/client-go v0.24.0-alpha.4
-	k8s.io/component-base v0.24.0-alpha.4
-	k8s.io/cri-api v0.24.0-alpha.4
-	k8s.io/kubectl v0.24.0-alpha.4
-	k8s.io/kubelet v0.24.0-alpha.4
+	k8s.io/api v0.24.0-beta.0
+	k8s.io/apimachinery v0.24.0-beta.0
+	k8s.io/apiserver v0.24.0-beta.0
+	k8s.io/client-go v0.24.0-beta.0
+	k8s.io/component-base v0.24.0-beta.0
+	k8s.io/cri-api v0.24.0-beta.0
+	k8s.io/kubectl v0.24.0-beta.0
+	k8s.io/kubelet v0.24.0-beta.0
 )
 
 require (
@@ -147,7 +147,7 @@ require (
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/briandowns/spinner v1.6.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
@@ -165,7 +165,6 @@ require (
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
-	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gertd/go-pluralize v0.1.7 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -224,6 +223,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runc v1.1.0 // indirect
@@ -279,14 +279,14 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
-	k8s.io/cli-runtime v0.24.0-alpha.4 // indirect
+	k8s.io/cli-runtime v0.24.0-beta.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.40.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220316025549-ddc66922ab18 // indirect
+	k8s.io/klog/v2 v2.60.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.63 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
-	sigs.k8s.io/kustomize/api v0.10.1 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.13.0 // indirect
+	sigs.k8s.io/kustomize/api v0.11.4 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
