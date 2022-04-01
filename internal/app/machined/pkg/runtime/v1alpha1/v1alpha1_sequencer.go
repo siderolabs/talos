@@ -280,6 +280,12 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 
+	// Use kexec if we don't wipe the boot partition.
+	withKexec := false
+	if len(in.GetSystemDiskTargets()) > 0 {
+		withKexec = !bootPartitionInTargets(in.GetSystemDiskTargets())
+	}
+
 	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.AppendList(stopAllPhaselist(r, false)).
@@ -308,7 +314,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"leave",
 			LeaveEtcd,
 		).AppendList(
-			stopAllPhaselist(r, false),
+			stopAllPhaselist(r, withKexec),
 		).AppendWhen(
 			len(in.GetSystemDiskTargets()) == 0,
 			"reset",
@@ -492,4 +498,14 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 	}
 
 	return phases
+}
+
+func bootPartitionInTargets(targets []runtime.PartitionTarget) bool {
+	for _, target := range targets {
+		if target.GetLabel() == constants.BootPartitionLabel {
+			return true
+		}
+	}
+
+	return false
 }

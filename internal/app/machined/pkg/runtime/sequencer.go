@@ -97,6 +97,7 @@ type ResetOptions interface {
 type PartitionTarget interface {
 	fmt.Stringer
 	Format() error
+	GetLabel() string
 }
 
 // Sequencer describes the set of sequences required for the lifecycle

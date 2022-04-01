@@ -289,6 +289,11 @@ func (t *Target) Save() (err error) {
 	return nil
 }
 
+// GetLabel returns the underlaying partition label.
+func (t *Target) GetLabel() string {
+	return t.Label
+}
+
 func withTemporaryMounted(partPath string, flags uintptr, fileSystemType partition.FileSystemType, label string, f func(mountPath string) error) error {
 	mountPath := filepath.Join(constants.SystemPath, "mnt")
 
