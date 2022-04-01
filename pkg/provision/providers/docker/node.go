@@ -104,6 +104,13 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		},
 	}
 
+	if !clusterReq.Network.DockerDisableIPv6 {
+		// enable IPv6
+		hostConfig.Sysctls = map[string]string{
+			"net.ipv6.conf.all.disable_ipv6": "0",
+		}
+	}
+
 	// Ensure that the container is created in the talos network.
 
 	networkConfig := &network.NetworkingConfig{

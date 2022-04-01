@@ -118,6 +118,7 @@ var (
 	configPatchWorker         []string
 	badRTC                    bool
 	extraBootKernelArgs       string
+	dockerDisableIPv6         bool
 )
 
 // createCmd represents the cluster up command.
@@ -250,6 +251,7 @@ func create(ctx context.Context) (err error) {
 
 				BundleURL: cniBundleURL,
 			},
+			DockerDisableIPv6: dockerDisableIPv6,
 		},
 
 		Image:         nodeImage,
@@ -869,6 +871,7 @@ func init() {
 	createCmd.Flags().StringArrayVar(&configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
+	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 
 	Cmd.AddCommand(createCmd)
 }
