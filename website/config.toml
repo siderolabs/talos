@@ -125,47 +125,47 @@ offlineSearch = false
 prism_syntax_highlighting = false
 
 [[params.versions]]
-url = "/v1.1"
+url = "/v1.1/"
 version = "v1.1 (pre-release)"
 
 [[params.versions]]
-url = "/v1.0"
+url = "/v1.0/"
 version = "v1.0 (latest)"
 
 [[params.versions]]
-url = "/v0.14"
+url = "/v0.14/"
 version = "v0.14"
 
 [[params.versions]]
-url = "/v0.13"
+url = "/v0.13/"
 version = "v0.13"
 
 [[params.versions]]
-url = "/v0.12"
+url = "/v0.12/"
 version = "v0.12"
 
 [[params.versions]]
-url = "/v0.11"
+url = "/v0.11/"
 version = "v0.11"
 
 [[params.versions]]
-url = "/v0.10"
+url = "/v0.10/"
 version = "v0.10"
 
 [[params.versions]]
-url = "/v0.9"
+url = "/v0.9/"
 version = "v0.9"
 
 [[params.versions]]
-url = "/v0.8"
+url = "/v0.8/"
 version = "v0.8"
 
 [[params.versions]]
-url = "/v0.7"
+url = "/v0.7/"
 version = "v0.7"
 
 [[params.versions]]
-url = "/v0.6"
+url = "/v0.6/"
 version = "v0.6"
 
 # User interface configuration

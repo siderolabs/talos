@@ -17,14 +17,13 @@ It is easy and automatic.
 
 ## Storage Clusters
 
-> **Talos** recommends having a separate disks (apart from the Talos install disk) to be used for storage.
+> **Sidero Labs** recommends having separate disks (apart from the Talos install disk) to be used for storage.
 
-Redundancy in storage is usually very important.
-Scaling capabilities, reliability, speed, maintenance load, and ease of use are all factors you must consider when managing your own storage.
+Redundancy, scaling capabilities, reliability, speed, maintenance load, and ease of use are all factors you must consider when managing your own storage.
 
-Running a storage cluster can be a very good choice when managing your own storage, and there are two project we recommend, depending on your situation.
+Running a storage cluster can be a very good choice when managing your own storage, and there are two projects we recommend, depending on your situation.
 
-If you need vast amounts of storage composed of more than a dozen or so disks, just use Rook to manage Ceph.
+If you need vast amounts of storage composed of more than a dozen or so disks, we recommend you use Rook to manage Ceph.
 Also, if you need _both_ mount-once _and_ mount-many capabilities, Ceph is your answer.
 Ceph also bundles in an S3-compatible object store.
 The down side of Ceph is that there are a lot of moving parts.
@@ -40,9 +39,7 @@ If your storage needs are small enough to not need Ceph, use Mayastor.
 [Ceph](https://ceph.io) is the grandfather of open source storage clusters.
 It is big, has a lot of pieces, and will do just about anything.
 It scales better than almost any other system out there, open source or proprietary, being able to easily add and remove storage over time with no downtime, safely and easily.
-It comes bundled with RadosGW, an S3-compatible object store.
-It comes with CephFS, a NFS-like clustered filesystem.
-And of course, it comes with RBD, a block storage system.
+It comes bundled with RadosGW, an S3-compatible object store; CephFS, a NFS-like clustered filesystem; and RBD, a block storage system.
 
 With the help of [Rook](https://rook.io), the vast majority of the complexity of Ceph is hidden away by a very robust operator, allowing you to control almost everything about your Ceph cluster from fairly simple Kubernetes CRDs.
 
@@ -69,22 +66,22 @@ It is much less complicated to set up than Ceph, but you probably wouldn't want 
 
 Mayastor is new, maybe _too_ new.
 If you're looking for something well-tested and battle-hardened, this is not it.
-If you're looking for something lean, future-oriented, and simpler than Ceph, it might be a great choice.
+However, if you're looking for something lean, future-oriented, and simpler than Ceph, it might be a great choice.
 
-### Video Walkthrough
+#### Video Walkthrough
 
 To see a live demo of this section, see the video below:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/q86Kidk81xE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-### Prep Nodes
+#### Prep Nodes
 
 Either during initial cluster creation or on running worker nodes, several machine config values should be edited.
-This information is gathered from the Mayastor [documentation](https://mayastor.gitbook.io/introduction/quickstart/preparing-the-cluster).
-We need to set the `vm.nr_hugepages` sysctl and add `openebs.io/engine=mayastor` labels to the nodes which are meant to be storage nodes
+(This information is gathered from the Mayastor [documentation](https://mayastor.gitbook.io/introduction/quickstart/preparing-the-cluster).)
+We need to set the `vm.nr_hugepages` sysctl and add `openebs.io/engine=mayastor` labels to the nodes which are meant to be storage nodes.
 This can be done with `talosctl patch machineconfig` or via config patches during `talosctl gen config`.
 
-Some examples are shown below, modify as needed.
+Some examples are shown below: modify as needed.
 
 Using gen config
 
@@ -104,17 +101,16 @@ talosctl patch --mode=no-reboot machineconfig -n <node ip> --patch '[{"op": "add
 talosctl -n <node ip> service kubelet restart
 ```
 
-### Deploy Mayastor
+#### Deploy Mayastor
 
 Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
 
 ## NFS
 
 NFS is an old pack animal long past its prime.
+NFS is slow, has all kinds of bottlenecks involving contention, distributed locking, single points of service, and more.
 However, it is supported by a wide variety of systems.
 You don't want to use it unless you have to, but unfortunately, that "have to" is too frequent.
-
-NFS is slow, has all kinds of bottlenecks involving contention, distributed locking, single points of service, and more.
 
 The NFS client is part of the [`kubelet` image](https://github.com/talos-systems/kubelet) maintained by the Talos team.
 This means that the version installed in your running `kubelet` is the version of NFS supported by Talos.
@@ -133,7 +129,7 @@ One of the most popular open source add-on object stores is [MinIO](https://min.
 ## Others (iSCSI)
 
 The most common remaining systems involve iSCSI in one form or another.
-This includes things like the original OpenEBS, Rancher's Longhorn, and many proprietary systems.
+These include the original OpenEBS, Rancher's Longhorn, and many proprietary systems.
 Unfortunately, Talos does _not_ support iSCSI-based systems.
 iSCSI in Linux is facilitated by [open-iscsi](https://github.com/open-iscsi/open-iscsi).
 This system was designed long before containers caught on, and it is not well
