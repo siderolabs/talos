@@ -199,6 +199,16 @@ Talos now supports setting `sysfs` kernel parameters  (`/sys/...`).
 Use machine configuration field `.machine.sysfs` to set `sysfs` kernel parameters.
 """
 
+    [notes.dockeripv6]
+        title = "IPv6 in Docker-based Talos Clusters"
+        description="""\
+The command `talosctl cluster create` now enables IPv6 by default for the Docker containers
+created for Talos nodes. This allows to use IPv6 addresses in Kubernetes networking.
+
+If `talosctl cluster create` fails to work on Linux due to the lack of IPv6 support,
+please use the flag `--disable-docker-ipv6` to revert the change.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -54,6 +54,9 @@ type NetworkRequest struct {
 
 	// CNI-specific parameters.
 	CNI CNIConfig
+
+	// Docker-specific parameters.
+	DockerDisableIPv6 bool
 }
 
 // NodeRequests is a list of NodeRequest.
