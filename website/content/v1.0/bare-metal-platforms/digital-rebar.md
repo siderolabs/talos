@@ -5,10 +5,10 @@ description: "In this guide we will create an Kubernetes cluster with 1 worker n
 
 ## Prerequisites
 
-- 3 nodes (please see [hardware requirements](../../guides/getting-started#system-requirements))
+- 3 nodes (please see [hardware requirements]({{< relref "../introduction/system-requirements/">}}))
 - Loadbalancer
 - Digital Rebar Server
-- Talosctl access (see [talosctl setup](../../guides/getting-started/talosctl))
+- Talosctl access (see [talosctl setup]({{< relref "../introduction/getting-started/#talosctl">}}))
 
 ## Creating a Cluster
 
@@ -49,7 +49,7 @@ worker.yaml is valid for metal mode
 
 #### Publishing the Machine Configuration Files
 
-Digital Rebar has a build-in fileserver, which means we can use this feature to expose the talos configuration files.
+Digital Rebar has a built-in fileserver, which means we can use this feature to expose the talos configuration files.
 We will place `controlplane.yaml`, and `worker.yaml` into Digital Rebar file server by using the `drpcli` tools.
 
 Copy the generated files from the step above into your Digital Rebar installation.
@@ -122,7 +122,7 @@ It's important to have a corresponding SHA256 hash matching the boot.tar.gz
 
 #### Bootenv BootParams
 
-We're using some of Digital Rebar build in templating to make sure the machine gets the correct role assigned.
+We're using some of Digital Rebar built in templating to make sure the machine gets the correct role assigned.
 
 `talos.platform=metal talos.config={{ .ProvisionerURL }}/files/{{.Param \"talos/role\"}}.yaml"`
 
@@ -135,7 +135,7 @@ The `{{.Param \"talos/role\"}}` then gets populated with one of the above roles.
 
 ### Boot the Machines
 
-In the UI of Digital Rebar you need to select the machines you want te provision.
+In the UI of Digital Rebar you need to select the machines you want to provision.
 Once selected, you need to assign to following:
 
 - Profile
@@ -144,7 +144,7 @@ Once selected, you need to assign to following:
 This will provision the Stage and Bootenv with the talos values.
 Once this is done, you can boot the machine.
 
-To understand the boot process, we have a higher level overview located at [metal overview](../overview).
+To understand the boot process, we have a higher level overview located at [metal overview](../../reference/platform/).
 
 ### Bootstrap Etcd
 
