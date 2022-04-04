@@ -1,3 +1,44 @@
+## [Talos 1.0.1](https://github.com/siderolabs/talos/releases/tag/v1.0.1) (2022-04-04)
+
+Welcome to the v1.0.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### IPv6 in Docker-based Talos Clusters
+
+The command `talosctl cluster create` now enables IPv6 by default for the Docker containers
+created for Talos nodes. This allows to use IPv6 addresses in Kubernetes networking.
+
+If `talosctl cluster create` fails to work on Linux due to the lack of IPv6 support,
+please use the flag `--disable-docker-ipv6` to revert the change.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`4d9baa450`](https://github.com/siderolabs/talos/commit/4d9baa4506c90d551da882f931cba48a18774cf6) fix: enable IPv6 in Docker-based Talos clusters
+* [`3bad0e5a4`](https://github.com/siderolabs/talos/commit/3bad0e5a437d8071a8330d28d3624404e9c33a42) fix: retry manifest updates in upgrade-k8s
+* [`686e77cef`](https://github.com/siderolabs/talos/commit/686e77ceffcfe95c0e08c928878b1dee956b7453) test: push GITHUB_TOKEN to the e2e-aws/gcp steps
+* [`119eecfe7`](https://github.com/siderolabs/talos/commit/119eecfe751067e3bf1df1592269dd8bf666da56) fix: validate empty TLS config for registries
+* [`41c48a68e`](https://github.com/siderolabs/talos/commit/41c48a68e667eba487e11a570dca1c476d477f4f) fix: enable etcd consistency on check startup
+</p>
+</details>
+
+### Dependency Changes
+
+This release has no dependency changes
+
+Previous release can be found at [v1.0.0](https://github.com/siderolabs/talos/releases/tag/v1.0.0)
+
 ## [Talos 1.0.0](https://github.com/siderolabs/talos/releases/tag/v1.0.0) (2022-03-29)
 
 Welcome to the v1.0.0 release of Talos!
