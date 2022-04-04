@@ -91,7 +91,7 @@ Before the first cluster is created, `talosctl` will download the CNI bundle for
 Once the above finishes successfully, your talosconfig (`~/.talos/config`) will be configured to point to the new cluster, and `kubeconfig` will be
 downloaded and merged into default kubectl config location (`~/.kube/config`).
 
-Cluster provisioning process can be optimized with [registry pull-through cahces](../../guides/configuring-pull-through-cache/).
+Cluster provisioning process can be optimized with [registry pull-through caches](../../guides/configuring-pull-through-cache/).
 
 ## Using the Cluster
 
