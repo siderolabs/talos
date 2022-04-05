@@ -22,7 +22,7 @@ For example, if VMs `talos-cp01` and `talos-cp02` exist, this will create VMs st
 
 Use the following command to create a single control plane node:
 
-````powershell
+```powershell
 New-TalosVM -VMNamePrefix talos-cp -CPUCount 2 -StartupMemory 4GB -SwitchName LAB -TalosISOPath C:\ISO\talos-amd64.iso -NumberOfVMs 1 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos'
 ```
 
