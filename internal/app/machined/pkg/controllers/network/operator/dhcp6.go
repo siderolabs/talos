@@ -140,7 +140,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	if reply.Options.OneIANA() != nil {
+	if reply.Options.OneIANA() != nil && reply.Options.OneIANA().Options.OneAddress() != nil {
 		addr, _ := netaddr.FromStdIPNet(&net.IPNet{
 			IP:   reply.Options.OneIANA().Options.OneAddress().IPv6Addr,
 			Mask: net.CIDRMask(128, 128),
