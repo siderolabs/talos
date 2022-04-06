@@ -46,12 +46,12 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				continue
 			}
 
-			parts := strings.Split(container.Image, ":")
-			if len(parts) == 1 {
+			idx := strings.LastIndex(container.Image, ":")
+			if idx == -1 {
 				continue
 			}
 
-			v, err := semver.NewVersion(strings.TrimLeft(parts[1], "v"))
+			v, err := semver.NewVersion(strings.TrimLeft(container.Image[idx+1:], "v"))
 			if err != nil {
 				options.Log("failed to parse %s container version %s", app, err)
 
@@ -62,6 +62,10 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				version = v
 			}
 		}
+	}
+
+	if version == nil {
+		return "", fmt.Errorf("failed to detect lowest Kubernetes version")
 	}
 
 	return version.String(), nil
