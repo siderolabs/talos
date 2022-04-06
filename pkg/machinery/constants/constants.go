@@ -63,8 +63,11 @@ const (
 	// BoardRock64 is the  name of the Rock64.
 	BoardRock64 = "rock64"
 
-	// BoardRockpi4 is the name of the Radxa Rock pi 4.
+	// BoardRockpi4 is the name of the Radxa Rock pi 4 revisions A and B.
 	BoardRockpi4 = "rockpi_4"
+
+	// BoardRockpi4c is the name of the Radxa Rock pi 4 revision C.
+	BoardRockpi4c = "rockpi_4c"
 
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.

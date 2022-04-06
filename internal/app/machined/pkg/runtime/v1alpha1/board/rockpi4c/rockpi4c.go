@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package rockpi4
+package rockpi4c
 
 import (
 	"fmt"
@@ -22,23 +22,22 @@ import (
 var (
 	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-rockchip.bin", constants.BoardRockpi4)
 	off int64 = 512 * 64
-	// https://github.com/u-boot/u-boot/blob/4de720e98d552dfda9278516bf788c4a73b3e56f/configs/rock-pi-4-rk3399_defconfig#L7=
-	// 4a and 4b uses the same overlay.
-	dtb = "/dtb/rockchip/rk3399-rock-pi-4b.dtb"
+	// https://github.com/u-boot/u-boot/blob/4de720e98d552dfda9278516bf788c4a73b3e56f/configs/rock-pi-4c-rk3399_defconfig#L7=
+	dtb = "/dtb/rockchip/rk3399-rock-pi-4c.dtb"
 )
 
-// Rockpi4 represents the Radxa rock pi board.
+// Rockpi4c represents the Radxa rock pi board.
 //
 // Reference: https://rockpi.org/
-type Rockpi4 struct{}
+type Rockpi4c struct{}
 
 // Name implements the runtime.Board.
-func (r *Rockpi4) Name() string {
+func (r *Rockpi4c) Name() string {
 	return constants.BoardRockpi4
 }
 
 // Install implements the runtime.Board.
-func (r *Rockpi4) Install(disk string) (err error) {
+func (r *Rockpi4c) Install(disk string) (err error) {
 	var f *os.File
 
 	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
@@ -83,13 +82,13 @@ func (r *Rockpi4) Install(disk string) (err error) {
 }
 
 // KernelArgs implements the runtime.Board.
-func (r *Rockpi4) KernelArgs() procfs.Parameters {
+func (r *Rockpi4c) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS2,1500000n8"),
 	}
 }
 
 // PartitionOptions implements the runtime.Board.
-func (r *Rockpi4) PartitionOptions() *runtime.PartitionOptions {
+func (r *Rockpi4c) PartitionOptions() *runtime.PartitionOptions {
 	return &runtime.PartitionOptions{PartitionsOffset: 2048 * 10}
 }

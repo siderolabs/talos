@@ -23,6 +23,12 @@ preface = """\
 * runc: 1.1.1
 """
 
+    [notes.sbc]
+        title = "Support RockPi 4 variants A and B"
+        description = """\
+Talos now supports RockPi variants A and B in addition to RockPi 4C
+"""
+
     [notes.dockeripv6]
         title = "IPv6 in Docker-based Talos Clusters"
         description="""\

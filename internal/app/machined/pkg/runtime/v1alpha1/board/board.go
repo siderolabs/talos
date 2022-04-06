@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
 	rockpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
+	rockpi4c "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
 	rpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -60,6 +61,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &rock64.Rock64{}
 	case constants.BoardRockpi4:
 		b = &rockpi4.Rockpi4{}
+	case constants.BoardRockpi4c:
+		b = &rockpi4c.Rockpi4c{}
 	case constants.BoardJetsonNano:
 		b = &jetsonnano.JetsonNano{}
 	default:

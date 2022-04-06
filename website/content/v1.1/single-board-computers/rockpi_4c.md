@@ -1,6 +1,6 @@
 ---
-title: "Radxa ROCK PI 4"
-description: "Installing Talos on Radxa ROCK PI 4a/4b SBC using raw disk image."
+title: "Radxa ROCK PI 4C"
+description: "Installing Talos on Radxa ROCK PI 4c SBC using raw disk image."
 ---
 
 ## Prerequisites
@@ -22,8 +22,8 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.img.xz
-xz -d metal-rockpi_4-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4c-arm64.img.xz
+xz -d metal-rockpi_4c-arm64.img.xz
 ```
 
 ## Writing the Image
@@ -34,7 +34,7 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-rockpi_4-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-rockpi_4c-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 The user has two options to proceed:
@@ -59,16 +59,16 @@ This requires the user has access to [crane CLI](https://github.com/google/go-co
 
 ```bash
 mkdir _out
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-19-g6691342 - | tar xf - --strip-components=1 -C _out rockpi_4/rkspi_loader.img
+crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-19-g6691342 - | tar xf - --strip-components=1 -C _out rockpi_4c/rkspi_loader.img
 sudo dd if=rkspi_loader.img of=/dev/mtdblock0 bs=4K
 ```
 
 - Optionally, you can also write Talos image to the SSD drive right from your Rock PI board:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.img.xz
-xz -d metal-rockpi_4-arm64.img.xz
-sudo dd if=metal-rockpi_4-arm64.img.xz of=/dev/nvme0n1
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4c-arm64.img.xz
+xz -d metal-rockpi_4c-arm64.img.xz
+sudo dd if=metal-rockpi_4c-arm64.img.xz of=/dev/nvme0n1
 ```
 
 - remove SD card and reboot.
