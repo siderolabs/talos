@@ -118,12 +118,12 @@ You may now skip past the "Manual Approach" section down to "Bootstrap Cluster".
 
 #### Import the OVA into vCenter
 
-A `talos.ova` asset is published with each [release](https://github.com/siderolabs/talos/releases).
+A `vmware-amd64.ova` asset is published with each [release](https://github.com/siderolabs/talos/releases).
 We will refer to the version of the release as `$TALOS_VERSION` below.
 It can be easily exported with `export TALOS_VERSION="v0.3.0-alpha.10"` or similar.
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/$TALOS_VERSION/talos.ova
+curl -LO https://github.com/siderolabs/talos/releases/download/$TALOS_VERSION/vmware-amd64.ova
 ```
 
 Create a content library (if needed) with:
@@ -135,7 +135,7 @@ govc library.create <library name>
 Import the OVA to the library with:
 
 ```bash
-govc library.import -n talos-${TALOS_VERSION} <library name> /path/to/downloaded/talos.ova
+govc library.import -n talos-${TALOS_VERSION} <library name> /path/to/downloaded/vmware-amd64.ova
 ```
 
 #### Create the Bootstrap Node
@@ -294,7 +294,7 @@ The talos-vmtoolsd application was deployed as a daemonset as part of the cluste
 Create a new talosconfig with:
 
 ```bash
-talosctl -n <control plane IP> config new vmtoolsd-secret.yaml --roles os:admin
+talosctl --talosconfig talosconfig -n <control plane IP> config new vmtoolsd-secret.yaml --roles os:admin
 ```
 
 Create a secret from the talosconfig:
