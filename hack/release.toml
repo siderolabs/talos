@@ -23,6 +23,13 @@ preface = """\
 * runc: 1.1.1
 """
 
+    [notes.eudev]
+        title = "drop some default rules shipped by eudev"
+        description = """\
+Drops some default eudev rules that doesn't make sense in the context of Talos OS.
+Especially the ones around sound devices, cd-roms and renaming the network interfaces to be predictable
+"""
+
     [notes.sbc]
         title = "Support RockPi 4 variants A and B"
         description = """\
