@@ -180,6 +180,8 @@ navbar_logo = true
 navbar_translucent_over_cover_disable = false
 # Enable to show the side bar menu in its compact state.
 sidebar_menu_compact = true
+# Enables the arrow for content to show there's nested stuff
+sidebar_menu_foldable = true
 # Set to true to hide the sidebar search box (the top nav search box will still be displayed if search is enabled)
 sidebar_search_disable = true
 
