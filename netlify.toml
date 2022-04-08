@@ -3,5 +3,5 @@ command = "cd website && hugo --gc --minify"
 publish = "website/public"
 
 [build.environment]
-HUGO_VERSION = "0.93.2"
-NODE_VERSION = "12.21.0"
+HUGO_VERSION = "0.95.0"
+NODE_VERSION = "16.13.2"
