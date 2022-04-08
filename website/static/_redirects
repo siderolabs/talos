@@ -1,9 +1,0 @@
-## TODO: we should templatize this so hugo spits it out and it always points to latest from config.toml.
-## There's a way to do it, but I couldn't get it to work quickly.
-## See https://dev.to/faraixyz/setting-a-custom-output-format-in-hugo-for-netlify-or-gitlab-page-s-redirects-file-4dcf
-## for what I'm talking about
-/docs     /v1.0  302
-/docs/*  /:splat 302
-
-/latest     /v1.0  302
-/latest/*   /v1.0/:splat  302

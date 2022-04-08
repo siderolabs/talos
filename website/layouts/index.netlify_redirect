@@ -1,0 +1,5 @@
+# Set docs/latest to the release param
+/docs		{{ .Site.Params.url_latest_version }}		302
+/docs/*		/:splat	302
+/latest		{{ .Site.Params.url_latest_version }}		302
+/latest/*	{{ .Site.Params.url_latest_version }}/:splat	302

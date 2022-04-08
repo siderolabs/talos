@@ -72,7 +72,18 @@ style = "solarized-dark"
 
 # Comment out if you don't want the "print entire section" link enabled.
 [outputs]
+home = ["HTML", "RSS", "netlify_redirect"]
 section = ["HTML", "print", "RSS"]
+
+[mediaTypes.'text/prs.netlify']
+suffixes = [""]
+delimiter = ""
+
+[outputFormats.netlify_redirect]
+baseName = "_redirects"
+isPlainText = true
+mediaType = "text/prs.netlify"
+notAlternative = true
 
 [params]
 copyright = "Sidero Labs, Inc."
