@@ -95,7 +95,7 @@ func (suite *NodeIdentitySuite) TestLoad() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity).Metadata(), func(r resource.Resource) error {
-			suite.Assert().Equal("gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE", r.(*cluster.Identity).TypedSpec().NodeID)
+			suite.Assert().Equal("gvqfS27LxD58lPlASmpaueeRVzuof16iXoieRgEvBWaE", r.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec().NodeID)
 
 			return nil
 		}),

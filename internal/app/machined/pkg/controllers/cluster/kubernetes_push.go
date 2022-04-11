@@ -82,7 +82,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled {
+			if !discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryKubernetesEnabled {
 				continue
 			}
 
@@ -99,7 +99,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			localAffiliateID := identity.(*cluster.Identity).TypedSpec().NodeID
+			localAffiliateID := identity.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec().NodeID
 
 			if ctrl.localAffiliateID != localAffiliateID {
 				ctrl.localAffiliateID = localAffiliateID
@@ -132,7 +132,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 
-			if err = registry.NewKubernetes(ctrl.kubernetesClient).Push(ctx, affiliate.(*cluster.Affiliate)); err != nil {
+			if err = registry.NewKubernetes(ctrl.kubernetesClient).Push(ctx, affiliate.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate])); err != nil {
 				// reset client connection
 				ctrl.kubernetesClient.Close() //nolint:errcheck
 				ctrl.kubernetesClient = nil

@@ -97,7 +97,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
-		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled {
+		if !discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryKubernetesEnabled {
 			// if discovery is disabled cleanup existing resources
 			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
 				return err
@@ -153,7 +153,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			affilateSpec := affilateSpec
 
 			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = *affilateSpec
+				*res.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec() = *affilateSpec
 
 				return nil
 			}); err != nil {

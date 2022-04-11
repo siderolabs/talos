@@ -47,7 +47,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 		suite.assertResource(
 			specMD,
 			func(res resource.Resource) error {
-				spec := res.(*cluster.Config).TypedSpec()
+				spec := res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec()
 
 				suite.Assert().True(spec.DiscoveryEnabled)
 				suite.Assert().True(spec.RegistryKubernetesEnabled)
@@ -97,7 +97,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustom() {
 		suite.assertResource(
 			specMD,
 			func(res resource.Resource) error {
-				spec := res.(*cluster.Config).TypedSpec()
+				spec := res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec()
 
 				suite.Assert().True(spec.DiscoveryEnabled)
 				suite.Assert().False(spec.RegistryKubernetesEnabled)
@@ -143,7 +143,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustomInsecure() {
 		suite.assertResource(
 			specMD,
 			func(res resource.Resource) error {
-				spec := res.(*cluster.Config).TypedSpec()
+				spec := res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec()
 
 				suite.Assert().True(spec.DiscoveryEnabled)
 				suite.Assert().False(spec.RegistryKubernetesEnabled)
@@ -176,7 +176,7 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 		suite.assertResource(
 			specMD,
 			func(res resource.Resource) error {
-				spec := res.(*cluster.Config).TypedSpec()
+				spec := res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec()
 
 				suite.Assert().False(spec.DiscoveryEnabled)
 				suite.Assert().False(spec.RegistryKubernetesEnabled)

@@ -18,10 +18,7 @@ const IdentityType = resource.Type("Identities.cluster.talos.dev")
 const LocalIdentity = resource.ID("local")
 
 // Identity resource holds node identity (as a member of the cluster).
-type Identity struct {
-	md   resource.Metadata
-	spec IdentitySpec
-}
+type Identity struct{}
 
 // IdentitySpec describes status of rendered secrets.
 //
@@ -34,41 +31,19 @@ type IdentitySpec struct {
 }
 
 // NewIdentity initializes a Identity resource.
-func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
-	r := &Identity{
-		md:   resource.NewMetadata(namespace, IdentityType, id, resource.VersionUndefined),
-		spec: IdentitySpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+func NewIdentity(namespace resource.Namespace, id resource.ID) *TypedResource[IdentitySpec, Identity] {
+	return NewTypedResource[IdentitySpec, Identity](
+		resource.NewMetadata(namespace, IdentityType, id, resource.VersionUndefined),
+		IdentitySpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Identity) Metadata() *resource.Metadata {
-	return &r.md
+func (Identity) String(md resource.Metadata, _ IdentitySpec) string {
+	return fmt.Sprintf("cluster.Identity(%q)", md.ID())
 }
 
-// Spec implements resource.Resource.
-func (r *Identity) Spec() interface{} {
-	return r.spec
-}
-
-func (r *Identity) String() string {
-	return fmt.Sprintf("cluster.Identity(%q)", r.md.ID())
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Identity) DeepCopy() resource.Resource {
-	return &Identity{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition returns proper meta.ResourceDefinitionProvider for current type.
+func (Identity) ResourceDefinition(_ resource.Metadata, _ IdentitySpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             IdentityType,
 		Aliases:          []resource.Type{},
@@ -80,9 +55,4 @@ func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Identity) TypedSpec() *IdentitySpec {
-	return &r.spec
 }

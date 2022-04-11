@@ -67,7 +67,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 	// there should be two merged affiliates: one from affiliate1+affiliate2, and another from affiliate3
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate1.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.4"), netaddr.MustParseIP("10.5.0.2")}, spec.Addresses)
@@ -85,7 +85,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate3.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal(affiliate3.TypedSpec().NodeID, spec.NodeID)
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.5")}, spec.Addresses)
@@ -103,7 +103,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate1.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
 

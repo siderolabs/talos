@@ -62,7 +62,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("172.20.0.2"), netaddr.MustParseIP("10.5.0.1")}, spec.Addresses)
 			suite.Assert().Equal("example1", spec.Hostname)
@@ -96,7 +96,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			if len(spec.Addresses) < 3 {
 				return retry.ExpectedErrorf("not reconciled yet")

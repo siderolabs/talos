@@ -63,7 +63,7 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 		}
 
 		for _, rawAffiliate := range rawAffiliates.Items {
-			affiliateSpec := rawAffiliate.(*cluster.Affiliate).TypedSpec()
+			affiliateSpec := rawAffiliate.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 			id := affiliateSpec.NodeID
 
 			if affiliate, ok := mergedAffiliates[id]; ok {
@@ -79,7 +79,7 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 			affiliateSpec := affiliateSpec
 
 			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.NamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = *affiliateSpec
+				*res.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec() = *affiliateSpec
 
 				return nil
 			}); err != nil {

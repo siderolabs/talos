@@ -166,8 +166,8 @@ func collectData(archive *cluster.BundleArchive, progress chan cluster.BundlePro
 	})
 }
 
-func getDiscoveryConfig() (*clusterresource.Config, error) {
-	var config *clusterresource.Config
+func getDiscoveryConfig() (*clusterresource.TypedResource[clusterresource.ConfigSpec, clusterresource.Config], error) {
+	var config *clusterresource.TypedResource[clusterresource.ConfigSpec, clusterresource.Config]
 
 	if e := WithClient(func(ctx context.Context, c *client.Client) error {
 		list, err := c.Resources.Get(ctx, clusterresource.NamespaceName, clusterresource.IdentityType, clusterresource.LocalIdentity)

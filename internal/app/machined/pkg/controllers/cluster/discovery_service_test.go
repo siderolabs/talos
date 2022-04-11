@@ -186,7 +186,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.5")}, spec.Addresses)
@@ -213,7 +213,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			if len(spec.KubeSpan.Endpoints) != 2 {
 				return retry.ExpectedErrorf("waiting for 2 endpoints, got %d", len(spec.KubeSpan.Endpoints))
@@ -309,7 +309,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
 
@@ -319,7 +319,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	// now disable the service registry
 	_, err = suite.state.UpdateWithConflicts(suite.ctx, discoveryConfig.Metadata(), func(r resource.Resource) error {
-		r.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
+		r.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryServiceEnabled = false
 
 		return nil
 	})

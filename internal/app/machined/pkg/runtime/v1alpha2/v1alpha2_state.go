@@ -79,10 +79,10 @@ func NewState() (*State, error) {
 	// register Talos resources
 	for _, r := range []resource.Resource{
 		&v1alpha1.Service{},
-		&cluster.Affiliate{},
-		&cluster.Config{},
-		&cluster.Identity{},
-		&cluster.Member{},
+		&cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]{},
+		&cluster.TypedResource[cluster.ConfigSpec, cluster.Config]{},
+		&cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]{},
+		&cluster.TypedResource[cluster.MemberSpec, cluster.Member]{},
 		&config.MachineConfig{},
 		&config.MachineType{},
 		&config.K8sControlPlane{},

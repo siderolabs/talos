@@ -25,10 +25,10 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
-		&cluster.Affiliate{},
-		&cluster.Config{},
-		&cluster.Identity{},
-		&cluster.Member{},
+		&cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]{},
+		&cluster.TypedResource[cluster.ConfigSpec, cluster.Config]{},
+		&cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]{},
+		&cluster.TypedResource[cluster.MemberSpec, cluster.Member]{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

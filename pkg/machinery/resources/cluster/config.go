@@ -19,12 +19,6 @@ const ConfigType = resource.Type("DiscoveryConfigs.cluster.talos.dev")
 // ConfigID the singleton config resource ID.
 const ConfigID = resource.ID("cluster")
 
-// Config resource holds KubeSpan configuration.
-type Config struct {
-	md   resource.Metadata
-	spec ConfigSpec
-}
-
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
 	DiscoveryEnabled          bool   `yaml:"discoveryEnabled"`
@@ -37,41 +31,22 @@ type ConfigSpec struct {
 }
 
 // NewConfig initializes a Config resource.
-func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
-	r := &Config{
-		md:   resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
-		spec: ConfigSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+func NewConfig(namespace resource.Namespace, id resource.ID) *TypedResource[ConfigSpec, Config] {
+	return NewTypedResource[ConfigSpec, Config](
+		resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
+		ConfigSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Config) Metadata() *resource.Metadata {
-	return &r.md
+// Config resource holds KubeSpan configuration.
+type Config struct{}
+
+func (Config) String(md resource.Metadata, _ ConfigSpec) string {
+	return fmt.Sprintf("cluster.Config(%q)", md.ID())
 }
 
-// Spec implements resource.Resource.
-func (r *Config) Spec() interface{} {
-	return r.spec
-}
-
-func (r *Config) String() string {
-	return fmt.Sprintf("cluster.Config(%q)", r.md.ID())
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Config) DeepCopy() resource.Resource {
-	return &Config{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition returns proper meta.ResourceDefinitionProvider for current type.
+func (Config) ResourceDefinition(md resource.Metadata, _ ConfigSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigType,
 		Aliases:          []resource.Type{},
@@ -79,9 +54,4 @@ func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Config) TypedSpec() *ConfigSpec {
-	return &r.spec
 }

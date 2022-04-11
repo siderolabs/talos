@@ -105,7 +105,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			continue
 		}
 
-		memberByID := make(map[string]*cluster.Member)
+		memberByID := make(map[string]*cluster.TypedResource[cluster.MemberSpec, cluster.Member])
 
 		for _, member := range members {
 			memberByID[member.Metadata().ID()] = member
@@ -156,7 +156,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 		// raw affiliates don't contain the local node
 		expectedRawAffiliates := len(registries) * (len(members) - 1)
 
-		var rawAffiliates []*cluster.Affiliate
+		var rawAffiliates []*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]
 
 		for i := 0; i < 30; i++ {
 			rawAffiliates = suite.getAffiliates(nodeCtx, cluster.RawNamespaceName)
@@ -172,7 +172,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 
 		suite.Assert().Len(rawAffiliates, expectedRawAffiliates)
 
-		rawAffiliatesByID := make(map[string]*cluster.Affiliate)
+		rawAffiliatesByID := make(map[string]*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate])
 
 		for _, rawAffiliate := range rawAffiliates {
 			rawAffiliatesByID[rawAffiliate.Metadata().ID()] = rawAffiliate
@@ -240,8 +240,8 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 }
 
 //nolint:dupl
-func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
-	var result []*cluster.Member
+func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.TypedResource[cluster.MemberSpec, cluster.Member] {
+	var result []*cluster.TypedResource[cluster.MemberSpec, cluster.Member]
 
 	memberList, err := suite.Client.Resources.List(nodeCtx, cluster.NamespaceName, cluster.MemberType)
 	suite.Require().NoError(err)
@@ -273,7 +273,7 @@ func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Memb
 	return result
 }
 
-func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.Identity {
+func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.TypedResource[cluster.IdentitySpec, cluster.Identity] {
 	list, err := suite.Client.Resources.Get(nodeCtx, cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity)
 	suite.Require().NoError(err)
 	suite.Require().Len(list, 1)
@@ -293,8 +293,8 @@ func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.I
 }
 
 //nolint:dupl
-func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace resource.Namespace) []*cluster.Affiliate {
-	var result []*cluster.Affiliate
+func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace resource.Namespace) []*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate] {
+	var result []*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]
 
 	affiliateList, err := suite.Client.Resources.List(nodeCtx, namespace, cluster.AffiliateType)
 	suite.Require().NoError(err)

@@ -73,11 +73,11 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 				c := cfg.(*config.MachineConfig).Config()
 
 				if err = r.Modify(ctx, cluster.NewConfig(config.NamespaceName, cluster.ConfigID), func(res resource.Resource) error {
-					res.(*cluster.Config).TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
+					res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
 
 					if c.Cluster().Discovery().Enabled() {
-						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
-						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
+						res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
+						res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
 
 						if c.Cluster().Discovery().Registries().Service().Enabled() {
 							var u *url.URL
@@ -98,24 +98,24 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 								}
 							}
 
-							res.(*cluster.Config).TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
-							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
 
-							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
 							if err != nil {
 								return err
 							}
 
-							res.(*cluster.Config).TypedSpec().ServiceClusterID = c.Cluster().ID()
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceClusterID = c.Cluster().ID()
 						} else {
-							res.(*cluster.Config).TypedSpec().ServiceEndpoint = ""
-							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = false
-							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey = nil
-							res.(*cluster.Config).TypedSpec().ServiceClusterID = ""
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpoint = ""
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpointInsecure = false
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEncryptionKey = nil
+							res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceClusterID = ""
 						}
 					} else {
-						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = false
-						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
+						res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryKubernetesEnabled = false
+						res.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryServiceEnabled = false
 					}
 
 					return nil

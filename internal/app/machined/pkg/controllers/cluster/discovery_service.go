@@ -128,7 +128,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryServiceEnabled {
+		if !discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().RegistryServiceEnabled {
 			// if discovery is disabled cleanup existing resources
 			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
 				return err
@@ -159,7 +159,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		localAffiliateID := identity.(*cluster.Identity).TypedSpec().NodeID
+		localAffiliateID := identity.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec().NodeID
 
 		if ctrl.localAffiliateID != localAffiliateID {
 			ctrl.localAffiliateID = localAffiliateID
@@ -198,7 +198,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		affiliateSpec := affiliate.(*cluster.Affiliate).TypedSpec()
+		affiliateSpec := affiliate.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 		otherEndpointsList, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.EndpointType, "", resource.VersionUndefined))
 		if err != nil {
@@ -208,18 +208,18 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		if client == nil {
 			var cipher cipher.Block
 
-			cipher, err = aes.NewCipher(discoveryConfig.(*cluster.Config).TypedSpec().ServiceEncryptionKey)
+			cipher, err = aes.NewCipher(discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEncryptionKey)
 			if err != nil {
 				return fmt.Errorf("error initializing AES cipher: %w", err)
 			}
 
 			client, err = discoveryclient.NewClient(discoveryclient.Options{
 				Cipher:        cipher,
-				Endpoint:      discoveryConfig.(*cluster.Config).TypedSpec().ServiceEndpoint,
-				ClusterID:     discoveryConfig.(*cluster.Config).TypedSpec().ServiceClusterID,
+				Endpoint:      discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpoint,
+				ClusterID:     discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceClusterID,
 				AffiliateID:   localAffiliateID,
 				TTL:           defaultDiscoveryTTL,
-				Insecure:      discoveryConfig.(*cluster.Config).TypedSpec().ServiceEndpointInsecure,
+				Insecure:      discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
 			})
 			if err != nil {
@@ -262,7 +262,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			discoveredAffiliate := discoveredAffiliate
 
 			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = specAffiliate(discoveredAffiliate.Affiliate, discoveredAffiliate.Endpoints)
+				*res.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec() = specAffiliate(discoveredAffiliate.Affiliate, discoveredAffiliate.Endpoints)
 
 				return nil
 			}); err != nil {

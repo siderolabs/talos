@@ -44,7 +44,7 @@ func NewKubernetes(client *kubernetes.Client) *Kubernetes {
 }
 
 // AnnotationsFromAffiliate generates Kubernetes Node annotations from the Affiliate spec.
-func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
+func AnnotationsFromAffiliate(affiliate *cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]) map[string]string {
 	var kubeSpanAddress string
 
 	if !affiliate.TypedSpec().KubeSpan.Address.IsZero() {
@@ -191,7 +191,7 @@ func parseIPPorts(in string) []netaddr.IPPort {
 }
 
 // Push updates Kubernetes Node resource to track Affiliate state.
-func (r *Kubernetes) Push(ctx context.Context, affiliate *cluster.Affiliate) error {
+func (r *Kubernetes) Push(ctx context.Context, affiliate *cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]) error {
 	node, err := r.client.CoreV1().Nodes().Get(ctx, affiliate.TypedSpec().Nodename, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get node %q: %w", affiliate.TypedSpec().Nodename, err)

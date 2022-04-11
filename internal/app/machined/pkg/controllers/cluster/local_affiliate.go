@@ -166,13 +166,13 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error getting kubespan additional addresses: %w", err)
 			}
 
-			localID := identity.(*cluster.Identity).TypedSpec().NodeID
+			localID := identity.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec().NodeID
 
 			touchedIDs := make(map[resource.ID]struct{})
 
-			if discoveryConfig.(*cluster.Config).TypedSpec().DiscoveryEnabled {
+			if discoveryConfig.(*cluster.TypedResource[cluster.ConfigSpec, cluster.Config]).TypedSpec().DiscoveryEnabled {
 				if err = r.Modify(ctx, cluster.NewAffiliate(cluster.NamespaceName, localID), func(res resource.Resource) error {
-					spec := res.(*cluster.Affiliate).TypedSpec()
+					spec := res.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 					spec.NodeID = localID
 					spec.Addresses = append([]netaddr.IP(nil), addresses.(*network.NodeAddress).TypedSpec().IPs()...)

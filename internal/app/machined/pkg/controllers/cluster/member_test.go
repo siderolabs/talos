@@ -66,7 +66,7 @@ func (suite *MemberSuite) TestReconcileDefault() {
 	// affiliates with non-empty Nodename should be translated to Members
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewMember(cluster.NamespaceName, affiliate1.TypedSpec().Nodename).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Member).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.MemberSpec, cluster.Member]).TypedSpec()
 
 			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.4")}, spec.Addresses)
@@ -80,7 +80,7 @@ func (suite *MemberSuite) TestReconcileDefault() {
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewMember(cluster.NamespaceName, affiliate2.TypedSpec().Nodename).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Member).TypedSpec()
+			spec := r.(*cluster.TypedResource[cluster.MemberSpec, cluster.Member]).TypedSpec()
 
 			suite.Assert().Equal(affiliate2.TypedSpec().NodeID, spec.NodeID)
 			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.5")}, spec.Addresses)

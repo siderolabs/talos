@@ -75,7 +75,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		affiliateLookup := make(map[string]string)
 
 		for _, res := range affiliates.Items {
-			affiliate := res.(*cluster.Affiliate).TypedSpec()
+			affiliate := res.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 			if affiliate.KubeSpan.PublicKey != "" {
 				affiliateLookup[affiliate.KubeSpan.PublicKey] = affiliate.NodeID

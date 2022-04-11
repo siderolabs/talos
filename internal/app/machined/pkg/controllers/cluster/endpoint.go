@@ -66,7 +66,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		var endpoints []netaddr.IP
 
 		for _, res := range memberList.Items {
-			member := res.(*cluster.Member).TypedSpec()
+			member := res.(*cluster.TypedResource[cluster.MemberSpec, cluster.Member]).TypedSpec()
 
 			if !(member.MachineType == machine.TypeControlPlane || member.MachineType == machine.TypeInit) {
 				continue

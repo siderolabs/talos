@@ -100,7 +100,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		if err := r.Modify(ctx, cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity), func(r resource.Resource) error {
-			*r.(*cluster.Identity).TypedSpec() = localIdentity
+			*r.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec() = localIdentity
 
 			return nil
 		}); err != nil {

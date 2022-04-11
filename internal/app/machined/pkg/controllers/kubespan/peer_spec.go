@@ -88,7 +88,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			touchedIDs := make(map[resource.ID]struct{})
 
 			if cfg != nil && localIdentity != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
-				localAffiliateID := localIdentity.(*cluster.Identity).TypedSpec().NodeID
+				localAffiliateID := localIdentity.(*cluster.TypedResource[cluster.IdentitySpec, cluster.Identity]).TypedSpec().NodeID
 
 				peerIPSets := make(map[string]*netaddr.IPSet, len(affiliates.Items))
 
@@ -99,7 +99,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						continue
 					}
 
-					spec := affiliate.(*cluster.Affiliate).TypedSpec()
+					spec := affiliate.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 
 					if spec.KubeSpan.PublicKey == "" {
 						// no kubespan information, skip it

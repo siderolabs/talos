@@ -20,10 +20,7 @@ const MemberType = resource.Type("Members.cluster.talos.dev")
 // Member resource contains information about discovered cluster members.
 //
 // Members are usually derived from Affiliates.
-type Member struct {
-	md   resource.Metadata
-	spec MemberSpec
-}
+type Member struct{}
 
 // MemberSpec describes Member state.
 type MemberSpec struct {
@@ -35,47 +32,19 @@ type MemberSpec struct {
 }
 
 // NewMember initializes a Member resource.
-func NewMember(namespace resource.Namespace, id resource.ID) *Member {
-	r := &Member{
-		md:   resource.NewMetadata(namespace, MemberType, id, resource.VersionUndefined),
-		spec: MemberSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+func NewMember(namespace resource.Namespace, id resource.ID) *TypedResource[MemberSpec, Member] {
+	return NewTypedResource[MemberSpec, Member](
+		resource.NewMetadata(namespace, MemberType, id, resource.VersionUndefined),
+		MemberSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Member) Metadata() *resource.Metadata {
-	return &r.md
+func (Member) String(md resource.Metadata, _ MemberSpec) string {
+	return fmt.Sprintf("cluster.Member(%q)", md.ID())
 }
 
-// Spec implements resource.Resource.
-func (r *Member) Spec() interface{} {
-	return r.spec
-}
-
-func (r *Member) String() string {
-	return fmt.Sprintf("cluster.Member(%q)", r.md.ID())
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Member) DeepCopy() resource.Resource {
-	return &Member{
-		md: r.md,
-		spec: MemberSpec{
-			NodeID:          r.spec.NodeID,
-			Addresses:       append([]netaddr.IP(nil), r.spec.Addresses...),
-			Hostname:        r.spec.Hostname,
-			MachineType:     r.spec.MachineType,
-			OperatingSystem: r.spec.OperatingSystem,
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Member) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition returns proper meta.ResourceDefinitionProvider for current type.
+func (Member) ResourceDefinition(_ resource.Metadata, _ MemberSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemberType,
 		Aliases:          []resource.Type{},
@@ -99,9 +68,4 @@ func (r *Member) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Member) TypedSpec() *MemberSpec {
-	return &r.spec
 }

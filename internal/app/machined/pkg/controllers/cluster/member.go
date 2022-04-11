@@ -64,14 +64,14 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 		touchedIDs := make(map[resource.ID]struct{})
 
 		for _, affiliate := range affiliates.Items {
-			affiliateSpec := affiliate.(*cluster.Affiliate).TypedSpec()
+			affiliateSpec := affiliate.(*cluster.TypedResource[cluster.AffiliateSpec, cluster.Affiliate]).TypedSpec()
 			if affiliateSpec.Nodename == "" {
 				// not a cluster member
 				continue
 			}
 
 			if err = r.Modify(ctx, cluster.NewMember(cluster.NamespaceName, affiliateSpec.Nodename), func(res resource.Resource) error {
-				spec := res.(*cluster.Member).TypedSpec()
+				spec := res.(*cluster.TypedResource[cluster.MemberSpec, cluster.Member]).TypedSpec()
 
 				spec.Addresses = append([]netaddr.IP(nil), affiliateSpec.Addresses...)
 				spec.Hostname = affiliateSpec.Hostname
