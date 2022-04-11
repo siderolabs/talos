@@ -1,6 +1,6 @@
 module github.com/talos-systems/talos
 
-go 1.17
+go 1.18
 
 replace (
 	// Use nested module.
