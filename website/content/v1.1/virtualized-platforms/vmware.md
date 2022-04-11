@@ -22,7 +22,7 @@ This can be done with the `talosctl gen config ...` command.
 Take note that we will also use a JSON6902 patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
 
 First, download `the cp.patch` to your local machine and edit the VIP to match your chosen IP.
-You can do this by issuing `https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/virtualized-platforms/vmware/cp.patch`.
+You can do this by issuing `https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/virtualized-platforms/vmware/cp.patch.yaml`.
 It's contents should look like the following:
 
 ```yaml
@@ -43,14 +43,14 @@ It's contents should look like the following:
 With the patch in hand, generate machine configs with:
 
 ```bash
-$ talosctl gen config vmware-test https://<VIP>:<port> --config-patch-control-plane "$(yq r -j cp.patch)"
+$ talosctl gen config vmware-test https://<VIP>:<port> --config-patch-control-plane @cp.patch.yaml
 created controlplane.yaml
 created worker.yaml
 created talosconfig
 ```
 
 At this point, you can modify the generated configs to your liking if needed.
-Optionally, you can specify additional patches by adding to the `cp.patch` file downloaded earlier, or create your own patch files.
+Optionally, you can specify additional patches by adding to the `cp.patch.yaml` file downloaded earlier, or create your own patch files.
 
 ### Validate the Configuration Files
 
