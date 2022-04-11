@@ -124,7 +124,7 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.63
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -284,7 +284,7 @@ require (
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.63 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.64 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
