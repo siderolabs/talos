@@ -30,10 +30,10 @@ require (
 require (
 	cloud.google.com/go/compute v1.5.0
 	github.com/AlekSi/pointer v1.2.0
-	github.com/BurntSushi/toml v1.0.0
-	github.com/aws/aws-sdk-go v1.43.31
+	github.com/BurntSushi/toml v1.1.0
+	github.com/aws/aws-sdk-go v1.43.36
 	github.com/beevik/ntp v0.3.0
-	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
 	github.com/containerd/containerd v1.6.2
 	github.com/containerd/cri v1.19.0
@@ -55,7 +55,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/google/go-cmp v0.5.7
-	github.com/google/nftables v0.0.0-20220402130106-19672dc9fe54
+	github.com/google/nftables v0.0.0-20220407195405-950e408d48c6
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -64,7 +64,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.4.0
 	github.com/hetznercloud/hcloud-go v1.33.1
-	github.com/insomniacslk/dhcp v0.0.0-20220119180841-3c283ff8b7dd
+	github.com/insomniacslk/dhcp v0.0.0-20220405050111-12fbdcb11b41
 	github.com/jsimonetti/rtnetlink v1.1.1
 	github.com/jxskiss/base62 v1.1.0
 	github.com/mattn/go-isatty v0.0.14
@@ -113,9 +113,9 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.2
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b
+	golang.org/x/net v0.0.0-20220407224826-aac1ed45d8e3
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220403205710-6acee93ad0eb
+	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220330030906-9490840b0b01
@@ -124,7 +124,7 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.63
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -273,7 +273,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
 	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220401170504-314d38edb7de // indirect
+	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
@@ -284,7 +284,7 @@ require (
 	k8s.io/klog/v2 v2.60.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.63 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.64 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
