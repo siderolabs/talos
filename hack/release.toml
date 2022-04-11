@@ -22,6 +22,8 @@ preface = """\
 * Kubernetes: 1.24.0-beta.0
 * Flannel: 0.17.0
 * runc: 1.1.1
+
+Talos is built with Go 1.18.
 """
 
     [notes.eudev]
@@ -76,6 +78,13 @@ plugins:
 ```
 
 The policy is part of the Talos machine configuration, and it can be modified to suite your needs.
+"""
+
+    [notes.x86_64]
+        title = "x86-64 Architecture"
+        description="""\
+Talos is built for x86-64 architecture with support for [x86-64-v2 microarchitecture level](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels),
+so Talos no longer runs on processors supporting only baseline `x86-64` microarchitecture (before 2009).
 """
 
 [make_deps]

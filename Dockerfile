@@ -278,7 +278,8 @@ FROM base AS init-build-amd64
 WORKDIR /src/internal/app/init
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
 RUN chmod +x /init
 
 FROM base AS init-build-arm64
@@ -299,7 +300,8 @@ FROM base AS machined-build-amd64
 WORKDIR /src/internal/app/machined
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /machined
 RUN chmod +x /machined
 
 FROM base AS machined-build-arm64
@@ -320,7 +322,8 @@ FROM base AS talosctl-linux-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
@@ -355,7 +358,8 @@ FROM base AS talosctl-darwin-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
 
 FROM base AS talosctl-darwin-arm64-build
@@ -373,7 +377,8 @@ FROM base AS talosctl-windows-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
 
 FROM scratch AS talosctl-windows
 COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
@@ -655,7 +660,8 @@ RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type
 FROM base AS integration-test-linux-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
@@ -666,7 +672,8 @@ COPY --from=integration-test-linux-build /src/integration.test /integration-test
 FROM base AS integration-test-darwin-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_api,integration_cli,integration_k8s \
     ./internal/integration
@@ -679,7 +686,8 @@ COPY --from=integration-test-darwin-build /src/integration.test /integration-tes
 FROM base AS integration-test-provision-linux-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 go test -v -c ${GO_BUILDFLAGS} \
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go test -v -c ${GO_BUILDFLAGS} \
     -ldflags "${GO_LDFLAGS}" \
     -tags integration,integration_provision \
     ./internal/integration

@@ -44,6 +44,7 @@ INSTALLER_ARCH ?= all
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
 GO_LDFLAGS ?=
+GOAMD64 ?= v2
 
 WITH_RACE ?= false
 WITH_DEBUG ?= false
@@ -90,6 +91,7 @@ COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
 COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
 COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
 COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
+COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 COMMON_ARGS += --build-arg=NAME=$(NAME)
