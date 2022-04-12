@@ -5,8 +5,6 @@
 package network
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -45,10 +43,6 @@ func (r *TimeServerStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *TimeServerStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *TimeServerStatus) String() string {
-	return fmt.Sprintf("network.TimeServerStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

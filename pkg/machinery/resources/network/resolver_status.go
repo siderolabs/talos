@@ -5,8 +5,6 @@
 package network
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
@@ -46,10 +44,6 @@ func (r *ResolverStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *ResolverStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *ResolverStatus) String() string {
-	return fmt.Sprintf("network.ResolverStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

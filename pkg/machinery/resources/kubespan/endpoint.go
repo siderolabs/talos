@@ -5,8 +5,6 @@
 package kubespan
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
@@ -49,10 +47,6 @@ func (r *Endpoint) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *Endpoint) Spec() interface{} {
 	return r.spec
-}
-
-func (r *Endpoint) String() string {
-	return fmt.Sprintf("kubespan.Endpoint(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

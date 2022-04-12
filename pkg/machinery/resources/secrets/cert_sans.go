@@ -5,7 +5,6 @@
 package secrets
 
 import (
-	"fmt"
 	"net"
 	"sort"
 
@@ -56,10 +55,6 @@ func (r *CertSAN) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *CertSAN) Spec() interface{} {
 	return r.spec
-}
-
-func (r *CertSAN) String() string {
-	return fmt.Sprintf("secrets.CertSANs(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

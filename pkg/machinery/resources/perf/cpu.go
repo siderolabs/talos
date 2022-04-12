@@ -5,8 +5,6 @@
 package perf
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -68,10 +66,6 @@ func (r *CPU) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *CPU) Spec() interface{} {
 	return &r.spec
-}
-
-func (r *CPU) String() string {
-	return fmt.Sprintf("secrets.CPUSecrets(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

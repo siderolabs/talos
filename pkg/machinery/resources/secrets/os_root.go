@@ -5,8 +5,6 @@
 package secrets
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/talos-systems/crypto/x509"
@@ -54,10 +52,6 @@ func (r *OSRoot) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *OSRoot) Spec() interface{} {
 	return &r.spec
-}
-
-func (r *OSRoot) String() string {
-	return fmt.Sprintf("secrets.OSRoot(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

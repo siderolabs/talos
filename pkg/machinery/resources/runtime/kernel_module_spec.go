@@ -5,8 +5,6 @@
 package runtime
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -46,10 +44,6 @@ func (r *KernelModuleSpec) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *KernelModuleSpec) Spec() interface{} {
 	return r.spec
-}
-
-func (r *KernelModuleSpec) String() string {
-	return fmt.Sprintf("runtime.KernelModuleSpec.(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

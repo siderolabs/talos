@@ -5,8 +5,6 @@
 package network
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 
@@ -138,10 +136,6 @@ func (r *LinkSpec) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *LinkSpec) Spec() interface{} {
 	return r.spec
-}
-
-func (r *LinkSpec) String() string {
-	return fmt.Sprintf("network.LinkSpec(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

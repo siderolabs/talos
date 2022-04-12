@@ -5,8 +5,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -47,10 +45,6 @@ func (r *Service) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *Service) Spec() interface{} {
 	return r.spec
-}
-
-func (r *Service) String() string {
-	return fmt.Sprintf("v1alpha1.Service(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

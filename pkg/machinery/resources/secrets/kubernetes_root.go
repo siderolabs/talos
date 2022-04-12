@@ -5,7 +5,6 @@
 package secrets
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 
@@ -64,10 +63,6 @@ func (r *KubernetesRoot) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *KubernetesRoot) Spec() interface{} {
 	return &r.spec
-}
-
-func (r *KubernetesRoot) String() string {
-	return fmt.Sprintf("secrets.KubernetesRoot(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

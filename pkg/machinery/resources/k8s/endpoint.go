@@ -5,7 +5,6 @@
 package k8s
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -53,10 +52,6 @@ func (r *Endpoint) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *Endpoint) Spec() interface{} {
 	return r.spec
-}
-
-func (r *Endpoint) String() string {
-	return fmt.Sprintf("k8s.Endpoint(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

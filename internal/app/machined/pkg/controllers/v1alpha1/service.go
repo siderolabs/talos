@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -84,11 +83,11 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 
 						return nil
 					}); err != nil {
-						logger.Info(fmt.Sprintf("failed creating service resource %s", service), zap.Error(err))
+						logger.Info("failed creating service resource", zap.String("id", service.Metadata().ID()), zap.Error(err))
 					}
 				default:
 					if err := r.Destroy(ctx, service.Metadata()); err != nil && !state.IsNotFoundError(err) {
-						logger.Info(fmt.Sprintf("failed destroying service resource %s", service), zap.Error(err))
+						logger.Info("failed destroying service resource", zap.String("id", service.Metadata().ID()), zap.Error(err))
 					}
 				}
 			}

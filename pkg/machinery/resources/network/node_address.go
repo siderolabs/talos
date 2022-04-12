@@ -64,10 +64,6 @@ func (r *NodeAddress) Spec() interface{} {
 	return r.spec
 }
 
-func (r *NodeAddress) String() string {
-	return fmt.Sprintf("network.NodeAddress(%q)", r.md.ID())
-}
-
 // DeepCopy implements resource.Resource.
 func (r *NodeAddress) DeepCopy() resource.Resource {
 	return &NodeAddress{

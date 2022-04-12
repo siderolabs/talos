@@ -5,8 +5,6 @@
 package runtime
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 
@@ -45,10 +43,6 @@ func (r *ExtensionStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *ExtensionStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *ExtensionStatus) String() string {
-	return fmt.Sprintf("runtime.ExtensionStatus.(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

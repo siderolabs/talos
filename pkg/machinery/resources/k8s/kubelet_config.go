@@ -5,8 +5,6 @@
 package k8s
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -57,10 +55,6 @@ func (r *KubeletConfig) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *KubeletConfig) Spec() interface{} {
 	return r.spec
-}
-
-func (r *KubeletConfig) String() string {
-	return fmt.Sprintf("k8s.KubeletConfig(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

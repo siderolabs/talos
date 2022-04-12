@@ -8,8 +8,6 @@
 package k8s
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -52,10 +50,6 @@ func (r *SecretsStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *SecretsStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *SecretsStatus) String() string {
-	return fmt.Sprintf("k8s.SecretStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

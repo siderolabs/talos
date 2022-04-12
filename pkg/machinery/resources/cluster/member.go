@@ -5,8 +5,6 @@
 package cluster
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
@@ -54,10 +52,6 @@ func (r *Member) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *Member) Spec() interface{} {
 	return r.spec
-}
-
-func (r *Member) String() string {
-	return fmt.Sprintf("cluster.Member(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

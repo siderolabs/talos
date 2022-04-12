@@ -5,7 +5,6 @@
 package files
 
 import (
-	"fmt"
 	"io/fs"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -47,10 +46,6 @@ func (r *EtcFileSpec) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *EtcFileSpec) Spec() interface{} {
 	return r.spec
-}
-
-func (r *EtcFileSpec) String() string {
-	return fmt.Sprintf("network.EtcFileSpec(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

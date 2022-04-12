@@ -5,8 +5,6 @@
 package k8s
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"inet.af/netaddr"
@@ -46,10 +44,6 @@ func (r *NodeIP) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *NodeIP) Spec() interface{} {
 	return r.spec
-}
-
-func (r *NodeIP) String() string {
-	return fmt.Sprintf("k8s.NodeIP(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

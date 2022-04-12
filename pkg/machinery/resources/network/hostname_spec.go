@@ -90,10 +90,6 @@ func (r *HostnameSpec) Spec() interface{} {
 	return r.spec
 }
 
-func (r *HostnameSpec) String() string {
-	return fmt.Sprintf("network.HostnameSpec(%q)", r.md.ID())
-}
-
 // DeepCopy implements resource.Resource.
 func (r *HostnameSpec) DeepCopy() resource.Resource {
 	return &HostnameSpec{

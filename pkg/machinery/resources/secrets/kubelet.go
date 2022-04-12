@@ -5,7 +5,6 @@
 package secrets
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -55,10 +54,6 @@ func (r *Kubelet) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *Kubelet) Spec() interface{} {
 	return &r.spec
-}
-
-func (r *Kubelet) String() string {
-	return fmt.Sprintf("secrets.Kubelet(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

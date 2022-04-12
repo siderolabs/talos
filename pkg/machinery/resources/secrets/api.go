@@ -5,8 +5,6 @@
 package secrets
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -72,10 +70,6 @@ func (r *API) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *API) Spec() interface{} {
 	return r.spec
-}
-
-func (r *API) String() string {
-	return fmt.Sprintf("secrets.APICertificates(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

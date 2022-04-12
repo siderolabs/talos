@@ -5,8 +5,6 @@
 package k8s
 
 import (
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 )
@@ -48,10 +46,6 @@ func (r *ManifestStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *ManifestStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *ManifestStatus) String() string {
-	return fmt.Sprintf("k8s.ManifestStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.

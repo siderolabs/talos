@@ -5,7 +5,6 @@
 package kubespan
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -62,10 +61,6 @@ func (r *PeerStatus) Metadata() *resource.Metadata {
 // Spec implements resource.Resource.
 func (r *PeerStatus) Spec() interface{} {
 	return r.spec
-}
-
-func (r *PeerStatus) String() string {
-	return fmt.Sprintf("kubespan.PeerStatus(%q)", r.md.ID())
 }
 
 // DeepCopy implements resource.Resource.
