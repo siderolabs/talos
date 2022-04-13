@@ -23,7 +23,7 @@ preface = """\
 * Flannel: 0.17.0
 * runc: 1.1.1
 
-Talos is built with Go 1.18.
+Talos is built with Go 1.18.1.
 """
 
     [notes.eudev]
