@@ -91,6 +91,7 @@ message ApplyConfigurationRequest {
     deprecated = true
   ];
   Mode mode = 4;
+  bool dry_run = 5;
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.

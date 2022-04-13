@@ -62,10 +62,6 @@ func (suite *ApplyConfigSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ApplyConfigSuite) SetupTest() {
-	if testing.Short() {
-		suite.T().Skip("skipping in short mode")
-	}
-
 	// make sure we abort at some point in time, but give enough room for Recovers
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }
@@ -79,6 +75,10 @@ func (suite *ApplyConfigSuite) TearDownTest() {
 
 // TestApply verifies the apply config API.
 func (suite *ApplyConfigSuite) TestApply() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
@@ -119,7 +119,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 			)
 			if err != nil {
 				// It is expected that the connection will EOF here, so just log the error
-				suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+				suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
 			}
 
 			return nil
@@ -317,7 +317,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 				)
 				if err != nil {
 					// It is expected that the connection will EOF here, so just log the error
-					suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+					suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
 				}
 
 				return nil
@@ -406,6 +406,43 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.Require().True(errors.As(err, &errs))
 	suite.Require().True(errors.As(errs.Errors[0], &nodeError))
 	suite.Require().Equal(codes.InvalidArgument, status.Code(nodeError.Err))
+}
+
+// TestApplyDryRun verifies the apply config API with dry run enabled.
+func (suite *ApplyConfigSuite) TestApplyDryRun() {
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	sort.Strings(nodes)
+
+	node := nodes[0]
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	suite.Require().True(ok)
+
+	// this won't be possible without a reboot
+	cfg.MachineConfig.MachineType = "controlplane"
+
+	cfgDataOut, err := cfg.Bytes()
+	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+
+	reply, err := suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data:   cfgDataOut,
+			Mode:   machineapi.ApplyConfigurationRequest_AUTO,
+			DryRun: true,
+		},
+	)
+
+	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
+	suite.Require().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
 }
 
 func init() {

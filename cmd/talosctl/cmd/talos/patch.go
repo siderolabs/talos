@@ -27,6 +27,7 @@ var patchCmdFlags struct {
 	namespace string
 	patch     []string
 	patchFile string
+	dryRun    bool
 }
 
 func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, client.ResourceResponse) error {
@@ -54,6 +55,7 @@ func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, clie
 			Mode:      patchCmdFlags.Mode.Mode,
 			OnReboot:  patchCmdFlags.OnReboot,
 			Immediate: patchCmdFlags.Immediate,
+			DryRun:    patchCmdFlags.dryRun,
 		})
 
 		if bytes.Equal(
@@ -113,6 +115,7 @@ func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
 	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
+	patchCmd.Flags().BoolVar(&patchCmdFlags.dryRun, "dry-run", false, "print the change summary and patch preview without applying the changes")
 	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)
 	addCommand(patchCmd)
 }

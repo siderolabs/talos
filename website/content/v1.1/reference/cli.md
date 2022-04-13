@@ -17,6 +17,7 @@ talosctl apply-config [flags]
 
 ```
       --cert-fingerprint strings                            list of server certificate fingeprints to accept (defaults to no check)
+      --dry-run                                             check how the config change will be applied in dry-run mode
   -f, --file string                                         the filename of the updated configuration
   -h, --help                                                help for apply-config
   -i, --insecure                                            apply the config using the insecure (encrypted with no auth) maintenance service
@@ -820,6 +821,7 @@ talosctl edit <type> [<id>] [flags]
 ### Options
 
 ```
+      --dry-run                                do not apply the change after editing and print the change summary instead
   -h, --help                                   help for edit
   -m, --mode auto, no-reboot, reboot, staged   apply config mode (default auto)
       --namespace string                       resource namespace (default is to use default namespace per resource)
@@ -1591,6 +1593,7 @@ talosctl patch <type> [<id>] [flags]
 ### Options
 
 ```
+      --dry-run                                print the change summary and patch preview without applying the changes
   -h, --help                                   help for patch
   -m, --mode auto, no-reboot, reboot, staged   apply config mode (default auto)
       --namespace string                       resource namespace (default is to use default namespace per resource)

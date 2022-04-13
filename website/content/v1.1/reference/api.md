@@ -507,6 +507,7 @@ node.
 | on_reboot | [bool](#bool) |  | **Deprecated.** replaced by mode |
 | immediate | [bool](#bool) |  | **Deprecated.** replaced by mode |
 | mode | [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode) |  |  |
+| dry_run | [bool](#bool) |  |  |
 
 
 

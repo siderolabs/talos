@@ -87,6 +87,13 @@ Talos is built for x86-64 architecture with support for [x86-64-v2 microarchitec
 so Talos no longer runs on processors supporting only baseline `x86-64` microarchitecture (before 2009).
 """
 
+    [notes.apply-config]
+        title = "Apply Config `--dry-run`"
+        description="""\
+The commands `talosctl apply-config`, `talosctl patch mc` and `talosctl edit mc` now support `--dry-run` flag.
+If enabled it just prints out the selected config application mode and the configuration diff.
+"""
+
 [make_deps]
 
     [make_deps.tools]
