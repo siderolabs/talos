@@ -408,6 +408,43 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.Require().Equal(codes.InvalidArgument, status.Code(nodeError.Err))
 }
 
+// TestApplyDryRun verifies the apply config API with dry run enabled.
+func (suite *ApplyConfigSuite) TestApplyDryRun() {
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	sort.Strings(nodes)
+
+	node := nodes[0]
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	suite.Require().True(ok)
+
+	// this won't be possible without a reboot
+	cfg.MachineConfig.MachineType = "controlplane"
+
+	cfgDataOut, err := cfg.Bytes()
+	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+
+	reply, err := suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data:   cfgDataOut,
+			Mode:   machineapi.ApplyConfigurationRequest_AUTO,
+			DryRun: true,
+		},
+	)
+
+	suite.Assert().Nilf("failed to apply configuration (node %q): %w", node, err)
+	suite.Require().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
+}
+
 func init() {
 	allSuites = append(allSuites, new(ApplyConfigSuite))
 }

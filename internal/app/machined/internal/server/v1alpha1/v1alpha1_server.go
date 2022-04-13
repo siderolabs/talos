@@ -29,6 +29,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/cri/pkg/constants"
+	"github.com/google/go-cmp/cmp"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
@@ -73,6 +74,7 @@ import (
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -136,10 +138,11 @@ func (s *Server) Register(obj *grpc.Server) {
 
 // ApplyConfiguration implements machine.MachineService.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	mode := in.Mode.String()
-	modeDetails := ""
+	modeDetails := "Applied configuration with a reboot"
+	modeErr := ""
 
 	// TODO: remove in v1.1
 	switch {
@@ -161,17 +164,47 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
+
+		modeDetails = "Applied configuration without a reboot"
+	// --mode=staged
+	case machine.ApplyConfigurationRequest_STAGED:
+		modeDetails = "Staged configuration to be applied after the next reboot"
 	// --mode=auto detect actual update mode
 	case machine.ApplyConfigurationRequest_AUTO:
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
 			in.Mode = machine.ApplyConfigurationRequest_REBOOT
-			modeDetails = fmt.Sprintf("applied configuration with a reboot: %s", err)
+			modeDetails = "Applied configuration with a reboot"
+			modeErr = ": " + err.Error()
 		} else {
 			in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
-			modeDetails = "applied configuration without a reboot"
+			modeDetails = "Applied configuration without a reboot"
 		}
 
 		mode = fmt.Sprintf("%s(%s)", mode, in.Mode)
+	}
+
+	if in.DryRun {
+		var config interface{}
+		if s.Controller.Runtime().Config() != nil {
+			config = s.Controller.Runtime().Config().Raw()
+		}
+
+		diff := cmp.Diff(config, cfgProvider.Raw(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
+		if diff == "" {
+			diff = "No changes."
+		}
+
+		return &machine.ApplyConfigurationResponse{
+			Messages: []*machine.ApplyConfiguration{
+				{
+					Mode: in.Mode,
+					ModeDetails: fmt.Sprintf(`Dry run summary:
+%s (skipped in dry-run).
+Config diff:
+%s`, modeDetails, diff),
+				},
+			},
+		}, nil
 	}
 
 	log.Printf("apply config request: mode %s", strings.ToLower(mode))
@@ -215,7 +248,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		Messages: []*machine.ApplyConfiguration{
 			{
 				Mode:        in.Mode,
-				ModeDetails: modeDetails,
+				ModeDetails: modeDetails + modeErr,
 			},
 		},
 	}, nil
