@@ -1,3 +1,66 @@
+## [Talos 1.0.2](https://github.com/siderolabs/talos/releases/tag/v1.0.2) (2022-04-13)
+
+Welcome to the v1.0.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Talos is built with [Go 1.17.9](https://go.dev/doc/devel/release#go1.17.minor).
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>3 commits</summary>
+<p>
+
+* [`aae68c92f`](https://github.com/siderolabs/talos/commit/aae68c92f1d4aa11b377d25a35750d8ee262a8c0) fix: avoid panic in DHCPv6 operator on nil dereference
+* [`36f60ea70`](https://github.com/siderolabs/talos/commit/36f60ea70f88d72a620b473d220fda7f22441f63) fix: correctly parse tags out of images
+* [`05b40075a`](https://github.com/siderolabs/talos/commit/05b40075a5188f38b3a790fd0e77576beadb6d1b) chore: update Go to 1.17.9
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>2 commits</summary>
+<p>
+
+* [`c5d3ab0`](https://github.com/siderolabs/extras/commit/c5d3ab0725aaf114595c1f67644ce7251deb4564) chore: rename organization
+* [`61a6b5f`](https://github.com/siderolabs/extras/commit/61a6b5f1f20d1f8d0b6cad94a0281b9387c5ea21) feat: update pkgs for Go 1.17.9
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`e6eb485`](https://github.com/siderolabs/pkgs/commit/e6eb485608ccc6749e575e142d8b83aa139f01ae) feat: update Go to 1.17.9
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`a8fb702`](https://github.com/siderolabs/tools/commit/a8fb702beb2568b2fcdf2ac601772e0015eb9dbc) chore: rename org
+* [`5a97af0`](https://github.com/siderolabs/tools/commit/5a97af0902b44e7f20975510a7454e5d869e7d2f) chore: bump go to 1.17.9
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.0.0 -> v1.0.0-2-gc5d3ab0
+* **github.com/siderolabs/pkgs**    v1.0.0-6-g7c293d5 -> v1.0.0-7-ge6eb485
+* **github.com/siderolabs/tools**   v1.0.0-1-g4c77d96 -> v1.0.0-3-ga8fb702
+
+Previous release can be found at [v1.0.1](https://github.com/siderolabs/talos/releases/tag/v1.0.1)
+
 ## [Talos 1.0.1](https://github.com/siderolabs/talos/releases/tag/v1.0.1) (2022-04-04)
 
 Welcome to the v1.0.1 release of Talos!
