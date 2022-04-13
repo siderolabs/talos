@@ -23,6 +23,7 @@ var applyConfigCmdFlags struct {
 	certFingerprints []string
 	filename         string
 	insecure         bool
+	dryRun           bool
 }
 
 // applyConfigCmd represents the applyConfiguration command.
@@ -79,7 +80,7 @@ var applyConfigCmd = &cobra.Command{
 				if len(Endpoints) > 0 {
 					return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
 						opts := []installer.Option{}
-						opts = append(opts, installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, Endpoints[0]))
+						opts = append(opts, installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, Endpoints[0]), installer.WithDryRun(applyConfigCmdFlags.dryRun))
 
 						conn, err := installer.NewConnection(
 							ctx,
@@ -99,6 +100,7 @@ var applyConfigCmd = &cobra.Command{
 					ctx,
 					c,
 					node,
+					installer.WithDryRun(applyConfigCmdFlags.dryRun),
 				)
 				if err != nil {
 					return err
@@ -112,6 +114,7 @@ var applyConfigCmd = &cobra.Command{
 				Mode:      applyConfigCmdFlags.Mode.Mode,
 				OnReboot:  applyConfigCmdFlags.OnReboot,
 				Immediate: applyConfigCmdFlags.Immediate,
+				DryRun:    applyConfigCmdFlags.dryRun,
 			})
 			if err != nil {
 				return fmt.Errorf("error applying new configuration: %s", err)
@@ -127,6 +130,7 @@ var applyConfigCmd = &cobra.Command{
 func init() {
 	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
+	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.dryRun, "dry-run", false, "check how the config change will be applied in dry-run mode")
 	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
 	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, applyConfigCmd)
 	addCommand(applyConfigCmd)

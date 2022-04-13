@@ -83,6 +83,14 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		},
 	}
 
+	if in.DryRun {
+		reply.Messages[0].ModeDetails = `dry run summary:
+node is running in mainenance mode
+applied config will be used after the reboot (skipped in dry run)`
+
+		return reply, nil
+	}
+
 	s.cfgCh <- in.GetData()
 
 	return reply, nil
