@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.0.0"
+previous = "v1.0.1"
 
 pre_release = false
 
@@ -14,14 +14,10 @@ preface = """\
 """
 
 [notes]
-    [notes.dockeripv6]
-        title = "IPv6 in Docker-based Talos Clusters"
+    [notes.updates]
+        title = "Component Updates"
         description="""\
-The command `talosctl cluster create` now enables IPv6 by default for the Docker containers
-created for Talos nodes. This allows to use IPv6 addresses in Kubernetes networking.
-
-If `talosctl cluster create` fails to work on Linux due to the lack of IPv6 support,
-please use the flag `--disable-docker-ipv6` to revert the change.
+Talos is built with [Go 1.17.9](https://go.dev/doc/devel/release#go1.17.minor).
 """
 
 [make_deps]
