@@ -83,6 +83,13 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		},
 	}
 
+	if in.DryRun {
+		reply.Messages[0].ModeDetails = `Dry run summary:
+Node is running in maintenance mode and does not have a config yet.`
+
+		return reply, nil
+	}
+
 	s.cfgCh <- in.GetData()
 
 	return reply, nil

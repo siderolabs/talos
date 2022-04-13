@@ -27,6 +27,7 @@ type Connection struct {
 	bootstrapClient   *client.Client
 	nodeCtx           context.Context //nolint:containedctx
 	bootstrapCtx      context.Context //nolint:containedctx
+	dryRun            bool
 }
 
 // NewConnection creates new installer connection.
@@ -168,6 +169,15 @@ func WithBootstrapNode(ctx context.Context, bootstrapClient *client.Client, boot
 		c.bootstrapEndpoint = bootstrapNode
 		c.bootstrapClient = bootstrapClient
 		c.bootstrapCtx = ctx
+
+		return nil
+	}
+}
+
+// WithDryRun enables dry run mode in the installer.
+func WithDryRun(dryRun bool) Option {
+	return func(c *Connection) error {
+		c.dryRun = dryRun
 
 		return nil
 	}

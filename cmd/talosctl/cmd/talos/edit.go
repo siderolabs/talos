@@ -27,6 +27,7 @@ import (
 var editCmdFlags struct {
 	helpers.Mode
 	namespace string
+	dryRun    bool
 }
 
 //nolint:gocyclo
@@ -118,6 +119,7 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 				Mode:      editCmdFlags.Mode.Mode,
 				OnReboot:  editCmdFlags.OnReboot,
 				Immediate: editCmdFlags.Immediate,
+				DryRun:    editCmdFlags.dryRun,
 			})
 			if err != nil {
 				lastError = err.Error()
@@ -177,5 +179,6 @@ or 'notepad' for Windows.`,
 func init() {
 	editCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	helpers.AddModeFlags(&editCmdFlags.Mode, editCmd)
+	editCmd.Flags().BoolVar(&editCmdFlags.dryRun, "dry-run", false, "do not apply the change after editing and print the change summary instead")
 	addCommand(editCmd)
 }

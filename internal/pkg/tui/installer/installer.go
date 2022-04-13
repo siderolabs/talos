@@ -370,15 +370,49 @@ func (installer *Installer) apply(conn *Connection) error {
 		)
 		s.SetBackgroundColor(color)
 
+		var reply *machineapi.ApplyConfigurationResponse
+
 		// TODO: progress bar, logs?
 		list.AddItem(s, 1, 1, false)
-		_, err = conn.ApplyConfiguration(
+		reply, err = conn.ApplyConfiguration(
 			&machineapi.ApplyConfigurationRequest{
-				Data: config,
+				Data:   config,
+				DryRun: conn.dryRun,
 			},
 		)
 
+		if conn.dryRun {
+			err = fmt.Errorf("skipped in dry run")
+		}
+
 		s.Stop(err == nil)
+
+		if conn.dryRun {
+			text := tview.NewTextView()
+			addLines := func(lines ...string) {
+				t := text.GetText(false)
+				t += strings.Join(lines, "\n")
+				text.SetText(t)
+				installer.app.Draw()
+			}
+
+			for _, m := range reply.Messages {
+				addLines("", m.ModeDetails)
+			}
+
+			addLines(
+				"",
+				"Press any key to exit.",
+			)
+
+			text.SetBackgroundColor(color)
+			list.AddItem(text, 0, 1, false)
+			installer.app.Draw()
+
+			installer.awaitKey()
+
+			return nil
+		}
 
 		if err != nil {
 			return err

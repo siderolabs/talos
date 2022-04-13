@@ -44,6 +44,7 @@ func (suite *PatchSuite) TestSuccess() {
 	suite.Require().NoError(err)
 
 	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "--mode=no-reboot"})
+	suite.RunCLI([]string{"patch", "--nodes", node, "--patch", string(data), "machineconfig", "--mode=no-reboot", "--dry-run"})
 }
 
 // TestError runs comand with error.
