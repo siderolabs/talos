@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"

@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"

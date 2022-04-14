@@ -17,7 +17,7 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/dustin/go-humanize"
