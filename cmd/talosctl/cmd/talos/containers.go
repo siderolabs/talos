@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	criconstants "github.com/containerd/cri/pkg/constants"
+	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"

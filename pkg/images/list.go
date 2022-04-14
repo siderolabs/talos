@@ -7,7 +7,7 @@ package images
 import (
 	"fmt"
 
-	criconfig "github.com/containerd/cri/pkg/config"
+	criconfig "github.com/containerd/containerd/pkg/cri/config"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/version"

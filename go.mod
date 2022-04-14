@@ -36,7 +36,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
 	github.com/containerd/containerd v1.6.2
-	github.com/containerd/cri v1.19.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.0.1
 	github.com/containernetworking/plugins v1.1.0
