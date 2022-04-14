@@ -15,6 +15,12 @@ preface = """\
 
 [notes]
 
+    [notes.sbc-rpi4]
+        title = "Raspberry Pi PoE hat fan"
+        description = """\
+Talos now enables the Raspberry Pi PoE fan control by pulling in the poe overlay that works with upstream kernel
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\
@@ -33,7 +39,7 @@ Drops some default eudev rules that doesn't make sense in the context of Talos O
 Especially the ones around sound devices, cd-roms and renaming the network interfaces to be predictable
 """
 
-    [notes.sbc]
+    [notes.sbc-rockpi4]
         title = "Support RockPi 4 variants A and B"
         description = """\
 Talos now supports RockPi variants A and B in addition to RockPi 4C
