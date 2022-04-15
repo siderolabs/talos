@@ -2,7 +2,7 @@
 title: "Extension Services"
 description: "Use extension services in Talos Linux."
 aliases:
-  - ../learn-more/extention-services
+  - ../learn-more/extension-services
 ---
 
 Talos provides a way to run additional system services early in the Talos boot process.
