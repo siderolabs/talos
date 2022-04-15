@@ -27,7 +27,8 @@ func XFS(partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)
 
 	// The ftype=1 naming option is required by overlayfs.
-	args := []string{"-n", "ftype=1"}
+	// The bigtime=1 metadata option enables timestamps beyond 2038.
+	args := []string{"-n", "ftype=1", "-m", "bigtime=1"}
 
 	if opts.Force {
 		args = append(args, "-f")
