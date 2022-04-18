@@ -1,3 +1,52 @@
+## [Talos 1.0.3](https://github.com/siderolabs/talos/releases/tag/v1.0.3) (2022-04-18)
+
+Welcome to the v1.0.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.34
+* etcd: 3.5.3
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`d4c88b3de`](https://github.com/siderolabs/talos/commit/d4c88b3de170614668d2633e849732cfc8794a76) feat: update etcd to 3.5.3
+* [`ac50a42c8`](https://github.com/siderolabs/talos/commit/ac50a42c8f3b036a1fe2a2866d25e3bc13160aad) fix: correct cri package import path
+* [`0fce96866`](https://github.com/siderolabs/talos/commit/0fce96866871356a3198cd4d5a4634cd0ae0fe1f) chore: update release.toml
+* [`826decf6c`](https://github.com/siderolabs/talos/commit/826decf6ce6a48fbe3b304f7fabcd705d864ba3e) chore: bump kernel to 5.15.34
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`76f8c5b`](https://github.com/siderolabs/pkgs/commit/76f8c5bc36a54d2daf7e5fcb6860cd89b678d87a) chore: bump kernel to 5.15.34
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.0.0-7-ge6eb485 -> v1.0.0-8-g76f8c5b
+* **go.etcd.io/etcd/api/v3**         v3.5.2 -> v3.5.3
+* **go.etcd.io/etcd/client/pkg/v3**  v3.5.2 -> v3.5.3
+* **go.etcd.io/etcd/client/v3**      v3.5.2 -> v3.5.3
+* **go.etcd.io/etcd/etcdutl/v3**     v3.5.2 -> v3.5.3
+
+Previous release can be found at [v1.0.2](https://github.com/siderolabs/talos/releases/tag/v1.0.2)
+
 ## [Talos 1.0.2](https://github.com/siderolabs/talos/releases/tag/v1.0.2) (2022-04-13)
 
 Welcome to the v1.0.2 release of Talos!
