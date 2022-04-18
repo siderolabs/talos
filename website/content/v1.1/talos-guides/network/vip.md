@@ -27,6 +27,8 @@ and it will take up the mantle: the IP address.
 Talos has (as of version 0.9) built-in support for this form of shared IP address,
 and it can utilize this for both the Kubernetes API server and the Talos endpoint set.
 Talos uses `etcd` for elections and leadership (control) of the IP address.
+It is not reccomended to use a virtual IP to access the API of Talos itself, since the
+node using the shared IP is not deterministic and could change.
 
 ## Video Walkthrough
 
