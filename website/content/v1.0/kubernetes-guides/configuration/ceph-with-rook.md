@@ -95,8 +95,8 @@ ceph-filesystem        rook-ceph.cephfs.csi.ceph.com   Delete          Immediate
 
 ## Talos Linux Considerations
 
-It is important to note that a Rook Ceph cluster saves cluster information directly onto the node (be default `dataDirHostPath` is set to `/var/lib/rook`) which under Talos Linux is **ephemeral**.
-This makes cluster management a little bit more involved, as any time a Talos Linux node is reconfigured or upgraded, the ephemeral partition is wiped.
+It is important to note that a Rook Ceph cluster saves cluster information directly onto the node (be default `dataDirHostPath` is set to `/var/lib/rook`).
+This makes cluster management a little bit more involved, as any time a Talos Linux node is reconfigured or upgraded, the partition that stores the `/var` [file system]({{< relref "../../learn-more/architecture#the-file-system" >}}) is wiped, but the `--preserve` option of [`talosctl upgrade`]({{< relref "../../reference/cli#talosctl-upgrade" >}}) can be used to avoid this.
 
 When performing maintenance on a Talos Linux node with a Rook Ceph cluster, it is imperative that care be taken to maintain the health of the Ceph cluster, for instance when upgrading the Talos Linux version.
 Before upgrading, you should always check the health status of the Ceph cluster to ensure that it is healthy.
