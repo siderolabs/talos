@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
+	"github.com/talos-systems/talos/pkg/logging"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -37,7 +38,7 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			if bootstrapCmdFlags.recoverFrom != "" {
-				manager := snapshot.NewV3(nil)
+				manager := snapshot.NewV3(logging.Wrap(os.Stderr))
 
 				status, err := manager.Status(bootstrapCmdFlags.recoverFrom)
 				if err != nil {

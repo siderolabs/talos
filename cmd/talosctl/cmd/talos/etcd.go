@@ -20,6 +20,7 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -192,7 +193,7 @@ var etcdSnapshotCmd = &cobra.Command{
 
 			fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
 
-			manager := snapshot.NewV3(nil)
+			manager := snapshot.NewV3(logging.Wrap(os.Stderr))
 
 			status, err := manager.Status(dbPath)
 			if err != nil {

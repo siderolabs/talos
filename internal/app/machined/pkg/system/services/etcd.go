@@ -42,6 +42,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -650,7 +651,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 
 // recoverFromSnapshot recovers etcd data directory from the snapshot uploaded previously.
 func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
-	manager := snapshot.NewV3(nil)
+	manager := snapshot.NewV3(logging.Wrap(log.Writer()))
 
 	status, err := manager.Status(constants.EtcdRecoverySnapshotPath)
 	if err != nil {
