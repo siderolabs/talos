@@ -116,7 +116,7 @@ Once chosen, form the full HTTPS URL from this IP:
 https://192.168.0.15:6443
 ```
 
-You are free to set a DNS record to this IP address to identify the endpoint, but you will need to use the IP address itself, not the DNS name, to configure the shared IP (`machine.network.interfaces[].vip.ip`) in the Talos configuration.
+You are free to set a DNS record to this IP address to identify the Kubernetes API endpoint, but you will need to use the IP address itself, not the DNS name, to configure the shared IP (`machine.network.interfaces[].vip.ip`) in the Talos configuration.
 
 For more information about using a shared IP, see the related
 [Guide]({{< relref "../talos-guides/network/vip" >}})
@@ -164,6 +164,10 @@ The difference is that the Talos API listens on port `50000/tcp`.
 
 Whichever way you wish to access the Talos API, be sure to note the IP(s) or
 hostname(s) so that you can configure your `talosctl` tool's `endpoints` below.
+
+**NOTE**: The [Virtual IP]({{< relref "../talos-guides/network/vip.md" >}}) method is not recommended when accessing the Talos API as it requires etcd to be bootstrapped and functional.
+This can make debugging any issues via the Talos API more difficult as issues with Talos configuration may result in etcd not achieving quorum, and therefore the Virtual IP not being available.
+In this case setting the endpoints to the IP or hostnames of the control plane nodes themselves is preferred.
 
 ## Configure Talos
 

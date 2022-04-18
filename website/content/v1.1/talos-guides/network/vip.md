@@ -19,7 +19,7 @@ router in between them.
 The term "virtual" is misleading here.
 The IP address is real, and it is assigned to an interface.
 Instead, what actually happens is that the controlplane machines vie for
-control of the shared IP address.
+control of the shared IP address using etcd elections.
 There can be only one owner of the IP address at any given time, but if that
 owner disappears or becomes non-responsive, another owner will be chosen,
 and it will take up the mantle: the IP address.
@@ -27,6 +27,8 @@ and it will take up the mantle: the IP address.
 Talos has (as of version 0.9) built-in support for this form of shared IP address,
 and it can utilize this for both the Kubernetes API server and the Talos endpoint set.
 Talos uses `etcd` for elections and leadership (control) of the IP address.
+It is not reccomended to use a virtual IP to access the API of Talos itself, since the
+node using the shared IP is not deterministic and could change.
 
 ## Video Walkthrough
 
