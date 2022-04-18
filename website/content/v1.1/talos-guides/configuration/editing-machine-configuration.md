@@ -28,6 +28,9 @@ Each of these commands can operate in one of four modes:
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
 
+Additionally, there is also `talosctl get machineconfig`, which retrieves the current node configuration API resource and contains the machine configuration in the `.spec` field.
+It can be used to modify the configuration locally before being applied to the node.
+
 The list of config changes allowed to be applied immediately in Talos {{< release >}}:
 
 * `.debug`
