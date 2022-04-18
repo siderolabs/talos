@@ -21,7 +21,6 @@ import (
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -38,9 +37,8 @@ func (ctrl *ExtraManifestController) Name() string {
 func (ctrl *ExtraManifestController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			ID:        pointer.ToString(config.K8sExtraManifestsID),
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.ExtraManifestsConfigType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -89,7 +87,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			continue
 		}
 
-		configResource, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, config.K8sExtraManifestsID, resource.VersionUndefined))
+		configResource, err := r.Get(ctx, k8s.NewExtraManifestsConfig().Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -102,7 +100,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		config := configResource.(*config.K8sControlPlane).ExtraManifests()
+		config := *configResource.(*k8s.ExtraManifestsConfig).TypedSpec()
 
 		var multiErr *multierror.Error
 
@@ -142,7 +140,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest config.ExtraManifest) (id resource.ID, err error) {
+func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest k8s.ExtraManifest) (id resource.ID, err error) {
 	id = fmt.Sprintf("%s-%s", manifest.Priority, manifest.Name)
 
 	// inline manifests don't require download
@@ -153,7 +151,7 @@ func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.R
 	return id, ctrl.processURL(ctx, r, logger, manifest, id)
 }
 
-func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest config.ExtraManifest, id resource.ID) (err error) {
+func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest k8s.ExtraManifest, id resource.ID) (err error) {
 	var tmpDir string
 
 	tmpDir, err = ioutil.TempDir("", "talos")
@@ -219,7 +217,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 	return nil
 }
 
-func (ctrl *ExtraManifestController) processInline(ctx context.Context, r controller.Runtime, manifest config.ExtraManifest, id resource.ID) error {
+func (ctrl *ExtraManifestController) processInline(ctx context.Context, r controller.Runtime, manifest k8s.ExtraManifest, id resource.ID) error {
 	err := r.Modify(
 		ctx,
 		k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),

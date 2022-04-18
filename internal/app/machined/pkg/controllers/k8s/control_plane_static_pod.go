@@ -25,7 +25,6 @@ import (
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -42,8 +41,18 @@ func (ctrl *ControlPlaneStaticPodController) Name() string {
 func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.APIServerConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.ControllerManagerConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.SchedulerConfigType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -139,23 +148,23 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		touchedIDs := map[string]struct{}{}
 
 		for _, pod := range []struct {
-			f  func(context.Context, controller.Runtime, *zap.Logger, *config.K8sControlPlane, string, string) (string, error)
-			id resource.ID
+			f  func(context.Context, controller.Runtime, *zap.Logger, resource.Resource, string, string) (string, error)
+			md *resource.Metadata
 		}{
 			{
 				f:  ctrl.manageAPIServer,
-				id: config.K8sControlPlaneAPIServerID,
+				md: k8s.NewAPIServerConfig().Metadata(),
 			},
 			{
 				f:  ctrl.manageControllerManager,
-				id: config.K8sControlPlaneControllerManagerID,
+				md: k8s.NewControllerManagerConfig().Metadata(),
 			},
 			{
 				f:  ctrl.manageScheduler,
-				id: config.K8sControlPlaneSchedulerID,
+				md: k8s.NewSchedulerConfig().Metadata(),
 			},
 		} {
-			res, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, pod.id, resource.VersionUndefined))
+			res, err := r.Get(ctx, pod.md)
 			if err != nil {
 				if state.IsNotFoundError(err) {
 					continue
@@ -166,8 +175,8 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 			var podID string
 
-			if podID, err = pod.f(ctx, r, logger, res.(*config.K8sControlPlane), secretsVersion, configVersion); err != nil {
-				return fmt.Errorf("error updating static pod for %q: %w", pod.id, err)
+			if podID, err = pod.f(ctx, r, logger, res, secretsVersion, configVersion); err != nil {
+				return fmt.Errorf("error updating static pod for %q: %w", pod.md.Type(), err)
 			}
 
 			if podID != "" {
@@ -218,7 +227,7 @@ func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r 
 	return nil
 }
 
-func volumeMounts(volumes []config.K8sExtraVolume) []v1.VolumeMount {
+func volumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
 	result := make([]v1.VolumeMount, 0, len(volumes))
 
 	for _, volume := range volumes {
@@ -232,7 +241,7 @@ func volumeMounts(volumes []config.K8sExtraVolume) []v1.VolumeMount {
 	return result
 }
 
-func volumes(volumes []config.K8sExtraVolume) []v1.Volume {
+func volumes(volumes []k8s.ExtraVolume) []v1.Volume {
 	result := make([]v1.Volume, 0, len(volumes))
 
 	for _, volume := range volumes {
@@ -276,9 +285,9 @@ func envVars(environment map[string]string) []v1.EnvVar {
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+	configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
-	cfg := configResource.APIServer()
+	cfg := configResource.(*k8s.APIServerConfig).TypedSpec()
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
 
@@ -366,14 +375,14 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
-	return config.K8sControlPlaneAPIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneAPIServerID), func(r resource.Resource) error {
+	return k8s.APIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "kube-apiserver",
+				Name:      k8s.APIServerID,
 				Namespace: "kube-system",
 				Annotations: map[string]string{
 					constants.AnnotationStaticPodSecretsVersion:    secretsVersion,
@@ -382,14 +391,14 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 				Labels: map[string]string{
 					"tier":    "control-plane",
-					"k8s-app": "kube-apiserver",
+					"k8s-app": k8s.APIServerID,
 				},
 			},
 			Spec: v1.PodSpec{
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
-						Name:    "kube-apiserver",
+						Name:    k8s.APIServerID,
 						Image:   cfg.Image,
 						Command: args,
 						Env: append(
@@ -466,9 +475,9 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+	logger *zap.Logger, configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
-	cfg := configResource.ControllerManager()
+	cfg := configResource.(*k8s.ControllerManagerConfig).TypedSpec()
 
 	if !cfg.Enabled {
 		return "", nil
@@ -521,14 +530,14 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return config.K8sControlPlaneControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneControllerManagerID), func(r resource.Resource) error {
+	return k8s.ControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "kube-controller-manager",
+				Name:      k8s.ControllerManagerID,
 				Namespace: "kube-system",
 				Annotations: map[string]string{
 					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
@@ -536,14 +545,14 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 				Labels: map[string]string{
 					"tier":    "control-plane",
-					"k8s-app": "kube-controller-manager",
+					"k8s-app": k8s.ControllerManagerID,
 				},
 			},
 			Spec: v1.PodSpec{
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
-						Name:    "kube-controller-manager",
+						Name:    k8s.ControllerManagerID,
 						Image:   cfg.Image,
 						Command: args,
 						Env:     envVars(cfg.EnvironmentVariables),
@@ -595,9 +604,9 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource *config.K8sControlPlane, secretsVersion, configVersion string,
+	logger *zap.Logger, configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
-	cfg := configResource.Scheduler()
+	cfg := configResource.(*k8s.SchedulerConfig).TypedSpec()
 
 	if !cfg.Enabled {
 		return "", nil
@@ -631,14 +640,14 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	args = append(args, builder.Args()...)
 
 	//nolint:dupl
-	return config.K8sControlPlaneSchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, config.K8sControlPlaneSchedulerID), func(r resource.Resource) error {
+	return k8s.SchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "kube-scheduler",
+				Name:      k8s.SchedulerID,
 				Namespace: "kube-system",
 				Annotations: map[string]string{
 					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
@@ -646,14 +655,14 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 				Labels: map[string]string{
 					"tier":    "control-plane",
-					"k8s-app": "kube-scheduler",
+					"k8s-app": k8s.SchedulerID,
 				},
 			},
 			Spec: v1.PodSpec{
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
-						Name:    "kube-scheduler",
+						Name:    k8s.SchedulerID,
 						Image:   cfg.Image,
 						Command: args,
 						Env:     envVars(cfg.EnvironmentVariables),

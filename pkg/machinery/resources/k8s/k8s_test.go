@@ -25,16 +25,22 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
+		&k8s.AdmissionControlConfig{},
+		&k8s.APIServerConfig{},
 		&k8s.ConfigStatus{},
+		&k8s.ControllerManagerConfig{},
 		&k8s.Endpoint{},
+		&k8s.ExtraManifestsConfig{},
 		&k8s.KubeletConfig{},
 		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},
 		&k8s.ManifestStatus{},
 		&k8s.Manifest{},
+		&k8s.BootstrapManifestsConfig{},
 		&k8s.Nodename{},
 		&k8s.NodeIP{},
 		&k8s.NodeIPConfig{},
+		&k8s.SchedulerConfig{},
 		&k8s.SecretsStatus{},
 		&k8s.StaticPodStatus{},
 		&k8s.StaticPod{},

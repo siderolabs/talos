@@ -18,3 +18,12 @@ const NodeAddressFilterOnlyK8s = "only-k8s"
 
 // NodeAddressFilterNoK8s is the ID for the node address filter which removes any Kubernetes IPs.
 const NodeAddressFilterNoK8s = "no-k8s"
+
+// APIServerID is a generic ID for resources related to kube-apiserver.
+const APIServerID = "kube-apiserver"
+
+// ControllerManagerID is a generic ID for resources related to kube-controller-manager.
+const ControllerManagerID = "kube-controller-manager"
+
+// SchedulerID is a generic ID for resources related to kube-scheduler.
+const SchedulerID = "kube-scheduler"

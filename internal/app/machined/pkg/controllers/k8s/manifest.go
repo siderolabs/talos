@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
@@ -36,9 +35,8 @@ func (ctrl *ManifestController) Name() string {
 func (ctrl *ManifestController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			ID:        pointer.ToString(config.K8sManifestsID),
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.BootstrapManifestsConfigType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -71,7 +69,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
-		configResource, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, config.K8sManifestsID, resource.VersionUndefined))
+		configResource, err := r.Get(ctx, k8s.NewBootstrapManifestsConfig().Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -84,7 +82,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		config := configResource.(*config.K8sControlPlane).Manifests()
+		config := *configResource.(*k8s.BootstrapManifestsConfig).TypedSpec()
 
 		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
@@ -156,14 +154,14 @@ func jsonify(input string) (string, error) {
 	return string(out), err
 }
 
-func (ctrl *ManifestController) render(cfg config.K8sManifestsSpec, scrt *secrets.KubernetesRootSpec) ([]renderedManifest, error) {
+func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scrt *secrets.KubernetesRootSpec) ([]renderedManifest, error) {
 	templateConfig := struct {
-		config.K8sManifestsSpec
+		k8s.BootstrapManifestsConfigSpec
 
 		Secrets *secrets.KubernetesRootSpec
 	}{
-		K8sManifestsSpec: cfg,
-		Secrets:          scrt,
+		BootstrapManifestsConfigSpec: cfg,
+		Secrets:                      scrt,
 	}
 
 	type manifestDesc struct {

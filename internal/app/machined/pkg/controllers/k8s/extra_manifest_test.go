@@ -26,7 +26,6 @@ import (
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
@@ -93,15 +92,14 @@ func (suite *ExtraManifestSuite) assertExtraManifests(manifests []string) error 
 }
 
 func (suite *ExtraManifestSuite) TestReconcileInlineManifests() {
-	configExtraManifests := config.NewK8sExtraManifests()
-	configExtraManifests.SetExtraManifests(
-		config.K8sExtraManifestsSpec{
-			ExtraManifests: []config.ExtraManifest{
-				{
-					Name:     "namespaces",
-					Priority: "99",
-					InlineManifest: strings.TrimSpace(
-						`
+	configExtraManifests := k8s.NewExtraManifestsConfig()
+	*configExtraManifests.TypedSpec() = k8s.ExtraManifestsConfigSpec{
+		ExtraManifests: []k8s.ExtraManifest{
+			{
+				Name:     "namespaces",
+				Priority: "99",
+				InlineManifest: strings.TrimSpace(
+					`
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -112,11 +110,10 @@ kind: Namespace
 metadata:
     name: build
 `,
-					),
-				},
+				),
 			},
 		},
-	)
+	}
 
 	statusNetwork := network.NewStatus(network.NamespaceName, network.StatusID)
 	statusNetwork.TypedSpec().AddressReady = true
@@ -164,7 +161,6 @@ func (suite *ExtraManifestSuite) TearDownTest() {
 
 	// trigger updates in resources to stop watch loops
 	suite.Assert().NoError(suite.state.Create(context.Background(), v1alpha1.NewService("foo")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), config.NewK8sManifests()))
 }
 
 func TestExtraManifestSuite(t *testing.T) {

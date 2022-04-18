@@ -26,7 +26,6 @@ import (
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
@@ -91,7 +90,7 @@ func (suite *ManifestSuite) assertManifests(manifests []string) error {
 	return nil
 }
 
-var defaultManifestSpec = config.K8sManifestsSpec{
+var defaultManifestSpec = k8s.BootstrapManifestsConfigSpec{
 	Server:        "127.0.0.1",
 	ClusterDomain: "cluster.",
 
@@ -121,8 +120,8 @@ var defaultManifestSpec = config.K8sManifestsSpec{
 
 func (suite *ManifestSuite) TestReconcileDefaults() {
 	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
-	manifestConfig := config.NewK8sManifests()
-	manifestConfig.SetManifests(defaultManifestSpec)
+	manifestConfig := k8s.NewBootstrapManifestsConfig()
+	*manifestConfig.TypedSpec() = defaultManifestSpec
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
@@ -152,10 +151,10 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 
 func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
-	manifestConfig := config.NewK8sManifests()
+	manifestConfig := k8s.NewBootstrapManifestsConfig()
 	spec := defaultManifestSpec
 	spec.ProxyEnabled = false
-	manifestConfig.SetManifests(spec)
+	*manifestConfig.TypedSpec() = spec
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
@@ -184,10 +183,10 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 
 func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
-	manifestConfig := config.NewK8sManifests()
+	manifestConfig := k8s.NewBootstrapManifestsConfig()
 	spec := defaultManifestSpec
 	spec.ProxyArgs = append(spec.ProxyArgs, "--bind-address=\"::\"")
-	manifestConfig.SetManifests(spec)
+	*manifestConfig.TypedSpec() = spec
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
@@ -239,10 +238,10 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 
 func (suite *ManifestSuite) TestReconcileDisablePSP() {
 	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
-	manifestConfig := config.NewK8sManifests()
+	manifestConfig := k8s.NewBootstrapManifestsConfig()
 	spec := defaultManifestSpec
 	spec.PodSecurityPolicyEnabled = false
-	manifestConfig.SetManifests(spec)
+	*manifestConfig.TypedSpec() = spec
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
@@ -278,7 +277,6 @@ func (suite *ManifestSuite) TearDownTest() {
 
 	// trigger updates in resources to stop watch loops
 	suite.Assert().NoError(suite.state.Create(context.Background(), secrets.NewKubernetesRoot("-")))
-	suite.Assert().NoError(suite.state.Create(context.Background(), config.NewK8sControlPlaneAPIServer()))
 }
 
 func TestManifestSuite(t *testing.T) {

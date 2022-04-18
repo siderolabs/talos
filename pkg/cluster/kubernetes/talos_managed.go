@@ -151,6 +151,19 @@ func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options Upgr
 	return nil
 }
 
+func controlplaneConfigResourceType(service string) resource.Type {
+	switch service {
+	case kubeAPIServer:
+		return k8s.APIServerConfigType
+	case kubeControllerManager:
+		return k8s.ControllerManagerConfigType
+	case kubeScheduler:
+		return k8s.SchedulerConfigType
+	}
+
+	panic(fmt.Sprintf("unknown service ID %q", service))
+}
+
 //nolint:gocyclo
 func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -165,13 +178,25 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 
 	options.Log(" > %q: starting update", node)
 
-	watchClient, err := c.Resources.Watch(ctx, config.NamespaceName, config.K8sControlPlaneType, service)
+	var watchClient *client.ResourceWatchClient
+
+	// try specific resource type (Talos 1.1+, and fall back to generic resource type for Talos <=1.0)
+	watchClient, err = c.Resources.Watch(ctx, k8s.ControlPlaneNamespaceName, controlplaneConfigResourceType(service), service)
 	if err != nil {
 		return fmt.Errorf("error watching service configuration: %w", err)
 	}
 
 	// first response is resource definition
 	_, err = watchClient.Recv()
+	if err != nil && client.StatusCode(err) == codes.NotFound {
+		watchClient, err = c.Resources.Watch(ctx, config.NamespaceName, "KubernetesControlPlaneConfigs.config.talos.dev", service)
+		if err != nil {
+			return fmt.Errorf("error watching service configuration: %w", err)
+		}
+
+		_, err = watchClient.Recv()
+	}
+
 	if err != nil {
 		return fmt.Errorf("error watching config: %w", err)
 	}

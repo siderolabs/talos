@@ -22,9 +22,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
-// K8sControlPlaneController manages config.K8sControlPlane based on configuration.
+// K8sControlPlaneController manages Kubernetes control plane resources based on configuration.
 type K8sControlPlaneController struct{}
 
 // Name implements controller.Controller interface.
@@ -54,7 +55,27 @@ func (ctrl *K8sControlPlaneController) Inputs() []controller.Input {
 func (ctrl *K8sControlPlaneController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: config.K8sControlPlaneType,
+			Type: k8s.AdmissionControlConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: k8s.APIServerConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: k8s.ControllerManagerConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: k8s.ExtraManifestsConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: k8s.BootstrapManifestsConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: k8s.SchedulerConfigType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -120,11 +141,11 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 	}
 }
 
-func convertVolumes(volumes []talosconfig.VolumeMount) []config.K8sExtraVolume {
-	result := make([]config.K8sExtraVolume, 0, len(volumes))
+func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
+	result := make([]k8s.ExtraVolume, 0, len(volumes))
 
 	for _, volume := range volumes {
-		result = append(result, config.K8sExtraVolume{
+		result = append(result, k8s.ExtraVolume{
 			Name:      volume.Name(),
 			HostPath:  volume.HostPath(),
 			MountPath: volume.MountPath(),
@@ -141,8 +162,8 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 		cloudProvider = "external"
 	}
 
-	return r.Modify(ctx, config.NewK8sControlPlaneAPIServer(), func(r resource.Resource) error {
-		r.(*config.K8sControlPlane).SetAPIServer(config.K8sControlPlaneAPIServerSpec{
+	return r.Modify(ctx, k8s.NewAPIServerConfig(), func(r resource.Resource) error {
+		*r.(*k8s.APIServerConfig).TypedSpec() = k8s.APIServerConfigSpec{
 			Image:                    cfgProvider.Cluster().APIServer().Image(),
 			CloudProvider:            cloudProvider,
 			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
@@ -153,26 +174,26 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 			EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
-		})
+		}
 
 		return nil
 	})
 }
 
 func (ctrl *K8sControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
-	spec := config.K8sAdmissionControlSpec{}
+	spec := k8s.AdmissionControlConfigSpec{}
 
 	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
 		spec.Config = append(spec.Config,
-			config.AdmissionPluginSpec{
+			k8s.AdmissionPluginSpec{
 				Name:          cfg.Name(),
 				Configuration: cfg.Configuration(),
 			},
 		)
 	}
 
-	return r.Modify(ctx, config.NewK8sAdmissionControlSpec(), func(r resource.Resource) error {
-		r.(*config.K8sControlPlane).SetAdmissionControl(spec)
+	return r.Modify(ctx, k8s.NewAdmissionControlConfig(), func(r resource.Resource) error {
+		*r.(*k8s.AdmissionControlConfig).TypedSpec() = spec
 
 		return nil
 	})
@@ -184,8 +205,8 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 		cloudProvider = "external"
 	}
 
-	return r.Modify(ctx, config.NewK8sControlPlaneControllerManager(), func(r resource.Resource) error {
-		r.(*config.K8sControlPlane).SetControllerManager(config.K8sControlPlaneControllerManagerSpec{
+	return r.Modify(ctx, k8s.NewControllerManagerConfig(), func(r resource.Resource) error {
+		*r.(*k8s.ControllerManagerConfig).TypedSpec() = k8s.ControllerManagerConfigSpec{
 			Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
 			Image:                cfgProvider.Cluster().ControllerManager().Image(),
 			CloudProvider:        cloudProvider,
@@ -194,21 +215,21 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 			ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
 			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
 			EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
-		})
+		}
 
 		return nil
 	})
 }
 
 func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
-	return r.Modify(ctx, config.NewK8sControlPlaneScheduler(), func(r resource.Resource) error {
-		r.(*config.K8sControlPlane).SetScheduler(config.K8sControlPlaneSchedulerSpec{
+	return r.Modify(ctx, k8s.NewSchedulerConfig(), func(r resource.Resource) error {
+		*r.(*k8s.SchedulerConfig).TypedSpec() = k8s.SchedulerConfigSpec{
 			Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
 			Image:                cfgProvider.Cluster().Scheduler().Image(),
 			ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
 			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
 			EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
-		})
+		}
 
 		return nil
 	})
@@ -237,7 +258,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 		}
 	}
 
-	return r.Modify(ctx, config.NewK8sManifests(), func(r resource.Resource) error {
+	return r.Modify(ctx, k8s.NewBootstrapManifestsConfig(), func(r resource.Resource) error {
 		images := images.List(cfgProvider)
 
 		proxyArgs, err := getProxyArgs(cfgProvider)
@@ -245,7 +266,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			return err
 		}
 
-		r.(*config.K8sControlPlane).SetManifests(config.K8sManifestsSpec{
+		*r.(*k8s.BootstrapManifestsConfig).TypedSpec() = k8s.BootstrapManifestsConfigSpec{
 			Server:        cfgProvider.Cluster().Endpoint().String(),
 			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
 
@@ -266,18 +287,18 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			FlannelCNIImage: images.FlannelCNI,
 
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
-		})
+		}
 
 		return nil
 	})
 }
 
 func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
-	return r.Modify(ctx, config.NewK8sExtraManifests(), func(r resource.Resource) error {
-		spec := config.K8sExtraManifestsSpec{}
+	return r.Modify(ctx, k8s.NewExtraManifestsConfig(), func(r resource.Resource) error {
+		spec := k8s.ExtraManifestsConfigSpec{}
 
 		for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 				Name:     url,
 				URL:      url,
 				Priority: "05", // push CNI to the top
@@ -285,7 +306,7 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 		}
 
 		for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 				Name:     url,
 				URL:      url,
 				Priority: "30", // after default manifests
@@ -293,7 +314,7 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 		}
 
 		for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 				Name:         url,
 				URL:          url,
 				Priority:     "99", // make sure extra manifests come last, when PSP is already created
@@ -302,14 +323,14 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 		}
 
 		for _, manifest := range cfgProvider.Cluster().InlineManifests() {
-			spec.ExtraManifests = append(spec.ExtraManifests, config.ExtraManifest{
+			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 				Name:           manifest.Name(),
 				Priority:       "99", // make sure extra manifests come last, when PSP is already created
 				InlineManifest: manifest.Contents(),
 			})
 		}
 
-		r.(*config.K8sControlPlane).SetExtraManifests(spec)
+		*r.(*k8s.ExtraManifestsConfig).TypedSpec() = spec
 
 		return nil
 	})

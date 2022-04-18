@@ -25,7 +25,6 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []resource.Resource{
-		&config.K8sControlPlane{},
 		&config.MachineType{},
 		&config.MachineConfig{},
 	} {

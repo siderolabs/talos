@@ -28,7 +28,6 @@ import (
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -102,9 +101,11 @@ func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests 
 func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
-	configAPIServer := config.NewK8sControlPlaneAPIServer()
-	configControllerManager := config.NewK8sControlPlaneControllerManager()
-	configScheduler := config.NewK8sControlPlaneScheduler()
+	configAPIServer := k8s.NewAPIServerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager.TypedSpec().Enabled = true
+	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
@@ -153,22 +154,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
-	configAPIServer := config.NewK8sControlPlaneAPIServer()
-	configAPIServer.SetAPIServer(
-		config.K8sControlPlaneAPIServerSpec{
-			ExtraVolumes: []config.K8sExtraVolume{
-				{
-					Name:      "foo",
-					HostPath:  "/var/lib",
-					MountPath: "/var/foo",
-					ReadOnly:  true,
-				},
+	configAPIServer := k8s.NewAPIServerConfig()
+	*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
+		ExtraVolumes: []k8s.ExtraVolume{
+			{
+				Name:      "foo",
+				HostPath:  "/var/lib",
+				MountPath: "/var/foo",
+				ReadOnly:  true,
 			},
 		},
-	)
+	}
 
-	configControllerManager := config.NewK8sControlPlaneControllerManager()
-	configScheduler := config.NewK8sControlPlaneScheduler()
+	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager.TypedSpec().Enabled = true
+	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
@@ -309,13 +310,11 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgs() {
 	for _, test := range tests {
 		configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 		secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
-		configAPIServer := config.NewK8sControlPlaneAPIServer()
+		configAPIServer := k8s.NewAPIServerConfig()
 
-		configAPIServer.SetAPIServer(
-			config.K8sControlPlaneAPIServerSpec{
-				ExtraArgs: test.args,
-			},
-		)
+		*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
+			ExtraArgs: test.args,
+		}
 
 		suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 		suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
@@ -447,13 +446,11 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
 		},
 	}
 	for _, test := range tests {
-		configAPIServer := config.NewK8sControlPlaneAPIServer()
+		configAPIServer := k8s.NewAPIServerConfig()
 
-		configAPIServer.SetAPIServer(
-			config.K8sControlPlaneAPIServerSpec{
-				EnvironmentVariables: test.env,
-			},
-		)
+		*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
+			EnvironmentVariables: test.env,
+		}
 
 		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
 
@@ -509,9 +506,11 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
 func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptScheduler() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
-	configAPIServer := config.NewK8sControlPlaneAPIServer()
-	configControllerManager := config.NewK8sControlPlaneControllerManager()
-	configScheduler := config.NewK8sControlPlaneScheduler()
+	configAPIServer := k8s.NewAPIServerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager.TypedSpec().Enabled = true
+	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
@@ -536,16 +535,12 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 	// flip enabled to disable scheduler
 	_, err := suite.state.UpdateWithConflicts(
 		suite.ctx, configScheduler.Metadata(), func(r resource.Resource) error {
-			spec := r.(*config.K8sControlPlane).Scheduler()
-			spec.Enabled = false
-			r.(*config.K8sControlPlane).SetScheduler(spec)
+			r.(*k8s.SchedulerConfig).TypedSpec().Enabled = false
 
 			return nil
 		},
 	)
 	suite.Require().NoError(err)
-
-	configScheduler.SetScheduler(config.K8sControlPlaneSchedulerSpec{Enabled: false})
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -575,7 +570,6 @@ func (suite *ControlPlaneStaticPodSuite) TearDownTest() {
 			k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, "-"),
 		),
 	)
-	suite.Assert().NoError(suite.state.Create(context.Background(), config.NewK8sManifests()))
 }
 
 func TestControlPlaneStaticPodSuite(t *testing.T) {

@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -23,7 +22,6 @@ import (
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -39,9 +37,8 @@ func (ctrl *RenderConfigsStaticPodController) Name() string {
 func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.K8sControlPlaneType,
-			ID:        pointer.ToString(config.K8sAdmissionControlID),
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.AdmissionControlConfigType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -68,7 +65,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		case <-r.EventCh():
 		}
 
-		admissionRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, config.K8sAdmissionControlID, resource.VersionUndefined))
+		admissionRes, err := r.Get(ctx, k8s.NewAdmissionControlConfig().Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -77,7 +74,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting admission config resource: %w", err)
 		}
 
-		admissionConfig := admissionRes.(*config.K8sControlPlane).AdmissionControl()
+		admissionConfig := admissionRes.(*k8s.AdmissionControlConfig).TypedSpec()
 
 		type configFile struct {
 			filename string
@@ -104,7 +101,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				configs: []configFile{
 					{
 						filename: "admission-control-config.yaml",
-						f:        admissionControlConfig(&admissionConfig),
+						f:        admissionControlConfig(admissionConfig),
 					},
 				},
 			},
@@ -148,7 +145,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 	}
 }
 
-func admissionControlConfig(spec *config.K8sAdmissionControlSpec) func() (runtime.Object, error) {
+func admissionControlConfig(spec *k8s.AdmissionControlConfigSpec) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
 		var cfg apiserverv1.AdmissionConfiguration
 

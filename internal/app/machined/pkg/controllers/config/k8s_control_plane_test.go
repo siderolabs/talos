@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -69,23 +68,19 @@ func (suite *K8sControlPlaneSuite) startRuntime() {
 	}()
 }
 
-func (suite *K8sControlPlaneSuite) assertK8sControlPlanes(manifests []string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(config.NamespaceName, config.K8sControlPlaneType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
+func (suite *K8sControlPlaneSuite) assertControlPlaneConfigs(resourceTypes ...resource.Type) error {
+	for _, resourceType := range resourceTypes {
+		resources, err := suite.state.List(
+			suite.ctx,
+			resource.NewMetadata(k8s.ControlPlaneNamespaceName, resourceType, "", resource.VersionUndefined),
+		)
+		if err != nil {
+			return err
+		}
 
-	ids := make([]string, 0, len(resources.Items))
-
-	for _, res := range resources.Items {
-		ids = append(ids, res.Metadata().ID())
-	}
-
-	if !reflect.DeepEqual(manifests, ids) {
-		return retry.ExpectedError(fmt.Errorf("expected %q, got %q", manifests, ids))
+		if len(resources.Items) == 0 {
+			return retry.ExpectedError(fmt.Errorf("no resources with type %q found", resourceType))
+		}
 	}
 
 	return nil
@@ -93,7 +88,7 @@ func (suite *K8sControlPlaneSuite) assertK8sControlPlanes(manifests []string) er
 
 // setupMachine creates a machine with given configuration, waits for it to become ready,
 // and returns API server's spec.
-func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) config.K8sControlPlaneAPIServerSpec {
+func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) k8s.APIServerConfigSpec {
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
 
@@ -103,27 +98,25 @@ func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) confi
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				return suite.assertK8sControlPlanes(
-					[]string{
-						config.K8sAdmissionControlID,
-						config.K8sExtraManifestsID,
-						config.K8sControlPlaneAPIServerID,
-						config.K8sControlPlaneControllerManagerID,
-						config.K8sControlPlaneSchedulerID,
-						config.K8sManifestsID,
-					},
+				return suite.assertControlPlaneConfigs(
+					k8s.AdmissionControlConfigType,
+					k8s.APIServerConfigType,
+					k8s.ControllerManagerConfigType,
+					k8s.SchedulerConfigType,
+					k8s.BootstrapManifestsConfigType,
+					k8s.ExtraManifestsConfigType,
 				)
 			},
 		),
 	)
 
-	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneAPIServer().Metadata())
+	r, err := suite.state.Get(suite.ctx, k8s.NewAPIServerConfig().Metadata())
 	suite.Require().NoError(err)
 
-	cp, ok := r.(*config.K8sControlPlane)
+	cp, ok := r.(*k8s.APIServerConfig)
 	suite.Require().True(ok, "got %T", r)
 
-	return cp.APIServer()
+	return *cp.TypedSpec()
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
@@ -147,9 +140,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	apiServerCfg := suite.setupMachine(cfg)
 	suite.Assert().Empty(apiServerCfg.CloudProvider)
 
-	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneControllerManager().Metadata())
+	r, err := suite.state.Get(suite.ctx, k8s.NewControllerManagerConfig().Metadata())
 	suite.Require().NoError(err)
-	suite.Assert().Empty(r.(*config.K8sControlPlane).ControllerManager().CloudProvider)
+	suite.Assert().Empty(r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
@@ -184,7 +177,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 
 	apiServerCfg := suite.setupMachine(cfg)
 	suite.Assert().Equal(
-		[]config.K8sExtraVolume{
+		[]k8s.ExtraVolume{
 			{
 				Name:      "var-foo",
 				HostPath:  "/var/lib",
@@ -260,16 +253,16 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 	apiServerCfg := suite.setupMachine(cfg)
 	suite.Assert().Equal("external", apiServerCfg.CloudProvider)
 
-	r, err := suite.state.Get(suite.ctx, config.NewK8sControlPlaneControllerManager().Metadata())
+	r, err := suite.state.Get(suite.ctx, k8s.NewControllerManagerConfig().Metadata())
 	suite.Require().NoError(err)
-	suite.Assert().Equal("external", r.(*config.K8sControlPlane).ControllerManager().CloudProvider)
+	suite.Assert().Equal("external", r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
 
-	r, err = suite.state.Get(suite.ctx, config.NewK8sExtraManifests().Metadata())
+	r, err = suite.state.Get(suite.ctx, k8s.NewExtraManifestsConfig().Metadata())
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(
-		config.K8sExtraManifestsSpec{
-			ExtraManifests: []config.ExtraManifest{
+		&k8s.ExtraManifestsConfigSpec{
+			ExtraManifests: []k8s.ExtraManifest{
 				{
 					Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
 					URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
@@ -281,7 +274,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 					Priority: "30",
 				},
 			},
-		}, r.(*config.K8sControlPlane).ExtraManifests(),
+		}, r.(*k8s.ExtraManifestsConfig).TypedSpec(),
 	)
 }
 
@@ -318,19 +311,19 @@ metadata:
 
 	suite.setupMachine(cfg)
 
-	r, err := suite.state.Get(suite.ctx, config.NewK8sExtraManifests().Metadata())
+	r, err := suite.state.Get(suite.ctx, k8s.NewExtraManifestsConfig().Metadata())
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(
-		config.K8sExtraManifestsSpec{
-			ExtraManifests: []config.ExtraManifest{
+		&k8s.ExtraManifestsConfigSpec{
+			ExtraManifests: []k8s.ExtraManifest{
 				{
 					Name:           "namespace-ci",
 					Priority:       "99",
 					InlineManifest: "apiVersion: v1\nkind: Namespace\nmetadata:\n\tname: ci",
 				},
 			},
-		}, r.(*config.K8sControlPlane).ExtraManifests(),
+		}, r.(*k8s.ExtraManifestsConfig).TypedSpec(),
 	)
 }
 
@@ -351,7 +344,7 @@ func (suite *K8sControlPlaneSuite) TearDownTest() {
 	suite.Assert().NoError(
 		suite.state.Destroy(
 			context.Background(),
-			config.NewK8sControlPlaneAPIServer().Metadata(),
+			k8s.NewAPIServerConfig().Metadata(),
 			state.WithDestroyOwner("config.K8sControlPlaneController"),
 		),
 	)
