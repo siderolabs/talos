@@ -7,6 +7,7 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -18,10 +19,7 @@ const MemberType = resource.Type("Members.cluster.talos.dev")
 // Member resource contains information about discovered cluster members.
 //
 // Members are usually derived from Affiliates.
-type Member struct {
-	md   resource.Metadata
-	spec MemberSpec
-}
+type Member = typed.Resource[MemberSpec, MemberRD]
 
 // MemberSpec describes Member state.
 type MemberSpec struct {
@@ -32,44 +30,30 @@ type MemberSpec struct {
 	OperatingSystem string       `yaml:"operatingSystem"`
 }
 
+// DeepCopy generates a deep copy of MemberSpec.
+func (spec MemberSpec) DeepCopy() MemberSpec {
+	cp := spec
+	if spec.Addresses != nil {
+		cp.Addresses = make([]netaddr.IP, len(spec.Addresses))
+		copy(cp.Addresses, spec.Addresses)
+	}
+
+	return cp
+}
+
 // NewMember initializes a Member resource.
 func NewMember(namespace resource.Namespace, id resource.ID) *Member {
-	r := &Member{
-		md:   resource.NewMetadata(namespace, MemberType, id, resource.VersionUndefined),
-		spec: MemberSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[MemberSpec, MemberRD](
+		resource.NewMetadata(namespace, MemberType, id, resource.VersionUndefined),
+		MemberSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Member) Metadata() *resource.Metadata {
-	return &r.md
-}
+// MemberRD provides auxiliary methods for Member.
+type MemberRD struct{}
 
-// Spec implements resource.Resource.
-func (r *Member) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Member) DeepCopy() resource.Resource {
-	return &Member{
-		md: r.md,
-		spec: MemberSpec{
-			NodeID:          r.spec.NodeID,
-			Addresses:       append([]netaddr.IP(nil), r.spec.Addresses...),
-			Hostname:        r.spec.Hostname,
-			MachineType:     r.spec.MachineType,
-			OperatingSystem: r.spec.OperatingSystem,
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Member) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (MemberRD) ResourceDefinition(resource.Metadata, MemberSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemberType,
 		Aliases:          []resource.Type{},
@@ -93,9 +77,4 @@ func (r *Member) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Member) TypedSpec() *MemberSpec {
-	return &r.spec
 }

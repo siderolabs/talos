@@ -7,6 +7,7 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -18,21 +19,7 @@ const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
 // Affiliate resource holds information about cluster affiliate: it is discovered potential cluster member and/or KubeSpan peer.
 //
 // Controller builds local Affiliate structure for the node itself, other Affiliates are pulled from the registry during the discovery process.
-type Affiliate struct {
-	md   resource.Metadata
-	spec AffiliateSpec
-}
-
-// AffiliateSpec describes Affiliate state.
-type AffiliateSpec struct {
-	NodeID          string                `yaml:"nodeId"`
-	Addresses       []netaddr.IP          `yaml:"addresses"`
-	Hostname        string                `yaml:"hostname"`
-	Nodename        string                `yaml:"nodename,omitempty"`
-	OperatingSystem string                `yaml:"operatingSystem"`
-	MachineType     machine.Type          `yaml:"machineType"`
-	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
-}
+type Affiliate = typed.Resource[AffiliateSpec, AffiliateRD]
 
 // KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
 type KubeSpanAffiliateSpec struct {
@@ -42,51 +29,19 @@ type KubeSpanAffiliateSpec struct {
 	Endpoints           []netaddr.IPPort   `yaml:"endpoints"`
 }
 
-// NewAffiliate initializes a Affiliate resource.
+// NewAffiliate initializes the Affiliate resource.
 func NewAffiliate(namespace resource.Namespace, id resource.ID) *Affiliate {
-	r := &Affiliate{
-		md:   resource.NewMetadata(namespace, AffiliateType, id, resource.VersionUndefined),
-		spec: AffiliateSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[AffiliateSpec, AffiliateRD](
+		resource.NewMetadata(namespace, AffiliateType, id, resource.VersionUndefined),
+		AffiliateSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Affiliate) Metadata() *resource.Metadata {
-	return &r.md
-}
+// AffiliateRD provides auxiliary methods for Affiliate.
+type AffiliateRD struct{}
 
-// Spec implements resource.Resource.
-func (r *Affiliate) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Affiliate) DeepCopy() resource.Resource {
-	return &Affiliate{
-		md: r.md,
-		spec: AffiliateSpec{
-			NodeID:          r.spec.NodeID,
-			Addresses:       append([]netaddr.IP(nil), r.spec.Addresses...),
-			Hostname:        r.spec.Hostname,
-			Nodename:        r.spec.Nodename,
-			OperatingSystem: r.spec.OperatingSystem,
-			MachineType:     r.spec.MachineType,
-			KubeSpan: KubeSpanAffiliateSpec{
-				PublicKey:           r.spec.KubeSpan.PublicKey,
-				Address:             r.spec.KubeSpan.Address,
-				AdditionalAddresses: append([]netaddr.IPPrefix(nil), r.spec.KubeSpan.AdditionalAddresses...),
-				Endpoints:           append([]netaddr.IPPort(nil), r.spec.KubeSpan.Endpoints...),
-			},
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Affiliate) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (r AffiliateRD) ResourceDefinition(resource.Metadata, AffiliateSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AffiliateType,
 		Aliases:          []resource.Type{},
@@ -108,9 +63,36 @@ func (r *Affiliate) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Affiliate) TypedSpec() *AffiliateSpec {
-	return &r.spec
+// AffiliateSpec describes Affiliate state.
+type AffiliateSpec struct {
+	NodeID          string                `yaml:"nodeId"`
+	Addresses       []netaddr.IP          `yaml:"addresses"`
+	Hostname        string                `yaml:"hostname"`
+	Nodename        string                `yaml:"nodename,omitempty"`
+	OperatingSystem string                `yaml:"operatingSystem"`
+	MachineType     machine.Type          `yaml:"machineType"`
+	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
+}
+
+// DeepCopy generates a deep copy of AffiliateSpec.
+func (spec AffiliateSpec) DeepCopy() AffiliateSpec {
+	cp := spec
+	if spec.Addresses != nil {
+		cp.Addresses = make([]netaddr.IP, len(spec.Addresses))
+		copy(cp.Addresses, spec.Addresses)
+	}
+
+	if spec.KubeSpan.AdditionalAddresses != nil {
+		cp.KubeSpan.AdditionalAddresses = make([]netaddr.IPPrefix, len(spec.KubeSpan.AdditionalAddresses))
+		copy(cp.KubeSpan.AdditionalAddresses, spec.KubeSpan.AdditionalAddresses)
+	}
+
+	if spec.KubeSpan.Endpoints != nil {
+		cp.KubeSpan.Endpoints = make([]netaddr.IPPort, len(spec.KubeSpan.Endpoints))
+		copy(cp.KubeSpan.Endpoints, spec.KubeSpan.Endpoints)
+	}
+
+	return cp
 }
 
 // Merge two AffiliateSpecs.

@@ -7,6 +7,7 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // IdentityType is type of Identity resource.
@@ -16,10 +17,7 @@ const IdentityType = resource.Type("Identities.cluster.talos.dev")
 const LocalIdentity = resource.ID("local")
 
 // Identity resource holds node identity (as a member of the cluster).
-type Identity struct {
-	md   resource.Metadata
-	spec IdentitySpec
-}
+type Identity = typed.Resource[IdentitySpec, IdentityRD]
 
 // IdentitySpec describes status of rendered secrets.
 //
@@ -31,38 +29,24 @@ type IdentitySpec struct {
 	NodeID string `yaml:"nodeId"`
 }
 
+// DeepCopy generates a deep copy of IdentitySpec.
+func (spec IdentitySpec) DeepCopy() IdentitySpec {
+	return spec
+}
+
 // NewIdentity initializes a Identity resource.
 func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
-	r := &Identity{
-		md:   resource.NewMetadata(namespace, IdentityType, id, resource.VersionUndefined),
-		spec: IdentitySpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[IdentitySpec, IdentityRD](
+		resource.NewMetadata(namespace, IdentityType, id, resource.VersionUndefined),
+		IdentitySpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Identity) Metadata() *resource.Metadata {
-	return &r.md
-}
+// IdentityRD provides auxiliary methods for Identity.
+type IdentityRD struct{}
 
-// Spec implements resource.Resource.
-func (r *Identity) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Identity) DeepCopy() resource.Resource {
-	return &Identity{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (c IdentityRD) ResourceDefinition(resource.Metadata, IdentitySpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             IdentityType,
 		Aliases:          []resource.Type{},
@@ -74,9 +58,4 @@ func (r *Identity) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Identity) TypedSpec() *IdentitySpec {
-	return &r.spec
 }
