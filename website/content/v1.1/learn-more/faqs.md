@@ -30,3 +30,10 @@ We envision Talos being a great place for the application of [control theory](ht
 Talos was an automaton created by the Greek God of the forge to protect the island of Crete.
 He would patrol the coast and enforce laws throughout the land.
 We felt it was a fitting name for a security focused operating system designed to run Kubernetes.
+
+## Why does Talos rely on a separate configuration from Kubernetes?
+
+The `talosconfig` file contains client credentials to access the Talos Linux API.
+Sometimes Kubernetes might be down for a number of reasons (etcd issues, misconfiguration, etc.), while Talos API access will always be available.
+The Talos API is a way to access the operating system and fix issues, e.g. fixing access to Kubernetes.
+When Talos Linux is running fine, using the Kubernetes APIs (via `kubeconfig`) is all you should need to deploy and manage Kubernetes workloads.
