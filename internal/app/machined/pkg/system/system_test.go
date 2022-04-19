@@ -27,12 +27,6 @@ func (suite *SystemServicesSuite) TestStartShutdown() {
 	time.Sleep(10 * time.Millisecond)
 
 	suite.Require().NoError(system.Services(nil).Unload(context.Background(), "trustd", "notrunning"))
-
-	system.Services(nil).Shutdown(context.TODO())
-}
-
-func TestSystemServicesSuite(t *testing.T) {
-	suite.Run(t, new(SystemServicesSuite))
 }
 
 func (suite *SystemServicesSuite) TestStartStop() {
@@ -46,4 +40,30 @@ func (suite *SystemServicesSuite) TestStartStop() {
 		context.TODO(), "yolo",
 	)
 	suite.Assert().NoError(err)
+}
+
+func (suite *SystemServicesSuite) TestStopWithRevDeps() {
+	system.Services(nil).LoadAndStart(
+		&MockService{name: "cri"},
+		&MockService{name: "networkd", dependencies: []string{"cri"}},
+		&MockService{name: "vland", dependencies: []string{"networkd"}},
+	)
+	time.Sleep(10 * time.Millisecond)
+
+	// stopping cri should stop all services
+	suite.Require().NoError(system.Services(nil).StopWithRevDepenencies(context.Background(), "cri"))
+
+	// no services should be running
+	for _, name := range []string{"cri", "networkd", "vland"} {
+		svc, running, err := system.Services(nil).IsRunning(name)
+		suite.Require().NoError(err)
+		suite.Assert().NotNil(svc)
+		suite.Assert().False(running)
+	}
+
+	system.Services(nil).Shutdown(context.TODO())
+}
+
+func TestSystemServicesSuite(t *testing.T) {
+	suite.Run(t, new(SystemServicesSuite))
 }

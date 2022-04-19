@@ -14,7 +14,6 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -66,8 +65,6 @@ func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
 
 	for _, dep := range svc.Spec.Depends {
 		switch {
-		case dep.Service != "":
-			conds = append(conds, system.WaitForService(system.StateEventUp, dep.Service))
 		case dep.Path != "":
 			conds = append(conds, conditions.WaitForFileToExist(dep.Path))
 		case len(dep.Network) > 0:
@@ -86,7 +83,15 @@ func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (svc *Extension) DependsOn(r runtime.Runtime) []string {
-	return []string{"containerd"}
+	deps := []string{"containerd"}
+
+	for _, dep := range svc.Spec.Depends {
+		if dep.Service != "" {
+			deps = append(deps, dep.Service)
+		}
+	}
+
+	return deps
 }
 
 // Runner implements the Service interface.
