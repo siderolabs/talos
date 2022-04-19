@@ -1,0 +1,10 @@
+{{ $page := .Site.Params.url_latest_version }}
+{{ $doc_latest_version := replaceRE (.Section | printf "^/%s") .Site.Params.url_latest_version .Page.RelPermalink | path.Clean }}
+{{ range $p := (where .Site.Pages "Section" (.Site.Params.url_latest_version | strings.TrimPrefix "/")) }}
+{{ $page = cond (eq $doc_latest_version ($p.RelPermalink | path.Clean)) $p.RelPermalink $page }}
+{{ range .Aliases }}
+{{ $alias := cond (hasPrefix . "/") . (path.Join $p.RelPermalink ".." .) }}
+{{ $page = cond (eq $alias $doc_latest_version) $p.RelPermalink $page}}
+{{ end }}
+{{ end }}
+{{ return $page }}
