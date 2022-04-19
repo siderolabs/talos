@@ -86,8 +86,12 @@ const (
 	// KernelParamPanic is the kernel parameter name for specifying the time to wait until rebooting after kernel panic (0 disables reboot).
 	KernelParamPanic = "panic"
 
-	// KernelParamSideroLink is the kernel paramater name to specify SideroLink API endpoint.
+	// KernelParamSideroLink is the kernel parameter name to specify SideroLink API endpoint.
 	KernelParamSideroLink = "siderolink.api"
+
+	// KernelParamEquinixMetalEvents is the kernel parameter name to specify the Equinix Metal phone home endpoint.
+	// This param is injected by Equinix Metal and depends on the device ID and datacenter.
+	KernelParamEquinixMetalEvents = "em.events_url"
 
 	// NewRoot is the path where the switchroot target is mounted.
 	NewRoot = "/root"

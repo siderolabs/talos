@@ -48,6 +48,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -470,6 +471,18 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			if errors.Is(e, perrors.ErrNoConfigSource) {
 				logger.Println("machine configuration not found; starting maintenance service")
 
+				// nb: we treat maintenance mode as an "activate"
+				// event b/c the user is expected to be able to
+				// interact with the system at this point.
+				platform.FireEvent(
+					ctx,
+					r.State().Platform(),
+					platform.Event{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+				)
+
 				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
 					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
@@ -480,6 +493,15 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
 					Error: e.Error(),
 				})
+
+				platform.FireEvent(
+					ctx,
+					r.State().Platform(),
+					platform.Event{
+						Type:    platform.EventTypeFailure,
+						Message: "Error fetching Talos machine config.",
+					},
+				)
 
 				return e
 			}
@@ -492,8 +514,26 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 					Error: e.Error(),
 				})
 
+				platform.FireEvent(
+					ctx,
+					r.State().Platform(),
+					platform.Event{
+						Type:    platform.EventTypeFailure,
+						Message: "Error loading and validating Talos machine config.",
+					},
+				)
+
 				return e
 			}
+
+			platform.FireEvent(
+				ctx,
+				r.State().Platform(),
+				platform.Event{
+					Type:    platform.EventTypeConfigLoaded,
+					Message: "Talos machine config loaded successfully.",
+				},
+			)
 
 			return r.SetConfig(cfg)
 		}
@@ -512,6 +552,15 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		}
 
 		logger.Printf("persistence is enabled, using existing config on disk")
+
+		platform.FireEvent(
+			ctx,
+			r.State().Platform(),
+			platform.Event{
+				Type:    platform.EventTypeConfigLoaded,
+				Message: "Talos machine config loaded successfully.",
+			},
+		)
 
 		return r.SetConfig(cfg)
 	}, "loadConfig"
@@ -668,6 +717,18 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // StartAllServices represents the task to start the system services.
 func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		// nb: Treating the beginning of "service starts" as the activate event for a normal
+		// non-maintenance mode boot. At this point, we'd expect the user to
+		// start interacting with the system for troubleshooting at least.
+		platform.FireEvent(
+			ctx,
+			r.State().Platform(),
+			platform.Event{
+				Type:    platform.EventTypeActivate,
+				Message: "Talos is ready for user interaction.",
+			},
+		)
+
 		svcs := system.Services(r)
 
 		svcs.Load(
@@ -1528,6 +1589,15 @@ func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, 
 			Cmd: int64(rebootCmd),
 		})
 
+		platform.FireEvent(
+			ctx,
+			r.State().Platform(),
+			platform.Event{
+				Type:    platform.EventTypeRebooted,
+				Message: "Talos rebooted.",
+			},
+		)
+
 		return runtime.RebootError{Cmd: rebootCmd}
 	}, "reboot"
 }
@@ -1708,8 +1778,26 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
 			)
 			if err != nil {
+				platform.FireEvent(
+					ctx,
+					r.State().Platform(),
+					platform.Event{
+						Type:    platform.EventTypeFailure,
+						Message: "Talos install failed.",
+					},
+				)
+
 				return err
 			}
+
+			platform.FireEvent(
+				ctx,
+				r.State().Platform(),
+				platform.Event{
+					Type:    platform.EventTypeInstalled,
+					Message: "Talos installed successfully.",
+				},
+			)
 
 			logger.Println("install successful")
 
@@ -1731,8 +1819,29 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				install.WithOptions(options),
 			)
 			if err != nil {
+				platform.FireEvent(
+					ctx,
+					r.State().Platform(),
+					platform.Event{
+						Type:    platform.EventTypeFailure,
+						Message: "Talos install failed.",
+					},
+				)
+
 				return err
 			}
+
+			// nb: we don't fire an "activate" event after this one
+			// b/c we'd only ever get here if Talos was already
+			// installed I believe.
+			platform.FireEvent(
+				ctx,
+				r.State().Platform(),
+				platform.Event{
+					Type:    platform.EventTypeUpgraded,
+					Message: "Talos staged upgrade successful.",
+				},
+			)
 
 			logger.Println("staged upgrade successful")
 

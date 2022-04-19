@@ -5,8 +5,10 @@
 package platform
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/talos-systems/go-procfs/procfs"
@@ -28,6 +30,33 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vmware"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/vultr"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+)
+
+// Event is a struct used below in FireEvent
+// in hopes that we can reuse some of this eventing in other platforms if possible.
+type Event struct {
+	Type    string
+	Message string
+}
+
+// nb: these events currently map to those expected by
+// equinix metal. if/when we do other platforms, we should
+// maybe generalize this and map the events inside each platform.
+const (
+	// EventTypeActivate is the activate event string.
+	EventTypeActivate = "activate"
+	// EventTypeFailure is the failure event string.
+	EventTypeFailure = "failure"
+	// EventTypeInfo is the info event string.
+	EventTypeInfo = "info"
+	// EventTypeConfigLoaded is the config loaded event string.
+	EventTypeConfigLoaded = "talos.prov.config.loaded"
+	// EventTypeRebooted is the reboot event string.
+	EventTypeRebooted = "talos.prov.host.rebooted"
+	// EventTypeInstalled is the installation event string.
+	EventTypeInstalled = "talos.prov.os.installed"
+	// EventTypeUpgraded is the upgrade event string.
+	EventTypeUpgraded = "talos.prov.os.upgraded"
 )
 
 // CurrentPlatform is a helper func for discovering the current platform.
@@ -93,4 +122,24 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	}
 
 	return p, nil
+}
+
+// FireEvent will call the implemented platform's event function if we know it has one.
+// Error logging is handled in this function and we don't return any error values to the sequencer.
+func FireEvent(ctx context.Context, p runtime.Platform, e Event) {
+	switch platType := p.(type) {
+	case *equinixmetal.EquinixMetal:
+		eventErr := platType.FireEvent(ctx, equinixmetal.Event{
+			Type:    e.Type,
+			Message: e.Message,
+		})
+
+		if eventErr != nil {
+			log.Printf("failed sending event: %s", eventErr)
+		}
+
+	default:
+		// Treat anything else as a no-op b/c we don't support event firing
+		return
+	}
 }
