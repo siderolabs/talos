@@ -7,16 +7,14 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // TimeServerSpecType is type of TimeServerSpec resource.
 const TimeServerSpecType = resource.Type("TimeServerSpecs.net.talos.dev")
 
 // TimeServerSpec resource holds NTP server info.
-type TimeServerSpec struct {
-	md   resource.Metadata
-	spec TimeServerSpecSpec
-}
+type TimeServerSpec = typed.Resource[TimeServerSpecSpec, TimeServerSpecRD]
 
 // TimeServerID is the ID of the singleton instance.
 const TimeServerID resource.ID = "timeservers"
@@ -27,50 +25,34 @@ type TimeServerSpecSpec struct {
 	ConfigLayer ConfigLayer `yaml:"layer"`
 }
 
+// DeepCopy generates a deep copy of TimeServerSpecSpec.
+func (spec TimeServerSpecSpec) DeepCopy() TimeServerSpecSpec {
+	cp := spec
+	if spec.NTPServers != nil {
+		cp.NTPServers = make([]string, len(spec.NTPServers))
+		copy(cp.NTPServers, spec.NTPServers)
+	}
+
+	return cp
+}
+
 // NewTimeServerSpec initializes a TimeServerSpec resource.
 func NewTimeServerSpec(namespace resource.Namespace, id resource.ID) *TimeServerSpec {
-	r := &TimeServerSpec{
-		md:   resource.NewMetadata(namespace, TimeServerSpecType, id, resource.VersionUndefined),
-		spec: TimeServerSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[TimeServerSpecSpec, TimeServerSpecRD](
+		resource.NewMetadata(namespace, TimeServerSpecType, id, resource.VersionUndefined),
+		TimeServerSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *TimeServerSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
+// TimeServerSpecRD provides auxiliary methods for TimeServerSpec.
+type TimeServerSpecRD struct{}
 
-// Spec implements resource.Resource.
-func (r *TimeServerSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *TimeServerSpec) DeepCopy() resource.Resource {
-	return &TimeServerSpec{
-		md: r.md,
-		spec: TimeServerSpecSpec{
-			NTPServers:  append([]string(nil), r.spec.NTPServers...),
-			ConfigLayer: r.spec.ConfigLayer,
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *TimeServerSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (TimeServerSpecRD) ResourceDefinition(resource.Metadata, TimeServerSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TimeServerSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *TimeServerSpec) TypedSpec() *TimeServerSpecSpec {
-	return &r.spec
 }

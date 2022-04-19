@@ -7,6 +7,7 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -14,10 +15,7 @@ import (
 const OperatorSpecType = resource.Type("OperatorSpecs.net.talos.dev")
 
 // OperatorSpec resource holds DNS resolver info.
-type OperatorSpec struct {
-	md   resource.Metadata
-	spec OperatorSpecSpec
-}
+type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecRD]
 
 // OperatorSpecSpec describes DNS resolvers.
 type OperatorSpecSpec struct {
@@ -30,6 +28,11 @@ type OperatorSpecSpec struct {
 	VIP   VIPOperatorSpec   `yaml:"vip,omitempty"`
 
 	ConfigLayer ConfigLayer `yaml:"layer"`
+}
+
+// DeepCopy generates a deep copy of OperatorSpecSpec.
+func (spec OperatorSpecSpec) DeepCopy() OperatorSpecSpec {
+	return spec
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.
@@ -68,36 +71,17 @@ type VIPHCloudSpec struct {
 
 // NewOperatorSpec initializes a OperatorSpec resource.
 func NewOperatorSpec(namespace resource.Namespace, id resource.ID) *OperatorSpec {
-	r := &OperatorSpec{
-		md:   resource.NewMetadata(namespace, OperatorSpecType, id, resource.VersionUndefined),
-		spec: OperatorSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[OperatorSpecSpec, OperatorSpecRD](
+		resource.NewMetadata(namespace, OperatorSpecType, id, resource.VersionUndefined),
+		OperatorSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *OperatorSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
+// OperatorSpecRD provides auxiliary methods for OperatorSpec.
+type OperatorSpecRD struct{}
 
-// Spec implements resource.Resource.
-func (r *OperatorSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *OperatorSpec) DeepCopy() resource.Resource {
-	return &OperatorSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *OperatorSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (OperatorSpecRD) ResourceDefinition(resource.Metadata, OperatorSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OperatorSpecType,
 		Aliases:          []resource.Type{},
@@ -105,9 +89,4 @@ func (r *OperatorSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *OperatorSpec) TypedSpec() *OperatorSpecSpec {
-	return &r.spec
 }

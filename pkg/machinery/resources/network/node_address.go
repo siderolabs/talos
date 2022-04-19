@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -16,10 +17,7 @@ import (
 const NodeAddressType = resource.Type("NodeAddresses.net.talos.dev")
 
 // NodeAddress resource holds physical network link status.
-type NodeAddress struct {
-	md   resource.Metadata
-	spec NodeAddressSpec
-}
+type NodeAddress = typed.Resource[NodeAddressSpec, NodeAddressRD]
 
 // NodeAddress well-known IDs.
 const (
@@ -42,40 +40,24 @@ type NodeAddressSpec struct {
 	Addresses []netaddr.IPPrefix `yaml:"addresses"`
 }
 
+// DeepCopy generates a deep copy of NodeAddressSpec.
+func (spec NodeAddressSpec) DeepCopy() NodeAddressSpec {
+	return spec
+}
+
 // NewNodeAddress initializes a NodeAddress resource.
 func NewNodeAddress(namespace resource.Namespace, id resource.ID) *NodeAddress {
-	r := &NodeAddress{
-		md:   resource.NewMetadata(namespace, NodeAddressType, id, resource.VersionUndefined),
-		spec: NodeAddressSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[NodeAddressSpec, NodeAddressRD](
+		resource.NewMetadata(namespace, NodeAddressType, id, resource.VersionUndefined),
+		NodeAddressSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *NodeAddress) Metadata() *resource.Metadata {
-	return &r.md
-}
+// NodeAddressRD provides auxiliary methods for NodeAddress.
+type NodeAddressRD struct{}
 
-// Spec implements resource.Resource.
-func (r *NodeAddress) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *NodeAddress) DeepCopy() resource.Resource {
-	return &NodeAddress{
-		md: r.md,
-		spec: NodeAddressSpec{
-			Addresses: append([]netaddr.IPPrefix(nil), r.spec.Addresses...),
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *NodeAddress) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (NodeAddressRD) ResourceDefinition(resource.Metadata, NodeAddressSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressType,
 		Aliases:          []resource.Type{},
@@ -87,11 +69,6 @@ func (r *NodeAddress) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *NodeAddress) TypedSpec() *NodeAddressSpec {
-	return &r.spec
 }
 
 // IPs returns IP without prefix.

@@ -7,6 +7,7 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -14,10 +15,7 @@ import (
 const NodeAddressFilterType = resource.Type("NodeAddressFilters.net.talos.dev")
 
 // NodeAddressFilter resource holds filter for NodeAddress resources.
-type NodeAddressFilter struct {
-	md   resource.Metadata
-	spec NodeAddressFilterSpec
-}
+type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilterRD]
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
 type NodeAddressFilterSpec struct {
@@ -27,41 +25,35 @@ type NodeAddressFilterSpec struct {
 	ExcludeSubnets []netaddr.IPPrefix `yaml:"excludeSubnets"`
 }
 
+// DeepCopy generates a deep copy of NodeAddressFilterSpec.
+func (spec NodeAddressFilterSpec) DeepCopy() NodeAddressFilterSpec {
+	cp := spec
+	if spec.IncludeSubnets != nil {
+		cp.IncludeSubnets = make([]netaddr.IPPrefix, len(spec.IncludeSubnets))
+		copy(cp.IncludeSubnets, spec.IncludeSubnets)
+	}
+
+	if spec.ExcludeSubnets != nil {
+		cp.ExcludeSubnets = make([]netaddr.IPPrefix, len(spec.ExcludeSubnets))
+		copy(cp.ExcludeSubnets, spec.ExcludeSubnets)
+	}
+
+	return cp
+}
+
 // NewNodeAddressFilter initializes a NodeAddressFilter resource.
 func NewNodeAddressFilter(namespace resource.Namespace, id resource.ID) *NodeAddressFilter {
-	r := &NodeAddressFilter{
-		md:   resource.NewMetadata(namespace, NodeAddressFilterType, id, resource.VersionUndefined),
-		spec: NodeAddressFilterSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[NodeAddressFilterSpec, NodeAddressFilterRD](
+		resource.NewMetadata(namespace, NodeAddressFilterType, id, resource.VersionUndefined),
+		NodeAddressFilterSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *NodeAddressFilter) Metadata() *resource.Metadata {
-	return &r.md
-}
+// NodeAddressFilterRD provides auxiliary methods for NodeAddressFilter.
+type NodeAddressFilterRD struct{}
 
-// Spec implements resource.Resource.
-func (r *NodeAddressFilter) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *NodeAddressFilter) DeepCopy() resource.Resource {
-	return &NodeAddressFilter{
-		md: r.md,
-		spec: NodeAddressFilterSpec{
-			IncludeSubnets: append([]netaddr.IPPrefix(nil), r.spec.IncludeSubnets...),
-			ExcludeSubnets: append([]netaddr.IPPrefix(nil), r.spec.ExcludeSubnets...),
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *NodeAddressFilter) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (NodeAddressFilterRD) ResourceDefinition(resource.Metadata, NodeAddressFilterSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressFilterType,
 		Aliases:          []resource.Type{},
@@ -77,9 +69,4 @@ func (r *NodeAddressFilter) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *NodeAddressFilter) TypedSpec() *NodeAddressFilterSpec {
-	return &r.spec
 }

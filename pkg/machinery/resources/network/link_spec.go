@@ -7,6 +7,8 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -15,10 +17,7 @@ import (
 const LinkSpecType = resource.Type("LinkSpecs.net.talos.dev")
 
 // LinkSpec resource describes desired state of the link (network interface).
-type LinkSpec struct {
-	md   resource.Metadata
-	spec LinkSpecSpec
-}
+type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecRD]
 
 // LinkSpecSpec describes spec for the link.
 type LinkSpecSpec struct {
@@ -53,6 +52,24 @@ type LinkSpecSpec struct {
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer"`
+}
+
+// DeepCopy generates a deep copy of LinkSpecSpec.
+func (spec LinkSpecSpec) DeepCopy() LinkSpecSpec {
+	cp := spec
+	if spec.Wireguard.Peers != nil {
+		cp.Wireguard.Peers = make([]WireguardPeer, len(spec.Wireguard.Peers))
+		copy(cp.Wireguard.Peers, spec.Wireguard.Peers)
+
+		for i3 := range spec.Wireguard.Peers {
+			if spec.Wireguard.Peers[i3].AllowedIPs != nil {
+				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(spec.Wireguard.Peers[i3].AllowedIPs))
+				copy(cp.Wireguard.Peers[i3].AllowedIPs, spec.Wireguard.Peers[i3].AllowedIPs)
+			}
+		}
+	}
+
+	return cp
 }
 
 var (
@@ -118,36 +135,17 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 
 // NewLinkSpec initializes a LinkSpec resource.
 func NewLinkSpec(namespace resource.Namespace, id resource.ID) *LinkSpec {
-	r := &LinkSpec{
-		md:   resource.NewMetadata(namespace, LinkSpecType, id, resource.VersionUndefined),
-		spec: LinkSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[LinkSpecSpec, LinkSpecRD](
+		resource.NewMetadata(namespace, LinkSpecType, id, resource.VersionUndefined),
+		LinkSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *LinkSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
+// LinkSpecRD provides auxiliary methods for LinkSpec.
+type LinkSpecRD struct{}
 
-// Spec implements resource.Resource.
-func (r *LinkSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *LinkSpec) DeepCopy() resource.Resource {
-	return &LinkSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *LinkSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (LinkSpecRD) ResourceDefinition(resource.Metadata, LinkSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkSpecType,
 		Aliases:          []resource.Type{},
@@ -155,9 +153,4 @@ func (r *LinkSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *LinkSpec) TypedSpec() *LinkSpecSpec {
-	return &r.spec
 }

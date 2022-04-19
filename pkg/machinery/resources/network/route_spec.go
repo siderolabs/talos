@@ -7,6 +7,7 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -16,10 +17,7 @@ import (
 const RouteSpecType = resource.Type("RouteSpecs.net.talos.dev")
 
 // RouteSpec resource holds route specification to be applied to the kernel.
-type RouteSpec struct {
-	md   resource.Metadata
-	spec RouteSpecSpec
-}
+type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecRD]
 
 // RouteSpecSpec describes the route.
 type RouteSpecSpec struct {
@@ -35,6 +33,11 @@ type RouteSpecSpec struct {
 	Flags       nethelpers.RouteFlags    `yaml:"flags"`
 	Protocol    nethelpers.RouteProtocol `yaml:"protocol"`
 	ConfigLayer ConfigLayer              `yaml:"layer"`
+}
+
+// DeepCopy generates a deep copy of RouteSpecSpec.
+func (route RouteSpecSpec) DeepCopy() RouteSpecSpec {
+	return route
 }
 
 var (
@@ -69,45 +72,21 @@ func (route *RouteSpecSpec) Normalize() {
 
 // NewRouteSpec initializes a RouteSpec resource.
 func NewRouteSpec(namespace resource.Namespace, id resource.ID) *RouteSpec {
-	r := &RouteSpec{
-		md:   resource.NewMetadata(namespace, RouteSpecType, id, resource.VersionUndefined),
-		spec: RouteSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[RouteSpecSpec, RouteSpecRD](
+		resource.NewMetadata(namespace, RouteSpecType, id, resource.VersionUndefined),
+		RouteSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *RouteSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
+// RouteSpecRD provides auxiliary methods for RouteSpec.
+type RouteSpecRD struct{}
 
-// Spec implements resource.Resource.
-func (r *RouteSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *RouteSpec) DeepCopy() resource.Resource {
-	return &RouteSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *RouteSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (RouteSpecRD) ResourceDefinition(resource.Metadata, RouteSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             RouteSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *RouteSpec) TypedSpec() *RouteSpecSpec {
-	return &r.spec
 }

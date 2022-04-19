@@ -7,6 +7,7 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -16,10 +17,7 @@ import (
 const AddressStatusType = resource.Type("AddressStatuses.net.talos.dev")
 
 // AddressStatus resource holds physical network link status.
-type AddressStatus struct {
-	md   resource.Metadata
-	spec AddressStatusSpec
-}
+type AddressStatus = typed.Resource[AddressStatusSpec, AddressStatusRD]
 
 // AddressStatusSpec describes status of rendered secrets.
 type AddressStatusSpec struct {
@@ -35,38 +33,24 @@ type AddressStatusSpec struct {
 	Flags     nethelpers.AddressFlags `yaml:"flags"`
 }
 
+// DeepCopy generates a deep copy of AddressStatusSpec.
+func (spec AddressStatusSpec) DeepCopy() AddressStatusSpec {
+	return spec
+}
+
 // NewAddressStatus initializes a AddressStatus resource.
 func NewAddressStatus(namespace resource.Namespace, id resource.ID) *AddressStatus {
-	r := &AddressStatus{
-		md:   resource.NewMetadata(namespace, AddressStatusType, id, resource.VersionUndefined),
-		spec: AddressStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[AddressStatusSpec, AddressStatusRD](
+		resource.NewMetadata(namespace, AddressStatusType, id, resource.VersionUndefined),
+		AddressStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *AddressStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// AddressStatusRD provides auxiliary methods for AddressStatus.
+type AddressStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *AddressStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *AddressStatus) DeepCopy() resource.Resource {
-	return &AddressStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *AddressStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (AddressStatusRD) ResourceDefinition(resource.Metadata, AddressStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AddressStatusType,
 		Aliases:          []resource.Type{"address", "addresses"},
@@ -82,9 +66,4 @@ func (r *AddressStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *AddressStatus) TypedSpec() *AddressStatusSpec {
-	return &r.spec
 }

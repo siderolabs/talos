@@ -7,6 +7,7 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -14,50 +15,37 @@ import (
 const ResolverStatusType = resource.Type("ResolverStatuses.net.talos.dev")
 
 // ResolverStatus resource holds DNS resolver info.
-type ResolverStatus struct {
-	md   resource.Metadata
-	spec ResolverStatusSpec
-}
+type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusRD]
 
 // ResolverStatusSpec describes DNS resolvers.
 type ResolverStatusSpec struct {
 	DNSServers []netaddr.IP `yaml:"dnsServers"`
 }
 
+// DeepCopy generates a deep copy of ResolverStatusSpec.
+func (spec ResolverStatusSpec) DeepCopy() ResolverStatusSpec {
+	cp := spec
+	if spec.DNSServers != nil {
+		cp.DNSServers = make([]netaddr.IP, len(spec.DNSServers))
+		copy(cp.DNSServers, spec.DNSServers)
+	}
+
+	return cp
+}
+
 // NewResolverStatus initializes a ResolverStatus resource.
 func NewResolverStatus(namespace resource.Namespace, id resource.ID) *ResolverStatus {
-	r := &ResolverStatus{
-		md:   resource.NewMetadata(namespace, ResolverStatusType, id, resource.VersionUndefined),
-		spec: ResolverStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ResolverStatusSpec, ResolverStatusRD](
+		resource.NewMetadata(namespace, ResolverStatusType, id, resource.VersionUndefined),
+		ResolverStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *ResolverStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// ResolverStatusRD provides auxiliary methods for ResolverStatus.
+type ResolverStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *ResolverStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *ResolverStatus) DeepCopy() resource.Resource {
-	return &ResolverStatus{
-		md: r.md,
-		spec: ResolverStatusSpec{
-			DNSServers: append([]netaddr.IP(nil), r.spec.DNSServers...),
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *ResolverStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (ResolverStatusRD) ResourceDefinition(resource.Metadata, ResolverStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ResolverStatusType,
 		Aliases:          []resource.Type{"resolvers"},
@@ -69,9 +57,4 @@ func (r *ResolverStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *ResolverStatus) TypedSpec() *ResolverStatusSpec {
-	return &r.spec
 }
