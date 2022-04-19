@@ -48,6 +48,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
 	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -470,6 +471,21 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			if errors.Is(e, perrors.ErrNoConfigSource) {
 				logger.Println("machine configuration not found; starting maintenance service")
 
+				em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+				if ok {
+					// nb: we treat maintenance mode as an "activate"
+					// event b/c the user is expected to be able to
+					// interact with the system at this point.
+					eventErr := em.FireEvent(ctx, equinixmetal.Event{
+						Type:    equinixmetal.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					})
+
+					if eventErr != nil {
+						logger.Printf("failed to send event to event URL: %s", err)
+					}
+				}
+
 				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
 				if e != nil {
 					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
@@ -480,6 +496,18 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
 					Error: e.Error(),
 				})
+
+				em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+				if ok {
+					eventErr := em.FireEvent(ctx, equinixmetal.Event{
+						Type:    equinixmetal.EventTypeFailure,
+						Message: "Error fetching Talos machine config.",
+					})
+
+					if eventErr != nil {
+						logger.Printf("failed to send event to event URL: %s", err)
+					}
+				}
 
 				return e
 			}
@@ -492,7 +520,31 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 					Error: e.Error(),
 				})
 
+				em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+				if ok {
+					eventErr := em.FireEvent(ctx, equinixmetal.Event{
+						Type:    equinixmetal.EventTypeFailure,
+						Message: "Error loading and validating Talos machine config.",
+					})
+
+					if eventErr != nil {
+						logger.Printf("failed to send event to event URL: %s", err)
+					}
+				}
+
 				return e
+			}
+
+			em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+			if ok {
+				eventErr := em.FireEvent(ctx, equinixmetal.Event{
+					Type:    equinixmetal.EventTypeConfigLoaded,
+					Message: "Talos machine config loaded successfully.",
+				})
+
+				if eventErr != nil {
+					logger.Printf("failed to send event to event URL: %s", err)
+				}
 			}
 
 			return r.SetConfig(cfg)
@@ -512,6 +564,18 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		}
 
 		logger.Printf("persistence is enabled, using existing config on disk")
+
+		em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+		if ok {
+			eventErr := em.FireEvent(ctx, equinixmetal.Event{
+				Type:    equinixmetal.EventTypeConfigLoaded,
+				Message: "Talos machine config loaded successfully.",
+			})
+
+			if eventErr != nil {
+				logger.Printf("failed to send event to event URL: %s", err)
+			}
+		}
 
 		return r.SetConfig(cfg)
 	}, "loadConfig"
@@ -668,6 +732,23 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 // StartAllServices represents the task to start the system services.
 func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		// nb: Treating the beginning of "service starts" as the activate event for a normal
+		// non-maintenance mode boot. At this point, we'd expect the user to
+		// start interacting with the system for troubleshooting at least.
+		em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+		if ok {
+			log.Printf("sending activate event")
+
+			eventErr := em.FireEvent(ctx, equinixmetal.Event{
+				Type:    equinixmetal.EventTypeActivate,
+				Message: "Talos is ready for user interaction.",
+			})
+
+			if eventErr != nil {
+				logger.Printf("failed to send event to event URL: %s", err)
+			}
+		}
+
 		svcs := system.Services(r)
 
 		svcs.Load(
@@ -1507,6 +1588,18 @@ func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, 
 			Cmd: int64(rebootCmd),
 		})
 
+		em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+		if ok {
+			eventErr := em.FireEvent(ctx, equinixmetal.Event{
+				Type:    equinixmetal.EventTypeRebooted,
+				Message: "Talos rebooted.",
+			})
+
+			if eventErr != nil {
+				logger.Printf("failed to send event to event URL: %s", err)
+			}
+		}
+
 		return runtime.RebootError{Cmd: rebootCmd}
 	}, "reboot"
 }
@@ -1687,7 +1780,31 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
 			)
 			if err != nil {
+				em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+				if ok {
+					eventErr := em.FireEvent(ctx, equinixmetal.Event{
+						Type:    equinixmetal.EventTypeFailure,
+						Message: "Talos install failed.",
+					})
+
+					if eventErr != nil {
+						logger.Printf("failed to send event to event URL: %s", err)
+					}
+				}
+
 				return err
+			}
+
+			em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+			if ok {
+				eventErr := em.FireEvent(ctx, equinixmetal.Event{
+					Type:    equinixmetal.EventTypeInstalled,
+					Message: "Talos installed successfully.",
+				})
+
+				if eventErr != nil {
+					logger.Printf("failed to send event to event URL: %s", err)
+				}
 			}
 
 			logger.Println("install successful")
@@ -1710,7 +1827,34 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 				install.WithOptions(options),
 			)
 			if err != nil {
+				em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+				if ok {
+					eventErr := em.FireEvent(ctx, equinixmetal.Event{
+						Type:    equinixmetal.EventTypeFailure,
+						Message: "Talos install failed.",
+					})
+
+					if eventErr != nil {
+						logger.Printf("failed to send event to event URL: %s", err)
+					}
+				}
+
 				return err
+			}
+
+			em, ok := r.State().Platform().(*equinixmetal.EquinixMetal)
+			if ok {
+				// nb: we don't fire an "activate" event after this one
+				// b/c we'd only ever get here if Talos was already
+				// installed I believe.
+				eventErr := em.FireEvent(ctx, equinixmetal.Event{
+					Type:    equinixmetal.EventTypeUpgraded,
+					Message: "Talos staged upgrade successful.",
+				})
+
+				if eventErr != nil {
+					logger.Printf("failed to send event to event URL: %s", err)
+				}
 			}
 
 			logger.Println("staged upgrade successful")
