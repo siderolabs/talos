@@ -14,3 +14,6 @@ var ErrNoHostname = errors.New("failed to fetch hostname from metadata service")
 
 // ErrNoExternalIPs indicates that the meta server does not have a external addresses.
 var ErrNoExternalIPs = errors.New("failed to fetch external addresses from metadata service")
+
+// ErrNoEventURL indicates that the platform does not have an expected events URL in the kernel params.
+var ErrNoEventURL = errors.New("no event URL")

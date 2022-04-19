@@ -5,13 +5,17 @@
 package equinixmetal
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
 
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
@@ -19,9 +23,33 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
+
+const (
+	// EventTypeActivate is the activate event string.
+	EventTypeActivate = "activate"
+	// EventTypeFailure is the failure event string.
+	EventTypeFailure = "failure"
+	// EventTypeInfo is the info event string.
+	EventTypeInfo = "info"
+	// EventTypeConfigLoaded is the config loaded event string.
+	EventTypeConfigLoaded = "talos.prov.config.loaded"
+	// EventTypeRebooted is the reboot event string.
+	EventTypeRebooted = "talos.prov.host.rebooted"
+	// EventTypeInstalled is the installation event string.
+	EventTypeInstalled = "talos.prov.os.installed"
+	// EventTypeUpgraded is the upgrade event string.
+	EventTypeUpgraded = "talos.prov.os.upgraded"
+)
+
+// Event holds data to pass to the Equinix Metal event URL.
+type Event struct {
+	Type    string `json:"type"`
+	Message string `json:"msg"`
+}
 
 // Metadata holds equinixmetal metadata info.
 type Metadata struct {
@@ -334,4 +362,32 @@ func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, ch chan<- *runt
 	}
 
 	return nil
+}
+
+// FireEvent will take an event and pass it to an events server.
+// nb: This is currently only used with Equinix Metal but we may find interesting ways
+// to extend it for other event servers (Azure may have something similar?)
+func (p *EquinixMetal) FireEvent(ctx context.Context, event Event) error {
+	var eventURL *string
+	if eventURL = procfs.ProcCmdline().Get(constants.KernelParamEquinixMetalEvents).First(); eventURL == nil {
+		return errors.ErrNoEventURL
+	}
+
+	eventData, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	err = retry.Constant(5*time.Minute,
+		retry.WithUnits(time.Second),
+		retry.WithErrorLogging(true)).RetryWithContext(
+		ctx,
+		func(ctx context.Context) error {
+			_, err = http.Post(*eventURL, "application/json", bytes.NewBuffer(eventData))
+
+			return retry.ExpectedError(err)
+		},
+	)
+
+	return err
 }
