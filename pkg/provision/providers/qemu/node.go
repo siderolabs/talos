@@ -80,7 +80,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("talos.shutdown", "halt")
 
 	// Talos config
-	cmdline.Append("talos.platform", "metal")
+	cmdline.Append("talos.platform", "packet")
 
 	// add overrides
 	if nodeReq.ExtraKernelArgs != nil {
