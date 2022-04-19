@@ -227,7 +227,7 @@ func (m *Manifest) checkMounts(device Device) error {
 					}
 				}
 
-				if fields[len(fields)-2] == device.Device {
+				if strings.HasPrefix(fields[len(fields)-2], device.Device) {
 					return fmt.Errorf("found active mount in %q for %q: %s", path, device.Device, scanner.Text())
 				}
 			}
