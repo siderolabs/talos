@@ -229,7 +229,7 @@ func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) 
 
 // StopWithRevDepenencies will initiate a shutdown of the specified services waiting for reverse dependencies to finish first.
 //
-// If reverse dependency is not stopped, this method might block waiting on it being stopped forever.
+// If reverse dependency is not stopped, this method might block waiting on it being stopped for up to 30 seconds.
 func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...string) (err error) {
 	if len(serviceIDs) == 0 {
 		return
@@ -247,11 +247,11 @@ func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...st
 
 //nolint:gocyclo
 func (s *singleton) stopServices(ctx context.Context, services []string, waitForRevDependencies bool) error {
-	stateCopy := make(map[string]*ServiceRunner)
+	servicesToStop := make(map[string]*ServiceRunner)
 
 	if services == nil {
 		for name, svcrunner := range s.state {
-			stateCopy[name] = svcrunner
+			servicesToStop[name] = svcrunner
 		}
 	} else {
 		for _, name := range services {
@@ -259,22 +259,64 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 				continue
 			}
 
-			stateCopy[name] = s.state[name]
+			servicesToStop[name] = s.state[name]
 		}
 	}
 
-	s.mu.Unlock()
-
-	// build reverse dependencies
+	// build reverse dependencies, and expand the list of services to stop
+	// with services which depend on the one being stopped
 	reverseDependencies := make(map[string][]string)
 
 	if waitForRevDependencies {
-		for name, svcrunner := range stateCopy {
+		// expand the list of services to stop with the list of services which depend
+		// on the ones being stopped
+		// the loop is run as long as more dependencies are added to the list
+		for {
+			expanded := false
+
+			for name, svcrunner := range s.state {
+				if _, scheduledToStop := servicesToStop[name]; scheduledToStop {
+					continue
+				}
+
+				dependencies := svcrunner.service.DependsOn(s.runtime)
+
+				shouldStopService := false
+
+				for _, dependency := range dependencies {
+					for scheduledService := range servicesToStop {
+						if scheduledService == dependency {
+							shouldStopService = true
+
+							break
+						}
+					}
+
+					if shouldStopService {
+						break
+					}
+				}
+
+				if shouldStopService {
+					servicesToStop[name] = svcrunner
+					expanded = true
+				}
+			}
+
+			if !expanded {
+				break
+			}
+		}
+
+		// build a list of dependencies to wait for before stopping each of the services
+		for name, svcrunner := range servicesToStop {
 			for _, dependency := range svcrunner.service.DependsOn(s.runtime) {
 				reverseDependencies[dependency] = append(reverseDependencies[dependency], name)
 			}
 		}
 	}
+
+	s.mu.Unlock()
 
 	// shutdown all the services waiting for rev deps
 	var shutdownWg sync.WaitGroup
@@ -285,7 +327,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 
 	stoppedConds := []conditions.Condition{}
 
-	for name, svcrunner := range stateCopy {
+	for name, svcrunner := range servicesToStop {
 		shutdownWg.Add(1)
 
 		stoppedConds = append(stoppedConds, WaitForService(StateEventDown, name))
