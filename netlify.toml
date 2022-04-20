@@ -1,5 +1,5 @@
 [build]
-command = "cd website && hugo --gc --minify"
+command = "cd website && hugo --gc --minify --baseURL $DEPLOY_PRIME_URL"
 publish = "website/public"
 
 [build.environment]

@@ -4,3 +4,15 @@
 {{ if (findRE "<pre" .Content 1) }}
     <link rel="stylesheet" href="/css/clipboard.css">
 {{ end }}
+
+<!--- https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls?hl=en#rel-canonical-link-method -->
+{{ if .Section }}
+  {{ $latest_version := .Site.Params.url_latest_version }}
+  {{ $current_version := .Section | printf "/%s" }}
+  {{ if ne $latest_version $current_version }}
+    {{ $latest_doc := partial "doc_latest_version.html" . }}
+    {{ if ne $latest_doc $latest_version }}
+      <link rel="canonical" href="{{ $latest_doc | safeURL | absURL }}" />
+    {{ end }}
+  {{ end }}
+{{ end }}
