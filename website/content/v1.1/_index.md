@@ -6,7 +6,7 @@ cascade:
   type: docs
 preRelease: true
 lastRelease: v1.1.0-alpha.0
-kubernetesRelease: "1.24.0-beta.0"
+kubernetesRelease: "1.24.0-rc.0"
 prevKubernetesRelease: "1.23.5"
 ---
 
