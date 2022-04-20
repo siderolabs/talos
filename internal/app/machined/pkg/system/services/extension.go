@@ -141,6 +141,9 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithOCISpecOpts(
 			oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
 			oci.WithRootFSReadonly(),
+			oci.WithWriteableSysfs,
+			oci.WithMaskedPaths(nil),
+			oci.WithReadonlyPaths(nil),
 			oci.WithCgroup(constants.CgroupExtensions),
 			oci.WithMounts(svc.Spec.Container.Mounts),
 			oci.WithHostNamespace(specs.NetworkNamespace),
