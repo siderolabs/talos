@@ -7,6 +7,6 @@
 # Use netlify to redirect alias pages
 {{- range $p := .Site.Pages }}
 {{- range .Aliases }}
-{{ printf "%s %s %d" (cond (hasPrefix . "/") . (path.Join $p.RelPermalink .)) $p.RelPermalink ($p.Params.HTTPCode | default 301) }}
+{{ printf "%s %s %d" (cond (hasPrefix . "/") . (path.Join $p.RelPermalink ".." .)) (path.Clean $p.RelPermalink) ($p.Params.HTTPCode | default 301) }}
 {{- end }}
 {{- end }}
