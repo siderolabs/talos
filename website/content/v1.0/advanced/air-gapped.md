@@ -38,7 +38,7 @@ As access to the public registries is restricted, we have to run an internal Doc
 In this guide, we will launch the registry on the same machine using Docker:
 
 ```bash
-$ docker run -d -p 6000:5000 --restart always --name registry-aigrapped registry:2
+$ docker run -d -p 6000:5000 --restart always --name registry-airgapped registry:2
 1bf09802bee1476bc463d972c686f90a64640d87dacce1ac8485585de69c91a5
 ```
 
@@ -49,8 +49,8 @@ First, we pull all the images to our local Docker daemon:
 
 ```bash
 $ for image in `talosctl images`; do docker pull $image; done
-v0.12.0-amd64: Pulling from coreos/flannel
-Digest: sha256:6d451d92c921f14bfb38196aacb6e506d4593c5b3c9d40a8b8a2506010dc3e10
+v0.15.1: Pulling from coreos/flannel
+Digest: sha256:9a296fbb67790659adc3701e287adde3c59803b7fcefe354f1fc482840cdb3d9
 ...
 ```
 
@@ -58,8 +58,9 @@ All images are now stored in the Docker daemon store:
 
 ```bash
 $ docker images
-ghcr.io/siderolabs/install-cni    v0.3.0-12-g90722c3      980d36ee2ee1        5 days ago          79.7MB
-k8s.gcr.io/kube-proxy-amd64          v1.20.0                 33c60812eab8        2 weeks ago         118MB
+REPOSITORY                               TAG                                        IMAGE ID       CREATED         SIZE
+gcr.io/etcd-development/etcd             v3.5.3                                     604d4f022632   6 days ago      181MB
+ghcr.io/siderolabs/install-cni           v1.0.0-2-gc5d3ab0                          4729e54f794d   6 days ago      76MB
 ...
 ```
 
@@ -68,7 +69,7 @@ We are going to replace the first component of the image name (before the first 
 
 ```bash
 $ for image in `talosctl images`; do \
-    docker tag $image `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'` \
+    docker tag $image `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
   done
 ```
 
@@ -76,36 +77,50 @@ As the next step, we push images to the internal registry:
 
 ```bash
 $ for image in `talosctl images`; do \
-    docker push `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'` \
+    docker push `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
   done
 ```
 
 We can now verify that the images are pushed to the registry:
 
 ```bash
-$ curl  http://127.0.0.1:6000/v2/_catalog
-{"repositories":["autonomy/kubelet","coredns","coreos/flannel","etcd-development/etcd","kube-apiserver-amd64","kube-controller-manager-amd64","kube-proxy-amd64","kube-scheduler-amd64","talos-systems/install-cni","talos-systems/installer"]}
+$ curl http://127.0.0.1:6000/v2/_catalog
+{"repositories":["coredns/coredns","coreos/flannel","etcd-development/etcd","kube-apiserver","kube-controller-manager","kube-proxy","kube-scheduler","pause","siderolabs/install-cni","siderolabs/installer","siderolabs/kubelet"]}
 ```
 
 > Note: images in the registry don't have the registry endpoint prefix anymore.
 
 ## Launching Talos in an Air-gapped Environment
 
-For Talos to use the internal registry, we use the registry mirror feature to redirect all the image pull requests to the internal registry.
+For Talos to use the internal registry, we use the registry mirror feature to redirect all image pull requests to the internal registry.
 This means that the registry endpoint (as the first component of the image reference) gets ignored, and all pull requests are sent directly to the specified endpoint.
 
 We are going to use a QEMU-based Talos cluster for this guide, but the same approach works with Docker-based clusters as well.
 As QEMU-based clusters go through the Talos install process, they can be used better to model a real air-gapped environment.
 
+Identify all registry prefixes from `talosctl images`, for example:
+
+- `docker.io`
+- `gcr.io`
+- `ghcr.io`
+- `k8s.gcr.io`
+- `quay.io`
+
 The `talosctl cluster create` command provides conveniences for common configuration options.
-The only required flag for this guide is `--registry-mirror '*'=http://10.5.0.1:6000` which redirects every pull request to the internal registry.
+The only required flag for this guide is `--registry-mirror <endpoint>=http://10.5.0.1:6000` which redirects every pull request to the internal registry, this flag
+needs to be repeated for each of the identified registry prefixes above.
 The endpoint being used is `10.5.0.1`, as this is the default bridge interface address which will be routable from the QEMU VMs (`127.0.0.1` IP will be pointing to the VM itself).
 
 ```bash
-$ sudo -E talosctl cluster create --provisioner=qemu --registry-mirror '*'=http://10.5.0.1:6000 --install-image=ghcr.io/siderolabs/installer:{{< release >}}
+$ sudo -E talosctl cluster create --provisioner=qemu --install-image=ghcr.io/siderolabs/installer:{{< release >}} \
+  --registry-mirror docker.io=http://10.5.0.1:6000 \
+  --registry-mirror gcr.io=http://10.5.0.1:6000 \
+  --registry-mirror ghcr.io=http://10.5.0.1:6000 \
+  --registry-mirror k8s.gcr.io=http://10.5.0.1:6000 \
+  --registry-mirror quay.io=http://10.5.0.1:6000
 validating CIDR and reserving IPs
 generating PKI and tokens
-creating state directory in "/home/smira/.talos/clusters/talos-default"
+creating state directory in "/home/user/.talos/clusters/talos-default"
 creating network talos-default
 creating load balancer
 creating dhcpd
@@ -130,7 +145,19 @@ machine:
   ...
   registries:
       mirrors:
-      '*':
+        docker.io:
+          endpoints:
+          - http://10.5.0.1:6000/
+        gcr.io:
+          endpoints:
+          - http://10.5.0.1:6000/
+        ghcr.io:
+          endpoints:
+          - http://10.5.0.1:6000/
+        k8s.gcr.io:
+          endpoints:
+          - http://10.5.0.1:6000/
+        quay.io:
           endpoints:
           - http://10.5.0.1:6000/
 ...

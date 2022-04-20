@@ -891,7 +891,7 @@ func init() {
 	RegistriesConfigDoc.Fields[0].Name = "mirrors"
 	RegistriesConfigDoc.Fields[0].Type = "map[string]RegistryMirrorConfig"
 	RegistriesConfigDoc.Fields[0].Note = ""
-	RegistriesConfigDoc.Fields[0].Description = "Specifies mirror configuration for each registry.\nThis setting allows to use local pull-through caching registires,\nair-gapped installations, etc.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one.\nTo catch any registry names not specified explicitly, use '*'."
+	RegistriesConfigDoc.Fields[0].Description = "Specifies mirror configuration for each registry.\nThis setting allows to use local pull-through caching registires,\nair-gapped installations, etc.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one."
 	RegistriesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies mirror configuration for each registry."
 
 	RegistriesConfigDoc.Fields[0].AddExample("", machineConfigRegistryMirrorsExample)

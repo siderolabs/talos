@@ -2684,7 +2684,6 @@ air-gapped installations, etc.
 
 Registry name is the first segment of image identifier, with 'docker.io'
 being default one.
-To catch any registry names not specified explicitly, use '*'.
 
 
 
