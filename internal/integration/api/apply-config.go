@@ -18,14 +18,18 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	mc "github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 // Sysctl to use for testing config changes.
@@ -443,6 +447,110 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
 	suite.Require().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
+}
+
+// TestApplyTry applies the config in try mode with a short timeout.
+//nolint:gocyclo
+func (suite *ApplyConfigSuite) TestApplyTry() {
+	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	sort.Strings(nodes)
+
+	node := nodes[0]
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	getMachineConfig := func(ctx context.Context) (config.Provider, error) {
+		resp, err := suite.Client.Resources.Get(ctx, mc.NamespaceName, "mc", mc.V1Alpha1ID)
+		if err != nil {
+			return nil, err
+		}
+
+		var body []byte
+
+		for _, res := range resp {
+			if res.Resource == nil {
+				continue
+			}
+
+			body, err = yaml.Marshal(res.Resource.Spec())
+			if err != nil {
+				return nil, err
+			}
+
+			break
+		}
+
+		return configloader.NewFromBytes(body)
+	}
+
+	provider, err := getMachineConfig(nodeCtx)
+	suite.Require().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	suite.Require().True(ok)
+
+	// this won't be possible without a reboot
+	if cfg.MachineConfig.MachineNetwork == nil {
+		cfg.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
+	}
+
+	cfg.MachineConfig.MachineNetwork.NetworkInterfaces = append(cfg.MachineConfig.MachineNetwork.NetworkInterfaces,
+		&v1alpha1.Device{
+			DeviceInterface: "dummy0",
+			DeviceDummy:     true,
+		},
+	)
+
+	cfgDataOut, err := cfg.Bytes()
+	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data:           cfgDataOut,
+			Mode:           machineapi.ApplyConfigurationRequest_TRY,
+			TryModeTimeout: durationpb.New(time.Second * 1),
+		},
+	)
+	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
+
+	provider, err = getMachineConfig(nodeCtx)
+	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+	suite.Assert().NotNil(provider.Machine().Network())
+	suite.Assert().NotNil(provider.Machine().Network().Devices())
+
+	lookupDummyInterface := func() bool {
+		for _, device := range provider.Machine().Network().Devices() {
+			if device.Dummy() && device.Interface() == "dummy0" {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	suite.Assert().Truef(lookupDummyInterface(), "dummy interface wasn't found")
+
+	for i := 0; i < 100; i++ {
+		provider, err = getMachineConfig(nodeCtx)
+		suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+
+		if provider.Machine().Network() == nil {
+			return
+		}
+
+		if !lookupDummyInterface() {
+			return
+		}
+
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	suite.Fail("dummy interface wasn't removed after config try timeout")
 }
 
 func init() {

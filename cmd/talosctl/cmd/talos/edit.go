@@ -11,8 +11,10 @@ import (
 	"io"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/durationpb"
 	yaml "gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/cmd/util/editor"
@@ -21,13 +23,15 @@ import (
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 var editCmdFlags struct {
 	helpers.Mode
-	namespace string
-	dryRun    bool
+	namespace        string
+	dryRun           bool
+	configTryTimeout time.Duration
 }
 
 //nolint:gocyclo
@@ -115,11 +119,12 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 			}
 
 			resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
-				Data:      edited,
-				Mode:      editCmdFlags.Mode.Mode,
-				OnReboot:  editCmdFlags.OnReboot,
-				Immediate: editCmdFlags.Immediate,
-				DryRun:    editCmdFlags.dryRun,
+				Data:           edited,
+				Mode:           editCmdFlags.Mode.Mode,
+				OnReboot:       editCmdFlags.OnReboot,
+				Immediate:      editCmdFlags.Immediate,
+				DryRun:         editCmdFlags.dryRun,
+				TryModeTimeout: durationpb.New(editCmdFlags.configTryTimeout),
 			})
 			if err != nil {
 				lastError = err.Error()
@@ -180,5 +185,6 @@ func init() {
 	editCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	helpers.AddModeFlags(&editCmdFlags.Mode, editCmd)
 	editCmd.Flags().BoolVar(&editCmdFlags.dryRun, "dry-run", false, "do not apply the change after editing and print the change summary instead")
+	editCmd.Flags().DurationVar(&editCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
 	addCommand(editCmd)
 }

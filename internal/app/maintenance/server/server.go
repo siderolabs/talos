@@ -57,6 +57,8 @@ func (s *Server) Register(obj *grpc.Server) {
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	//nolint:exhaustive
 	switch in.Mode {
+	case machine.ApplyConfigurationRequest_TRY:
+		fallthrough
 	case machine.ApplyConfigurationRequest_REBOOT:
 		fallthrough
 	case machine.ApplyConfigurationRequest_AUTO:

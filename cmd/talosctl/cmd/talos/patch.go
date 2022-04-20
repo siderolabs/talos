@@ -9,9 +9,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/durationpb"
 	yaml "gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
@@ -19,15 +21,17 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
 var patchCmdFlags struct {
 	helpers.Mode
-	namespace string
-	patch     []string
-	patchFile string
-	dryRun    bool
+	namespace        string
+	patch            []string
+	patchFile        string
+	dryRun           bool
+	configTryTimeout time.Duration
 }
 
 func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, client.ResourceResponse) error {
@@ -51,11 +55,12 @@ func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, clie
 		}
 
 		resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
-			Data:      patched,
-			Mode:      patchCmdFlags.Mode.Mode,
-			OnReboot:  patchCmdFlags.OnReboot,
-			Immediate: patchCmdFlags.Immediate,
-			DryRun:    patchCmdFlags.dryRun,
+			Data:           patched,
+			Mode:           patchCmdFlags.Mode.Mode,
+			OnReboot:       patchCmdFlags.OnReboot,
+			Immediate:      patchCmdFlags.Immediate,
+			DryRun:         patchCmdFlags.dryRun,
+			TryModeTimeout: durationpb.New(patchCmdFlags.configTryTimeout),
 		})
 
 		if bytes.Equal(
@@ -116,6 +121,7 @@ func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
 	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
 	patchCmd.Flags().BoolVar(&patchCmdFlags.dryRun, "dry-run", false, "print the change summary and patch preview without applying the changes")
+	patchCmd.Flags().DurationVar(&patchCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
 	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)
 	addCommand(patchCmd)
 }

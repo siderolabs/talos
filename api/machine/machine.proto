@@ -78,6 +78,7 @@ message ApplyConfigurationRequest {
     AUTO = 1;
     NO_REBOOT = 2;
     STAGED = 3;
+    TRY = 4;
   }
   bytes data = 1;
   // replaced by mode
@@ -92,6 +93,7 @@ message ApplyConfigurationRequest {
   ];
   Mode mode = 4;
   bool dry_run = 5;
+  google.protobuf.Duration try_mode_timeout = 6;
 }
 
 // ApplyConfigurationResponse describes the response to a configuration request.

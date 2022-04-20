@@ -30,6 +30,8 @@ type Mode struct {
 
 func (m Mode) String() string {
 	switch m.Mode {
+	case machine.ApplyConfigurationRequest_TRY:
+		return modeTry
 	case machine.ApplyConfigurationRequest_AUTO:
 		return modeAuto
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
@@ -85,6 +87,7 @@ const (
 	modeReboot      = "reboot"
 	modeStaged      = "staged"
 	modeInteractive = "interactive"
+	modeTry         = "try"
 )
 
 // AddModeFlags adds deprecated flags to the command and registers mode flag with it's parser.
@@ -94,6 +97,7 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 		modeNoReboot: machine.ApplyConfigurationRequest_NO_REBOOT,
 		modeReboot:   machine.ApplyConfigurationRequest_REBOOT,
 		modeStaged:   machine.ApplyConfigurationRequest_STAGED,
+		modeTry:      machine.ApplyConfigurationRequest_TRY,
 	}
 
 	deprecatedFlag := func(dest *bool, flag, usage, deprecationWarning string) {

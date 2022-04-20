@@ -508,6 +508,7 @@ node.
 | immediate | [bool](#bool) |  | **Deprecated.** replaced by mode |
 | mode | [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode) |  |  |
 | dry_run | [bool](#bool) |  |  |
+| try_mode_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
@@ -2680,6 +2681,7 @@ rpc upgrade
 | AUTO | 1 |  |
 | NO_REBOOT | 2 |  |
 | STAGED | 3 |  |
+| TRY | 4 |  |
 
 
 

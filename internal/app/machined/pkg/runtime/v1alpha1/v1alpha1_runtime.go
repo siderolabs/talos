@@ -7,7 +7,9 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"log"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -28,6 +30,9 @@ type Runtime struct {
 	s runtime.State
 	e runtime.EventStream
 	l runtime.LoggingManager
+
+	rollbackTimerMu sync.Mutex
+	rollbackTimer   *time.Timer
 }
 
 // NewRuntime initializes and returns the v1alpha1 runtime.
@@ -57,6 +62,37 @@ func (r *Runtime) LoadAndValidateConfig(b []byte) (config.Provider, error) {
 	}
 
 	return cfg, nil
+}
+
+// RollbackToConfigAfter implements the Runtime interface.
+func (r *Runtime) RollbackToConfigAfter(cfg []byte, timeout time.Duration) error {
+	cfgProvider, err := r.LoadAndValidateConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	r.CancelConfigRollbackTimeout()
+
+	r.rollbackTimer = time.AfterFunc(timeout, func() {
+		log.Println("rolling back the configuration")
+
+		if err := r.SetConfig(cfgProvider); err != nil {
+			log.Printf("config rollback failed %s", err)
+		}
+	})
+
+	return nil
+}
+
+// CancelConfigRollbackTimeout implements the Runtime interface.
+func (r *Runtime) CancelConfigRollbackTimeout() {
+	r.rollbackTimerMu.Lock()
+	defer r.rollbackTimerMu.Unlock()
+
+	if r.rollbackTimer != nil {
+		r.rollbackTimer.Stop()
+		r.rollbackTimer = nil
+	}
 }
 
 // SetConfig implements the Runtime interface.

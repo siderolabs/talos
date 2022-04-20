@@ -339,6 +339,9 @@ const (
 	// ConfigPath is the path to the downloaded config.
 	ConfigPath = StateMountPoint + "/config.yaml"
 
+	// ConfigTryTimeout is the timeout of the config apply in try mode.
+	ConfigTryTimeout = time.Minute
+
 	// MetalConfigISOLabel is the volume label for ISO based configuration.
 	MetalConfigISOLabel = "metal-iso"
 

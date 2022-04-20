@@ -5,6 +5,8 @@
 package runtime
 
 import (
+	"time"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
@@ -12,6 +14,8 @@ import (
 type Runtime interface {
 	Config() config.Provider
 	LoadAndValidateConfig([]byte) (config.Provider, error)
+	RollbackToConfigAfter([]byte, time.Duration) error
+	CancelConfigRollbackTimeout()
 	SetConfig(config.Provider) error
 	CanApplyImmediate(config.Provider) error
 	State() State

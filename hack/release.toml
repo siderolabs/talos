@@ -100,6 +100,17 @@ The commands `talosctl apply-config`, `talosctl patch mc` and `talosctl edit mc`
 If enabled it just prints out the selected config application mode and the configuration diff.
 """
 
+    [notes.apply-config-try]
+        title = "Apply Config `--mode=try`"
+        description="""\
+The commands `talosctl apply-config`, `talosctl patch mc` and `talosctl edit mc` now support the new mode called `try`.
+In this mode the config change is applied for a period of time and then reverted back to the state it was before the change.
+`--timeout` parameter can be used to customize the config rollback timeout.
+This new mode can be used only with the parts of the config that can be changed without a reboot and can help to check that
+the new configuration doesn't break the node.
+Can be especially useful to check network interfaces changes that may lead to the loss of connectivity to the node.
+"""
+
 [make_deps]
 
     [make_deps.tools]

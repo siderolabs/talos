@@ -152,6 +152,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		in.Mode = machine.ApplyConfigurationRequest_STAGED
 	}
 
+	if in.Mode != machine.ApplyConfigurationRequest_TRY {
+		s.Controller.Runtime().CancelConfigRollbackTimeout()
+	}
+
 	cfgProvider, err := s.Controller.Runtime().LoadAndValidateConfig(in.GetData())
 	if err != nil {
 		return nil, err
@@ -159,6 +163,9 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	//nolint:exhaustive
 	switch in.Mode {
+	// --mode=try
+	case machine.ApplyConfigurationRequest_TRY:
+		fallthrough
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
@@ -214,12 +221,33 @@ Config diff:
 		return nil, err
 	}
 
-	if err := ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
-		return nil, err
+	if in.Mode != machine.ApplyConfigurationRequest_TRY {
+		if err := ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
+			return nil, err
+		}
 	}
 
 	//nolint:exhaustive
 	switch in.Mode {
+	// --mode=try
+	case machine.ApplyConfigurationRequest_TRY:
+		oldConfig, err := s.Controller.Runtime().Config().Bytes()
+		if err != nil {
+			return nil, err
+		}
+
+		timeout := constants.ConfigTryTimeout
+		if in.TryModeTimeout != nil {
+			timeout = in.TryModeTimeout.AsDuration()
+		}
+
+		modeDetails += fmt.Sprintf("\nThe config is applied in 'try' mode and will be automatically reverted back in %s", timeout.String())
+
+		if err := s.Controller.Runtime().RollbackToConfigAfter(oldConfig, timeout); err != nil {
+			return nil, err
+		}
+
+		fallthrough
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		if err := s.Controller.Runtime().SetConfig(cfgProvider); err != nil {
