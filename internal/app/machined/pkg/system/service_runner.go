@@ -239,6 +239,15 @@ func (svcrunner *ServiceRunner) Start() {
 		return
 	}
 
+	defer func() {
+		// PostFunc passes in the state so that we can take actions that depend on the outcome of the run
+		state := svcrunner.GetState()
+
+		if err := svcrunner.service.PostFunc(svcrunner.runtime, state); err != nil {
+			svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
+		}
+	}()
+
 	if runnr == nil {
 		svcrunner.UpdateState(events.StateSkipped, "Service skipped")
 
@@ -249,15 +258,6 @@ func (svcrunner *ServiceRunner) Start() {
 		svcrunner.UpdateState(events.StateFailed, "Failed running service: %v", err)
 	} else {
 		svcrunner.UpdateState(events.StateFinished, "Service finished successfully")
-	}
-
-	// PostFunc passes in the state so that we can take actions that depend on the outcome of the run
-	state := svcrunner.GetState()
-
-	if err := svcrunner.service.PostFunc(svcrunner.runtime, state); err != nil {
-		svcrunner.UpdateState(events.StateFailed, "Failed to run post stage: %v", err)
-
-		return
 	}
 }
 
