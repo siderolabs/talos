@@ -6,6 +6,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -102,8 +103,13 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	for _, mount := range svc.Spec.Container.Mounts {
-		if err := os.MkdirAll(mount.Source, 0o700); err != nil {
-			return nil, err
+		// if file already exists skip
+		if _, err := os.Stat(mount.Source); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				if err := os.MkdirAll(mount.Source, 0o700); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 
