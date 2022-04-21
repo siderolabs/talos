@@ -139,7 +139,11 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 		// configs inotify.
 		{
 			Key:   "proc.sys.fs.inotify.max_user_instances",
-			Value: "512",
+			Value: "8192",
+		},
+		{
+			Key:   "proc.sys.fs.aio-max-nr",
+			Value: "1048576",
 		},
 	}...)
 
