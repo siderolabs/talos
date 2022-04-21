@@ -277,11 +277,27 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 
 	buf.Reset()
 
-	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{k8sRoot: k8sRoot}, &buf); err != nil {
+	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{
+		k8sRoot:  k8sRoot,
+		endpoint: k8sRoot.Endpoint,
+	}, &buf); err != nil {
 		return fmt.Errorf("failed to generate admin kubeconfig: %w", err)
 	}
 
 	k8sSecrets.AdminKubeconfig = buf.String()
+
+	buf.Reset()
+
+	localhost, _ := url.Parse("https://localhost:6443/") //nolint:errcheck
+
+	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{
+		k8sRoot:  k8sRoot,
+		endpoint: localhost,
+	}, &buf); err != nil {
+		return fmt.Errorf("failed to generate admin kubeconfig: %w", err)
+	}
+
+	k8sSecrets.LocalhostAdminKubeconfig = buf.String()
 
 	return nil
 }
@@ -305,7 +321,8 @@ func (ctrl *KubernetesController) teardownAll(ctx context.Context, r controller.
 
 // generateAdminAdapter allows to translate input config into GenerateAdmin input.
 type generateAdminAdapter struct {
-	k8sRoot *secrets.KubernetesRootSpec
+	k8sRoot  *secrets.KubernetesRootSpec
+	endpoint *url.URL
 }
 
 func (adapter *generateAdminAdapter) Name() string {
@@ -313,9 +330,7 @@ func (adapter *generateAdminAdapter) Name() string {
 }
 
 func (adapter *generateAdminAdapter) Endpoint() *url.URL {
-	u, _ := url.Parse("https://localhost:6443/") //nolint:errcheck
-
-	return u
+	return adapter.endpoint
 }
 
 func (adapter *generateAdminAdapter) CA() *x509.PEMEncodedCertificateAndKey {
