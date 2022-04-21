@@ -253,7 +253,7 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	for _, disk := range config.DiskPaths {
-		args = append(args, "-drive", fmt.Sprintf("format=raw,if=virtio,file=%s", disk))
+		args = append(args, "-drive", fmt.Sprintf("format=raw,if=virtio,file=%s,cache=unsafe", disk))
 	}
 
 	machineArg := config.MachineType
