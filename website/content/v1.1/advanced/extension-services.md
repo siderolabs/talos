@@ -35,7 +35,7 @@ depends:
    - service: cri
    - path: /run/machined/machined.sock
    - network:
-       - address
+       - addresses
        - connectivity
        - hostname
        - etcfiles
@@ -80,7 +80,7 @@ Available dependencies:
 
 * `service: <name>`: wait for the service `<name>` to be running and healthy
 * `path: <path>`: wait for the `<path>` to exist
-* `network: [address, connectivity, hostname, etcfiles]`: wait for the specified network readiness checks to succeed
+* `network: [addresses, connectivity, hostname, etcfiles]`: wait for the specified network readiness checks to succeed
 * `time: true`: wait for the NTP time sync
 
 ### `restart`
