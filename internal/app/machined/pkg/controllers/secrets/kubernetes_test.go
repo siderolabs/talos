@@ -236,6 +236,7 @@ func (suite *KubernetesSuite) TestReconcile() {
 				for _, kubeconfig := range []string{
 					kubernetesCerts.ControllerManagerKubeconfig,
 					kubernetesCerts.SchedulerKubeconfig,
+					kubernetesCerts.LocalhostAdminKubeconfig,
 					kubernetesCerts.AdminKubeconfig,
 				} {
 					config, err := clientcmd.Load([]byte(kubeconfig))

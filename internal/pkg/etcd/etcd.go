@@ -9,11 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"time"
 
-	"github.com/talos-systems/crypto/x509"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
@@ -23,10 +23,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 // QuorumCheckTimeout is the amount of time to allow for KV operations before quorum is declared invalid.
@@ -72,19 +72,24 @@ func NewLocalClient() (client *Client, err error) {
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
-func NewClientFromControlPlaneIPs(ctx context.Context, creds *x509.PEMEncodedCertificateAndKey, endpoint *url.URL) (client *Client, err error) {
-	h, err := kubernetes.NewTemporaryClientFromPKI(creds, endpoint)
+func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (client *Client, err error) {
+	endpointResources, err := resources.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
 	if err != nil {
-		return nil, fmt.Errorf("error building kubernetes client from PKI: %w", err)
+		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
 	}
 
-	defer h.Close() //nolint:errcheck
+	var endpointAddrs k8s.EndpointList
 
-	var endpoints []string
-
-	if endpoints, err = h.MasterIPs(ctx); err != nil {
-		return nil, fmt.Errorf("error getting kubernetes endpoints: %w", err)
+	// merge all endpoints into a single list
+	for _, res := range endpointResources.Items {
+		endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
 	}
+
+	if len(endpointAddrs) == 0 {
+		return nil, fmt.Errorf("no controlplane endpoints discovered yet")
+	}
+
+	endpoints := endpointAddrs.Strings()
 
 	// Etcd expects host:port format.
 	for i := 0; i < len(endpoints); i++ {

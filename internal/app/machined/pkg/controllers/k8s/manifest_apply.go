@@ -132,7 +132,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			)
 
 			kubeconfig, err = clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
-				return clientcmd.Load([]byte(secrets.AdminKubeconfig))
+				return clientcmd.Load([]byte(secrets.LocalhostAdminKubeconfig))
 			})
 			if err != nil {
 				return fmt.Errorf("error loading kubeconfig: %w", err)

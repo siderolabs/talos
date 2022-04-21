@@ -1206,7 +1206,7 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 // LeaveEtcd represents the task for removing a control plane node from etcd.
 func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.State().V1Alpha2().Resources())
 		if err != nil {
 			return fmt.Errorf("failed to create etcd client: %w", err)
 		}

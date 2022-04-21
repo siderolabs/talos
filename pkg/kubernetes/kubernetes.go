@@ -170,24 +170,6 @@ func (h *Client) Close() error {
 	return nil
 }
 
-// MasterIPs returns a list of control plane endpoints (IP addresses).
-func (h *Client) MasterIPs(ctx context.Context) (addrs []string, err error) {
-	endpoints, err := h.CoreV1().Endpoints("default").Get(ctx, "kubernetes", metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	addrs = []string{}
-
-	for _, endpoint := range endpoints.Subsets {
-		for _, addr := range endpoint.Addresses {
-			addrs = append(addrs, addr.IP)
-		}
-	}
-
-	return addrs, nil
-}
-
 // NodeIPs returns list of node IP addresses by machine type.
 //
 //nolint:gocyclo

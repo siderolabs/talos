@@ -30,7 +30,10 @@ type KubernetesCertsSpec struct {
 
 	SchedulerKubeconfig         string `yaml:"schedulerKubeconfig"`
 	ControllerManagerKubeconfig string `yaml:"controllerManagerKubeconfig"`
-	AdminKubeconfig             string `yaml:"adminKubeconfig"`
+
+	// Admin-level kubeconfig with access through the localhost endpoint and cluster endpoints.
+	LocalhostAdminKubeconfig string `yaml:"localhostAdminKubeconfig"`
+	AdminKubeconfig          string `yaml:"adminKubeconfig"`
 }
 
 // NewKubernetes initializes a Kubernetes resource.
