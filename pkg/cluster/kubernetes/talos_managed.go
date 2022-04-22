@@ -66,6 +66,10 @@ var deprecations = map[string][]string{
 //
 //nolint:gocyclo,cyclop
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
+	// strip leading `v` from Kubernetes version
+	options.FromVersion = strings.TrimLeft(options.FromVersion, "v")
+	options.ToVersion = strings.TrimLeft(options.ToVersion, "v")
+
 	switch path := options.Path(); path {
 	// nothing for all those
 	case "1.19->1.19":
