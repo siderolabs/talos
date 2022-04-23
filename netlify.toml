@@ -1,13 +1,7 @@
 [build]
+command = "hugo --source website --gc --minify"
 publish = "website/public"
 
 [build.environment]
-BUILD_COMMAND = "hugo --source website --gc --minify"
 HUGO_VERSION = "0.95.0"
 NODE_VERSION = "16.13.2"
-
-[context.production]
-command = "$BUILD_COMMAND --baseURL $URL"
-
-[context.deploy-preview]
-command = "$BUILD_COMMAND --baseURL $DEPLOY_PRIME_URL"

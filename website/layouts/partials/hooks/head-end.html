@@ -12,7 +12,7 @@
   {{ if ne $latest_version $current_version }}
     {{ $latest_doc := partial "doc_latest_version.html" . }}
     {{ if ne $latest_doc $latest_version }}
-      <link rel="canonical" href="{{ $latest_doc | safeURL | absURL }}" />
+      <link rel="canonical" href="https://www.talos.dev{{ $latest_doc | safeURL }}" />
     {{ end }}
   {{ end }}
 {{ end }}
