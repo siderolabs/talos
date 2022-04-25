@@ -575,7 +575,7 @@ type Config struct {
 	//     Enable verbose logging to the console.
 	//     All system containers logs will flow into serial console.
 	//
-	//     > Note: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.
+	//     **Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.
 	//   values:
 	//     - true
 	//     - yes
@@ -606,18 +606,18 @@ type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
 	//
-	//     #### Init
+	//     **Init**
 	//
 	//     Init node type designates the first control plane node to come up.
 	//     You can think of it like a bootstrap node.
 	//     This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.
 	//
-	//     #### Control Plane
+	//     **Control Plane**
 	//
 	//     Control Plane node type designates the node as a control plane member.
 	//     This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.
 	//
-	//     #### Worker
+	//     **Worker**
 	//
 	//     Worker node type designates the node as a worker node.
 	//     This means it will be an available compute node for scheduling workloads.

@@ -17,18 +17,11 @@ import (
 )
 
 var markdownTemplate = `
-{{ define "fieldExamples" }}
-Examples:
-
-{{ range $example := .Examples }}
-{{ yaml $example.GetValue $.Name }}
-{{ end }}
-{{ end }}
-
 {{ .Description }}
 {{- $anchors := .Anchors -}}
 {{- $tick := "` + "`" + `" -}}
 {{ range $struct := .Structs }}
+---
 ## {{ $struct.Type }}
 {{ if $struct.Description -}}
 {{ $struct.Description }}
@@ -40,54 +33,23 @@ Appears in:
 - <code>{{ encodeType $appearance.TypeName }}.{{ $appearance.FieldName }}</code>
 {{ end -}}
 {{ end }}
-{{ if $struct.Examples -}}
+
 {{ range $example := $struct.Examples }}
 {{ yaml $example.GetValue "" }}
-{{- end -}}
 {{ end }}
 
 {{ if $struct.Fields -}}
-
-<hr />
-
-{{ range $field := $struct.Fields }}{{ if $field.Name -}}
-<div class="dd">
-
-<code>{{ $field.Name }}</code>  <i>{{ encodeType $field.Type }}</i>
-
-</div>
-<div class="dt">
-
-{{ $field.Description }}
-
-{{ if $field.Values }}
-Valid values:
-
-{{ range $value := $field.Values }}
-  - <code>{{ $value }}</code>
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+{{ range $field := $struct.Fields -}}
+{{ if $field.Name -}}
+| {{- $tick }}{{ $field.Name }}{{ $tick }} | 
+{{- encodeType $field.Type }} | 
+{{- fmtDesc $field.Description }} {{ with $field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue $field.Name }}{{ end }}</details>{{ end }} | 
+{{- range $value := $field.Values }}{{ $tick }}{{ $value }}{{ $tick }}<br />{{ end }} |
 {{ end -}}
-{{ end -}}
-
-{{- if $field.Note }}
-> {{ $field.Note }}
-{{ end -}}
-
-{{- if $field.Examples }}
-{{ template "fieldExamples" $field }}
-{{ end -}}
-
-</div>
-
-<hr />
-{{ end }}{{ end }}{{ end }}
-{{ if $struct.Values -}}
-
-{{ $struct.Type }} Valid Values:
-
-{{ range $value := $struct.Values -}}
-- {{ $tick }}{{ $value }}{{ $tick }}
-{{ end -}}
-{{- end }}
+{{ end }}
+{{ end }}
 {{ end }}`
 
 // FileDoc represents a single go file documentation.
@@ -115,6 +77,7 @@ func (fd *FileDoc) Encode() ([]byte, error) {
 	fd.t = template.Must(template.New("file_markdown.tpl").
 		Funcs(template.FuncMap{
 			"yaml":       encodeYaml,
+			"fmtDesc":    formatDescription,
 			"encodeType": fd.encodeType,
 		}).
 		Parse(markdownTemplate))
@@ -195,9 +158,18 @@ func encodeYaml(in interface{}, name string) string {
 		lines[i] = strings.TrimRight(line, " ")
 	}
 
-	return fmt.Sprintf("``` yaml\n%s```", strings.Join(lines, "\n"))
+	return fmt.Sprintf("{{< highlight yaml >}}\n%s{{< /highlight >}}", strings.Join(lines, "\n"))
 }
 
 func formatLink(text, link string) string {
 	return fmt.Sprintf(`<a href="%s">%s</a>`, link, text)
+}
+
+func formatDescription(description string) string {
+	lines := strings.Split(description, "\n")
+	if len(lines) <= 1 {
+		return strings.Join(lines, "<br />")
+	}
+
+	return fmt.Sprintf("<details><summary>%s</summary>%s</details>", lines[0], strings.Join(lines[1:], "<br />"))
 }

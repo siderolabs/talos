@@ -6,8 +6,6 @@ desription: Talos node configuration file reference.
 <!-- markdownlint-disable -->
 
 
-
-
 Package v1alpha1 configuration file contains all the options available for configuring a machine.
 
 To generate a set of basic configuration files, run:
@@ -16,113 +14,32 @@ To generate a set of basic configuration files, run:
 
 This will generate a machine config for each node type, and a talosconfig for the CLI.
 
+---
 ## Config
 Config defines the v1alpha1 configuration file.
 
 
 
-``` yaml
+
+{{< highlight yaml >}}
 version: v1alpha1
 persist: true
 machine: # ...
 cluster: # ...
-```
-
-<hr />
-
-<div class="dd">
-
-<code>version</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Indicates the schema used to decode the contents.
+{{< /highlight >}}
 
 
-Valid values:
-
-
-  - <code>v1alpha1</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>debug</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enable verbose logging to the console.
-All system containers logs will flow into serial console.
-
-> Note: To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>persist</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates whether to pull the machine config upon every boot.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>machine</code>  <i><a href="#machineconfig">MachineConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides machine specific configuration options.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>cluster</code>  <i><a href="#clusterconfig">ClusterConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides cluster specific configuration options.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`version` |string |Indicates the schema used to decode the contents.  |`v1alpha1`<br /> |
+|`debug` |bool |<details><summary>Enable verbose logging to the console.</summary>All system containers logs will flow into serial console.<br /><br />**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`persist` |bool |Indicates whether to pull the machine config upon every boot.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`machine` |<a href="#machineconfig">MachineConfig</a> |Provides machine specific configuration options.  | |
+|`cluster` |<a href="#clusterconfig">ClusterConfig</a> |Provides cluster specific configuration options.  | |
 
 
 
+---
 ## MachineConfig
 MachineConfig represents the machine-specific config values.
 
@@ -131,7 +48,8 @@ Appears in:
 - <code><a href="#config">Config</a>.machine</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 type: controlplane
 # InstallConfig represents the installation options for preparing a node.
 install:
@@ -152,141 +70,27 @@ install:
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
     # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
-```
-
-<hr />
-
-<div class="dd">
-
-<code>type</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Defines the role of the machine within the cluster.
-
-#### Init
-
-Init node type designates the first control plane node to come up.
-You can think of it like a bootstrap node.
-This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.
-
-#### Control Plane
-
-Control Plane node type designates the node as a control plane member.
-This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.
-
-#### Worker
-
-Worker node type designates the node as a worker node.
-This means it will be an available compute node for scheduling workloads.
-
-This node type was previously known as "join"; that value is still supported but deprecated.
+{{< /highlight >}}
 
 
-Valid values:
-
-
-  - <code>init</code>
-
-  - <code>controlplane</code>
-
-  - <code>worker</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>token</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The `token` is used by a machine to join the PKI of the cluster.
-Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.
-
-
-> Warning: It is important to ensure that this token is correct since a machine's certificate has a short TTL by default.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`type` |string |<details><summary>Defines the role of the machine within the cluster.</summary><br />**Init**<br /><br />Init node type designates the first control plane node to come up.<br />You can think of it like a bootstrap node.<br />This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.<br /><br />**Control Plane**<br /><br />Control Plane node type designates the node as a control plane member.<br />This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.<br /><br />**Worker**<br /><br />Worker node type designates the node as a worker node.<br />This means it will be an available compute node for scheduling workloads.<br /><br />This node type was previously known as "join"; that value is still supported but deprecated.</details>  |`init`<br />`controlplane`<br />`worker`<br /> |
+|`token` |string |<details><summary>The `token` is used by a machine to join the PKI of the cluster.</summary>Using this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 token: 328hom.uqjzh6jnn2eie9oi
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
-
-</div>
-<div class="dt">
-
-The root certificate authority of the PKI.
-It is composed of a base64 encoded `crt` and `key`.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`ca` |PEMEncodedCertificateAndKey |<details><summary>The root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>certSANs</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Extra certificate subject alternative names for the machine's certificate.
-By default, all non-loopback interface IPs are automatically added to the certificate's SANs.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`certSANs` |[]string |<details><summary>Extra certificate subject alternative names for the machine's certificate.</summary>By default, all non-loopback interface IPs are automatically added to the certificate's SANs.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 certSANs:
     - 10.0.0.10
     - 172.16.0.10
     - 192.168.0.10
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>controlPlane</code>  <i><a href="#machinecontrolplaneconfig">MachineControlPlaneConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides machine specific control plane configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`controlPlane` |<a href="#machinecontrolplaneconfig">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controlPlane:
     # Controller manager machine specific configuration options.
     controllerManager:
@@ -294,27 +98,8 @@ controlPlane:
     # Scheduler machine specific configuration options.
     scheduler:
         disabled: true # Disable kube-scheduler on the node.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>kubelet</code>  <i><a href="#kubeletconfig">KubeletConfig</a></i>
-
-</div>
-<div class="dt">
-
-Used to provide additional options to the kubelet.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`kubelet` |<a href="#kubeletconfig">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubelet:
     image: ghcr.io/siderolabs/kubelet:v1.24.0-rc.0 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
@@ -347,33 +132,8 @@ kubelet:
     #         - 10.0.0.0/8
     #         - '!10.0.0.3/32'
     #         - fdc7::/16
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>pods</code>  <i>[]Unstructured</i>
-
-</div>
-<div class="dt">
-
-Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
-
-Static pods can be used to run components which should be started before the Kubernetes control plane is up.
-Talos doesn't validate the pod definition.
-Updates to this field can be applied without a reboot.
-
-See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`pods` |[]Unstructured |<details><summary>Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.</summary><br />Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br />Talos doesn't validate the pod definition.<br />Updates to this field can be applied without a reboot.<br /><br />See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pods:
     - apiVersion: v1
       kind: pod
@@ -383,27 +143,8 @@ pods:
         containers:
             - image: nginx
               name: nginx
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>network</code>  <i><a href="#networkconfig">NetworkConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides machine specific network configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`network` |<a href="#networkconfig">NetworkConfig</a> |Provides machine specific network configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 network:
     hostname: worker-1 # Used to statically set the hostname for the machine.
     # `interfaces` is used to define the network interface configuration.
@@ -479,33 +220,8 @@ network:
     # # Configures KubeSpan feature.
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>disks</code>  <i>[]<a href="#machinedisk">MachineDisk</a></i>
-
-</div>
-<div class="dt">
-
-Used to partition, format and mount additional disks.
-Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
-Note that the partitioning and formating is done only once, if and only if no existing partitions are found.
-If `size:` is omitted, the partition is sized to occupy the full disk.
-
-
-> Note: `size` is in units of bytes.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`disks` |[]<a href="#machinedisk">MachineDisk</a> |<details><summary>Used to partition, format and mount additional disks.</summary>Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.<br />Note that the partitioning and formating is done only once, if and only if no existing partitions are found.<br />If `size:` is omitted, the partition is sized to occupy the full disk.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 disks:
     - device: /dev/sdb # The name of the disk to use.
       # A list of partitions to create on the disk.
@@ -518,27 +234,8 @@ disks:
           # size: 100 MB
           # # Precise value in bytes.
           # size: 1073741824
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>install</code>  <i><a href="#installconfig">InstallConfig</a></i>
-
-</div>
-<div class="dt">
-
-Used to provide instructions for installations.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`install` |<a href="#installconfig">InstallConfig</a> |Used to provide instructions for installations. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
     # Allows for supplying extra kernel args via the bootloader.
@@ -557,196 +254,45 @@ install:
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
     # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>files</code>  <i>[]<a href="#machinefile">MachineFile</a></i>
-
-</div>
-<div class="dt">
-
-Allows the addition of user specified files.
-The value of `op` can be `create`, `overwrite`, or `append`.
-In the case of `create`, `path` must not exist.
-In the case of `overwrite`, and `append`, `path` must be a valid file.
-If an `op` value of `append` is used, the existing file will be appended.
-Note that the file contents are not required to be base64 encoded.
-
-
-> Note: The specified `path` is relative to `/var`.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`files` |[]<a href="#machinefile">MachineFile</a> |<details><summary>Allows the addition of user specified files.</summary>The value of `op` can be `create`, `overwrite`, or `append`.<br />In the case of `create`, `path` must not exist.<br />In the case of `overwrite`, and `append`, `path` must be a valid file.<br />If an `op` value of `append` is used, the existing file will be appended.<br />Note that the file contents are not required to be base64 encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 files:
     - content: '...' # The contents of the file.
       permissions: 0o666 # The file's permissions in octal.
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>env</code>  <i>Env</i>
-
-</div>
-<div class="dt">
-
-The `env` field allows for the addition of environment variables.
-All environment variables are set on PID 1 in addition to every service.
-
-
-Valid values:
-
-
-  - <code>`GRPC_GO_LOG_VERBOSITY_LEVEL`</code>
-
-  - <code>`GRPC_GO_LOG_SEVERITY_LEVEL`</code>
-
-  - <code>`http_proxy`</code>
-
-  - <code>`https_proxy`</code>
-
-  - <code>`no_proxy`</code>
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`env` |Env |<details><summary>The `env` field allows for the addition of environment variables.</summary>All environment variables are set on PID 1 in addition to every service.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 env:
     GRPC_GO_LOG_SEVERITY_LEVEL: info
     GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
     https_proxy: http://SERVER:PORT/
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 env:
     GRPC_GO_LOG_SEVERITY_LEVEL: error
     https_proxy: https://USERNAME:PASSWORD@SERVER:PORT/
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 env:
     https_proxy: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>time</code>  <i><a href="#timeconfig">TimeConfig</a></i>
-
-</div>
-<div class="dt">
-
-Used to configure the machine's time settings.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> |``GRPC_GO_LOG_VERBOSITY_LEVEL``<br />``GRPC_GO_LOG_SEVERITY_LEVEL``<br />``http_proxy``<br />``https_proxy``<br />``no_proxy``<br /> |
+|`time` |<a href="#timeconfig">TimeConfig</a> |Used to configure the machine's time settings. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 time:
     disabled: false # Indicates if the time service is disabled for the machine.
     # Specifies time (NTP) servers to use for setting the system time.
     servers:
         - time.cloudflare.com
     bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>sysctls</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Used to configure the machine's sysctls.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 sysctls:
     kernel.domainname: talos.dev
     net.ipv4.ip_forward: "0"
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>sysfs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Used to configure the machine's sysfs.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`sysfs` |map[string]string |Used to configure the machine's sysfs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>registries</code>  <i><a href="#registriesconfig">RegistriesConfig</a></i>
-
-</div>
-<div class="dt">
-
-Used to configure the machine's container image registry mirrors.
-
-Automatically generates matching CRI configuration for registry mirrors.
-
-The `mirrors` section allows to redirect requests for images to non-default registry,
-which might be local registry or caching mirror.
-
-The `config` section provides a way to authenticate to the registry with TLS client
-identity, provide registry CA, or authentication information.
-Authentication information has same meaning with the corresponding field in `.docker/config.json`.
-
-See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`registries` |<a href="#registriesconfig">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to non-default registry,<br />which might be local registry or caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in `.docker/config.json`.<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 registries:
     # Specifies mirror configuration for each registry.
     mirrors:
@@ -767,28 +313,8 @@ registries:
             auth:
                 username: username # Optional registry authentication.
                 password: password # Optional registry authentication.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>systemDiskEncryption</code>  <i><a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a></i>
-
-</div>
-<div class="dt">
-
-Machine system disk encryption configuration.
-Defines each system partition encryption parameters.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`systemDiskEncryption` |<a href="#systemdiskencryptionconfig">SystemDiskEncryptionConfig</a> |<details><summary>Machine system disk encryption configuration.</summary>Defines each system partition encryption parameters.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 systemDiskEncryption:
     # Ephemeral partition encryption.
     ephemeral:
@@ -809,114 +335,34 @@ systemDiskEncryption:
         # options:
         #     - no_read_workqueue
         #     - no_write_workqueue
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>features</code>  <i><a href="#featuresconfig">FeaturesConfig</a></i>
-
-</div>
-<div class="dt">
-
-Features describe individual Talos features that can be switched on or off.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`features` |<a href="#featuresconfig">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
     rbac: true # Enable role-based access control (RBAC).
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>udev</code>  <i><a href="#udevconfig">UdevConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configures the udev system.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`udev` |<a href="#udevconfig">UdevConfig</a> |Configures the udev system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 udev:
     # List of udev rules to apply to the udev system
     rules:
         - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>logging</code>  <i><a href="#loggingconfig">LoggingConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configures the logging system.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`logging` |<a href="#loggingconfig">LoggingConfig</a> |Configures the logging system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 logging:
     # Logging destination.
     destinations:
         - endpoint: tcp://1.2.3.4:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
           format: json_lines # Logs format.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>kernel</code>  <i><a href="#kernelconfig">KernelConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configures the kernel.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`kernel` |<a href="#kernelconfig">KernelConfig</a> |Configures the kernel. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kernel:
     # Kernel modules to load.
     modules:
         - name: brtfs # Module name.
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## ClusterConfig
 ClusterConfig represents the cluster-wide config values.
 
@@ -925,7 +371,8 @@ Appears in:
 - <code><a href="#config">Config</a>.cluster</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # ControlPlaneConfig represents the control plane configuration options.
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
@@ -943,86 +390,20 @@ network:
     # The service subnet CIDR.
     serviceSubnets:
         - 10.96.0.0/12
-```
-
-<hr />
-
-<div class="dd">
-
-<code>id</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Globally unique identifier for this cluster (base64 encoded random 32 bytes).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>secret</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Shared secret of cluster (base64 encoded random 32 bytes).
-This secret is shared among cluster members but should never be sent over the network.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>controlPlane</code>  <i><a href="#controlplaneconfig">ControlPlaneConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides control plane specific configuration options.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`id` |string |Globally unique identifier for this cluster (base64 encoded random 32 bytes).  | |
+|`secret` |string |<details><summary>Shared secret of cluster (base64 encoded random 32 bytes).</summary>This secret is shared among cluster members but should never be sent over the network.</details>  | |
+|`controlPlane` |<a href="#controlplaneconfig">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
     localAPIServerPort: 443 # The port that the API server listens on internally.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>clusterName</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Configures the cluster's name.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>network</code>  <i><a href="#clusternetworkconfig">ClusterNetworkConfig</a></i>
-
-</div>
-<div class="dt">
-
-Provides cluster specific network configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`clusterName` |string |Configures the cluster's name.  | |
+|`network` |<a href="#clusternetworkconfig">ClusterNetworkConfig</a> |Provides cluster specific network configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 network:
     # The CNI used.
     cni:
@@ -1034,144 +415,28 @@ network:
     # The service subnet CIDR.
     serviceSubnets:
         - 10.96.0.0/12
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>token</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>aescbcEncryptionSecret</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`aescbcEncryptionSecret` |string |The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
-
-</div>
-<div class="dt">
-
-The base64 encoded root certificate authority used by Kubernetes.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>aggregatorCA</code>  <i>PEMEncodedCertificateAndKey</i>
-
-</div>
-<div class="dt">
-
-The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
-
-This CA can be self-signed.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`aggregatorCA` |PEMEncodedCertificateAndKey |<details><summary>The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.</summary><br />This CA can be self-signed.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aggregatorCA:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>serviceAccount</code>  <i>PEMEncodedKey</i>
-
-</div>
-<div class="dt">
-
-The base64 encoded private key for service account token generation.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 serviceAccount:
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>apiServer</code>  <i><a href="#apiserverconfig">APIServerConfig</a></i>
-
-</div>
-<div class="dt">
-
-API server specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`apiServer` |<a href="#apiserverconfig">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiServer:
     image: k8s.gcr.io/kube-apiserver:v1.24.0-rc.0 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
@@ -1202,106 +467,30 @@ apiServer:
     #             runtimeClasses: []
     #             usernames: []
     #         kind: PodSecurityConfiguration
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>controllerManager</code>  <i><a href="#controllermanagerconfig">ControllerManagerConfig</a></i>
-
-</div>
-<div class="dt">
-
-Controller manager server specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`controllerManager` |<a href="#controllermanagerconfig">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controllerManager:
     image: k8s.gcr.io/kube-controller-manager:v1.24.0-rc.0 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
         feature-gates: ServerSideApply=true
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>proxy</code>  <i><a href="#proxyconfig">ProxyConfig</a></i>
-
-</div>
-<div class="dt">
-
-Kube-proxy server-specific configuration options
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`proxy` |<a href="#proxyconfig">ProxyConfig</a> |Kube-proxy server-specific configuration options <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 proxy:
     image: k8s.gcr.io/kube-proxy:v1.24.0-rc.0 # The container image used in the kube-proxy manifest.
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
         proxy-mode: iptables
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>scheduler</code>  <i><a href="#schedulerconfig">SchedulerConfig</a></i>
-
-</div>
-<div class="dt">
-
-Scheduler server specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`scheduler` |<a href="#schedulerconfig">SchedulerConfig</a> |Scheduler server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 scheduler:
     image: k8s.gcr.io/kube-scheduler:v1.24.0-rc.0 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
         feature-gates: AllBeta=true
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>discovery</code>  <i><a href="#clusterdiscoveryconfig">ClusterDiscoveryConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configures cluster member discovery.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`discovery` |<a href="#clusterdiscoveryconfig">ClusterDiscoveryConfig</a> |Configures cluster member discovery. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 discovery:
     enabled: true # Enable the cluster membership discovery feature.
     # Configure registries used for cluster member discovery.
@@ -1311,27 +500,8 @@ discovery:
         # Service registry is using an external service to push and pull information about cluster members.
         service:
             endpoint: https://discovery.talos.dev/ # External service endpoint.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>etcd</code>  <i><a href="#etcdconfig">EtcdConfig</a></i>
-
-</div>
-<div class="dt">
-
-Etcd specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`etcd` |<a href="#etcdconfig">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
     image: gcr.io/etcd-development/etcd:v3.5.4 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
@@ -1344,127 +514,30 @@ etcd:
 
     # # The subnet from which the advertise URL should be.
     # subnet: 10.0.0.0/8
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>coreDNS</code>  <i><a href="#coredns">CoreDNS</a></i>
-
-</div>
-<div class="dt">
-
-Core DNS specific configuration options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`coreDNS` |<a href="#coredns">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
     image: docker.io/coredns/coredns:1.9.1 # The `image` field is an override to the default coredns image.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>externalCloudProvider</code>  <i><a href="#externalcloudproviderconfig">ExternalCloudProviderConfig</a></i>
-
-</div>
-<div class="dt">
-
-External cloud provider configuration.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`externalCloudProvider` |<a href="#externalcloudproviderconfig">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
     enabled: true # Enable external cloud provider.
     # A list of urls that point to additional manifests for an external cloud provider.
     manifests:
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraManifests</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-A list of urls that point to additional manifests.
-These will get automatically deployed as part of the bootstrap.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraManifests` |[]string |<details><summary>A list of urls that point to additional manifests.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraManifests:
     - https://www.example.com/manifest1.yaml
     - https://www.example.com/manifest2.yaml
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraManifestHeaders</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-A map of key value pairs that will be added while fetching the extraManifests.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraManifestHeaders` |map[string]string |A map of key value pairs that will be added while fetching the extraManifests. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraManifestHeaders:
     Token: "1234567"
     X-ExtraInfo: info
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>inlineManifests</code>  <i>ClusterInlineManifests</i>
-
-</div>
-<div class="dt">
-
-A list of inline Kubernetes manifests.
-These will get automatically deployed as part of the bootstrap.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`inlineManifests` |ClusterInlineManifests |<details><summary>A list of inline Kubernetes manifests.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 inlineManifests:
     - name: namespace-ci # Name of the manifest.
       contents: |- # Manifest contents as a string.
@@ -1472,62 +545,16 @@ inlineManifests:
         kind: Namespace
         metadata:
         	name: ci
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>adminKubeconfig</code>  <i><a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a></i>
-
-</div>
-<div class="dt">
-
-Settings for admin kubeconfig generation.
-Certificate lifetime can be configured.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`adminKubeconfig` |<a href="#adminkubeconfigconfig">AdminKubeconfigConfig</a> |<details><summary>Settings for admin kubeconfig generation.</summary>Certificate lifetime can be configured.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>allowSchedulingOnMasters</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Allows running workload on master nodes.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`allowSchedulingOnMasters` |bool |Allows running workload on master nodes.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 
+---
 ## ExtraMount
 ExtraMount wraps OCI Mount specification.
 
@@ -1536,7 +563,8 @@ Appears in:
 - <code><a href="#kubeletconfig">KubeletConfig</a>.extraMounts</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - destination: /var/lib/example
   type: bind
   source: /var/lib/example
@@ -1544,11 +572,12 @@ Appears in:
     - bind
     - rshared
     - rw
-```
+{{< /highlight >}}
 
 
 
 
+---
 ## MachineControlPlaneConfig
 MachineControlPlaneConfig machine specific configuration options.
 
@@ -1557,44 +586,25 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.controlPlane</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Controller manager machine specific configuration options.
 controllerManager:
     disabled: false # Disable kube-controller-manager on the node.
 # Scheduler machine specific configuration options.
 scheduler:
     disabled: true # Disable kube-scheduler on the node.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>controllerManager</code>  <i><a href="#machinecontrollermanagerconfig">MachineControllerManagerConfig</a></i>
-
-</div>
-<div class="dt">
-
-Controller manager machine specific configuration options.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>scheduler</code>  <i><a href="#machineschedulerconfig">MachineSchedulerConfig</a></i>
-
-</div>
-<div class="dt">
-
-Scheduler machine specific configuration options.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`controllerManager` |<a href="#machinecontrollermanagerconfig">MachineControllerManagerConfig</a> |Controller manager machine specific configuration options.  | |
+|`scheduler` |<a href="#machineschedulerconfig">MachineSchedulerConfig</a> |Scheduler machine specific configuration options.  | |
 
 
 
+---
 ## MachineControllerManagerConfig
 MachineControllerManagerConfig represents the machine specific ControllerManager config values.
 
@@ -1604,23 +614,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable kube-controller-manager on the node.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable kube-controller-manager on the node.  | |
 
 
 
+---
 ## MachineSchedulerConfig
 MachineSchedulerConfig represents the machine specific Scheduler config values.
 
@@ -1630,23 +631,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable kube-scheduler on the node.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable kube-scheduler on the node.  | |
 
 
 
+---
 ## KubeletConfig
 KubeletConfig represents the kubelet config values.
 
@@ -1655,7 +647,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.kubelet</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: ghcr.io/siderolabs/kubelet:v1.24.0-rc.0 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
@@ -1687,95 +680,24 @@ extraArgs:
 #         - 10.0.0.0/8
 #         - '!10.0.0.3/32'
 #         - fdc7::/16
-```
-
-<hr />
-
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The `image` field is an optional reference to an alternative kubelet image.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The `image` field is an optional reference to an alternative kubelet image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/kubelet:v1.24.0-rc.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>clusterDNS</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`clusterDNS` |[]string |The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clusterDNS:
     - 10.96.0.10
     - 169.254.2.53
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-The `extraArgs` field is used to provide additional flags to the kubelet.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraArgs` |map[string]string |The `extraArgs` field is used to provide additional flags to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraArgs:
     key: value
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraMounts</code>  <i>[]<a href="#extramount">ExtraMount</a></i>
-
-</div>
-<div class="dt">
-
-The `extraMounts` field is used to add additional mounts to the kubelet container.
-Note that either `bind` or `rbind` are required in the `options`.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraMounts` |[]<a href="#extramount">ExtraMount</a> |<details><summary>The `extraMounts` field is used to add additional mounts to the kubelet container.</summary>Note that either `bind` or `rbind` are required in the `options`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraMounts:
     - destination: /var/lib/example
       type: bind
@@ -1784,93 +706,24 @@ extraMounts:
         - bind
         - rshared
         - rw
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraConfig</code>  <i>Unstructured</i>
-
-</div>
-<div class="dt">
-
-The `extraConfig` field is used to provide kubelet configuration overrides.
-
-Some fields are not allowed to be overridden: authentication and authorization, cgroups
-configuration, ports, etc.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraConfig` |Unstructured |<details><summary>The `extraConfig` field is used to provide kubelet configuration overrides.</summary><br />Some fields are not allowed to be overridden: authentication and authorization, cgroups<br />configuration, ports, etc.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraConfig:
     serverTLSBootstrap: true
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>registerWithFQDN</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
-This is required in clouds like AWS.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>nodeIP</code>  <i><a href="#kubeletnodeipconfig">KubeletNodeIPConfig</a></i>
-
-</div>
-<div class="dt">
-
-The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
-This is used when a node has multiple addresses to choose from.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`registerWithFQDN` |bool |<details><summary>The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.</summary>This is required in clouds like AWS.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`nodeIP` |<a href="#kubeletnodeipconfig">KubeletNodeIPConfig</a> |<details><summary>The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.</summary>This is used when a node has multiple addresses to choose from.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeIP:
     # The `validSubnets` field configures the networks to pick kubelet node IP from.
     validSubnets:
         - 10.0.0.0/8
         - '!10.0.0.3/32'
         - fdc7::/16
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## KubeletNodeIPConfig
 KubeletNodeIPConfig represents the kubelet node IP configuration.
 
@@ -1879,35 +732,23 @@ Appears in:
 - <code><a href="#kubeletconfig">KubeletConfig</a>.nodeIP</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # The `validSubnets` field configures the networks to pick kubelet node IP from.
 validSubnets:
     - 10.0.0.0/8
     - '!10.0.0.3/32'
     - fdc7::/16
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>validSubnets</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The `validSubnets` field configures the networks to pick kubelet node IP from.
-For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.
-IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.
-Negative subnet matches should be specified last to filter out IPs picked by positive matches.
-If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`validSubnets` |[]string |<details><summary>The `validSubnets` field configures the networks to pick kubelet node IP from.</summary>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.</details>  | |
 
 
 
+---
 ## NetworkConfig
 NetworkConfig represents the machine's networking config values.
 
@@ -1916,7 +757,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.network</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 hostname: worker-1 # Used to statically set the hostname for the machine.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
@@ -1991,39 +833,13 @@ nameservers:
 # # Configures KubeSpan feature.
 # kubespan:
 #     enabled: true # Enable the KubeSpan feature.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>hostname</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Used to statically set the hostname for the machine.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>interfaces</code>  <i>[]<a href="#device">Device</a></i>
-
-</div>
-<div class="dt">
-
-`interfaces` is used to define the network interface configuration.
-By default all network interfaces will attempt a DHCP discovery.
-This can be further tuned through this configuration parameter.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`hostname` |string |Used to statically set the hostname for the machine.  | |
+|`interfaces` |[]<a href="#device">Device</a> |<details><summary>`interfaces` is used to define the network interface configuration.</summary>By default all network interfaces will attempt a DHCP discovery.<br />This can be further tuned through this configuration parameter.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interfaces:
     - interface: eth0 # The interface name.
       # Assigns static IP addresses to the interface.
@@ -2080,90 +896,28 @@ interfaces:
       # # Virtual (shared) IP address configuration.
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>nameservers</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Used to statically set the nameservers for the machine.
-Defaults to `1.1.1.1` and `8.8.8.8`
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`nameservers` |[]string |<details><summary>Used to statically set the nameservers for the machine.</summary>Defaults to `1.1.1.1` and `8.8.8.8`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nameservers:
     - 8.8.8.8
     - 1.1.1.1
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraHostEntries</code>  <i>[]<a href="#extrahost">ExtraHost</a></i>
-
-</div>
-<div class="dt">
-
-Allows for extra entries to be added to the `/etc/hosts` file
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraHostEntries` |[]<a href="#extrahost">ExtraHost</a> |Allows for extra entries to be added to the `/etc/hosts` file <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraHostEntries:
     - ip: 192.168.1.100 # The IP of the host.
       # The host alias.
       aliases:
         - example
         - example.domain.tld
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>kubespan</code>  <i><a href="#networkkubespan">NetworkKubeSpan</a></i>
-
-</div>
-<div class="dt">
-
-Configures KubeSpan feature.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`kubespan` |<a href="#networkkubespan">NetworkKubeSpan</a> |Configures KubeSpan feature. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubespan:
     enabled: true # Enable the KubeSpan feature.
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## InstallConfig
 InstallConfig represents the installation options for preparing a node.
 
@@ -2172,7 +926,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.install</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 disk: /dev/sda # The disk used for installations.
 # Allows for supplying extra kernel args via the bootloader.
 extraKernelArgs:
@@ -2190,195 +945,40 @@ wipe: false # Indicates if the installation disk should be wiped at installation
 
 # # Allows for supplying additional system extension images to install on top of base Talos image.
 # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
-```
-
-<hr />
-
-<div class="dd">
-
-<code>disk</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The disk used for installations.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disk` |string |The disk used for installations. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 disk: /dev/sda
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 disk: /dev/nvme0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>diskSelector</code>  <i><a href="#installdiskselector">InstallDiskSelector</a></i>
-
-</div>
-<div class="dt">
-
-Look up disk using disk attributes like model, size, serial and others.
-Always has priority over `disk`.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`diskSelector` |<a href="#installdiskselector">InstallDiskSelector</a> |<details><summary>Look up disk using disk attributes like model, size, serial and others.</summary>Always has priority over `disk`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 diskSelector:
     size: 4GB # Disk size.
     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraKernelArgs</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Allows for supplying extra kernel args via the bootloader.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraKernelArgs` |[]string |Allows for supplying extra kernel args via the bootloader. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraKernelArgs:
     - talos.platform=metal
     - reboot=k
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Allows for supplying the image used to perform the installation.
-Image reference for each Talos release can be found on
-[GitHub releases page](https://github.com/siderolabs/talos/releases).
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`image` |string |<details><summary>Allows for supplying the image used to perform the installation.</summary>Image reference for each Talos release can be found on<br />[GitHub releases page](https://github.com/siderolabs/talos/releases).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: ghcr.io/siderolabs/installer:latest
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extensions</code>  <i>[]<a href="#installextensionconfig">InstallExtensionConfig</a></i>
-
-</div>
-<div class="dt">
-
-Allows for supplying additional system extension images to install on top of base Talos image.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extensions` |[]<a href="#installextensionconfig">InstallExtensionConfig</a> |Allows for supplying additional system extension images to install on top of base Talos image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>bootloader</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if a bootloader should be installed.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>wipe</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if the installation disk should be wiped at installation time.
-Defaults to `true`.
-
-
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>legacyBIOSSupport</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if MBR partition should be marked as bootable (active).
-Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`bootloader` |bool |Indicates if a bootloader should be installed.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`legacyBIOSSupport` |bool |<details><summary>Indicates if MBR partition should be marked as bootable (active).</summary>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.</details>  | |
 
 
 
+---
 ## InstallDiskSelector
 InstallDiskSelector represents a disk query parameters for the install disk lookup.
 
@@ -2387,168 +987,39 @@ Appears in:
 - <code><a href="#installconfig">InstallConfig</a>.diskSelector</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 size: 4GB # Disk size.
 model: WDC* # Disk model `/sys/block/<dev>/device/model`.
 busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>size</code>  <i>InstallDiskSizeMatcher</i>
-
-</div>
-<div class="dt">
-
-Disk size.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`size` |InstallDiskSizeMatcher |Disk size. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 size: 4GB
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 size: '> 1TB'
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 size: <= 2TB
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>name</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk name `/sys/block/<dev>/device/name`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>model</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk model `/sys/block/<dev>/device/model`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>serial</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk serial number `/sys/block/<dev>/serial`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>modalias</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk modalias `/sys/block/<dev>/device/modalias`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>uuid</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk UUID `/sys/block/<dev>/uuid`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>wwid</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk WWID `/sys/block/<dev>/wwid`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>type</code>  <i>InstallDiskType</i>
-
-</div>
-<div class="dt">
-
-Disk Type.
-
-
-Valid values:
-
-
-  - <code>ssd</code>
-
-  - <code>hdd</code>
-
-  - <code>nvme</code>
-
-  - <code>sd</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>busPath</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Disk bus path.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`name` |string |Disk name `/sys/block/<dev>/device/name`.  | |
+|`model` |string |Disk model `/sys/block/<dev>/device/model`.  | |
+|`serial` |string |Disk serial number `/sys/block/<dev>/serial`.  | |
+|`modalias` |string |Disk modalias `/sys/block/<dev>/device/modalias`.  | |
+|`uuid` |string |Disk UUID `/sys/block/<dev>/uuid`.  | |
+|`wwid` |string |Disk WWID `/sys/block/<dev>/wwid`.  | |
+|`type` |InstallDiskType |Disk Type.  |`ssd`<br />`hdd`<br />`nvme`<br />`sd`<br /> |
+|`busPath` |string |Disk bus path. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 busPath: /pci0000:00/*
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## InstallExtensionConfig
 InstallExtensionConfig represents a configuration for a system extension.
 
@@ -2557,27 +1028,19 @@ Appears in:
 - <code><a href="#installconfig">InstallConfig</a>.extensions</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-System extension image.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |System extension image.  | |
 
 
 
+---
 ## TimeConfig
 TimeConfig represents the options for configuring time on a machine.
 
@@ -2586,59 +1049,25 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.time</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 disabled: false # Indicates if the time service is disabled for the machine.
 # Specifies time (NTP) servers to use for setting the system time.
 servers:
     - time.cloudflare.com
 bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if the time service is disabled for the machine.
-Defaults to `false`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>servers</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Specifies time (NTP) servers to use for setting the system time.
-Defaults to `pool.ntp.org`
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>bootTimeout</code>  <i>Duration</i>
-
-</div>
-<div class="dt">
-
-Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
-NTP sync will be still running in the background.
-Defaults to "infinity" (waiting forever for time sync)
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |<details><summary>Indicates if the time service is disabled for the machine.</summary>Defaults to `false`.</details>  | |
+|`servers` |[]string |<details><summary>Specifies time (NTP) servers to use for setting the system time.</summary>Defaults to `pool.ntp.org`</details>  | |
+|`bootTimeout` |Duration |<details><summary>Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.</summary>NTP sync will be still running in the background.<br />Defaults to "infinity" (waiting forever for time sync)</details>  | |
 
 
 
+---
 ## RegistriesConfig
 RegistriesConfig represents the image pull options.
 
@@ -2647,7 +1076,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.registries</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Specifies mirror configuration for each registry.
 mirrors:
     docker.io:
@@ -2667,61 +1097,20 @@ config:
         auth:
             username: username # Optional registry authentication.
             password: password # Optional registry authentication.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>mirrors</code>  <i>map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a></i>
-
-</div>
-<div class="dt">
-
-Specifies mirror configuration for each registry.
-This setting allows to use local pull-through caching registires,
-air-gapped installations, etc.
-
-Registry name is the first segment of image identifier, with 'docker.io'
-being default one.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`mirrors` |map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a> |<details><summary>Specifies mirror configuration for each registry.</summary>This setting allows to use local pull-through caching registires,<br />air-gapped installations, etc.<br /><br />Registry name is the first segment of image identifier, with 'docker.io'<br />being default one.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 mirrors:
     ghcr.io:
         # List of endpoints (URLs) for registry mirrors to use.
         endpoints:
             - https://registry.insecure
             - https://ghcr.io/v2/
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>config</code>  <i>map[string]<a href="#registryconfig">RegistryConfig</a></i>
-
-</div>
-<div class="dt">
-
-Specifies TLS & auth configuration for HTTPS image registries.
-Mutual TLS can be enabled with 'clientIdentity' option.
-
-TLS configuration can be skipped if registry has trusted
-server certificate.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`config` |map[string]<a href="#registryconfig">RegistryConfig</a> |<details><summary>Specifies TLS & auth configuration for HTTPS image registries.</summary>Mutual TLS can be enabled with 'clientIdentity' option.<br /><br />TLS configuration can be skipped if registry has trusted<br />server certificate.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 config:
     registry.insecure:
         # The TLS configuration for the registry.
@@ -2737,38 +1126,25 @@ config:
         # auth:
         #     username: username # Optional registry authentication.
         #     password: password # Optional registry authentication.
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## PodCheckpointer
 PodCheckpointer represents the pod-checkpointer config values.
 
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The `image` field is an override to the default pod-checkpointer image.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The `image` field is an override to the default pod-checkpointer image.  | |
 
 
 
+---
 ## CoreDNS
 CoreDNS represents the CoreDNS config values.
 
@@ -2777,39 +1153,20 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.coreDNS</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: docker.io/coredns/coredns:1.9.1 # The `image` field is an override to the default coredns image.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable coredns deployment on cluster bootstrap.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The `image` field is an override to the default coredns image.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable coredns deployment on cluster bootstrap.  | |
+|`image` |string |The `image` field is an override to the default coredns image.  | |
 
 
 
+---
 ## Endpoint
 Endpoint represents the endpoint URL parsed out of the machine config.
 
@@ -2819,22 +1176,27 @@ Appears in:
 - <code><a href="#loggingdestination">LoggingDestination</a>.endpoint</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 https://1.2.3.4:6443
-```
-``` yaml
+{{< /highlight >}}
+
+{{< highlight yaml >}}
 https://cluster1.internal:6443
-```
-``` yaml
+{{< /highlight >}}
+
+{{< highlight yaml >}}
 udp://127.0.0.1:12345
-```
-``` yaml
+{{< /highlight >}}
+
+{{< highlight yaml >}}
 tcp://1.2.3.4:12345
-```
+{{< /highlight >}}
 
 
 
 
+---
 ## ControlPlaneConfig
 ControlPlaneConfig represents the control plane configuration options.
 
@@ -2843,57 +1205,25 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.controlPlane</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
 localAPIServerPort: 443 # The port that the API server listens on internally.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>endpoint</code>  <i><a href="#endpoint">Endpoint</a></i>
-
-</div>
-<div class="dt">
-
-Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-It is single-valued, and may optionally include a port number.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoint` |<a href="#endpoint">Endpoint</a> |<details><summary>Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.</summary>It is single-valued, and may optionally include a port number.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 endpoint: https://1.2.3.4:6443
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 endpoint: https://cluster1.internal:6443
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>localAPIServerPort</code>  <i>int</i>
-
-</div>
-<div class="dt">
-
-The port that the API server listens on internally.
-This may be different than the port portion listed in the endpoint field above.
-The default is `6443`.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`localAPIServerPort` |int |<details><summary>The port that the API server listens on internally.</summary>This may be different than the port portion listed in the endpoint field above.<br />The default is `6443`.</details>  | |
 
 
 
+---
 ## APIServerConfig
 APIServerConfig represents the kube apiserver configuration options.
 
@@ -2902,7 +1232,8 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.apiServer</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: k8s.gcr.io/kube-apiserver:v1.24.0-rc.0 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
@@ -2932,107 +1263,20 @@ certSANs:
 #             runtimeClasses: []
 #             usernames: []
 #         kind: PodSecurityConfiguration
-```
-
-<hr />
-
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The container image used in the API server manifest.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: k8s.gcr.io/kube-apiserver:v1.24.0-rc.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Extra arguments to supply to the API server.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
-
-</div>
-<div class="dt">
-
-Extra volumes to mount to the API server static pod.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>env</code>  <i>Env</i>
-
-</div>
-<div class="dt">
-
-The `env` field allows for the addition of environment variables for the control plane component.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>certSANs</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Extra certificate subject alternative names for the API server's certificate.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>disablePodSecurityPolicy</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable PodSecurityPolicy in the API server and default manifests.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>admissionControl</code>  <i>[]<a href="#admissionpluginconfig">AdmissionPluginConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configure the API server admission plugins.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraArgs` |map[string]string |Extra arguments to supply to the API server.  | |
+|`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
+|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
+|`certSANs` |[]string |Extra certificate subject alternative names for the API server's certificate.  | |
+|`disablePodSecurityPolicy` |bool |Disable PodSecurityPolicy in the API server and default manifests.  | |
+|`admissionControl` |[]<a href="#admissionpluginconfig">AdmissionPluginConfig</a> |Configure the API server admission plugins. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 admissionControl:
     - name: PodSecurity # Name is the name of the admission controller.
       # Configuration is an embedded configuration object to be used as the plugin's
@@ -3051,15 +1295,11 @@ admissionControl:
             runtimeClasses: []
             usernames: []
         kind: PodSecurityConfiguration
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## AdmissionPluginConfig
 AdmissionPluginConfig represents the API server admission plugin configuration.
 
@@ -3068,7 +1308,8 @@ Appears in:
 - <code><a href="#apiserverconfig">APIServerConfig</a>.admissionControl</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - name: PodSecurity # Name is the name of the admission controller.
   # Configuration is an embedded configuration object to be used as the plugin's
   configuration:
@@ -3086,39 +1327,17 @@ Appears in:
         runtimeClasses: []
         usernames: []
     kind: PodSecurityConfiguration
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>name</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Name is the name of the admission controller.
-It must match the registered admission plugin name.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>configuration</code>  <i>Unstructured</i>
-
-</div>
-<div class="dt">
-
-Configuration is an embedded configuration object to be used as the plugin's
-configuration.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |<details><summary>Name is the name of the admission controller.</summary>It must match the registered admission plugin name.</details>  | |
+|`configuration` |Unstructured |<details><summary>Configuration is an embedded configuration object to be used as the plugin's</summary>configuration.</details>  | |
 
 
 
+---
 ## ControllerManagerConfig
 ControllerManagerConfig represents the kube controller manager configuration options.
 
@@ -3127,76 +1346,27 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.controllerManager</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: k8s.gcr.io/kube-controller-manager:v1.24.0-rc.0 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
     feature-gates: ServerSideApply=true
-```
-
-<hr />
-
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The container image used in the controller manager manifest.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The container image used in the controller manager manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: k8s.gcr.io/kube-controller-manager:v1.24.0-rc.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Extra arguments to supply to the controller manager.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
-
-</div>
-<div class="dt">
-
-Extra volumes to mount to the controller manager static pod.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>env</code>  <i>Env</i>
-
-</div>
-<div class="dt">
-
-The `env` field allows for the addition of environment variables for the control plane component.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`extraArgs` |map[string]string |Extra arguments to supply to the controller manager.  | |
+|`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
+|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 
 
 
+---
 ## ProxyConfig
 ProxyConfig represents the kube proxy configuration options.
 
@@ -3205,88 +1375,30 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.proxy</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: k8s.gcr.io/kube-proxy:v1.24.0-rc.0 # The container image used in the kube-proxy manifest.
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
     proxy-mode: iptables
-```
-
-<hr />
-
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable kube-proxy deployment on cluster bootstrap.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable kube-proxy deployment on cluster bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 disabled: false
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The container image used in the kube-proxy manifest.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`image` |string |The container image used in the kube-proxy manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: k8s.gcr.io/kube-proxy:v1.24.0-rc.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mode</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-proxy mode of kube-proxy.
-The default is 'iptables'.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Extra arguments to supply to kube-proxy.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`mode` |string |<details><summary>proxy mode of kube-proxy.</summary>The default is 'iptables'.</details>  | |
+|`extraArgs` |map[string]string |Extra arguments to supply to kube-proxy.  | |
 
 
 
+---
 ## SchedulerConfig
 SchedulerConfig represents the kube scheduler configuration options.
 
@@ -3295,76 +1407,27 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.scheduler</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: k8s.gcr.io/kube-scheduler:v1.24.0-rc.0 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
     feature-gates: AllBeta=true
-```
-
-<hr />
-
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The container image used in the scheduler manifest.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The container image used in the scheduler manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: k8s.gcr.io/kube-scheduler:v1.24.0-rc.0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Extra arguments to supply to the scheduler.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraVolumes</code>  <i>[]<a href="#volumemountconfig">VolumeMountConfig</a></i>
-
-</div>
-<div class="dt">
-
-Extra volumes to mount to the scheduler static pod.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>env</code>  <i>Env</i>
-
-</div>
-<div class="dt">
-
-The `env` field allows for the addition of environment variables for the control plane component.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`extraArgs` |map[string]string |Extra arguments to supply to the scheduler.  | |
+|`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
+|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 
 
 
+---
 ## EtcdConfig
 EtcdConfig represents the etcd configuration options.
 
@@ -3373,7 +1436,8 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.etcd</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 image: gcr.io/etcd-development/etcd:v3.5.4 # The container image used to create the etcd service.
 # The `ca` is the root certificate authority of the PKI.
 ca:
@@ -3385,108 +1449,27 @@ extraArgs:
 
 # # The subnet from which the advertise URL should be.
 # subnet: 10.0.0.0/8
-```
-
-<hr />
-
-<div class="dd">
-
-<code>image</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The container image used to create the etcd service.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: gcr.io/etcd-development/etcd:v3.5.4
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ca</code>  <i>PEMEncodedCertificateAndKey</i>
-
-</div>
-<div class="dt">
-
-The `ca` is the root certificate authority of the PKI.
-It is composed of a base64 encoded `crt` and `key`.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`ca` |PEMEncodedCertificateAndKey |<details><summary>The `ca` is the root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>extraArgs</code>  <i>map[string]string</i>
-
-</div>
-<div class="dt">
-
-Extra arguments to supply to etcd.
-Note that the following args are not allowed:
-
-- `name`
-- `data-dir`
-- `initial-cluster-state`
-- `listen-peer-urls`
-- `listen-client-urls`
-- `cert-file`
-- `key-file`
-- `trusted-ca-file`
-- `peer-client-cert-auth`
-- `peer-cert-file`
-- `peer-trusted-ca-file`
-- `peer-key-file`
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>subnet</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The subnet from which the advertise URL should be.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`extraArgs` |map[string]string |<details><summary>Extra arguments to supply to etcd.</summary>Note that the following args are not allowed:<br /><br />- `name`<br />- `data-dir`<br />- `initial-cluster-state`<br />- `listen-peer-urls`<br />- `listen-client-urls`<br />- `cert-file`<br />- `key-file`<br />- `trusted-ca-file`<br />- `peer-client-cert-auth`<br />- `peer-cert-file`<br />- `peer-trusted-ca-file`<br />- `peer-key-file`</details>  | |
+|`subnet` |string |The subnet from which the advertise URL should be. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 subnet: 10.0.0.0/8
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## ClusterNetworkConfig
 ClusterNetworkConfig represents kube networking configuration options.
 
@@ -3495,7 +1478,8 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.network</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # The CNI used.
 cni:
     name: flannel # Name of CNI to use.
@@ -3506,113 +1490,33 @@ podSubnets:
 # The service subnet CIDR.
 serviceSubnets:
     - 10.96.0.0/12
-```
-
-<hr />
-
-<div class="dd">
-
-<code>cni</code>  <i><a href="#cniconfig">CNIConfig</a></i>
-
-</div>
-<div class="dt">
-
-The CNI used.
-Composed of "name" and "urls".
-The "name" key supports the following options: "flannel", "custom", and "none".
-"flannel" uses Talos-managed Flannel CNI, and that's the default option.
-"custom" uses custom manifests that should be provided in "urls".
-"none" indicates that Talos will not manage any CNI installation.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`cni` |<a href="#cniconfig">CNIConfig</a> |<details><summary>The CNI used.</summary>Composed of "name" and "urls".<br />The "name" key supports the following options: "flannel", "custom", and "none".<br />"flannel" uses Talos-managed Flannel CNI, and that's the default option.<br />"custom" uses custom manifests that should be provided in "urls".<br />"none" indicates that Talos will not manage any CNI installation.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 cni:
     name: custom # Name of CNI to use.
     # URLs containing manifests to apply for the CNI.
     urls:
         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>dnsDomain</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The domain used by Kubernetes DNS.
-The default is `cluster.local`
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`dnsDomain` |string |<details><summary>The domain used by Kubernetes DNS.</summary>The default is `cluster.local`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dnsDomain: cluser.local
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>podSubnets</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The pod subnet CIDR.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`podSubnets` |[]string |The pod subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 podSubnets:
     - 10.244.0.0/16
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>serviceSubnets</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The service subnet CIDR.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`serviceSubnets` |[]string |The service subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 serviceSubnets:
     - 10.96.0.0/12
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## CNIConfig
 CNIConfig represents the CNI configuration options.
 
@@ -3621,52 +1525,23 @@ Appears in:
 - <code><a href="#clusternetworkconfig">ClusterNetworkConfig</a>.cni</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 name: custom # Name of CNI to use.
 # URLs containing manifests to apply for the CNI.
 urls:
     - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
-```
-
-<hr />
-
-<div class="dd">
-
-<code>name</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Name of CNI to use.
+{{< /highlight >}}
 
 
-Valid values:
-
-
-  - <code>flannel</code>
-
-  - <code>custom</code>
-
-  - <code>none</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>urls</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-URLs containing manifests to apply for the CNI.
-Should be present for "custom", must be empty for "flannel" and "none".
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of CNI to use.  |`flannel`<br />`custom`<br />`none`<br /> |
+|`urls` |[]string |<details><summary>URLs containing manifests to apply for the CNI.</summary>Should be present for "custom", must be empty for "flannel" and "none".</details>  | |
 
 
 
+---
 ## ExternalCloudProviderConfig
 ExternalCloudProviderConfig contains external cloud provider configuration.
 
@@ -3675,67 +1550,28 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.externalCloudProvider</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 enabled: true # Enable external cloud provider.
 # A list of urls that point to additional manifests for an external cloud provider.
 manifests:
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
-```
-
-<hr />
-
-<div class="dd">
-
-<code>enabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enable external cloud provider.
+{{< /highlight >}}
 
 
-Valid values:
-
-
-  - <code>true</code>
-
-  - <code>yes</code>
-
-  - <code>false</code>
-
-  - <code>no</code>
-</div>
-
-<hr />
-<div class="dd">
-
-<code>manifests</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-A list of urls that point to additional manifests for an external cloud provider.
-These will get automatically deployed as part of the bootstrap.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable external cloud provider.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`manifests` |[]string |<details><summary>A list of urls that point to additional manifests for an external cloud provider.</summary>These will get automatically deployed as part of the bootstrap.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 manifests:
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## AdminKubeconfigConfig
 AdminKubeconfigConfig contains admin kubeconfig settings.
 
@@ -3744,28 +1580,19 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.adminKubeconfig</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>certLifetime</code>  <i>Duration</i>
-
-</div>
-<div class="dt">
-
-Admin kubeconfig certificate lifetime (default is 1 year).
-Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`certLifetime` |Duration |<details><summary>Admin kubeconfig certificate lifetime (default is 1 year).</summary>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).</details>  | |
 
 
 
+---
 ## MachineDisk
 MachineDisk represents the options available for partitioning, formatting, and
 mounting extra disks.
@@ -3776,7 +1603,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.disks</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - device: /dev/sdb # The name of the disk to use.
   # A list of partitions to create on the disk.
   partitions:
@@ -3788,37 +1616,17 @@ Appears in:
       # size: 100 MB
       # # Precise value in bytes.
       # size: 1073741824
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>device</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The name of the disk to use.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>partitions</code>  <i>[]<a href="#diskpartition">DiskPartition</a></i>
-
-</div>
-<div class="dt">
-
-A list of partitions to create on the disk.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`device` |string |The name of the disk to use.  | |
+|`partitions` |[]<a href="#diskpartition">DiskPartition</a> |A list of partitions to create on the disk.  | |
 
 
 
+---
 ## DiskPartition
 DiskPartition represents the options for a disk partition.
 
@@ -3828,49 +1636,19 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>size</code>  <i>DiskSize</i>
-
-</div>
-<div class="dt">
-
-The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`size` |DiskSize |The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 size: 100 MB
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 size: 1073741824
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mountpoint</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Where to mount the partition.
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`mountpoint` |string |Where to mount the partition.  | |
 
 
 
+---
 ## EncryptionConfig
 EncryptionConfig represents partition encryption settings.
 
@@ -3881,143 +1659,29 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>provider</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Encryption provider to use for the encryption.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`provider` |string |Encryption provider to use for the encryption. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 provider: luks2
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>keys</code>  <i>[]<a href="#encryptionkey">EncryptionKey</a></i>
-
-</div>
-<div class="dt">
-
-Defines the encryption keys generation and storage method.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>cipher</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Cipher kind to use for the encryption. Depends on the encryption provider.
-
-
-Valid values:
-
-
-  - <code>aes-xts-plain64</code>
-
-  - <code>xchacha12,aes-adiantum-plain64</code>
-
-  - <code>xchacha20,aes-adiantum-plain64</code>
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`keys` |[]<a href="#encryptionkey">EncryptionKey</a> |Defines the encryption keys generation and storage method.  | |
+|`cipher` |string |Cipher kind to use for the encryption. Depends on the encryption provider. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 cipher: aes-xts-plain64
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>keySize</code>  <i>uint</i>
-
-</div>
-<div class="dt">
-
-Defines the encryption key length.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>blockSize</code>  <i>uint64</i>
-
-</div>
-<div class="dt">
-
-Defines the encryption sector size.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> |`aes-xts-plain64`<br />`xchacha12,aes-adiantum-plain64`<br />`xchacha20,aes-adiantum-plain64`<br /> |
+|`keySize` |uint |Defines the encryption key length.  | |
+|`blockSize` |uint64 |Defines the encryption sector size. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 blockSize: 4096
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>options</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Additional --perf parameters for the LUKS2 encryption.
-
-
-Valid values:
-
-
-  - <code>no_read_workqueue</code>
-
-  - <code>no_write_workqueue</code>
-
-  - <code>same_cpu_crypt</code>
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`options` |[]string |Additional --perf parameters for the LUKS2 encryption. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 options:
     - no_read_workqueue
     - no_write_workqueue
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> |`no_read_workqueue`<br />`no_write_workqueue`<br />`same_cpu_crypt`<br /> |
 
 
 
+---
 ## EncryptionKey
 EncryptionKey represents configuration for disk encryption key.
 
@@ -4027,47 +1691,16 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>static</code>  <i><a href="#encryptionkeystatic">EncryptionKeyStatic</a></i>
-
-</div>
-<div class="dt">
-
-Key which value is stored in the configuration file.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>nodeID</code>  <i><a href="#encryptionkeynodeid">EncryptionKeyNodeID</a></i>
-
-</div>
-<div class="dt">
-
-Deterministically generated key from the node UUID and PartitionLabel.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>slot</code>  <i>int</i>
-
-</div>
-<div class="dt">
-
-Key slot number for LUKS2 encryption.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`static` |<a href="#encryptionkeystatic">EncryptionKeyStatic</a> |Key which value is stored in the configuration file.  | |
+|`nodeID` |<a href="#encryptionkeynodeid">EncryptionKeyNodeID</a> |Deterministically generated key from the node UUID and PartitionLabel.  | |
+|`slot` |int |Key slot number for LUKS2 encryption.  | |
 
 
 
+---
 ## EncryptionKeyStatic
 EncryptionKeyStatic represents throw away key type.
 
@@ -4077,23 +1710,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>passphrase</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Defines the static passphrase value.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`passphrase` |string |Defines the static passphrase value.  | |
 
 
 
+---
 ## EncryptionKeyNodeID
 EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
 
@@ -4106,6 +1730,7 @@ Appears in:
 
 
 
+---
 ## MachineFile
 MachineFile represents a file to write to disk.
 
@@ -4114,75 +1739,25 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.files</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - content: '...' # The contents of the file.
   permissions: 0o666 # The file's permissions in octal.
   path: /tmp/file.txt # The path of the file.
   op: append # The operation to use
-```
-
-<hr />
-
-<div class="dd">
-
-<code>content</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The contents of the file.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>permissions</code>  <i>FileMode</i>
-
-</div>
-<div class="dt">
-
-The file's permissions in octal.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>path</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The path of the file.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>op</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The operation to use
+{{< /highlight >}}
 
 
-Valid values:
-
-
-  - <code>create</code>
-
-  - <code>append</code>
-
-  - <code>overwrite</code>
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`content` |string |The contents of the file.  | |
+|`permissions` |FileMode |The file's permissions in octal.  | |
+|`path` |string |The path of the file.  | |
+|`op` |string |The operation to use  |`create`<br />`append`<br />`overwrite`<br /> |
 
 
 
+---
 ## ExtraHost
 ExtraHost represents a host entry in /etc/hosts.
 
@@ -4191,43 +1766,24 @@ Appears in:
 - <code><a href="#networkconfig">NetworkConfig</a>.extraHostEntries</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - ip: 192.168.1.100 # The IP of the host.
   # The host alias.
   aliases:
     - example
     - example.domain.tld
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>ip</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The IP of the host.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>aliases</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The host alias.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`ip` |string |The IP of the host.  | |
+|`aliases` |[]string |The host alias.  | |
 
 
 
+---
 ## Device
 Device represents a network interface.
 
@@ -4236,7 +1792,8 @@ Appears in:
 - <code><a href="#networkconfig">NetworkConfig</a>.interfaces</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - interface: eth0 # The interface name.
   # Assigns static IP addresses to the interface.
   addresses:
@@ -4292,99 +1849,27 @@ Appears in:
   # # Virtual (shared) IP address configuration.
   # vip:
   #     ip: 172.16.199.55 # Specifies the IP address to be used.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>interface</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The interface name.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`interface` |string |The interface name. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interface: eth0
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>addresses</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-Assigns static IP addresses to the interface.
-An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`addresses` |[]string |<details><summary>Assigns static IP addresses to the interface.</summary>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 addresses:
     - 10.5.0.0/16
     - 192.168.3.7
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>routes</code>  <i>[]<a href="#route">Route</a></i>
-
-</div>
-<div class="dt">
-
-A list of routes associated with the interface.
-If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`routes` |[]<a href="#route">Route</a> |<details><summary>A list of routes associated with the interface.</summary>If used in combination with DHCP, these routes will be appended to routes returned by DHCP server.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 routes:
     - network: 0.0.0.0/0 # The route's network (destination).
       gateway: 10.5.0.1 # The route's gateway (if empty, creates link scope route).
     - network: 10.2.0.0/16 # The route's network (destination).
       gateway: 10.2.0.1 # The route's gateway (if empty, creates link scope route).
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>bond</code>  <i><a href="#bond">Bond</a></i>
-
-</div>
-<div class="dt">
-
-Bond specific options.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`bond` |<a href="#bond">Bond</a> |Bond specific options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 bond:
     # The interfaces that make up the bond.
     interfaces:
@@ -4392,130 +1877,19 @@ bond:
         - eth1
     mode: 802.3ad # A bond option.
     lacpRate: fast # A bond option.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>vlans</code>  <i>[]<a href="#vlan">Vlan</a></i>
-
-</div>
-<div class="dt">
-
-VLAN specific options.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mtu</code>  <i>int</i>
-
-</div>
-<div class="dt">
-
-The interface's MTU.
-If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>dhcp</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if DHCP should be used to configure the interface.
-The following DHCP options are supported:
-
-- `OptionClasslessStaticRoute`
-- `OptionDomainNameServer`
-- `OptionDNSDomainSearchList`
-- `OptionHostName`
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`vlans` |[]<a href="#vlan">Vlan</a> |VLAN specific options.  | |
+|`mtu` |int |<details><summary>The interface's MTU.</summary>If used in combination with DHCP, this will override any MTU settings returned from DHCP server.</details>  | |
+|`dhcp` |bool |<details><summary>Indicates if DHCP should be used to configure the interface.</summary>The following DHCP options are supported:<br /><br />- `OptionClasslessStaticRoute`<br />- `OptionDomainNameServer`<br />- `OptionDNSDomainSearchList`<br />- `OptionHostName`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dhcp: true
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ignore</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if the interface should be ignored (skips configuration).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>dummy</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if the interface is a dummy interface.
-`dummy` is used to specify that this interface should be a virtual-only, dummy interface.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>dhcpOptions</code>  <i><a href="#dhcpoptions">DHCPOptions</a></i>
-
-</div>
-<div class="dt">
-
-DHCP specific options.
-`dhcp` *must* be set to true for these to take effect.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`ignore` |bool |Indicates if the interface should be ignored (skips configuration).  | |
+|`dummy` |bool |<details><summary>Indicates if the interface is a dummy interface.</summary>`dummy` is used to specify that this interface should be a virtual-only, dummy interface.</details>  | |
+|`dhcpOptions` |<a href="#dhcpoptions">DHCPOptions</a> |<details><summary>DHCP specific options.</summary>`dhcp` *must* be set to true for these to take effect.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dhcpOptions:
     routeMetric: 1024 # The priority of all routes received via DHCP.
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>wireguard</code>  <i><a href="#devicewireguardconfig">DeviceWireguardConfig</a></i>
-
-</div>
-<div class="dt">
-
-Wireguard specific configuration.
-Includes things like private key, listen port, peers.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`wireguard` |<a href="#devicewireguardconfig">DeviceWireguardConfig</a> |<details><summary>Wireguard specific configuration.</summary>Includes things like private key, listen port, peers.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 wireguard:
     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
     listenPort: 51111 # Specifies a device's listening port.
@@ -4526,9 +1900,7 @@ wireguard:
           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           allowedIPs:
             - 192.168.1.0/24
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 wireguard:
     privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
     # Specifies a list of peer configurations to apply to a device.
@@ -4539,38 +1911,15 @@ wireguard:
           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           allowedIPs:
             - 192.168.1.0/24
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>vip</code>  <i><a href="#devicevipconfig">DeviceVIPConfig</a></i>
-
-</div>
-<div class="dt">
-
-Virtual (shared) IP address configuration.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`vip` |<a href="#devicevipconfig">DeviceVIPConfig</a> |Virtual (shared) IP address configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 vip:
     ip: 172.16.199.55 # Specifies the IP address to be used.
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## DHCPOptions
 DHCPOptions contains options for configuring the DHCP settings for a given interface.
 
@@ -4579,63 +1928,22 @@ Appears in:
 - <code><a href="#device">Device</a>.dhcpOptions</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 routeMetric: 1024 # The priority of all routes received via DHCP.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>routeMetric</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-The priority of all routes received via DHCP.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ipv4</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enables DHCPv4 protocol for the interface (default is enabled).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ipv6</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enables DHCPv6 protocol for the interface (default is disabled).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>duidv6</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Set client DUID (hex string).
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`routeMetric` |uint32 |The priority of all routes received via DHCP.  | |
+|`ipv4` |bool |Enables DHCPv4 protocol for the interface (default is enabled).  | |
+|`ipv6` |bool |Enables DHCPv6 protocol for the interface (default is disabled).  | |
+|`duidv6` |string |Set client DUID (hex string).  | |
 
 
 
+---
 ## DeviceWireguardConfig
 DeviceWireguardConfig contains settings for configuring Wireguard network interface.
 
@@ -4644,7 +1952,8 @@ Appears in:
 - <code><a href="#device">Device</a>.wireguard</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
 listenPort: 51111 # Specifies a device's listening port.
 # Specifies a list of peer configurations to apply to a device.
@@ -4654,8 +1963,9 @@ peers:
       # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       allowedIPs:
         - 192.168.1.0/24
-```
-``` yaml
+{{< /highlight >}}
+
+{{< highlight yaml >}}
 privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
 # Specifies a list of peer configurations to apply to a device.
 peers:
@@ -4665,62 +1975,19 @@ peers:
       # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       allowedIPs:
         - 192.168.1.0/24
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>privateKey</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies a private key configuration (base64 encoded).
-Can be generated by `wg genkey`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>listenPort</code>  <i>int</i>
-
-</div>
-<div class="dt">
-
-Specifies a device's listening port.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>firewallMark</code>  <i>int</i>
-
-</div>
-<div class="dt">
-
-Specifies a device's firewall mark.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>peers</code>  <i>[]<a href="#devicewireguardpeer">DeviceWireguardPeer</a></i>
-
-</div>
-<div class="dt">
-
-Specifies a list of peer configurations to apply to a device.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`privateKey` |string |<details><summary>Specifies a private key configuration (base64 encoded).</summary>Can be generated by `wg genkey`.</details>  | |
+|`listenPort` |int |Specifies a device's listening port.  | |
+|`firewallMark` |int |Specifies a device's firewall mark.  | |
+|`peers` |[]<a href="#devicewireguardpeer">DeviceWireguardPeer</a> |Specifies a list of peer configurations to apply to a device.  | |
 
 
 
+---
 ## DeviceWireguardPeer
 DeviceWireguardPeer a WireGuard device peer configuration.
 
@@ -4730,61 +1997,17 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>publicKey</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies the public key of this peer.
-Can be extracted from private key by running `wg pubkey < private.key > public.key && cat public.key`.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>endpoint</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies the endpoint of this peer entry.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>persistentKeepaliveInterval</code>  <i>Duration</i>
-
-</div>
-<div class="dt">
-
-Specifies the persistent keepalive interval for this peer.
-Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>allowedIPs</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`publicKey` |string |<details><summary>Specifies the public key of this peer.</summary>Can be extracted from private key by running `wg pubkey < private.key > public.key && cat public.key`.</details>  | |
+|`endpoint` |string |Specifies the endpoint of this peer entry.  | |
+|`persistentKeepaliveInterval` |Duration |<details><summary>Specifies the persistent keepalive interval for this peer.</summary>Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).</details>  | |
+|`allowedIPs` |[]string |AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.  | |
 
 
 
+---
 ## DeviceVIPConfig
 DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface.
 
@@ -4794,51 +2017,21 @@ Appears in:
 - <code><a href="#vlan">Vlan</a>.vip</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 ip: 172.16.199.55 # Specifies the IP address to be used.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>ip</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies the IP address to be used.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>equinixMetal</code>  <i><a href="#vipequinixmetalconfig">VIPEquinixMetalConfig</a></i>
-
-</div>
-<div class="dt">
-
-Specifies the Equinix Metal API settings to assign VIP to the node.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>hcloud</code>  <i><a href="#viphcloudconfig">VIPHCloudConfig</a></i>
-
-</div>
-<div class="dt">
-
-Specifies the Hetzner Cloud API settings to assign VIP to the node.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`ip` |string |Specifies the IP address to be used.  | |
+|`equinixMetal` |<a href="#vipequinixmetalconfig">VIPEquinixMetalConfig</a> |Specifies the Equinix Metal API settings to assign VIP to the node.  | |
+|`hcloud` |<a href="#viphcloudconfig">VIPHCloudConfig</a> |Specifies the Hetzner Cloud API settings to assign VIP to the node.  | |
 
 
 
+---
 ## VIPEquinixMetalConfig
 VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
 
@@ -4848,23 +2041,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>apiToken</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies the Equinix Metal API Token.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`apiToken` |string |Specifies the Equinix Metal API Token.  | |
 
 
 
+---
 ## VIPHCloudConfig
 VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
 
@@ -4874,23 +2058,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>apiToken</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Specifies the Hetzner Cloud API Token.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`apiToken` |string |Specifies the Hetzner Cloud API Token.  | |
 
 
 
+---
 ## Bond
 Bond contains the various options for configuring a bonded interface.
 
@@ -4899,372 +2074,50 @@ Appears in:
 - <code><a href="#device">Device</a>.bond</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # The interfaces that make up the bond.
 interfaces:
     - eth0
     - eth1
 mode: 802.3ad # A bond option.
 lacpRate: fast # A bond option.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>interfaces</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The interfaces that make up the bond.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>arpIPTarget</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-Not supported at the moment.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mode</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>xmitHashPolicy</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>lacpRate</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>adActorSystem</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-Not supported at the moment.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>arpValidate</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>arpAllTargets</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>primary</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>primaryReselect</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>failOverMac</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>adSelect</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>miimon</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>updelay</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>downdelay</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>arpInterval</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>resendIgmp</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>minLinks</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>lpInterval</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>packetsPerSlave</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>numPeerNotif</code>  <i>uint8</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>tlbDynamicLb</code>  <i>uint8</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>allSlavesActive</code>  <i>uint8</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>useCarrier</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>adActorSysPrio</code>  <i>uint16</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>adUserPortKey</code>  <i>uint16</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>peerNotifyDelay</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-A bond option.
-Please see the official kernel documentation.
-
-</div>
-
-<hr />
-
-
-
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`interfaces` |[]string |The interfaces that make up the bond.  | |
+|`arpIPTarget` |[]string |<details><summary>A bond option.</summary>Please see the official kernel documentation.<br />Not supported at the moment.</details>  | |
+|`mode` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`xmitHashPolicy` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`lacpRate` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`adActorSystem` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.<br />Not supported at the moment.</details>  | |
+|`arpValidate` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`arpAllTargets` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`primary` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`primaryReselect` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`failOverMac` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`adSelect` |string |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`miimon` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`updelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`downdelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`arpInterval` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`resendIgmp` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`minLinks` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`lpInterval` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`packetsPerSlave` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`numPeerNotif` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`tlbDynamicLb` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`allSlavesActive` |uint8 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`useCarrier` |bool |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`adActorSysPrio` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`adUserPortKey` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+|`peerNotifyDelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+
+
+
+---
 ## Vlan
 Vlan represents vlan settings for a device.
 
@@ -5274,83 +2127,19 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>addresses</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-The addresses in CIDR notation or as plain IPs to use.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>routes</code>  <i>[]<a href="#route">Route</a></i>
-
-</div>
-<div class="dt">
-
-A list of routes associated with the VLAN.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>dhcp</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Indicates if DHCP should be used.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>vlanId</code>  <i>uint16</i>
-
-</div>
-<div class="dt">
-
-The VLAN's ID.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mtu</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-The VLAN's MTU.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>vip</code>  <i><a href="#devicevipconfig">DeviceVIPConfig</a></i>
-
-</div>
-<div class="dt">
-
-The VLAN's virtual IP address configuration.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`addresses` |[]string |The addresses in CIDR notation or as plain IPs to use.  | |
+|`routes` |[]<a href="#route">Route</a> |A list of routes associated with the VLAN.  | |
+|`dhcp` |bool |Indicates if DHCP should be used.  | |
+|`vlanId` |uint16 |The VLAN's ID.  | |
+|`mtu` |uint32 |The VLAN's MTU.  | |
+|`vip` |<a href="#devicevipconfig">DeviceVIPConfig</a> |The VLAN's virtual IP address configuration.  | |
 
 
 
+---
 ## Route
 Route represents a network route.
 
@@ -5360,66 +2149,25 @@ Appears in:
 - <code><a href="#vlan">Vlan</a>.routes</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 - network: 0.0.0.0/0 # The route's network (destination).
   gateway: 10.5.0.1 # The route's gateway (if empty, creates link scope route).
 - network: 10.2.0.0/16 # The route's network (destination).
   gateway: 10.2.0.1 # The route's gateway (if empty, creates link scope route).
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>network</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The route's network (destination).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>gateway</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The route's gateway (if empty, creates link scope route).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>source</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-The route's source address (optional).
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>metric</code>  <i>uint32</i>
-
-</div>
-<div class="dt">
-
-The optional metric for the route.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`network` |string |The route's network (destination).  | |
+|`gateway` |string |The route's gateway (if empty, creates link scope route).  | |
+|`source` |string |The route's source address (optional).  | |
+|`metric` |uint32 |The optional metric for the route.  | |
 
 
 
+---
 ## RegistryMirrorConfig
 RegistryMirrorConfig represents mirror configuration for a registry.
 
@@ -5428,33 +2176,23 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.mirrors</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 ghcr.io:
     # List of endpoints (URLs) for registry mirrors to use.
     endpoints:
         - https://registry.insecure
         - https://ghcr.io/v2/
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>endpoints</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-List of endpoints (URLs) for registry mirrors to use.
-Endpoint configures HTTP/HTTPS access mode, host name,
-port and path (if path is not set, it defaults to `/v2`).
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoints` |[]string |<details><summary>List of endpoints (URLs) for registry mirrors to use.</summary>Endpoint configures HTTP/HTTPS access mode, host name,<br />port and path (if path is not set, it defaults to `/v2`).</details>  | |
 
 
 
+---
 ## RegistryConfig
 RegistryConfig specifies auth & TLS config per registry.
 
@@ -5463,7 +2201,8 @@ Appears in:
 - <code><a href="#registriesconfig">RegistriesConfig</a>.config</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 registry.insecure:
     # The TLS configuration for the registry.
     tls:
@@ -5478,33 +2217,18 @@ registry.insecure:
     # auth:
     #     username: username # Optional registry authentication.
     #     password: password # Optional registry authentication.
-```
-
-<hr />
-
-<div class="dd">
-
-<code>tls</code>  <i><a href="#registrytlsconfig">RegistryTLSConfig</a></i>
-
-</div>
-<div class="dt">
-
-The TLS configuration for the registry.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`tls` |<a href="#registrytlsconfig">RegistryTLSConfig</a> |The TLS configuration for the registry. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 tls:
     # Enable mutual TLS authentication with the registry.
     clientIdentity:
         crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
         key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 tls:
     insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
 
@@ -5512,40 +2236,16 @@ tls:
     # clientIdentity:
     #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>auth</code>  <i><a href="#registryauthconfig">RegistryAuthConfig</a></i>
-
-</div>
-<div class="dt">
-
-The auth configuration for this registry.
-Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`auth` |<a href="#registryauthconfig">RegistryAuthConfig</a> |<details><summary>The auth configuration for this registry.</summary>Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 auth:
     username: username # Optional registry authentication.
     password: password # Optional registry authentication.
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## RegistryAuthConfig
 RegistryAuthConfig specifies authentication configuration for a registry.
 
@@ -5554,68 +2254,23 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.auth</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 username: username # Optional registry authentication.
 password: password # Optional registry authentication.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>username</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Optional registry authentication.
-The meaning of each field is the same with the corresponding field in .docker/config.json.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>password</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Optional registry authentication.
-The meaning of each field is the same with the corresponding field in .docker/config.json.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>auth</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Optional registry authentication.
-The meaning of each field is the same with the corresponding field in .docker/config.json.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>identityToken</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Optional registry authentication.
-The meaning of each field is the same with the corresponding field in .docker/config.json.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`username` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
+|`password` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
+|`auth` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
+|`identityToken` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
 
 
 
+---
 ## RegistryTLSConfig
 RegistryTLSConfig specifies TLS config for HTTPS registries.
 
@@ -5624,76 +2279,37 @@ Appears in:
 - <code><a href="#registryconfig">RegistryConfig</a>.tls</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Enable mutual TLS authentication with the registry.
 clientIdentity:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-``` yaml
+{{< /highlight >}}
+
+{{< highlight yaml >}}
 insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
 
 # # Enable mutual TLS authentication with the registry.
 # clientIdentity:
 #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
 #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-<hr />
-
-<div class="dd">
-
-<code>clientIdentity</code>  <i>PEMEncodedCertificateAndKey</i>
-
-</div>
-<div class="dt">
-
-Enable mutual TLS authentication with the registry.
-Client certificate and key should be base64-encoded.
+{{< /highlight >}}
 
 
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`clientIdentity` |PEMEncodedCertificateAndKey |<details><summary>Enable mutual TLS authentication with the registry.</summary>Client certificate and key should be base64-encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clientIdentity:
     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ca</code>  <i>Base64Bytes</i>
-
-</div>
-<div class="dt">
-
-CA registry certificate to add the list of trusted certificates.
-Certificate should be base64-encoded.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>insecureSkipVerify</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Skip TLS server certificate verification (not recommended).
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`ca` |Base64Bytes |<details><summary>CA registry certificate to add the list of trusted certificates.</summary>Certificate should be base64-encoded.</details>  | |
+|`insecureSkipVerify` |bool |Skip TLS server certificate verification (not recommended).  | |
 
 
 
+---
 ## SystemDiskEncryptionConfig
 SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
 
@@ -5702,7 +2318,8 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.systemDiskEncryption</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Ephemeral partition encryption.
 ephemeral:
     provider: luks2 # Encryption provider to use for the encryption.
@@ -5722,37 +2339,17 @@ ephemeral:
     # options:
     #     - no_read_workqueue
     #     - no_write_workqueue
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>state</code>  <i><a href="#encryptionconfig">EncryptionConfig</a></i>
-
-</div>
-<div class="dt">
-
-State partition encryption.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>ephemeral</code>  <i><a href="#encryptionconfig">EncryptionConfig</a></i>
-
-</div>
-<div class="dt">
-
-Ephemeral partition encryption.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`state` |<a href="#encryptionconfig">EncryptionConfig</a> |State partition encryption.  | |
+|`ephemeral` |<a href="#encryptionconfig">EncryptionConfig</a> |Ephemeral partition encryption.  | |
 
 
 
+---
 ## FeaturesConfig
 FeaturesConfig describe individual Talos features that can be switched on or off.
 
@@ -5761,27 +2358,19 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.features</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 rbac: true # Enable role-based access control (RBAC).
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>rbac</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enable role-based access control (RBAC).
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rbac` |bool |Enable role-based access control (RBAC).  | |
 
 
 
+---
 ## VolumeMountConfig
 VolumeMountConfig struct describes extra volume mount for the static pods.
 
@@ -5793,133 +2382,41 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>hostPath</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Path on the host.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`hostPath` |string |Path on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 hostPath: /var/lib/auth
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>mountPath</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Path in the container.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`mountPath` |string |Path in the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 mountPath: /etc/kubernetes/auth
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>readonly</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Mount the volume read only.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`readonly` |bool |Mount the volume read only. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 readonly: true
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## ClusterInlineManifest
 ClusterInlineManifest struct describes inline bootstrap manifests for the user.
 
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>name</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Name of the manifest.
-Name should be unique.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |<details><summary>Name of the manifest.</summary>Name should be unique.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 name: csi
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>contents</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Manifest contents as a string.
-
-
-
-Examples:
-
-
-``` yaml
+{{< /highlight >}}</details> | |
+|`contents` |string |Manifest contents as a string. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 contents: /etc/kubernetes/auth
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## NetworkKubeSpan
 NetworkKubeSpan struct describes KubeSpan configuration.
 
@@ -5928,43 +2425,20 @@ Appears in:
 - <code><a href="#networkconfig">NetworkConfig</a>.kubespan</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 enabled: true # Enable the KubeSpan feature.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>enabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enable the KubeSpan feature.
-Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>allowDownPeerBypass</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Skip sending traffic via KubeSpan if the peer connection state is not up.
-This provides configurable choice between connectivity and security: either traffic is always
-forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
-to the peer if Wireguard connection can't be established.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |<details><summary>Enable the KubeSpan feature.</summary>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.</details>  | |
+|`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
 
 
 
+---
 ## ClusterDiscoveryConfig
 ClusterDiscoveryConfig struct configures cluster membership discovery.
 
@@ -5973,7 +2447,8 @@ Appears in:
 - <code><a href="#clusterconfig">ClusterConfig</a>.discovery</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 enabled: true # Enable the cluster membership discovery feature.
 # Configure registries used for cluster member discovery.
 registries:
@@ -5982,38 +2457,17 @@ registries:
     # Service registry is using an external service to push and pull information about cluster members.
     service:
         endpoint: https://discovery.talos.dev/ # External service endpoint.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>enabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Enable the cluster membership discovery feature.
-Cluster discovery is based on individual registries which are configured under the registries field.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>registries</code>  <i><a href="#discoveryregistriesconfig">DiscoveryRegistriesConfig</a></i>
-
-</div>
-<div class="dt">
-
-Configure registries used for cluster member discovery.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |<details><summary>Enable the cluster membership discovery feature.</summary>Cluster discovery is based on individual registries which are configured under the registries field.</details>  | |
+|`registries` |<a href="#discoveryregistriesconfig">DiscoveryRegistriesConfig</a> |Configure registries used for cluster member discovery.  | |
 
 
 
+---
 ## DiscoveryRegistriesConfig
 DiscoveryRegistriesConfig struct configures cluster membership discovery.
 
@@ -6023,36 +2477,15 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>kubernetes</code>  <i><a href="#registrykubernetesconfig">RegistryKubernetesConfig</a></i>
-
-</div>
-<div class="dt">
-
-Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
-as annotations on the Node resources.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>service</code>  <i><a href="#registryserviceconfig">RegistryServiceConfig</a></i>
-
-</div>
-<div class="dt">
-
-Service registry is using an external service to push and pull information about cluster members.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`kubernetes` |<a href="#registrykubernetesconfig">RegistryKubernetesConfig</a> |<details><summary>Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information</summary>as annotations on the Node resources.</details>  | |
+|`service` |<a href="#registryserviceconfig">RegistryServiceConfig</a> |Service registry is using an external service to push and pull information about cluster members.  | |
 
 
 
+---
 ## RegistryKubernetesConfig
 RegistryKubernetesConfig struct configures Kubernetes discovery registry.
 
@@ -6062,23 +2495,14 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable Kubernetes discovery registry.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable Kubernetes discovery registry.  | |
 
 
 
+---
 ## RegistryServiceConfig
 RegistryServiceConfig struct configures Kubernetes discovery registry.
 
@@ -6088,45 +2512,17 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>disabled</code>  <i>bool</i>
-
-</div>
-<div class="dt">
-
-Disable external service discovery registry.
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>endpoint</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-External service endpoint.
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disabled` |bool |Disable external service discovery registry.  | |
+|`endpoint` |string |External service endpoint. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 endpoint: https://discovery.talos.dev/
-```
-
-
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
 
 
 
+---
 ## UdevConfig
 UdevConfig describes how the udev system should be configured.
 
@@ -6135,29 +2531,21 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.udev</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # List of udev rules to apply to the udev system
 rules:
     - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>rules</code>  <i>[]string</i>
-
-</div>
-<div class="dt">
-
-List of udev rules to apply to the udev system
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rules` |[]string |List of udev rules to apply to the udev system  | |
 
 
 
+---
 ## LoggingConfig
 LoggingConfig struct configures Talos logging.
 
@@ -6166,30 +2554,22 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.logging</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Logging destination.
 destinations:
     - endpoint: tcp://1.2.3.4:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
       format: json_lines # Logs format.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>destinations</code>  <i>[]<a href="#loggingdestination">LoggingDestination</a></i>
-
-</div>
-<div class="dt">
-
-Logging destination.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`destinations` |[]<a href="#loggingdestination">LoggingDestination</a> |Logging destination.  | |
 
 
 
+---
 ## LoggingDestination
 LoggingDestination struct configures Talos logging destination.
 
@@ -6199,54 +2579,19 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>endpoint</code>  <i><a href="#endpoint">Endpoint</a></i>
-
-</div>
-<div class="dt">
-
-Where to send logs. Supported protocols are "tcp" and "udp".
-
-
-
-Examples:
-
-
-``` yaml
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoint` |<a href="#endpoint">Endpoint</a> |Where to send logs. Supported protocols are "tcp" and "udp". <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 endpoint: udp://127.0.0.1:12345
-```
-
-``` yaml
+{{< /highlight >}}{{< highlight yaml >}}
 endpoint: tcp://1.2.3.4:12345
-```
-
-
-</div>
-
-<hr />
-<div class="dd">
-
-<code>format</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Logs format.
-
-
-Valid values:
-
-
-  - <code>json_lines</code>
-</div>
-
-<hr />
+{{< /highlight >}}</details> | |
+|`format` |string |Logs format.  |`json_lines`<br /> |
 
 
 
+---
 ## KernelConfig
 KernelConfig struct configures Talos Linux kernel.
 
@@ -6255,29 +2600,21 @@ Appears in:
 - <code><a href="#machineconfig">MachineConfig</a>.kernel</code>
 
 
-``` yaml
+
+{{< highlight yaml >}}
 # Kernel modules to load.
 modules:
     - name: brtfs # Module name.
-```
+{{< /highlight >}}
 
-<hr />
 
-<div class="dd">
-
-<code>modules</code>  <i>[]<a href="#kernelmoduleconfig">KernelModuleConfig</a></i>
-
-</div>
-<div class="dt">
-
-Kernel modules to load.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`modules` |[]<a href="#kernelmoduleconfig">KernelModuleConfig</a> |Kernel modules to load.  | |
 
 
 
+---
 ## KernelModuleConfig
 KernelModuleConfig struct configures Linux kernel modules to load.
 
@@ -6287,19 +2624,9 @@ Appears in:
 
 
 
-<hr />
 
-<div class="dd">
-
-<code>name</code>  <i>string</i>
-
-</div>
-<div class="dt">
-
-Module name.
-
-</div>
-
-<hr />
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Module name.  | |
 
 
