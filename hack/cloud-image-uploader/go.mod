@@ -3,7 +3,7 @@ module github.com/talos-systems/cloud-image-uploader
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.43.41
+	github.com/aws/aws-sdk-go v1.43.45
 	github.com/google/uuid v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/talos-systems/go-retry v0.3.1
