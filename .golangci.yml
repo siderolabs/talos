@@ -30,6 +30,13 @@ run:
     - integration_cli
     - integration_k8s
     - integration_provision
+    # build tags for podman provisioner
+    - remote
+    - exclude_graphdriver_btrfs
+    - exclude_graphdriver_btrfs
+    - btrfs_noversion
+    - exclude_graphdriver_devicemapper
+    - containers_image_openpgp
 
 # output configuration options
 output:

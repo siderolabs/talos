@@ -47,6 +47,9 @@ GO_BUILDFLAGS ?=
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
+# Build tags for podman provisioner
+GO_BUILDFLAGS += -tags remote,exclude_graphdriver_btrfs,exclude_graphdriver_btrfs,btrfs_noversion,exclude_graphdriver_devicemapper,containers_image_openpgp
+
 WITH_RACE ?= false
 WITH_DEBUG ?= false
 

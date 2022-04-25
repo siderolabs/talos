@@ -80,7 +80,7 @@ talosctl bootstrap [flags]
 
 ## talosctl cluster create
 
-Creates a local docker-based or QEMU-based kubernetes cluster
+Creates a local docker-, podman- or QEMU-based kubernetes cluster
 
 ```
 talosctl cluster create [flags]
@@ -253,7 +253,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local docker-based or QEMU-based kubernetes cluster
+* [talosctl cluster create](#talosctl-cluster-create)	 - Creates a local docker-, podman- or QEMU-based kubernetes cluster
 * [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local docker-based or firecracker-based kubernetes cluster
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
 

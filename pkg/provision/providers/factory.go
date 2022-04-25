@@ -10,6 +10,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers/docker"
+	"github.com/talos-systems/talos/pkg/provision/providers/podman"
 )
 
 // Factory instantiates provision provider by name.
@@ -17,6 +18,8 @@ func Factory(ctx context.Context, name string) (provision.Provisioner, error) {
 	switch name {
 	case "docker":
 		return docker.NewProvisioner(ctx)
+	case "podman":
+		return podman.NewProvisioner(ctx)
 	case "qemu":
 		return newQemu(ctx)
 	default:
