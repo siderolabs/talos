@@ -153,7 +153,7 @@ var (
 // createCmd represents the cluster up command.
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Creates a local docker-based or QEMU-based kubernetes cluster",
+	Short: "Creates a local docker-, podman- or QEMU-based kubernetes cluster",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
