@@ -106,7 +106,7 @@ require (
 	github.com/vmware/govmomi v0.27.4
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.0.3
-	go.etcd.io/etcd/api/v3 v3.5.3
+	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.3
 	go.etcd.io/etcd/client/v3 v3.5.3
 	go.etcd.io/etcd/etcdutl/v3 v3.5.3
