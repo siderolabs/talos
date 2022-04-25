@@ -17,13 +17,13 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.24.0-rc.0
-	k8s.io/apimachinery v0.24.0-rc.0
+	k8s.io/api v0.25.0-alpha.0
+	k8s.io/apimachinery v0.25.0-alpha.0
 	k8s.io/apiserver v0.24.0-rc.0
-	k8s.io/client-go v0.24.0-rc.0
-	k8s.io/component-base v0.24.0-rc.0
+	k8s.io/client-go v0.25.0-alpha.0
+	k8s.io/component-base v0.25.0-alpha.0
 	k8s.io/cri-api v0.24.0-rc.0
-	k8s.io/kubectl v0.24.0-rc.0
+	k8s.io/kubectl v0.25.0-alpha.0
 	k8s.io/kubelet v0.24.0-rc.0
 )
 
@@ -279,7 +279,7 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
-	k8s.io/cli-runtime v0.24.0-rc.0 // indirect
+	k8s.io/cli-runtime v0.25.0-alpha.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
