@@ -57,8 +57,8 @@ func (suite *ControlPlaneStaticPodSuite) SetupTest() {
 	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
 
 	etcdService := v1alpha1.NewService("etcd")
-	etcdService.SetRunning(true)
-	etcdService.SetHealthy(true)
+	etcdService.TypedSpec().Running = true
+	etcdService.TypedSpec().Healthy = true
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, etcdService))
 

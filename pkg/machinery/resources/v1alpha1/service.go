@@ -7,16 +7,14 @@ package v1alpha1
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // ServiceType is type of Service resource.
 const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 
 // Service describes running service state.
-type Service struct {
-	md   resource.Metadata
-	spec ServiceSpec
-}
+type Service = typed.Resource[ServiceSpec, ServiceRD]
 
 // ServiceSpec describe service state.
 type ServiceSpec struct {
@@ -27,36 +25,22 @@ type ServiceSpec struct {
 
 // NewService initializes a Service resource.
 func NewService(id resource.ID) *Service {
-	r := &Service{
-		md:   resource.NewMetadata(NamespaceName, ServiceType, id, resource.VersionUndefined),
-		spec: ServiceSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ServiceSpec, ServiceRD](
+		resource.NewMetadata(NamespaceName, ServiceType, id, resource.VersionUndefined),
+		ServiceSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Service) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (s ServiceSpec) DeepCopy() ServiceSpec {
+	return s
 }
 
-// Spec implements resource.Resource.
-func (r *Service) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Service) DeepCopy() resource.Resource {
-	return &Service{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// ServiceRD provides auxiliary methods for Service.
+type ServiceRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Service) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ServiceRD) ResourceDefinition(resource.Metadata, ServiceSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ServiceType,
 		Aliases:          []resource.Type{"svc"},
@@ -76,34 +60,4 @@ func (r *Service) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// SetRunning changes .spec.running.
-func (r *Service) SetRunning(running bool) {
-	r.spec.Running = running
-}
-
-// SetHealthy changes .spec.healthy.
-func (r *Service) SetHealthy(healthy bool) {
-	r.spec.Healthy = healthy
-}
-
-// SetUnknown changes .spec.unknown.
-func (r *Service) SetUnknown(unknown bool) {
-	r.spec.Unknown = unknown
-}
-
-// Running returns .spec.running.
-func (r *Service) Running() bool {
-	return r.spec.Running
-}
-
-// Healthy returns .spec.healthy.
-func (r *Service) Healthy() bool {
-	return r.spec.Healthy
-}
-
-// Unknown returns .spec.unknown.
-func (r *Service) Unknown() bool {
-	return r.spec.Unknown
 }

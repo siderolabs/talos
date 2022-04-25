@@ -91,8 +91,8 @@ func (suite *SyncSuite) assertTimeStatus(spec timeresource.StatusSpec) error {
 
 	status := r.(*timeresource.Status) //nolint:errcheck,forcetypeassert
 
-	if status.Status() != spec {
-		return retry.ExpectedError(fmt.Errorf("time status doesn't match: %v != %v", status.Status(), spec))
+	if *status.TypedSpec() != spec {
+		return retry.ExpectedError(fmt.Errorf("time status doesn't match: %v != %v", *status.TypedSpec(), spec))
 	}
 
 	return nil

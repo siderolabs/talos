@@ -77,9 +77,11 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, lo
 					if err := r.Modify(ctx, service, func(r resource.Resource) error {
 						svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
 
-						svc.SetRunning(true)
-						svc.SetHealthy(msg.GetHealth().GetHealthy())
-						svc.SetUnknown(msg.GetHealth().GetUnknown())
+						*svc.TypedSpec() = v1alpha1.ServiceSpec{
+							Running: true,
+							Healthy: msg.GetHealth().GetHealthy(),
+							Unknown: msg.GetHealth().GetUnknown(),
+						}
 
 						return nil
 					}); err != nil {

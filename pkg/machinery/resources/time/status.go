@@ -7,6 +7,7 @@ package time
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -18,10 +19,7 @@ const StatusType = resource.Type("TimeStatuses.v1alpha1.talos.dev")
 const StatusID = resource.ID("node")
 
 // Status describes running current time sync status.
-type Status struct {
-	md   resource.Metadata
-	spec StatusSpec
-}
+type Status = typed.Resource[StatusSpec, StatusRD]
 
 // StatusSpec describes time sync state.
 type StatusSpec struct {
@@ -37,36 +35,22 @@ type StatusSpec struct {
 
 // NewStatus initializes a TimeSync resource.
 func NewStatus() *Status {
-	r := &Status{
-		md:   resource.NewMetadata(v1alpha1.NamespaceName, StatusType, StatusID, resource.VersionUndefined),
-		spec: StatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[StatusSpec, StatusRD](
+		resource.NewMetadata(v1alpha1.NamespaceName, StatusType, StatusID, resource.VersionUndefined),
+		StatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Status) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (s StatusSpec) DeepCopy() StatusSpec {
+	return s
 }
 
-// Spec implements resource.Resource.
-func (r *Status) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Status) DeepCopy() resource.Resource {
-	return &Status{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// StatusRD provides auxiliary methods for Status.
+type StatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Status) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (r StatusRD) ResourceDefinition(resource.Metadata, StatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StatusType,
 		Aliases:          []resource.Type{},
@@ -78,14 +62,4 @@ func (r *Status) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// SetStatus changes .spec.
-func (r *Status) SetStatus(status StatusSpec) {
-	r.spec = status
-}
-
-// Status returns .spec.
-func (r *Status) Status() StatusSpec {
-	return r.spec
 }

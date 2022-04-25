@@ -227,11 +227,11 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 
 		if err = r.Modify(ctx, time.NewStatus(), func(r resource.Resource) error {
-			r.(*time.Status).SetStatus(time.StatusSpec{
+			*r.(*time.Status).TypedSpec() = time.StatusSpec{
 				Epoch:        epoch,
 				Synced:       timeSynced,
 				SyncDisabled: syncDisabled,
-			})
+			}
 
 			return nil
 		}); err != nil {

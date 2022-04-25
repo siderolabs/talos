@@ -111,7 +111,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		if !etcdResource.(*v1alpha1.Service).Healthy() {
+		if !etcdResource.(*v1alpha1.Service).TypedSpec().Healthy {
 			continue
 		}
 

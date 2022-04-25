@@ -115,7 +115,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return err
 		}
 
-		if !timeSyncResource.(*time.Status).Status().Synced {
+		if !timeSyncResource.(*time.Status).TypedSpec().Synced {
 			continue
 		}
 

@@ -153,7 +153,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 			return err
 		}
 
-		if !timeSyncResource.(*timeresource.Status).Status().Synced {
+		if !timeSyncResource.(*timeresource.Status).TypedSpec().Synced {
 			continue
 		}
 

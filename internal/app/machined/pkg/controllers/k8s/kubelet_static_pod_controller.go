@@ -121,7 +121,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		if !kubeletResource.(*v1alpha1.Service).Running() {
+		if !kubeletResource.(*v1alpha1.Service).TypedSpec().Running {
 			kubeletClient = nil
 
 			if err = ctrl.teardownStatuses(ctx, r); err != nil {

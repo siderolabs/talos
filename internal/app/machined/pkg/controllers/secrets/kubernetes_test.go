@@ -138,11 +138,9 @@ func (suite *KubernetesSuite) TestReconcile() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, certSANs))
 
 	timeSync := timeresource.NewStatus()
-	timeSync.SetStatus(
-		timeresource.StatusSpec{
-			Synced: true,
-		},
-	)
+	*timeSync.TypedSpec() = timeresource.StatusSpec{
+		Synced: true,
+	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeSync))
 
 	suite.Assert().NoError(

@@ -161,7 +161,7 @@ func (vip *VIP) waitForPreconditions(ctx context.Context) error {
 
 			svc := r.(*v1alpha1.Service) //nolint:errcheck,forcetypeassert
 
-			return svc.Running() && svc.Healthy(), nil
+			return svc.TypedSpec().Running && svc.TypedSpec().Healthy, nil
 		}))
 	if err != nil {
 		return fmt.Errorf("etcd health wait failure: %w", err)
