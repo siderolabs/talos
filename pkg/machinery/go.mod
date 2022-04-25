@@ -9,7 +9,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb3
 require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/containerd/go-cni v1.1.4
-	github.com/cosi-project/runtime v0.0.0-20220415110418-639b4a2e6120
+	github.com/cosi-project/runtime v0.0.0-20220422174308-a295ab76c36d
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -22,8 +22,8 @@ require (
 	github.com/talos-systems/go-blockdevice v0.3.2-0.20220405134045-d9c3a2738861
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
-	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4
-	google.golang.org/grpc v1.45.0
+	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731
+	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
@@ -43,6 +43,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/siderolabs/go-pointer v1.0.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
