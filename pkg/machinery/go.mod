@@ -6,12 +6,10 @@ go 1.18
 // which are then encoded as a valid YAML blocks with proper indentiation
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 
-replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20220425204019-52afaad48968
-
 require (
 	github.com/AlekSi/pointer v1.2.0
 	github.com/containerd/go-cni v1.1.4
-	github.com/cosi-project/runtime v0.0.0-20220422174308-a295ab76c36d
+	github.com/cosi-project/runtime v0.0.0-20220426085650-bb78834e8c63
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
