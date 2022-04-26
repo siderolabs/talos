@@ -606,12 +606,6 @@ type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
 	//
-	//     **Init**
-	//
-	//     Init node type designates the first control plane node to come up.
-	//     You can think of it like a bootstrap node.
-	//     This node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.
-	//
 	//     **Control Plane**
 	//
 	//     Control Plane node type designates the node as a control plane member.
@@ -624,7 +618,6 @@ type MachineConfig struct {
 	//
 	//     This node type was previously known as "join"; that value is still supported but deprecated.
 	//   values:
-	//     - "init"
 	//     - "controlplane"
 	//     - "worker"
 	MachineType string `yaml:"type"`

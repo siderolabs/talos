@@ -142,10 +142,9 @@ func init() {
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
-	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n**Init**\n\nInit node type designates the first control plane node to come up.\nYou can think of it like a bootstrap node.\nThis node will perform the initial steps to bootstrap the cluster -- generation of TLS assets, starting of the control plane, etc.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated."
+	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated."
 	MachineConfigDoc.Fields[0].Comments[encoder.LineComment] = "Defines the role of the machine within the cluster."
 	MachineConfigDoc.Fields[0].Values = []string{
-		"init",
 		"controlplane",
 		"worker",
 	}
