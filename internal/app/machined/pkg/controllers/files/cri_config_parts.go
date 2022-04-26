@@ -36,7 +36,7 @@ func (ctrl *CRIConfigPartsController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: files.NamespaceName,
-			Type:      files.EtcFileSpecType,
+			Type:      files.EtcFileStatusType,
 			ID:        pointer.ToString(constants.CRIRegistryConfigPart), // watch only registry configuration which might be updated
 			Kind:      controller.InputWeak,
 		},
