@@ -302,7 +302,7 @@ waitLoop:
 		}
 	}
 
-	etcdCerts := event.Resource.(*secrets.Etcd).Certs()
+	etcdCerts := event.Resource.(*secrets.Etcd).TypedSpec()
 
 	for _, keypair := range []struct {
 		getter   func() *x509.PEMEncodedCertificateAndKey

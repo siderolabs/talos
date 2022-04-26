@@ -120,7 +120,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 
 		if err = r.Modify(ctx, secrets.NewEtcd(), func(r resource.Resource) error {
-			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).Certs())
+			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).TypedSpec())
 		}); err != nil {
 			return err
 		}

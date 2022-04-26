@@ -7,6 +7,7 @@ package secrets
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 )
 
@@ -17,10 +18,7 @@ const KubernetesType = resource.Type("KubernetesSecrets.secrets.talos.dev")
 const KubernetesID = resource.ID("k8s-certs")
 
 // Kubernetes contains K8s generated secrets.
-type Kubernetes struct {
-	md   resource.Metadata
-	spec *KubernetesCertsSpec
-}
+type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesRD]
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
 type KubernetesCertsSpec struct {
@@ -38,47 +36,26 @@ type KubernetesCertsSpec struct {
 
 // NewKubernetes initializes a Kubernetes resource.
 func NewKubernetes() *Kubernetes {
-	r := &Kubernetes{
-		md:   resource.NewMetadata(NamespaceName, KubernetesType, KubernetesID, resource.VersionUndefined),
-		spec: &KubernetesCertsSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KubernetesCertsSpec, KubernetesRD](
+		resource.NewMetadata(NamespaceName, KubernetesType, KubernetesID, resource.VersionUndefined),
+		KubernetesCertsSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Kubernetes) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (s KubernetesCertsSpec) DeepCopy() KubernetesCertsSpec {
+	return s
 }
 
-// Spec implements resource.Resource.
-func (r *Kubernetes) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Kubernetes) DeepCopy() resource.Resource {
-	specCopy := *r.spec
-
-	return &Kubernetes{
-		md:   r.md,
-		spec: &specCopy,
-	}
-}
+// KubernetesRD provides auxiliary methods for Kubernetes.
+type KubernetesRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Kubernetes) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubernetesRD) ResourceDefinition(resource.Metadata, KubernetesCertsSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// Certs returns .spec.
-func (r *Kubernetes) Certs() *KubernetesCertsSpec {
-	return r.spec
 }

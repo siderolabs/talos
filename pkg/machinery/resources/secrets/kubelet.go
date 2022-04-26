@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 )
 
@@ -19,10 +20,7 @@ const KubeletType = resource.Type("KubeletSecrets.secrets.talos.dev")
 const KubeletID = resource.ID("kubelet")
 
 // Kubelet contains root (not generated) secrets.
-type Kubelet struct {
-	md   resource.Metadata
-	spec KubeletSpec
-}
+type Kubelet = typed.Resource[KubeletSpec, KubeletRD]
 
 // KubeletSpec describes root Kubernetes secrets.
 type KubeletSpec struct {
@@ -36,45 +34,26 @@ type KubeletSpec struct {
 
 // NewKubelet initializes a Kubelet resource.
 func NewKubelet(id resource.ID) *Kubelet {
-	r := &Kubelet{
-		md:   resource.NewMetadata(NamespaceName, KubeletType, id, resource.VersionUndefined),
-		spec: KubeletSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KubeletSpec, KubeletRD](
+		resource.NewMetadata(NamespaceName, KubeletType, id, resource.VersionUndefined),
+		KubeletSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Kubelet) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (s KubeletSpec) DeepCopy() KubeletSpec {
+	return s
 }
 
-// Spec implements resource.Resource.
-func (r *Kubelet) Spec() interface{} {
-	return &r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Kubelet) DeepCopy() resource.Resource {
-	return &Kubelet{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KubeletRD provides auxiliary methods for Kubelet.
+type KubeletRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Kubelet) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubeletRD) ResourceDefinition(resource.Metadata, KubeletSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *Kubelet) TypedSpec() *KubeletSpec {
-	return &r.spec
 }

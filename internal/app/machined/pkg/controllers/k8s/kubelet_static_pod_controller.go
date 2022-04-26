@@ -179,7 +179,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		secrets := secretsResource.(*secrets.Kubernetes).Certs()
+		secrets := secretsResource.(*secrets.Kubernetes).TypedSpec()
 
 		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 		if err != nil {

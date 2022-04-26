@@ -179,7 +179,7 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).Certs()
+		secrets := secretsResources.(*secrets.Kubernetes).TypedSpec()
 
 		kubeconfig, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 			// using here kubeconfig with cluster control plane endpoint, as endpoint discovery should work before local API server is ready

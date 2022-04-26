@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 )
 
@@ -20,10 +21,7 @@ const KubernetesRootType = resource.Type("KubernetesRootSecrets.secrets.talos.de
 const KubernetesRootID = resource.ID("k8s")
 
 // KubernetesRoot contains root (not generated) secrets.
-type KubernetesRoot struct {
-	md   resource.Metadata
-	spec KubernetesRootSpec
-}
+type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
 
 // KubernetesRootSpec describes root Kubernetes secrets.
 type KubernetesRootSpec struct {
@@ -45,45 +43,26 @@ type KubernetesRootSpec struct {
 
 // NewKubernetesRoot initializes a KubernetesRoot resource.
 func NewKubernetesRoot(id resource.ID) *KubernetesRoot {
-	r := &KubernetesRoot{
-		md:   resource.NewMetadata(NamespaceName, KubernetesRootType, id, resource.VersionUndefined),
-		spec: KubernetesRootSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KubernetesRootSpec, KubernetesRootRD](
+		resource.NewMetadata(NamespaceName, KubernetesRootType, id, resource.VersionUndefined),
+		KubernetesRootSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KubernetesRoot) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (spec KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *KubernetesRoot) Spec() interface{} {
-	return &r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KubernetesRoot) DeepCopy() resource.Resource {
-	return &KubernetesRoot{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KubernetesRootRD provides auxiliary methods for KubernetesRoot.
+type KubernetesRootRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KubernetesRoot) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubernetesRootRD) ResourceDefinition(resource.Metadata, KubernetesRootSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesRootType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *KubernetesRoot) TypedSpec() *KubernetesRootSpec {
-	return &r.spec
 }
