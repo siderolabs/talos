@@ -169,7 +169,7 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		certSANs := certSANResource.(*secrets.CertSAN).TypedSpec()
 
 		if err = r.Modify(ctx, secrets.NewKubernetes(), func(r resource.Resource) error {
-			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).Certs(), certSANs)
+			return ctrl.updateSecrets(k8sRoot, r.(*secrets.Kubernetes).TypedSpec(), certSANs)
 		}); err != nil {
 			return err
 		}

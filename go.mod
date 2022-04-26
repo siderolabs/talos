@@ -15,6 +15,8 @@ replace (
 	inet.af/tcpproxy => github.com/smira/tcpproxy v0.0.0-20201015133617-de5f7797b95b
 )
 
+replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20220425204019-52afaad48968
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.24.0-rc.0

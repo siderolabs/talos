@@ -7,6 +7,7 @@ package secrets
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 )
 
@@ -17,10 +18,7 @@ const EtcdType = resource.Type("EtcdSecrets.secrets.talos.dev")
 const EtcdID = resource.ID("etcd")
 
 // Etcd contains etcd generated secrets.
-type Etcd struct {
-	md   resource.Metadata
-	spec *EtcdCertsSpec
-}
+type Etcd = typed.Resource[EtcdCertsSpec, EtcdRD]
 
 // EtcdCertsSpec describes etcd certs secrets.
 type EtcdCertsSpec struct {
@@ -32,47 +30,26 @@ type EtcdCertsSpec struct {
 
 // NewEtcd initializes a Etc resource.
 func NewEtcd() *Etcd {
-	r := &Etcd{
-		md:   resource.NewMetadata(NamespaceName, EtcdType, EtcdID, resource.VersionUndefined),
-		spec: &EtcdCertsSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[EtcdCertsSpec, EtcdRD](
+		resource.NewMetadata(NamespaceName, EtcdType, EtcdID, resource.VersionUndefined),
+		EtcdCertsSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Etcd) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (s EtcdCertsSpec) DeepCopy() EtcdCertsSpec {
+	return s
 }
 
-// Spec implements resource.Resource.
-func (r *Etcd) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Etcd) DeepCopy() resource.Resource {
-	specCopy := *r.spec
-
-	return &Etcd{
-		md:   r.md,
-		spec: &specCopy,
-	}
-}
+// EtcdRD provides auxiliary methods for Etcd.
+type EtcdRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Etcd) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (EtcdRD) ResourceDefinition(resource.Metadata, EtcdCertsSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcdType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// Certs returns .spec.
-func (r *Etcd) Certs() *EtcdCertsSpec {
-	return r.spec
 }

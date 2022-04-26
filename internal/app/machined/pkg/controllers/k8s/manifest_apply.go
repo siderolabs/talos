@@ -99,7 +99,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).Certs()
+		secrets := secretsResources.(*secrets.Kubernetes).TypedSpec()
 
 		// wait for etcd to be healthy as controller relies on etcd for locking
 		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))

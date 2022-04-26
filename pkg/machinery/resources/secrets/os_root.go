@@ -7,6 +7,7 @@ package secrets
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 	"inet.af/netaddr"
 )
@@ -18,10 +19,7 @@ const OSRootType = resource.Type("OSRootSecrets.secrets.talos.dev")
 const OSRootID = resource.ID("os")
 
 // OSRoot contains root (not generated) secrets.
-type OSRoot struct {
-	md   resource.Metadata
-	spec OSRootSpec
-}
+type OSRoot = typed.Resource[OSRootSpec, OSRootRD]
 
 // OSRootSpec describes operating system CA.
 type OSRootSpec struct {
@@ -34,45 +32,26 @@ type OSRootSpec struct {
 
 // NewOSRoot initializes a OSRoot resource.
 func NewOSRoot(id resource.ID) *OSRoot {
-	r := &OSRoot{
-		md:   resource.NewMetadata(NamespaceName, OSRootType, id, resource.VersionUndefined),
-		spec: OSRootSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[OSRootSpec, OSRootRD](
+		resource.NewMetadata(NamespaceName, OSRootType, id, resource.VersionUndefined),
+		OSRootSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *OSRoot) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements the DeepCopyable interface.
+func (spec OSRootSpec) DeepCopy() OSRootSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *OSRoot) Spec() interface{} {
-	return &r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *OSRoot) DeepCopy() resource.Resource {
-	return &OSRoot{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// OSRootRD provides auxiliary methods for OSRoot.
+type OSRootRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *OSRoot) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (OSRootRD) ResourceDefinition(resource.Metadata, OSRootSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OSRootType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *OSRoot) TypedSpec() *OSRootSpec {
-	return &r.spec
 }

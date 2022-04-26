@@ -122,8 +122,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 
 		rootEtcdSecrets := rootEtcdRes.(*secrets.EtcdRoot).TypedSpec()
 		rootK8sSecrets := rootK8sRes.(*secrets.KubernetesRoot).TypedSpec()
-		etcdSecrets := etcdRes.(*secrets.Etcd).Certs()
-		k8sSecrets := secretsRes.(*secrets.Kubernetes).Certs()
+		etcdSecrets := etcdRes.(*secrets.Etcd).TypedSpec()
+		k8sSecrets := secretsRes.(*secrets.Kubernetes).TypedSpec()
 
 		serviceAccountKey, err := rootK8sSecrets.ServiceAccount.GetKey()
 		if err != nil {

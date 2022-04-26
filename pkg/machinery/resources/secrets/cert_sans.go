@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -23,10 +24,7 @@ const CertSANAPIID = resource.ID("api")
 const CertSANKubernetesID = resource.ID("k8s")
 
 // CertSAN contains certficiate subject alternative names.
-type CertSAN struct {
-	md   resource.Metadata
-	spec CertSANSpec
-}
+type CertSAN = typed.Resource[CertSANSpec, CertSANRD]
 
 // CertSANSpec describes fields of the cert SANs.
 type CertSANSpec struct {
@@ -37,40 +35,17 @@ type CertSANSpec struct {
 
 // NewCertSAN initializes a Etc resource.
 func NewCertSAN(namespace resource.Namespace, id resource.ID) *CertSAN {
-	r := &CertSAN{
-		md:   resource.NewMetadata(namespace, CertSANType, id, resource.VersionUndefined),
-		spec: CertSANSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[CertSANSpec, CertSANRD](
+		resource.NewMetadata(namespace, CertSANType, id, resource.VersionUndefined),
+		CertSANSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *CertSAN) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *CertSAN) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *CertSAN) DeepCopy() resource.Resource {
-	return &CertSAN{
-		md: r.md,
-		spec: CertSANSpec{
-			IPs:      append([]netaddr.IP(nil), r.spec.IPs...),
-			DNSNames: append([]string(nil), r.spec.DNSNames...),
-			FQDN:     r.spec.FQDN,
-		},
-	}
-}
+// CertSANRD is a resource data of CertSAN.
+type CertSANRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *CertSAN) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (CertSANRD) ResourceDefinition(resource.Metadata, CertSANSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CertSANType,
 		Aliases:          []resource.Type{},
@@ -79,9 +54,13 @@ func (r *CertSAN) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// TypedSpec returns .spec.
-func (r *CertSAN) TypedSpec() *CertSANSpec {
-	return &r.spec
+// DeepCopy implements DeepCopyable.
+func (spec CertSANSpec) DeepCopy() CertSANSpec {
+	return CertSANSpec{
+		IPs:      append([]netaddr.IP(nil), spec.IPs...),
+		DNSNames: append([]string(nil), spec.DNSNames...),
+		FQDN:     spec.FQDN,
+	}
 }
 
 // Append list of SANs splitting into IPs/DNS names.

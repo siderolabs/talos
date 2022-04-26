@@ -163,7 +163,7 @@ func (suite *KubernetesSuite) TestReconcile() {
 					return err
 				}
 
-				kubernetesCerts := certs.(*secrets.Kubernetes).Certs()
+				kubernetesCerts := certs.(*secrets.Kubernetes).TypedSpec()
 
 				apiCert, err := kubernetesCerts.APIServer.GetCert()
 				suite.Require().NoError(err)

@@ -8,6 +8,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 
 	secretspb "github.com/talos-systems/talos/pkg/machinery/api/resource/secrets"
@@ -21,10 +22,7 @@ const APIType = resource.Type("ApiCertificates.secrets.talos.dev")
 const APIID = resource.ID("api")
 
 // API contains apid generated secrets.
-type API struct {
-	md   resource.Metadata
-	spec *APICertsSpec
-}
+type API = typed.Resource[APICertsSpec, APIRD]
 
 // APICertsSpec describes etcd certs secrets.
 type APICertsSpec struct {
@@ -33,8 +31,16 @@ type APICertsSpec struct {
 	Server *x509.PEMEncodedCertificateAndKey `yaml:"server"`
 }
 
+// NewAPI initializes a Etc resource.
+func NewAPI() *API {
+	return typed.NewResource[APICertsSpec, APIRD](
+		resource.NewMetadata(NamespaceName, APIType, APIID, resource.VersionUndefined),
+		APICertsSpec{},
+	)
+}
+
 // MarshalProto implements ProtoMarshaler.
-func (spec *APICertsSpec) MarshalProto() ([]byte, error) {
+func (spec APICertsSpec) MarshalProto() ([]byte, error) {
 	protoSpec := secretspb.APISpec{
 		CaPem: spec.CA.Crt,
 		Client: &secretspb.CertAndKeyPEM{
@@ -50,64 +56,15 @@ func (spec *APICertsSpec) MarshalProto() ([]byte, error) {
 	return proto.Marshal(&protoSpec)
 }
 
-// NewAPI initializes a Etc resource.
-func NewAPI() *API {
-	r := &API{
-		md:   resource.NewMetadata(NamespaceName, APIType, APIID, resource.VersionUndefined),
-		spec: &APICertsSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
-}
-
-// Metadata implements resource.Resource.
-func (r *API) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *API) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *API) DeepCopy() resource.Resource {
-	specCopy := *r.spec
-
-	return &API{
-		md:   r.md,
-		spec: &specCopy,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *API) ResourceDefinition() meta.ResourceDefinitionSpec {
-	return meta.ResourceDefinitionSpec{
-		Type:             APIType,
-		Aliases:          []resource.Type{},
-		DefaultNamespace: NamespaceName,
-		Sensitivity:      meta.Sensitive,
-	}
-}
-
-// TypedSpec returns .spec.
-func (r *API) TypedSpec() *APICertsSpec {
-	return r.spec
-}
-
 // UnmarshalProto implements protobuf.ResourceUnmarshaler.
-func (r *API) UnmarshalProto(md *resource.Metadata, protoBytes []byte) error {
-	r.md = *md
-
+func (spec *APICertsSpec) UnmarshalProto(protoBytes []byte) error {
 	protoSpec := secretspb.APISpec{}
 
 	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
 		return err
 	}
 
-	r.spec = &APICertsSpec{
+	*spec = APICertsSpec{
 		CA: &x509.PEMEncodedCertificateAndKey{
 			Crt: protoSpec.CaPem,
 		},
@@ -122,6 +79,24 @@ func (r *API) UnmarshalProto(md *resource.Metadata, protoBytes []byte) error {
 	}
 
 	return nil
+}
+
+// DeepCopy implements the DeepCopyable interface.
+func (spec APICertsSpec) DeepCopy() APICertsSpec {
+	return spec
+}
+
+// APIRD provides auxiliary methods for API.
+type APIRD struct{}
+
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (APIRD) ResourceDefinition(resource.Metadata, APICertsSpec) meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
+		Type:             APIType,
+		Aliases:          []resource.Type{},
+		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
+	}
 }
 
 func init() {
