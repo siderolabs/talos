@@ -7,16 +7,14 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // KernelParamStatusType is type of KernelParam resource.
 const KernelParamStatusType = resource.Type("KernelParamStatuses.runtime.talos.dev")
 
 // KernelParamStatus resource holds defined sysctl flags status.
-type KernelParamStatus struct {
-	md   resource.Metadata
-	spec KernelParamStatusSpec
-}
+type KernelParamStatus = typed.Resource[KernelParamStatusSpec, KernelParamStatusRD]
 
 // KernelParamStatusSpec describes status of the defined sysctls.
 type KernelParamStatusSpec struct {
@@ -27,36 +25,22 @@ type KernelParamStatusSpec struct {
 
 // NewKernelParamStatus initializes a KernelParamStatus resource.
 func NewKernelParamStatus(namespace resource.Namespace, id resource.ID) *KernelParamStatus {
-	r := &KernelParamStatus{
-		md:   resource.NewMetadata(namespace, KernelParamStatusType, id, resource.VersionUndefined),
-		spec: KernelParamStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KernelParamStatusSpec, KernelParamStatusRD](
+		resource.NewMetadata(namespace, KernelParamStatusType, id, resource.VersionUndefined),
+		KernelParamStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KernelParamStatus) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec KernelParamStatusSpec) DeepCopy() KernelParamStatusSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *KernelParamStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KernelParamStatus) DeepCopy() resource.Resource {
-	return &KernelParamStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KernelParamStatusRD is auxiliary resource data for KernelParamStatus.
+type KernelParamStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KernelParamStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamStatusRD) ResourceDefinition(resource.Metadata, KernelParamStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamStatusType,
 		Aliases:          []resource.Type{"sysctls", "kernelparameters", "kernelparams"},
@@ -76,9 +60,4 @@ func (r *KernelParamStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the KernelParamStatusSpec with the proper type.
-func (r *KernelParamStatus) TypedSpec() *KernelParamStatusSpec {
-	return &r.spec
 }

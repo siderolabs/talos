@@ -44,3 +44,8 @@ func (cfg *Config) Write(path string) error {
 
 	return yaml.NewEncoder(f).Encode(cfg)
 }
+
+// DeepCopy implements DeepCopyable.
+func (layer Layer) DeepCopy() Layer {
+	return layer
+}

@@ -7,6 +7,7 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/extensions"
 )
@@ -15,46 +16,24 @@ import (
 const ExtensionStatusType = resource.Type("ExtensionStatuses.runtime.talos.dev")
 
 // ExtensionStatus resource holds status of installed system extensions.
-type ExtensionStatus struct {
-	md   resource.Metadata
-	spec ExtensionStatusSpec
-}
+type ExtensionStatus = typed.Resource[ExtensionStatusSpec, ExtensionStatusRD]
 
 // ExtensionStatusSpec is the spec for system extensions.
 type ExtensionStatusSpec = extensions.Layer
 
 // NewExtensionStatus initializes a ExtensionStatus resource.
 func NewExtensionStatus(namespace resource.Namespace, id resource.ID) *ExtensionStatus {
-	r := &ExtensionStatus{
-		md:   resource.NewMetadata(namespace, ExtensionStatusType, id, resource.VersionUndefined),
-		spec: ExtensionStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ExtensionStatusSpec, ExtensionStatusRD](
+		resource.NewMetadata(namespace, ExtensionStatusType, id, resource.VersionUndefined),
+		ExtensionStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *ExtensionStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *ExtensionStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *ExtensionStatus) DeepCopy() resource.Resource {
-	return &ExtensionStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// ExtensionStatusRD is auxiliary resource data for ExtensionStatus.
+type ExtensionStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *ExtensionStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ExtensionStatusRD) ResourceDefinition(resource.Metadata, ExtensionStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtensionStatusType,
 		Aliases:          []resource.Type{"extensions"},
@@ -70,9 +49,4 @@ func (r *ExtensionStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the ExtensionStatusSpec with the proper type.
-func (r *ExtensionStatus) TypedSpec() *ExtensionStatusSpec {
-	return &r.spec
 }

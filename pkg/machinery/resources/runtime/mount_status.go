@@ -7,16 +7,14 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // MountStatusType is type of Mount resource.
 const MountStatusType = resource.Type("MountStatuses.runtime.talos.dev")
 
 // MountStatus resource holds defined sysctl flags status.
-type MountStatus struct {
-	md   resource.Metadata
-	spec MountStatusSpec
-}
+type MountStatus = typed.Resource[MountStatusSpec, MountStatusRD]
 
 // MountStatusSpec describes status of the defined sysctls.
 type MountStatusSpec struct {
@@ -28,36 +26,22 @@ type MountStatusSpec struct {
 
 // NewMountStatus initializes a MountStatus resource.
 func NewMountStatus(namespace resource.Namespace, id resource.ID) *MountStatus {
-	r := &MountStatus{
-		md:   resource.NewMetadata(namespace, MountStatusType, id, resource.VersionUndefined),
-		spec: MountStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[MountStatusSpec, MountStatusRD](
+		resource.NewMetadata(namespace, MountStatusType, id, resource.VersionUndefined),
+		MountStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *MountStatus) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec MountStatusSpec) DeepCopy() MountStatusSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *MountStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *MountStatus) DeepCopy() resource.Resource {
-	return &MountStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// MountStatusRD is auxiliary resource data for MountStatus.
+type MountStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *MountStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (MountStatusRD) ResourceDefinition(resource.Metadata, MountStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MountStatusType,
 		Aliases:          []resource.Type{"mounts"},
@@ -77,9 +61,4 @@ func (r *MountStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the MountStatusSpec with the proper type.
-func (r *MountStatus) TypedSpec() *MountStatusSpec {
-	return &r.spec
 }

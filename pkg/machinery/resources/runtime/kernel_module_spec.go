@@ -7,16 +7,14 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // KernelModuleSpecType is type of KernelModuleSpec resource.
 const KernelModuleSpecType = resource.Type("KernelModuleSpecs.runtime.talos.dev")
 
 // KernelModuleSpec resource holds information about Linux kernel module to load.
-type KernelModuleSpec struct {
-	md   resource.Metadata
-	spec KernelModuleSpecSpec
-}
+type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecRD]
 
 // KernelModuleSpecSpec describes Linux kernel module to load.
 type KernelModuleSpecSpec struct {
@@ -26,44 +24,25 @@ type KernelModuleSpecSpec struct {
 
 // NewKernelModuleSpec initializes a KernelModuleSpec resource.
 func NewKernelModuleSpec(namespace resource.Namespace, id resource.ID) *KernelModuleSpec {
-	r := &KernelModuleSpec{
-		md:   resource.NewMetadata(namespace, KernelModuleSpecType, id, resource.VersionUndefined),
-		spec: KernelModuleSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KernelModuleSpecSpec, KernelModuleSpecRD](
+		resource.NewMetadata(namespace, KernelModuleSpecType, id, resource.VersionUndefined),
+		KernelModuleSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KernelModuleSpec) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec KernelModuleSpecSpec) DeepCopy() KernelModuleSpecSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *KernelModuleSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KernelModuleSpec) DeepCopy() resource.Resource {
-	return &KernelModuleSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KernelModuleSpecRD is auxiliary resource data for KernelModuleSpec.
+type KernelModuleSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KernelModuleSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelModuleSpecRD) ResourceDefinition(resource.Metadata, KernelModuleSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelModuleSpecType,
 		Aliases:          []resource.Type{"modules"},
 		DefaultNamespace: NamespaceName,
 	}
-}
-
-// TypedSpec allows to access the KernelModuleSpecSpec with the proper type.
-func (r *KernelModuleSpec) TypedSpec() *KernelModuleSpecSpec {
-	return &r.spec
 }

@@ -21,8 +21,8 @@ github.com/containerd/go-cni v1.1.4 h1:Mv3XkOjVsjTJHMpSi+dKZQPQGXEMpmXWs8oYZDaCK
 github.com/containerd/go-cni v1.1.4/go.mod h1:Rflh2EJ/++BA2/vY5ao3K6WJRR/bZKsX123aPk+kUtA=
 github.com/containernetworking/cni v1.0.1 h1:9OIL/sZmMYDBe+G8svzILAlulUpaDTUjeAbtH/JNLBo=
 github.com/containernetworking/cni v1.0.1/go.mod h1:AKuhXbN5EzmD4yTNtfSsX3tPcmtrBI6QcRV0NiNt15Y=
-github.com/cosi-project/runtime v0.0.0-20220426085650-bb78834e8c63 h1:z8IOq3C2m8V37jOOmRrON0I/5Mut7Ji/WNcfEO0/lbY=
-github.com/cosi-project/runtime v0.0.0-20220426085650-bb78834e8c63/go.mod h1:CyH8WYzYaPNiLW7phc0VgYn/WxPPBlD4G6XGmO9BPbY=
+github.com/cosi-project/runtime v0.0.0-20220426184241-e22a85955e81 h1:qB3TKLl82/F8zHyPngGFPG4J/h26qrN0DxEJccPT+x4=
+github.com/cosi-project/runtime v0.0.0-20220426184241-e22a85955e81/go.mod h1:CyH8WYzYaPNiLW7phc0VgYn/WxPPBlD4G6XGmO9BPbY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

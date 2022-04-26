@@ -7,6 +7,7 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -26,10 +27,7 @@ type KernelParam interface {
 }
 
 // KernelParamSpec resource holds sysctl flags to define.
-type KernelParamSpec struct {
-	md   resource.Metadata
-	spec KernelParamSpecSpec
-}
+type KernelParamSpec = typed.Resource[KernelParamSpecSpec, KernelParamSpecRD]
 
 // KernelParamSpecSpec describes status of the defined sysctls.
 type KernelParamSpecSpec struct {
@@ -37,38 +35,24 @@ type KernelParamSpecSpec struct {
 	IgnoreErrors bool   `yaml:"ignoreErrors"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec KernelParamSpecSpec) DeepCopy() KernelParamSpecSpec {
+	return spec
+}
+
 // NewKernelParamSpec initializes a KernelParamSpec resource.
 func NewKernelParamSpec(namespace resource.Namespace, id resource.ID) *KernelParamSpec {
-	r := &KernelParamSpec{
-		md:   resource.NewMetadata(namespace, KernelParamSpecType, id, resource.VersionUndefined),
-		spec: KernelParamSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KernelParamSpecSpec, KernelParamSpecRD](
+		resource.NewMetadata(namespace, KernelParamSpecType, id, resource.VersionUndefined),
+		KernelParamSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KernelParamSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *KernelParamSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KernelParamSpec) DeepCopy() resource.Resource {
-	return &KernelParamSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KernelParamSpecRD is the ResourceDefinition for KernelParamSpec.
+type KernelParamSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KernelParamSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamSpecRD) ResourceDefinition(resource.Metadata, KernelParamSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamSpecType,
 		Aliases:          []resource.Type{},
@@ -77,58 +61,29 @@ func (r *KernelParamSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// TypedSpec allows to access the KernelParamSpecSpec with the proper type.
-func (r *KernelParamSpec) TypedSpec() *KernelParamSpecSpec {
-	return &r.spec
-}
-
-// NewKernelParamDefaultSpec initializes a KernelParamSpec resource.
-func NewKernelParamDefaultSpec(namespace resource.Namespace, id resource.ID) *KernelParamDefaultSpec {
-	r := &KernelParamDefaultSpec{
-		md:   resource.NewMetadata(namespace, KernelParamDefaultSpecType, id, resource.VersionUndefined),
-		spec: KernelParamSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
-}
-
 // KernelParamDefaultSpec implements meta.ResourceDefinitionProvider interface.
-type KernelParamDefaultSpec struct {
-	md   resource.Metadata
-	spec KernelParamSpecSpec
+type KernelParamDefaultSpec = typed.Resource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecRD]
+
+// KernelParamDefaultSpecSpec is same as KernelParamSpecSpec.
+type KernelParamDefaultSpecSpec = KernelParamSpecSpec
+
+// NewKernelParamDefaultSpec initializes a KernelParamDefaultSpec resource.
+func NewKernelParamDefaultSpec(namespace resource.Namespace, id resource.ID) *KernelParamDefaultSpec {
+	return typed.NewResource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecRD](
+		resource.NewMetadata(namespace, KernelParamDefaultSpecType, id, resource.VersionUndefined),
+		KernelParamSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KernelParamDefaultSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *KernelParamDefaultSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KernelParamDefaultSpec) DeepCopy() resource.Resource {
-	return &KernelParamDefaultSpec{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// KernelParamDefaultSpecRD is the ResourceDefinition for KernelParamDefaultSpec.
+type KernelParamDefaultSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KernelParamDefaultSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamDefaultSpecRD) ResourceDefinition(resource.Metadata, KernelParamDefaultSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamDefaultSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 	}
-}
-
-// TypedSpec allows to access the KernelParamSpecSpec with the proper type.
-func (r *KernelParamDefaultSpec) TypedSpec() *KernelParamSpecSpec {
-	return &r.spec
 }
