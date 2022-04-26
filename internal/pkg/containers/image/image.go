@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/pkg/kmutex"
 	"github.com/talos-systems/go-retry/retry"
 
 	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
@@ -48,6 +49,8 @@ func WithSkipIfAlreadyPulled() PullOption {
 	}
 }
 
+var unpackDuplicationSuppressor = kmutex.New()
+
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
 func Pull(ctx context.Context, reg config.Registries, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
@@ -78,6 +81,11 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 			containerd.WithPullUnpack,
 			containerd.WithResolver(resolver),
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+			containerd.WithUnpackOpts(
+				[]containerd.UnpackOpt{
+					containerd.WithUnpackDuplicationSuppressor(unpackDuplicationSuppressor),
+				},
+			),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
