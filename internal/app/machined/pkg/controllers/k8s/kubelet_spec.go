@@ -294,11 +294,11 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 		config.Logging.Format = "json"
 	}
 
-	if config.ShutdownGracePeriod.Duration == 0 {
+	if _, overridden := extraConfig["shutdownGracePeriod"]; !overridden && config.ShutdownGracePeriod.Duration == 0 {
 		config.ShutdownGracePeriod = metav1.Duration{Duration: constants.KubeletShutdownGracePeriod}
 	}
 
-	if config.ShutdownGracePeriodCriticalPods.Duration == 0 {
+	if _, overridden := extraConfig["shutdownGracePeriodCriticalPods"]; !overridden && config.ShutdownGracePeriodCriticalPods.Duration == 0 {
 		config.ShutdownGracePeriodCriticalPods = metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods}
 	}
 

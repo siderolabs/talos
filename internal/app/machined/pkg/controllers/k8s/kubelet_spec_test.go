@@ -285,14 +285,8 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 	}
 }
 
-func TestNewKubeletConfigurationSuccess(t *testing.T) {
-	config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", map[string]interface{}{
-		"oomScoreAdj":             -300,
-		"enableDebuggingHandlers": true,
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, &kubeletconfig.KubeletConfiguration{
+func TestNewKubeletConfigurationMerge(t *testing.T) {
+	defaultKubeletConfig := kubeletconfig.KubeletConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
 			Kind:       "KubeletConfiguration",
@@ -319,7 +313,7 @@ func TestNewKubeletConfigurationSuccess(t *testing.T) {
 		RotateCertificates:    true,
 		ProtectKernelDefaults: true,
 		Address:               "0.0.0.0",
-		OOMScoreAdj:           pointer.ToInt32(-300),
+		OOMScoreAdj:           pointer.ToInt32(constants.KubeletOOMScoreAdj),
 		ClusterDomain:         "cluster.local",
 		ClusterDNS:            []string{"10.0.0.5"},
 		SerializeImagePulls:   pointer.ToBool(false),
@@ -337,7 +331,47 @@ func TestNewKubeletConfigurationSuccess(t *testing.T) {
 		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
 		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
 		TLSMinVersion:                   "VersionTLS13",
-		EnableDebuggingHandlers:         pointer.ToBool(true),
-	},
-		config)
+	}
+
+	for _, tt := range []struct {
+		name              string
+		extraConfig       map[string]interface{}
+		expectedOverrides func(*kubeletconfig.KubeletConfiguration)
+	}{
+		{
+			name: "override some",
+			extraConfig: map[string]interface{}{
+				"oomScoreAdj":             -300,
+				"enableDebuggingHandlers": true,
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.OOMScoreAdj = pointer.ToInt32(-300)
+				kc.EnableDebuggingHandlers = pointer.ToBool(true)
+			},
+		},
+		{
+			name: "disable graceful shutdown",
+			extraConfig: map[string]interface{}{
+				"shutdownGracePeriod":             "0s",
+				"shutdownGracePeriodCriticalPods": "0s",
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.ShutdownGracePeriod = metav1.Duration{}
+				kc.ShutdownGracePeriodCriticalPods = metav1.Duration{}
+			},
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			expected := defaultKubeletConfig
+			tt.expectedOverrides(&expected)
+
+			config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", tt.extraConfig)
+
+			require.NoError(t, err)
+
+			assert.Equal(t, &expected, config)
+		})
+	}
 }
