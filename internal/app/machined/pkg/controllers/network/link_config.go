@@ -18,6 +18,7 @@ import (
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -269,7 +270,7 @@ func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) ([]network.Li
 //nolint:gocyclo
 func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) []network.LinkSpecSpec {
 	// scan for the bonds
-	bondedLinks := map[string]string{} // mapping physical interface -> bond interface
+	bondedLinks := map[string]ordered.Pair[string, int]{} // mapping physical interface -> bond interface
 
 	for _, device := range cfgProvider.Machine().Network().Devices() {
 		if device.Ignore() {
@@ -280,12 +281,12 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 			continue
 		}
 
-		for _, linkName := range device.Bond().Interfaces() {
-			if bondName, exists := bondedLinks[linkName]; exists && bondName != device.Interface() {
+		for idx, linkName := range device.Bond().Interfaces() {
+			if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
 				logger.Sugar().Warnf("link %q is included into more than two bonds", linkName)
 			}
 
-			bondedLinks[linkName] = device.Interface()
+			bondedLinks[linkName] = ordered.MakePair(device.Interface(), idx)
 		}
 	}
 
@@ -331,7 +332,7 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 		}
 	}
 
-	for slaveName, bondName := range bondedLinks {
+	for slaveName, bondData := range bondedLinks {
 		if _, exists := linkMap[slaveName]; !exists {
 			linkMap[slaveName] = &network.LinkSpecSpec{
 				Name:        slaveName,
@@ -340,7 +341,7 @@ func (ctrl *LinkConfigController) parseMachineConfiguration(logger *zap.Logger, 
 			}
 		}
 
-		SetBondSlave(linkMap[slaveName], bondName)
+		SetBondSlave(linkMap[slaveName], bondData)
 	}
 
 	links := make([]network.LinkSpecSpec, 0, len(linkMap))

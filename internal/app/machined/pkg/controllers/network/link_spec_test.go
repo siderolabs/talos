@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -371,24 +372,30 @@ func (suite *LinkSpecSuite) TestBond() {
 	dummy0Name := suite.uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
 	*dummy0.TypedSpec() = network.LinkSpecSpec{
-		Name:        dummy0Name,
-		Type:        nethelpers.LinkEther,
-		Kind:        "dummy",
-		Up:          true,
-		Logical:     true,
-		MasterName:  bondName,
+		Name:    dummy0Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		BondSlave: network.BondSlave{
+			MasterName: bondName,
+			SlaveIndex: 0,
+		},
 		ConfigLayer: network.ConfigDefault,
 	}
 
 	dummy1Name := suite.uniqueDummyInterface()
 	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
 	*dummy1.TypedSpec() = network.LinkSpecSpec{
-		Name:        dummy1Name,
-		Type:        nethelpers.LinkEther,
-		Kind:        "dummy",
-		Up:          true,
-		Logical:     true,
-		MasterName:  bondName,
+		Name:    dummy1Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		BondSlave: network.BondSlave{
+			MasterName: bondName,
+			SlaveIndex: 1,
+		},
 		ConfigLayer: network.ConfigDefault,
 	}
 
@@ -460,7 +467,7 @@ func (suite *LinkSpecSuite) TestBond() {
 	// unslave one of the interfaces
 	_, err = suite.state.UpdateWithConflicts(
 		suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().MasterName = ""
+			r.(*network.LinkSpec).TypedSpec().BondSlave.MasterName = ""
 
 			return nil
 		},
@@ -533,12 +540,15 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 		dummyName := suite.uniqueDummyInterface()
 		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
 		*dummy.TypedSpec() = network.LinkSpecSpec{
-			Name:        dummyName,
-			Type:        nethelpers.LinkEther,
-			Kind:        "dummy",
-			Up:          true,
-			Logical:     true,
-			MasterName:  bondName,
+			Name:    dummyName,
+			Type:    nethelpers.LinkEther,
+			Kind:    "dummy",
+			Up:      true,
+			Logical: true,
+			BondSlave: network.BondSlave{
+				MasterName: bondName,
+				SlaveIndex: 0,
+			},
 			ConfigLayer: network.ConfigDefault,
 		}
 
@@ -742,4 +752,73 @@ func (suite *LinkSpecSuite) TearDownTest() {
 
 func TestLinkSpecSuite(t *testing.T) {
 	suite.Run(t, new(LinkSpecSuite))
+}
+
+func TestSortBonds(t *testing.T) {
+	expectedSlice := []network.LinkSpecSpec{
+		{
+			Name: "A",
+		}, {
+			Name: "G",
+			BondSlave: network.BondSlave{
+				MasterName: "A",
+				SlaveIndex: 0,
+			},
+		}, {
+			Name: "C",
+		}, {
+			Name: "E",
+			BondSlave: network.BondSlave{
+				MasterName: "C",
+				SlaveIndex: 0,
+			},
+		}, {
+			Name: "F",
+			BondSlave: network.BondSlave{
+				MasterName: "C",
+				SlaveIndex: 1,
+			},
+		}, {
+			Name: "B",
+			BondSlave: network.BondSlave{
+				MasterName: "C",
+				SlaveIndex: 2,
+			},
+		},
+	}
+
+	seed := time.Now().Unix()
+	rnd := rand.New(rand.NewSource(seed))
+
+	for i := 0; i < 100; i++ {
+		res := toResources(expectedSlice)
+		rnd.Shuffle(len(res), func(i, j int) { res[i], res[j] = res[j], res[i] })
+		netctrl.SortBonds(res)
+		sorted := toSpecs(res)
+		require.Equal(t, expectedSlice, sorted, "failed with seed %d iteration %d", seed, i)
+	}
+}
+
+func toResources(slice []network.LinkSpecSpec) []resource.Resource {
+	result := make([]resource.Resource, 0, len(slice))
+
+	for _, elem := range slice {
+		link := network.NewLinkSpec(network.NamespaceName, "bar")
+		*link.TypedSpec() = elem
+
+		result = append(result, link)
+	}
+
+	return result
+}
+
+func toSpecs(slice []resource.Resource) []network.LinkSpecSpec {
+	result := make([]network.LinkSpecSpec, 0, len(slice))
+
+	for _, elem := range slice {
+		v := elem.Spec().(network.LinkSpecSpec) //nolint:errcheck
+		result = append(result, v)
+	}
+
+	return result
 }

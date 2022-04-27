@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -20,6 +21,7 @@ import (
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -111,6 +113,8 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		// loop over links and make reconcile decision
 		var multiErr *multierror.Error
 
+		SortBonds(list.Items)
+
 		for _, res := range list.Items {
 			link := res.(*network.LinkSpec) //nolint:forcetypeassert,errcheck
 
@@ -123,6 +127,27 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 	}
+}
+
+// SortBonds sort resources in increasing order, except it places slave interfaces right after the bond
+// in proper order.
+func SortBonds(items []resource.Resource) {
+	sort.Slice(items, func(i, j int) bool {
+		left := items[i].Spec().(network.LinkSpecSpec)  //nolint:errcheck
+		right := items[j].Spec().(network.LinkSpecSpec) //nolint:errcheck
+
+		l := ordered.MakeTriple(left.Name, 0, "")
+		if left.BondSlave.MasterName != "" {
+			l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
+		}
+
+		r := ordered.MakeTriple(right.Name, 0, "")
+		if right.BondSlave.MasterName != "" {
+			r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
+		}
+
+		return l.LessThan(r)
+	})
 }
 
 func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage {
@@ -341,7 +366,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 								Master: pointer.ToUint32(0),
 							},
 						}); err != nil {
-							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().MasterName, err)
+							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().BondSlave.MasterName, err)
 						}
 
 						(*links)[i].Attributes.Master = nil
@@ -448,8 +473,8 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		// sync master index (for links which are bond slaves)
 		var masterIndex uint32
 
-		if link.TypedSpec().MasterName != "" {
-			if master := findLink(*links, link.TypedSpec().MasterName); master != nil {
+		if link.TypedSpec().BondSlave.MasterName != "" {
+			if master := findLink(*links, link.TypedSpec().BondSlave.MasterName); master != nil {
 				masterIndex = master.Index
 			}
 		}
@@ -464,12 +489,12 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Master: pointer.ToUint32(masterIndex),
 				},
 			}); err != nil {
-				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.TypedSpec().Name, link.TypedSpec().MasterName, err)
+				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.TypedSpec().Name, link.TypedSpec().BondSlave.MasterName, err)
 			}
 
 			existing.Attributes.Master = pointer.ToUint32(masterIndex)
 
-			logger.Info("enslaved/unslaved link", zap.String("parent", link.TypedSpec().MasterName))
+			logger.Info("enslaved/unslaved link", zap.String("parent", link.TypedSpec().BondSlave.MasterName))
 		}
 	}
 

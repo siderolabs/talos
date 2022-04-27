@@ -316,7 +316,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						case "eth2", "eth3":
 							suite.Assert().True(r.TypedSpec().Up)
 							suite.Assert().False(r.TypedSpec().Logical)
-							suite.Assert().Equal("bond0", r.TypedSpec().MasterName)
+							suite.Assert().Equal("bond0", r.TypedSpec().BondSlave.MasterName)
 						case "bond0":
 							suite.Assert().True(r.TypedSpec().Up)
 							suite.Assert().True(r.TypedSpec().Logical)
