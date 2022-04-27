@@ -5,6 +5,8 @@
 package v1alpha1
 
 import (
+	"errors"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 )
@@ -57,15 +59,11 @@ func (r *ReadonlyProvider) Validate(mode config.RuntimeMode, opts ...config.Vali
 
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (r *ReadonlyProvider) Bytes() ([]byte, error) {
-	if r.bytes != nil {
-		return r.bytes, nil
+	if r.bytes == nil {
+		return r.bytes, errors.New("incorrect provider state: bytes is nil")
 	}
 
-	var err error
-
-	r.bytes, err = r.EncodeBytes()
-
-	return r.bytes, err
+	return r.bytes, nil
 }
 
 // EncodeString implements the config.Provider interface.
