@@ -103,8 +103,8 @@ func (suite *PerfSuite) TestReconcile() {
 					return err
 				}
 
-				cpuSpec := cpu.Spec().(*perfresource.CPUSpec)    //nolint:errcheck,forcetypeassert
-				memSpec := mem.Spec().(*perfresource.MemorySpec) //nolint:errcheck,forcetypeassert
+				cpuSpec := cpu.(*perfresource.CPU).TypedSpec()
+				memSpec := mem.(*perfresource.Memory).TypedSpec()
 
 				if len(cpuSpec.CPU) == 0 || memSpec.MemTotal == 0 {
 					return retry.ExpectedError(fmt.Errorf("cpu spec does not contain any CPU or Total memory is zero"))

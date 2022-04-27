@@ -7,6 +7,7 @@ package perf
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // MemoryType is type of Etcd resource.
@@ -16,10 +17,7 @@ const MemoryType = resource.Type("MemoryStats.perf.talos.dev")
 const MemoryID = resource.ID("latest")
 
 // Memory represents the last Memory stats snapshot.
-type Memory struct {
-	md   resource.Metadata
-	spec MemorySpec
-}
+type Memory = typed.Resource[MemorySpec, MemoryRD]
 
 // MemorySpec represents the last Memory stats snapshot.
 type MemorySpec struct {
@@ -75,35 +73,22 @@ type MemorySpec struct {
 
 // NewMemory creates new default Memory stats object.
 func NewMemory() *Memory {
-	r := &Memory{
-		md: resource.NewMetadata(NamespaceName, MemoryType, MemoryID, resource.VersionUndefined),
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[MemorySpec, MemoryRD](
+		resource.NewMetadata(NamespaceName, MemoryType, MemoryID, resource.VersionUndefined),
+		MemorySpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Memory) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements typed.Deepcopyable interface.
+func (spec MemorySpec) DeepCopy() MemorySpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *Memory) Spec() interface{} {
-	return &r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Memory) DeepCopy() resource.Resource {
-	return &Memory{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// MemoryRD is an auxiliary type for Memory resource.
+type MemoryRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Memory) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (MemoryRD) ResourceDefinition(resource.Metadata, MemorySpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemoryType,
 		Aliases:          []resource.Type{},
@@ -119,9 +104,4 @@ func (r *Memory) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *Memory) TypedSpec() *MemorySpec {
-	return &r.spec
 }

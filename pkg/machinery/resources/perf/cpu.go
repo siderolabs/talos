@@ -7,6 +7,7 @@ package perf
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // CPUType is type of Etcd resource.
@@ -16,10 +17,7 @@ const CPUType = resource.Type("CPUStats.perf.talos.dev")
 const CPUID = resource.ID("latest")
 
 // CPU represents the last CPU stats snapshot.
-type CPU struct {
-	md   resource.Metadata
-	spec CPUSpec
-}
+type CPU = typed.Resource[CPUSpec, CPURD]
 
 // CPUSpec represents the last CPU stats snapshot.
 type CPUSpec struct {
@@ -49,35 +47,22 @@ type CPUStat struct {
 
 // NewCPU creates new default CPU stats object.
 func NewCPU() *CPU {
-	r := &CPU{
-		md: resource.NewMetadata(NamespaceName, CPUType, CPUID, resource.VersionUndefined),
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[CPUSpec, CPURD](
+		resource.NewMetadata(NamespaceName, CPUType, CPUID, resource.VersionUndefined),
+		CPUSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *CPU) Metadata() *resource.Metadata {
-	return &r.md
+// DeepCopy implements typed.Deepcopyable interface.
+func (spec CPUSpec) DeepCopy() CPUSpec {
+	return spec
 }
 
-// Spec implements resource.Resource.
-func (r *CPU) Spec() interface{} {
-	return &r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *CPU) DeepCopy() resource.Resource {
-	return &CPU{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
+// CPURD is an auxiliary type for CPU resource.
+type CPURD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *CPU) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (CPURD) ResourceDefinition(resource.Metadata, CPUSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CPUType,
 		Aliases:          []resource.Type{},
@@ -93,9 +78,4 @@ func (r *CPU) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *CPU) TypedSpec() *CPUSpec {
-	return &r.spec
 }
