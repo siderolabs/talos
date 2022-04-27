@@ -117,6 +117,8 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
+	slaveIndex := 0
+
 	for _, iface := range equinixMetadata.Network.Interfaces {
 		if iface.Bond == "" {
 			continue
@@ -136,11 +138,15 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 
 				networkConfig.Links = append(networkConfig.Links,
 					network.LinkSpecSpec{
+						Name: hostIf.Name,
+						Up:   true,
+						BondSlave: network.BondSlave{
+							MasterName: bondName,
+							SlaveIndex: slaveIndex,
+						},
 						ConfigLayer: network.ConfigPlatform,
-						Name:        hostIf.Name,
-						Up:          true,
-						MasterName:  bondName,
 					})
+				slaveIndex++
 
 				break
 			}
@@ -154,8 +160,12 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 					ConfigLayer: network.ConfigPlatform,
 					Name:        iface.Name,
 					Up:          true,
-					MasterName:  bondName,
+					BondSlave: network.BondSlave{
+						MasterName: bondName,
+						SlaveIndex: slaveIndex,
+					},
 				})
+			slaveIndex++
 		}
 	}
 

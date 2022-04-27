@@ -63,14 +63,20 @@ func (suite *CmdlineSuite) TestParse() {
 				Up:          true,
 				Logical:     false,
 				ConfigLayer: netconfig.ConfigCmdline,
-				MasterName:  "bond0",
+				BondSlave: netconfig.BondSlave{
+					MasterName: "bond0",
+					SlaveIndex: 0,
+				},
 			},
 			{
 				Name:        "eth1",
 				Up:          true,
 				Logical:     false,
 				ConfigLayer: netconfig.ConfigCmdline,
-				MasterName:  "bond0",
+				BondSlave: netconfig.BondSlave{
+					MasterName: "bond0",
+					SlaveIndex: 1,
+				},
 			},
 		},
 	}
@@ -233,14 +239,20 @@ func (suite *CmdlineSuite) TestParse() {
 						Up:          true,
 						Logical:     false,
 						ConfigLayer: netconfig.ConfigCmdline,
-						MasterName:  "bond1",
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 0,
+						},
 					},
 					{
 						Name:        "eth4",
 						Up:          true,
 						Logical:     false,
 						ConfigLayer: netconfig.ConfigCmdline,
-						MasterName:  "bond1",
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 1,
+						},
 					},
 				},
 			},
@@ -275,14 +287,20 @@ func (suite *CmdlineSuite) TestParse() {
 						Up:          true,
 						Logical:     false,
 						ConfigLayer: netconfig.ConfigCmdline,
-						MasterName:  "bond1",
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 0,
+						},
 					},
 					{
 						Name:        "eth4",
 						Up:          true,
 						Logical:     false,
 						ConfigLayer: netconfig.ConfigCmdline,
-						MasterName:  "bond1",
+						BondSlave: netconfig.BondSlave{
+							MasterName: "bond1",
+							SlaveIndex: 1,
+						},
 					},
 				},
 			},

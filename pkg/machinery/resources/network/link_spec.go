@@ -43,7 +43,7 @@ type LinkSpecSpec struct {
 	ParentName string `yaml:"parentName,omitempty"`
 
 	// MasterName indicates master link for enslaved bonded interfaces.
-	MasterName string `yaml:"masterName,omitempty"`
+	BondSlave BondSlave `yaml:",omitempty,inline"`
 
 	// These structures are present depending on "Kind" for Logical intefaces.
 	VLAN       VLANSpec       `yaml:"vlan,omitempty"`
@@ -52,6 +52,15 @@ type LinkSpecSpec struct {
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer"`
+}
+
+// BondSlave contains a bond's master name and slave index.
+type BondSlave struct {
+	// MasterName indicates master link for enslaved bonded interfaces.
+	MasterName string `yaml:"masterName,omitempty"`
+
+	// SlaveIndex indicates a slave's position in bond.
+	SlaveIndex int `yaml:"slaveIndex,omitempty"`
 }
 
 // DeepCopy generates a deep copy of LinkSpecSpec.
@@ -72,51 +81,20 @@ func (spec LinkSpecSpec) DeepCopy() LinkSpecSpec {
 	return cp
 }
 
-var (
-	zeroVLAN       VLANSpec
-	zeroBondMaster BondMasterSpec
-)
-
 // Merge with other, overwriting fields from other if set.
 //
 //nolint:gocyclo
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	// prefer Logical, as it is defined for bonds/vlans, etc.
-	if other.Logical {
-		spec.Logical = other.Logical
-	}
-
-	if other.Up {
-		spec.Up = other.Up
-	}
-
-	if other.MTU != 0 {
-		spec.MTU = other.MTU
-	}
-
-	if other.Kind != "" {
-		spec.Kind = other.Kind
-	}
-
-	if other.Type != 0 {
-		spec.Type = other.Type
-	}
-
-	if other.ParentName != "" {
-		spec.ParentName = other.ParentName
-	}
-
-	if other.MasterName != "" {
-		spec.MasterName = other.MasterName
-	}
-
-	if other.VLAN != zeroVLAN {
-		spec.VLAN = other.VLAN
-	}
-
-	if other.BondMaster != zeroBondMaster {
-		spec.BondMaster = other.BondMaster
-	}
+	updateIfNotZero(&spec.Logical, other.Logical)
+	updateIfNotZero(&spec.Up, other.Up)
+	updateIfNotZero(&spec.MTU, other.MTU)
+	updateIfNotZero(&spec.Kind, other.Kind)
+	updateIfNotZero(&spec.Type, other.Type)
+	updateIfNotZero(&spec.ParentName, other.ParentName)
+	updateIfNotZero(&spec.BondSlave, other.BondSlave)
+	updateIfNotZero(&spec.VLAN, other.VLAN)
+	updateIfNotZero(&spec.BondMaster, other.BondMaster)
 
 	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
 	// Thus, we handle each Wireguard configuration value discretely.
@@ -131,6 +109,13 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	spec.ConfigLayer = other.ConfigLayer
 
 	return nil
+}
+
+func updateIfNotZero[T comparable](target *T, source T) {
+	var zero T
+	if source != zero {
+		*target = source
+	}
 }
 
 // NewLinkSpec initializes a LinkSpec resource.

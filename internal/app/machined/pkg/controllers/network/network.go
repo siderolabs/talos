@@ -11,6 +11,7 @@ import (
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -18,8 +19,11 @@ import (
 const DefaultRouteMetric = 1024
 
 // SetBondSlave sets the bond slave spec.
-func SetBondSlave(link *network.LinkSpecSpec, bondName string) {
-	link.MasterName = bondName
+func SetBondSlave(link *network.LinkSpecSpec, bond ordered.Pair[string, int]) {
+	link.BondSlave = network.BondSlave{
+		MasterName: bond.F1,
+		SlaveIndex: bond.F2,
+	}
 }
 
 // SetBondMaster sets the bond master spec.

@@ -16,6 +16,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -244,13 +245,13 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 		linkSpecSpecs = append(linkSpecSpecs, bondLinkSpec)
 
-		for _, slave := range bondSlaves {
+		for idx, slave := range bondSlaves {
 			slaveLinkSpec := network.LinkSpecSpec{
 				Name:        slave,
 				Up:          true,
 				ConfigLayer: network.ConfigCmdline,
 			}
-			SetBondSlave(&slaveLinkSpec, bondName)
+			SetBondSlave(&slaveLinkSpec, ordered.MakePair(bondName, idx))
 			linkSpecSpecs = append(linkSpecSpecs, slaveLinkSpec)
 		}
 	}

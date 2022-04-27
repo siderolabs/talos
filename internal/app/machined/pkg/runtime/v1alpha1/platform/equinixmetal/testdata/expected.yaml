@@ -33,6 +33,7 @@ links:
       kind: ""
       type: netrom
       masterName: bond0
+      slaveIndex: 1
       layer: platform
     - name: bond0
       logical: true

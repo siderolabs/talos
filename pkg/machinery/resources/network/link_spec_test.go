@@ -26,7 +26,10 @@ func TestLinkSpecMarshalYAML(t *testing.T) {
 		Kind:       "eth",
 		Type:       nethelpers.LinkEther,
 		ParentName: "eth1",
-		MasterName: "bond0",
+		BondSlave: network.BondSlave{
+			MasterName: "bond0",
+			SlaveIndex: 0,
+		},
 		VLAN: network.VLANSpec{
 			VID:      25,
 			Protocol: nethelpers.VLANProtocol8021AD,
