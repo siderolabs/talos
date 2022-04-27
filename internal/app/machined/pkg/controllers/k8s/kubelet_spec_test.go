@@ -322,63 +322,93 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 	}
 }
 
-func TestNewKubeletConfigurationSuccess(t *testing.T) {
-	config, err := k8sctrl.NewKubeletConfiguration(
-		[]string{"10.0.0.5"}, "cluster.local", map[string]interface{}{
-			"oomScoreAdj":             -300,
-			"enableDebuggingHandlers": true,
+func TestNewKubeletConfigurationMerge(t *testing.T) {
+	defaultKubeletConfig := kubeletconfig.KubeletConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
+			Kind:       "KubeletConfiguration",
 		},
-	)
-	require.NoError(t, err)
+		StaticPodPath: constants.ManifestsDirectory,
+		Port:          constants.KubeletPort,
+		Authentication: kubeletconfig.KubeletAuthentication{
+			X509: kubeletconfig.KubeletX509Authentication{
+				ClientCAFile: constants.KubernetesCACert,
+			},
+			Webhook: kubeletconfig.KubeletWebhookAuthentication{
+				Enabled: pointer.ToBool(true),
+			},
+			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
+				Enabled: pointer.ToBool(false),
+			},
+		},
+		Authorization: kubeletconfig.KubeletAuthorization{
+			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
+		},
+		CgroupRoot:            "/",
+		SystemCgroups:         constants.CgroupSystem,
+		KubeletCgroups:        constants.CgroupKubelet,
+		RotateCertificates:    true,
+		ProtectKernelDefaults: true,
+		Address:               "0.0.0.0",
+		OOMScoreAdj:           pointer.ToInt32(constants.KubeletOOMScoreAdj),
+		ClusterDomain:         "cluster.local",
+		ClusterDNS:            []string{"10.0.0.5"},
+		SerializeImagePulls:   pointer.ToBool(false),
+		FailSwapOn:            pointer.ToBool(false),
+		SystemReserved: map[string]string{
+			"cpu":               constants.KubeletSystemReservedCPU,
+			"memory":            constants.KubeletSystemReservedMemory,
+			"pid":               constants.KubeletSystemReservedPid,
+			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
+		},
+		Logging: v1alpha1.LoggingConfiguration{
+			Format: "json",
+		},
+		ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
+		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
+		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
+		TLSMinVersion:                   "VersionTLS13",
+	}
 
-	assert.Equal(
-		t, &kubeletconfig.KubeletConfiguration{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: kubeletconfig.SchemeGroupVersion.String(),
-				Kind:       "KubeletConfiguration",
+	for _, tt := range []struct {
+		name              string
+		extraConfig       map[string]interface{}
+		expectedOverrides func(*kubeletconfig.KubeletConfiguration)
+	}{
+		{
+			name: "override some",
+			extraConfig: map[string]interface{}{
+				"oomScoreAdj":             -300,
+				"enableDebuggingHandlers": true,
 			},
-			StaticPodPath: constants.ManifestsDirectory,
-			Port:          constants.KubeletPort,
-			Authentication: kubeletconfig.KubeletAuthentication{
-				X509: kubeletconfig.KubeletX509Authentication{
-					ClientCAFile: constants.KubernetesCACert,
-				},
-				Webhook: kubeletconfig.KubeletWebhookAuthentication{
-					Enabled: pointer.ToBool(true),
-				},
-				Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-					Enabled: pointer.ToBool(false),
-				},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.OOMScoreAdj = pointer.ToInt32(-300)
+				kc.EnableDebuggingHandlers = pointer.ToBool(true)
 			},
-			Authorization: kubeletconfig.KubeletAuthorization{
-				Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
-			},
-			CgroupRoot:            "/",
-			SystemCgroups:         constants.CgroupSystem,
-			KubeletCgroups:        constants.CgroupKubelet,
-			RotateCertificates:    true,
-			ProtectKernelDefaults: true,
-			Address:               "0.0.0.0",
-			OOMScoreAdj:           pointer.ToInt32(-300),
-			ClusterDomain:         "cluster.local",
-			ClusterDNS:            []string{"10.0.0.5"},
-			SerializeImagePulls:   pointer.ToBool(false),
-			FailSwapOn:            pointer.ToBool(false),
-			SystemReserved: map[string]string{
-				"cpu":               constants.KubeletSystemReservedCPU,
-				"memory":            constants.KubeletSystemReservedMemory,
-				"pid":               constants.KubeletSystemReservedPid,
-				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-			},
-			Logging: v1alpha1.LoggingConfiguration{
-				Format: "json",
-			},
-			ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},
-			ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
-			StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
-			TLSMinVersion:                   "VersionTLS13",
-			EnableDebuggingHandlers:         pointer.ToBool(true),
 		},
-		config,
-	)
+		{
+			name: "disable graceful shutdown",
+			extraConfig: map[string]interface{}{
+				"shutdownGracePeriod":             "0s",
+				"shutdownGracePeriodCriticalPods": "0s",
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.ShutdownGracePeriod = metav1.Duration{}
+				kc.ShutdownGracePeriodCriticalPods = metav1.Duration{}
+			},
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			expected := defaultKubeletConfig
+			tt.expectedOverrides(&expected)
+
+			config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", tt.extraConfig)
+
+			require.NoError(t, err)
+
+			assert.Equal(t, &expected, config)
+		})
+	}
 }
