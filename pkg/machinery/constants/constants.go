@@ -652,7 +652,7 @@ const (
 	DBusServiceSocketPath = SystemRunPath + "/dbus/service.socket"
 
 	// DBusClientSocketPath is the path to the D-Bus socket for the kubelet to connect to.
-	DBusClientSocketPath = SystemRunPath + "/dbus/client.socket"
+	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 )
 
 // See https://linux.die.net/man/3/klogctl
