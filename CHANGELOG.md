@@ -1,3 +1,62 @@
+## [Talos 1.0.4](https://github.com/siderolabs/talos/releases/tag/v1.0.4) (2022-04-28)
+
+Welcome to the v1.0.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.36
+* Kubernetes: 1.23.6
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`39979ac90`](https://github.com/siderolabs/talos/commit/39979ac90c139406a5de8ec082fa6db9fb84a879) fix: allow graceful node shutdown to be overridden
+* [`78dab0182`](https://github.com/siderolabs/talos/commit/78dab0182e69091e93e84a6b972408e4c44de5f3) fix: include Go primitive types into unstructured deepcopy
+* [`2a359d243`](https://github.com/siderolabs/talos/commit/2a359d24378fe412c10c597e62c044bdf78a9bec) fix: don't mount D-Bus socket via mount under recursive bind mount
+* [`ebcf50442`](https://github.com/siderolabs/talos/commit/ebcf504420ac540d9975a41369e175d60cccee41) fix: trigger CRI config merge on correct resource update
+* [`84c10017b`](https://github.com/siderolabs/talos/commit/84c10017b3c4576851e8b246cf2b262870eedf93) fix: strip 'v' prefix from versions on Kubernetes upgrade
+* [`d5a823ab6`](https://github.com/siderolabs/talos/commit/d5a823ab6e8f56dfe373891c18d72ee941cdae44) fix: run the 'post' stage of the service always
+* [`71991a9f6`](https://github.com/siderolabs/talos/commit/71991a9f61492fead4a113849174d72b610fb7ac) fix: correctly handle stopping services with reverse dependencies
+* [`f881f2f11`](https://github.com/siderolabs/talos/commit/f881f2f1108052e9b75a523ef4874043cc102812) fix: detect lingering mounts in the installer correctly
+* [`47ede0c74`](https://github.com/siderolabs/talos/commit/47ede0c741e5777af102619af79fa20c8d3ea816) chore: bump kernel to 5.15.36
+* [`bd3e77633`](https://github.com/siderolabs/talos/commit/bd3e7763348da6abaec21d10e8279eaf508a1b31) feat: update Kubernetes to 1.23.6
+* [`2c6de5fad`](https://github.com/siderolabs/talos/commit/2c6de5fad592d462e4c92304e601cd2b32cea3a2) chore: bump kernel to 5.15.35
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`bf81bd2`](https://github.com/siderolabs/pkgs/commit/bf81bd2c17bd8c5a12a4e65ea5fcdbf05015d8ff) chore: bump kernel to 5.15.36
+* [`da97b13`](https://github.com/siderolabs/pkgs/commit/da97b13847a4a232b0e04bf269bf7158d5f65f00) chore: bump kernel to 5.15.35
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.0.0-8-g76f8c5b -> v1.0.0-10-gbf81bd2
+* **k8s.io/api**                  v0.23.5 -> v0.23.6
+* **k8s.io/apiserver**            v0.23.5 -> v0.23.6
+* **k8s.io/client-go**            v0.23.5 -> v0.23.6
+* **k8s.io/component-base**       v0.23.5 -> v0.23.6
+* **k8s.io/kubectl**              v0.23.5 -> v0.23.6
+* **k8s.io/kubelet**              v0.23.5 -> v0.23.6
+
+Previous release can be found at [v1.0.3](https://github.com/siderolabs/talos/releases/tag/v1.0.3)
+
 ## [Talos 1.0.3](https://github.com/siderolabs/talos/releases/tag/v1.0.3) (2022-04-19)
 
 Welcome to the v1.0.3 release of Talos!
