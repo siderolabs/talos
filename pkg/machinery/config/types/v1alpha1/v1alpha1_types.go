@@ -26,9 +26,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	humanize "github.com/dustin/go-humanize"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	yaml "gopkg.in/yaml.v3"
@@ -256,7 +256,7 @@ var (
 	}
 
 	machineFeaturesExample = &FeaturesConfig{
-		RBAC: pointer.ToBool(true),
+		RBAC: pointer.To(true),
 	}
 
 	machineUdevExample = &UdevConfig{

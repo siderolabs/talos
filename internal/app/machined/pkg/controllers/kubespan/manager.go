@@ -11,10 +11,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -67,7 +67,7 @@ func (ctrl *ManagerController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.ToString(kubespan.ConfigID),
+			ID:        pointer.To(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -78,7 +78,7 @@ func (ctrl *ManagerController) Inputs() []controller.Input {
 		{
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.IdentityType,
-			ID:        pointer.ToString(kubespan.LocalIdentity),
+			ID:        pointer.To(kubespan.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 	}

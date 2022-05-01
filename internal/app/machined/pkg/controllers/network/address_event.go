@@ -8,10 +8,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -38,7 +38,7 @@ func (ctrl *AddressEventController) Inputs() []controller.Input {
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
 			Kind:      controller.InputWeak,
-			ID: pointer.ToString(network.FilteredNodeAddressID(
+			ID: pointer.To(network.FilteredNodeAddressID(
 				network.NodeAddressCurrentID,
 				k8s.NodeAddressFilterNoK8s)),
 		},
@@ -46,7 +46,7 @@ func (ctrl *AddressEventController) Inputs() []controller.Input {
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
 			Kind:      controller.InputWeak,
-			ID:        pointer.ToString(network.HostnameID),
+			ID:        pointer.To(network.HostnameID),
 		},
 	}
 }

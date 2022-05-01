@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/AlekSi/pointer"
+	"github.com/siderolabs/go-pointer"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -56,7 +56,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 	}
 
 	if in.VersionContract.SupportsRBACFeature() {
-		machine.MachineFeatures.RBAC = pointer.ToBool(true)
+		machine.MachineFeatures.RBAC = pointer.To(true)
 	}
 
 	certSANs := in.GetAPIServerSANs()

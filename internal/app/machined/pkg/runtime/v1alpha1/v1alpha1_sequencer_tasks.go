@@ -23,13 +23,13 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util"
@@ -163,8 +163,8 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 				name: constants.CgroupInit,
 				resources: &cgroupsv2.Resources{
 					Memory: &cgroupsv2.Memory{
-						Min: pointer.ToInt64(constants.CgroupInitReservedMemory),
-						Low: pointer.ToInt64(constants.CgroupInitReservedMemory * 2),
+						Min: pointer.To[int64](constants.CgroupInitReservedMemory),
+						Low: pointer.To[int64](constants.CgroupInitReservedMemory * 2),
 					},
 				},
 			},
@@ -172,8 +172,8 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 				name: constants.CgroupSystem,
 				resources: &cgroupsv2.Resources{
 					Memory: &cgroupsv2.Memory{
-						Min: pointer.ToInt64(constants.CgroupSystemReservedMemory),
-						Low: pointer.ToInt64(constants.CgroupSystemReservedMemory * 2),
+						Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
+						Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
 					},
 				},
 			},
@@ -185,8 +185,8 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 				name: constants.CgroupPodRuntime,
 				resources: &cgroupsv2.Resources{
 					Memory: &cgroupsv2.Memory{
-						Min: pointer.ToInt64(constants.CgroupPodRuntimeReservedMemory),
-						Low: pointer.ToInt64(constants.CgroupPodRuntimeReservedMemory * 2),
+						Min: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
+						Low: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
 					},
 				},
 			},
@@ -194,8 +194,8 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 				name: constants.CgroupKubelet,
 				resources: &cgroupsv2.Resources{
 					Memory: &cgroupsv2.Memory{
-						Min: pointer.ToInt64(constants.CgroupKubeletReservedMemory),
-						Low: pointer.ToInt64(constants.CgroupKubeletReservedMemory * 2),
+						Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
+						Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
 					},
 				},
 			},

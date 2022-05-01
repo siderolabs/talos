@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
@@ -44,7 +44,7 @@ func (ctrl *NodeIdentityController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.ToString(constants.StatePartitionLabel),
+			ID:        pointer.To(constants.StatePartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}

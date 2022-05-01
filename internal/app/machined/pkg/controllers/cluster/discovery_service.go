@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/talos-systems/discovery-client/pkg/client"
 	"go.uber.org/zap"
@@ -47,13 +47,13 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      cluster.ConfigType,
-			ID:        pointer.ToString(cluster.ConfigID),
+			ID:        pointer.To(cluster.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.ToString(cluster.LocalIdentity),
+			ID:        pointer.To(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -168,7 +168,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				controller.Input{
 					Namespace: cluster.NamespaceName,
 					Type:      cluster.AffiliateType,
-					ID:        pointer.ToString(ctrl.localAffiliateID),
+					ID:        pointer.To(ctrl.localAffiliateID),
 					Kind:      controller.InputWeak,
 				},
 			)); err != nil {

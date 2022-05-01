@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/rs/xid"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/siderolink/api/events"
 	"go.uber.org/atomic"
@@ -50,7 +50,7 @@ func (ctrl *EventsSinkController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.ToString(network.StatusID),
+			ID:        pointer.To(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

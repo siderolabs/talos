@@ -10,10 +10,10 @@ import (
 	"sync"
 	stdtime "time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -42,13 +42,13 @@ func (ctrl *SyncController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.TimeServerStatusType,
-			ID:        pointer.ToString(network.TimeServerID),
+			ID:        pointer.To(network.TimeServerID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.ToString(config.V1Alpha1ID),
+			ID:        pointer.To(config.V1Alpha1ID),
 		},
 	}
 }

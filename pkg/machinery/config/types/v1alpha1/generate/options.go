@@ -5,7 +5,7 @@
 package generate
 
 import (
-	"github.com/AlekSi/pointer"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -208,7 +208,7 @@ func WithRoles(roles role.Set) GenOption {
 // WithClusterDiscovery enables cluster discovery feature.
 func WithClusterDiscovery(enabled bool) GenOption {
 	return func(o *GenOptions) error {
-		o.DiscoveryEnabled = pointer.ToBool(enabled)
+		o.DiscoveryEnabled = pointer.To(enabled)
 
 		return nil
 	}

@@ -8,10 +8,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
@@ -34,7 +34,7 @@ func (ctrl *PeerSpecController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.ToString(kubespan.ConfigID),
+			ID:        pointer.To(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -45,7 +45,7 @@ func (ctrl *PeerSpecController) Inputs() []controller.Input {
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.ToString(cluster.LocalIdentity),
+			ID:        pointer.To(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 	}

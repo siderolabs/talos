@@ -10,10 +10,10 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
@@ -42,19 +42,19 @@ func (ctrl *IdentityController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.ToString(kubespan.ConfigID),
+			ID:        pointer.To(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HardwareAddrType,
-			ID:        pointer.ToString(network.FirstHardwareAddr),
+			ID:        pointer.To(network.FirstHardwareAddr),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.ToString(constants.StatePartitionLabel),
+			ID:        pointer.To(constants.StatePartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}

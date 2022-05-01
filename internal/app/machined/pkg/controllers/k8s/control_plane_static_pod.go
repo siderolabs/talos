@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
@@ -58,19 +58,19 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.SecretsStatusType,
-			ID:        pointer.ToString(k8s.StaticPodSecretsStaticPodID),
+			ID:        pointer.To(k8s.StaticPodSecretsStaticPodID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.ConfigStatusType,
-			ID:        pointer.ToString(k8s.ConfigStatusStaticPodID),
+			ID:        pointer.To(k8s.ConfigStatusStaticPodID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.ToString("etcd"),
+			ID:        pointer.To("etcd"),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -440,8 +440,8 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.ToBool(true),
-					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
+					RunAsNonRoot: pointer.To(true),
+					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -585,8 +585,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.ToBool(true),
-					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
+					RunAsNonRoot: pointer.To(true),
+					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -695,8 +695,8 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.ToBool(true),
-					RunAsUser:    pointer.ToInt64(constants.KubernetesRunUser),
+					RunAsNonRoot: pointer.To(true),
+					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
 				},
 				Volumes: append([]v1.Volume{
 					{

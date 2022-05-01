@@ -12,10 +12,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
@@ -42,7 +42,7 @@ func (ctrl *ManifestController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.ToString(secrets.KubernetesRootID),
+			ID:        pointer.To(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 	}

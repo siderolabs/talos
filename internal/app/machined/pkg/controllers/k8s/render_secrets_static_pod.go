@@ -13,10 +13,10 @@ import (
 	"path/filepath"
 	stdlibtemplate "text/template"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	"go.uber.org/zap"
 
@@ -39,25 +39,25 @@ func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.ToString(secrets.KubernetesRootID),
+			ID:        pointer.To(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdRootType,
-			ID:        pointer.ToString(secrets.EtcdRootID),
+			ID:        pointer.To(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.ToString(secrets.KubernetesID),
+			ID:        pointer.To(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdType,
-			ID:        pointer.ToString(secrets.EtcdID),
+			ID:        pointer.To(secrets.EtcdID),
 			Kind:      controller.InputWeak,
 		},
 	}

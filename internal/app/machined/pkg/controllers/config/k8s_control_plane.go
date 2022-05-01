@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	talosnet "github.com/talos-systems/net"
 	"go.uber.org/zap"
 
@@ -39,13 +39,13 @@ func (ctrl *K8sControlPlaneController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.ToString(config.V1Alpha1ID),
+			ID:        pointer.To(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
+			ID:        pointer.To(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 	}

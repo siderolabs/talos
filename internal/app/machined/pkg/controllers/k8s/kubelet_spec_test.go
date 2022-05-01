@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -335,10 +335,10 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				ClientCAFile: constants.KubernetesCACert,
 			},
 			Webhook: kubeletconfig.KubeletWebhookAuthentication{
-				Enabled: pointer.ToBool(true),
+				Enabled: pointer.To(true),
 			},
 			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-				Enabled: pointer.ToBool(false),
+				Enabled: pointer.To(false),
 			},
 		},
 		Authorization: kubeletconfig.KubeletAuthorization{
@@ -350,11 +350,11 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		RotateCertificates:    true,
 		ProtectKernelDefaults: true,
 		Address:               "0.0.0.0",
-		OOMScoreAdj:           pointer.ToInt32(constants.KubeletOOMScoreAdj),
+		OOMScoreAdj:           pointer.To[int32](constants.KubeletOOMScoreAdj),
 		ClusterDomain:         "cluster.local",
 		ClusterDNS:            []string{"10.0.0.5"},
-		SerializeImagePulls:   pointer.ToBool(false),
-		FailSwapOn:            pointer.ToBool(false),
+		SerializeImagePulls:   pointer.To(false),
+		FailSwapOn:            pointer.To(false),
 		SystemReserved: map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
 			"memory":            constants.KubeletSystemReservedMemory,
@@ -382,8 +382,8 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				"enableDebuggingHandlers": true,
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.OOMScoreAdj = pointer.ToInt32(-300)
-				kc.EnableDebuggingHandlers = pointer.ToBool(true)
+				kc.OOMScoreAdj = pointer.To[int32](-300)
+				kc.EnableDebuggingHandlers = pointer.To(true)
 			},
 		},
 		{

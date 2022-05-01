@@ -7,7 +7,6 @@ go 1.18
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 
 require (
-	github.com/AlekSi/pointer v1.2.0
 	github.com/containerd/go-cni v1.1.4
 	github.com/cosi-project/runtime v0.0.0-20220426184241-e22a85955e81
 	github.com/dustin/go-humanize v1.0.0
@@ -17,6 +16,7 @@ require (
 	github.com/jsimonetti/rtnetlink v1.2.0
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/siderolabs/go-pointer v1.0.0
 	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/go-blockdevice v0.3.2-0.20220405134045-d9c3a2738861
@@ -43,7 +43,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/siderolabs/go-pointer v1.0.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect

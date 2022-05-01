@@ -22,7 +22,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/errdefs"
@@ -33,6 +32,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-kmsg"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -1710,54 +1710,54 @@ func (s *Server) Memory(ctx context.Context, in *emptypb.Empty) (reply *machine.
 	}
 
 	meminfo := &machine.MemInfo{
-		Memtotal:          pointer.GetUint64(info.MemTotal),
-		Memfree:           pointer.GetUint64(info.MemFree),
-		Memavailable:      pointer.GetUint64(info.MemAvailable),
-		Buffers:           pointer.GetUint64(info.Buffers),
-		Cached:            pointer.GetUint64(info.Cached),
-		Swapcached:        pointer.GetUint64(info.SwapCached),
-		Active:            pointer.GetUint64(info.Active),
-		Inactive:          pointer.GetUint64(info.Inactive),
-		Activeanon:        pointer.GetUint64(info.ActiveAnon),
-		Inactiveanon:      pointer.GetUint64(info.InactiveAnon),
-		Activefile:        pointer.GetUint64(info.ActiveFile),
-		Inactivefile:      pointer.GetUint64(info.InactiveFile),
-		Unevictable:       pointer.GetUint64(info.Unevictable),
-		Mlocked:           pointer.GetUint64(info.Mlocked),
-		Swaptotal:         pointer.GetUint64(info.SwapTotal),
-		Swapfree:          pointer.GetUint64(info.SwapFree),
-		Dirty:             pointer.GetUint64(info.Dirty),
-		Writeback:         pointer.GetUint64(info.Writeback),
-		Anonpages:         pointer.GetUint64(info.AnonPages),
-		Mapped:            pointer.GetUint64(info.Mapped),
-		Shmem:             pointer.GetUint64(info.Shmem),
-		Slab:              pointer.GetUint64(info.Slab),
-		Sreclaimable:      pointer.GetUint64(info.SReclaimable),
-		Sunreclaim:        pointer.GetUint64(info.SUnreclaim),
-		Kernelstack:       pointer.GetUint64(info.KernelStack),
-		Pagetables:        pointer.GetUint64(info.PageTables),
-		Nfsunstable:       pointer.GetUint64(info.NFSUnstable),
-		Bounce:            pointer.GetUint64(info.Bounce),
-		Writebacktmp:      pointer.GetUint64(info.WritebackTmp),
-		Commitlimit:       pointer.GetUint64(info.CommitLimit),
-		Committedas:       pointer.GetUint64(info.CommittedAS),
-		Vmalloctotal:      pointer.GetUint64(info.VmallocTotal),
-		Vmallocused:       pointer.GetUint64(info.VmallocUsed),
-		Vmallocchunk:      pointer.GetUint64(info.VmallocChunk),
-		Hardwarecorrupted: pointer.GetUint64(info.HardwareCorrupted),
-		Anonhugepages:     pointer.GetUint64(info.AnonHugePages),
-		Shmemhugepages:    pointer.GetUint64(info.ShmemHugePages),
-		Shmempmdmapped:    pointer.GetUint64(info.ShmemPmdMapped),
-		Cmatotal:          pointer.GetUint64(info.CmaTotal),
-		Cmafree:           pointer.GetUint64(info.CmaFree),
-		Hugepagestotal:    pointer.GetUint64(info.HugePagesTotal),
-		Hugepagesfree:     pointer.GetUint64(info.HugePagesFree),
-		Hugepagesrsvd:     pointer.GetUint64(info.HugePagesRsvd),
-		Hugepagessurp:     pointer.GetUint64(info.HugePagesSurp),
-		Hugepagesize:      pointer.GetUint64(info.Hugepagesize),
-		Directmap4K:       pointer.GetUint64(info.DirectMap4k),
-		Directmap2M:       pointer.GetUint64(info.DirectMap2M),
-		Directmap1G:       pointer.GetUint64(info.DirectMap1G),
+		Memtotal:          pointer.SafeDeref(info.MemTotal),
+		Memfree:           pointer.SafeDeref(info.MemFree),
+		Memavailable:      pointer.SafeDeref(info.MemAvailable),
+		Buffers:           pointer.SafeDeref(info.Buffers),
+		Cached:            pointer.SafeDeref(info.Cached),
+		Swapcached:        pointer.SafeDeref(info.SwapCached),
+		Active:            pointer.SafeDeref(info.Active),
+		Inactive:          pointer.SafeDeref(info.Inactive),
+		Activeanon:        pointer.SafeDeref(info.ActiveAnon),
+		Inactiveanon:      pointer.SafeDeref(info.InactiveAnon),
+		Activefile:        pointer.SafeDeref(info.ActiveFile),
+		Inactivefile:      pointer.SafeDeref(info.InactiveFile),
+		Unevictable:       pointer.SafeDeref(info.Unevictable),
+		Mlocked:           pointer.SafeDeref(info.Mlocked),
+		Swaptotal:         pointer.SafeDeref(info.SwapTotal),
+		Swapfree:          pointer.SafeDeref(info.SwapFree),
+		Dirty:             pointer.SafeDeref(info.Dirty),
+		Writeback:         pointer.SafeDeref(info.Writeback),
+		Anonpages:         pointer.SafeDeref(info.AnonPages),
+		Mapped:            pointer.SafeDeref(info.Mapped),
+		Shmem:             pointer.SafeDeref(info.Shmem),
+		Slab:              pointer.SafeDeref(info.Slab),
+		Sreclaimable:      pointer.SafeDeref(info.SReclaimable),
+		Sunreclaim:        pointer.SafeDeref(info.SUnreclaim),
+		Kernelstack:       pointer.SafeDeref(info.KernelStack),
+		Pagetables:        pointer.SafeDeref(info.PageTables),
+		Nfsunstable:       pointer.SafeDeref(info.NFSUnstable),
+		Bounce:            pointer.SafeDeref(info.Bounce),
+		Writebacktmp:      pointer.SafeDeref(info.WritebackTmp),
+		Commitlimit:       pointer.SafeDeref(info.CommitLimit),
+		Committedas:       pointer.SafeDeref(info.CommittedAS),
+		Vmalloctotal:      pointer.SafeDeref(info.VmallocTotal),
+		Vmallocused:       pointer.SafeDeref(info.VmallocUsed),
+		Vmallocchunk:      pointer.SafeDeref(info.VmallocChunk),
+		Hardwarecorrupted: pointer.SafeDeref(info.HardwareCorrupted),
+		Anonhugepages:     pointer.SafeDeref(info.AnonHugePages),
+		Shmemhugepages:    pointer.SafeDeref(info.ShmemHugePages),
+		Shmempmdmapped:    pointer.SafeDeref(info.ShmemPmdMapped),
+		Cmatotal:          pointer.SafeDeref(info.CmaTotal),
+		Cmafree:           pointer.SafeDeref(info.CmaFree),
+		Hugepagestotal:    pointer.SafeDeref(info.HugePagesTotal),
+		Hugepagesfree:     pointer.SafeDeref(info.HugePagesFree),
+		Hugepagesrsvd:     pointer.SafeDeref(info.HugePagesRsvd),
+		Hugepagessurp:     pointer.SafeDeref(info.HugePagesSurp),
+		Hugepagesize:      pointer.SafeDeref(info.Hugepagesize),
+		Directmap4K:       pointer.SafeDeref(info.DirectMap4k),
+		Directmap2M:       pointer.SafeDeref(info.DirectMap2M),
+		Directmap1G:       pointer.SafeDeref(info.DirectMap1G),
 	}
 
 	reply = &machine.MemoryResponse{

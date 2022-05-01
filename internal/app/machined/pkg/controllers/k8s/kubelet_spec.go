@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,19 +43,19 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletConfigType,
-			ID:        pointer.ToString(k8s.KubeletID),
+			ID:        pointer.To(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.ToString(k8s.NodenameID),
+			ID:        pointer.To(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeIPType,
-			ID:        pointer.ToString(k8s.KubeletID),
+			ID:        pointer.To(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -241,10 +241,10 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 			ClientCAFile: constants.KubernetesCACert,
 		},
 		Webhook: kubeletconfig.KubeletWebhookAuthentication{
-			Enabled: pointer.ToBool(true),
+			Enabled: pointer.To(true),
 		},
 		Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-			Enabled: pointer.ToBool(false),
+			Enabled: pointer.To(false),
 		},
 	}
 	config.Authorization = kubeletconfig.KubeletAuthorization{
@@ -262,7 +262,7 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	}
 
 	if config.OOMScoreAdj == nil {
-		config.OOMScoreAdj = pointer.ToInt32(constants.KubeletOOMScoreAdj)
+		config.OOMScoreAdj = pointer.To[int32](constants.KubeletOOMScoreAdj)
 	}
 
 	if config.ClusterDomain == "" {
@@ -274,11 +274,11 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	}
 
 	if config.SerializeImagePulls == nil {
-		config.SerializeImagePulls = pointer.ToBool(false)
+		config.SerializeImagePulls = pointer.To(false)
 	}
 
 	if config.FailSwapOn == nil {
-		config.FailSwapOn = pointer.ToBool(false)
+		config.FailSwapOn = pointer.To(false)
 	}
 
 	if len(config.SystemReserved) == 0 {

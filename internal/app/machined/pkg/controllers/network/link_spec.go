@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -363,7 +363,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 							Type:   slave.Type,
 							Index:  slave.Index,
 							Attributes: &rtnetlink.LinkAttributes{
-								Master: pointer.ToUint32(0),
+								Master: pointer.To[uint32](0),
 							},
 						}); err != nil {
 							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().BondSlave.MasterName, err)
@@ -486,13 +486,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				Index:  existing.Index,
 				Change: unix.IFF_UP,
 				Attributes: &rtnetlink.LinkAttributes{
-					Master: pointer.ToUint32(masterIndex),
+					Master: pointer.To(masterIndex),
 				},
 			}); err != nil {
 				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.TypedSpec().Name, link.TypedSpec().BondSlave.MasterName, err)
 			}
 
-			existing.Attributes.Master = pointer.ToUint32(masterIndex)
+			existing.Attributes.Master = pointer.To(masterIndex)
 
 			logger.Info("enslaved/unslaved link", zap.String("parent", link.TypedSpec().BondSlave.MasterName))
 		}

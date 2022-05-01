@@ -5,7 +5,7 @@
 package v1alpha1
 
 import (
-	"github.com/AlekSi/pointer"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -58,7 +58,7 @@ func WithNetworkInterfaceDHCPv4(iface string, enable bool) NetworkConfigOption {
 			dev.DeviceDHCPOptions = &DHCPOptions{}
 		}
 
-		dev.DeviceDHCPOptions.DHCPIPv4 = pointer.ToBool(enable)
+		dev.DeviceDHCPOptions.DHCPIPv4 = pointer.To(enable)
 
 		return nil
 	}
@@ -73,7 +73,7 @@ func WithNetworkInterfaceDHCPv6(iface string, enable bool) NetworkConfigOption {
 			dev.DeviceDHCPOptions = &DHCPOptions{}
 		}
 
-		dev.DeviceDHCPOptions.DHCPIPv6 = pointer.ToBool(enable)
+		dev.DeviceDHCPOptions.DHCPIPv6 = pointer.To(enable)
 
 		return nil
 	}

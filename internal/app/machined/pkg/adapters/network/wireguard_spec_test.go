@@ -7,8 +7,9 @@ package network_test
 import (
 	"net"
 	"testing"
+	"time"
 
-	"github.com/AlekSi/pointer"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -174,8 +175,8 @@ func TestWireguardSpecEncode(t *testing.T) {
 
 	assert.Equal(t, &wgtypes.Config{
 		PrivateKey:   &priv,
-		ListenPort:   pointer.ToInt(30000),
-		FirewallMark: pointer.ToInt(1),
+		ListenPort:   pointer.To(30000),
+		FirewallMark: pointer.To(1),
 		Peers: []wgtypes.PeerConfig{
 			{
 				PublicKey: pub1.PublicKey(),
@@ -183,7 +184,7 @@ func TestWireguardSpecEncode(t *testing.T) {
 					IP:   net.ParseIP("10.2.0.3"),
 					Port: 20000,
 				},
-				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				PersistentKeepaliveInterval: pointer.To[time.Duration](0),
 				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{
@@ -194,7 +195,7 @@ func TestWireguardSpecEncode(t *testing.T) {
 			},
 			{
 				PublicKey:                   pub2.PublicKey(),
-				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				PersistentKeepaliveInterval: pointer.To[time.Duration](0),
 				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{
@@ -260,12 +261,12 @@ func TestWireguardSpecEncode(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, &wgtypes.Config{
-		FirewallMark: pointer.ToInt(2),
+		FirewallMark: pointer.To(2),
 		Peers: []wgtypes.PeerConfig{
 			{
 				PublicKey:                   pub1.PublicKey(),
 				PresharedKey:                &priv,
-				PersistentKeepaliveInterval: pointer.ToDuration(0),
+				PersistentKeepaliveInterval: pointer.To[time.Duration](0),
 				ReplaceAllowedIPs:           true,
 				AllowedIPs: []net.IPNet{
 					{

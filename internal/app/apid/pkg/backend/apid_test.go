@@ -10,7 +10,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/AlekSi/pointer"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -269,32 +269,32 @@ func getOptions(t *testing.T, descriptor protoreflect.Descriptor) (deprecated bo
 	switch opts := descriptor.Options().(type) {
 	case *descriptorpb.EnumOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedEnum).(string)
 		}
 	case *descriptorpb.EnumValueOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedEnumValue).(string)
 		}
 	case *descriptorpb.MessageOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedMessage).(string)
 		}
 	case *descriptorpb.FieldOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedField).(string)
 		}
 	case *descriptorpb.ServiceOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedService).(string)
 		}
 	case *descriptorpb.MethodOptions:
 		if opts != nil {
-			deprecated = pointer.GetBool(opts.Deprecated)
+			deprecated = pointer.SafeDeref(opts.Deprecated)
 			version = protobuf.GetExtension(opts, common.E_RemoveDeprecatedMethod).(string)
 		}
 

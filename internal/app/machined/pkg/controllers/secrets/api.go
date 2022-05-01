@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	"go.uber.org/zap"
 
@@ -43,13 +43,13 @@ func (ctrl *APIController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.ToString(network.StatusID),
+			ID:        pointer.To(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
+			ID:        pointer.To(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -135,19 +135,19 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.OSRootType,
-			ID:        pointer.ToString(secrets.OSRootID),
+			ID:        pointer.To(secrets.OSRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.CertSANType,
-			ID:        pointer.ToString(secrets.CertSANAPIID),
+			ID:        pointer.To(secrets.CertSANAPIID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.ToString(config.MachineTypeID),
+			ID:        pointer.To(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 		// time status isn't fetched, but the fact that it is in dependencies means
@@ -155,7 +155,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.ToString(timeresource.StatusID),
+			ID:        pointer.To(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

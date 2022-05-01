@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	"inet.af/netaddr"
@@ -50,7 +50,7 @@ func (ctrl *PlatformConfigController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.ToString(constants.StatePartitionLabel),
+			ID:        pointer.To(constants.StatePartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}

@@ -29,7 +29,6 @@ require (
 
 require (
 	cloud.google.com/go/compute v1.6.1
-	github.com/AlekSi/pointer v1.2.0
 	github.com/BurntSushi/toml v1.1.0
 	github.com/aws/aws-sdk-go v1.43.45
 	github.com/beevik/ntp v0.3.0
@@ -83,6 +82,7 @@ require (
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
+	github.com/siderolabs/go-pointer v1.0.0
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
@@ -241,7 +241,6 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v0.0.0-20190127155807-68a33a018ad0 // indirect
-	github.com/siderolabs/go-pointer v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect

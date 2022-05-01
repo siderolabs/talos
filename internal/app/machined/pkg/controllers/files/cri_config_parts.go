@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -37,7 +37,7 @@ func (ctrl *CRIConfigPartsController) Inputs() []controller.Input {
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
-			ID:        pointer.ToString(constants.CRIRegistryConfigPart), // watch only registry configuration which might be updated
+			ID:        pointer.To(constants.CRIRegistryConfigPart), // watch only registry configuration which might be updated
 			Kind:      controller.InputWeak,
 		},
 	}

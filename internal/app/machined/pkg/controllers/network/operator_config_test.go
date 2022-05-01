@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -289,7 +289,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 							DeviceInterface: "eth3",
 							DeviceDHCP:      true,
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv4:        pointer.ToBool(true),
+								DHCPIPv4:        pointer.To(true),
 								DHCPRouteMetric: 256,
 							},
 						},
@@ -390,21 +390,21 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 							DeviceInterface: "eth1",
 							DeviceDHCP:      true,
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv4: pointer.ToBool(true),
+								DHCPIPv4: pointer.To(true),
 							},
 						},
 						{
 							DeviceInterface: "eth2",
 							DeviceDHCP:      true,
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv6: pointer.ToBool(true),
+								DHCPIPv6: pointer.To(true),
 							},
 						},
 						{
 							DeviceInterface: "eth3",
 							DeviceDHCP:      true,
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv6:        pointer.ToBool(true),
+								DHCPIPv6:        pointer.To(true),
 								DHCPRouteMetric: 512,
 							},
 						},

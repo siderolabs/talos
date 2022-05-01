@@ -12,10 +12,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/AlekSi/pointer"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	"go.uber.org/zap"
 
@@ -47,7 +47,7 @@ func (ctrl *KubernetesController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.ToString(network.StatusID),
+			ID:        pointer.To(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -96,19 +96,19 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.ToString(secrets.KubernetesRootID),
+			ID:        pointer.To(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.ToString(timeresource.StatusID),
+			ID:        pointer.To(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.CertSANType,
-			ID:        pointer.ToString(secrets.CertSANKubernetesID),
+			ID:        pointer.To(secrets.CertSANKubernetesID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
