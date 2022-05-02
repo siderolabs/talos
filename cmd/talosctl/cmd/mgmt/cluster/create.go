@@ -21,6 +21,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	"github.com/talos-systems/go-procfs/procfs"
 	talosnet "github.com/talos-systems/net"
@@ -28,7 +29,6 @@ import (
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
-	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/images"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
@@ -55,6 +55,36 @@ const (
 
 	// vipOffset is the offset from the network address of the CIDR to use for allocating the Virtual (shared) IP address, if enabled.
 	vipOffset = 50
+
+	inputDirFlag = "input-dir"
+
+	// these flags are considered gen options.
+	nodeInstallImageFlag          = "install-image"
+	configDebugFlag               = "with-debug"
+	dnsDomainFlag                 = "dns-domain"
+	withClusterDiscoveryFlag      = "with-cluster-discovery"
+	registryMirrorFlag            = "registry-mirror"
+	registryInsecureFlag          = "registry-insecure-skip-verify"
+	networkIPv4Flag               = "ipv4"
+	networkIPv6Flag               = "ipv6"
+	networkMTUFlag                = "mtu"
+	networkCIDRFlag               = "cidr"
+	nameserversFlag               = "nameservers"
+	cniBinPathFlag                = "cni-bin-path"
+	cniConfDirFlag                = "cni-conf-dir"
+	cniCacheDirFlag               = "cni-cache-dir"
+	cniBundleURLFlag              = "cni-bundle-url"
+	dockerDisableIPv6Flag         = "docker-disable-ipv6"
+	clusterDiskSizeFlag           = "disk"
+	clusterDisksFlag              = "user-disk"
+	customCNIUrlFlag              = "custom-cni-url"
+	talosVersionFlag              = "talos-version"
+	encryptStatePartitionFlag     = "encrypt-state"
+	encryptEphemeralPartitionFlag = "encrypt-ephemeral"
+	useVIPFlag                    = "use-vip"
+	enableKubeSpanFlag            = "with-kubespan"
+	bootloaderEnabledFlag         = "with-bootloader"
+	forceEndpointFlag             = "endpoint"
 )
 
 var (
@@ -128,12 +158,14 @@ var createCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.WithContext(context.Background(), create)
+		return create(cmd.Flags())
 	},
 }
 
 //nolint:gocyclo,cyclop
-func create(ctx context.Context) (err error) {
+func create(flags *pflag.FlagSet) (err error) {
+	ctx := context.Background()
+
 	if masters < 1 {
 		return fmt.Errorf("number of masters can't be less than 1")
 	}
@@ -288,6 +320,11 @@ func create(ctx context.Context) (err error) {
 	}
 
 	if inputDir != "" {
+		definedGenFlag := checkForDefinedGenFlag(flags)
+		if definedGenFlag != "" {
+			return fmt.Errorf("flag --%s is not supported with generated configs(--%s)", definedGenFlag, inputDirFlag)
+		}
+
 		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
 	} else {
 		genOptions := []generate.GenOption{
@@ -445,6 +482,7 @@ func create(ctx context.Context) (err error) {
 		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
+
 		configBundleOpts = append(configBundleOpts,
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
@@ -807,45 +845,45 @@ func init() {
 
 	createCmd.Flags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
 	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(images.DefaultTalosImageRepository), "the image to use")
-	createCmd.Flags().StringVar(&nodeInstallImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
+	createCmd.Flags().StringVar(&nodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
 	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
 	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
 	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
-	createCmd.Flags().BoolVar(&bootloaderEnabled, "with-bootloader", true, "enable bootloader to load kernel and initramfs from disk image after install")
+	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
-	createCmd.Flags().StringSliceVar(&registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
-	createCmd.Flags().StringSliceVar(&registryInsecure, "registry-insecure-skip-verify", []string{}, "list of registry hostnames to skip TLS verification for")
-	createCmd.Flags().BoolVar(&configDebug, "with-debug", false, "enable debug in Talos config to send service logs to the console")
-	createCmd.Flags().IntVar(&networkMTU, "mtu", 1500, "MTU of the cluster network")
-	createCmd.Flags().StringVar(&networkCIDR, "cidr", "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
-	createCmd.Flags().BoolVar(&networkIPv4, "ipv4", true, "enable IPv4 network in the cluster")
-	createCmd.Flags().BoolVar(&networkIPv6, "ipv6", false, "enable IPv6 network in the cluster (QEMU provisioner only)")
+	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
+	createCmd.Flags().StringSliceVar(&registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")
+	createCmd.Flags().BoolVar(&configDebug, configDebugFlag, false, "enable debug in Talos config to send service logs to the console")
+	createCmd.Flags().IntVar(&networkMTU, networkMTUFlag, 1500, "MTU of the cluster network")
+	createCmd.Flags().StringVar(&networkCIDR, networkCIDRFlag, "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+	createCmd.Flags().BoolVar(&networkIPv4, networkIPv4Flag, true, "enable IPv4 network in the cluster")
+	createCmd.Flags().BoolVar(&networkIPv6, networkIPv6Flag, false, "enable IPv6 network in the cluster (QEMU provisioner only)")
 	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")
-	createCmd.Flags().StringSliceVar(&nameservers, "nameservers", []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
+	createCmd.Flags().StringSliceVar(&nameservers, nameserversFlag, []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
 	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
 	createCmd.Flags().StringVar(&controlPlaneCpus, "cpus", "2.0", "the share of CPUs as fraction (each control plane/VM)")
 	createCmd.Flags().StringVar(&workersCpus, "cpus-workers", "2.0", "the share of CPUs as fraction (each worker/VM)")
 	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
 	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
-	createCmd.Flags().IntVar(&clusterDiskSize, "disk", 6*1024, "default limit on disk size in MB (each VM)")
-	createCmd.Flags().StringSliceVar(&clusterDisks, "user-disk", []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
+	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
 	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
 	createCmd.Flags().DurationVar(&clusterWaitTimeout, "wait-timeout", 20*time.Minute, "timeout to wait for the cluster to be ready")
 	createCmd.Flags().BoolVar(&forceInitNodeAsEndpoint, "init-node-as-endpoint", false, "use init node as endpoint instead of any load balancer endpoint")
-	createCmd.Flags().StringVar(&forceEndpoint, "endpoint", "", "use endpoint instead of provider defaults")
+	createCmd.Flags().StringVar(&forceEndpoint, forceEndpointFlag, "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
-	createCmd.Flags().StringVarP(&inputDir, "input-dir", "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
-	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
-	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
-	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
+	createCmd.Flags().StringVarP(&inputDir, inputDirFlag, "i", "", "location of pre-generated config files")
+	createCmd.Flags().StringSliceVar(&cniBinPath, cniBinPathFlag, []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
+	createCmd.Flags().StringVar(&cniConfDir, cniConfDirFlag, filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
+	createCmd.Flags().StringVar(&cniCacheDir, cniCacheDirFlag, filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
+	createCmd.Flags().StringVar(&cniBundleURL, cniBundleURLFlag, fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 		images.Username, trimVersion(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
@@ -855,23 +893,62 @@ func init() {
 	)
 	createCmd.Flags().StringVar(&dockerHostIP, "docker-host-ip", "0.0.0.0", "Host IP to forward exposed ports to (Docker provisioner only)")
 	createCmd.Flags().BoolVar(&withInitNode, "with-init-node", false, "create the cluster with an init node")
-	createCmd.Flags().StringVar(&customCNIUrl, "custom-cni-url", "", "install custom CNI from the URL (Talos cluster)")
-	createCmd.Flags().StringVar(&dnsDomain, "dns-domain", "cluster.local", "the dns domain to use for cluster")
+	createCmd.Flags().StringVar(&customCNIUrl, customCNIUrlFlag, "", "install custom CNI from the URL (Talos cluster)")
+	createCmd.Flags().StringVar(&dnsDomain, dnsDomainFlag, "cluster.local", "the dns domain to use for cluster")
 	createCmd.Flags().BoolVar(&crashdumpOnFailure, "crashdump", false, "print debug crashdump to stderr when cluster startup fails")
 	createCmd.Flags().BoolVar(&skipKubeconfig, "skip-kubeconfig", false, "skip merging kubeconfig from the created cluster")
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
-	createCmd.Flags().BoolVar(&encryptStatePartition, "encrypt-state", false, "enable state partition encryption")
-	createCmd.Flags().BoolVar(&encryptEphemeralPartition, "encrypt-ephemeral", false, "enable ephemeral partition encryption")
-	createCmd.Flags().StringVar(&talosVersion, "talos-version", "", "the desired Talos version to generate config for (if not set, defaults to image version)")
-	createCmd.Flags().BoolVar(&useVIP, "use-vip", false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
-	createCmd.Flags().BoolVar(&enableClusterDiscovery, "with-cluster-discovery", true, "enable cluster discovery")
-	createCmd.Flags().BoolVar(&enableKubeSpan, "with-kubespan", false, "enable KubeSpan system")
+	createCmd.Flags().BoolVar(&encryptStatePartition, encryptStatePartitionFlag, false, "enable state partition encryption")
+	createCmd.Flags().BoolVar(&encryptEphemeralPartition, encryptEphemeralPartitionFlag, false, "enable ephemeral partition encryption")
+	createCmd.Flags().StringVar(&talosVersion, talosVersionFlag, "", "the desired Talos version to generate config for (if not set, defaults to image version)")
+	createCmd.Flags().BoolVar(&useVIP, useVIPFlag, false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
+	createCmd.Flags().BoolVar(&enableClusterDiscovery, withClusterDiscoveryFlag, true, "enable cluster discovery")
+	createCmd.Flags().BoolVar(&enableKubeSpan, enableKubeSpanFlag, false, "enable KubeSpan system")
 	createCmd.Flags().StringArrayVar(&configPatch, "config-patch", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
 	createCmd.Flags().StringArrayVar(&configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	createCmd.Flags().StringArrayVar(&configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
-	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
+	createCmd.Flags().BoolVar(&dockerDisableIPv6, dockerDisableIPv6Flag, false, "skip enabling IPv6 in containers (Docker only)")
 
 	Cmd.AddCommand(createCmd)
+}
+
+// checkForDefinedGenFlag returns a gen option flag if one has been defined by the user.
+func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
+	genOptionFlags := []string{
+		nodeInstallImageFlag,
+		configDebugFlag,
+		dnsDomainFlag,
+		withClusterDiscoveryFlag,
+		registryMirrorFlag,
+		registryInsecureFlag,
+		networkIPv4Flag,
+		networkIPv6Flag,
+		networkMTUFlag,
+		networkCIDRFlag,
+		nameserversFlag,
+		cniBinPathFlag,
+		cniConfDirFlag,
+		cniCacheDirFlag,
+		cniBundleURLFlag,
+		dockerDisableIPv6Flag,
+		clusterDiskSizeFlag,
+		clusterDisksFlag,
+		customCNIUrlFlag,
+		talosVersionFlag,
+		encryptStatePartitionFlag,
+		encryptEphemeralPartitionFlag,
+		useVIPFlag,
+		enableKubeSpanFlag,
+		bootloaderEnabledFlag,
+		forceEndpointFlag,
+	}
+	for _, genFlag := range genOptionFlags {
+		if flags.Lookup(genFlag).Changed {
+			return genFlag
+		}
+	}
+
+	return ""
 }
