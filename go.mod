@@ -103,7 +103,7 @@ require (
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.2.0-beta
 	github.com/vmware-tanzu/sonobuoy v0.56.4
-	github.com/vmware/govmomi v0.27.4
+	github.com/vmware/govmomi v0.28.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.0.3
 	go.etcd.io/etcd/api/v3 v3.5.4
