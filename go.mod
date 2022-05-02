@@ -49,7 +49,7 @@ require (
 	github.com/emicklei/dot v0.16.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fatih/color v1.13.0
-	github.com/fsnotify/fsnotify v1.5.3
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
