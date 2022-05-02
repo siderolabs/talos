@@ -42,7 +42,9 @@ type NodeAddressSpec struct {
 
 // DeepCopy generates a deep copy of NodeAddressSpec.
 func (spec NodeAddressSpec) DeepCopy() NodeAddressSpec {
-	return spec
+	return NodeAddressSpec{
+		Addresses: append([]netaddr.IPPrefix(nil), spec.Addresses...),
+	}
 }
 
 // NewNodeAddress initializes a NodeAddress resource.

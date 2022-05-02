@@ -7,61 +7,45 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // StaticPodType is type of StaticPod resource.
 const StaticPodType = resource.Type("StaticPods.kubernetes.talos.dev")
 
 // StaticPod resource holds definition of kubelet static pod.
-type StaticPod struct {
-	md   resource.Metadata
-	spec *StaticPodSpec
-}
+type StaticPod = typed.Resource[StaticPodSpec, StaticPodRD]
 
 // StaticPodSpec describes static pod spec, it contains marshaled *v1.Pod spec.
 type StaticPodSpec struct {
 	Pod map[string]interface{}
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec StaticPodSpec) DeepCopy() StaticPodSpec {
+	return StaticPodSpec{
+		Pod: copyMap(spec.Pod),
+	}
+}
+
 // MarshalYAML implements yaml.Marshaler.
-func (spec *StaticPodSpec) MarshalYAML() (interface{}, error) {
+func (spec StaticPodSpec) MarshalYAML() (interface{}, error) {
 	return spec.Pod, nil
 }
 
 // NewStaticPod initializes a StaticPod resource.
 func NewStaticPod(namespace resource.Namespace, id resource.ID) *StaticPod {
-	r := &StaticPod{
-		md:   resource.NewMetadata(namespace, StaticPodType, id, resource.VersionUndefined),
-		spec: &StaticPodSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[StaticPodSpec, StaticPodRD](
+		resource.NewMetadata(namespace, StaticPodType, id, resource.VersionUndefined),
+		StaticPodSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *StaticPod) Metadata() *resource.Metadata {
-	return &r.md
-}
+// StaticPodRD provides auxiliary methods for StaticPod.
+type StaticPodRD struct{}
 
-// Spec implements resource.Resource.
-func (r *StaticPod) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *StaticPod) DeepCopy() resource.Resource {
-	return &StaticPod{
-		md: r.md,
-		spec: &StaticPodSpec{
-			Pod: r.spec.Pod,
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *StaticPod) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (StaticPodRD) ResourceDefinition(resource.Metadata, StaticPodSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodType,
 		Aliases:          []resource.Type{},
@@ -69,7 +53,11 @@ func (r *StaticPod) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// TypedSpec returns .spec.
-func (r *StaticPod) TypedSpec() *StaticPodSpec {
-	return r.spec
+func copyMap[K comparable, V any](m map[K]V) map[K]V {
+	result := make(map[K]V, len(m))
+	for k, v := range m {
+		result[k] = v
+	}
+
+	return result
 }
