@@ -53,7 +53,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/google/nftables v0.0.0-20220422151220-76ed01e300f2
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
