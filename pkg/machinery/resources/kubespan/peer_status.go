@@ -9,6 +9,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -18,10 +19,7 @@ const PeerStatusType = resource.Type("KubeSpanPeerStatuses.kubespan.talos.dev")
 // PeerStatus the Wireguard peer state for KubeSpan.
 //
 // PeerStatus is identified by the public key.
-type PeerStatus struct {
-	md   resource.Metadata
-	spec PeerStatusSpec
-}
+type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusRD]
 
 // PeerStatusSpec describes PeerStatus state.
 type PeerStatusSpec struct {
@@ -41,38 +39,22 @@ type PeerStatusSpec struct {
 	LastEndpointChange time.Time      `yaml:"lastEndpointChange"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec PeerStatusSpec) DeepCopy() PeerStatusSpec { return spec }
+
 // NewPeerStatus initializes a PeerStatus resource.
 func NewPeerStatus(namespace resource.Namespace, id resource.ID) *PeerStatus {
-	r := &PeerStatus{
-		md:   resource.NewMetadata(namespace, PeerStatusType, id, resource.VersionUndefined),
-		spec: PeerStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[PeerStatusSpec, PeerStatusRD](
+		resource.NewMetadata(namespace, PeerStatusType, id, resource.VersionUndefined),
+		PeerStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *PeerStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// PeerStatusRD provides auxiliary methods for PeerStatus.
+type PeerStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *PeerStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *PeerStatus) DeepCopy() resource.Resource {
-	return &PeerStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *PeerStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (PeerStatusRD) ResourceDefinition(resource.Metadata, PeerStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerStatusType,
 		Aliases:          []resource.Type{},
@@ -100,9 +82,4 @@ func (r *PeerStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *PeerStatus) TypedSpec() *PeerStatusSpec {
-	return &r.spec
 }

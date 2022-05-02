@@ -10,6 +10,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // SecretsStatusType is type of SecretsStatus resource.
@@ -19,10 +20,7 @@ const SecretsStatusType = resource.Type("SecretStatuses.kubernetes.talos.dev")
 const StaticPodSecretsStaticPodID = resource.ID("static-pods")
 
 // SecretsStatus resource holds definition of rendered secrets.
-type SecretsStatus struct {
-	md   resource.Metadata
-	spec SecretsStatusSpec
-}
+type SecretsStatus = typed.Resource[SecretsStatusSpec, SecretsStatusRD]
 
 // SecretsStatusSpec describes status of rendered secrets.
 type SecretsStatusSpec struct {
@@ -30,38 +28,22 @@ type SecretsStatusSpec struct {
 	Version string `yaml:"version"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec SecretsStatusSpec) DeepCopy() SecretsStatusSpec { return spec }
+
 // NewSecretsStatus initializes a SecretsStatus resource.
 func NewSecretsStatus(namespace resource.Namespace, id resource.ID) *SecretsStatus {
-	r := &SecretsStatus{
-		md:   resource.NewMetadata(namespace, SecretsStatusType, id, resource.VersionUndefined),
-		spec: SecretsStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[SecretsStatusSpec, SecretsStatusRD](
+		resource.NewMetadata(namespace, SecretsStatusType, id, resource.VersionUndefined),
+		SecretsStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *SecretsStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// SecretsStatusRD provides auxiliary methods for SecretsStatus.
+type SecretsStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *SecretsStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *SecretsStatus) DeepCopy() resource.Resource {
-	return &SecretsStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *SecretsStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (SecretsStatusRD) ResourceDefinition(resource.Metadata, SecretsStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SecretsStatusType,
 		Aliases:          []resource.Type{},
@@ -77,9 +59,4 @@ func (r *SecretsStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *SecretsStatus) TypedSpec() *SecretsStatusSpec {
-	return &r.spec
 }

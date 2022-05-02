@@ -7,20 +7,25 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // ManifestType is type of Manifest resource.
 const ManifestType = resource.Type("Manifests.kubernetes.talos.dev")
 
 // Manifest resource holds definition of kubelet static pod.
-type Manifest struct {
-	md   resource.Metadata
-	spec *ManifestSpec
-}
+type Manifest = typed.Resource[ManifestSpec, ManifestRD]
 
 // ManifestSpec holds the Kubernetes resources spec.
 type ManifestSpec struct {
 	Items []map[string]interface{}
+}
+
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec ManifestSpec) DeepCopy() ManifestSpec {
+	return ManifestSpec{
+		Items: append([]map[string]interface{}(nil), spec.Items...),
+	}
 }
 
 // MarshalYAML implements yaml.Marshaler.
@@ -30,46 +35,20 @@ func (spec *ManifestSpec) MarshalYAML() (interface{}, error) {
 
 // NewManifest initializes an empty Manifest resource.
 func NewManifest(namespace resource.Namespace, id resource.ID) *Manifest {
-	r := &Manifest{
-		md:   resource.NewMetadata(namespace, ManifestType, id, resource.VersionUndefined),
-		spec: &ManifestSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ManifestSpec, ManifestRD](
+		resource.NewMetadata(namespace, ManifestType, id, resource.VersionUndefined),
+		ManifestSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Manifest) Metadata() *resource.Metadata {
-	return &r.md
-}
+// ManifestRD provides auxiliary methods for Manifest.
+type ManifestRD struct{}
 
-// Spec implements resource.Resource.
-func (r *Manifest) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Manifest) DeepCopy() resource.Resource {
-	return &Manifest{
-		md: r.md,
-		spec: &ManifestSpec{
-			Items: append([]map[string]interface{}(nil), r.spec.Items...),
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Manifest) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (ManifestRD) ResourceDefinition(resource.Metadata, ManifestSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *Manifest) TypedSpec() *ManifestSpec {
-	return r.spec
 }

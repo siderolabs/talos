@@ -7,6 +7,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // KubeletLifecycleType is type of KubeletLifecycle resource.
@@ -22,46 +23,27 @@ const KubeletLifecycleID = resource.ID("kubelet")
 //
 // KubeletLifecycle is mostly about status of the workloads kubelet is running vs.
 // the actual status of the kubelet service itself.
-type KubeletLifecycle struct {
-	md   resource.Metadata
-	spec KubeletLifecycleSpec
-}
+type KubeletLifecycle = typed.Resource[KubeletLifecycleSpec, KubeletLifecycleRD]
 
 // KubeletLifecycleSpec is empty.
 type KubeletLifecycleSpec struct{}
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec KubeletLifecycleSpec) DeepCopy() KubeletLifecycleSpec { return spec }
+
 // NewKubeletLifecycle initializes an empty KubeletLifecycle resource.
 func NewKubeletLifecycle(namespace resource.Namespace, id resource.ID) *KubeletLifecycle {
-	r := &KubeletLifecycle{
-		md:   resource.NewMetadata(namespace, KubeletLifecycleType, id, resource.VersionUndefined),
-		spec: KubeletLifecycleSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[KubeletLifecycleSpec, KubeletLifecycleRD](
+		resource.NewMetadata(namespace, KubeletLifecycleType, id, resource.VersionUndefined),
+		KubeletLifecycleSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *KubeletLifecycle) Metadata() *resource.Metadata {
-	return &r.md
-}
+// KubeletLifecycleRD provides auxiliary methods for KubeletLifecycle.
+type KubeletLifecycleRD struct{}
 
-// Spec implements resource.Resource.
-func (r *KubeletLifecycle) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KubeletLifecycle) DeepCopy() resource.Resource {
-	return &KubeletLifecycle{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KubeletLifecycle) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (KubeletLifecycleRD) ResourceDefinition(resource.Metadata, KubeletLifecycleSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletLifecycleType,
 		Aliases:          []resource.Type{},

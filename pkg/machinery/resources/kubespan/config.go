@@ -7,6 +7,7 @@ package kubespan
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
@@ -18,10 +19,7 @@ const ConfigType = resource.Type("KubeSpanConfigs.kubespan.talos.dev")
 const ConfigID = resource.ID("kubespan")
 
 // Config resource holds KubeSpan configuration.
-type Config struct {
-	md   resource.Metadata
-	spec ConfigSpec
-}
+type Config = typed.Resource[ConfigSpec, ConfigRD]
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
@@ -32,38 +30,22 @@ type ConfigSpec struct {
 	ForceRouting bool `yaml:"forceRouting"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec ConfigSpec) DeepCopy() ConfigSpec { return spec }
+
 // NewConfig initializes a Config resource.
 func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
-	r := &Config{
-		md:   resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
-		spec: ConfigSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ConfigSpec, ConfigRD](
+		resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
+		ConfigSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *Config) Metadata() *resource.Metadata {
-	return &r.md
-}
+// ConfigRD provides auxiliary methods for Config.
+type ConfigRD struct{}
 
-// Spec implements resource.Resource.
-func (r *Config) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *Config) DeepCopy() resource.Resource {
-	return &Config{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (ConfigRD) ResourceDefinition(resource.Metadata, ConfigSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigType,
 		Aliases:          []resource.Type{},
@@ -71,9 +53,4 @@ func (r *Config) ResourceDefinition() meta.ResourceDefinitionSpec {
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *Config) TypedSpec() *ConfigSpec {
-	return &r.spec
 }

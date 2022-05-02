@@ -10,6 +10,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // ConfigStatusType is type of ConfigStatus resource.
@@ -19,10 +20,7 @@ const ConfigStatusType = resource.Type("ConfigStatuses.kubernetes.talos.dev")
 const ConfigStatusStaticPodID = resource.ID("static-pods")
 
 // ConfigStatus resource holds definition of rendered secrets.
-type ConfigStatus struct {
-	md   resource.Metadata
-	spec ConfigStatusSpec
-}
+type ConfigStatus = typed.Resource[ConfigStatusSpec, ConfigStatusRD]
 
 // ConfigStatusSpec describes status of rendered secrets.
 type ConfigStatusSpec struct {
@@ -30,38 +28,22 @@ type ConfigStatusSpec struct {
 	Version string `yaml:"version"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec ConfigStatusSpec) DeepCopy() ConfigStatusSpec { return spec }
+
 // NewConfigStatus initializes a ConfigStatus resource.
 func NewConfigStatus(namespace resource.Namespace, id resource.ID) *ConfigStatus {
-	r := &ConfigStatus{
-		md:   resource.NewMetadata(namespace, ConfigStatusType, id, resource.VersionUndefined),
-		spec: ConfigStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ConfigStatusSpec, ConfigStatusRD](
+		resource.NewMetadata(namespace, ConfigStatusType, id, resource.VersionUndefined),
+		ConfigStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *ConfigStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// ConfigStatusRD provides auxiliary methods for ConfigStatus.
+type ConfigStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *ConfigStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *ConfigStatus) DeepCopy() resource.Resource {
-	return &ConfigStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *ConfigStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (ConfigStatusRD) ResourceDefinition(resource.Metadata, ConfigStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigStatusType,
 		Aliases:          []resource.Type{},
@@ -77,9 +59,4 @@ func (r *ConfigStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *ConfigStatus) TypedSpec() *ConfigStatusSpec {
-	return &r.spec
 }

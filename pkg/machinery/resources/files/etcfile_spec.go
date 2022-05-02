@@ -9,16 +9,14 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // EtcFileSpecType is type of EtcFile resource.
 const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")
 
 // EtcFileSpec resource holds contents of the file which should be put to `/etc` directory.
-type EtcFileSpec struct {
-	md   resource.Metadata
-	spec EtcFileSpecSpec
-}
+type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecMD]
 
 // EtcFileSpecSpec describes status of rendered secrets.
 type EtcFileSpecSpec struct {
@@ -26,50 +24,31 @@ type EtcFileSpecSpec struct {
 	Mode     fs.FileMode `yaml:"mode"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (e EtcFileSpecSpec) DeepCopy() EtcFileSpecSpec {
+	return EtcFileSpecSpec{
+		Contents: append([]byte(nil), e.Contents...),
+		Mode:     e.Mode,
+	}
+}
+
 // NewEtcFileSpec initializes a EtcFileSpec resource.
 func NewEtcFileSpec(namespace resource.Namespace, id resource.ID) *EtcFileSpec {
-	r := &EtcFileSpec{
-		md:   resource.NewMetadata(namespace, EtcFileSpecType, id, resource.VersionUndefined),
-		spec: EtcFileSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[EtcFileSpecSpec, EtcFileSpecMD](
+		resource.NewMetadata(namespace, EtcFileSpecType, id, resource.VersionUndefined),
+		EtcFileSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *EtcFileSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *EtcFileSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *EtcFileSpec) DeepCopy() resource.Resource {
-	return &EtcFileSpec{
-		md: r.md,
-		spec: EtcFileSpecSpec{
-			Contents: append([]byte(nil), r.spec.Contents...),
-			Mode:     r.spec.Mode,
-		},
-	}
-}
+// EtcFileSpecMD provides auxiliary methods for EtcFileSpec.
+type EtcFileSpecMD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *EtcFileSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (EtcFileSpecMD) ResourceDefinition(resource.Metadata, EtcFileSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcFileSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *EtcFileSpec) TypedSpec() *EtcFileSpecSpec {
-	return &r.spec
 }

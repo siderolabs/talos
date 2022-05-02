@@ -7,6 +7,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
 // ManifestStatusType is type of ManifestStatus resource.
@@ -16,53 +17,29 @@ const ManifestStatusType = resource.Type("ManifestStatuses.kubernetes.talos.dev"
 const ManifestStatusID = resource.ID("manifests")
 
 // ManifestStatus resource holds definition of kubelet static pod.
-type ManifestStatus struct {
-	md   resource.Metadata
-	spec ManifestStatusSpec
-}
+type ManifestStatus = typed.Resource[ManifestStatusSpec, ManifestStatusRD]
 
 // ManifestStatusSpec describes manifest application status.
 type ManifestStatusSpec struct {
 	ManifestsApplied []string `yaml:"manifestsApplied"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec ManifestStatusSpec) DeepCopy() ManifestStatusSpec { return spec }
+
 // NewManifestStatus initializes an empty ManifestStatus resource.
 func NewManifestStatus(namespace resource.Namespace) *ManifestStatus {
-	r := &ManifestStatus{
-		md:   resource.NewMetadata(namespace, ManifestStatusType, ManifestStatusID, resource.VersionUndefined),
-		spec: ManifestStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[ManifestStatusSpec, ManifestStatusRD](
+		resource.NewMetadata(namespace, ManifestStatusType, ManifestStatusID, resource.VersionUndefined),
+		ManifestStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *ManifestStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// ManifestStatusRD provides auxiliary methods for ManifestStatus.
+type ManifestStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *ManifestStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *ManifestStatus) DeepCopy() resource.Resource {
-	return &ManifestStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// TypedSpec returns ManifestStatusSpec.
-func (r *ManifestStatus) TypedSpec() *ManifestStatusSpec {
-	return &r.spec
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *ManifestStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (ManifestStatusRD) ResourceDefinition(resource.Metadata, ManifestStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestStatusType,
 		Aliases:          []resource.Type{},

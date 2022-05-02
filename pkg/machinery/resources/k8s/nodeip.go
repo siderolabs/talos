@@ -7,6 +7,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -14,58 +15,36 @@ import (
 const NodeIPType = resource.Type("NodeIPs.kubernetes.talos.dev")
 
 // NodeIP resource holds definition of Node IP specification.
-type NodeIP struct {
-	md   resource.Metadata
-	spec *NodeIPSpec
-}
+type NodeIP = typed.Resource[NodeIPSpec, NodeIPRD]
 
 // NodeIPSpec holds the Node IP specification.
 type NodeIPSpec struct {
 	Addresses []netaddr.IP `yaml:"addresses"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec NodeIPSpec) DeepCopy() NodeIPSpec {
+	return NodeIPSpec{
+		Addresses: append([]netaddr.IP(nil), spec.Addresses...),
+	}
+}
+
 // NewNodeIP initializes an empty NodeIP resource.
 func NewNodeIP(namespace resource.Namespace, id resource.ID) *NodeIP {
-	r := &NodeIP{
-		md:   resource.NewMetadata(namespace, NodeIPType, id, resource.VersionUndefined),
-		spec: &NodeIPSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[NodeIPSpec, NodeIPRD](
+		resource.NewMetadata(namespace, NodeIPType, id, resource.VersionUndefined),
+		NodeIPSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *NodeIP) Metadata() *resource.Metadata {
-	return &r.md
-}
+// NodeIPRD provides auxiliary methods for NodeIP.
+type NodeIPRD struct{}
 
-// Spec implements resource.Resource.
-func (r *NodeIP) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *NodeIP) DeepCopy() resource.Resource {
-	return &NodeIP{
-		md: r.md,
-		spec: &NodeIPSpec{
-			Addresses: append([]netaddr.IP(nil), r.spec.Addresses...),
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *NodeIP) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (NodeIPRD) ResourceDefinition(resource.Metadata, NodeIPSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeIPType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *NodeIP) TypedSpec() *NodeIPSpec {
-	return r.spec
 }

@@ -7,6 +7,7 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -19,10 +20,7 @@ const KubeletConfigType = resource.Type("KubeletConfigs.kubernetes.talos.dev")
 const KubeletID = resource.ID("kubelet")
 
 // KubeletConfig resource holds source of kubelet configuration.
-type KubeletConfig struct {
-	md   resource.Metadata
-	spec *KubeletConfigSpec
-}
+type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigRD]
 
 // KubeletConfigSpec holds the source of kubelet configuration.
 type KubeletConfigSpec struct {
@@ -35,63 +33,44 @@ type KubeletConfigSpec struct {
 	CloudProviderExternal bool                   `yaml:"cloudProviderExternal"`
 }
 
-// NewKubeletConfig initializes an empty KubeletConfig resource.
-func NewKubeletConfig(namespace resource.Namespace, id resource.ID) *KubeletConfig {
-	r := &KubeletConfig{
-		md:   resource.NewMetadata(namespace, KubeletConfigType, id, resource.VersionUndefined),
-		spec: &KubeletConfigSpec{},
-	}
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
+	extraArgs := make(map[string]string, len(spec.ExtraArgs))
 
-	r.md.BumpVersion()
-
-	return r
-}
-
-// Metadata implements resource.Resource.
-func (r *KubeletConfig) Metadata() *resource.Metadata {
-	return &r.md
-}
-
-// Spec implements resource.Resource.
-func (r *KubeletConfig) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *KubeletConfig) DeepCopy() resource.Resource {
-	extraArgs := make(map[string]string, len(r.spec.ExtraArgs))
-
-	for k, v := range r.spec.ExtraArgs {
+	for k, v := range spec.ExtraArgs {
 		extraArgs[k] = v
 	}
 
-	extraConfig := &v1alpha1.Unstructured{Object: r.spec.ExtraConfig}
+	extraConfig := &v1alpha1.Unstructured{Object: spec.ExtraConfig}
 	extraConfig = extraConfig.DeepCopy()
 
-	return &KubeletConfig{
-		md: r.md,
-		spec: &KubeletConfigSpec{
-			Image:                 r.spec.Image,
-			ClusterDNS:            append([]string(nil), r.spec.ClusterDNS...),
-			ClusterDomain:         r.spec.ClusterDomain,
-			ExtraArgs:             extraArgs,
-			ExtraMounts:           append([]specs.Mount(nil), r.spec.ExtraMounts...),
-			ExtraConfig:           extraConfig.Object,
-			CloudProviderExternal: r.spec.CloudProviderExternal,
-		},
+	return KubeletConfigSpec{
+		Image:                 spec.Image,
+		ClusterDNS:            append([]string(nil), spec.ClusterDNS...),
+		ClusterDomain:         spec.ClusterDomain,
+		ExtraArgs:             extraArgs,
+		ExtraMounts:           append([]specs.Mount(nil), spec.ExtraMounts...),
+		ExtraConfig:           extraConfig.Object,
+		CloudProviderExternal: spec.CloudProviderExternal,
 	}
 }
 
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *KubeletConfig) ResourceDefinition() meta.ResourceDefinitionSpec {
+// NewKubeletConfig initializes an empty KubeletConfig resource.
+func NewKubeletConfig(namespace resource.Namespace, id resource.ID) *KubeletConfig {
+	return typed.NewResource[KubeletConfigSpec, KubeletConfigRD](
+		resource.NewMetadata(namespace, KubeletConfigType, id, resource.VersionUndefined),
+		KubeletConfigSpec{},
+	)
+}
+
+// KubeletConfigRD provides auxiliary methods for KubeletConfig.
+type KubeletConfigRD struct{}
+
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (KubeletConfigRD) ResourceDefinition(resource.Metadata, KubeletConfigSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
-}
-
-// TypedSpec returns .spec.
-func (r *KubeletConfig) TypedSpec() *KubeletConfigSpec {
-	return r.spec
 }

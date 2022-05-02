@@ -7,6 +7,7 @@ package kubespan
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 )
 
@@ -16,10 +17,7 @@ const PeerSpecType = resource.Type("KubeSpanPeerSpecs.kubespan.talos.dev")
 // PeerSpec is produced from cluster.Affiliate which has KubeSpan information attached.
 //
 // PeerSpec is identified by the public key.
-type PeerSpec struct {
-	md   resource.Metadata
-	spec PeerSpecSpec
-}
+type PeerSpec = typed.Resource[PeerSpecSpec, PeerSpecRD]
 
 // PeerSpecSpec describes PeerSpec state.
 type PeerSpecSpec struct {
@@ -29,43 +27,29 @@ type PeerSpecSpec struct {
 	Label      string             `yaml:"label"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (spec PeerSpecSpec) DeepCopy() PeerSpecSpec {
+	return PeerSpecSpec{
+		Address:    spec.Address,
+		AllowedIPs: append([]netaddr.IPPrefix(nil), spec.AllowedIPs...),
+		Endpoints:  append([]netaddr.IPPort(nil), spec.Endpoints...),
+		Label:      spec.Label,
+	}
+}
+
 // NewPeerSpec initializes a PeerSpec resource.
 func NewPeerSpec(namespace resource.Namespace, id resource.ID) *PeerSpec {
-	r := &PeerSpec{
-		md:   resource.NewMetadata(namespace, PeerSpecType, id, resource.VersionUndefined),
-		spec: PeerSpecSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[PeerSpecSpec, PeerSpecRD](
+		resource.NewMetadata(namespace, PeerSpecType, id, resource.VersionUndefined),
+		PeerSpecSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *PeerSpec) Metadata() *resource.Metadata {
-	return &r.md
-}
+// PeerSpecRD provides auxiliary methods for PeerSpec.
+type PeerSpecRD struct{}
 
-// Spec implements resource.Resource.
-func (r *PeerSpec) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *PeerSpec) DeepCopy() resource.Resource {
-	return &PeerSpec{
-		md: r.md,
-		spec: PeerSpecSpec{
-			Address:    r.spec.Address,
-			AllowedIPs: append([]netaddr.IPPrefix(nil), r.spec.AllowedIPs...),
-			Endpoints:  append([]netaddr.IPPort(nil), r.spec.Endpoints...),
-			Label:      r.spec.Label,
-		},
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *PeerSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (PeerSpecRD) ResourceDefinition(resource.Metadata, PeerSpecSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerSpecType,
 		Aliases:          []resource.Type{},
@@ -81,9 +65,4 @@ func (r *PeerSpec) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *PeerSpec) TypedSpec() *PeerSpecSpec {
-	return &r.spec
 }
