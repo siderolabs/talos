@@ -201,7 +201,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		for _, item := range list.Items {
 			linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
 
-			if linkStatus.Physical() {
+			if linkStatus.TypedSpec().Physical() {
 				if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {
 					if _, ignored := ignoredInterfaces[linkStatus.Metadata().ID()]; !ignored {
 						// enable DHCPv4 operator on physical interfaces which don't have any explicit configuration and are not ignored
