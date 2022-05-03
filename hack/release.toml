@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.0.3"
+previous = "v1.0.4"
 
 pre_release = false
 
@@ -17,8 +17,8 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.36
-* Kubernetes: 1.23.6
+* Linux: 5.15.37
+* Containerd: v1.6.4
 """
 
 [make_deps]
