@@ -421,7 +421,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 				// notify link status controller, as wireguard updates can't be watched via netlink API
 				if err = r.Modify(ctx, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r resource.Resource) error {
-					r.(*network.LinkRefresh).Bump()
+					r.(*network.LinkRefresh).TypedSpec().Bump()
 
 					return nil
 				}); err != nil {

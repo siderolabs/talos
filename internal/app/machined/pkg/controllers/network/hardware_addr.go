@@ -76,7 +76,7 @@ func (ctrl *HardwareAddrController) Run(ctx context.Context, r controller.Runtim
 		for _, res := range links.Items {
 			link := res.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
 
-			if !link.Physical() {
+			if !link.TypedSpec().Physical() {
 				continue
 			}
 

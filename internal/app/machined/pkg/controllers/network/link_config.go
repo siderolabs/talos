@@ -184,7 +184,7 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 			linkStatus := item.(*network.LinkStatus) //nolint:errcheck,forcetypeassert
 
 			if _, configured := configuredLinks[linkStatus.Metadata().ID()]; !configured {
-				if linkStatus.Physical() {
+				if linkStatus.TypedSpec().Physical() {
 					var ids []string
 
 					ids, err = ctrl.apply(ctx, r, []network.LinkSpecSpec{

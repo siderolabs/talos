@@ -7,6 +7,8 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -15,10 +17,7 @@ import (
 const LinkStatusType = resource.Type("LinkStatuses.net.talos.dev")
 
 // LinkStatus resource holds physical network link status.
-type LinkStatus struct {
-	md   resource.Metadata
-	spec LinkStatusSpec
-}
+type LinkStatus = typed.Resource[LinkStatusSpec, LinkStatusRD]
 
 // LinkStatusSpec describes status of rendered secrets.
 type LinkStatusSpec struct {
@@ -46,38 +45,52 @@ type LinkStatusSpec struct {
 	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
 }
 
+// DeepCopy implements typed.DeepCopyable interface.
+func (s LinkStatusSpec) DeepCopy() LinkStatusSpec {
+	cp := s
+
+	if s.HardwareAddr != nil {
+		cp.HardwareAddr = make([]byte, len(s.HardwareAddr))
+		copy(cp.HardwareAddr, s.HardwareAddr)
+	}
+
+	if s.BroadcastAddr != nil {
+		cp.BroadcastAddr = make([]byte, len(s.BroadcastAddr))
+		copy(cp.BroadcastAddr, s.BroadcastAddr)
+	}
+
+	if s.Wireguard.Peers != nil {
+		cp.Wireguard.Peers = append([]WireguardPeer(nil), s.Wireguard.Peers...)
+
+		for i3 := range s.Wireguard.Peers {
+			if s.Wireguard.Peers[i3].AllowedIPs != nil {
+				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(s.Wireguard.Peers[i3].AllowedIPs))
+				copy(cp.Wireguard.Peers[i3].AllowedIPs, s.Wireguard.Peers[i3].AllowedIPs)
+			}
+		}
+	}
+
+	return cp
+}
+
+// Physical checks if the link is physical ethernet.
+func (s LinkStatusSpec) Physical() bool {
+	return s.Type == nethelpers.LinkEther && s.Kind == ""
+}
+
 // NewLinkStatus initializes a LinkStatus resource.
 func NewLinkStatus(namespace resource.Namespace, id resource.ID) *LinkStatus {
-	r := &LinkStatus{
-		md:   resource.NewMetadata(namespace, LinkStatusType, id, resource.VersionUndefined),
-		spec: LinkStatusSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[LinkStatusSpec, LinkStatusRD](
+		resource.NewMetadata(namespace, LinkStatusType, id, resource.VersionUndefined),
+		LinkStatusSpec{},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *LinkStatus) Metadata() *resource.Metadata {
-	return &r.md
-}
+// LinkStatusRD provides auxiliary methods for LinkStatus.
+type LinkStatusRD struct{}
 
-// Spec implements resource.Resource.
-func (r *LinkStatus) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *LinkStatus) DeepCopy() resource.Resource {
-	return &LinkStatus{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *LinkStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (LinkStatusRD) ResourceDefinition(resource.Metadata, LinkStatusSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkStatusType,
 		Aliases:          []resource.Type{"link", "links"},
@@ -106,14 +119,4 @@ func (r *LinkStatus) ResourceDefinition() meta.ResourceDefinitionSpec {
 		},
 		Sensitivity: meta.NonSensitive,
 	}
-}
-
-// TypedSpec allows to access the Spec with the proper type.
-func (r *LinkStatus) TypedSpec() *LinkStatusSpec {
-	return &r.spec
-}
-
-// Physical checks if the link is physical ethernet.
-func (r *LinkStatus) Physical() bool {
-	return r.TypedSpec().Type == nethelpers.LinkEther && r.TypedSpec().Kind == ""
 }

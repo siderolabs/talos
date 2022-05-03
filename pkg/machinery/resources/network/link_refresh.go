@@ -7,6 +7,8 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/siderolabs/go-pointer"
 )
 
 // LinkRefreshType is type of LinkRefresh resource.
@@ -19,57 +21,46 @@ const LinkRefreshType = resource.Type("LinkRefreshes.net.talos.dev")
 //
 // Whenever Wireguard interface is updated, LinkRefresh resource is modified to trigger a reconcile
 // loop in the LinkStatusController.
-type LinkRefresh struct {
-	md   resource.Metadata
-	spec LinkRefreshSpec
-}
+type LinkRefresh = typed.Resource[LinkRefreshSpec, LinkRefreshRD]
 
 // LinkRefreshSpec describes status of rendered secrets.
 type LinkRefreshSpec struct {
-	Generation int `yaml:"generation"`
+	Generation *int `yaml:"generation"`
+}
+
+// DeepCopy implements typed.DeepCopyable interface.
+func (s LinkRefreshSpec) DeepCopy() LinkRefreshSpec {
+	generation := *s.Generation
+
+	return LinkRefreshSpec{
+		Generation: &generation,
+	}
+}
+
+// Bump performs an update.
+func (s LinkRefreshSpec) Bump() {
+	*s.Generation++
 }
 
 // NewLinkRefresh initializes a LinkRefresh resource.
 func NewLinkRefresh(namespace resource.Namespace, id resource.ID) *LinkRefresh {
-	r := &LinkRefresh{
-		md:   resource.NewMetadata(namespace, LinkRefreshType, id, resource.VersionUndefined),
-		spec: LinkRefreshSpec{},
-	}
-
-	r.md.BumpVersion()
-
-	return r
+	return typed.NewResource[LinkRefreshSpec, LinkRefreshRD](
+		resource.NewMetadata(namespace, LinkRefreshType, id, resource.VersionUndefined),
+		LinkRefreshSpec{
+			Generation: pointer.To(0),
+		},
+	)
 }
 
-// Metadata implements resource.Resource.
-func (r *LinkRefresh) Metadata() *resource.Metadata {
-	return &r.md
-}
+// LinkRefreshRD provides auxiliary methods for LinkRefresh.
+type LinkRefreshRD struct{}
 
-// Spec implements resource.Resource.
-func (r *LinkRefresh) Spec() interface{} {
-	return r.spec
-}
-
-// DeepCopy implements resource.Resource.
-func (r *LinkRefresh) DeepCopy() resource.Resource {
-	return &LinkRefresh{
-		md:   r.md,
-		spec: r.spec,
-	}
-}
-
-// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r *LinkRefresh) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements typed.ResourceDefinition interface.
+func (LinkRefreshRD) ResourceDefinition(resource.Metadata, LinkRefreshSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkRefreshType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 	}
-}
-
-// Bump performs an update.
-func (r *LinkRefresh) Bump() {
-	r.spec.Generation++
 }

@@ -86,7 +86,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 			if link.TypedSpec().OperationalState == nethelpers.OperStateUp || link.TypedSpec().OperationalState == nethelpers.OperStateUnknown {
 				// skip physical interfaces without carrier
-				if !link.Physical() || link.TypedSpec().LinkState {
+				if !link.TypedSpec().Physical() || link.TypedSpec().LinkState {
 					linksUp[link.TypedSpec().Index] = struct{}{}
 				}
 			}
