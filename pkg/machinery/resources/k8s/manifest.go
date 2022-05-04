@@ -29,7 +29,7 @@ func (spec ManifestSpec) DeepCopy() ManifestSpec {
 }
 
 // MarshalYAML implements yaml.Marshaler.
-func (spec *ManifestSpec) MarshalYAML() (interface{}, error) {
+func (spec ManifestSpec) MarshalYAML() (interface{}, error) {
 	return spec.Items, nil
 }
 
