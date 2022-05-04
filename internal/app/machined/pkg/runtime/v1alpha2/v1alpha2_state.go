@@ -113,6 +113,7 @@ func NewState() (*State, error) {
 		&kubespan.PeerStatus{},
 		&network.AddressStatus{},
 		&network.AddressSpec{},
+		&network.DeviceConfigSpec{},
 		&network.HardwareAddr{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},

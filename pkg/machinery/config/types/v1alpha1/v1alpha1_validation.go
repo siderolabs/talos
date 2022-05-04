@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,8 +32,14 @@ var (
 
 	// ErrRequiredSection denotes a section is required.
 	ErrRequiredSection = errors.New("required config section")
+	// ErrRequiredSectionOptions denotes at least one section is required.
+	ErrRequiredSectionOptions = errors.New("required either config section to be set")
 	// ErrInvalidVersion denotes that the config file version is invalid.
 	ErrInvalidVersion = errors.New("invalid config version")
+	// ErrMutuallyExclusive denotes that config sections are mutually exclusive.
+	ErrMutuallyExclusive = errors.New("config sections are mutually exclusive")
+	// ErrEmpty denotes that config section should have at least a single field defined.
+	ErrEmpty = errors.New("config section should contain at least one field")
 
 	// Security.
 
@@ -419,6 +426,7 @@ func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, check
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
+//nolint:gocyclo
 func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
@@ -426,8 +434,14 @@ func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]stri
 		return nil, fmt.Errorf("empty device")
 	}
 
-	if d.DeviceInterface == "" {
-		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.interface", ErrRequiredSection))
+	if d.DeviceInterface == "" && d.DeviceSelector == nil {
+		result = multierror.Append(result, fmt.Errorf("[%s], [%s]: %w", "networking.os.device.interface", "networking.os.device.deviceSelector", ErrRequiredSectionOptions))
+	} else if d.DeviceInterface != "" && d.DeviceSelector != nil {
+		result = multierror.Append(result, fmt.Errorf("[%s], [%s]: %w", "networking.os.device.interface", "networking.os.device.deviceSelector", ErrMutuallyExclusive))
+	}
+
+	if d.DeviceSelector != nil && reflect.ValueOf(d.DeviceSelector).Elem().IsZero() {
+		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.deviceSelector", ErrEmpty))
 	}
 
 	if d.DeviceBond != nil {

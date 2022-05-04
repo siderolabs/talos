@@ -160,6 +160,16 @@ network:
               metric: 1024 # The optional metric for the route.
           mtu: 1500 # The interface's MTU.
 
+          # # Picks a network device using the selector.
+
+          # # select a device with bus prefix 00:*.
+          # deviceSelector:
+          #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+          # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+          # deviceSelector:
+          #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+          #     driver: virtio # Kernel driver, supports matching by wildcard.
+
           # # Bond specific options.
           # bond:
           #     # The interfaces that make up the bond.
@@ -202,6 +212,8 @@ network:
           #             - 192.168.1.0/24
 
           # # Virtual (shared) IP address configuration.
+
+          # # layer2 vip example
           # vip:
           #     ip: 172.16.199.55 # Specifies the IP address to be used.
     # Used to statically set the nameservers for the machine.
@@ -773,6 +785,16 @@ interfaces:
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
+      # # Picks a network device using the selector.
+
+      # # select a device with bus prefix 00:*.
+      # deviceSelector:
+      #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+      # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+      # deviceSelector:
+      #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+      #     driver: virtio # Kernel driver, supports matching by wildcard.
+
       # # Bond specific options.
       # bond:
       #     # The interfaces that make up the bond.
@@ -815,6 +837,8 @@ interfaces:
       #             - 192.168.1.0/24
 
       # # Virtual (shared) IP address configuration.
+
+      # # layer2 vip example
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
 # Used to statically set the nameservers for the machine.
@@ -852,6 +876,16 @@ interfaces:
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
 
+      # # Picks a network device using the selector.
+
+      # # select a device with bus prefix 00:*.
+      # deviceSelector:
+      #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+      # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+      # deviceSelector:
+      #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+      #     driver: virtio # Kernel driver, supports matching by wildcard.
+
       # # Bond specific options.
       # bond:
       #     # The interfaces that make up the bond.
@@ -894,6 +928,8 @@ interfaces:
       #             - 192.168.1.0/24
 
       # # Virtual (shared) IP address configuration.
+
+      # # layer2 vip example
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}</details> | |
@@ -1805,6 +1841,16 @@ Appears in:
       metric: 1024 # The optional metric for the route.
   mtu: 1500 # The interface's MTU.
 
+  # # Picks a network device using the selector.
+
+  # # select a device with bus prefix 00:*.
+  # deviceSelector:
+  #     busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+  # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+  # deviceSelector:
+  #     hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+  #     driver: virtio # Kernel driver, supports matching by wildcard.
+
   # # Bond specific options.
   # bond:
   #     # The interfaces that make up the bond.
@@ -1847,6 +1893,8 @@ Appears in:
   #             - 192.168.1.0/24
 
   # # Virtual (shared) IP address configuration.
+
+  # # layer2 vip example
   # vip:
   #     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}
@@ -1854,8 +1902,16 @@ Appears in:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`interface` |string |The interface name. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`interface` |string |<details><summary>The interface name.</summary>Mutually exclusive with `deviceSelector`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interface: eth0
+{{< /highlight >}}</details> | |
+|`deviceSelector` |<a href="#networkdeviceselector">NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interface`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+deviceSelector:
+    busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+{{< /highlight >}}{{< highlight yaml >}}
+deviceSelector:
+    hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+    driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
 |`addresses` |[]string |<details><summary>Assigns static IP addresses to the interface.</summary>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 addresses:
@@ -2435,6 +2491,35 @@ enabled: true # Enable the KubeSpan feature.
 |-------|------|-------------|----------|
 |`enabled` |bool |<details><summary>Enable the KubeSpan feature.</summary>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.</details>  | |
 |`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
+
+
+
+---
+## NetworkDeviceSelector
+NetworkDeviceSelector struct describes network device selector.
+
+Appears in:
+
+- <code><a href="#device">Device</a>.deviceSelector</code>
+
+
+
+{{< highlight yaml >}}
+busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+{{< /highlight >}}
+
+{{< highlight yaml >}}
+hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+driver: virtio # Kernel driver, supports matching by wildcard.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`busPath` |string |PCI, USB bus prefix, supports matching by wildcard.  | |
+|`hardwareAddr` |string |Device hardware address, supports matching by wildcard.  | |
+|`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
+|`driver` |string |Kernel driver, supports matching by wildcard.  | |
 
 
 
