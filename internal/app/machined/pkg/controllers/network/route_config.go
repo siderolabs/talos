@@ -11,14 +11,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -36,9 +34,8 @@ func (ctrl *RouteConfigController) Name() string {
 func (ctrl *RouteConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			Namespace: network.NamespaceName,
+			Type:      network.DeviceConfigSpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -67,21 +64,29 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
-
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else {
-			cfgProvider = cfg.(*config.MachineConfig).Config()
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
 
-		if cfgProvider != nil {
-			for _, device := range cfgProvider.Machine().Network().Devices() {
+		devices := make([]talosconfig.Device, len(items.Items))
+
+		for i, item := range items.Items {
+			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
+
+			devices[i] = device
+
+			if device.Ignore() {
+				ignoredInterfaces[device.Interface()] = struct{}{}
+			}
+		}
+
+		if len(devices) > 0 {
+			for _, device := range devices {
 				if device.Ignore() {
 					ignoredInterfaces[device.Interface()] = struct{}{}
 				}
@@ -106,8 +111,8 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// parse machine configuration for static routes
-		if cfgProvider != nil {
-			addresses := ctrl.parseMachineConfiguration(logger, cfgProvider)
+		if len(devices) > 0 {
+			addresses := ctrl.processDevicesConfiguration(logger, devices)
 
 			var ids []string
 
@@ -205,7 +210,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (routes []network.RouteSpecSpec) {
+func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device) (routes []network.RouteSpecSpec) {
 	convert := func(linkName string, in talosconfig.Route) (route network.RouteSpecSpec, err error) {
 		if in.Network() != "" {
 			route.Destination, err = netaddr.ParseIPPrefix(in.Network())
@@ -258,7 +263,7 @@ func (ctrl *RouteConfigController) parseMachineConfiguration(logger *zap.Logger,
 		return route, nil
 	}
 
-	for _, device := range cfgProvider.Machine().Network().Devices() {
+	for _, device := range devices {
 		if device.Ignore() {
 			continue
 		}

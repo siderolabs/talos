@@ -12,14 +12,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -37,9 +35,8 @@ func (ctrl *OperatorVIPConfigController) Name() string {
 func (ctrl *OperatorVIPConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			Namespace: network.NamespaceName,
+			Type:      network.DeviceConfigSpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -68,15 +65,19 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
-
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else {
-			cfgProvider = cfg.(*config.MachineConfig).Config()
+		}
+
+		devices := make([]talosconfig.Device, len(items.Items))
+
+		for i, item := range items.Items {
+			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
+
+			devices[i] = device
 		}
 
 		ignoredInterfaces := map[string]struct{}{}
@@ -100,8 +101,8 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 		)
 
 		// operators from the config
-		if cfgProvider != nil {
-			for _, device := range cfgProvider.Machine().Network().Devices() {
+		if len(devices) > 0 {
+			for _, device := range devices {
 				if device.Ignore() {
 					ignoredInterfaces[device.Interface()] = struct{}{}
 				}

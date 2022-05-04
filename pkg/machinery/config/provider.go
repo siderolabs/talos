@@ -163,6 +163,7 @@ type Device interface {
 	DHCPOptions() DHCPOptions
 	VIPConfig() VIPConfig
 	WireguardConfig() WireguardConfig
+	Selector() NetworkDeviceSelector
 }
 
 // DHCPOptions represents a set of DHCP options.
@@ -260,6 +261,14 @@ type Route interface {
 type KubeSpan interface {
 	Enabled() bool
 	ForceRouting() bool
+}
+
+// NetworkDeviceSelector defines the set of fields that can be used to pick network a device.
+type NetworkDeviceSelector interface {
+	Bus() string
+	HardwareAddress() string
+	PCIID() string
+	KernelDriver() string
 }
 
 // Time defines the requirements for a config that pertains to time related

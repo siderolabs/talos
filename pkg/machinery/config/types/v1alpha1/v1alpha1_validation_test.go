@@ -950,6 +950,79 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* kubelet configuration field \"port\" can't be overridden\n\n",
 		},
+		{
+			name: "DeviceInterfaceInvalid",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.interface], [networking.os.device.deviceSelector]: required either config section to be set\n\n",
+		},
+		{
+			name: "DeviceSelectorAndInterfaceSet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceSelector: &v1alpha1.NetworkDeviceSelector{
+									NetworkDeviceBus: "00:01",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.interface], [networking.os.device.deviceSelector]: config sections are mutually exclusive\n\n",
+		},
+		{
+			name: "DeviceSelectorAndInterfaceSet",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceSelector: &v1alpha1.NetworkDeviceSelector{},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* [networking.os.device.deviceSelector]: config section should contain at least one field\n\n",
+		},
 	} {
 		test := test
 
@@ -961,14 +1034,14 @@ func TestValidate(t *testing.T) {
 				opts = append(opts, config.WithStrict())
 			}
 
-			warnings, errrors := test.config.Validate(runtimeMode{test.requiresInstall}, opts...)
+			warnings, errors := test.config.Validate(runtimeMode{test.requiresInstall}, opts...)
 
 			assert.Equal(t, test.expectedWarnings, warnings)
 
 			if test.expectedError == "" {
-				assert.NoError(t, errrors)
+				assert.NoError(t, errors)
 			} else {
-				assert.EqualError(t, errrors, test.expectedError)
+				assert.EqualError(t, errors, test.expectedError)
 			}
 		})
 	}
