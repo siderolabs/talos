@@ -99,6 +99,37 @@ NODE         NAMESPACE   TYPE             ID          VERSION   RESOLVERS
 172.20.0.2   network     ResolverStatus   resolvers   2         ["8.8.8.8","1.1.1.1"]
 ```
 
+```sh
+$ talosctl get links -o yaml
+node: 172.20.0.2
+metadata:
+    namespace: network
+    type: LinkStatuses.net.talos.dev
+    id: eth0
+    version: 2
+    owner: network.LinkStatusController
+    phase: running
+    created: 2021-06-29T20:23:18Z
+    updated: 2021-06-29T20:23:18Z
+spec:
+    index: 4
+    type: ether
+    linkIndex: 0
+    flags: UP,BROADCAST,RUNNING,MULTICAST,LOWER_UP
+    hardwareAddr: 4e:95:8e:8f:e4:47
+    broadcastAddr: ff:ff:ff:ff:ff:ff
+    mtu: 1500
+    queueDisc: pfifo_fast
+    operationalState: up
+    kind: ""
+    slaveKind: ""
+    driver: virtio_net
+    linkState: true
+    speedMbit: 4294967295
+    port: Other
+    duplex: Unknown
+```
+
 ## Inspecting Configuration
 
 The desired networking configuration is combined from multiple sources and presented
