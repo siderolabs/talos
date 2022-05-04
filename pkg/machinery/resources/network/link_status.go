@@ -34,6 +34,9 @@ type LinkStatusSpec struct {
 	OperationalState nethelpers.OperationalState `yaml:"operationalState"`
 	Kind             string                      `yaml:"kind"`
 	SlaveKind        string                      `yaml:"slaveKind"`
+	BusPath          string                      `yaml:"busPath,omitempty"`
+	PCIID            string                      `yaml:"pciID,omitempty"`
+	Driver           string                      `yaml:"driver,omitempty"`
 	// Fields coming from ethtool API.
 	LinkState     bool              `yaml:"linkState"`
 	SpeedMegabits int               `yaml:"speedMbit,omitempty"`

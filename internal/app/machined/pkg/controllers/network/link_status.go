@@ -213,6 +213,19 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 				status.Duplex = nethelpers.Duplex(ethtool.Unknown)
 			}
 
+			var deviceInfo *nethelpers.DeviceInfo
+
+			deviceInfo, err = nethelpers.GetDeviceInfo(link.Attributes.Name)
+			if err != nil {
+				logger.Warn("failure getting device information from /sys/class/net/*", zap.Error(err), zap.String("link", link.Attributes.Name))
+			}
+
+			if deviceInfo != nil {
+				status.BusPath = deviceInfo.BusPath
+				status.Driver = deviceInfo.Driver
+				status.PCIID = deviceInfo.PCIID
+			}
+
 			switch status.Kind {
 			case network.LinkKindVLAN:
 				if err = networkadapter.VLANSpec(&status.VLAN).Decode(link.Attributes.Info.Data); err != nil {

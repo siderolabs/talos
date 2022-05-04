@@ -7,10 +7,12 @@ package network_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -126,6 +128,59 @@ func (suite *LinkStatusSuite) assertNoInterface(id string) error {
 }
 
 func (suite *LinkStatusSuite) TestLoopbackInterface() {
+	errNoInterfaces := fmt.Errorf("no suitable interfaces found")
+
+	err := retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			resources, err := suite.state.List(
+				suite.ctx,
+				resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined),
+			)
+			suite.Require().NoError(err)
+
+			for _, res := range resources.Items {
+				spec := res.(*network.LinkStatus).TypedSpec() //nolint:errcheck,forcetypeassert
+
+				if !spec.Physical() {
+					continue
+				}
+
+				if spec.Type != nethelpers.LinkEther {
+					continue
+				}
+
+				emptyFields := []string{}
+
+				for key, value := range map[string]string{
+					"hw addr":  spec.HardwareAddr.String(),
+					"driver":   spec.Driver,
+					"bus path": spec.BusPath,
+					"PCI id":   spec.PCIID,
+				} {
+					if value == "" {
+						emptyFields = append(emptyFields, key)
+					}
+				}
+
+				if len(emptyFields) > 0 {
+					return fmt.Errorf("the interface %s has the following fields empty: %s", res.Metadata().ID(), strings.Join(emptyFields, ", "))
+				}
+
+				return nil
+			}
+
+			return retry.ExpectedError(errNoInterfaces)
+		},
+	)
+
+	if errors.Is(err, errNoInterfaces) {
+		suite.T().Skip(err.Error())
+	}
+
+	suite.Require().NoError(err)
+}
+
+func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
