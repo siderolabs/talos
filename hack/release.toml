@@ -26,7 +26,7 @@ Talos now enables the Raspberry Pi PoE fan control by pulling in the poe overlay
         description="""\
 * Linux: 5.15.37
 * Containerd: v1.6.4
-* Kubernetes: 1.24.0-rc.0
+* Kubernetes: 1.24.0
 * Flannel: 0.17.0
 * runc: 1.1.1
 

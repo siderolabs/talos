@@ -238,8 +238,6 @@ kind: ServiceAccount
 metadata:
   name: coredns
   namespace: kube-system
-  labels:
-    kubernetes.io/cluster-service: "true"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -274,11 +272,6 @@ rules:
     verbs:
       - list
       - watch
-  - apiGroups: [""]
-    resources:
-      - nodes
-    verbs:
-      - get
   - apiGroups: ["discovery.k8s.io"]
     resources:
       - endpointslices
@@ -323,7 +316,6 @@ metadata:
   labels:
     k8s-app: kube-dns
     kubernetes.io/name: "CoreDNS"
-    kubernetes.io/cluster-service: "true"
 spec:
   replicas: 2
   strategy:
@@ -338,6 +330,8 @@ spec:
       labels:
         k8s-app: kube-dns
     spec:
+      nodeSelector:
+        kubernetes.io/os: linux
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -359,6 +353,8 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
       containers:
         - name: coredns
           image: {{ .CoreDNSImage }}
@@ -457,6 +453,9 @@ spec:
       protocol: UDP
     - name: dns-tcp
       port: 53
+      protocol: TCP
+    - name: metrics
+      port: 9153
       protocol: TCP
 `)
 
