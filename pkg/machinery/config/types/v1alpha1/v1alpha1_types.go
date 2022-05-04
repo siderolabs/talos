@@ -467,6 +467,10 @@ metadata:
 		KubeSpanEnabled: true,
 	}
 
+	networkDeviceSelectorExample = NetworkDeviceSelector{
+		NetworkDeviceBusPrefix: "00:10",
+	}
+
 	clusterDiscoveryExample = ClusterDiscoveryConfig{
 		DiscoveryEnabled: true,
 		DiscoveryRegistries: DiscoveryRegistriesConfig{
@@ -1830,6 +1834,11 @@ type Device struct {
 	//     - name: layer2 vip example
 	//     - value: networkConfigVIPLayer2Example
 	DeviceVIPConfig *DeviceVIPConfig `yaml:"vip,omitempty"`
+	//   description: |
+	//     Picks a network device using the selector.
+	//   examples:
+	//     - value: networkDeviceSelectorExample
+	DeviceSelector *NetworkDeviceSelector `yaml:"deviceSelector,omitempty"`
 }
 
 // DHCPOptions contains options for configuring the DHCP settings for a given interface.
@@ -2166,6 +2175,18 @@ type NetworkKubeSpan struct {
 	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
 	//   to the peer if Wireguard connection can't be established.
 	KubeSpanAllowDownPeerBypass bool `yaml:"allowDownPeerBypass,omitempty"`
+}
+
+// NetworkDeviceSelector struct describes network device selector.
+type NetworkDeviceSelector struct {
+	// description: PCI, USB bus prefix.
+	NetworkDeviceBusPrefix string `yaml:"busPrefix,omitempty"`
+	// description: Device hardware address.
+	NetworkDeviceHardwareAddress string `yaml:"hardwareAddress,omitempty"`
+	// description: PCI ID (vendor ID, product ID).
+	NetworkDevicePCIID string `yaml:"pciID,omitempty"`
+	// description: Kernel driver.
+	NetworkDeviceKernelDriver string `yaml:"kernelDriver,omitempty"`
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.

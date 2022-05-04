@@ -204,6 +204,10 @@ network:
           # # Virtual (shared) IP address configuration.
           # vip:
           #     ip: 172.16.199.55 # Specifies the IP address to be used.
+
+          # # Picks a network device using the selector.
+          # deviceSelector:
+          #     busPrefix: 00:10 # PCI, USB bus prefix.
     # Used to statically set the nameservers for the machine.
     nameservers:
         - 9.8.7.6
@@ -817,6 +821,10 @@ interfaces:
       # # Virtual (shared) IP address configuration.
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
+
+      # # Picks a network device using the selector.
+      # deviceSelector:
+      #     busPrefix: 00:10 # PCI, USB bus prefix.
 # Used to statically set the nameservers for the machine.
 nameservers:
     - 9.8.7.6
@@ -896,6 +904,10 @@ interfaces:
       # # Virtual (shared) IP address configuration.
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
+
+      # # Picks a network device using the selector.
+      # deviceSelector:
+      #     busPrefix: 00:10 # PCI, USB bus prefix.
 {{< /highlight >}}</details> | |
 |`nameservers` |[]string |<details><summary>Used to statically set the nameservers for the machine.</summary>Defaults to `1.1.1.1` and `8.8.8.8`</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nameservers:
@@ -1849,6 +1861,10 @@ Appears in:
   # # Virtual (shared) IP address configuration.
   # vip:
   #     ip: 172.16.199.55 # Specifies the IP address to be used.
+
+  # # Picks a network device using the selector.
+  # deviceSelector:
+  #     busPrefix: 00:10 # PCI, USB bus prefix.
 {{< /highlight >}}
 
 
@@ -1915,6 +1931,10 @@ wireguard:
 |`vip` |<a href="#devicevipconfig">DeviceVIPConfig</a> |Virtual (shared) IP address configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 vip:
     ip: 172.16.199.55 # Specifies the IP address to be used.
+{{< /highlight >}}</details> | |
+|`deviceSelector` |<a href="#networkdeviceselector">NetworkDeviceSelector</a> |Picks a network device using the selector. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+deviceSelector:
+    busPrefix: 00:10 # PCI, USB bus prefix.
 {{< /highlight >}}</details> | |
 
 
@@ -2435,6 +2455,30 @@ enabled: true # Enable the KubeSpan feature.
 |-------|------|-------------|----------|
 |`enabled` |bool |<details><summary>Enable the KubeSpan feature.</summary>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.</details>  | |
 |`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
+
+
+
+---
+## NetworkDeviceSelector
+NetworkDeviceSelector struct describes network device selector.
+
+Appears in:
+
+- <code><a href="#device">Device</a>.deviceSelector</code>
+
+
+
+{{< highlight yaml >}}
+busPrefix: 00:10 # PCI, USB bus prefix.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`busPrefix` |string |PCI, USB bus prefix.  | |
+|`hardwareAddress` |string |Device hardware address.  | |
+|`pciID` |string |PCI ID (vendor ID, product ID).  | |
+|`kernelDriver` |string |Kernel driver.  | |
 
 
 

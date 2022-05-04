@@ -53,6 +53,8 @@ func (suite *RouteConfigSuite) SetupTest() {
 
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
 }
 
 func (suite *RouteConfigSuite) startRuntime() {

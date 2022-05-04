@@ -426,7 +426,7 @@ func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]stri
 		return nil, fmt.Errorf("empty device")
 	}
 
-	if d.DeviceInterface == "" {
+	if d.DeviceInterface == "" && d.DeviceSelector == nil {
 		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.interface", ErrRequiredSection))
 	}
 

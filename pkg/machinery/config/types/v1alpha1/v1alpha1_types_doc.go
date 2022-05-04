@@ -68,6 +68,7 @@ var (
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
 	NetworkKubeSpanDoc                encoder.Doc
+	NetworkDeviceSelectorDoc          encoder.Doc
 	ClusterDiscoveryConfigDoc         encoder.Doc
 	DiscoveryRegistriesConfigDoc      encoder.Doc
 	RegistryKubernetesConfigDoc       encoder.Doc
@@ -1564,7 +1565,7 @@ func init() {
 			FieldName: "interfaces",
 		},
 	}
-	DeviceDoc.Fields = make([]encoder.Doc, 13)
+	DeviceDoc.Fields = make([]encoder.Doc, 14)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
 	DeviceDoc.Fields[0].Note = ""
@@ -1643,6 +1644,13 @@ func init() {
 	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
 
 	DeviceDoc.Fields[12].AddExample("", networkConfigVIPLayer2Example)
+	DeviceDoc.Fields[13].Name = "deviceSelector"
+	DeviceDoc.Fields[13].Type = "NetworkDeviceSelector"
+	DeviceDoc.Fields[13].Note = ""
+	DeviceDoc.Fields[13].Description = "Picks a network device using the selector."
+	DeviceDoc.Fields[13].Comments[encoder.LineComment] = "Picks a network device using the selector."
+
+	DeviceDoc.Fields[13].AddExample("", networkDeviceSelectorExample)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
@@ -2268,6 +2276,39 @@ func init() {
 	NetworkKubeSpanDoc.Fields[1].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
 	NetworkKubeSpanDoc.Fields[1].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
 
+	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
+	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."
+	NetworkDeviceSelectorDoc.Description = "NetworkDeviceSelector struct describes network device selector."
+
+	NetworkDeviceSelectorDoc.AddExample("", networkDeviceSelectorExample)
+	NetworkDeviceSelectorDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "deviceSelector",
+		},
+	}
+	NetworkDeviceSelectorDoc.Fields = make([]encoder.Doc, 4)
+	NetworkDeviceSelectorDoc.Fields[0].Name = "busPrefix"
+	NetworkDeviceSelectorDoc.Fields[0].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[0].Note = ""
+	NetworkDeviceSelectorDoc.Fields[0].Description = "PCI, USB bus prefix."
+	NetworkDeviceSelectorDoc.Fields[0].Comments[encoder.LineComment] = "PCI, USB bus prefix."
+	NetworkDeviceSelectorDoc.Fields[1].Name = "hardwareAddress"
+	NetworkDeviceSelectorDoc.Fields[1].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[1].Note = ""
+	NetworkDeviceSelectorDoc.Fields[1].Description = "Device hardware address."
+	NetworkDeviceSelectorDoc.Fields[1].Comments[encoder.LineComment] = "Device hardware address."
+	NetworkDeviceSelectorDoc.Fields[2].Name = "pciID"
+	NetworkDeviceSelectorDoc.Fields[2].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[2].Note = ""
+	NetworkDeviceSelectorDoc.Fields[2].Description = "PCI ID (vendor ID, product ID)."
+	NetworkDeviceSelectorDoc.Fields[2].Comments[encoder.LineComment] = "PCI ID (vendor ID, product ID)."
+	NetworkDeviceSelectorDoc.Fields[3].Name = "kernelDriver"
+	NetworkDeviceSelectorDoc.Fields[3].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[3].Note = ""
+	NetworkDeviceSelectorDoc.Fields[3].Description = "Kernel driver."
+	NetworkDeviceSelectorDoc.Fields[3].Comments[encoder.LineComment] = "Kernel driver."
+
 	ClusterDiscoveryConfigDoc.Type = "ClusterDiscoveryConfig"
 	ClusterDiscoveryConfigDoc.Comments[encoder.LineComment] = "ClusterDiscoveryConfig struct configures cluster membership discovery."
 	ClusterDiscoveryConfigDoc.Description = "ClusterDiscoveryConfig struct configures cluster membership discovery."
@@ -2674,6 +2715,10 @@ func (_ NetworkKubeSpan) Doc() *encoder.Doc {
 	return &NetworkKubeSpanDoc
 }
 
+func (_ NetworkDeviceSelector) Doc() *encoder.Doc {
+	return &NetworkDeviceSelectorDoc
+}
+
 func (_ ClusterDiscoveryConfig) Doc() *encoder.Doc {
 	return &ClusterDiscoveryConfigDoc
 }
@@ -2772,6 +2817,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
 			&NetworkKubeSpanDoc,
+			&NetworkDeviceSelectorDoc,
 			&ClusterDiscoveryConfigDoc,
 			&DiscoveryRegistriesConfigDoc,
 			&RegistryKubernetesConfigDoc,

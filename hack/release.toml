@@ -113,6 +113,13 @@ the new configuration doesn't break the node.
 Can be especially useful to check network interfaces changes that may lead to the loss of connectivity to the node.
 """
 
+    [notes.network-device-selector]
+        title = "Network Device Selector"
+        description="""\
+Add `deviceSelector` parameter to the `.machine.network.interfaces`, which can be used to select an interface using `kernelDriver`,
+`hardwareAddress`, `busPrefix` or `pciid`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

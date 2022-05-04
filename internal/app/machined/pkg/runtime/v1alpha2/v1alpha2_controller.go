@@ -141,6 +141,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.AddressMergeController{},
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
+		&network.DeviceConfigController{},
 		&network.EtcFileController{},
 		&network.HardwareAddrController{},
 		&network.HostnameConfigController{
