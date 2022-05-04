@@ -467,6 +467,16 @@ metadata:
 		KubeSpanEnabled: true,
 	}
 
+	networkDeviceSelectorExamples = []NetworkDeviceSelector{
+		{
+			NetworkDeviceBus: "00:*",
+		},
+		{
+			NetworkDeviceHardwareAddress: "*:f0:ab",
+			NetworkDeviceKernelDriver:    "virtio",
+		},
+	}
+
 	clusterDiscoveryExample = ClusterDiscoveryConfig{
 		DiscoveryEnabled: true,
 		DiscoveryRegistries: DiscoveryRegistriesConfig{
@@ -1764,10 +1774,22 @@ type ExtraHost struct {
 
 // Device represents a network interface.
 type Device struct {
-	//   description: The interface name.
+	//   description: |
+	//     The interface name.
+	//		 Mutually exclusive with `deviceSelector`.
 	//   examples:
 	//     - value: '"eth0"'
-	DeviceInterface string `yaml:"interface"`
+	DeviceInterface string `yaml:"interface,omitempty"`
+	//   description: |
+	//     Picks a network device using the selector.
+	//     Mutually exclusive with `interface`.
+	//     Supports partial match using wildcard syntax.
+	//   examples:
+	//     - name: select a device with bus prefix 00:*.
+	//       value: networkDeviceSelectorExamples[0]
+	//     - name: select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+	//       value: networkDeviceSelectorExamples[1]
+	DeviceSelector *NetworkDeviceSelector `yaml:"deviceSelector,omitempty"`
 	//   description: |
 	//     Assigns static IP addresses to the interface.
 	//     An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).
@@ -1828,7 +1850,7 @@ type Device struct {
 	//   description: Virtual (shared) IP address configuration.
 	//   examples:
 	//     - name: layer2 vip example
-	//     - value: networkConfigVIPLayer2Example
+	//       value: networkConfigVIPLayer2Example
 	DeviceVIPConfig *DeviceVIPConfig `yaml:"vip,omitempty"`
 }
 
@@ -2166,6 +2188,18 @@ type NetworkKubeSpan struct {
 	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
 	//   to the peer if Wireguard connection can't be established.
 	KubeSpanAllowDownPeerBypass bool `yaml:"allowDownPeerBypass,omitempty"`
+}
+
+// NetworkDeviceSelector struct describes network device selector.
+type NetworkDeviceSelector struct {
+	// description: PCI, USB bus prefix.
+	NetworkDeviceBus string `yaml:"busPath,omitempty"`
+	// description: Device hardware address.
+	NetworkDeviceHardwareAddress string `yaml:"hardwareAddr,omitempty"`
+	// description: PCI ID (vendor ID, product ID).
+	NetworkDevicePCIID string `yaml:"pciID,omitempty"`
+	// description: Kernel driver.
+	NetworkDeviceKernelDriver string `yaml:"driver,omitempty"`
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.

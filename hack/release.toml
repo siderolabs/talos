@@ -113,6 +113,13 @@ the new configuration doesn't break the node.
 Can be especially useful to check network interfaces changes that may lead to the loss of connectivity to the node.
 """
 
+    [notes.network-device-selector]
+        title = "Network Device Selector"
+        description="""\
+Talos machine configuration supports specifying network interfaces by selectors instead of interface name.
+See [documentation](https://www.talos.dev/v1.1/talos-guides/network/device-selector/) for more details.
+"""
+
 [make_deps]
 
     [make_deps.tools]

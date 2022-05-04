@@ -68,6 +68,7 @@ var (
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
 	NetworkKubeSpanDoc                encoder.Doc
+	NetworkDeviceSelectorDoc          encoder.Doc
 	ClusterDiscoveryConfigDoc         encoder.Doc
 	DiscoveryRegistriesConfigDoc      encoder.Doc
 	RegistryKubernetesConfigDoc       encoder.Doc
@@ -1564,85 +1565,92 @@ func init() {
 			FieldName: "interfaces",
 		},
 	}
-	DeviceDoc.Fields = make([]encoder.Doc, 13)
+	DeviceDoc.Fields = make([]encoder.Doc, 14)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
 	DeviceDoc.Fields[0].Note = ""
-	DeviceDoc.Fields[0].Description = "The interface name."
-	DeviceDoc.Fields[0].Comments[encoder.LineComment] = "The interface name."
-
-	DeviceDoc.Fields[0].AddExample("", "eth0")
-	DeviceDoc.Fields[1].Name = "addresses"
-	DeviceDoc.Fields[1].Type = "[]string"
+	DeviceDoc.Fields[0].Description = "description: |\n    The interface name.\n		 Mutually exclusive with `deviceSelector`.\n  examples:\n    - value: '\"eth0\"'\n"
+	DeviceDoc.Fields[0].Comments[encoder.LineComment] = "description: |"
+	DeviceDoc.Fields[1].Name = "deviceSelector"
+	DeviceDoc.Fields[1].Type = "NetworkDeviceSelector"
 	DeviceDoc.Fields[1].Note = ""
-	DeviceDoc.Fields[1].Description = "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed)."
-	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Assigns static IP addresses to the interface."
+	DeviceDoc.Fields[1].Description = "Picks a network device using the selector.\nMutually exclusive with `interface`.\nSupports partial match using wildcard syntax."
+	DeviceDoc.Fields[1].Comments[encoder.LineComment] = "Picks a network device using the selector."
 
-	DeviceDoc.Fields[1].AddExample("", []string{"10.5.0.0/16", "192.168.3.7"})
-	DeviceDoc.Fields[3].Name = "routes"
-	DeviceDoc.Fields[3].Type = "[]Route"
-	DeviceDoc.Fields[3].Note = ""
-	DeviceDoc.Fields[3].Description = "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
-	DeviceDoc.Fields[3].Comments[encoder.LineComment] = "A list of routes associated with the interface."
+	DeviceDoc.Fields[1].AddExample("select a device with bus prefix 00:*.", networkDeviceSelectorExamples[0])
 
-	DeviceDoc.Fields[3].AddExample("", networkConfigRoutesExample)
-	DeviceDoc.Fields[4].Name = "bond"
-	DeviceDoc.Fields[4].Type = "Bond"
+	DeviceDoc.Fields[1].AddExample("select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.", networkDeviceSelectorExamples[1])
+	DeviceDoc.Fields[2].Name = "addresses"
+	DeviceDoc.Fields[2].Type = "[]string"
+	DeviceDoc.Fields[2].Note = ""
+	DeviceDoc.Fields[2].Description = "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed)."
+	DeviceDoc.Fields[2].Comments[encoder.LineComment] = "Assigns static IP addresses to the interface."
+
+	DeviceDoc.Fields[2].AddExample("", []string{"10.5.0.0/16", "192.168.3.7"})
+	DeviceDoc.Fields[4].Name = "routes"
+	DeviceDoc.Fields[4].Type = "[]Route"
 	DeviceDoc.Fields[4].Note = ""
-	DeviceDoc.Fields[4].Description = "Bond specific options."
-	DeviceDoc.Fields[4].Comments[encoder.LineComment] = "Bond specific options."
+	DeviceDoc.Fields[4].Description = "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
+	DeviceDoc.Fields[4].Comments[encoder.LineComment] = "A list of routes associated with the interface."
 
-	DeviceDoc.Fields[4].AddExample("", networkConfigBondExample)
-	DeviceDoc.Fields[5].Name = "vlans"
-	DeviceDoc.Fields[5].Type = "[]Vlan"
+	DeviceDoc.Fields[4].AddExample("", networkConfigRoutesExample)
+	DeviceDoc.Fields[5].Name = "bond"
+	DeviceDoc.Fields[5].Type = "Bond"
 	DeviceDoc.Fields[5].Note = ""
-	DeviceDoc.Fields[5].Description = "VLAN specific options."
-	DeviceDoc.Fields[5].Comments[encoder.LineComment] = "VLAN specific options."
-	DeviceDoc.Fields[6].Name = "mtu"
-	DeviceDoc.Fields[6].Type = "int"
-	DeviceDoc.Fields[6].Note = ""
-	DeviceDoc.Fields[6].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
-	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "The interface's MTU."
-	DeviceDoc.Fields[7].Name = "dhcp"
-	DeviceDoc.Fields[7].Type = "bool"
-	DeviceDoc.Fields[7].Note = ""
-	DeviceDoc.Fields[7].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
-	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+	DeviceDoc.Fields[5].Description = "Bond specific options."
+	DeviceDoc.Fields[5].Comments[encoder.LineComment] = "Bond specific options."
 
-	DeviceDoc.Fields[7].AddExample("", true)
-	DeviceDoc.Fields[8].Name = "ignore"
+	DeviceDoc.Fields[5].AddExample("", networkConfigBondExample)
+	DeviceDoc.Fields[6].Name = "vlans"
+	DeviceDoc.Fields[6].Type = "[]Vlan"
+	DeviceDoc.Fields[6].Note = ""
+	DeviceDoc.Fields[6].Description = "VLAN specific options."
+	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "VLAN specific options."
+	DeviceDoc.Fields[7].Name = "mtu"
+	DeviceDoc.Fields[7].Type = "int"
+	DeviceDoc.Fields[7].Note = ""
+	DeviceDoc.Fields[7].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
+	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "The interface's MTU."
+	DeviceDoc.Fields[8].Name = "dhcp"
 	DeviceDoc.Fields[8].Type = "bool"
 	DeviceDoc.Fields[8].Note = ""
-	DeviceDoc.Fields[8].Description = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[9].Name = "dummy"
+	DeviceDoc.Fields[8].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
+	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+
+	DeviceDoc.Fields[8].AddExample("", true)
+	DeviceDoc.Fields[9].Name = "ignore"
 	DeviceDoc.Fields[9].Type = "bool"
 	DeviceDoc.Fields[9].Note = ""
-	DeviceDoc.Fields[9].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
-	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
-	DeviceDoc.Fields[10].Name = "dhcpOptions"
-	DeviceDoc.Fields[10].Type = "DHCPOptions"
+	DeviceDoc.Fields[9].Description = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[10].Name = "dummy"
+	DeviceDoc.Fields[10].Type = "bool"
 	DeviceDoc.Fields[10].Note = ""
-	DeviceDoc.Fields[10].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
-	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "DHCP specific options."
-
-	DeviceDoc.Fields[10].AddExample("", networkConfigDHCPOptionsExample)
-	DeviceDoc.Fields[11].Name = "wireguard"
-	DeviceDoc.Fields[11].Type = "DeviceWireguardConfig"
+	DeviceDoc.Fields[10].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
+	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
+	DeviceDoc.Fields[11].Name = "dhcpOptions"
+	DeviceDoc.Fields[11].Type = "DHCPOptions"
 	DeviceDoc.Fields[11].Note = ""
-	DeviceDoc.Fields[11].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
-	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "Wireguard specific configuration."
+	DeviceDoc.Fields[11].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "DHCP specific options."
 
-	DeviceDoc.Fields[11].AddExample("wireguard server example", networkConfigWireguardHostExample)
-
-	DeviceDoc.Fields[11].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
-	DeviceDoc.Fields[12].Name = "vip"
-	DeviceDoc.Fields[12].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[11].AddExample("", networkConfigDHCPOptionsExample)
+	DeviceDoc.Fields[12].Name = "wireguard"
+	DeviceDoc.Fields[12].Type = "DeviceWireguardConfig"
 	DeviceDoc.Fields[12].Note = ""
-	DeviceDoc.Fields[12].Description = "Virtual (shared) IP address configuration."
-	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[12].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
+	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "Wireguard specific configuration."
 
-	DeviceDoc.Fields[12].AddExample("", networkConfigVIPLayer2Example)
+	DeviceDoc.Fields[12].AddExample("wireguard server example", networkConfigWireguardHostExample)
+
+	DeviceDoc.Fields[12].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
+	DeviceDoc.Fields[13].Name = "vip"
+	DeviceDoc.Fields[13].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[13].Note = ""
+	DeviceDoc.Fields[13].Description = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[13].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+
+	DeviceDoc.Fields[13].AddExample("layer2 vip example", networkConfigVIPLayer2Example)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
@@ -1747,7 +1755,7 @@ func init() {
 	DeviceVIPConfigDoc.Comments[encoder.LineComment] = "DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface."
 	DeviceVIPConfigDoc.Description = "DeviceVIPConfig contains settings for configuring a Virtual Shared IP on an interface."
 
-	DeviceVIPConfigDoc.AddExample("", networkConfigVIPLayer2Example)
+	DeviceVIPConfigDoc.AddExample("layer2 vip example", networkConfigVIPLayer2Example)
 	DeviceVIPConfigDoc.AppearsIn = []encoder.Appearance{
 		{
 			TypeName:  "Device",
@@ -2268,6 +2276,41 @@ func init() {
 	NetworkKubeSpanDoc.Fields[1].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
 	NetworkKubeSpanDoc.Fields[1].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
 
+	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
+	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."
+	NetworkDeviceSelectorDoc.Description = "NetworkDeviceSelector struct describes network device selector."
+
+	NetworkDeviceSelectorDoc.AddExample("select a device with bus prefix 00:*.", networkDeviceSelectorExamples[0])
+
+	NetworkDeviceSelectorDoc.AddExample("select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.", networkDeviceSelectorExamples[1])
+	NetworkDeviceSelectorDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "deviceSelector",
+		},
+	}
+	NetworkDeviceSelectorDoc.Fields = make([]encoder.Doc, 4)
+	NetworkDeviceSelectorDoc.Fields[0].Name = "busPath"
+	NetworkDeviceSelectorDoc.Fields[0].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[0].Note = ""
+	NetworkDeviceSelectorDoc.Fields[0].Description = "PCI, USB bus prefix."
+	NetworkDeviceSelectorDoc.Fields[0].Comments[encoder.LineComment] = "PCI, USB bus prefix."
+	NetworkDeviceSelectorDoc.Fields[1].Name = "hardwareAddr"
+	NetworkDeviceSelectorDoc.Fields[1].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[1].Note = ""
+	NetworkDeviceSelectorDoc.Fields[1].Description = "Device hardware address."
+	NetworkDeviceSelectorDoc.Fields[1].Comments[encoder.LineComment] = "Device hardware address."
+	NetworkDeviceSelectorDoc.Fields[2].Name = "pciID"
+	NetworkDeviceSelectorDoc.Fields[2].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[2].Note = ""
+	NetworkDeviceSelectorDoc.Fields[2].Description = "PCI ID (vendor ID, product ID)."
+	NetworkDeviceSelectorDoc.Fields[2].Comments[encoder.LineComment] = "PCI ID (vendor ID, product ID)."
+	NetworkDeviceSelectorDoc.Fields[3].Name = "driver"
+	NetworkDeviceSelectorDoc.Fields[3].Type = "string"
+	NetworkDeviceSelectorDoc.Fields[3].Note = ""
+	NetworkDeviceSelectorDoc.Fields[3].Description = "Kernel driver."
+	NetworkDeviceSelectorDoc.Fields[3].Comments[encoder.LineComment] = "Kernel driver."
+
 	ClusterDiscoveryConfigDoc.Type = "ClusterDiscoveryConfig"
 	ClusterDiscoveryConfigDoc.Comments[encoder.LineComment] = "ClusterDiscoveryConfig struct configures cluster membership discovery."
 	ClusterDiscoveryConfigDoc.Description = "ClusterDiscoveryConfig struct configures cluster membership discovery."
@@ -2674,6 +2717,10 @@ func (_ NetworkKubeSpan) Doc() *encoder.Doc {
 	return &NetworkKubeSpanDoc
 }
 
+func (_ NetworkDeviceSelector) Doc() *encoder.Doc {
+	return &NetworkDeviceSelectorDoc
+}
+
 func (_ ClusterDiscoveryConfig) Doc() *encoder.Doc {
 	return &ClusterDiscoveryConfigDoc
 }
@@ -2772,6 +2819,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
 			&NetworkKubeSpanDoc,
+			&NetworkDeviceSelectorDoc,
 			&ClusterDiscoveryConfigDoc,
 			&DiscoveryRegistriesConfigDoc,
 			&RegistryKubernetesConfigDoc,

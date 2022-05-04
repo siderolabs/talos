@@ -149,7 +149,7 @@ network:
     hostname: worker-1 # Used to statically set the hostname for the machine.
     # `interfaces` is used to define the network interface configuration.
     interfaces:
-        - interface: eth0 # The interface name.
+        - interface: eth0 # description: |
           # Assigns static IP addresses to the interface.
           addresses:
             - 192.168.2.0/24
@@ -159,6 +159,16 @@ network:
               gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
               metric: 1024 # The optional metric for the route.
           mtu: 1500 # The interface's MTU.
+
+          # # Picks a network device using the selector.
+
+          # # select a device with bus prefix 00:*.
+          # deviceSelector:
+          #     busPath: 00:* # PCI, USB bus prefix.
+          # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+          # deviceSelector:
+          #     hardwareAddr: '*:f0:ab' # Device hardware address.
+          #     driver: virtio # Kernel driver.
 
           # # Bond specific options.
           # bond:
@@ -202,6 +212,8 @@ network:
           #             - 192.168.1.0/24
 
           # # Virtual (shared) IP address configuration.
+
+          # # layer2 vip example
           # vip:
           #     ip: 172.16.199.55 # Specifies the IP address to be used.
     # Used to statically set the nameservers for the machine.
@@ -762,7 +774,7 @@ Appears in:
 hostname: worker-1 # Used to statically set the hostname for the machine.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
-    - interface: eth0 # The interface name.
+    - interface: eth0 # description: |
       # Assigns static IP addresses to the interface.
       addresses:
         - 192.168.2.0/24
@@ -772,6 +784,16 @@ interfaces:
           gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
+
+      # # Picks a network device using the selector.
+
+      # # select a device with bus prefix 00:*.
+      # deviceSelector:
+      #     busPath: 00:* # PCI, USB bus prefix.
+      # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+      # deviceSelector:
+      #     hardwareAddr: '*:f0:ab' # Device hardware address.
+      #     driver: virtio # Kernel driver.
 
       # # Bond specific options.
       # bond:
@@ -815,6 +837,8 @@ interfaces:
       #             - 192.168.1.0/24
 
       # # Virtual (shared) IP address configuration.
+
+      # # layer2 vip example
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
 # Used to statically set the nameservers for the machine.
@@ -841,7 +865,7 @@ nameservers:
 |`hostname` |string |Used to statically set the hostname for the machine.  | |
 |`interfaces` |[]<a href="#device">Device</a> |<details><summary>`interfaces` is used to define the network interface configuration.</summary>By default all network interfaces will attempt a DHCP discovery.<br />This can be further tuned through this configuration parameter.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interfaces:
-    - interface: eth0 # The interface name.
+    - interface: eth0 # description: |
       # Assigns static IP addresses to the interface.
       addresses:
         - 192.168.2.0/24
@@ -851,6 +875,16 @@ interfaces:
           gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
           metric: 1024 # The optional metric for the route.
       mtu: 1500 # The interface's MTU.
+
+      # # Picks a network device using the selector.
+
+      # # select a device with bus prefix 00:*.
+      # deviceSelector:
+      #     busPath: 00:* # PCI, USB bus prefix.
+      # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+      # deviceSelector:
+      #     hardwareAddr: '*:f0:ab' # Device hardware address.
+      #     driver: virtio # Kernel driver.
 
       # # Bond specific options.
       # bond:
@@ -894,6 +928,8 @@ interfaces:
       #             - 192.168.1.0/24
 
       # # Virtual (shared) IP address configuration.
+
+      # # layer2 vip example
       # vip:
       #     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}</details> | |
@@ -1794,7 +1830,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-- interface: eth0 # The interface name.
+- interface: eth0 # description: |
   # Assigns static IP addresses to the interface.
   addresses:
     - 192.168.2.0/24
@@ -1804,6 +1840,16 @@ Appears in:
       gateway: 192.168.2.1 # The route's gateway (if empty, creates link scope route).
       metric: 1024 # The optional metric for the route.
   mtu: 1500 # The interface's MTU.
+
+  # # Picks a network device using the selector.
+
+  # # select a device with bus prefix 00:*.
+  # deviceSelector:
+  #     busPath: 00:* # PCI, USB bus prefix.
+  # # select a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+  # deviceSelector:
+  #     hardwareAddr: '*:f0:ab' # Device hardware address.
+  #     driver: virtio # Kernel driver.
 
   # # Bond specific options.
   # bond:
@@ -1847,6 +1893,8 @@ Appears in:
   #             - 192.168.1.0/24
 
   # # Virtual (shared) IP address configuration.
+
+  # # layer2 vip example
   # vip:
   #     ip: 172.16.199.55 # Specifies the IP address to be used.
 {{< /highlight >}}
@@ -1854,8 +1902,14 @@ Appears in:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`interface` |string |The interface name. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-interface: eth0
+|`interface` |string |<details><summary>description: |</summary>    The interface name.<br />		 Mutually exclusive with `deviceSelector`.<br />  examples:<br />    - value: '"eth0"'<br /></details>  | |
+|`deviceSelector` |<a href="#networkdeviceselector">NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interface`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+deviceSelector:
+    busPath: 00:* # PCI, USB bus prefix.
+{{< /highlight >}}{{< highlight yaml >}}
+deviceSelector:
+    hardwareAddr: '*:f0:ab' # Device hardware address.
+    driver: virtio # Kernel driver.
 {{< /highlight >}}</details> | |
 |`addresses` |[]string |<details><summary>Assigns static IP addresses to the interface.</summary>An address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 addresses:
@@ -2435,6 +2489,35 @@ enabled: true # Enable the KubeSpan feature.
 |-------|------|-------------|----------|
 |`enabled` |bool |<details><summary>Enable the KubeSpan feature.</summary>Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.</details>  | |
 |`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
+
+
+
+---
+## NetworkDeviceSelector
+NetworkDeviceSelector struct describes network device selector.
+
+Appears in:
+
+- <code><a href="#device">Device</a>.deviceSelector</code>
+
+
+
+{{< highlight yaml >}}
+busPath: 00:* # PCI, USB bus prefix.
+{{< /highlight >}}
+
+{{< highlight yaml >}}
+hardwareAddr: '*:f0:ab' # Device hardware address.
+driver: virtio # Kernel driver.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`busPath` |string |PCI, USB bus prefix.  | |
+|`hardwareAddr` |string |Device hardware address.  | |
+|`pciID` |string |PCI ID (vendor ID, product ID).  | |
+|`driver` |string |Kernel driver.  | |
 
 
 

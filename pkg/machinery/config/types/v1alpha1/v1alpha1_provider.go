@@ -619,6 +619,15 @@ func (d *Device) VIPConfig() config.VIPConfig {
 	return d.DeviceVIPConfig
 }
 
+// Selector implements the config.Device interface.
+func (d *Device) Selector() config.NetworkDeviceSelector {
+	if d.DeviceSelector == nil {
+		return nil
+	}
+
+	return d.DeviceSelector
+}
+
 // IP implements the config.VIPConfig interface.
 func (d *DeviceVIPConfig) IP() string {
 	return d.SharedIP
@@ -733,6 +742,26 @@ func (wd *DeviceWireguardPeer) PersistentKeepaliveInterval() time.Duration {
 // AllowedIPs implements the MachineNetwork interface.
 func (wd *DeviceWireguardPeer) AllowedIPs() []string {
 	return wd.WireguardAllowedIPs
+}
+
+// Bus implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) Bus() string {
+	return s.NetworkDeviceBus
+}
+
+// HardwareAddress implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) HardwareAddress() string {
+	return s.NetworkDeviceHardwareAddress
+}
+
+// PCIID implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) PCIID() string {
+	return s.NetworkDevicePCIID
+}
+
+// KernelDriver implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) KernelDriver() string {
+	return s.NetworkDeviceKernelDriver
 }
 
 // Network implements the MachineNetwork interface.

@@ -31,8 +31,12 @@ var (
 
 	// ErrRequiredSection denotes a section is required.
 	ErrRequiredSection = errors.New("required config section")
+	// ErrRequiredSectionOptions denotes at least one section is required.
+	ErrRequiredSectionOptions = errors.New("required either config section to be set")
 	// ErrInvalidVersion denotes that the config file version is invalid.
 	ErrInvalidVersion = errors.New("invalid config version")
+	// ErrMutuallyExclusive denotes that config sections are mutually exclusive.
+	ErrMutuallyExclusive = errors.New("config sections are mutually exclusive")
 
 	// Security.
 
@@ -419,6 +423,7 @@ func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, check
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
+//nolint:gocyclo
 func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
@@ -426,7 +431,13 @@ func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]stri
 		return nil, fmt.Errorf("empty device")
 	}
 
-	if d.DeviceInterface == "" {
+	if d.DeviceInterface == "" && d.DeviceSelector == nil {
+		result = multierror.Append(result, fmt.Errorf("[%s], [%s]: %w", "networking.os.device.interface", "networking.os.device.deviceSelector", ErrRequiredSectionOptions))
+	} else if d.DeviceInterface != "" && d.DeviceSelector != nil {
+		result = multierror.Append(result, fmt.Errorf("[%s], [%s]: %w", "networking.os.device.interface", "networking.os.device.deviceSelector", ErrMutuallyExclusive))
+	}
+
+	if d.DeviceInterface == "" && d.DeviceSelector == nil {
 		result = multierror.Append(result, fmt.Errorf("[%s]: %w", "networking.os.device.interface", ErrRequiredSection))
 	}
 

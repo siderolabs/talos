@@ -56,6 +56,8 @@ func (suite *RouteSpecSuite) SetupTest() {
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteSpecController{}))
 
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
+
 	suite.startRuntime()
 }
 
