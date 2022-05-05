@@ -2503,7 +2503,7 @@ ephemeral:
 
 ---
 ## FeaturesConfig
-FeaturesConfig describe individual Talos features that can be switched on or off.
+FeaturesConfig describes individual Talos features that can be switched on or off.
 
 Appears in:
 
@@ -2519,6 +2519,26 @@ rbac: true # Enable role-based access control (RBAC).
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`rbac` |bool |Enable role-based access control (RBAC).  | |
+|`kubernetesTalosAPIAccess` |<a href="#kubernetestalosapiaccessconfig">KubernetesTalosAPIAccessConfig</a> |<details><summary>Configure Talos API access from Kubernetes pods.</summary><br />This feature is disabled if the feature config is not specified.</details>  | |
+
+
+
+---
+## KubernetesTalosAPIAccessConfig
+KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.
+
+Appears in:
+
+- <code><a href="#featuresconfig">FeaturesConfig</a>.kubernetesTalosAPIAccess</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable Talos API access from Kubernetes pods.  | |
+|`allowedRoles` |[]string |<details><summary>The list of Talos API roles which can be granted for access from Kubernetes pods.</summary><br />Empty list means that no roles can be granted, so access is blocked.</details>  | |
+|`allowedKubernetesNamespaces` |[]string |The list of Kubernetes namespaces Talos API access is available from.  | |
 
 
 

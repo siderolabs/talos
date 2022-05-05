@@ -59,3 +59,8 @@ func (t *Type) UnmarshalText(text []byte) error {
 
 	return err
 }
+
+// IsControlPlane returns true if the type is a control plane node.
+func (t Type) IsControlPlane() bool {
+	return t == TypeControlPlane || t == TypeInit
+}

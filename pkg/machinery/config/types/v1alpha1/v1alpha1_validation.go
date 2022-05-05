@@ -254,6 +254,14 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		}
 	}
 
+	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() && !c.Machine().Features().RBACEnabled() {
+		result = multierror.Append(result, fmt.Errorf("Talos API RBAC should be enabled when Kubernetes Talos API Access is enabled"))
+	}
+
+	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() && !c.Machine().Type().IsControlPlane() {
+		result = multierror.Append(result, fmt.Errorf("Kubernetes Talos API Access can be enabled only on control plane machines"))
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))

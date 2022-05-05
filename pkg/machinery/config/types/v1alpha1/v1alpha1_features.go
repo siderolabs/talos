@@ -4,6 +4,8 @@
 
 package v1alpha1
 
+import "github.com/talos-systems/talos/pkg/machinery/config"
+
 // RBACEnabled implements config.Features interface.
 func (f *FeaturesConfig) RBACEnabled() bool {
 	if f.RBAC == nil {
@@ -11,4 +13,9 @@ func (f *FeaturesConfig) RBACEnabled() bool {
 	}
 
 	return *f.RBAC
+}
+
+// KubernetesTalosAPIAccess implements config.Features interface.
+func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
+	return f.KubernetesTalosAPIAccessConfig
 }
