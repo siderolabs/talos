@@ -588,6 +588,16 @@ metadata:
 			ExtensionImage: "ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0",
 		},
 	}
+
+	kubernetesTalosAPIAccessConfigExample = &KubernetesTalosAPIAccessConfig{
+		AccessEnabled: pointer.To(true),
+		AccessAllowedRoles: []string{
+			"os:reader",
+		},
+		AccessAllowedKubernetesNamespaces: []string{
+			"kube-system",
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -2274,7 +2284,7 @@ type SystemDiskEncryptionConfig struct {
 	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
 }
 
-// FeaturesConfig describe individual Talos features that can be switched on or off.
+// FeaturesConfig describes individual Talos features that can be switched on or off.
 type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
@@ -2282,6 +2292,28 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable stable default hostname.
 	StableHostname *bool `yaml:"stableHostname,omitempty"`
+	//   description: |
+	//    Configure Talos API access from Kubernetes pods.
+	//
+	//    This feature is disabled if the feature config is not specified.
+	//   examples:
+	//     - value: kubernetesTalosAPIAccessConfigExample
+	KubernetesTalosAPIAccessConfig *KubernetesTalosAPIAccessConfig `yaml:"kubernetesTalosAPIAccess,omitempty"`
+}
+
+// KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.
+type KubernetesTalosAPIAccessConfig struct {
+	//   description: |
+	//     Enable Talos API access from Kubernetes pods.
+	AccessEnabled *bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     The list of Talos API roles which can be granted for access from Kubernetes pods.
+	//
+	//     Empty list means that no roles can be granted, so access is blocked.
+	AccessAllowedRoles []string `yaml:"allowedRoles,omitempty"`
+	//   description: |
+	//     The list of Kubernetes namespaces Talos API access is available from.
+	AccessAllowedKubernetesNamespaces []string `yaml:"allowedKubernetesNamespaces,omitempty"`
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

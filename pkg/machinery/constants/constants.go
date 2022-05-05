@@ -689,6 +689,15 @@ const (
 
 	// GoVersion is the version of Go compiler this release was built with.
 	GoVersion = "go1.18.4"
+
+	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
+	KubernetesTalosAPIServiceName = "talos"
+
+	// KubernetesTalosAPIServiceNamespace is the namespace of the Kubernetes service to access Talos API.
+	KubernetesTalosAPIServiceNamespace = "default"
+
+	// KubernetesTalosProvider is the name of the Talos provider as a Kubernetes label.
+	KubernetesTalosProvider = "talos.dev"
 )
 
 // See https://linux.die.net/man/3/klogctl

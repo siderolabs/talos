@@ -25,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubeaccess"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
@@ -134,6 +135,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.RenderConfigsStaticPodController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&k8s.StaticPodConfigController{},
+		&kubeaccess.ConfigController{},
+		&kubeaccess.EndpointController{},
 		&kubespan.ConfigController{},
 		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},

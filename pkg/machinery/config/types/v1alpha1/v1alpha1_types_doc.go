@@ -69,6 +69,7 @@ var (
 	RegistryTLSConfigDoc              encoder.Doc
 	SystemDiskEncryptionConfigDoc     encoder.Doc
 	FeaturesConfigDoc                 encoder.Doc
+	KubernetesTalosAPIAccessConfigDoc encoder.Doc
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
 	NetworkKubeSpanDoc                encoder.Doc
@@ -2240,8 +2241,8 @@ func init() {
 	SystemDiskEncryptionConfigDoc.Fields[1].Comments[encoder.LineComment] = "Ephemeral partition encryption."
 
 	FeaturesConfigDoc.Type = "FeaturesConfig"
-	FeaturesConfigDoc.Comments[encoder.LineComment] = "FeaturesConfig describe individual Talos features that can be switched on or off."
-	FeaturesConfigDoc.Description = "FeaturesConfig describe individual Talos features that can be switched on or off."
+	FeaturesConfigDoc.Comments[encoder.LineComment] = "FeaturesConfig describes individual Talos features that can be switched on or off."
+	FeaturesConfigDoc.Description = "FeaturesConfig describes individual Talos features that can be switched on or off."
 
 	FeaturesConfigDoc.AddExample("", machineFeaturesExample)
 	FeaturesConfigDoc.AppearsIn = []encoder.Appearance{
@@ -2250,7 +2251,7 @@ func init() {
 			FieldName: "features",
 		},
 	}
-	FeaturesConfigDoc.Fields = make([]encoder.Doc, 2)
+	FeaturesConfigDoc.Fields = make([]encoder.Doc, 3)
 	FeaturesConfigDoc.Fields[0].Name = "rbac"
 	FeaturesConfigDoc.Fields[0].Type = "bool"
 	FeaturesConfigDoc.Fields[0].Note = ""
@@ -2261,6 +2262,41 @@ func init() {
 	FeaturesConfigDoc.Fields[1].Note = ""
 	FeaturesConfigDoc.Fields[1].Description = "Enable stable default hostname."
 	FeaturesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Enable stable default hostname."
+	FeaturesConfigDoc.Fields[2].Name = "kubernetesTalosAPIAccess"
+	FeaturesConfigDoc.Fields[2].Type = "KubernetesTalosAPIAccessConfig"
+	FeaturesConfigDoc.Fields[2].Note = ""
+	FeaturesConfigDoc.Fields[2].Description = "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified."
+	FeaturesConfigDoc.Fields[2].Comments[encoder.LineComment] = "Configure Talos API access from Kubernetes pods."
+
+	FeaturesConfigDoc.Fields[2].AddExample("", kubernetesTalosAPIAccessConfigExample)
+
+	KubernetesTalosAPIAccessConfigDoc.Type = "KubernetesTalosAPIAccessConfig"
+	KubernetesTalosAPIAccessConfigDoc.Comments[encoder.LineComment] = "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
+	KubernetesTalosAPIAccessConfigDoc.Description = "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
+
+	KubernetesTalosAPIAccessConfigDoc.AddExample("", kubernetesTalosAPIAccessConfigExample)
+	KubernetesTalosAPIAccessConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "FeaturesConfig",
+			FieldName: "kubernetesTalosAPIAccess",
+		},
+	}
+	KubernetesTalosAPIAccessConfigDoc.Fields = make([]encoder.Doc, 3)
+	KubernetesTalosAPIAccessConfigDoc.Fields[0].Name = "enabled"
+	KubernetesTalosAPIAccessConfigDoc.Fields[0].Type = "bool"
+	KubernetesTalosAPIAccessConfigDoc.Fields[0].Note = ""
+	KubernetesTalosAPIAccessConfigDoc.Fields[0].Description = "Enable Talos API access from Kubernetes pods."
+	KubernetesTalosAPIAccessConfigDoc.Fields[0].Comments[encoder.LineComment] = "Enable Talos API access from Kubernetes pods."
+	KubernetesTalosAPIAccessConfigDoc.Fields[1].Name = "allowedRoles"
+	KubernetesTalosAPIAccessConfigDoc.Fields[1].Type = "[]string"
+	KubernetesTalosAPIAccessConfigDoc.Fields[1].Note = ""
+	KubernetesTalosAPIAccessConfigDoc.Fields[1].Description = "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked."
+	KubernetesTalosAPIAccessConfigDoc.Fields[1].Comments[encoder.LineComment] = "The list of Talos API roles which can be granted for access from Kubernetes pods."
+	KubernetesTalosAPIAccessConfigDoc.Fields[2].Name = "allowedKubernetesNamespaces"
+	KubernetesTalosAPIAccessConfigDoc.Fields[2].Type = "[]string"
+	KubernetesTalosAPIAccessConfigDoc.Fields[2].Note = ""
+	KubernetesTalosAPIAccessConfigDoc.Fields[2].Description = "The list of Kubernetes namespaces Talos API access is available from."
+	KubernetesTalosAPIAccessConfigDoc.Fields[2].Comments[encoder.LineComment] = "The list of Kubernetes namespaces Talos API access is available from."
 
 	VolumeMountConfigDoc.Type = "VolumeMountConfig"
 	VolumeMountConfigDoc.Comments[encoder.LineComment] = "VolumeMountConfig struct describes extra volume mount for the static pods."
@@ -2781,6 +2817,10 @@ func (_ FeaturesConfig) Doc() *encoder.Doc {
 	return &FeaturesConfigDoc
 }
 
+func (_ KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
+	return &KubernetesTalosAPIAccessConfigDoc
+}
+
 func (_ VolumeMountConfig) Doc() *encoder.Doc {
 	return &VolumeMountConfigDoc
 }
@@ -2894,6 +2934,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryTLSConfigDoc,
 			&SystemDiskEncryptionConfigDoc,
 			&FeaturesConfigDoc,
+			&KubernetesTalosAPIAccessConfigDoc,
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
 			&NetworkKubeSpanDoc,

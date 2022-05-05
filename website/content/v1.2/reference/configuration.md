@@ -363,6 +363,16 @@ systemDiskEncryption:
 |`features` |<a href="#featuresconfig">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
     rbac: true # Enable role-based access control (RBAC).
+
+    # # Configure Talos API access from Kubernetes pods.
+    # kubernetesTalosAPIAccess:
+    #     enabled: true # Enable Talos API access from Kubernetes pods.
+    #     # The list of Talos API roles which can be granted for access from Kubernetes pods.
+    #     allowedRoles:
+    #         - os:reader
+    #     # The list of Kubernetes namespaces Talos API access is available from.
+    #     allowedKubernetesNamespaces:
+    #         - kube-system
 {{< /highlight >}}</details> | |
 |`udev` |<a href="#udevconfig">UdevConfig</a> |Configures the udev system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 udev:
@@ -2513,7 +2523,7 @@ ephemeral:
 
 ---
 ## FeaturesConfig
-FeaturesConfig describe individual Talos features that can be switched on or off.
+FeaturesConfig describes individual Talos features that can be switched on or off.
 
 Appears in:
 
@@ -2523,6 +2533,16 @@ Appears in:
 
 {{< highlight yaml >}}
 rbac: true # Enable role-based access control (RBAC).
+
+# # Configure Talos API access from Kubernetes pods.
+# kubernetesTalosAPIAccess:
+#     enabled: true # Enable Talos API access from Kubernetes pods.
+#     # The list of Talos API roles which can be granted for access from Kubernetes pods.
+#     allowedRoles:
+#         - os:reader
+#     # The list of Kubernetes namespaces Talos API access is available from.
+#     allowedKubernetesNamespaces:
+#         - kube-system
 {{< /highlight >}}
 
 
@@ -2530,6 +2550,45 @@ rbac: true # Enable role-based access control (RBAC).
 |-------|------|-------------|----------|
 |`rbac` |bool |Enable role-based access control (RBAC).  | |
 |`stableHostname` |bool |Enable stable default hostname.  | |
+|`kubernetesTalosAPIAccess` |<a href="#kubernetestalosapiaccessconfig">KubernetesTalosAPIAccessConfig</a> |<details><summary>Configure Talos API access from Kubernetes pods.</summary><br />This feature is disabled if the feature config is not specified.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+kubernetesTalosAPIAccess:
+    enabled: true # Enable Talos API access from Kubernetes pods.
+    # The list of Talos API roles which can be granted for access from Kubernetes pods.
+    allowedRoles:
+        - os:reader
+    # The list of Kubernetes namespaces Talos API access is available from.
+    allowedKubernetesNamespaces:
+        - kube-system
+{{< /highlight >}}</details> | |
+
+
+
+---
+## KubernetesTalosAPIAccessConfig
+KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.
+
+Appears in:
+
+- <code><a href="#featuresconfig">FeaturesConfig</a>.kubernetesTalosAPIAccess</code>
+
+
+
+{{< highlight yaml >}}
+enabled: true # Enable Talos API access from Kubernetes pods.
+# The list of Talos API roles which can be granted for access from Kubernetes pods.
+allowedRoles:
+    - os:reader
+# The list of Kubernetes namespaces Talos API access is available from.
+allowedKubernetesNamespaces:
+    - kube-system
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable Talos API access from Kubernetes pods.  | |
+|`allowedRoles` |[]string |<details><summary>The list of Talos API roles which can be granted for access from Kubernetes pods.</summary><br />Empty list means that no roles can be granted, so access is blocked.</details>  | |
+|`allowedKubernetesNamespaces` |[]string |The list of Kubernetes namespaces Talos API access is available from.  | |
 
 
 

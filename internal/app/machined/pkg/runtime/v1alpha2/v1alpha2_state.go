@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/resources/kubeaccess"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
@@ -114,6 +115,7 @@ func NewState() (*State, error) {
 		&k8s.StaticPod{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
+		&kubeaccess.Config{},
 		&kubespan.Config{},
 		&kubespan.Endpoint{},
 		&kubespan.Identity{},

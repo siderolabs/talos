@@ -18,6 +18,7 @@ import (
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
@@ -144,6 +145,14 @@ func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, os
 		} else {
 			osSecrets.CertSANDNSNames = append(osSecrets.CertSANDNSNames, san)
 		}
+	}
+
+	if cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
+		// add Kubernetes Talos service name to the list of SANs
+		osSecrets.CertSANDNSNames = append(osSecrets.CertSANDNSNames,
+			constants.KubernetesTalosAPIServiceName,
+			constants.KubernetesTalosAPIServiceName+"."+constants.KubernetesTalosAPIServiceNamespace,
+		)
 	}
 
 	osSecrets.Token = cfgProvider.Machine().Security().Token()

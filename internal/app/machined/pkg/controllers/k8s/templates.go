@@ -700,3 +700,21 @@ spec:
   - min: 1
     max: 65536
 `)
+
+// talosAPIService is the service to access Talos API from Kubernetes.
+// Service exposes the Endpoints which are managed by controllers.
+var talosAPIService = []byte(`apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    component: apid
+    provider: talos
+  name: {{ .KubernetesTalosAPIServiceName }}
+  namespace: {{ .KubernetesTalosAPIServiceNamespace }}
+spec:
+  ports:
+  - name: apid
+    port: {{ .ApidPort }}
+    protocol: TCP
+    targetPort: {{ .ApidPort }}
+`)

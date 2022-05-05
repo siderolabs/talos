@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
@@ -159,9 +160,19 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		k8s.BootstrapManifestsConfigSpec
 
 		Secrets *secrets.KubernetesRootSpec
+
+		KubernetesTalosAPIServiceName      string
+		KubernetesTalosAPIServiceNamespace string
+
+		ApidPort int
 	}{
 		BootstrapManifestsConfigSpec: cfg,
 		Secrets:                      scrt,
+
+		KubernetesTalosAPIServiceName:      constants.KubernetesTalosAPIServiceName,
+		KubernetesTalosAPIServiceNamespace: constants.KubernetesTalosAPIServiceNamespace,
+
+		ApidPort: constants.ApidPort,
 	}
 
 	type manifestDesc struct {
@@ -207,6 +218,14 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		defaultManifests = append(defaultManifests,
 			[]manifestDesc{
 				{"03-default-pod-security-policy", podSecurityPolicy},
+			}...,
+		)
+	}
+
+	if cfg.TalosAPIServiceEnabled {
+		defaultManifests = append(defaultManifests,
+			[]manifestDesc{
+				{"12-talos-api-service", talosAPIService},
 			}...,
 		)
 	}

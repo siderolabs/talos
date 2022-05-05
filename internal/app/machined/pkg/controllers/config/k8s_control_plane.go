@@ -280,6 +280,8 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 			FlannelCNIImage: images.FlannelCNI,
 
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
+
+			TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
 		}
 
 		return nil

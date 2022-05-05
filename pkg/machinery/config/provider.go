@@ -515,6 +515,14 @@ type SystemDiskEncryption interface {
 type Features interface {
 	RBACEnabled() bool
 	StableHostnameEnabled() bool
+	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
+}
+
+// KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.
+type KubernetesTalosAPIAccess interface {
+	Enabled() bool
+	AllowedRoles() []string
+	AllowedKubernetesNamespaces() []string
 }
 
 // VolumeMount describes extra volume mount for the static pods.

@@ -47,6 +47,7 @@ The list of config changes allowed to be applied immediately in Talos {{< releas
 * `.machine.pods`
 * `.machine.kernel`
 * `.machine.registries` (CRI containerd plugin will not pick up the registry authentication settings without a reboot)
+* `.machine.features.kubernetesTalosAPIAccess`
 
 ### `talosctl apply-config`
 

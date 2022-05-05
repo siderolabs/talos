@@ -44,6 +44,8 @@ type BootstrapManifestsConfigSpec struct {
 	FlannelCNIImage string `yaml:"flannelCNIImage"`
 
 	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled"`
+
+	TalosAPIServiceEnabled bool `yaml:"talosAPIServiceEnabled"`
 }
 
 // NewBootstrapManifestsConfig returns new BootstrapManifestsConfig resource.

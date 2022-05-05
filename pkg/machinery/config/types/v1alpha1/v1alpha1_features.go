@@ -4,7 +4,11 @@
 
 package v1alpha1
 
-import "github.com/siderolabs/go-pointer"
+import (
+	"github.com/siderolabs/go-pointer"
+
+	"github.com/talos-systems/talos/pkg/machinery/config"
+)
 
 // RBACEnabled implements config.Features interface.
 func (f *FeaturesConfig) RBACEnabled() bool {
@@ -18,4 +22,9 @@ func (f *FeaturesConfig) RBACEnabled() bool {
 // StableHostnameEnabled implements config.Features interface.
 func (f *FeaturesConfig) StableHostnameEnabled() bool {
 	return pointer.SafeDeref(f.StableHostname)
+}
+
+// KubernetesTalosAPIAccess implements config.Features interface.
+func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
+	return f.KubernetesTalosAPIAccessConfig
 }
