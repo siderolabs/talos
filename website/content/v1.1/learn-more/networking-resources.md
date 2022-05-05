@@ -4,12 +4,14 @@ weight: 70
 description: "Delve deeper into networking of Talos Linux."
 ---
 
-Starting with version 0.11, a new implementation of the network configuration subsystem is powered by [COSI]({{< relref "controllers-resources" >}}).
-The new implementation is still using the same machine configuration file format and external sources to configure a node's network, so there should be no difference
-in the way Talos works in 0.11.
+Talos network configuration subsystem is powered by [COSI]({{< relref "controllers-resources" >}}).
+Talos translates network configuration from multiple sources: machine configuration, cloud metadata, network automatic configuration (e.g. DHCP) into COSI resources.
 
-The most notable change in Talos 0.11 is that all changes to machine configuration `.machine.network` can be applied now in immediate mode (without a reboot) via
-`talosctl edit mc --mode=no-reboot` or `talosctl apply-config --mode=no-reboot`.
+Network configuration and network state can be inspected using `talosctl get` command.
+
+Network machine configuration can be modified using `talosctl edit mc` command (also variants `talosctl patch mc`, `talosctl apply-config`) without a reboot.
+As API access requires network connection, [`--mode=try`]({{< relref "../talos-guides/configuration/editing-machine-configuration" >}})
+can be used to test the configuration with automatic rollback to avoid losing network access to the node.
 
 ## Resources
 
@@ -65,8 +67,8 @@ accordingly.
 
 Additional details about the address can be accessed via the YAML output:
 
-```sh
-$ talosctl get address eth0/172.20.0.2/24 -o yaml
+```yaml
+# talosctl get address eth0/172.20.0.2/24 -o yaml
 node: 172.20.0.2
 metadata:
     namespace: network
@@ -99,8 +101,8 @@ NODE         NAMESPACE   TYPE             ID          VERSION   RESOLVERS
 172.20.0.2   network     ResolverStatus   resolvers   2         ["8.8.8.8","1.1.1.1"]
 ```
 
-```sh
-$ talosctl get links -o yaml
+```yaml
+# talosctl get links -o yaml
 node: 172.20.0.2
 metadata:
     namespace: network
@@ -151,8 +153,8 @@ from multiple configuration sources (see a section below for details).
 
 If a `*Spec` resource is queried in YAML format, some additional information is available:
 
-```sh
-$ talosctl get addressspecs eth0/172.20.0.2/24 -o yaml
+```yaml
+# talosctl get addressspecs eth0/172.20.0.2/24 -o yaml
 node: 172.20.0.2
 metadata:
     namespace: network
@@ -185,8 +187,8 @@ Spec resources in the `network-config` namespace are merged with conflict resolu
 Let's take `HostnameSpec` as an example.
 The final merged representation is:
 
-```sh
-$ talosctl get hostnamespec -o yaml
+```yaml
+# talosctl get hostnamespec -o yaml
 node: 172.20.0.2
 metadata:
     namespace: network
@@ -217,8 +219,8 @@ NODE         NAMESPACE   TYPE             ID         VERSION   HOSTNAME         
 
 Initial configuration for the hostname in the `network-config` namespace is:
 
-```sh
-$ talosctl get hostnamespec -o yaml --namespace network-config
+```yaml
+# talosctl get hostnamespec -o yaml --namespace network-config
 node: 172.20.0.2
 metadata:
     namespace: network-config
@@ -264,7 +266,7 @@ Here is the order of precedence from low to high:
 * `operator` (various dynamic configuration options: DHCP, Virtual IP, etc);
 * `configuration` (derived from the machine configuration).
 
-So in our example the `operator` layer `HostnameSpec` overwrites the `default` layer producing the final hostname `talos-default-master-1`.
+So in our example the `operator` layer `HostnameSpec` overrides the `default` layer producing the final hostname `talos-default-master-1`.
 
 The merge process applies to all six core networking specs.
 For each spec, the `layer` controls the merge behavior
@@ -287,8 +289,8 @@ Network operators produce specs for addresses, routes, links, etc., which are th
 Operators are configured with `OperatorSpec` resources which describe when operators
 should run and additional configuration for the operator:
 
-```sh
-$ talosctl get operatorspecs -o yaml
+```yaml
+# talosctl get operatorspecs -o yaml
 node: 172.20.0.2
 metadata:
     namespace: network
@@ -351,8 +353,8 @@ Depending on the machine configuration `nodename` might be just a hostname or th
 
 `NetworkStatus` aggregates the current state of the network configuration:
 
-```sh
-$ talosctl get networkstatus -o yaml
+```yaml
+# talosctl get networkstatus -o yaml
 node: 10.100.2.23
 metadata:
     namespace: network
@@ -398,15 +400,21 @@ There are several configuration sources for the network configuration, which are
 
 ### Cmdline
 
-The kernel command line is parsed for the following options:
+The kernel [command line]({{< relref "../reference/kernel" >}}) is parsed for the following options:
 
 * `ip=` option is parsed for node IP, default gateway, hostname, DNS servers, NTP servers;
+* `bond=` option is parsed for bonding interfaces and their options;
 * `talos.hostname=` option is used to set node hostname;
 * `talos.network.interface.ignore=` can be used to make Talos skip network interface configuration completely.
 
 ### Platform
 
 Platform configuration delivers cloud environment-specific options (e.g. the hostname).
+
+Platform configuration is specific to the environment metadata: for example, on Equinix Metal, Talos automatically
+configures public and private IPs, routing, link bonding, hostname.
+
+Platform configuration is cached across reboots in `/system/state/platform-network.yaml`.
 
 ### Operator
 
