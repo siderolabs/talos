@@ -57,11 +57,11 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 	var dnsIPs []netaddr.IP
 
 	for _, netsvc := range unmarshalledNetworkConfig.Services {
-		if netsvc.Type == "dns" {
+		if netsvc.Type == "dns" && netsvc.Address != "" {
 			if ip, err := netaddr.ParseIP(netsvc.Address); err == nil {
 				dnsIPs = append(dnsIPs, ip)
 			} else {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse dns service ip: %w", err)
 			}
 		}
 	}
@@ -112,55 +112,57 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 		case "ipv4", "ipv6":
 			var ipPrefix netaddr.IPPrefix
 
-			cidr := strings.SplitN(ntwrk.Address, "/", 2)
-			if len(cidr) == 1 {
-				ip, err := netaddr.ParseIP(ntwrk.Address)
-				if err != nil {
-					return nil, err
-				}
-
-				bits, err := strconv.Atoi(ntwrk.Netmask)
-				if err != nil {
-					netmask, err := netaddr.ParseIP(ntwrk.Netmask)
-					if err != nil {
-						return nil, err
-					}
-
-					mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
-					ones, _ := net.IPMask(mask).Size()
-					ipPrefix = netaddr.IPPrefixFrom(ip, uint8(ones))
-				} else {
-					ipPrefix = netaddr.IPPrefixFrom(ip, uint8(bits))
-				}
-			} else {
-				var err error
-
-				ipPrefix, err = netaddr.ParseIPPrefix(ntwrk.Address)
-				if err != nil {
-					return nil, err
-				}
-			}
-
 			family := nethelpers.FamilyInet4
 			if ntwrk.Type == "ipv6" {
 				family = nethelpers.FamilyInet6
 			}
 
-			networkConfig.Addresses = append(networkConfig.Addresses,
-				network.AddressSpecSpec{
-					ConfigLayer: network.ConfigPlatform,
-					LinkName:    iface,
-					Address:     ipPrefix,
-					Scope:       nethelpers.ScopeGlobal,
-					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-					Family:      family,
-				},
-			)
+			if ntwrk.Address != "" {
+				cidr := strings.SplitN(ntwrk.Address, "/", 2)
+				if len(cidr) == 1 {
+					ip, err := netaddr.ParseIP(ntwrk.Address)
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse ip address: %w", err)
+					}
+
+					bits, err := strconv.Atoi(ntwrk.Netmask)
+					if err != nil {
+						netmask, err := netaddr.ParseIP(ntwrk.Netmask)
+						if err != nil {
+							return nil, fmt.Errorf("failed to parse ip netmask: %w", err)
+						}
+
+						mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
+						ones, _ := net.IPMask(mask).Size()
+						ipPrefix = netaddr.IPPrefixFrom(ip, uint8(ones))
+					} else {
+						ipPrefix = netaddr.IPPrefixFrom(ip, uint8(bits))
+					}
+				} else {
+					var err error
+
+					ipPrefix, err = netaddr.ParseIPPrefix(ntwrk.Address)
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse ipPrefix: %w", err)
+					}
+				}
+
+				networkConfig.Addresses = append(networkConfig.Addresses,
+					network.AddressSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						LinkName:    iface,
+						Address:     ipPrefix,
+						Scope:       nethelpers.ScopeGlobal,
+						Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+						Family:      family,
+					},
+				)
+			}
 
 			if ntwrk.Gateway != "" {
 				gw, err := netaddr.ParseIP(ntwrk.Gateway)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
 				}
 
 				route := network.RouteSpecSpec{
@@ -182,63 +184,63 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 
 				networkConfig.Routes = append(networkConfig.Routes, route)
 			}
-		}
 
-		for _, route := range ntwrk.Routes {
-			gw, err := netaddr.ParseIP(route.Gateway)
-			if err != nil {
-				return nil, err
-			}
-
-			destIP, err := netaddr.ParseIP(route.Network)
-			if err != nil {
-				return nil, err
-			}
-
-			var dest netaddr.IPPrefix
-
-			bits, err := strconv.Atoi(route.Netmask)
-			if err != nil {
-				var maskIP netaddr.IP
-
-				maskIP, err = netaddr.ParseIP(route.Netmask)
+			for _, route := range ntwrk.Routes {
+				gw, err := netaddr.ParseIP(route.Gateway)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to parse route gateway: %w", err)
 				}
 
-				mask, _ := maskIP.MarshalBinary() //nolint:errcheck
-
-				dest, err = destIP.Netmask(mask)
+				destIP, err := netaddr.ParseIP(route.Network)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to parse route network: %w", err)
 				}
-			} else {
-				dest, err = destIP.Prefix(uint8(bits))
+
+				var dest netaddr.IPPrefix
+
+				bits, err := strconv.Atoi(route.Netmask)
 				if err != nil {
-					return nil, err
+					var maskIP netaddr.IP
+
+					maskIP, err = netaddr.ParseIP(route.Netmask)
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse route netmask: %w", err)
+					}
+
+					mask, _ := maskIP.MarshalBinary() //nolint:errcheck
+
+					dest, err = destIP.Netmask(mask)
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse route dest netmask digits: %w", err)
+					}
+				} else {
+					dest, err = destIP.Prefix(uint8(bits))
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse route dest netmask digits: %w", err)
+					}
 				}
+
+				family := nethelpers.FamilyInet4
+				if destIP.Is6() {
+					family = nethelpers.FamilyInet6
+				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Destination: dest,
+					Gateway:     gw,
+					OutLinkName: iface,
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      family,
+					Priority:    1024,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
 			}
-
-			family := nethelpers.FamilyInet4
-			if destIP.Is6() {
-				family = nethelpers.FamilyInet6
-			}
-
-			route := network.RouteSpecSpec{
-				ConfigLayer: network.ConfigPlatform,
-				Destination: dest,
-				Gateway:     gw,
-				OutLinkName: iface,
-				Table:       nethelpers.TableMain,
-				Protocol:    nethelpers.ProtocolStatic,
-				Type:        nethelpers.TypeUnicast,
-				Family:      family,
-				Priority:    1024,
-			}
-
-			route.Normalize()
-
-			networkConfig.Routes = append(networkConfig.Routes, route)
 		}
 	}
 
