@@ -42,7 +42,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.0.0-20220426184241-e22a85955e81
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v20.10.14+incompatible
+	github.com/docker/docker v20.10.15+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/emicklei/dot v0.16.0
@@ -84,6 +84,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/spf13/cobra v1.4.0
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.1
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
@@ -245,7 +246,6 @@ require (
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.10.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/u-root/uio v0.0.0-20210528114334-82958018845c // indirect
