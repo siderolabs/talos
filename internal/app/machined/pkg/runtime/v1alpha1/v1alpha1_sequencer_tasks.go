@@ -707,7 +707,35 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		ctx, cancel := context.WithTimeout(ctx, constants.BootTimeout)
 		defer cancel()
 
-		return conditions.WaitForAll(all...).Wait(ctx)
+		aggregateCondition := conditions.WaitForAll(all...)
+
+		errChan := make(chan error)
+
+		go func() {
+			errChan <- aggregateCondition.Wait(ctx)
+		}()
+
+		lastMessage := aggregateCondition.String()
+		logger.Printf("%s", lastMessage)
+
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case err := <-errChan:
+				return err
+			case <-ticker.C:
+			}
+
+			latestMessage := aggregateCondition.String()
+
+			if latestMessage != lastMessage {
+				logger.Printf("%s", latestMessage)
+
+				lastMessage = latestMessage
+			}
+		}
 	}, "startAllServices"
 }
 
