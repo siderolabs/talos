@@ -105,7 +105,7 @@ with a single `--mode` flag that can take the following values:
 - `auto` new mode that automatically applies the configuration in no-reboot/reboot mode based on the change.
 - `no-reboot` force apply immediately, if that is not possible then it fails.
 - `reboot` force reboot with applied config.
-- `staged` write new machine configuration to `STATE`, but don't apply it (it will be applied after a reboot).
+- `staged` write new machine configuration to [STATE]({{< relref "../learn-more/architecture/#file-system-partitions" >}}), but don't apply it (it will be applied after a reboot).
 - `interactive` starts interactive installer, only for `apply`.
 
 ## Networking

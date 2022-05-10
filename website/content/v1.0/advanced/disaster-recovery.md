@@ -91,7 +91,7 @@ If some control plane nodes experienced hardware failure, replace them with new 
 Use machine configuration backup to re-create the nodes with the same secret material and control plane settings
 to allow workers to join the recovered control plane.
 
-If a control plane node is healthy but `etcd` isn't, wipe the node's `EPHEMERAL` partition to remove the `etcd`
+If a control plane node is healthy but `etcd` isn't, wipe the node's [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition to remove the `etcd`
 data directory (make sure a database snapshot is taken before doing this):
 
 ```bash

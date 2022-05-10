@@ -65,7 +65,7 @@ spec:
 
 Node identity is used as the unique `Affiliate` identifier.
 
-Node identity resource is preserved in the `STATE` partition in `node-identity.yaml` file.
+Node identity resource is preserved in the [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partition in `node-identity.yaml` file.
 Node identity is preserved across reboots and upgrades, but it is regenerated if the node is reset (wiped).
 
 #### Affiliates

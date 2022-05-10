@@ -171,7 +171,7 @@ govc vm.change \
   -vm control-plane-1
 ```
 
-The following can be used to adjust the ephemeral disk size.
+The following can be used to adjust the [EPHEMERAL]({{< relref "../../../learn-more/architecture/#file-system-partitions" >}}) disk size.
 
 ```bash
 govc vm.disk.change -vm control-plane-1 -disk.name disk-1000-0 -size 10G

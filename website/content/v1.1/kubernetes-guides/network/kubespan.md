@@ -125,7 +125,7 @@ Talos automatically configures unique IPv6 address for each node in the cluster-
 
 Wireguard private key is generated for the node, private key never leaves the node while public key is published through the cluster discovery.
 
-`KubeSpanIdentity` is persisted across reboots and upgrades in `STATE` partition in the file `kubespan-identity.yaml`.
+`KubeSpanIdentity` is persisted across reboots and upgrades in [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partition in the file `kubespan-identity.yaml`.
 
 ### KubeSpanPeerSpecs
 

@@ -12,7 +12,7 @@ Doing this means removing the machine from Kubernetes, Etcd (if applicable), and
 ## CLI
 
 > WARNING: Running a `talosctl reset` on cloud VM's might result in the VM being unable to boot as this wipes the entire disk.
-It might be more useful to just wipe the `STATE` and `EPHEMERAL` partitions on a cloud VM if not booting via `iPXE`.
+It might be more useful to just wipe the [STATE]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partitions on a cloud VM if not booting via `iPXE`.
 `talosctl reset --system-labels-to-wipe STATE --system-labels-to-wipe EPHEMERAL`
 
 The API command for doing this is `talosctl reset`.

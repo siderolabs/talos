@@ -6,7 +6,7 @@ aliases:
 ---
 
 It is possible to enable encryption for system disks at the OS level.
-As of this writing, only STATE and EPHEMERAL partitions can be encrypted.
+As of this writing, only [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partitions can be encrypted.
 STATE contains the most sensitive node data: secrets and certs.
 EPHEMERAL partition may contain some sensitive workload data.
 Data is encrypted using LUKS2, which is provided by the Linux kernel modules and `cryptsetup` utility.
