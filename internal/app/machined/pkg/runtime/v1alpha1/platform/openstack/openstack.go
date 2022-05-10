@@ -7,6 +7,7 @@ package openstack
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	stderrors "errors"
 	"fmt"
 	"net"
@@ -14,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/talos-systems/go-procfs/procfs"
-	yaml "gopkg.in/yaml.v3"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -299,8 +299,8 @@ func (o *Openstack) NetworkConfiguration(ctx context.Context, ch chan<- *runtime
 	)
 
 	// ignore errors unmarshaling, empty configs work just fine as empty default
-	_ = yaml.Unmarshal(metadataConfigDl, &unmarshalledMetadataConfig)       //nolint:errcheck
-	_ = yaml.Unmarshal(metadataNetworkConfigDl, &unmarshalledNetworkConfig) //nolint:errcheck
+	_ = json.Unmarshal(metadataConfigDl, &unmarshalledMetadataConfig)       //nolint:errcheck
+	_ = json.Unmarshal(metadataNetworkConfigDl, &unmarshalledNetworkConfig) //nolint:errcheck
 
 	networkConfig, err := o.ParseMetadata(&unmarshalledMetadataConfig, &unmarshalledNetworkConfig, string(hostname), extIPs)
 	if err != nil {
