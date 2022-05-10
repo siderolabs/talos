@@ -697,7 +697,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		all := []conditions.Condition{}
 
-		logger.Printf("waiting for %d services", len(svcs.List()))
+		//logger.Printf("waiting for %d services", len(svcs.List()))
 
 		for _, svc := range svcs.List() {
 			cond := system.WaitForService(system.StateEventUp, svc.AsProto().GetId())
@@ -707,7 +707,35 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 		ctx, cancel := context.WithTimeout(ctx, constants.BootTimeout)
 		defer cancel()
 
-		return conditions.WaitForAll(all...).Wait(ctx)
+		cond := conditions.WaitForAll(all...)
+
+		errCh := make(chan error)
+
+		go func() {
+			errCh <- cond.Wait(ctx)
+		}()
+
+		lastMessage := cond.String()
+		logger.Printf("%s", lastMessage)
+
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case err := <-errCh:
+				return err
+			case <-ticker.C:
+			}
+
+			msg := cond.String()
+
+			if msg != lastMessage {
+				logger.Printf("%s", msg)
+
+				lastMessage = msg
+			}
+		}
 	}, "startAllServices"
 }
 
