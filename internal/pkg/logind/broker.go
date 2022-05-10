@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"syscall"
@@ -31,6 +32,13 @@ type DBusBroker struct {
 
 // NewBroker initializes new broker.
 func NewBroker(serviceSocketPath, clientSocketPath string) (*DBusBroker, error) {
+	// remove socket paths as with Docker mode paths might persist across container restarts
+	for _, socketPath := range []string{serviceSocketPath, clientSocketPath} {
+		if err := os.RemoveAll(socketPath); err != nil {
+			return nil, fmt.Errorf("error cleaning up D-Bus socket paths: %w", err)
+		}
+	}
+
 	broker := &DBusBroker{}
 
 	var err error
