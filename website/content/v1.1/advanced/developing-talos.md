@@ -71,7 +71,7 @@ sudo -E _out/talosctl-linux-amd64 cluster create \
     --registry-mirror gcr.io=http://172.20.0.1:5003 \
     --registry-mirror ghcr.io=http://172.20.0.1:5004 \
     --registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005 \
-    --install-image=127.0.0.1:5005/talos-systems/installer:<RECORDED HASH from the build step> \
+    --install-image=127.0.0.1:5005/siderolabs/installer:<RECORDED HASH from the build step> \
     --masters 3 \
     --workers 2 \
     --with-bootloader=false

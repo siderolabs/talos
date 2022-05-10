@@ -9,7 +9,7 @@ A list of adopters of Talos Linux, and the use
 * **[Nedap Security Atlas](https://nedapsecurityatlas.com)**  
   Nedap Security Atlas does all on-premise development, unit and integration testing in Gitlab running on Talos clusters.
 
-* **[Sidero Labs](https://www.siderolanbs.com)**  
+* **[Sidero Labs](https://www.siderolabs.com)**  
   Sidero Labs uses Talos to build & test Talos! All the unit and end-to-end testing happens on our CI platform running in Talos-backed Kubernetes clusters.
 
 ## Contributing
