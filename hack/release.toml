@@ -20,6 +20,7 @@ preface = """\
 * Linux: 5.15.39
 * Containerd: v1.6.4
 * Runc: 1.1.2
+* CoreDNS: v1.9.2
 
 Talos is built with Go 1.17.10
 """
