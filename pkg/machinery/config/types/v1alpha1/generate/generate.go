@@ -116,10 +116,7 @@ func (i *Input) GetAPIServerSANs() []string {
 
 	endpointURL, err := url.Parse(i.ControlPlaneEndpoint)
 	if err == nil {
-		host, _, err := net.SplitHostPort(endpointURL.Host)
-		if err == nil {
-			list = append(list, host)
-		}
+		list = append(list, endpointURL.Hostname())
 	}
 
 	list = append(list, i.AdditionalSubjectAltNames...)
