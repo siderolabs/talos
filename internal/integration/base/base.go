@@ -28,6 +28,8 @@ type TalosSuite struct {
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
 	Version string
+	// GoVersion is the (expected) version of Go compiler.
+	GoVersion string
 	// TalosctlPath is a path to talosctl binary
 	TalosctlPath string
 	// KubectlPath is a path to kubectl binary

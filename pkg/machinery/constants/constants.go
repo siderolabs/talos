@@ -659,6 +659,9 @@ const (
 
 	// DBusClientSocketPath is the path to the D-Bus socket for the kubelet to connect to.
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
+
+	// GoVersion is the version of Go compiler this release was built with.
+	GoVersion = "go1.18.1"
 )
 
 // See https://linux.die.net/man/3/klogctl
