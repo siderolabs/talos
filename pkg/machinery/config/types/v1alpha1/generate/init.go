@@ -136,6 +136,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
 			DiscoveryEnabled: in.DiscoveryEnabled,
 		},
+		AllowSchedulingOnMasters: in.AllowSchedulingOnMasters,
 	}
 
 	config.MachineConfig = machine
