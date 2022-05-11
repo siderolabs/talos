@@ -50,6 +50,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(suite.Version, v.Messages[0].Version.Tag)
+	suite.Assert().Equal(suite.GoVersion, v.Messages[0].Version.GoVersion)
 }
 
 // TestSameVersionCluster verifies that all the nodes are on the same version.

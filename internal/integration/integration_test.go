@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/talos/internal/integration/k8s"
 	provision_test "github.com/talos-systems/talos/internal/integration/provision"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 	"github.com/talos-systems/talos/pkg/version"
@@ -33,17 +34,18 @@ var allSuites []suite.TestingSuite
 
 // Flag values.
 var (
-	failFast         bool
-	crashdumpEnabled bool
-	talosConfig      string
-	endpoint         string
-	k8sEndpoint      string
-	expectedVersion  string
-	talosctlPath     string
-	kubectlPath      string
-	provisionerName  string
-	clusterName      string
-	stateDir         string
+	failFast          bool
+	crashdumpEnabled  bool
+	talosConfig       string
+	endpoint          string
+	k8sEndpoint       string
+	expectedVersion   string
+	expectedGoVersion string
+	talosctlPath      string
+	kubectlPath       string
+	provisionerName   string
+	clusterName       string
+	stateDir          string
 )
 
 // TestIntegration ...
@@ -88,6 +90,7 @@ func TestIntegration(t *testing.T) {
 				Cluster:      cluster,
 				TalosConfig:  talosConfig,
 				Version:      expectedVersion,
+				GoVersion:    expectedGoVersion,
 				TalosctlPath: talosctlPath,
 				KubectlPath:  kubectlPath,
 			})
@@ -134,6 +137,7 @@ func init() {
 	flag.StringVar(&stateDir, "talos.state", defaultStateDir, "directory path to store cluster state")
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
+	flag.StringVar(&expectedGoVersion, "talos.go.version", constants.GoVersion, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
 	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
 
