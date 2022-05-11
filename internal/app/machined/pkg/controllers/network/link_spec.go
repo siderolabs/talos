@@ -75,10 +75,10 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 	wgClient, err := wgctrl.New()
 	if err != nil {
-		return fmt.Errorf("error creating wireguard client: %w", err)
+		logger.Warn("error creating wireguard client", zap.Error(err))
+	} else {
+		defer wgClient.Close() //nolint:errcheck
 	}
-
-	defer wgClient.Close() //nolint:errcheck
 
 	for {
 		select {
@@ -394,6 +394,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 		// sync wireguard settings
 		if link.TypedSpec().Kind == network.LinkKindWireguard {
+			if wgClient == nil {
+				return fmt.Errorf("wireguard client not available, cannot configure wireguard link %q", link.TypedSpec().Name)
+			}
+
 			wgDev, err := wgClient.Device(link.TypedSpec().Name)
 			if err != nil {
 				return fmt.Errorf("error getting wireguard settings for %q: %w", link.TypedSpec().Name, err)

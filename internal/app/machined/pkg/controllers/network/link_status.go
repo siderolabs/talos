@@ -89,10 +89,10 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 
 	wgClient, err := wgctrl.New()
 	if err != nil {
-		return fmt.Errorf("error creating wireguard client: %w", err)
+		logger.Warn("error creating wireguard client", zap.Error(err))
+	} else {
+		defer wgClient.Close() //nolint:errcheck
 	}
-
-	defer wgClient.Close() //nolint:errcheck
 
 	for {
 		select {
@@ -236,6 +236,10 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 					logger.Warn("failure decoding bond attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
 			case network.LinkKindWireguard:
+				if wgClient == nil {
+					return fmt.Errorf("wireguard client not available, but wireguard interface was discovered: %q", link.Attributes.Name)
+				}
+
 				var wgDev *wgtypes.Device
 
 				wgDev, err = wgClient.Device(link.Attributes.Name)

@@ -133,12 +133,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		ctrl.PeerReconcileInterval = DefaultPeerReconcileInterval
 	}
 
-	wgClient, err := ctrl.WireguardClientFactory()
-	if err != nil {
-		return fmt.Errorf("error creating wireguard client: %w", err)
-	}
+	var wgClient WireguardClient
 
-	defer wgClient.Close() //nolint:errcheck
+	defer func() {
+		if wgClient != nil {
+			wgClient.Close() //nolint:errcheck
+		}
+	}()
 
 	var rulesMgr RulesManager
 
@@ -205,6 +206,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 
 			continue
+		}
+
+		if wgClient == nil {
+			wgClient, err = ctrl.WireguardClientFactory()
+			if err != nil {
+				return fmt.Errorf("error creating wireguard client: %w", err)
+			}
 		}
 
 		if ticker == nil {
