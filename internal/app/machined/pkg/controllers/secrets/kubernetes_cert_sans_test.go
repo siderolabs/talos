@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -99,7 +100,9 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				certSANs, err := suite.state.Get(
+				var certSANs resource.Resource
+
+				certSANs, err = suite.state.Get(
 					suite.ctx,
 					resource.NewMetadata(
 						secrets.NamespaceName,
@@ -132,6 +135,54 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 					}, spec.DNSNames,
 				)
 				suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
+
+				return nil
+			},
+		),
+	)
+
+	_, err = suite.state.UpdateWithConflicts(suite.ctx, rootSecrets.Metadata(), func(r resource.Resource) error {
+		r.(*secrets.KubernetesRoot).TypedSpec().Endpoint, err = url.Parse("https://some.other.url:6443/")
+
+		return err
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				var certSANs resource.Resource
+
+				certSANs, err = suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.CertSANType,
+						secrets.CertSANKubernetesID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					return err
+				}
+
+				spec := certSANs.(*secrets.CertSAN).TypedSpec()
+
+				expectedDNSNames := []string{
+					"example.com",
+					"foo",
+					"foo.example.com",
+					"kubernetes",
+					"kubernetes.default",
+					"kubernetes.default.svc",
+					"kubernetes.default.svc.cluster.remote",
+					"localhost",
+					"some.other.url",
+				}
+
+				if !reflect.DeepEqual(spec.DNSNames, expectedDNSNames) {
+					return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
+				}
 
 				return nil
 			},

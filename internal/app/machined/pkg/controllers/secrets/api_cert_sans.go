@@ -115,6 +115,8 @@ func (ctrl *APICertSANsController) Run(ctx context.Context, r controller.Runtime
 		if err = r.Modify(ctx, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANAPIID), func(r resource.Resource) error {
 			spec := r.(*secrets.CertSAN).TypedSpec()
 
+			spec.Reset()
+
 			spec.AppendIPs(apiRoot.CertSANIPs...)
 			spec.AppendIPs(nodeAddresses.IPs()...)
 
