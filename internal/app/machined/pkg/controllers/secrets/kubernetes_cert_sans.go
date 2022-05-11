@@ -115,6 +115,8 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 		if err = r.Modify(ctx, secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANKubernetesID), func(r resource.Resource) error {
 			spec := r.(*secrets.CertSAN).TypedSpec()
 
+			spec.Reset()
+
 			spec.Append(k8sRoot.Endpoint.Hostname())
 			spec.Append(k8sRoot.CertSANs...)
 

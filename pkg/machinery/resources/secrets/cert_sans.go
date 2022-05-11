@@ -89,6 +89,13 @@ func (r *CertSAN) TypedSpec() *CertSANSpec {
 	return &r.spec
 }
 
+// Reset the list of SANs.
+func (spec *CertSANSpec) Reset() {
+	spec.DNSNames = nil
+	spec.IPs = nil
+	spec.FQDN = ""
+}
+
 // Append list of SANs splitting into IPs/DNS names.
 func (spec *CertSANSpec) Append(sans ...string) {
 	for _, san := range sans {

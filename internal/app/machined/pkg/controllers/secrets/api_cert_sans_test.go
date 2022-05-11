@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -102,6 +103,42 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 			return nil
 		},
 	))
+
+	_, err := suite.state.UpdateWithConflicts(suite.ctx, rootSecrets.Metadata(), func(r resource.Resource) error {
+		r.(*secrets.OSRoot).TypedSpec().CertSANDNSNames = []string{"other.org"}
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				certSANs, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.CertSANType,
+						secrets.CertSANAPIID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					return err
+				}
+
+				spec := certSANs.(*secrets.CertSAN).TypedSpec()
+
+				expectedDNSNames := []string{"bar", "bar.some.org", "other.org"}
+
+				if !reflect.DeepEqual(expectedDNSNames, spec.DNSNames) {
+					return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
+				}
+
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *APICertSANsSuite) TearDownTest() {

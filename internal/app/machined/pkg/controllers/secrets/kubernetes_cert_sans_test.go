@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -92,7 +93,9 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 
 	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
-			certSANs, err := suite.state.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANKubernetesID, resource.VersionUndefined))
+			var certSANs resource.Resource
+
+			certSANs, err = suite.state.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.CertSANType, secrets.CertSANKubernetesID, resource.VersionUndefined))
 			if err != nil {
 				if state.IsNotFoundError(err) {
 					return retry.ExpectedError(err)
@@ -120,6 +123,54 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 			return nil
 		},
 	))
+
+	_, err = suite.state.UpdateWithConflicts(suite.ctx, rootSecrets.Metadata(), func(r resource.Resource) error {
+		r.(*secrets.KubernetesRoot).TypedSpec().Endpoint, err = url.Parse("https://some.other.url:6443/")
+
+		return err
+	})
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				var certSANs resource.Resource
+
+				certSANs, err = suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						secrets.NamespaceName,
+						secrets.CertSANType,
+						secrets.CertSANKubernetesID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					return err
+				}
+
+				spec := certSANs.(*secrets.CertSAN).TypedSpec()
+
+				expectedDNSNames := []string{
+					"example.com",
+					"foo",
+					"foo.example.com",
+					"kubernetes",
+					"kubernetes.default",
+					"kubernetes.default.svc",
+					"kubernetes.default.svc.cluster.remote",
+					"localhost",
+					"some.other.url",
+				}
+
+				if !reflect.DeepEqual(spec.DNSNames, expectedDNSNames) {
+					return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
+				}
+
+				return nil
+			},
+		),
+	)
 }
 
 func (suite *KubernetesCertSANsSuite) TearDownTest() {
