@@ -19,6 +19,8 @@ preface = """\
         description="""\
 * Linux: 5.15.38
 * Containerd: v1.6.4
+
+Talos is built with Go 1.17.10
 """
 
 [make_deps]
