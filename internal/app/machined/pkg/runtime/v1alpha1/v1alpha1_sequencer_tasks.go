@@ -672,6 +672,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		svcs.Load(
 			&services.CRI{},
+			&services.Kubelet{},
 		)
 
 		switch t := r.Config().Machine().Type(); t {
