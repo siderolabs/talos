@@ -24,11 +24,11 @@ Talos now enables the Raspberry Pi PoE fan control by pulling in the poe overlay
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.38
+* Linux: 5.15.39
 * Containerd: v1.6.4
 * Kubernetes: 1.24.0
 * Flannel: 0.17.0
-* runc: 1.1.1
+* runc: 1.1.2
 * CoreDNS: v1.9.2
 
 Talos is built with Go 1.18.2
