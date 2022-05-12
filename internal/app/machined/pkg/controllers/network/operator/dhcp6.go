@@ -136,7 +136,7 @@ func (d *DHCP6) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return nil
 }
 
-func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
+func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -156,6 +156,8 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
 				ConfigLayer: network.ConfigOperator,
 			},
 		}
+
+		leaseTime = reply.Options.OneIANA().Options.OneAddress().ValidLifetime
 	} else {
 		d.addresses = nil
 	}
@@ -188,6 +190,8 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) {
 	} else {
 		d.hostname = nil
 	}
+
+	return leaseTime
 }
 
 func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
@@ -205,9 +209,7 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 
 	d.logger.Debug("DHCP6 REPLY", zap.String("link", d.linkName), zap.String("dhcp", collapseSummary(reply.Summary())))
 
-	d.parseReply(reply)
-
-	return reply.Options.OneIANA().Options.OneAddress().ValidLifetime, nil
+	return d.parseReply(reply), nil
 }
 
 func (d *DHCP6) waitIPv6LinkReady(ctx context.Context, iface *net.Interface) error {
