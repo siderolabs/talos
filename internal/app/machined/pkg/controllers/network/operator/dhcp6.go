@@ -245,7 +245,12 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 
 	d.parseReply(reply)
 
-	return reply.Options.OneIANA().Options.OneAddress().ValidLifetime, nil
+	options := reply.Options.OneIANA()
+	if options != nil && options.Options.OneAddress() != nil {
+		return options.Options.OneAddress().ValidLifetime, nil
+	}
+
+	return 0, fmt.Errorf("no addresses available")
 }
 
 func (d *DHCP6) waitIPv6LinkReady(ctx context.Context, iface *net.Interface) error {
