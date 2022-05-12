@@ -40,6 +40,18 @@ type Container struct {
 	Args []string `yaml:"args"`
 	// Volume mounts.
 	Mounts []specs.Mount `yaml:"mounts"`
+	// Security options.
+	Security Security `yaml:"security"`
+}
+
+// Security options for containers.
+type Security struct {
+	// WriteableSysfs makes the '/sys' path writeable in the container namespace if set to true.
+	WriteableSysfs bool `yaml:"writeableSysfs"`
+	// MaskedPaths is a list of paths in the container namespace that should not be readable.
+	MaskedPaths []string `yaml:"maskedPaths"`
+	// ReadonlyPaths is a list of paths in the container namespace that should be read-only.
+	ReadonlyPaths []string `yaml:"readonlyPaths"`
 }
 
 // Dependency describes a service Dependency.
