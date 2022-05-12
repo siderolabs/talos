@@ -21,17 +21,6 @@ type TimeServerStatusSpec struct {
 	NTPServers []string `yaml:"timeServers"`
 }
 
-// DeepCopy generates a deep copy of TimeServerStatusSpec.
-func (spec TimeServerStatusSpec) DeepCopy() TimeServerStatusSpec {
-	cp := spec
-	if spec.NTPServers != nil {
-		cp.NTPServers = make([]string, len(spec.NTPServers))
-		copy(cp.NTPServers, spec.NTPServers)
-	}
-
-	return cp
-}
-
 // NewTimeServerStatus initializes a TimeServerStatus resource.
 func NewTimeServerStatus(namespace resource.Namespace, id resource.ID) *TimeServerStatus {
 	return typed.NewResource[TimeServerStatusSpec, TimeServerStatusRD](

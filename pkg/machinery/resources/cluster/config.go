@@ -32,17 +32,6 @@ type ConfigSpec struct {
 	ServiceClusterID          string `yaml:"serviceClusterID"`
 }
 
-// DeepCopy generates a deep copy of ConfigSpec.
-func (cs ConfigSpec) DeepCopy() ConfigSpec {
-	cp := cs
-	if cs.ServiceEncryptionKey != nil {
-		cp.ServiceEncryptionKey = make([]byte, len(cs.ServiceEncryptionKey))
-		copy(cp.ServiceEncryptionKey, cs.ServiceEncryptionKey)
-	}
-
-	return cp
-}
-
 // NewConfig initializes a Config resource.
 func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
 	return typed.NewResource[ConfigSpec, ConfigRD](

@@ -15,6 +15,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
+//nolint:lll
+//go:generate deep-copy -type APICertsSpec -type CertSANSpec -type EtcdCertsSpec -type EtcdRootSpec -type KubeletSpec -type KubernetesCertsSpec -type KubernetesRootSpec -type OSRootSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // APIType is type of API resource.
 const APIType = resource.Type("ApiCertificates.secrets.talos.dev")
 
@@ -79,11 +82,6 @@ func (spec *APICertsSpec) UnmarshalProto(protoBytes []byte) error {
 	}
 
 	return nil
-}
-
-// DeepCopy implements the DeepCopyable interface.
-func (spec APICertsSpec) DeepCopy() APICertsSpec {
-	return spec
 }
 
 // APIRD provides auxiliary methods for API.

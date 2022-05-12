@@ -46,13 +46,6 @@ type BootstrapManifestsConfigSpec struct {
 	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled"`
 }
 
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec BootstrapManifestsConfigSpec) DeepCopy() BootstrapManifestsConfigSpec {
-	return spec
-}
-
 // NewBootstrapManifestsConfig returns new BootstrapManifestsConfig resource.
 func NewBootstrapManifestsConfig() *BootstrapManifestsConfig {
 	return typed.NewResource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigRD](

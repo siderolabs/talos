@@ -30,17 +30,6 @@ type HardwareAddrSpec struct {
 	HardwareAddr nethelpers.HardwareAddr `yaml:"hardwareAddr"`
 }
 
-// DeepCopy generates a deep copy of HardwareAddrSpec.
-func (spec HardwareAddrSpec) DeepCopy() HardwareAddrSpec {
-	cp := spec
-	if spec.HardwareAddr != nil {
-		cp.HardwareAddr = make([]byte, len(spec.HardwareAddr))
-		copy(cp.HardwareAddr, spec.HardwareAddr)
-	}
-
-	return cp
-}
-
 // NewHardwareAddr initializes a HardwareAddr resource.
 func NewHardwareAddr(namespace resource.Namespace, id resource.ID) *HardwareAddr {
 	return typed.NewResource[HardwareAddrSpec, HardwareAddrRD](

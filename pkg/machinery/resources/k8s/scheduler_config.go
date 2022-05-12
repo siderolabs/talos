@@ -31,13 +31,6 @@ type SchedulerConfigSpec struct {
 	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
 }
 
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec SchedulerConfigSpec) DeepCopy() SchedulerConfigSpec {
-	return spec
-}
-
 // NewSchedulerConfig returns new SchedulerConfig resource.
 func NewSchedulerConfig() *SchedulerConfig {
 	return typed.NewResource[SchedulerConfigSpec, SchedulerConfigRD](

@@ -25,9 +25,6 @@ type NodenameSpec struct {
 	HostnameVersion string `yaml:"hostnameVersion"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec NodenameSpec) DeepCopy() NodenameSpec { return spec }
-
 // NewNodename initializes a Nodename resource.
 func NewNodename(namespace resource.Namespace, id resource.ID) *Nodename {
 	return typed.NewResource[NodenameSpec, NodenameRD](

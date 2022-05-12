@@ -12,6 +12,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
+//nolint:lll
+//go:generate deep-copy -type ConfigSpec -type EndpointSpec -type IdentitySpec -type PeerSpecSpec -type PeerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // ConfigType is type of Config resource.
 const ConfigType = resource.Type("KubeSpanConfigs.kubespan.talos.dev")
 
@@ -29,9 +32,6 @@ type ConfigSpec struct {
 	// Force routing via KubeSpan even if the peer connection is not up.
 	ForceRouting bool `yaml:"forceRouting"`
 }
-
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec ConfigSpec) DeepCopy() ConfigSpec { return spec }
 
 // NewConfig initializes a Config resource.
 func NewConfig(namespace resource.Namespace, id resource.ID) *Config {

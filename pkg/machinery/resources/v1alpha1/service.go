@@ -10,6 +10,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
+//nolint:lll
+//go:generate deep-copy -type ServiceSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // ServiceType is type of Service resource.
 const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 
@@ -29,11 +32,6 @@ func NewService(id resource.ID) *Service {
 		resource.NewMetadata(NamespaceName, ServiceType, id, resource.VersionUndefined),
 		ServiceSpec{},
 	)
-}
-
-// DeepCopy implements the DeepCopyable interface.
-func (s ServiceSpec) DeepCopy() ServiceSpec {
-	return s
 }
 
 // ServiceRD provides auxiliary methods for Service.

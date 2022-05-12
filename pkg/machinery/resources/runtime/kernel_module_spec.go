@@ -30,11 +30,6 @@ func NewKernelModuleSpec(namespace resource.Namespace, id resource.ID) *KernelMo
 	)
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KernelModuleSpecSpec) DeepCopy() KernelModuleSpecSpec {
-	return spec
-}
-
 // KernelModuleSpecRD is auxiliary resource data for KernelModuleSpec.
 type KernelModuleSpecRD struct{}
 

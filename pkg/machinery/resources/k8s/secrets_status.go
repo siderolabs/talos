@@ -28,9 +28,6 @@ type SecretsStatusSpec struct {
 	Version string `yaml:"version"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec SecretsStatusSpec) DeepCopy() SecretsStatusSpec { return spec }
-
 // NewSecretsStatus initializes a SecretsStatus resource.
 func NewSecretsStatus(namespace resource.Namespace, id resource.ID) *SecretsStatus {
 	return typed.NewResource[SecretsStatusSpec, SecretsStatusRD](

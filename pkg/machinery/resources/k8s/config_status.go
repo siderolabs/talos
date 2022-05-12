@@ -28,9 +28,6 @@ type ConfigStatusSpec struct {
 	Version string `yaml:"version"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec ConfigStatusSpec) DeepCopy() ConfigStatusSpec { return spec }
-
 // NewConfigStatus initializes a ConfigStatus resource.
 func NewConfigStatus(namespace resource.Namespace, id resource.ID) *ConfigStatus {
 	return typed.NewResource[ConfigStatusSpec, ConfigStatusRD](

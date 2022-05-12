@@ -38,11 +38,6 @@ func NewOSRoot(id resource.ID) *OSRoot {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (spec OSRootSpec) DeepCopy() OSRootSpec {
-	return spec
-}
-
 // OSRootRD provides auxiliary methods for OSRoot.
 type OSRootRD struct{}
 

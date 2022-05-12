@@ -44,13 +44,6 @@ type APIServerConfigSpec struct {
 	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
 }
 
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec APIServerConfigSpec) DeepCopy() APIServerConfigSpec {
-	return spec
-}
-
 // NewAPIServerConfig returns new APIServerConfig resource.
 func NewAPIServerConfig() *APIServerConfig {
 	return typed.NewResource[APIServerConfigSpec, APIServerConfigRD](

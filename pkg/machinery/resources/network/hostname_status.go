@@ -22,11 +22,6 @@ type HostnameStatusSpec struct {
 	Domainname string `yaml:"domainname"`
 }
 
-// DeepCopy generates a deep copy of HostnameSpecSpec.
-func (spec HostnameStatusSpec) DeepCopy() HostnameStatusSpec {
-	return spec
-}
-
 // FQDN returns the fully-qualified domain name.
 func (spec *HostnameStatusSpec) FQDN() string {
 	if spec.Domainname == "" {

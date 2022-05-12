@@ -22,17 +22,6 @@ type ResolverStatusSpec struct {
 	DNSServers []netaddr.IP `yaml:"dnsServers"`
 }
 
-// DeepCopy generates a deep copy of ResolverStatusSpec.
-func (spec ResolverStatusSpec) DeepCopy() ResolverStatusSpec {
-	cp := spec
-	if spec.DNSServers != nil {
-		cp.DNSServers = make([]netaddr.IP, len(spec.DNSServers))
-		copy(cp.DNSServers, spec.DNSServers)
-	}
-
-	return cp
-}
-
 // NewResolverStatus initializes a ResolverStatus resource.
 func NewResolverStatus(namespace resource.Namespace, id resource.ID) *ResolverStatus {
 	return typed.NewResource[ResolverStatusSpec, ResolverStatusRD](

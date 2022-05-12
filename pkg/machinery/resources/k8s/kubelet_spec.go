@@ -25,22 +25,6 @@ type KubeletSpecSpec struct {
 	Config      map[string]interface{} `yaml:"config"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KubeletSpecSpec) DeepCopy() KubeletSpecSpec {
-	config := make(map[string]interface{}, len(spec.Config))
-
-	for k, v := range spec.Config {
-		config[k] = v
-	}
-
-	return KubeletSpecSpec{
-		Image:       spec.Image,
-		Args:        append([]string(nil), spec.Args...),
-		ExtraMounts: append([]specs.Mount(nil), spec.ExtraMounts...),
-		Config:      config,
-	}
-}
-
 // NewKubeletSpec initializes an empty KubeletSpec resource.
 func NewKubeletSpec(namespace resource.Namespace, id resource.ID) *KubeletSpec {
 	return typed.NewResource[KubeletSpecSpec, KubeletSpecRD](

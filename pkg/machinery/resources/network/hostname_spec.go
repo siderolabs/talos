@@ -29,11 +29,6 @@ type HostnameSpecSpec struct {
 	ConfigLayer ConfigLayer `yaml:"layer"`
 }
 
-// DeepCopy generates a deep copy of HostnameSpecSpec.
-func (spec HostnameSpecSpec) DeepCopy() HostnameSpecSpec {
-	return spec
-}
-
 // Validate the hostname.
 func (spec *HostnameSpecSpec) Validate() error {
 	lenHostname := len(spec.Hostname)

@@ -40,11 +40,6 @@ func NewKubelet(id resource.ID) *Kubelet {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (s KubeletSpec) DeepCopy() KubeletSpec {
-	return s
-}
-
 // KubeletRD provides auxiliary methods for Kubelet.
 type KubeletRD struct{}
 

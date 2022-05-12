@@ -10,6 +10,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
+//nolint:lll
+//go:generate deep-copy -type CPUSpec -type MemorySpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // CPUType is type of Etcd resource.
 const CPUType = resource.Type("CPUStats.perf.talos.dev")
 
@@ -51,11 +54,6 @@ func NewCPU() *CPU {
 		resource.NewMetadata(NamespaceName, CPUType, CPUID, resource.VersionUndefined),
 		CPUSpec{},
 	)
-}
-
-// DeepCopy implements typed.Deepcopyable interface.
-func (spec CPUSpec) DeepCopy() CPUSpec {
-	return spec
 }
 
 // CPURD is an auxiliary type for CPU resource.

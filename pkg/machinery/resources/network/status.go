@@ -24,11 +24,6 @@ type StatusSpec struct {
 	EtcFilesReady     bool `yaml:"etcFilesReady"`
 }
 
-// DeepCopy generates a deep copy of StatusSpec.
-func (spec StatusSpec) DeepCopy() StatusSpec {
-	return spec
-}
-
 // StatusID is the resource ID of the singleton instance.
 const StatusID resource.ID = "status"
 

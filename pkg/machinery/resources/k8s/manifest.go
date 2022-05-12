@@ -21,13 +21,6 @@ type ManifestSpec struct {
 	Items []map[string]interface{}
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec ManifestSpec) DeepCopy() ManifestSpec {
-	return ManifestSpec{
-		Items: append([]map[string]interface{}(nil), spec.Items...),
-	}
-}
-
 // MarshalYAML implements yaml.Marshaler.
 func (spec ManifestSpec) MarshalYAML() (interface{}, error) {
 	return spec.Items, nil

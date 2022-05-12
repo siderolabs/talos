@@ -24,9 +24,6 @@ type ManifestStatusSpec struct {
 	ManifestsApplied []string `yaml:"manifestsApplied"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec ManifestStatusSpec) DeepCopy() ManifestStatusSpec { return spec }
-
 // NewManifestStatus initializes an empty ManifestStatus resource.
 func NewManifestStatus(namespace resource.Namespace) *ManifestStatus {
 	return typed.NewResource[ManifestStatusSpec, ManifestStatusRD](

@@ -29,11 +29,6 @@ type IdentitySpec struct {
 	NodeID string `yaml:"nodeId"`
 }
 
-// DeepCopy generates a deep copy of IdentitySpec.
-func (spec IdentitySpec) DeepCopy() IdentitySpec {
-	return spec
-}
-
 // NewIdentity initializes a Identity resource.
 func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
 	return typed.NewResource[IdentitySpec, IdentityRD](

@@ -49,11 +49,6 @@ func NewKubernetesRoot(id resource.ID) *KubernetesRoot {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (spec KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
-	return spec
-}
-
 // KubernetesRootRD provides auxiliary methods for KubernetesRoot.
 type KubernetesRootRD struct{}
 

@@ -79,11 +79,6 @@ func NewMemory() *Memory {
 	)
 }
 
-// DeepCopy implements typed.Deepcopyable interface.
-func (spec MemorySpec) DeepCopy() MemorySpec {
-	return spec
-}
-
 // MemoryRD is an auxiliary type for Memory resource.
 type MemoryRD struct{}
 

@@ -35,11 +35,6 @@ type RouteSpecSpec struct {
 	ConfigLayer ConfigLayer              `yaml:"layer"`
 }
 
-// DeepCopy generates a deep copy of RouteSpecSpec.
-func (route RouteSpecSpec) DeepCopy() RouteSpecSpec {
-	return route
-}
-
 var (
 	zero16 = netaddr.MustParseIP("::")
 	zero4  = netaddr.MustParseIP("0.0.0.0")

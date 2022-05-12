@@ -102,6 +102,9 @@ RUN go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
 ARG GOFUMPT_VERSION
 RUN go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
+ARG DEEPCOPY_VERSION
+RUN go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
+    && mv /go/bin/deep-copy /toolchain/go/bin/deep-copy
 ARG STRINGER_VERSION
 RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer

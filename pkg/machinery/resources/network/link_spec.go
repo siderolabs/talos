@@ -8,7 +8,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -61,24 +60,6 @@ type BondSlave struct {
 
 	// SlaveIndex indicates a slave's position in bond.
 	SlaveIndex int `yaml:"slaveIndex,omitempty"`
-}
-
-// DeepCopy generates a deep copy of LinkSpecSpec.
-func (spec LinkSpecSpec) DeepCopy() LinkSpecSpec {
-	cp := spec
-	if spec.Wireguard.Peers != nil {
-		cp.Wireguard.Peers = make([]WireguardPeer, len(spec.Wireguard.Peers))
-		copy(cp.Wireguard.Peers, spec.Wireguard.Peers)
-
-		for i3 := range spec.Wireguard.Peers {
-			if spec.Wireguard.Peers[i3].AllowedIPs != nil {
-				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(spec.Wireguard.Peers[i3].AllowedIPs))
-				copy(cp.Wireguard.Peers[i3].AllowedIPs, spec.Wireguard.Peers[i3].AllowedIPs)
-			}
-		}
-	}
-
-	return cp
 }
 
 // Merge with other, overwriting fields from other if set.

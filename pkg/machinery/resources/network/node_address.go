@@ -40,13 +40,6 @@ type NodeAddressSpec struct {
 	Addresses []netaddr.IPPrefix `yaml:"addresses"`
 }
 
-// DeepCopy generates a deep copy of NodeAddressSpec.
-func (spec NodeAddressSpec) DeepCopy() NodeAddressSpec {
-	return NodeAddressSpec{
-		Addresses: append([]netaddr.IPPrefix(nil), spec.Addresses...),
-	}
-}
-
 // NewNodeAddress initializes a NodeAddress resource.
 func NewNodeAddress(namespace resource.Namespace, id resource.ID) *NodeAddress {
 	return typed.NewResource[NodeAddressSpec, NodeAddressRD](

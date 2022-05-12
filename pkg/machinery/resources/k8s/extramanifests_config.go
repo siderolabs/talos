@@ -36,13 +36,6 @@ type ExtraManifest struct {
 	InlineManifest string            `yaml:"inlineManifest"`
 }
 
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec ExtraManifestsConfigSpec) DeepCopy() ExtraManifestsConfigSpec {
-	return spec
-}
-
 // NewExtraManifestsConfig returns new ExtraManifestsConfig resource.
 func NewExtraManifestsConfig() *ExtraManifestsConfig {
 	return typed.NewResource[ExtraManifestsConfigSpec, ExtraManifestsConfigRD](

@@ -32,11 +32,6 @@ func NewMountStatus(namespace resource.Namespace, id resource.ID) *MountStatus {
 	)
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec MountStatusSpec) DeepCopy() MountStatusSpec {
-	return spec
-}
-
 // MountStatusRD is auxiliary resource data for MountStatus.
 type MountStatusRD struct{}
 

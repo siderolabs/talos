@@ -13,6 +13,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
+//nolint:lll
+//go:generate deep-copy -type AddressSpecSpec -type AddressStatusSpec -type HardwareAddrSpec -type HostnameSpecSpec -type HostnameStatusSpec -type LinkRefreshSpec -type LinkSpecSpec -type LinkStatusSpec -type NodeAddressSpec -type NodeAddressFilterSpec -type OperatorSpecSpec -type ResolverSpecSpec -type ResolverStatusSpec -type RouteSpecSpec -type RouteStatusSpec -type StatusSpec -type TimeServerSpecSpec -type TimeServerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // AddressSpecType is type of AddressSpec resource.
 const AddressSpecType = resource.Type("AddressSpecs.net.talos.dev")
 
@@ -28,11 +31,6 @@ type AddressSpecSpec struct {
 	Flags           nethelpers.AddressFlags `yaml:"flags"`
 	AnnounceWithARP bool                    `yaml:"announceWithARP,omitempty"`
 	ConfigLayer     ConfigLayer             `yaml:"layer"`
-}
-
-// DeepCopy generates a deep copy of AddressSpecSpec.
-func (spec AddressSpecSpec) DeepCopy() AddressSpecSpec {
-	return spec
 }
 
 // NewAddressSpec initializes a AddressSpec resource.

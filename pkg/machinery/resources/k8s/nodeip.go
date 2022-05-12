@@ -22,13 +22,6 @@ type NodeIPSpec struct {
 	Addresses []netaddr.IP `yaml:"addresses"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec NodeIPSpec) DeepCopy() NodeIPSpec {
-	return NodeIPSpec{
-		Addresses: append([]netaddr.IP(nil), spec.Addresses...),
-	}
-}
-
 // NewNodeIP initializes an empty NodeIP resource.
 func NewNodeIP(namespace resource.Namespace, id resource.ID) *NodeIP {
 	return typed.NewResource[NodeIPSpec, NodeIPRD](

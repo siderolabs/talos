@@ -33,11 +33,6 @@ type AddressStatusSpec struct {
 	Flags     nethelpers.AddressFlags `yaml:"flags"`
 }
 
-// DeepCopy generates a deep copy of AddressStatusSpec.
-func (spec AddressStatusSpec) DeepCopy() AddressStatusSpec {
-	return spec
-}
-
 // NewAddressStatus initializes a AddressStatus resource.
 func NewAddressStatus(namespace resource.Namespace, id resource.ID) *AddressStatus {
 	return typed.NewResource[AddressStatusSpec, AddressStatusRD](

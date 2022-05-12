@@ -42,11 +42,6 @@ func NewKubernetes() *Kubernetes {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (s KubernetesCertsSpec) DeepCopy() KubernetesCertsSpec {
-	return s
-}
-
 // KubernetesRD provides auxiliary methods for Kubernetes.
 type KubernetesRD struct{}
 

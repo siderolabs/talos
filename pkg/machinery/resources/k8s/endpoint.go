@@ -30,14 +30,7 @@ type EndpointSpec struct {
 	Addresses []netaddr.IP `yaml:"addresses"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec EndpointSpec) DeepCopy() EndpointSpec {
-	return EndpointSpec{
-		Addresses: append([]netaddr.IP(nil), spec.Addresses...),
-	}
-}
-
-// NewEndpoint initializes a Endpoint resource.
+// NewEndpoint initializes the Endpoint resource.
 func NewEndpoint(namespace resource.Namespace, id resource.ID) *Endpoint {
 	return typed.NewResource[EndpointSpec, EndpointRD](
 		resource.NewMetadata(namespace, EndpointType, id, resource.VersionUndefined),

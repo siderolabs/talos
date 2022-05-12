@@ -21,13 +21,6 @@ type StaticPodSpec struct {
 	Pod map[string]interface{}
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec StaticPodSpec) DeepCopy() StaticPodSpec {
-	return StaticPodSpec{
-		Pod: copyMap(spec.Pod),
-	}
-}
-
 // MarshalYAML implements yaml.Marshaler.
 func (spec StaticPodSpec) MarshalYAML() (interface{}, error) {
 	return spec.Pod, nil
@@ -51,13 +44,4 @@ func (StaticPodRD) ResourceDefinition(resource.Metadata, StaticPodSpec) meta.Res
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 	}
-}
-
-func copyMap[K comparable, V any](m map[K]V) map[K]V {
-	result := make(map[K]V, len(m))
-	for k, v := range m {
-		result[k] = v
-	}
-
-	return result
 }

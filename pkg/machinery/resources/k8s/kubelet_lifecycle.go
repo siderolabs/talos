@@ -28,9 +28,6 @@ type KubeletLifecycle = typed.Resource[KubeletLifecycleSpec, KubeletLifecycleRD]
 // KubeletLifecycleSpec is empty.
 type KubeletLifecycleSpec struct{}
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KubeletLifecycleSpec) DeepCopy() KubeletLifecycleSpec { return spec }
-
 // NewKubeletLifecycle initializes an empty KubeletLifecycle resource.
 func NewKubeletLifecycle(namespace resource.Namespace, id resource.ID) *KubeletLifecycle {
 	return typed.NewResource[KubeletLifecycleSpec, KubeletLifecycleRD](

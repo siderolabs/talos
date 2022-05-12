@@ -35,11 +35,6 @@ type KernelParamSpecSpec struct {
 	IgnoreErrors bool   `yaml:"ignoreErrors"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KernelParamSpecSpec) DeepCopy() KernelParamSpecSpec {
-	return spec
-}
-
 // NewKernelParamSpec initializes a KernelParamSpec resource.
 func NewKernelParamSpec(namespace resource.Namespace, id resource.ID) *KernelParamSpec {
 	return typed.NewResource[KernelParamSpecSpec, KernelParamSpecRD](

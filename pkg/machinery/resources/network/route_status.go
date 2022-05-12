@@ -35,11 +35,6 @@ type RouteStatusSpec struct {
 	Protocol     nethelpers.RouteProtocol `yaml:"protocol"`
 }
 
-// DeepCopy generates a deep copy of RouteStatusSpec.
-func (spec RouteStatusSpec) DeepCopy() RouteStatusSpec {
-	return spec
-}
-
 // NewRouteStatus initializes a RouteStatus resource.
 func NewRouteStatus(namespace resource.Namespace, id resource.ID) *RouteStatus {
 	return typed.NewResource[RouteStatusSpec, RouteStatusRD](

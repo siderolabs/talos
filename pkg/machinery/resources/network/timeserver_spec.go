@@ -25,17 +25,6 @@ type TimeServerSpecSpec struct {
 	ConfigLayer ConfigLayer `yaml:"layer"`
 }
 
-// DeepCopy generates a deep copy of TimeServerSpecSpec.
-func (spec TimeServerSpecSpec) DeepCopy() TimeServerSpecSpec {
-	cp := spec
-	if spec.NTPServers != nil {
-		cp.NTPServers = make([]string, len(spec.NTPServers))
-		copy(cp.NTPServers, spec.NTPServers)
-	}
-
-	return cp
-}
-
 // NewTimeServerSpec initializes a TimeServerSpec resource.
 func NewTimeServerSpec(namespace resource.Namespace, id resource.ID) *TimeServerSpec {
 	return typed.NewResource[TimeServerSpecSpec, TimeServerSpecRD](

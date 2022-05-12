@@ -34,13 +34,6 @@ type ControllerManagerConfigSpec struct {
 	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
 }
 
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec ControllerManagerConfigSpec) DeepCopy() ControllerManagerConfigSpec {
-	return spec
-}
-
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.
 func NewControllerManagerConfig() *ControllerManagerConfig {
 	return typed.NewResource[ControllerManagerConfigSpec, ControllerManagerConfigRD](

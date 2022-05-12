@@ -12,6 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
+//go:generate deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // EtcFileSpecType is type of EtcFile resource.
 const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")
 
@@ -22,14 +24,6 @@ type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecMD]
 type EtcFileSpecSpec struct {
 	Contents []byte      `yaml:"contents"`
 	Mode     fs.FileMode `yaml:"mode"`
-}
-
-// DeepCopy implements typed.DeepCopyable interface.
-func (e EtcFileSpecSpec) DeepCopy() EtcFileSpecSpec {
-	return EtcFileSpecSpec{
-		Contents: append([]byte(nil), e.Contents...),
-		Mode:     e.Mode,
-	}
 }
 
 // NewEtcFileSpec initializes a EtcFileSpec resource.

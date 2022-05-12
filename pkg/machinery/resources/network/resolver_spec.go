@@ -26,17 +26,6 @@ type ResolverSpecSpec struct {
 	ConfigLayer ConfigLayer  `yaml:"layer"`
 }
 
-// DeepCopy generates a deep copy of ResolverSpecSpec.
-func (spec ResolverSpecSpec) DeepCopy() ResolverSpecSpec {
-	cp := spec
-	if spec.DNSServers != nil {
-		cp.DNSServers = make([]netaddr.IP, len(spec.DNSServers))
-		copy(cp.DNSServers, spec.DNSServers)
-	}
-
-	return cp
-}
-
 // NewResolverSpec initializes a ResolverSpec resource.
 func NewResolverSpec(namespace resource.Namespace, id resource.ID) *ResolverSpec {
 	return typed.NewResource[ResolverSpecSpec, ResolverSpecRD](

@@ -8,7 +8,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -46,34 +45,6 @@ type LinkStatusSpec struct {
 	VLAN       VLANSpec       `yaml:"vlan,omitempty"`
 	BondMaster BondMasterSpec `yaml:"bondMaster,omitempty"`
 	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
-}
-
-// DeepCopy implements typed.DeepCopyable interface.
-func (s LinkStatusSpec) DeepCopy() LinkStatusSpec {
-	cp := s
-
-	if s.HardwareAddr != nil {
-		cp.HardwareAddr = make([]byte, len(s.HardwareAddr))
-		copy(cp.HardwareAddr, s.HardwareAddr)
-	}
-
-	if s.BroadcastAddr != nil {
-		cp.BroadcastAddr = make([]byte, len(s.BroadcastAddr))
-		copy(cp.BroadcastAddr, s.BroadcastAddr)
-	}
-
-	if s.Wireguard.Peers != nil {
-		cp.Wireguard.Peers = append([]WireguardPeer(nil), s.Wireguard.Peers...)
-
-		for i3 := range s.Wireguard.Peers {
-			if s.Wireguard.Peers[i3].AllowedIPs != nil {
-				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(s.Wireguard.Peers[i3].AllowedIPs))
-				copy(cp.Wireguard.Peers[i3].AllowedIPs, s.Wireguard.Peers[i3].AllowedIPs)
-			}
-		}
-	}
-
-	return cp
 }
 
 // Physical checks if the link is physical ethernet.

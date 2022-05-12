@@ -36,11 +36,6 @@ func NewEtcd() *Etcd {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (s EtcdCertsSpec) DeepCopy() EtcdCertsSpec {
-	return s
-}
-
 // EtcdRD provides auxiliary methods for Etcd.
 type EtcdRD struct{}
 

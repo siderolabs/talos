@@ -21,11 +21,6 @@ type EtcFileStatusSpec struct {
 	SpecVersion string `yaml:"specVersion"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (e EtcFileStatusSpec) DeepCopy() EtcFileStatusSpec {
-	return e
-}
-
 // NewEtcFileStatus initializes a EtcFileStatus resource.
 func NewEtcFileStatus(namespace resource.Namespace, id resource.ID) *EtcFileStatus {
 	return typed.NewResource[EtcFileStatusSpec, EtcFileStatusMD](

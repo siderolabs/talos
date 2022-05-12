@@ -21,13 +21,6 @@ type StaticPodStatusSpec struct {
 	PodStatus map[string]interface{}
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec StaticPodStatusSpec) DeepCopy() StaticPodStatusSpec {
-	return StaticPodStatusSpec{
-		PodStatus: copyMap(spec.PodStatus),
-	}
-}
-
 // MarshalYAML implements yaml.Marshaler.
 func (spec StaticPodStatusSpec) MarshalYAML() (interface{}, error) {
 	return spec.PodStatus, nil

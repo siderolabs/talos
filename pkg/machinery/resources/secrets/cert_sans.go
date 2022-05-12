@@ -54,15 +54,6 @@ func (CertSANRD) ResourceDefinition(resource.Metadata, CertSANSpec) meta.Resourc
 	}
 }
 
-// DeepCopy implements DeepCopyable.
-func (spec CertSANSpec) DeepCopy() CertSANSpec {
-	return CertSANSpec{
-		IPs:      append([]netaddr.IP(nil), spec.IPs...),
-		DNSNames: append([]string(nil), spec.DNSNames...),
-		FQDN:     spec.FQDN,
-	}
-}
-
 // Reset the list of SANs.
 func (spec *CertSANSpec) Reset() {
 	spec.DNSNames = nil

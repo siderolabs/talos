@@ -13,6 +13,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
+//nolint:lll
+//go:generate deep-copy -type AdmissionControlConfigSpec -type APIServerConfigSpec -type ConfigStatusSpec -type ControllerManagerConfigSpec -type EndpointSpec -type ExtraManifestsConfigSpec -type KubeletLifecycleSpec -type KubeletSpecSpec -type ManifestSpec -type ManifestStatusSpec -type BootstrapManifestsConfigSpec -type NodeIPSpec -type NodeIPConfigSpec -type NodenameSpec -type SchedulerConfigSpec -type SecretsStatusSpec -type StaticPodSpec -type StaticPodStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // AdmissionControlConfigType is type of AdmissionControlConfig resource.
 const AdmissionControlConfigType = resource.Type("AdmissionControlConfigs.kubernetes.talos.dev")
 
@@ -31,13 +34,6 @@ type AdmissionControlConfigSpec struct {
 type AdmissionPluginSpec struct {
 	Name          string                 `yaml:"name"`
 	Configuration map[string]interface{} `yaml:"configuration"`
-}
-
-// DeepCopy implements Deepcopyable.
-//
-// TODO: should be properly go-generated.
-func (spec AdmissionControlConfigSpec) DeepCopy() AdmissionControlConfigSpec {
-	return spec
 }
 
 // NewAdmissionControlConfig returns new AdmissionControlConfig resource.

@@ -27,9 +27,6 @@ type LinkRefreshSpec struct {
 	Generation int `yaml:"generation"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (s LinkRefreshSpec) DeepCopy() LinkRefreshSpec { return s }
-
 // Bump performs an update.
 func (s *LinkRefreshSpec) Bump() {
 	s.Generation++

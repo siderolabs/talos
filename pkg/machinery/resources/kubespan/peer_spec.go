@@ -27,16 +27,6 @@ type PeerSpecSpec struct {
 	Label      string             `yaml:"label"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec PeerSpecSpec) DeepCopy() PeerSpecSpec {
-	return PeerSpecSpec{
-		Address:    spec.Address,
-		AllowedIPs: append([]netaddr.IPPrefix(nil), spec.AllowedIPs...),
-		Endpoints:  append([]netaddr.IPPort(nil), spec.Endpoints...),
-		Label:      spec.Label,
-	}
-}
-
 // NewPeerSpec initializes a PeerSpec resource.
 func NewPeerSpec(namespace resource.Namespace, id resource.ID) *PeerSpec {
 	return typed.NewResource[PeerSpecSpec, PeerSpecRD](

@@ -39,9 +39,6 @@ type PeerStatusSpec struct {
 	LastEndpointChange time.Time      `yaml:"lastEndpointChange"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec PeerStatusSpec) DeepCopy() PeerStatusSpec { return spec }
-
 // NewPeerStatus initializes a PeerStatus resource.
 func NewPeerStatus(namespace resource.Namespace, id resource.ID) *PeerStatus {
 	return typed.NewResource[PeerStatusSpec, PeerStatusRD](

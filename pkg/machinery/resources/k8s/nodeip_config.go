@@ -22,14 +22,6 @@ type NodeIPConfigSpec struct {
 	ExcludeSubnets []string `yaml:"excludeSubnets"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec NodeIPConfigSpec) DeepCopy() NodeIPConfigSpec {
-	return NodeIPConfigSpec{
-		ValidSubnets:   append([]string(nil), spec.ValidSubnets...),
-		ExcludeSubnets: append([]string(nil), spec.ExcludeSubnets...),
-	}
-}
-
 // NewNodeIPConfig initializes an empty NodeIPConfig resource.
 func NewNodeIPConfig(namespace resource.Namespace, id resource.ID) *NodeIPConfig {
 	return typed.NewResource[NodeIPConfigSpec, NodeIPConfigRD](

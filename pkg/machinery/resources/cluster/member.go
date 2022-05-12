@@ -30,17 +30,6 @@ type MemberSpec struct {
 	OperatingSystem string       `yaml:"operatingSystem"`
 }
 
-// DeepCopy generates a deep copy of MemberSpec.
-func (spec MemberSpec) DeepCopy() MemberSpec {
-	cp := spec
-	if spec.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(spec.Addresses))
-		copy(cp.Addresses, spec.Addresses)
-	}
-
-	return cp
-}
-
 // NewMember initializes a Member resource.
 func NewMember(namespace resource.Namespace, id resource.ID) *Member {
 	return typed.NewResource[MemberSpec, MemberRD](

@@ -25,9 +25,6 @@ type EndpointSpec struct {
 	Endpoint    netaddr.IPPort `yaml:"endpoint"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec EndpointSpec) DeepCopy() EndpointSpec { return spec }
-
 // NewEndpoint initializes a Endpoint resource.
 func NewEndpoint(namespace resource.Namespace, id resource.ID) *Endpoint {
 	return typed.NewResource[EndpointSpec, EndpointRD](

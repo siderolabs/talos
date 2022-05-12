@@ -10,6 +10,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+//nolint:lll
+//go:generate deep-copy -type Layer -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // Config specifies Talos installer extensions configuration.
 type Config struct {
 	Layers []*Layer `yaml:"layers"`
@@ -43,9 +46,4 @@ func (cfg *Config) Write(path string) error {
 	defer f.Close() //nolint:errcheck
 
 	return yaml.NewEncoder(f).Encode(cfg)
-}
-
-// DeepCopy implements DeepCopyable.
-func (layer Layer) DeepCopy() Layer {
-	return layer
 }

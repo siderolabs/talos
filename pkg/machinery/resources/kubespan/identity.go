@@ -33,9 +33,6 @@ type IdentitySpec struct {
 	PublicKey  string `yaml:"publicKey"`
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec IdentitySpec) DeepCopy() IdentitySpec { return spec }
-
 // NewIdentity initializes a Identity resource.
 func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
 	return typed.NewResource[IdentitySpec, IdentityRD](

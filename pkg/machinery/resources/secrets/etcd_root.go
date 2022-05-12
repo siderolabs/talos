@@ -33,11 +33,6 @@ func NewEtcdRoot(id resource.ID) *EtcdRoot {
 	)
 }
 
-// DeepCopy implements the DeepCopyable interface.
-func (s EtcdRootSpec) DeepCopy() EtcdRootSpec {
-	return s
-}
-
 // EtcdRootRD provides auxiliary methods for EtcdRoot.
 type EtcdRootRD struct{}
 

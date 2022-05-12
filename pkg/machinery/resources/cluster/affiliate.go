@@ -13,6 +13,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
+//go:generate deep-copy -type AffiliateSpec -type IdentitySpec -type MemberSpec -type ConfigSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // AffiliateType is type of Affiliate resource.
 const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
 
@@ -72,27 +74,6 @@ type AffiliateSpec struct {
 	OperatingSystem string                `yaml:"operatingSystem"`
 	MachineType     machine.Type          `yaml:"machineType"`
 	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
-}
-
-// DeepCopy generates a deep copy of AffiliateSpec.
-func (spec AffiliateSpec) DeepCopy() AffiliateSpec {
-	cp := spec
-	if spec.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(spec.Addresses))
-		copy(cp.Addresses, spec.Addresses)
-	}
-
-	if spec.KubeSpan.AdditionalAddresses != nil {
-		cp.KubeSpan.AdditionalAddresses = make([]netaddr.IPPrefix, len(spec.KubeSpan.AdditionalAddresses))
-		copy(cp.KubeSpan.AdditionalAddresses, spec.KubeSpan.AdditionalAddresses)
-	}
-
-	if spec.KubeSpan.Endpoints != nil {
-		cp.KubeSpan.Endpoints = make([]netaddr.IPPort, len(spec.KubeSpan.Endpoints))
-		copy(cp.KubeSpan.Endpoints, spec.KubeSpan.Endpoints)
-	}
-
-	return cp
 }
 
 // Merge two AffiliateSpecs.

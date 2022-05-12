@@ -12,6 +12,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
+//nolint:lll
+//go:generate deep-copy -type StatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // StatusType is type of TimeSync resource.
 const StatusType = resource.Type("TimeStatuses.v1alpha1.talos.dev")
 
@@ -39,11 +42,6 @@ func NewStatus() *Status {
 		resource.NewMetadata(v1alpha1.NamespaceName, StatusType, StatusID, resource.VersionUndefined),
 		StatusSpec{},
 	)
-}
-
-// DeepCopy implements the DeepCopyable interface.
-func (s StatusSpec) DeepCopy() StatusSpec {
-	return s
 }
 
 // StatusRD provides auxiliary methods for Status.

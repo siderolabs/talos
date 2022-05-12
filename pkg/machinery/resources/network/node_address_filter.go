@@ -25,22 +25,6 @@ type NodeAddressFilterSpec struct {
 	ExcludeSubnets []netaddr.IPPrefix `yaml:"excludeSubnets"`
 }
 
-// DeepCopy generates a deep copy of NodeAddressFilterSpec.
-func (spec NodeAddressFilterSpec) DeepCopy() NodeAddressFilterSpec {
-	cp := spec
-	if spec.IncludeSubnets != nil {
-		cp.IncludeSubnets = make([]netaddr.IPPrefix, len(spec.IncludeSubnets))
-		copy(cp.IncludeSubnets, spec.IncludeSubnets)
-	}
-
-	if spec.ExcludeSubnets != nil {
-		cp.ExcludeSubnets = make([]netaddr.IPPrefix, len(spec.ExcludeSubnets))
-		copy(cp.ExcludeSubnets, spec.ExcludeSubnets)
-	}
-
-	return cp
-}
-
 // NewNodeAddressFilter initializes a NodeAddressFilter resource.
 func NewNodeAddressFilter(namespace resource.Namespace, id resource.ID) *NodeAddressFilter {
 	return typed.NewResource[NodeAddressFilterSpec, NodeAddressFilterRD](

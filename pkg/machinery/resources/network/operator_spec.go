@@ -30,11 +30,6 @@ type OperatorSpecSpec struct {
 	ConfigLayer ConfigLayer `yaml:"layer"`
 }
 
-// DeepCopy generates a deep copy of OperatorSpecSpec.
-func (spec OperatorSpecSpec) DeepCopy() OperatorSpecSpec {
-	return spec
-}
-
 // DHCP4OperatorSpec describes DHCP4 operator options.
 type DHCP4OperatorSpec struct {
 	RouteMetric uint32 `yaml:"routeMetric"`

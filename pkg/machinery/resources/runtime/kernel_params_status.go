@@ -31,11 +31,6 @@ func NewKernelParamStatus(namespace resource.Namespace, id resource.ID) *KernelP
 	)
 }
 
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KernelParamStatusSpec) DeepCopy() KernelParamStatusSpec {
-	return spec
-}
-
 // KernelParamStatusRD is auxiliary resource data for KernelParamStatus.
 type KernelParamStatusRD struct{}
 
