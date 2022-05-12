@@ -72,6 +72,21 @@ The section `mounts` uses the standard OCI spec:
 All requested directories will be mounted into the extension service container mount namespace.
 If the `source` directory doesn't exist in the host filesystem, it will be created (only for writable paths in the Talos root filesystem).
 
+#### `container.security`
+
+The section `security` follows this example:
+
+```yaml
+maskedPaths:
+  - "/should/be/masked"
+readonlyPaths:
+  - "/path/that/should/be/readonly"
+  - "/another/readonly/path"
+writeableRootfs: true
+```
+
+The rootfs is readonly by default unless `writeableRootfs: true` and masked paths will be mounted to /dev/null.
+
 ### `depends`
 
 The `depends` section describes extension service start dependencies: the service will not be started until all dependencies are met.

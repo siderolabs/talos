@@ -95,6 +95,37 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 	return deps
 }
 
+func (svc *Extension) getOCIOptions() []oci.SpecOpts {
+	ociOpts := []oci.SpecOpts{
+		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
+		oci.WithCgroup(constants.CgroupExtensions),
+		oci.WithMounts(svc.Spec.Container.Mounts),
+		oci.WithHostNamespace(specs.NetworkNamespace),
+		oci.WithSelinuxLabel(""),
+		oci.WithApparmorProfile(""),
+		oci.WithCapabilities(capability.AllGrantableCapabilities()),
+		oci.WithAllDevicesAllowed,
+	}
+
+	if !svc.Spec.Container.Security.WriteableRootfs {
+		ociOpts = append(ociOpts, oci.WithRootFSReadonly())
+	}
+
+	if svc.Spec.Container.Security.WriteableSysfs {
+		ociOpts = append(ociOpts, oci.WithWriteableSysfs)
+	}
+
+	if svc.Spec.Container.Security.MaskedPaths != nil {
+		ociOpts = append(ociOpts, oci.WithMaskedPaths(svc.Spec.Container.Security.MaskedPaths))
+	}
+
+	if svc.Spec.Container.Security.ReadonlyPaths != nil {
+		ociOpts = append(ociOpts, oci.WithReadonlyPaths(svc.Spec.Container.Security.ReadonlyPaths))
+	}
+
+	return ociOpts
+}
+
 // Runner implements the Service interface.
 func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 	args := runner.Args{
@@ -138,17 +169,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
-		runner.WithOCISpecOpts(
-			oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
-			oci.WithRootFSReadonly(),
-			oci.WithCgroup(constants.CgroupExtensions),
-			oci.WithMounts(svc.Spec.Container.Mounts),
-			oci.WithHostNamespace(specs.NetworkNamespace),
-			oci.WithSelinuxLabel(""),
-			oci.WithApparmorProfile(""),
-			oci.WithCapabilities(capability.AllGrantableCapabilities()),
-			oci.WithAllDevicesAllowed,
-		),
+		runner.WithOCISpecOpts(svc.getOCIOptions()...),
 		runner.WithOOMScoreAdj(-600),
 	),
 		restart.WithType(restartType),
