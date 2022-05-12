@@ -13,6 +13,12 @@
             "type": "ovs",
             "mtu": 9000,
             "vif_id": "c816df7e-7bcc-45ca-9eb2-3d3d3dca0639"
+        },
+        {
+            "ethernet_mac_address": "A4:BF:00:10:20:33",
+            "id": "aae16046-6c74-4f33-acf2-a16e9ab093ed",
+            "type": "vif",
+            "vif_id": "c816df7e-7bcc-45ca-9eb2-3d3d3dca063a"
         }
     ],
     "networks": [
@@ -74,6 +80,15 @@
                     "gateway": "fd00::1"
                 }
             ]
+        },
+        {
+            "id": "privatnet-ipv6-2",
+            "link": "aae16046-6c74-4f33-acf2-a16e9ab093ed",
+            "network_id": "66374c4d-5123-4f11-8fa9-8a6dea2b4fe7",
+            "type": "ipv6_dhcpv6-stateless",
+            "ip_address": "fd60:172:16:84:f816:3eff:fe73:5901",
+            "netmask": "ffff:ffff:ffff:ffff::",
+            "routes": []
         }
     ],
     "services": [

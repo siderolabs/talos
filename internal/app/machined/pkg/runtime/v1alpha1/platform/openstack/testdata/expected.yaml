@@ -17,6 +17,12 @@ addresses:
       scope: global
       flags: permanent
       layer: platform
+    - address: fd60:172:16:84:f816:3eff:fe73:5901/64
+      linkName: eth2
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
 links:
     - name: eth0
       logical: false
@@ -32,6 +38,13 @@ links:
       kind: ""
       type: netrom
       layer: platform
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
 routes:
     - family: inet6
       dst: ""
@@ -39,7 +52,7 @@ routes:
       gateway: 2000:0:100:2fff:ff:ff:ff:ff
       outLinkName: eth0
       table: main
-      priority: 2048
+      priority: 1024
       scope: global
       type: unicast
       flags: ""
@@ -108,6 +121,12 @@ operators:
       linkName: eth0
       requireUp: true
       dhcp4:
+        routeMetric: 1024
+      layer: platform
+    - operator: dhcp6
+      linkName: eth2
+      requireUp: true
+      dhcp6:
         routeMetric: 1024
       layer: platform
 externalIPs:
