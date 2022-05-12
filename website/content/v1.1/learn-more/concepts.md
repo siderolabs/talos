@@ -6,22 +6,19 @@ description: "Summary of Talos Linux."
 
 When people come across Talos, they frequently want a nice, bite-sized summary
 of it.
-Even better would be if we could give them a reference by which to extrapolate
-what Talos is from something they already know.
 This is surprisingly difficult when Talos represents such a
 fundamentally-rethought operating system.
 
 ## Not based on X distro
 
-A really easy (and useful!) way to summarize an operating system is to say that it is based on X, but focused on Y.
+A useful way to summarize an operating system is to say that it is based on X, but focused on Y.
 For instance, Mint was originally based on Ubuntu, but focused on Gnome 2 (instead of, at the time, Unity).
 Or maybe something like Raspbian is based on Debian, but it is focused on the Raspberry Pi.
 CentOS is RHEL, but made license-free.
 
-Talos Linux _isn't_ based on any other distribution, so there's no help here.
+Talos Linux _isn't_ based on any other distribution.
 We often think of ourselves as being the second-generation of
 container-optimised operating systems, where things like CoreOS, Flatcar, and Rancher represent the first generation, but that implies heredity where there is none.
-It does, though, allow a conceptual handle to the concept.
 
 Talos Linux is actually a ground-up rewrite of the userspace, from PID 1.
 We run the Linux kernel, but everything downstream of that is our own custom
@@ -36,12 +33,12 @@ We don't even have a build toolchain in the normal sense of the word.
 ## Not for individual use
 
 Technically, Talos Linux installs to a computer much as other operating systems.
-_Unlike_ other operating systems, however, Talos is not meant to run alone, on a
+_Unlike_ other operating systems, Talos is not meant to run alone, on a
 single machine.
 Talos Linux comes with tooling from the very foundation to form clusters, even
 before Kubernetes comes into play.
-A design goal of Talos Linux is to come as close to eliminating the management
-of individual nodes as possible.
+A design goal of Talos Linux is eliminating the management
+of individual nodes as much as possible.
 In order to do that, Talos Linux operates as a cluster of machines, with lots of
 checking and coordination between them, at all levels.
 
@@ -62,13 +59,13 @@ Never get hung up on an individual machine.
 
 ## Control Planes are not linear replicas
 
-People familiar with traditional relational database replication tactics often
+People familiar with traditional relational database replication often
 overlook a critical design concept of the Kubernetes (and Talos) database:
 `etcd`.
 Unlike linear replicas, which have dedicated masters and slaves/replicas, `etcd`
 is highly dynamic.
 The `master` in an `etcd` cluster is entirely temporal.
-This means fail-overs are handled easily, often, and usually without any notice
+This means fail-overs are handled easily, and usually without any notice
 of operators.
 This _also_ means that the operational architecture is fundamentally different.
 
@@ -86,7 +83,7 @@ If any two disagree or even fail to answer, the `etcd` database will lock itself
 until quorum is again achieved in order to protect itself and the integrity of
 the data.
 This is fantastically important for handling distributed systems and the various
-types of contention which may arise therein.
+types of contention which may arise.
 
 This design means, however, that having an incorrect number of members can be
 devastating.
@@ -144,6 +141,3 @@ Bootstrapping only tells `etcd` to form a cluster, so don't judge the success of
 a bootstrap by the failure of Kubernetes to start.
 Kubernetes relies on `etcd`, so bootstrapping is _required_, but it is not
 _sufficient_ for Kubernetes to start.
-
-[comment]: <>(!-- TODO: how to check if a cluster has already been bootstrapped
-successfully.)
