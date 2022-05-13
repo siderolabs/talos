@@ -1,3 +1,100 @@
+## [Talos 1.0.5](https://github.com/siderolabs/talos/releases/tag/v1.0.5) (2022-05-13)
+
+Welcome to the v1.0.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.39
+* Containerd: v1.6.4
+* Runc: 1.1.2
+* CoreDNS: v1.9.2
+
+Talos is built with Go 1.17.10
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Dmitriy Matrenichev
+* Philipp Sauter
+* Serge Logvinov
+* Artem Chernyshev
+
+### Changes
+<details><summary>20 commits</summary>
+<p>
+
+* [`07729c402`](https://github.com/siderolabs/talos/commit/07729c40281d9f3526452588203cf6cae2367f60) fix: detect WSL for `talosctl cluster create` on Docker
+* [`23274efe6`](https://github.com/siderolabs/talos/commit/23274efe602dded9a7e3d9605d11d0028a2be607) fix: dhcpv6 leasetime segfault loop
+* [`0523c63ba`](https://github.com/siderolabs/talos/commit/0523c63ba9b7026dc9d38c730ad915fd21436bc3) fix: reset certificate SANs on update
+* [`89d928516`](https://github.com/siderolabs/talos/commit/89d9285166b848a168c3bed85667c7966da227eb) fix: append hostname to cluster SANs when port is not specified
+* [`a73fccb79`](https://github.com/siderolabs/talos/commit/a73fccb793c059f52309b073ee2ceddf7fe806f0) fix: ignore failures to dial wireguard client
+* [`011093439`](https://github.com/siderolabs/talos/commit/011093439415dce692a9cea98b82a2fac953447f) test: add a test for version of Go Talos was built with
+* [`cfb5572d7`](https://github.com/siderolabs/talos/commit/cfb5572d7c468a48ee589054b85db00f55734f72) fix: properly set `allowSchedulingOnMasters` in the interactive install
+* [`ad84c2137`](https://github.com/siderolabs/talos/commit/ad84c213774aaf7aa50a127ae687e5b59b333386) fix: load kubelet system service in StartAllServices task
+* [`c32946212`](https://github.com/siderolabs/talos/commit/c32946212737f277c9e36b9580b423dca365c752) fix: openstack unable to parseIP
+* [`e8f1234c5`](https://github.com/siderolabs/talos/commit/e8f1234c5b383a03f90e790b42beefe0a5e1665c) chore: bump coredns to v1.9.2
+* [`c91205e1f`](https://github.com/siderolabs/talos/commit/c91205e1f726160997a7a1a41d40e9a2c7c4ea03) fix: remove D-Bus sockets before listen attempts
+* [`a5cda5df8`](https://github.com/siderolabs/talos/commit/a5cda5df8dc117499d4823a4e96daf19b06e2bb4) fix: use json.Unmarshal instead of yaml.Unmarshal
+* [`20c10a470`](https://github.com/siderolabs/talos/commit/20c10a470a965192b98ed10da5dbeffa8ade5063) fix: add source path for ovmf flash image
+* [`805804e73`](https://github.com/siderolabs/talos/commit/805804e730b3a520727b0e3bfdb722b5ba26f382) chore: allow mounting files from the host
+* [`75e93e7b8`](https://github.com/siderolabs/talos/commit/75e93e7b8e82073154d098dbd24114dda7f0f70b) docs: provide example on using config generation package
+* [`1fa3513d9`](https://github.com/siderolabs/talos/commit/1fa3513d961fd655cc1b8e1adaf5adc312c73fcd) chore: bump kernel and runc
+* [`546b22480`](https://github.com/siderolabs/talos/commit/546b2248018401c04102168fd8850cf1a39ecb69) chore: update deps to go 1.17.10
+* [`9f3e6276b`](https://github.com/siderolabs/talos/commit/9f3e6276b4c0b8111ae0e57a438f8ad984e0c5b9) chore: bump kernel to 5.15.38
+* [`118bbd99d`](https://github.com/siderolabs/talos/commit/118bbd99d1e0e47dcf646114c1e780d8044f49ec) feat: update containerd to 1.6.4
+* [`b7a275694`](https://github.com/siderolabs/talos/commit/b7a27569496a933756ff67c2732422620744a94c) chore: bump kernel and containerd
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`6327c36`](https://github.com/siderolabs/extras/commit/6327c36af09717b43ad11d545e53656227e32c6d) chore: bump Go to 1.17.10
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`7567bf4`](https://github.com/siderolabs/pkgs/commit/7567bf411e835eed42a1e9625e195c3c21485b2a) chore: bump kernel to 5.15.39
+* [`774fa72`](https://github.com/siderolabs/pkgs/commit/774fa72501f612a18e297bd19a88ae977a2da444) chore: bump runc to v1.1.2
+* [`1dd581a`](https://github.com/siderolabs/pkgs/commit/1dd581a8fe239d5cbc131aa2b69bacd0cfa4e8bc) chore: bump Go to 1.17.10
+* [`de04341`](https://github.com/siderolabs/pkgs/commit/de0434135a20f6dc0eabe7fd14ffd6a6c1a7b6bf) chore: bump kernel to 5.15.38
+* [`b4a98c4`](https://github.com/siderolabs/pkgs/commit/b4a98c48af9f7c73e4f69b4f037940432b176802) chore: bump containerd to v1.6.4
+* [`ebf74f9`](https://github.com/siderolabs/pkgs/commit/ebf74f90f3206d16b5fe8f00319ec613b784672b) chore: bump kernel to 5.15.37
+* [`ebdc549`](https://github.com/siderolabs/pkgs/commit/ebdc549c1e3d11bb0cb3367ec2edbe0ce6972074) feat: update containerd to 1.6.3
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`943b5d0`](https://github.com/siderolabs/tools/commit/943b5d0d15d2b9747db7d767e180b27c2ffd201c) chore: bump go to 1.17.10
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**        v1.6.2 -> v1.6.4
+* **github.com/containernetworking/cni**      v1.0.1 -> v1.1.0
+* **github.com/containernetworking/plugins**  v1.1.0 -> v1.1.1
+* **github.com/opencontainers/image-spec**    v1.0.2 -> c5a74bcca799
+* **github.com/siderolabs/extras**            v1.0.0-2-gc5d3ab0 -> v1.0.0-3-g6327c36
+* **github.com/siderolabs/pkgs**              v1.0.0-10-gbf81bd2 -> v1.0.0-17-g7567bf4
+* **github.com/siderolabs/tools**             v1.0.0-3-ga8fb702 -> v1.0.0-4-g943b5d0
+
+Previous release can be found at [v1.0.4](https://github.com/siderolabs/talos/releases/tag/v1.0.4)
+
 ## [Talos 1.0.4](https://github.com/siderolabs/talos/releases/tag/v1.0.4) (2022-04-28)
 
 Welcome to the v1.0.4 release of Talos!
