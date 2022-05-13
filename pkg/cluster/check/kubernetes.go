@@ -275,7 +275,30 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, name
 	var notReadyPods, readyPods []string
 
 	for _, pod := range pods.Items {
+		// skip deleted pods
+		if pod.DeletionTimestamp != nil {
+			continue
+		}
+
+		// skip failed pods
 		if pod.Status.Phase == v1.PodFailed {
+			continue
+		}
+
+		// skip pods which `kubectl get pods` marks as 'Completed':
+		// * these pods have a phase 'Running', but all containers are terminated
+		// * such pods appear after a graceful kubelet shutdown
+		allContainersTerminated := true
+
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			if containerStatus.State.Terminated == nil {
+				allContainersTerminated = false
+
+				break
+			}
+		}
+
+		if allContainersTerminated {
 			continue
 		}
 
