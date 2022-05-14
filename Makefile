@@ -44,7 +44,7 @@ IMAGER_ARGS ?=
 IMAGER_SYSTEM_EXTENSIONS ?=
 
 CGO_ENABLED ?= 0
-GO_BUILDFLAGS ?=
+GO_BUILDFLAGS ?= remote exclude_graphdriver_btrfs btrfs_noversion exclude_graphdriver_devicemapper containers_image_openpgp
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
