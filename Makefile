@@ -46,6 +46,12 @@ GO_BUILDFLAGS ?=
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
+GO_BUILDFLAGS += -tags remote
+GO_BUILDFLAGS += -tags exclude_graphdriver_btrfs
+GO_BUILDFLAGS += -tags btrfs_noversion
+GO_BUILDFLAGS += -tags exclude_graphdriver_devicemapper
+GO_BUILDFLAGS += -tags containers_image_openpgp
+
 WITH_RACE ?= false
 WITH_DEBUG ?= false
 
