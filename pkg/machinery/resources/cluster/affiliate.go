@@ -13,7 +13,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-//go:generate deep-copy -type AffiliateSpec -type IdentitySpec -type MemberSpec -type ConfigSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type AffiliateSpec -type ConfigSpec -type IdentitySpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // AffiliateType is type of Affiliate resource.
 const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
