@@ -175,11 +175,23 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec := res.(*cluster.Affiliate).TypedSpec()
 
 					spec.NodeID = localID
-					spec.Addresses = append([]netaddr.IP(nil), addresses.(*network.NodeAddress).TypedSpec().IPs()...)
 					spec.Hostname = hostname.(*network.HostnameStatus).TypedSpec().FQDN()
 					spec.Nodename = nodename.(*k8s.Nodename).TypedSpec().Nodename
 					spec.MachineType = machineType.(*config.MachineType).MachineType()
 					spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
+
+					nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
+
+					spec.Addresses = make([]netaddr.IP, 0, len(nodeIPs))
+
+					for _, ip := range nodeIPs {
+						if network.IsULA(ip, network.ULASideroLink) {
+							// ignore SideroLink addresses, as they are point-to-point addresses
+							continue
+						}
+
+						spec.Addresses = append(spec.Addresses, ip)
+					}
 
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 
@@ -188,16 +200,20 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey
 						spec.KubeSpan.AdditionalAddresses = append([]netaddr.IPPrefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
 
-						nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
 						endpoints := make([]netaddr.IPPort, 0, len(nodeIPs))
 
-						for i := range nodeIPs {
-							if nodeIPs[i] == spec.KubeSpan.Address {
+						for _, ip := range nodeIPs {
+							if ip == spec.KubeSpan.Address {
 								// skip kubespan local address
 								continue
 							}
 
-							endpoints = append(endpoints, netaddr.IPPortFrom(nodeIPs[i], constants.KubeSpanDefaultPort))
+							if network.IsULA(ip, network.ULASideroLink) {
+								// ignore SideroLink addresses, as they are point-to-point addresses
+								continue
+							}
+
+							endpoints = append(endpoints, netaddr.IPPortFrom(ip, constants.KubeSpanDefaultPort))
 						}
 
 						spec.KubeSpan.Endpoints = endpoints

@@ -53,7 +53,11 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
 	nonK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
-	nonK8sAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("172.20.0.2/24"), netaddr.MustParseIPPrefix("10.5.0.1/32")}
+	nonK8sAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
+		netaddr.MustParseIPPrefix("172.20.0.2/24"),
+		netaddr.MustParseIPPrefix("10.5.0.1/32"),
+		netaddr.MustParseIPPrefix("fdae:41e4:649b:9303:60be:7e36:c270:3238/128"), // SideroLink, should be ignored
+	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sAddresses))
 
 	machineType := config.NewMachineType()
