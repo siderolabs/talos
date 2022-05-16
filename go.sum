@@ -1190,8 +1190,8 @@ github.com/vmware/govmomi v0.28.0 h1:VgeQ/Rvz79U9G8QIKLdgpsN9AndHJL+5iMJLgYIrBGI
 github.com/vmware/govmomi v0.28.0/go.mod h1:F7adsVewLNHsW/IIm7ziFURaXDaHEwcc+ym4r3INMdY=
 github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3 h1:v6jG/tdl4O07LNVp74Nt7/OyL+1JsIW1M2f/nSvQheY=
 github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3/go.mod h1:CSBTxrhePCm0cmXNKDGeu+6bOQzpaEklfCqEpn89JWk=
-github.com/vultr/metadata v1.0.3 h1:sM2KjASP7A49Kltf/fRzAgpCfxV8/HLsgZJB9QXeU1A=
-github.com/vultr/metadata v1.0.3/go.mod h1:9W0P2cGZYdhwzzfeOPGSoa2jqWiBpl333rEF9ml9E4A=
+github.com/vultr/metadata v1.1.0 h1:RUjCnH5Mdlz7uuyfb1jOZNkU72zl/HwK76jLzVFdiOo=
+github.com/vultr/metadata v1.1.0/go.mod h1:4yocaI6h2EFJzwN0m1KnnC/vDCx2axIqnyxmtF/LWoQ=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=

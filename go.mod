@@ -106,7 +106,7 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.56.5
 	github.com/vmware/govmomi v0.28.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
-	github.com/vultr/metadata v1.0.3
+	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4
 	go.etcd.io/etcd/client/v3 v3.5.4
