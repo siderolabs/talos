@@ -24,7 +24,7 @@ chmod +x /usr/local/bin/talosctl
 
 > Flashing the firmware only needs to be done once.
 
-We will use the [R32.7.1 release](https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/t210/jetson-210_linux_r32.7.1_aarch64.tbz2) for the Jetson Nano.
+We will use the [R32.7.2 release](https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/t210/jetson-210_linux_r32.7.2_aarch64.tbz2) for the Jetson Nano.
 Most of the instructions is similar to this [doc](https://nullr0ute.com/2020/11/installing-fedora-on-the-nvidia-jetson-nano/) except that we'd be using a upstream version of `u-boot` with patches from NVIDIA u-boot so that USB boot also works.
 
 Before flashing we need the following:
@@ -40,7 +40,7 @@ If you're planning to use the serial console follow the documentation [here](htt
 First start by downloading the Jetson Nano L4T release.
 
 ```bash
-curl -SLO https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/t210/jetson-210_linux_r32.7.1_aarch64.tbz2
+curl -SLO https://developer.nvidia.com/embedded/l4t/r32_release_v7.1/t210/jetson-210_linux_r32.7.2_aarch64.tbz2
 ```
 
 Next we will extract the L4T release and replace the `u-boot` binary with the patched version.
@@ -48,7 +48,7 @@ Next we will extract the L4T release and replace the `u-boot` binary with the pa
 ```bash
 tar xf jetson-210_linux_r32.6.1_aarch64.tbz2
 cd Linux_for_Tegra
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-15-g4b3e70e - | tar xf - --strip-components=1 -C bootloader/t210ref/p3450-0000/ jetson_nano/u-boot.bin
+crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-42-gcd05ae8 - | tar xf - --strip-components=1 -C bootloader/t210ref/p3450-0000/ jetson_nano/u-boot.bin
 ```
 
 Next we will flash the firmware to the Jetson Nano SPI flash.
