@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -264,7 +265,7 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 
 	defer cli.Close() //nolint:errcheck
 
-	packet, err := arp.NewPacket(arp.OperationRequest, cli.HardwareAddr(), ip.IPAddr().IP, cli.HardwareAddr(), ip.IPAddr().IP)
+	packet, err := arp.NewPacket(arp.OperationRequest, cli.HardwareAddr(), netaddrIPToNetipAddr(ip), cli.HardwareAddr(), netaddrIPToNetipAddr(ip))
 	if err != nil {
 		return fmt.Errorf("error building packet: %w", err)
 	}
@@ -276,6 +277,12 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 	logger.Info("sent gratuitous ARP", zap.Stringer("address", ip), zap.String("link", iface.Name))
 
 	return nil
+}
+
+func netaddrIPToNetipAddr(addr netaddr.IP) netip.Addr {
+	ip, _ := netip.AddrFromSlice(addr.IPAddr().IP)
+
+	return ip
 }
 
 func broadcastAddr(addr netaddr.IPPrefix) net.IP {
