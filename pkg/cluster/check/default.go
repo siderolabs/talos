@@ -102,6 +102,13 @@ func DefaultClusterChecks() []ClusterCheck {
 				return K8sAllNodesSchedulableAssertion(ctx, cluster)
 			}, 5*time.Minute, 5*time.Second)
 		},
+
+		// wait for etcd members to be consistent across nodes
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("etcd members to be consistent across nodes", func(ctx context.Context) error {
+				return EtcdConsistentAssertion(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
 	}
 }
 
