@@ -324,3 +324,78 @@ machine:
 ```
 
 This example configuration was well tested with Cilium CNI, and it should work with iptables/ipvs based CNI plugins too.
+
+### Vector example
+
+[Vector](https://vector.dev) is a lightweight observability pipeline ideal for a Kubernetes environment.
+It can ingest (source) logs from multiple sources, perform remapping on the logs (transform), and forward the resulting pipeline to multiple destinations (sinks).
+As it is an end to end platform, it can be run as a single-deployment 'aggregator' as well as a replicaSet of 'Agents' that run on each node.
+
+As Talos can be set as above to send logs to a destination, we can run Vector as an Aggregator, and forward both kernel and service to a UDP socket in-cluster.
+
+Below is an excerpt of a source/sink setup for Talos, with a 'sink' destination of an in-cluster [Grafana Loki](https://grafana.com/oss/loki/) log aggregation service.
+As Loki can create labels from the log input, we have set up the Loki sink to create labels based on the host IP, service and facility of the inbound logs.
+
+Note that a method of exposing the Vector service will be required which may vary depending on your setup - a LoadBalancer is a good option.
+
+```yaml
+role: "Stateless-Aggregator"
+
+# Sources
+sources:
+  talos_kernel_logs:
+    address: 0.0.0.0:6050
+    type: socket
+    mode: udp
+    max_length: 102400
+    decoding:
+      codec: json
+    host_key: __host
+
+  talos_service_logs:
+    address: 0.0.0.0:6051
+    type: socket
+    mode: udp
+    max_length: 102400
+    decoding:
+      codec: json
+    host_key: __host
+
+# Sinks
+sinks:
+  talos_kernel:
+    type: loki
+    inputs:
+      - talos_kernel_logs_xform
+    endpoint: http://loki.system-monitoring:3100
+    encoding:
+      codec: json
+      except_fields:
+        - __host
+    batch:
+      max_bytes: 1048576
+    out_of_order_action: rewrite_timestamp
+    labels:
+      hostname: >-
+        {{`{{ __host }}`}}
+      facility: >-
+        {{`{{ facility }}`}}
+
+  talos_service:
+    type: loki
+    inputs:
+      - talos_service_logs_xform
+    endpoint: http://loki.system-monitoring:3100
+    encoding:
+      codec: json
+      except_fields:
+        - __host
+    batch:
+      max_bytes: 400000
+    out_of_order_action: rewrite_timestamp
+    labels:
+      hostname: >-
+        {{`{{ __host }}`}}
+      service: >-
+        {{`{{ "talos-service" }}`}}
+```
