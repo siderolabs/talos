@@ -108,7 +108,7 @@ func (p *provisioner) GetFirstInterface() string {
 func detectWSL() bool {
 	// "Official" way of detecting WSL https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
 	contents, err := os.ReadFile("/proc/sys/kernel/osrelease")
-	if err == nil && (bytes.Contains(contents, []byte("Microsoft")) || bytes.Contains(contents, []byte("WSL"))) {
+	if err == nil && (bytes.Contains(bytes.ToLower(contents), []byte("microsoft")) || bytes.Contains(bytes.ToLower(contents), []byte("wsl"))) {
 		return true
 	}
 
