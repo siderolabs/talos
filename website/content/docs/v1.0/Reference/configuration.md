@@ -238,8 +238,8 @@ Examples:
 
 ``` yaml
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -761,8 +761,8 @@ registries:
             tls:
                 # Enable mutual TLS authentication with the registry.
                 clientIdentity:
-                    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-                    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+                    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+                    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
             # The auth configuration for this registry.
             auth:
                 username: username # Optional registry authentication.
@@ -1100,8 +1100,8 @@ Examples:
 
 ``` yaml
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -1126,8 +1126,8 @@ Examples:
 
 ``` yaml
 aggregatorCA:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -1150,7 +1150,7 @@ Examples:
 
 ``` yaml
 serviceAccount:
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -1336,8 +1336,8 @@ etcd:
     image: gcr.io/etcd-development/etcd:v3.5.3 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
-        crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
     # Extra arguments to supply to etcd.
     extraArgs:
         election-timeout: "5000"
@@ -2661,8 +2661,8 @@ config:
         tls:
             # Enable mutual TLS authentication with the registry.
             clientIdentity:
-                crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-                key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+                crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+                key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
         # The auth configuration for this registry.
         auth:
             username: username # Optional registry authentication.
@@ -2731,8 +2731,8 @@ config:
 
             # # Enable mutual TLS authentication with the registry.
             # clientIdentity:
-            #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-            #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+            #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+            #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 
         # # The auth configuration for this registry.
         # auth:
@@ -3378,8 +3378,8 @@ Appears in:
 image: gcr.io/etcd-development/etcd:v3.5.3 # The container image used to create the etcd service.
 # The `ca` is the root certificate authority of the PKI.
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 # Extra arguments to supply to etcd.
 extraArgs:
     election-timeout: "5000"
@@ -3429,8 +3429,8 @@ Examples:
 
 ``` yaml
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -5460,8 +5460,8 @@ registry.insecure:
 
         # # Enable mutual TLS authentication with the registry.
         # clientIdentity:
-        #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 
     # # The auth configuration for this registry.
     # auth:
@@ -5489,8 +5489,8 @@ Examples:
 tls:
     # Enable mutual TLS authentication with the registry.
     clientIdentity:
-        crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 ``` yaml
@@ -5499,8 +5499,8 @@ tls:
 
     # # Enable mutual TLS authentication with the registry.
     # clientIdentity:
-    #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
@@ -5616,16 +5616,16 @@ Appears in:
 ``` yaml
 # Enable mutual TLS authentication with the registry.
 clientIdentity:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 ``` yaml
 insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
 
 # # Enable mutual TLS authentication with the registry.
 # clientIdentity:
-#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+#     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+#     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 <hr />
@@ -5647,8 +5647,8 @@ Examples:
 
 ``` yaml
 clientIdentity:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 ```
 
 
