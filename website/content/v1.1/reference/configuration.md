@@ -81,8 +81,8 @@ token: 328hom.uqjzh6jnn2eie9oi
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |<details><summary>The root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`certSANs` |[]string |<details><summary>Extra certificate subject alternative names for the machine's certificate.</summary>By default, all non-loopback interface IPs are automatically added to the certificate's SANs.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 certSANs:
@@ -319,8 +319,8 @@ registries:
             tls:
                 # Enable mutual TLS authentication with the registry.
                 clientIdentity:
-                    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-                    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+                    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+                    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
             # The auth configuration for this registry.
             auth:
                 username: username # Optional registry authentication.
@@ -436,17 +436,17 @@ aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`aggregatorCA` |PEMEncodedCertificateAndKey |<details><summary>The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.</summary><br />This CA can be self-signed.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aggregatorCA:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 serviceAccount:
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`apiServer` |<a href="#apiserverconfig">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiServer:
@@ -518,8 +518,8 @@ etcd:
     image: gcr.io/etcd-development/etcd:v3.5.4 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
-        crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
     # Extra arguments to supply to etcd.
     extraArgs:
         election-timeout: "5000"
@@ -1127,8 +1127,8 @@ config:
         tls:
             # Enable mutual TLS authentication with the registry.
             clientIdentity:
-                crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-                key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+                crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+                key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
         # The auth configuration for this registry.
         auth:
             username: username # Optional registry authentication.
@@ -1155,8 +1155,8 @@ config:
 
             # # Enable mutual TLS authentication with the registry.
             # clientIdentity:
-            #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-            #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+            #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+            #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 
         # # The auth configuration for this registry.
         # auth:
@@ -1477,8 +1477,8 @@ Appears in:
 image: gcr.io/etcd-development/etcd:v3.5.4 # The container image used to create the etcd service.
 # The `ca` is the root certificate authority of the PKI.
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 # Extra arguments to supply to etcd.
 extraArgs:
     election-timeout: "5000"
@@ -1495,8 +1495,8 @@ image: gcr.io/etcd-development/etcd:v3.5.4
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |<details><summary>The `ca` is the root certificate authority of the PKI.</summary>It is composed of a base64 encoded `crt` and `key`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |<details><summary>Extra arguments to supply to etcd.</summary>Note that the following args are not allowed:<br /><br />- `name`<br />- `data-dir`<br />- `initial-cluster-state`<br />- `listen-peer-urls`<br />- `listen-client-urls`<br />- `cert-file`<br />- `key-file`<br />- `trusted-ca-file`<br />- `peer-client-cert-auth`<br />- `peer-cert-file`<br />- `peer-trusted-ca-file`<br />- `peer-key-file`</details>  | |
 |`subnet` |string |The subnet from which the advertise URL should be. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -2266,8 +2266,8 @@ registry.insecure:
 
         # # Enable mutual TLS authentication with the registry.
         # clientIdentity:
-        #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 
     # # The auth configuration for this registry.
     # auth:
@@ -2282,16 +2282,16 @@ registry.insecure:
 tls:
     # Enable mutual TLS authentication with the registry.
     clientIdentity:
-        crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-        key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+        crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+        key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}{{< highlight yaml >}}
 tls:
     insecureSkipVerify: true # Skip TLS server certificate verification (not recommended).
 
     # # Enable mutual TLS authentication with the registry.
     # clientIdentity:
-    #     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    #     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    #     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    #     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`auth` |<a href="#registryauthconfig">RegistryAuthConfig</a> |<details><summary>The auth configuration for this registry.</summary>Note: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 auth:
@@ -2339,8 +2339,8 @@ Appears in:
 {{< highlight yaml >}}
 # Enable mutual TLS authentication with the registry.
 clientIdentity:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}
 
 {{< highlight yaml >}}
@@ -2348,8 +2348,8 @@ insecureSkipVerify: true # Skip TLS server certificate verification (not recomme
 
 # # Enable mutual TLS authentication with the registry.
 # clientIdentity:
-#     crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-#     key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+#     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+#     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}
 
 
@@ -2357,8 +2357,8 @@ insecureSkipVerify: true # Skip TLS server certificate verification (not recomme
 |-------|------|-------------|----------|
 |`clientIdentity` |PEMEncodedCertificateAndKey |<details><summary>Enable mutual TLS authentication with the registry.</summary>Client certificate and key should be base64-encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clientIdentity:
-    crt: TFMwdExTMUNSVWRKVGlCRFJWSlVTVVpKUTBGVVJTMHRMUzB0Q2sxSlNVSklla05DTUhGLi4u
-    key: TFMwdExTMUNSVWRKVGlCRlJESTFOVEU1SUZCU1NWWkJWRVVnUzBWWkxTMHRMUzBLVFVNLi4u
+    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
+    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`ca` |Base64Bytes |<details><summary>CA registry certificate to add the list of trusted certificates.</summary>Certificate should be base64-encoded.</details>  | |
 |`insecureSkipVerify` |bool |Skip TLS server certificate verification (not recommended).  | |

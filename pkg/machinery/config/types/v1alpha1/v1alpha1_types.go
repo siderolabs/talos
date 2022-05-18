@@ -126,12 +126,12 @@ var (
 	}
 
 	pemEncodedCertificateExample *x509.PEMEncodedCertificateAndKey = &x509.PEMEncodedCertificateAndKey{
-		Crt: []byte("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJIekNCMHF..."),
-		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
+		Crt: []byte("--- EXAMPLE CERTIFICATE ---"),
+		Key: []byte("--- EXAMPLE KEY ---"),
 	}
 
 	pemEncodedKeyExample *x509.PEMEncodedKey = &x509.PEMEncodedKey{
-		Key: []byte("LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM..."),
+		Key: []byte("--- EXAMPLE KEY ---"),
 	}
 
 	machineControlplaneExample = &MachineControlPlaneConfig{
