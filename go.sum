@@ -1148,8 +1148,8 @@ github.com/talos-systems/go-retry v0.1.0/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lI
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
 github.com/talos-systems/go-retry v0.3.1 h1:GjjyHB8i1CJpb1O5qYPMljq74cRQ5uiDoyMaWddA5FA=
 github.com/talos-systems/go-retry v0.3.1/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
-github.com/talos-systems/go-smbios v0.1.1 h1:Au6obB/Pp0i0JHhvPlzONk5aoNseosO2BUsmvWWi7y8=
-github.com/talos-systems/go-smbios v0.1.1/go.mod h1:vk76naUSZaWE8Z95wbDn51FgH0goECM4oK3KY2hYSMU=
+github.com/talos-systems/go-smbios v0.2.0 h1:Ga7gLxeOGg7q1V7dtGzzC6EbSxm/vyi0EBKinbtJ6x4=
+github.com/talos-systems/go-smbios v0.2.0/go.mod h1:vk76naUSZaWE8Z95wbDn51FgH0goECM4oK3KY2hYSMU=
 github.com/talos-systems/grpc-proxy v0.3.0 h1:pM4P6GqzjmZzq6jAxeP2mzjuTbx9B2E5peVdi2bufM4=
 github.com/talos-systems/grpc-proxy v0.3.0/go.mod h1:1TNaCLt0NTdFdz48OCnOM+HbPEIkj3DhCi85+z6zSM8=
 github.com/talos-systems/net v0.3.2 h1:IMseRyuha8fNsv/3FbQPRE9hLVRBEFR+9sxcoETQ5vI=
