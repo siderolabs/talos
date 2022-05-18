@@ -79,10 +79,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		return fmt.Errorf("error reading node UUID: %w", err)
 	}
 
-	nodeUUID, err := s.SystemInformation().UUID()
-	if err != nil {
-		return fmt.Errorf("error getting node UUID: %w", err)
-	}
+	nodeUUID := s.SystemInformation.UUID
 
 	var zeroKey wgtypes.Key
 
@@ -125,7 +122,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 
 		resp, err := sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
-			NodeUuid:      nodeUUID.String(),
+			NodeUuid:      nodeUUID,
 			NodePublicKey: ctrl.nodeKey.PublicKey().String(),
 		})
 		if err != nil {

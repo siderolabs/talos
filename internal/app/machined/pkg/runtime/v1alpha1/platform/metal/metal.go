@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -65,7 +64,7 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 }
 
 // PopulateURLParameters fills in empty parameters in the download URL.
-func PopulateURLParameters(downloadURL string, getSystemUUID func() (uuid.UUID, error)) (string, error) {
+func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, error)) (string, error) {
 	u, err := url.Parse(downloadURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
@@ -83,7 +82,7 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (uuid.UUID, 
 					return "", err
 				}
 
-				values.Set("uuid", uid.String())
+				values.Set("uuid", uid)
 			}
 		default:
 			log.Printf("unsupported query parameter: %q", key)
@@ -95,13 +94,13 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (uuid.UUID, 
 	return u.String(), nil
 }
 
-func getSystemUUID() (uuid.UUID, error) {
+func getSystemUUID() (string, error) {
 	s, err := smbios.New()
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
-	return s.SystemInformation().UUID()
+	return s.SystemInformation.UUID, nil
 }
 
 // Mode implements the platform.Platform interface.

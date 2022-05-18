@@ -187,7 +187,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadata
 	metaBaseURL := ""
 	networkSource := false
 
-	options := strings.Split(s.SystemInformation().SerialNumber(), ";")
+	options := strings.Split(s.SystemInformation.SerialNumber, ";")
 	for _, option := range options {
 		parts := strings.SplitN(option, "=", 2)
 		if len(parts) == 2 {

@@ -15,7 +15,7 @@ import (
 )
 
 func TestPopulateURLParameters(t *testing.T) {
-	mockUUID := uuid.New()
+	mockUUID := uuid.New().String()
 
 	for _, tt := range []struct {
 		name          string
@@ -31,7 +31,7 @@ func TestPopulateURLParameters(t *testing.T) {
 		{
 			name:        "empty uuid",
 			url:         "http://example.com/metadata?uuid=",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID.String()),
+			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
 		},
 		{
 			name:        "uuid present",
@@ -46,13 +46,13 @@ func TestPopulateURLParameters(t *testing.T) {
 		{
 			name:        "multiple uuids",
 			url:         "http://example.com/metadata?uuid=xyz&uuid=foo",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID.String()),
+			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
 		},
 	} {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
-			output, err := metal.PopulateURLParameters(tt.url, func() (uuid.UUID, error) {
+			output, err := metal.PopulateURLParameters(tt.url, func() (string, error) {
 				return mockUUID, nil
 			})
 
