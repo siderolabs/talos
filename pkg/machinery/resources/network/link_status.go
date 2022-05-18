@@ -36,6 +36,8 @@ type LinkStatusSpec struct {
 	BusPath          string                      `yaml:"busPath,omitempty"`
 	PCIID            string                      `yaml:"pciID,omitempty"`
 	Driver           string                      `yaml:"driver,omitempty"`
+	DriverVersion    string                      `yaml:"driverVersion,omitempty"`
+	FirmwareVersion  string                      `yaml:"firmwareVersion,omitempty"`
 	// Fields coming from ethtool API.
 	LinkState     bool              `yaml:"linkState"`
 	SpeedMegabits int               `yaml:"speedMbit,omitempty"`

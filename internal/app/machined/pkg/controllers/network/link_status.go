@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/ethtool"
+	ethtoolioctl "github.com/safchain/ethtool"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -55,6 +56,8 @@ func (ctrl *LinkStatusController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
@@ -87,6 +90,13 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 		defer ethClient.Close() //nolint:errcheck
 	}
 
+	ethIoctlClient, err := ethtoolioctl.NewEthtool()
+	if err != nil {
+		logger.Warn("error dialing ethtool ioctl socket", zap.Error(err))
+	} else {
+		defer ethIoctlClient.Close() //nolint:errcheck
+	}
+
 	wgClient, err := wgctrl.New()
 	if err != nil {
 		logger.Warn("error creating wireguard client", zap.Error(err))
@@ -101,7 +111,7 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		if err = ctrl.reconcile(ctx, r, logger, conn, ethClient, wgClient); err != nil {
+		if err = ctrl.reconcile(ctx, r, logger, conn, ethClient, ethIoctlClient, wgClient); err != nil {
 			return err
 		}
 	}
@@ -110,7 +120,15 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 // reconcile function runs for every reconciliation loop querying the netlink state and updating resources.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn, ethClient *ethtool.Client, wgClient *wgctrl.Client) error {
+func (ctrl *LinkStatusController) reconcile(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	conn *rtnetlink.Conn,
+	ethClient *ethtool.Client,
+	ethtoolIoctlClient *ethtoolioctl.Ethtool,
+	wgClient *wgctrl.Client,
+) error {
 	// list the existing LinkStatus resources and mark them all to be deleted, as the actual link is discovered via netlink, resource ID is removed from the list
 	list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 	if err != nil {
@@ -133,9 +151,10 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 		link := link
 
 		var (
-			ethState *ethtool.LinkState
-			ethInfo  *ethtool.LinkInfo
-			ethMode  *ethtool.LinkMode
+			ethState   *ethtool.LinkState
+			ethInfo    *ethtool.LinkInfo
+			ethMode    *ethtool.LinkMode
+			driverInfo ethtoolioctl.DrvInfo
 		)
 
 		if ethClient != nil {
@@ -166,6 +185,10 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 					logger.Warn("error querying ethtool link mode", zap.String("link", link.Attributes.Name), zap.Error(err))
 				}
 			}
+		}
+
+		if ethtoolIoctlClient != nil {
+			driverInfo, _ = ethtoolIoctlClient.DriverInfo(link.Attributes.Name) //nolint:errcheck
 		}
 
 		if err = r.Modify(ctx, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r resource.Resource) error {
@@ -225,6 +248,17 @@ func (ctrl *LinkStatusController) reconcile(ctx context.Context, r controller.Ru
 				status.Driver = deviceInfo.Driver
 				status.PCIID = deviceInfo.PCIID
 			}
+
+			if status.Driver == "" {
+				status.Driver = driverInfo.Driver
+			}
+
+			if status.BusPath == "" {
+				status.BusPath = driverInfo.BusInfo
+			}
+
+			status.DriverVersion = driverInfo.Version
+			status.FirmwareVersion = driverInfo.FwVersion
 
 			switch status.Kind {
 			case network.LinkKindVLAN:

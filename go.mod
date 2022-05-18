@@ -83,6 +83,7 @@ require (
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
+	github.com/safchain/ethtool v0.0.0-20210803160452-9aa261dae9b1
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/spf13/cobra v1.4.0
