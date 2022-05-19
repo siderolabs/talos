@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
+	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -63,6 +64,7 @@ func NewState() (*State, error) {
 		{cluster.RawNamespaceName, "Cluster unmerged raw resources."},
 		{config.NamespaceName, "Talos node configuration."},
 		{files.NamespaceName, "Files and file-like resources."},
+		{hardware.NamespaceName, "Hardware resources."},
 		{k8s.NamespaceName, "Kubernetes all node types resources."},
 		{k8s.ControlPlaneNamespaceName, "Kubernetes control plane resources."},
 		{kubespan.NamespaceName, "KubeSpan resources."},
@@ -87,6 +89,8 @@ func NewState() (*State, error) {
 		&config.MachineType{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&hardware.Processor{},
+		&hardware.Memory{},
 		&k8s.AdmissionControlConfig{},
 		&k8s.APIServerConfig{},
 		&k8s.ConfigStatus{},
