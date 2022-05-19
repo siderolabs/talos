@@ -7,9 +7,10 @@
 package secrets
 
 import (
-	"inet.af/netaddr"
 	"net"
 	"net/url"
+
+	"inet.af/netaddr"
 )
 
 // DeepCopy generates a deep copy of APICertsSpec.
