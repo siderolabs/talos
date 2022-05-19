@@ -9,7 +9,7 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | Release Date                                                                                                   | 2022-06-01, T                      | 2022-03-29 (1.0.0)                 |
 | End of Community Support                                                                                       | 1.2.0 release (2022-09-01, TBD)    | 1.1.0 release (2022-06-01, TBD)    |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) |
-| Kubernetes                                                                                                     | 1.23, 1.22, 1.21                   | 1.23, 1.22, 1.21                   |
+| Kubernetes                                                                                                     | 1.24, 1.23, 1.22                   | 1.23, 1.22, 1.21                   |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud |
