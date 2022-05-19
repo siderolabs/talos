@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
@@ -107,6 +108,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			EtcPath:    "/etc",
 			ShadowPath: constants.SystemEtcPath,
 		},
+		&hardware.SystemInfoController{},
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},
