@@ -950,6 +950,7 @@ extraHostEntries:
 kubespan:
     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
+|`disableSearchDomain` |bool |<details><summary>Disable generating a default search domain in /etc/resolv.conf</summary>based on the machine hostname.<br />Defaults to `false`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 

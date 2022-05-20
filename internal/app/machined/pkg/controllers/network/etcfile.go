@@ -129,7 +129,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 		if resolverStatus != nil {
 			if err = r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
 				func(r resource.Resource) error {
-					r.(*files.EtcFileSpec).TypedSpec().Contents = ctrl.renderResolvConf(resolverStatus, hostnameStatus)
+					r.(*files.EtcFileSpec).TypedSpec().Contents = ctrl.renderResolvConf(resolverStatus, hostnameStatus, cfgProvider)
 					r.(*files.EtcFileSpec).TypedSpec().Mode = 0o644
 
 					return nil
@@ -152,7 +152,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.ResolverStatusSpec, hostnameStatus *network.HostnameStatusSpec) []byte {
+func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.ResolverStatusSpec, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Provider) []byte {
 	var buf bytes.Buffer
 
 	for i, resolver := range resolverStatus.DNSServers {
@@ -164,7 +164,12 @@ func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.Resolver
 		fmt.Fprintf(&buf, "nameserver %s\n", resolver)
 	}
 
-	if hostnameStatus != nil && hostnameStatus.Domainname != "" {
+	var disableSearchDomain bool
+	if cfgProvider != nil {
+		disableSearchDomain = cfgProvider.Machine().Network().DisableSearchDomain()
+	}
+
+	if !disableSearchDomain && hostnameStatus != nil && hostnameStatus.Domainname != "" {
 		fmt.Fprintf(&buf, "\nsearch %s\n", hostnameStatus.Domainname)
 	}
 

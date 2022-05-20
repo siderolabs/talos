@@ -141,6 +141,7 @@ type MachineNetwork interface {
 	Devices() []Device
 	ExtraHosts() []ExtraHost
 	KubeSpan() KubeSpan
+	DisableSearchDomain() bool
 }
 
 // ExtraHost represents a host entry in /etc/hosts.

@@ -239,6 +239,24 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 	)
 }
 
+func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineNetwork: &v1alpha1.NetworkConfig{
+					NetworkDisableSearchDomain: true,
+				},
+			},
+		},
+	)
+	suite.testFiles(
+		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
+		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
+		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters", //nolint:lll
+	)
+}
+
 func (suite *EtcFileConfigSuite) TestNoDomainname() {
 	suite.hostnameStatus.TypedSpec().Domainname = ""
 
