@@ -22,6 +22,7 @@ import (
 
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/internal/pkg/pci"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -255,6 +256,23 @@ func (ctrl *LinkStatusController) reconcile(
 
 			if status.BusPath == "" {
 				status.BusPath = driverInfo.BusInfo
+			}
+
+			var pciDev *pci.Device
+
+			pciDev, err = pci.SysfsDeviceInfo(driverInfo.BusInfo)
+			if err != nil {
+				logger.Warn("failure looking up sysfs PCI info", zap.Error(err), zap.String("link", link.Attributes.Name))
+			}
+
+			if pciDev != nil {
+				pciDev.LookupDB()
+
+				status.VendorID = fmt.Sprintf("0x%04x", pciDev.VendorID)
+				status.ProductID = fmt.Sprintf("0x%04x", pciDev.ProductID)
+
+				status.Vendor = pciDev.Vendor
+				status.Product = pciDev.Product
 			}
 
 			status.DriverVersion = driverInfo.Version
