@@ -149,7 +149,8 @@ var (
 	kubeletImageExample = (&KubeletConfig{}).Image()
 
 	machineNetworkConfigExample = &NetworkConfig{
-		NetworkHostname: "worker-1",
+		NetworkHostname:            "worker-1",
+		NetworkDisableSearchDomain: false,
 		NetworkInterfaces: []*Device{
 			{
 				DeviceInterface: "eth0",
@@ -1061,6 +1062,16 @@ type NetworkConfig struct {
 	//   examples:
 	//     - value: networkKubeSpanExample
 	NetworkKubeSpan NetworkKubeSpan `yaml:"kubespan,omitempty"`
+	//   description: |
+	//     Disable generating a default search domain in /etc/resolv.conf
+	//     based on the machine hostname.
+	//     Defaults to `false`.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	NetworkDisableSearchDomain bool `yaml:"disableSearchDomain,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.
