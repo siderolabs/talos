@@ -644,7 +644,7 @@ func init() {
 			FieldName: "network",
 		},
 	}
-	NetworkConfigDoc.Fields = make([]encoder.Doc, 5)
+	NetworkConfigDoc.Fields = make([]encoder.Doc, 6)
 	NetworkConfigDoc.Fields[0].Name = "hostname"
 	NetworkConfigDoc.Fields[0].Type = "string"
 	NetworkConfigDoc.Fields[0].Note = ""
@@ -678,6 +678,17 @@ func init() {
 	NetworkConfigDoc.Fields[4].Comments[encoder.LineComment] = "Configures KubeSpan feature."
 
 	NetworkConfigDoc.Fields[4].AddExample("", networkKubeSpanExample)
+	NetworkConfigDoc.Fields[5].Name = "disableSearchDomain"
+	NetworkConfigDoc.Fields[5].Type = "bool"
+	NetworkConfigDoc.Fields[5].Note = ""
+	NetworkConfigDoc.Fields[5].Description = "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to `false`."
+	NetworkConfigDoc.Fields[5].Comments[encoder.LineComment] = "Disable generating a default search domain in /etc/resolv.conf"
+	NetworkConfigDoc.Fields[5].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
 
 	InstallConfigDoc.Type = "InstallConfig"
 	InstallConfigDoc.Comments[encoder.LineComment] = "InstallConfig represents the installation options for preparing a node."

@@ -469,6 +469,11 @@ func (n *NetworkConfig) Hostname() string {
 	return n.NetworkHostname
 }
 
+// DisableSearchDomain implements the config.Provider interface.
+func (n *NetworkConfig) DisableSearchDomain() bool {
+	return n.NetworkDisableSearchDomain
+}
+
 // Devices implements the config.Provider interface.
 func (n *NetworkConfig) Devices() []config.Device {
 	interfaces := make([]config.Device, len(n.NetworkInterfaces))
