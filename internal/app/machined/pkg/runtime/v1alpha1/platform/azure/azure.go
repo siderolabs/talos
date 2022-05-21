@@ -32,9 +32,9 @@ const (
 	// https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/
 	AzureInternalEndpoint = "http://168.63.129.16"
 	// AzureHostnameEndpoint is the local endpoint for the hostname.
-	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-05-01&format=text"
+	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/osProfile/computerName?api-version=2021-12-13&format=text"
 	// AzureInterfacesEndpoint is the local endpoint to get external IPs.
-	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-05-01"
+	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-12-13"
 
 	mnt = "/mnt"
 )
@@ -155,6 +155,7 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 }
 
 // configFromCD handles looking for devices and trying to mount/fetch xml to get the custom data.
+//nolint:gocyclo
 func (a *Azure) configFromCD() ([]byte, error) {
 	devList, err := ioutil.ReadDir("/dev")
 	if err != nil {
@@ -196,12 +197,16 @@ func (a *Azure) configFromCD() ([]byte, error) {
 				return nil, err
 			}
 
-			b64CustomData, err := base64.StdEncoding.DecodeString(ovfEnvData.CustomData)
-			if err != nil {
-				return nil, err
+			if len(ovfEnvData.CustomData) > 0 {
+				b64CustomData, err := base64.StdEncoding.DecodeString(ovfEnvData.CustomData)
+				if err != nil {
+					return nil, err
+				}
+
+				return b64CustomData, nil
 			}
 
-			return b64CustomData, nil
+			return nil, errors.ErrNoConfigSource
 		}
 	}
 
