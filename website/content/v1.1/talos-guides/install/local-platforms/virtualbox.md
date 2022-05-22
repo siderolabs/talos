@@ -163,14 +163,14 @@ talosctl config node $CONTROL_PLANE_IP
 Set the `endpoints` and `nodes`:
 
 ```bash
-talosctl --talosconfig talosconfig config endpoint <control plane 1 IP>
-talosctl --talosconfig talosconfig config node <control plane 1 IP>
+talosctl --talosconfig $TALOSCONFIG config endpoint <control plane 1 IP>
+talosctl --talosconfig $TALOSCONFIG config node <control plane 1 IP>
 ```
 
 Bootstrap `etcd`:
 
 ```bash
-talosctl --talosconfig talosconfig bootstrap
+talosctl --talosconfig $TALOSCONFIG bootstrap
 ```
 
 ### Retrieve the `kubeconfig`
@@ -178,7 +178,7 @@ talosctl --talosconfig talosconfig bootstrap
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig talosconfig kubeconfig .
+talosctl --talosconfig $TALOSCONFIG kubeconfig .
 ```
 
 You can then use kubectl in this fashion:
