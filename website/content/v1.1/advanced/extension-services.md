@@ -83,9 +83,30 @@ readonlyPaths:
   - "/path/that/should/be/readonly"
   - "/another/readonly/path"
 writeableRootfs: true
+writeableSysfs: true
 ```
 
-The rootfs is readonly by default unless `writeableRootfs: true` and masked paths will be mounted to /dev/null.
+> * The rootfs is readonly by default unless `writeableRootfs: true` is set.
+> * The sysfs is readonly by default unless `writeableSysfs: true` is set.
+> * Masked paths if not set defaults to [containerd defaults](https://github.com/containerd/containerd/tree/main/oci/spec.go).
+Masked paths will be mounted to `/dev/null`.
+To set empty masked paths use:
+>
+> ```yaml
+> container:
+>   security:
+>     maskedPaths: []
+> ```
+>
+> * Read Only paths if not set defaults to [containerd defaults](https://github.com/containerd/containerd/tree/main/oci/spec.go).
+Read-only paths will be mounted to `/dev/null`.
+To set empty read only paths use:
+>
+> ```yaml
+> container:
+>   security:
+>     readonlyPaths: []
+> ```
 
 ### `depends`
 

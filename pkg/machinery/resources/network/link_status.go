@@ -38,6 +38,10 @@ type LinkStatusSpec struct {
 	Driver           string                      `yaml:"driver,omitempty"`
 	DriverVersion    string                      `yaml:"driverVersion,omitempty"`
 	FirmwareVersion  string                      `yaml:"firmwareVersion,omitempty"`
+	ProductID        string                      `yaml:"productID,omitempty"`
+	VendorID         string                      `yaml:"vendorID,omitempty"`
+	Product          string                      `yaml:"product,omitempty"`
+	Vendor           string                      `yaml:"vendor,omitempty"`
 	// Fields coming from ethtool API.
 	LinkState     bool              `yaml:"linkState"`
 	SpeedMegabits int               `yaml:"speedMbit,omitempty"`
