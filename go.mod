@@ -96,7 +96,7 @@ require (
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
-	github.com/talos-systems/go-loadbalancer v0.1.1
+	github.com/talos-systems/go-loadbalancer v0.1.2
 	github.com/talos-systems/go-procfs v0.1.0
 	github.com/talos-systems/go-retry v0.3.1
 	github.com/talos-systems/go-smbios v0.2.0
