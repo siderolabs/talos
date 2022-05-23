@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
+	"regexp"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -63,6 +65,29 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 			Kind: controller.OutputShared,
 		},
 	}
+}
+
+var urlSchemeMatcher = regexp.MustCompile(`[a-zA-z]+\://`)
+
+// parseJoinToken parses the jointoken from the sidero link kernel parameter
+// returns nil if no joinToken was specified
+func parseJoinToken(sideroLinkParam string) (joinToken *string, err error) {
+	if !urlSchemeMatcher.Match([]byte(sideroLinkParam)) {
+		sideroLinkParam = "grpc://" + sideroLinkParam
+	}
+
+	u, err := url.Parse(sideroLinkParam)
+	if err != nil {
+		return nil, err
+	}
+
+	params := u.Query()
+	joinTokenStr, ok := params["jointoken"]
+	if !ok || len(joinTokenStr) < 1 {
+		return nil, nil
+	}
+
+	return &joinTokenStr[0], nil
 }
 
 // Run implements controller.Controller interface.
@@ -121,9 +146,15 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			continue
 		}
 
+		joinToken, err := parseJoinToken(apiEndpoint)
+		if err != nil {
+			logger.Warn("failed to parse join token from sidero link kernel parameter: %w", zap.Error(err))
+		}
+
 		resp, err := sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
 			NodeUuid:      nodeUUID,
 			NodePublicKey: ctrl.nodeKey.PublicKey().String(),
+			JoinToken:     joinToken,
 		})
 		if err != nil {
 			return fmt.Errorf("error accessing SideroLink API: %w", err)
