@@ -102,7 +102,7 @@ require (
 	github.com/talos-systems/go-smbios v0.2.0
 	github.com/talos-systems/grpc-proxy v0.3.0
 	github.com/talos-systems/net v0.3.2
-	github.com/talos-systems/siderolink v0.1.0
+	github.com/talos-systems/siderolink v0.1.1
 	github.com/talos-systems/talos/pkg/machinery v1.1.0-alpha.2
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.2.0-beta
