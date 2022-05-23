@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -201,4 +202,42 @@ func (suite *ManagerSuite) TearDownTest() {
 
 func TestManagerSuite(t *testing.T) {
 	suite.Run(t, new(ManagerSuite))
+}
+
+func TestParseJoinToken(t *testing.T) {
+	t.Run("parses a join token from a complete URL without error", func(t *testing.T) {
+		// when
+		joinToken, err := siderolinkctrl.ParseJoinToken("grpc://10.5.0.2:3445?jointoken=ttt")
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, "ttt", *joinToken)
+	})
+
+	t.Run("parses a join token from an URL without a scheme", func(t *testing.T) {
+		// when
+		joinToken, err := siderolinkctrl.ParseJoinToken("10.5.0.2:3445?jointoken=ttt")
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, "ttt", *joinToken)
+	})
+
+	t.Run("does not error if there is no join token in a complete URL", func(t *testing.T) {
+		// when
+		joinToken, err := siderolinkctrl.ParseJoinToken("grpc://10.5.0.2:3445")
+
+		// then
+		assert.NoError(t, err)
+		assert.Nil(t, joinToken)
+	})
+
+	t.Run("does not error if there is no join token in an URL without a scheme", func(t *testing.T) {
+		// when
+		joinToken, err := siderolinkctrl.ParseJoinToken("10.5.0.2:3445")
+
+		// then
+		assert.NoError(t, err)
+		assert.Nil(t, joinToken)
+	})
 }
