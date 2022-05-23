@@ -40,7 +40,7 @@ type handler struct {
 }
 
 // HandleEvent implements events.Adapter.
-func (s *handler) HandleEvent(e events.Event) error {
+func (s *handler) HandleEvent(ctx context.Context, e events.Event) error {
 	s.eventsMu.Lock()
 	defer s.eventsMu.Unlock()
 

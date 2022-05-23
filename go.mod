@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.6.1
 	github.com/BurntSushi/toml v1.1.0
-	github.com/aws/aws-sdk-go v1.44.14
+	github.com/aws/aws-sdk-go v1.44.19
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4-0.20220301195952-2e502f6b9e43
@@ -59,9 +59,9 @@ require (
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
-	github.com/hashicorp/go-getter v1.5.11
+	github.com/hashicorp/go-getter v1.6.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-version v1.4.0
+	github.com/hashicorp/go-version v1.5.0
 	github.com/hetznercloud/hcloud-go v1.33.2
 	github.com/insomniacslk/dhcp v0.0.0-20220504074936-1ca156eafb9f
 	github.com/jsimonetti/rtnetlink v1.2.0
@@ -97,13 +97,13 @@ require (
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
-	github.com/talos-systems/go-loadbalancer v0.1.1
+	github.com/talos-systems/go-loadbalancer v0.1.2
 	github.com/talos-systems/go-procfs v0.1.0
 	github.com/talos-systems/go-retry v0.3.1
 	github.com/talos-systems/go-smbios v0.2.0
 	github.com/talos-systems/grpc-proxy v0.3.0
 	github.com/talos-systems/net v0.3.2
-	github.com/talos-systems/siderolink v0.1.0
+	github.com/talos-systems/siderolink v0.1.1
 	github.com/talos-systems/talos/pkg/machinery v1.1.0-alpha.2
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.2.0-beta
@@ -119,7 +119,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220513224357-95641704303c
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
-	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e
 	golang.org/x/term v0.0.0-20220411215600-e5f449aeb171
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
