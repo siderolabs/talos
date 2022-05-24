@@ -698,7 +698,7 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 	c, err := clientconfig.Open(talosconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("error opening talos config: %s", err)
 	}
 
 	renames := c.Merge(talosConfigObj)
