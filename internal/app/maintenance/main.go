@@ -12,8 +12,10 @@ import (
 	"net"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	ttls "github.com/talos-systems/crypto/tls"
 	"github.com/talos-systems/crypto/x509"
+	"github.com/talos-systems/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"inet.af/netaddr"
@@ -37,7 +39,12 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		return nil, fmt.Errorf("error waiting for the network to be ready: %w", err)
 	}
 
-	currentAddresses, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined))
+	var sideroLinkAddress netaddr.IP
+
+	currentAddresses, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
+		resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined),
+		sideroLinkAddressFinder(&sideroLinkAddress, logger),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting node addresses: %w", err)
 	}
@@ -89,7 +96,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		factory.WithStreamInterceptor(injector.StreamInterceptor()),
 	)
 
-	listener, err := factory.NewListener(factory.Port(constants.ApidPort))
+	listener, err := factory.NewListener(factory.Address(formatIP(sideroLinkAddress)), factory.Port(constants.ApidPort))
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +107,10 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		//nolint:errcheck
 		server.Serve(listener)
 	}()
+
+	if !sideroLinkAddress.IsZero() {
+		ips = []netaddr.IP{sideroLinkAddress}
+	}
 
 	logger.Println("this machine is reachable at:")
 
@@ -132,6 +143,14 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	case <-ctx.Done():
 		return nil, fmt.Errorf("context is done")
 	}
+}
+
+func formatIP(addr netaddr.IP) string {
+	if addr.IsZero() {
+		return ""
+	}
+
+	return addr.String()
 }
 
 func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
@@ -175,4 +194,34 @@ func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, p
 	}
 
 	return tlsConfig, provider, nil
+}
+
+func sideroLinkAddressFinder(address *netaddr.IP, logger *log.Logger) state.WatchForConditionFunc {
+	sideroLinkEnabled := false
+	if procfs.ProcCmdline().Get(constants.KernelParamSideroLink).First() != nil {
+		sideroLinkEnabled = true
+
+		logger.Println(constants.KernelParamSideroLink + " is enabled, waiting for address")
+	}
+
+	return state.WithCondition(func(r resource.Resource) (bool, error) {
+		if resource.IsTombstone(r) {
+			return false, nil
+		}
+
+		if !sideroLinkEnabled {
+			return true, nil
+		}
+
+		ips := r.(*network.NodeAddress).TypedSpec().IPs()
+		for _, ip := range ips {
+			if network.IsULA(ip, network.ULASideroLink) {
+				*address = ip
+
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
 }

@@ -35,6 +35,7 @@ type Registrator interface {
 
 // Options is the functional options struct.
 type Options struct {
+	Address            string
 	Port               int
 	SocketPath         string
 	Network            string
@@ -49,6 +50,13 @@ type Options struct {
 
 // Option is the functional option func.
 type Option func(*Options)
+
+// Address sets the listen address of the server.
+func Address(a string) Option {
+	return func(args *Options) {
+		args.Address = a
+	}
+}
 
 // Port sets the listen port of the server.
 func Port(o int) Option {
@@ -226,7 +234,7 @@ func NewListener(setters ...Option) (net.Listener, error) {
 			return nil, fmt.Errorf("error creating containing directory for the file socket; %w", err)
 		}
 	case "tcp":
-		address = ":" + strconv.Itoa(opts.Port)
+		address = net.JoinHostPort(opts.Address, strconv.Itoa(opts.Port))
 	default:
 		return nil, fmt.Errorf("unknown network: %s", opts.Network)
 	}
