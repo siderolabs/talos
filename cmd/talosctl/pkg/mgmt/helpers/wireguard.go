@@ -24,7 +24,7 @@ func NewWireguardConfigBundle(ips []net.IP, wireguardCidr string, listenPort, ma
 	peers := make([]*v1alpha1.DeviceWireguardPeer, len(ips))
 
 	for i, ip := range ips {
-		key, err := wgtypes.GenerateKey()
+		key, err := wgtypes.GeneratePrivateKey()
 		if err != nil {
 			return nil, err
 		}
