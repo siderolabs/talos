@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
@@ -34,7 +35,9 @@ const (
 	// AzureHostnameEndpoint is the local endpoint for the hostname.
 	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/osProfile/computerName?api-version=2021-12-13&format=text"
 	// AzureInterfacesEndpoint is the local endpoint to get external IPs.
-	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-12-13"
+	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-12-13&format=json"
+	// AzureLoadbalancerEndpoint is the local endpoint for load balancer config.
+	AzureLoadbalancerEndpoint = "http://169.254.169.254/metadata/loadbalancer?api-version=2021-05-01&format=json"
 
 	mnt = "/mnt"
 )
@@ -53,6 +56,16 @@ type NetworkConfig struct {
 type IPAddresses struct {
 	PrivateIPAddress string `json:"privateIpAddress"`
 	PublicIPAddress  string `json:"publicIpAddress"`
+}
+
+// LoadBalancerMetadata represents load balancer metadata in IMDS.
+type LoadBalancerMetadata struct {
+	LoadBalancer struct {
+		PublicIPAddresses []struct {
+			FrontendIPAddress string `json:"frontendIpAddress,omitempty"`
+			PrivateIPAddress  string `json:"privateIpAddress,omitempty"`
+		} `json:"publicIpAddresses,omitempty"`
+	} `json:"loadbalancer,omitempty"`
 }
 
 // Azure is the concrete type that implements the platform.Platform interface.
@@ -124,6 +137,25 @@ func (a *Azure) ParseMetadata(interfaceAddresses []NetworkConfig, host []byte) (
 	}
 
 	return &networkConfig, nil
+}
+
+// ParseLoadBalancerIP parses Azure LoadBalancer metadata into the platform external ip list.
+func (a *Azure) ParseLoadBalancerIP(lbConfig LoadBalancerMetadata, exIP []netaddr.IP) ([]netaddr.IP, error) {
+	lbAddresses := exIP
+
+	for _, addr := range lbConfig.LoadBalancer.PublicIPAddresses {
+		ipaddr := addr.FrontendIPAddress
+
+		if i := strings.IndexByte(ipaddr, ']'); i != -1 {
+			ipaddr = strings.TrimPrefix(ipaddr[:i], "[")
+		}
+
+		if ip, err := netaddr.ParseIP(ipaddr); err == nil {
+			lbAddresses = append(lbAddresses, ip)
+		}
+	}
+
+	return lbAddresses, nil
 }
 
 // Configuration implements the platform.Platform interface.
@@ -214,6 +246,8 @@ func (a *Azure) configFromCD() ([]byte, error) {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
+//
+//nolint:gocyclo
 func (a *Azure) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching network config from %q", AzureInterfacesEndpoint)
 
@@ -236,12 +270,37 @@ func (a *Azure) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.Pla
 		download.WithErrorOnNotFound(errors.ErrNoHostname),
 		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
 	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
-		return err
+		return fmt.Errorf("failed to fetch hostname from metadata service: %w", err)
 	}
 
 	networkConfig, err := a.ParseMetadata(interfaceAddresses, host)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse network metadata: %w", err)
+	}
+
+	log.Printf("fetching load balancer metadata from: %q", AzureLoadbalancerEndpoint)
+
+	var loadBalancerAddresses LoadBalancerMetadata
+
+	lbConfig, err := download.Download(ctx, AzureLoadbalancerEndpoint,
+		download.WithHeaders(map[string]string{"Metadata": "true"}),
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+	if err != nil && !stderrors.Is(err, errors.ErrNoConfigSource) {
+		log.Printf("failed to fetch load balancer config from metadata service: %s", err)
+
+		lbConfig = nil
+	}
+
+	if len(lbConfig) > 0 {
+		if err = json.Unmarshal(lbConfig, &loadBalancerAddresses); err != nil {
+			return fmt.Errorf("failed to parse loadbalancer metadata: %w", err)
+		}
+
+		networkConfig.ExternalIPs, err = a.ParseLoadBalancerIP(loadBalancerAddresses, networkConfig.ExternalIPs)
+		if err != nil {
+			return fmt.Errorf("failed to define externalIPs: %w", err)
+		}
 	}
 
 	select {
