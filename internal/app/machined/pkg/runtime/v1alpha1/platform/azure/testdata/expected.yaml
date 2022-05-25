@@ -16,3 +16,5 @@ operators:
       layer: default
 externalIPs:
     - 1.2.3.4
+    - 2603:1020:10:5::34
+    - 20.10.5.34

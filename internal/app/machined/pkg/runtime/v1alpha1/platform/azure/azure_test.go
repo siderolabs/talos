@@ -19,6 +19,9 @@ import (
 //go:embed testdata/metadata.json
 var rawMetadata []byte
 
+//go:embed testdata/loadbalancer.json
+var rawLoadBalancerMetadata []byte
+
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
@@ -30,6 +33,13 @@ func TestParseMetadata(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 
 	networkConfig, err := a.ParseMetadata(m, []byte("some.fqdn"))
+	require.NoError(t, err)
+
+	var lb azure.LoadBalancerMetadata
+
+	require.NoError(t, json.Unmarshal(rawLoadBalancerMetadata, &lb))
+
+	networkConfig.ExternalIPs, err = a.ParseLoadBalancerIP(lb, networkConfig.ExternalIPs)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)
