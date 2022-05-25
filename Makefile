@@ -36,6 +36,7 @@ RELEASES ?= v0.13.4 v0.14.1
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
+IMAGER_ARGS ?=
 
 VERSION_PKG = github.com/talos-systems/talos/pkg/version
 IMAGES_PKGS = github.com/talos-systems/talos/pkg/images
@@ -225,7 +226,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
-		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS) ; \
+		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
 	done
 
 images-essential: image-aws image-gcp image-metal ## Builds only essential images used in the CI (AWS, GCP, and Metal).
@@ -234,7 +235,7 @@ images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-m
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4 and pine64 (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout | tar xz -C $(ARTIFACTS)
+	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)
 
 sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-pine64 sbc-jetson_nano ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, pine64, Libre Computer Board ALL-H3-CC and Jetson Nano).
 
@@ -243,7 +244,7 @@ iso: ## Builds the ISO and outputs it to the artifact directory.
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
-		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout | tar xz -C $(ARTIFACTS)  ; \
+		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
 	done
 
 .PHONY: talosctl-cni-bundle

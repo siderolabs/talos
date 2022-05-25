@@ -5,32 +5,27 @@
 package cmd
 
 import (
+	"bytes"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/spf13/cobra"
+	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/kernel"
 )
 
-var cfg = []byte(`set default=0
-set timeout=3
-
-insmod all_video
-
-terminal_input console
-terminal_output console
-
-menuentry "Talos ISO" {
-	set gfxmode=auto
-	set gfxpayload=text
-	linux /boot/vmlinuz init_on_alloc=1 slab_nomerge pti=on panic=0 consoleblank=0 printk.devkmsg=on earlyprintk=ttyS0 console=tty0 console=ttyS0 talos.platform=metal
-	initrd /boot/initramfs.xz
-}`)
+//go:embed grub.iso.cfg
+var isoGrubCfg []byte
 
 // isoCmd represents the iso command.
 var isoCmd = &cobra.Command{
@@ -90,17 +85,49 @@ func runISOCmd() error {
 
 	log.Println("creating grub.cfg")
 
+	// ISO is always using platform "metal".
+	p := &metal.Metal{}
+
+	cmdline := procfs.NewCmdline("")
+	cmdline.Append(constants.KernelParamPlatform, p.Name())
+	cmdline.Append("earlyprintk", "ttyS0")
+
+	cmdline.SetAll(p.KernelArgs().Strings())
+
+	if err := cmdline.AppendAll(kernel.DefaultArgs); err != nil {
+		return err
+	}
+
+	if err := cmdline.AppendAll(options.ExtraKernelArgs, procfs.WithOverwriteArgs("console")); err != nil {
+		return err
+	}
+
+	var grubCfg bytes.Buffer
+
+	tmpl, err := template.New("grub.cfg").Parse(string(isoGrubCfg))
+	if err != nil {
+		return err
+	}
+
+	if err = tmpl.Execute(&grubCfg, struct {
+		Cmdline string
+	}{
+		Cmdline: cmdline.String(),
+	}); err != nil {
+		return err
+	}
+
 	cfgPath := "/mnt/boot/grub/grub.cfg"
 
-	if err := os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
+	if err = os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(cfgPath, cfg, 0o666); err != nil {
+	if err = ioutil.WriteFile(cfgPath, grubCfg.Bytes(), 0o666); err != nil {
 		return err
 	}
 
-	if err := pkg.TouchFiles("/mnt"); err != nil {
+	if err = pkg.TouchFiles("/mnt"); err != nil {
 		return err
 	}
 
@@ -108,7 +135,7 @@ func runISOCmd() error {
 
 	out := fmt.Sprintf("/tmp/talos-%s.iso", options.Arch)
 
-	if err := pkg.CreateISO(out, "/mnt"); err != nil {
+	if err = pkg.CreateISO(out, "/mnt"); err != nil {
 		return err
 	}
 

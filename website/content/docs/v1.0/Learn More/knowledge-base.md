@@ -19,3 +19,17 @@ machine:
       shutdownGracePeriod: 0s
       shutdownGracePeriodCriticalPods: 0s
 ```
+
+## Generating Talos Linux ISO image with custom kernel arguments
+
+Pass additional kernel arguments using `--extra-kernel-arg` flag:
+
+```shell
+$ docker run --rm -i ghcr.io/siderolabs/imager:{{< release >}} iso --arch amd64 --tar-to-stdout --extra-kernel-arg console=ttyS1 --extra-kernel-arg console=tty0 | tar xz
+2022/05/25 13:18:47 copying /usr/install/amd64/vmlinuz to /mnt/boot/vmlinuz
+2022/05/25 13:18:47 copying /usr/install/amd64/initramfs.xz to /mnt/boot/initramfs.xz
+2022/05/25 13:18:47 creating grub.cfg
+2022/05/25 13:18:47 creating ISO
+```
+
+ISO will be output to the file `talos-<arch>.iso` in the current directory.
