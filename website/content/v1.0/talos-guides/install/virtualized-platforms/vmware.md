@@ -93,7 +93,7 @@ If you wish to carry out the manual approach, simply skip ahead to the "Manual A
 ### Scripted Install
 
 Download the `vmware.sh` script to your local machine.
-You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/virtualized-platforms/vmware/vmware.sh"`.
+You can do this by issuing `curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/vmware.sh"`.
 This script has default variables for things like Talos version and cluster name that may be interesting to tweak before deploying.
 
 #### Import OVA
