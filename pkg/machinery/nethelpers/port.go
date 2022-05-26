@@ -6,10 +6,19 @@ package nethelpers
 
 import "github.com/mdlayher/ethtool"
 
+//go:generate enumer -type=Port -text
+
 // Port wraps ethtool.Port for YAML marshaling.
 type Port ethtool.Port
 
-// MarshalText implements text.Marshaler interface.
-func (port Port) MarshalText() ([]byte, error) {
-	return []byte(ethtool.Port(port).String()), nil
-}
+// Possible Port type values.
+const (
+	TwistedPair  Port = Port(ethtool.TwistedPair)
+	AUI          Port = Port(ethtool.AUI)
+	MII          Port = Port(ethtool.MII)
+	Fibre        Port = Port(ethtool.Fibre) //nolint:misspell
+	BNC          Port = Port(ethtool.BNC)
+	DirectAttach Port = Port(ethtool.DirectAttach)
+	None         Port = Port(ethtool.None)
+	Other        Port = Port(ethtool.Other)
+)

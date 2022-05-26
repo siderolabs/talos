@@ -14,6 +14,18 @@ func (addr HardwareAddr) MarshalText() ([]byte, error) {
 	return []byte(net.HardwareAddr(addr).String()), nil
 }
 
+// UnmarshalText implements text.Unmarshaler interface.
+func (addr *HardwareAddr) UnmarshalText(b []byte) error {
+	mac, err := net.ParseMAC(string(b))
+	if err != nil {
+		return err
+	}
+
+	*addr = HardwareAddr(mac)
+
+	return nil
+}
+
 func (addr HardwareAddr) String() string {
 	return net.HardwareAddr(addr).String()
 }
