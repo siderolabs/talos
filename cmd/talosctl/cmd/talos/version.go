@@ -24,6 +24,7 @@ var versionCmdFlags struct {
 	clientOnly   bool
 	shortVersion bool
 	json         bool
+	insecure     bool
 }
 
 // versionCmd represents the `talosctl version` command.
@@ -49,56 +50,65 @@ var versionCmd = &cobra.Command{
 			fmt.Println("Server:")
 		}
 
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var remotePeer peer.Peer
+		if versionCmdFlags.insecure {
+			return WithClientMaintenance(nil, cmdVersion)
+		}
 
-			resp, err := c.Version(ctx, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting version: %s", err)
-				}
-				cli.Warning("%s", err)
-			}
-
-			defaultNode := client.AddrFromPeer(&remotePeer)
-
-			for _, msg := range resp.Messages {
-				node := defaultNode
-
-				if msg.Metadata != nil {
-					node = msg.Metadata.Hostname
-				}
-
-				if !versionCmdFlags.json {
-					fmt.Printf("\t%s:        %s\n", "NODE", node)
-
-					version.PrintLongVersionFromExisting(msg.Version)
-
-					var enabledFeatures []string
-					if msg.Features.GetRbac() {
-						enabledFeatures = append(enabledFeatures, "RBAC")
-					}
-
-					fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
-
-					continue
-				}
-
-				b, err := protojson.Marshal(msg)
-				if err != nil {
-					return err
-				}
-				fmt.Printf("%s\n", b)
-			}
-
-			return nil
-		})
+		return WithClient(cmdVersion)
 	},
+}
+
+func cmdVersion(ctx context.Context, c *client.Client) error {
+	var remotePeer peer.Peer
+
+	resp, err := c.Version(ctx, grpc.Peer(&remotePeer))
+	if err != nil {
+		if resp == nil {
+			return fmt.Errorf("error getting version: %s", err)
+		}
+
+		cli.Warning("%s", err)
+	}
+
+	defaultNode := client.AddrFromPeer(&remotePeer)
+
+	for _, msg := range resp.Messages {
+		node := defaultNode
+
+		if msg.Metadata != nil {
+			node = msg.Metadata.Hostname
+		}
+
+		if !versionCmdFlags.json {
+			fmt.Printf("\t%s:        %s\n", "NODE", node)
+
+			version.PrintLongVersionFromExisting(msg.Version)
+
+			var enabledFeatures []string
+			if msg.Features.GetRbac() {
+				enabledFeatures = append(enabledFeatures, "RBAC")
+			}
+
+			fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
+
+			continue
+		}
+
+		b, err := protojson.Marshal(msg)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", b)
+	}
+
+	return nil
 }
 
 func init() {
 	versionCmd.Flags().BoolVar(&versionCmdFlags.shortVersion, "short", false, "Print the short version")
 	versionCmd.Flags().BoolVar(&versionCmdFlags.clientOnly, "client", false, "Print client version only")
+	versionCmd.Flags().BoolVarP(&versionCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
 
 	// TODO remove when https://github.com/talos-systems/talos/issues/907 is implemented
 	versionCmd.Flags().BoolVar(&versionCmdFlags.json, "json", false, "")

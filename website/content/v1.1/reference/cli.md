@@ -2094,9 +2094,10 @@ talosctl version [flags]
 ### Options
 
 ```
-      --client   Print client version only
-  -h, --help     help for version
-      --short    Print the short version
+      --client     Print client version only
+  -h, --help       help for version
+  -i, --insecure   use Talos maintenance mode API
+      --short      Print the short version
 ```
 
 ### Options inherited from parent commands

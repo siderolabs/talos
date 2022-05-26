@@ -8,11 +8,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/resources"
@@ -23,6 +27,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/version"
 )
 
 // Server implements machine.MachineService, network.NetworkService, and storage.StorageService.
@@ -115,4 +121,54 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 // GenerateClientConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) can't be generated in the maintenance mode")
+}
+
+func verifyPeer(ctx context.Context, condition func(netaddr.IP) bool) bool {
+	remotePeer, ok := peer.FromContext(ctx)
+	if !ok {
+		return false
+	}
+
+	if remotePeer.Addr.Network() != "tcp" {
+		return false
+	}
+
+	ip, _, err := net.SplitHostPort(remotePeer.Addr.String())
+	if err != nil {
+		return false
+	}
+
+	addr, err := netaddr.ParseIP(ip)
+	if err != nil {
+		return false
+	}
+
+	return condition(addr)
+}
+
+// Version implements the machine.MachineServer interface.
+func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.VersionResponse, error) {
+	if !verifyPeer(ctx, func(addr netaddr.IP) bool {
+		return network.IsULA(addr, network.ULASideroLink)
+	}) {
+		return nil, status.Error(codes.Unimplemented, "Version API is not implemented in maintenance mode")
+	}
+
+	var platform *machine.PlatformInfo
+
+	if s.runtime.State().Platform() != nil {
+		platform = &machine.PlatformInfo{
+			Name: s.runtime.State().Platform().Name(),
+			Mode: s.runtime.State().Platform().Mode().String(),
+		}
+	}
+
+	return &machine.VersionResponse{
+		Messages: []*machine.Version{
+			{
+				Version:  version.NewVersion(),
+				Platform: platform,
+			},
+		},
+	}, nil
 }
