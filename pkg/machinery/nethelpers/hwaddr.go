@@ -4,7 +4,11 @@
 
 package nethelpers
 
-import "net"
+import (
+	"bytes"
+	"encoding/hex"
+	"net"
+)
 
 // HardwareAddr wraps net.HardwareAddr for YAML marshaling.
 type HardwareAddr net.HardwareAddr
@@ -16,12 +20,17 @@ func (addr HardwareAddr) MarshalText() ([]byte, error) {
 
 // UnmarshalText implements text.Unmarshaler interface.
 func (addr *HardwareAddr) UnmarshalText(b []byte) error {
-	mac, err := net.ParseMAC(string(b))
+	rawHex := bytes.ReplaceAll(b, []byte(":"), []byte(""))
+	dstLen := hex.DecodedLen(len(rawHex))
+
+	dst := make([]byte, dstLen)
+
+	n, err := hex.Decode(dst, rawHex)
 	if err != nil {
 		return err
 	}
 
-	*addr = HardwareAddr(mac)
+	*addr = HardwareAddr(dst[:n])
 
 	return nil
 }
