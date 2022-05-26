@@ -29,6 +29,10 @@ func (flags RouteFlags) String() string {
 func RouteFlagsString(s string) (RouteFlags, error) {
 	flags := RouteFlags(0)
 
+	if s == "" {
+		return flags, nil
+	}
+
 	for _, p := range strings.Split(s, ",") {
 		flag, err := RouteFlagString(p)
 		if err != nil {
