@@ -41,7 +41,7 @@ func (ctrl *SystemInfoController) Outputs() []controller.Output {
 			Kind: controller.OutputExclusive,
 		},
 		{
-			Type: hardware.MemoryType,
+			Type: hardware.MemoryModuleType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -84,8 +84,8 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 		// replaces `SIMM 0` with `SIMM-0`
 		id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
 
-		if err := r.Modify(ctx, hardware.NewMemoryInfo(id), func(res resource.Resource) error {
-			hwadapter.Memory(res.(*hardware.Memory)).Update(&m)
+		if err := r.Modify(ctx, hardware.NewMemoryModuleInfo(id), func(res resource.Resource) error {
+			hwadapter.MemoryModule(res.(*hardware.MemoryModule)).Update(&m)
 
 			return nil
 		}); err != nil {

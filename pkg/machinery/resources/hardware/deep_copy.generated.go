@@ -13,7 +13,7 @@ func (o ProcessorSpec) DeepCopy() ProcessorSpec {
 }
 
 // DeepCopy generates a deep copy of MemorySpec.
-func (o MemorySpec) DeepCopy() MemorySpec {
-	var cp MemorySpec = o
+func (o MemoryModuleSpec) DeepCopy() MemoryModuleSpec {
+	var cp MemoryModuleSpec = o
 	return cp
 }

@@ -70,7 +70,7 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 		},
 	}
 
-	memorySpecs := map[string]hardware.MemorySpec{
+	memorySpecs := map[string]hardware.MemoryModuleSpec{
 		"P1-DIMMA1": {
 			Size:          4096,
 			DeviceLocator: "P1-DIMMA1",
@@ -111,8 +111,8 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	for k, v := range memorySpecs {
 		suite.Assert().NoError(
 			retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				suite.assertResource(*hardware.NewMemoryInfo(k).Metadata(), func(r resource.Resource) error {
-					status := *r.(*hardware.Memory).TypedSpec()
+				suite.assertResource(*hardware.NewMemoryModuleInfo(k).Metadata(), func(r resource.Resource) error {
+					status := *r.(*hardware.MemoryModule).TypedSpec()
 					if !suite.Assert().Equal(v, status) {
 						return retry.ExpectedError(fmt.Errorf("memory status doesn't match: %v != %v", v, status))
 					}

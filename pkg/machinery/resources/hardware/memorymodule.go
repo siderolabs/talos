@@ -10,14 +10,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 )
 
-// MemoryType is type of Memory resource.
-const MemoryType = resource.Type("Memories.hardware.talos.dev")
+// MemoryModuleType is type of MemoryModule resource.
+const MemoryModuleType = resource.Type("MemoryModules.hardware.talos.dev")
 
-// Memory resource holds node Memory information.
-type Memory = typed.Resource[MemorySpec, MemoryRD]
+// MemoryModule resource holds node MemoryModule information.
+type MemoryModule = typed.Resource[MemoryModuleSpec, MemoryModuleRD]
 
-// MemorySpec represents a single Memory.
-type MemorySpec struct {
+// MemoryModuleSpec represents a single Memory.
+type MemoryModuleSpec struct {
 	Size          uint32 `yaml:"sizeMiB,omitempty"`
 	DeviceLocator string `yaml:"deviceLocator,omitempty"`
 	BankLocator   string `yaml:"bankLocator,omitempty"`
@@ -28,23 +28,23 @@ type MemorySpec struct {
 	ProductName   string `yaml:"productName,omitempty"`
 }
 
-// NewMemoryInfo initializes a MemoryInfo resource.
-func NewMemoryInfo(id string) *Memory {
-	return typed.NewResource[MemorySpec, MemoryRD](
-		resource.NewMetadata(NamespaceName, MemoryType, id, resource.VersionUndefined),
-		MemorySpec{},
+// NewMemoryModuleInfo initializes a MemoryModuleInfo resource.
+func NewMemoryModuleInfo(id string) *MemoryModule {
+	return typed.NewResource[MemoryModuleSpec, MemoryModuleRD](
+		resource.NewMetadata(NamespaceName, MemoryModuleType, id, resource.VersionUndefined),
+		MemoryModuleSpec{},
 	)
 }
 
-// MemoryRD provides auxiliary methods for Memory info.
-type MemoryRD struct{}
+// MemoryModuleRD provides auxiliary methods for Memory info.
+type MemoryModuleRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (c MemoryRD) ResourceDefinition(resource.Metadata, MemorySpec) meta.ResourceDefinitionSpec {
+func (c MemoryModuleRD) ResourceDefinition(resource.Metadata, MemoryModuleSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
-		Type: MemoryType,
+		Type: MemoryModuleType,
 		Aliases: []resource.Type{
-			"memory",
+			"memorymodules",
 			"ram",
 		},
 		DefaultNamespace: NamespaceName,

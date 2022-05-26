@@ -26,7 +26,7 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, resource := range []resource.Resource{
 		&hardware.Processor{},
-		&hardware.Memory{},
+		&hardware.MemoryModule{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
