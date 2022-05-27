@@ -93,7 +93,7 @@ require (
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
-	github.com/talos-systems/go-blockdevice v0.3.2-0.20220405134045-d9c3a2738861
+	github.com/talos-systems/go-blockdevice v0.3.2
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/go-kmsg v0.1.1
@@ -103,7 +103,7 @@ require (
 	github.com/talos-systems/go-smbios v0.2.0
 	github.com/talos-systems/grpc-proxy v0.3.0
 	github.com/talos-systems/net v0.3.2
-	github.com/talos-systems/siderolink v0.1.2-0.20220524191358-3a5be65da5bb
+	github.com/talos-systems/siderolink v0.1.2
 	github.com/talos-systems/talos/pkg/machinery v1.1.0-alpha.2
 	github.com/u-root/u-root v0.8.0
 	github.com/vishvananda/netlink v1.2.0-beta
