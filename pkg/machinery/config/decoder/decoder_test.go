@@ -269,7 +269,7 @@ spec:
 			name:        "internal error",
 			source:      []byte(":   \xea"),
 			expected:    nil,
-			expectedErr: "recovered: internal error: attempted to parse unknown event (please report): none",
+			expectedErr: "decode error: yaml: incomplete UTF-8 octet sequence",
 		},
 		{
 			name: "unstructured config",
