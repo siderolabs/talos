@@ -178,14 +178,14 @@ func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.Resolver
 
 var hostsTemplate = template.Must(template.New("hosts").Parse(strings.TrimSpace(`
 127.0.0.1       localhost
-{{ .IP }}       {{ .Hostname }} {{ if ne .Hostname .Alias }}{{ .Alias }}{{ end }}
+{{ printf "%-15s" .IP }} {{ .Hostname }} {{ if ne .Hostname .Alias }}{{ .Alias }}{{ end }}
 ::1             localhost ip6-localhost ip6-loopback
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 
 {{- with .ExtraHosts }}
 {{ range . }}
-{{ .IP }} {{ range .Aliases }}{{.}} {{ end -}}
+{{ printf "%-15s" .IP }} {{ range .Aliases }}{{.}} {{ end -}}
 {{ end -}}
 {{ end -}}
 `)))

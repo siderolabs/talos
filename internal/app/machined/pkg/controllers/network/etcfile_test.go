@@ -227,7 +227,7 @@ func (suite *EtcFileConfigSuite) TestComplete() {
 	suite.testFiles(
 		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
-		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters\n\n10.0.0.1 a b \n10.0.0.2 c d ", //nolint:lll
+		"127.0.0.1       localhost\n33.11.22.44     foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters\n\n10.0.0.1        a b \n10.0.0.2        c d ", //nolint:lll
 	)
 }
 
@@ -235,7 +235,7 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 	suite.testFiles(
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
-		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
+		"127.0.0.1       localhost\n33.11.22.44     foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
 }
 
@@ -253,7 +253,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 	suite.testFiles(
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters", //nolint:lll
+		"127.0.0.1       localhost\n33.11.22.44     foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters", //nolint:lll
 	)
 }
 
@@ -263,7 +263,7 @@ func (suite *EtcFileConfigSuite) TestNoDomainname() {
 	suite.testFiles(
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"127.0.0.1       localhost\n33.11.22.44       foo \n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
+		"127.0.0.1       localhost\n33.11.22.44     foo \n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
 }
 
@@ -279,7 +279,7 @@ func (suite *EtcFileConfigSuite) TestOnlyHostname() {
 	suite.testFiles(
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus},
 		"",
-		"127.0.0.1       localhost\n33.11.22.44       foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
+		"127.0.0.1       localhost\n33.11.22.44     foo.example.com foo\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters",
 	)
 }
 
