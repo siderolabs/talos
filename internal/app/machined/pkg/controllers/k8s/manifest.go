@@ -216,8 +216,9 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 	for i := range defaultManifests {
 		tmpl, err := template.New(defaultManifests[i].name).
 			Funcs(template.FuncMap{
-				"json": jsonify,
-				"join": strings.Join,
+				"json":     jsonify,
+				"join":     strings.Join,
+				"contains": strings.Contains,
 			}).
 			Parse(string(defaultManifests[i].template))
 		if err != nil {

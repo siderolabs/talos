@@ -534,7 +534,14 @@ data:
     }
   net-conf.json: |
     {
-      "Network": "{{ index .PodCIDRs 0 }}",
+      {{- range $cidr := .PodCIDRs }}
+        {{- if contains $cidr "." }}
+      "Network": "{{ $cidr }}",
+        {{- else }}
+      "IPv6Network" : "{{ $cidr }}",
+      "EnableIPv6" : true,
+        {{- end }}
+      {{- end }}
       "Backend": {
         "Type": "vxlan",
         "Port": 4789
