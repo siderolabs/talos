@@ -163,7 +163,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 
 	// I wish we never used go-getter package, as it doesn't allow downloading into memory.
 	// But there's not much we can do about it right now, as it supports lots of magic
-	// users might rely upon now.
+	// users might rely upon.
 
 	// Disable netrc since we don't have getent installed, and most likely
 	// never will.
