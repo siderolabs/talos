@@ -189,9 +189,9 @@ func readConfigFromISO() (b []byte, err error) {
 		return nil, fmt.Errorf("failed to get filesystem type")
 	}
 
-	//if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
-	//	return nil, fmt.Errorf("failed to mount iso: %w", err)
-	//}
+	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
+		return nil, fmt.Errorf("failed to mount iso: %w", err)
+	}
 
 	b, err = ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
 	if err != nil {
