@@ -48,6 +48,11 @@ func TestPopulateURLParameters(t *testing.T) {
 			url:         "http://example.com/metadata?uuid=xyz&uuid=foo",
 			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
 		},
+		{
+			name:        "uuid in path",
+			url:         "http://example.com/{{.UUID}}/metadata",
+			expectedURL: fmt.Sprintf("http://example.com/%s/metadata", mockUUID),
+		},
 	} {
 		tt := tt
 
