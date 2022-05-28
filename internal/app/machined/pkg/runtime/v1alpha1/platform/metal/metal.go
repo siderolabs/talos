@@ -5,6 +5,7 @@
 package metal
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -63,8 +65,32 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	}
 }
 
+type MachineConfigUrlTemplate struct {
+	UUID     string
+	MAC      string
+	Serial   string
+	Hostname string
+}
+
 // PopulateURLParameters fills in empty parameters in the download URL.
 func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, error)) (string, error) {
+	// first, do a templating of the downloadURL.  Then finally add a uuid if not set
+	tmpl, templateErr := template.New("config-url-template").Parse(downloadURL)
+	uid, uuidError := getSystemUUID()
+	if templateErr != nil {
+		log.Printf("failed to parse downloadURL: #{templateErr}")
+	} else if uuidError != nil {
+		log.Printf("failed to generate system uuid: #{uuidError}")
+	} else {
+		var urlTemplateResult bytes.Buffer
+
+		data := getMachineConfigSubstitutions(uid)
+		if err := tmpl.Execute(&urlTemplateResult, data); err != nil {
+			log.Printf("failed to templatize downloadURL: #{err}")
+		}
+		downloadURL = urlTemplateResult.String()
+	}
+
 	u, err := url.Parse(downloadURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
@@ -77,11 +103,6 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 		case "uuid":
 			// don't touch uuid field if it already has some value
 			if !(len(qValues) == 1 && len(strings.TrimSpace(qValues[0])) > 0) {
-				uid, err := getSystemUUID()
-				if err != nil {
-					return "", err
-				}
-
 				values.Set("uuid", uid)
 			}
 		default:
@@ -92,6 +113,13 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 	u.RawQuery = values.Encode()
 
 	return u.String(), nil
+}
+
+func getMachineConfigSubstitutions(uid string) MachineConfigUrlTemplate {
+
+	return MachineConfigUrlTemplate{
+		UUID: uid,
+	}
 }
 
 func getSystemUUID() (string, error) {
