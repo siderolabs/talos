@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -68,7 +70,6 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 type MachineConfigUrlTemplate struct {
 	UUID     string
 	MAC      string
-	Serial   string
 	Hostname string
 }
 
@@ -115,11 +116,43 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 	return u.String(), nil
 }
 
-func getMachineConfigSubstitutions(uid string) MachineConfigUrlTemplate {
+func getMacAddr() (string, error) {
+	ifen0, en0Err := net.InterfaceByName("en0")
+	if ifen0 != nil && en0Err == nil {
+		return ifen0.HardwareAddr.String(), nil
+	}
+	ifEth0, eth0Err := net.InterfaceByName("eth0")
+	if ifEth0 != nil && eth0Err == nil {
+		return ifEth0.HardwareAddr.String(), nil
+	}
 
-	return MachineConfigUrlTemplate{
+	ifas, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	for _, ifa := range ifas {
+		a := ifa.HardwareAddr.String()
+		if a != "" {
+			return a, nil
+		}
+	}
+	return "", nil
+}
+
+func getMachineConfigSubstitutions(uid string) MachineConfigUrlTemplate {
+	tplData := MachineConfigUrlTemplate{
 		UUID: uid,
 	}
+	name, err := os.Hostname()
+	if err == nil {
+		tplData.Hostname = name
+	}
+	macAddress, errMac := getMacAddr()
+	if errMac == nil && macAddress != "" {
+		tplData.MAC = macAddress
+		// TODO: represent secondary interfaces on MAC_0, MAC_1, etc.
+	}
+	return tplData
 }
 
 func getSystemUUID() (string, error) {
@@ -156,9 +189,9 @@ func readConfigFromISO() (b []byte, err error) {
 		return nil, fmt.Errorf("failed to get filesystem type")
 	}
 
-	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
-		return nil, fmt.Errorf("failed to mount iso: %w", err)
-	}
+	//if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
+	//	return nil, fmt.Errorf("failed to mount iso: %w", err)
+	//}
 
 	b, err = ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
 	if err != nil {
