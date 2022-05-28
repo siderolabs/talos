@@ -84,6 +84,13 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
   The URL at which the machine configuration data may be found.
 
+  Supports `text/template` style replacements for:
+    - `{{.UUID}}`
+    - `{{.MAC}}`
+    - `{{.Hostname}}`
+
+  Example: `https://config.example.com/machines/{{.UUID}}/bootstrap/config?mac={{.MAC}}`
+
 #### `talos.platform`
 
   The platform name on which Talos will run.

@@ -5,13 +5,17 @@
 package metal
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
@@ -63,8 +67,31 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 	}
 }
 
+type MachineConfigUrlTemplate struct {
+	UUID     string
+	MAC      string
+	Hostname string
+}
+
 // PopulateURLParameters fills in empty parameters in the download URL.
 func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, error)) (string, error) {
+	// first, do a templating of the downloadURL.  Then finally add a uuid if not set
+	tmpl, templateErr := template.New("config-url-template").Parse(downloadURL)
+	uid, uuidError := getSystemUUID()
+	if templateErr != nil {
+		log.Printf("failed to parse downloadURL: #{templateErr}")
+	} else if uuidError != nil {
+		log.Printf("failed to generate system uuid: #{uuidError}")
+	} else {
+		var urlTemplateResult bytes.Buffer
+
+		data := getMachineConfigSubstitutions(uid)
+		if err := tmpl.Execute(&urlTemplateResult, data); err != nil {
+			log.Printf("failed to templatize downloadURL: #{err}")
+		}
+		downloadURL = urlTemplateResult.String()
+	}
+
 	u, err := url.Parse(downloadURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
@@ -77,11 +104,6 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 		case "uuid":
 			// don't touch uuid field if it already has some value
 			if !(len(qValues) == 1 && len(strings.TrimSpace(qValues[0])) > 0) {
-				uid, err := getSystemUUID()
-				if err != nil {
-					return "", err
-				}
-
 				values.Set("uuid", uid)
 			}
 		default:
@@ -92,6 +114,45 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 	u.RawQuery = values.Encode()
 
 	return u.String(), nil
+}
+
+func getMacAddr() (string, error) {
+	ifen0, en0Err := net.InterfaceByName("en0")
+	if ifen0 != nil && en0Err == nil {
+		return ifen0.HardwareAddr.String(), nil
+	}
+	ifEth0, eth0Err := net.InterfaceByName("eth0")
+	if ifEth0 != nil && eth0Err == nil {
+		return ifEth0.HardwareAddr.String(), nil
+	}
+
+	ifas, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	for _, ifa := range ifas {
+		a := ifa.HardwareAddr.String()
+		if a != "" {
+			return a, nil
+		}
+	}
+	return "", nil
+}
+
+func getMachineConfigSubstitutions(uid string) MachineConfigUrlTemplate {
+	tplData := MachineConfigUrlTemplate{
+		UUID: uid,
+	}
+	name, err := os.Hostname()
+	if err == nil {
+		tplData.Hostname = name
+	}
+	macAddress, errMac := getMacAddr()
+	if errMac == nil && macAddress != "" {
+		tplData.MAC = macAddress
+		// TODO: represent secondary interfaces on MAC_0, MAC_1, etc.
+	}
+	return tplData
 }
 
 func getSystemUUID() (string, error) {
