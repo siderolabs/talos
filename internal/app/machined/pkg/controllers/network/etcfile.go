@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -176,42 +176,32 @@ func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.Resolver
 	return buf.Bytes()
 }
 
-var hostsTemplate = template.Must(template.New("hosts").Parse(strings.TrimSpace(`
-127.0.0.1       localhost
-{{ .IP }}       {{ .Hostname }} {{ if ne .Hostname .Alias }}{{ .Alias }}{{ end }}
-::1             localhost ip6-localhost ip6-loopback
-ff02::1         ip6-allnodes
-ff02::2         ip6-allrouters
-
-{{- with .ExtraHosts }}
-{{ range . }}
-{{ .IP }} {{ range .Aliases }}{{.}} {{ end -}}
-{{ end -}}
-{{ end -}}
-`)))
-
 func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatusSpec, nodeAddressStatus *network.NodeAddressSpec, cfgProvider talosconfig.Provider) ([]byte, error) {
 	var buf bytes.Buffer
 
-	extraHosts := []talosconfig.ExtraHost{}
+	tabW := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
+
+	tabW.Write([]byte("127.0.0.1\tlocalhost\n")) //nolint:errcheck
+
+	tabW.Write([]byte(fmt.Sprintf("%s\t%s", nodeAddressStatus.Addresses[0].IP(), hostnameStatus.FQDN()))) //nolint:errcheck
+
+	if hostnameStatus.Hostname != hostnameStatus.FQDN() {
+		tabW.Write([]byte(" " + hostnameStatus.Hostname)) //nolint:errcheck
+	}
+
+	tabW.Write([]byte("\n")) //nolint:errcheck
+
+	tabW.Write([]byte("::1\tlocalhost ip6-localhost ip6-loopback\n")) //nolint:errcheck
+	tabW.Write([]byte("ff02::1\tip6-allnodes\n"))                     //nolint:errcheck
+	tabW.Write([]byte("ff02::2\tip6-allrouters\n"))                   //nolint:errcheck
 
 	if cfgProvider != nil {
-		extraHosts = cfgProvider.Machine().Network().ExtraHosts()
+		for _, extraHost := range cfgProvider.Machine().Network().ExtraHosts() {
+			tabW.Write([]byte(fmt.Sprintf("%s\t%s\n", extraHost.IP(), strings.Join(extraHost.Aliases(), " ")))) //nolint:errcheck
+		}
 	}
 
-	data := struct {
-		IP         string
-		Hostname   string
-		Alias      string
-		ExtraHosts []talosconfig.ExtraHost
-	}{
-		IP:         nodeAddressStatus.Addresses[0].IP().String(),
-		Hostname:   hostnameStatus.FQDN(),
-		Alias:      hostnameStatus.Hostname,
-		ExtraHosts: extraHosts,
-	}
-
-	if err := hostsTemplate.Execute(&buf, data); err != nil {
+	if err := tabW.Flush(); err != nil {
 		return nil, err
 	}
 
