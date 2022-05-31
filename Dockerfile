@@ -560,7 +560,7 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.15.4 AS unicode-pf2
+FROM alpine:3.16.0 AS unicode-pf2
 RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
@@ -587,7 +587,7 @@ FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
-FROM alpine:3.15.4 AS installer
+FROM alpine:3.16.0 AS installer
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
