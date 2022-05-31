@@ -86,6 +86,7 @@ func (r *Rockpi4) Install(disk string) (err error) {
 func (r *Rockpi4) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS2,1500000n8"),
+		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
 	}
 }
 
