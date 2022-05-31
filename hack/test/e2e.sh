@@ -243,7 +243,7 @@ function run_day_two_tests {
   ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
   ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
   # .status.ceph is populated only after the cluster comes up
-  sleep 20
+  sleep 60
   ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
   KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G
