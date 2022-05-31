@@ -97,29 +97,29 @@ RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
 ARG GOLANGCILINT_VERSION
 RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/${GOLANGCILINT_VERSION}/install.sh | bash -s -- -b /toolchain/bin ${GOLANGCILINT_VERSION}
 ARG GOIMPORTS_VERSION
-RUN go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
+RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION} \
     && mv /go/bin/goimports /toolchain/go/bin/goimports
 ARG GOFUMPT_VERSION
-RUN go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
+RUN --mount=type=cache,target=/.cache go install mvdan.cc/gofumpt@${GOFUMPT_VERSION} \
     && mv /go/bin/gofumpt /toolchain/go/bin/gofumpt
 ARG DEEPCOPY_VERSION
-RUN go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/deep-copy@${DEEPCOPY_VERSION} \
     && mv /go/bin/deep-copy /toolchain/go/bin/deep-copy
 ARG STRINGER_VERSION
-RUN go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
+RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
 ARG ENUMER_VERSION
-RUN go install github.com/alvaroloes/enumer@${ENUMER_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/alvaroloes/enumer@${ENUMER_VERSION} \
     && mv /go/bin/enumer /toolchain/go/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
-RUN go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
+RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \
     && mv /go/bin/deepcopy-gen /toolchain/go/bin/deepcopy-gen
 ARG VTPROTOBUF_VERSION
-RUN go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
-RUN cd /go/src/github.com/talos-systems/talos-hack-docgen \
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/talos-hack-docgen \
     && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
@@ -790,3 +790,21 @@ COPY --from=proto-docs-build /tmp/api.md /website/content/v1.1/reference/
 FROM scratch AS talosctl-cni-bundle
 ARG TARGETARCH
 COPY --from=extras-talosctl-cni-bundle-install /opt/cni/bin/ /talosctl-cni-bundle-${TARGETARCH}/
+
+# The go-mod-outdated target lists all outdated modules.
+
+FROM base AS go-mod-outdated
+RUN --mount=type=cache,target=/.cache go install github.com/psampaz/go-mod-outdated@latest \
+    && mv /go/bin/go-mod-outdated /toolchain/go/bin/go-mod-outdated
+COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
+# fail always to get the output back
+RUN --mount=type=cache,target=/.cache cd pkg/machinery && \
+    echo -e "\n>>>> pkg/machinery:" && \
+    (go list -u -m -json all | go-mod-outdated -update -direct) && \
+    cd ../.. && \
+    echo -e "\n>>>> .:" && \
+    (go list -u -m -json all | go-mod-outdated -update -direct) && \
+    cd hack/cloud-image-uploader && \
+    echo -e "\n>>>> hack/cloud-image-uploader:" && \
+    (go list -u -m -json all | go-mod-outdated -update -direct) && \
+    exit 1
