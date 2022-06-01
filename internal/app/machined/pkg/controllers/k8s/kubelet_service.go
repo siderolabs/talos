@@ -23,11 +23,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
+	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
@@ -42,6 +44,7 @@ type ServiceManager interface {
 // KubeletServiceController renders kubelet configuration files and controls kubelet service lifecycle.
 type KubeletServiceController struct {
 	V1Alpha1Services ServiceManager
+	V1Alpha1Mode     runtimetalos.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -63,12 +66,18 @@ func (ctrl *KubeletServiceController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// initially, wait for the machine-id to be generated
+	// initially, wait for the machine-id to be generated and /var to be mounted
 	if err := r.UpdateInputs([]controller.Input{
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
 			ID:        pointer.ToString("machine-id"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.MountStatusType,
+			ID:        pointer.ToString(constants.EphemeralPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -91,10 +100,23 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting etc file status: %w", err)
 		}
 
+		_, err = r.Get(ctx, resource.NewMetadata(runtimeres.NamespaceName, runtimeres.MountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// in container mode EPHEMERAL is always mounted
+				if ctrl.V1Alpha1Mode != runtimetalos.ModeContainer {
+					// wait for the EPHEMERAL to be mounted
+					continue
+				}
+			} else {
+				return fmt.Errorf("error getting ephemeral mount status: %w", err)
+			}
+		}
+
 		break
 	}
 
-	// normal reconcile loop, ignore cri state
+	// normal reconcile loop
 	if err := r.UpdateInputs([]controller.Input{
 		{
 			Namespace: k8s.NamespaceName,

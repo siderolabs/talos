@@ -113,6 +113,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.KubeletConfigController{},
 		&k8s.KubeletServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
+			V1Alpha1Mode:     ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&k8s.KubeletSpecController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
