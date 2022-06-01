@@ -130,6 +130,26 @@ func (c *Client) GetEndpoints() []string {
 	return nil
 }
 
+// SetEndpoints updates the client's endpoints.
+// Recreates underlying gRPC connection.
+func (c *Client) SetEndpoints(ctx context.Context, endpoints []string) error {
+	c.options.unixSocketPath = ""
+
+	c.options.endpointsOverride = endpoints
+
+	if c.conn != nil {
+		if err := c.conn.Close(); err != nil {
+			return err
+		}
+	}
+
+	var err error
+
+	c.conn, err = c.GetConn(ctx)
+
+	return err
+}
+
 // New returns a new Client.
 func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c = new(Client)
