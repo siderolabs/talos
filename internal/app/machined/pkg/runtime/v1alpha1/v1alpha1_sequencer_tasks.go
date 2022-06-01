@@ -731,19 +731,24 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 
 		svcs := system.Services(r)
 
+		// load the kubelet service, but don't start it;
+		// KubeletServiceController will start it once it's ready.
 		svcs.Load(
-			&services.CRI{},
 			&services.Kubelet{},
 		)
 
+		serviceList := []system.Service{
+			&services.CRI{},
+		}
+
 		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:
-			svcs.Load(
+			serviceList = append(serviceList,
 				&services.Trustd{},
 				&services.Etcd{Bootstrap: true},
 			)
 		case machine.TypeControlPlane:
-			svcs.Load(
+			serviceList = append(serviceList,
 				&services.Trustd{},
 				&services.Etcd{},
 			)
@@ -755,7 +760,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 			panic(fmt.Sprintf("unexpected machine type %v", t))
 		}
 
-		system.Services(r).StartAll()
+		svcs.LoadAndStart(serviceList...)
 
 		all := []conditions.Condition{}
 
