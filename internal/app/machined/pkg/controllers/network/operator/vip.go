@@ -248,13 +248,52 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 		campaignErrCh <- election.Campaign(ctx, hostname)
 	}()
 
-	select {
-	case err = <-campaignErrCh:
-		if err != nil {
-			return fmt.Errorf("failed to conduct campaign: %w", err)
+	watchCh := make(chan state.Event)
+
+	if err = vip.state.Watch(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined), watchCh); err != nil {
+		return fmt.Errorf("error setting up etcd watch: %w", err)
+	}
+
+	if err = vip.state.Watch(ctx, kubeletLifecycle, watchCh); err != nil {
+		return fmt.Errorf("error setting up etcd watch: %w", err)
+	}
+
+	err = vip.state.WatchKind(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined), watchCh)
+	if err != nil {
+		return fmt.Errorf("kube-apiserver health wait failure: %w", err)
+	}
+
+	// wait for the etcd election campaign to be complete
+	// while waiting, also observe the kubelet lifecycle object (if the node is shutting down) and etcd status
+campaignLoop:
+	for {
+		select {
+		case err = <-campaignErrCh:
+			if err != nil {
+				return fmt.Errorf("failed to conduct campaign: %w", err)
+			}
+
+			// node won the election campaign!
+			break campaignLoop
+		case <-sess.Done():
+			vip.logger.Info("etcd session closed")
+
+			return nil
+		case <-ctx.Done():
+			return nil
+		case event := <-watchCh:
+			// note: here we don't wait for kube-apiserver, as it might not be up on cluster bootstrap, but VIP should be still assigned
+
+			// break the loop when etcd is stopped
+			if event.Type == state.Destroyed && event.Resource.Metadata().ID() == "etcd" {
+				return nil
+			}
+
+			// break the loop if the kubelet lifecycle is entering teardown phase
+			if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
+				return nil
+			}
 		}
-	case <-sess.Done():
-		vip.logger.Info("etcd session closed")
 	}
 
 	defer func() {
@@ -278,21 +317,6 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 	}()
 
 	vip.logger.Info("enabled shared IP", zap.String("link", vip.linkName), zap.Stringer("ip", vip.sharedIP))
-
-	watchCh := make(chan state.Event)
-
-	if err = vip.state.Watch(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined), watchCh); err != nil {
-		return fmt.Errorf("error setting up etcd watch: %w", err)
-	}
-
-	if err = vip.state.Watch(ctx, kubeletLifecycle, watchCh); err != nil {
-		return fmt.Errorf("error setting up etcd watch: %w", err)
-	}
-
-	err = vip.state.WatchKind(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined), watchCh)
-	if err != nil {
-		return fmt.Errorf("kube-apiserver health wait failure: %w", err)
-	}
 
 	observe := election.Observe(ctx)
 
