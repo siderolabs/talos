@@ -13,9 +13,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.1.0
-PKGS ?= v1.1.0-1-gdc21e30
-EXTRAS ?= v1.1.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.1.0-1-g134974c
+PKGS ?= v1.1.0-2-g9f61c50
+EXTRAS ?= v1.1.0-1-g5800284
 GO_VERSION ?= 1.18
 GOIMPORTS_VERSION ?= v0.1.10
 GOFUMPT_VERSION ?= v0.3.0

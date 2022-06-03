@@ -665,7 +665,7 @@ const (
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.18.2"
+	GoVersion = "go1.18.3"
 )
 
 // See https://linux.die.net/man/3/klogctl
