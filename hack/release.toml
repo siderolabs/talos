@@ -22,7 +22,7 @@ preface = """\
 * Runc: 1.1.2
 * CoreDNS: v1.9.2
 
-Talos is built with Go 1.17.10
+Talos is built with Go 1.17.11
 """
 
 [make_deps]
