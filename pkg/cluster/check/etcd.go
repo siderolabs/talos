@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -78,6 +79,43 @@ func EtcdConsistentAssertion(ctx context.Context, cluster ClusterInfo) error {
 	return nil
 }
 
+// EtcdControlPlaneNodesAssertion checks that etcd nodes are control plane nodes.
+func EtcdControlPlaneNodesAssertion(ctx context.Context, cluster ClusterInfo) error {
+	cli, err := cluster.Client()
+	if err != nil {
+		return err
+	}
+
+	controlPlaneNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
+
+	resp, err := cli.EtcdMemberList(ctx, &machineapi.EtcdMemberListRequest{})
+	if err != nil {
+		return err
+	}
+
+	members := resp.GetMessages()[0].GetMembers()
+
+	var memberIPs []string
+
+	for _, member := range members {
+		for _, peerURL := range member.GetPeerUrls() {
+			parsed, err2 := url.Parse(peerURL)
+			if err2 != nil {
+				return err2
+			}
+
+			memberIP := parsed.Hostname()
+			memberIPs = append(memberIPs, memberIP)
+		}
+	}
+
+	if !isSubset(controlPlaneNodes, memberIPs) {
+		return errors.New("mismatch between etcd member and control plane nodes")
+	}
+
+	return nil
+}
+
 func mapCollect[M ~map[K]V, Z any, K comparable, V any](m M, fn func(K, V) Z) []Z {
 	r := make([]Z, 0, len(m))
 	for k, v := range m {
@@ -94,4 +132,25 @@ func sliceCollect[S ~[]V, V any, R any](slc S, fn func(V) R) []R {
 	}
 
 	return r
+}
+
+func isSubset[S ~[]V, V comparable](set S, subset S) bool {
+	inputMap := toKeyMap(set)
+	for _, v := range subset {
+		if _, found := inputMap[v]; !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+func toKeyMap[S ~[]V, V comparable](input S) map[V]struct{} {
+	m := make(map[V]struct{}, len(input))
+
+	for _, val := range input {
+		m[val] = struct{}{}
+	}
+
+	return m
 }
