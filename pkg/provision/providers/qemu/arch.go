@@ -93,7 +93,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			return nil
 		}
 
-		uefiSourcePaths := []string{"/usr/share/ovmf/OVMF.fd", "/usr/share/OVMF/OVMF.fd", "/usr/share/OVMF/OVMF_CODE.fd"}
+		uefiSourcePaths := []string{"/usr/share/ovmf/OVMF.fd", "/usr/share/OVMF/OVMF.fd", "/usr/share/OVMF/OVMF_CODE.fd", "/usr/share/OVMF/OVMF_CODE.secboot.fd"}
 		for _, p := range extraUEFISearchPaths {
 			uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, "OVMF.fd"))
 		}
