@@ -31,5 +31,6 @@ charts:
     podSecurityLevel: privileged
     repo: https://charts.rook.io/release
     chart: rook-ceph-cluster
+    valuesPath: hack/test/day-two/ceph-values.yaml
     depends:
       - rook
