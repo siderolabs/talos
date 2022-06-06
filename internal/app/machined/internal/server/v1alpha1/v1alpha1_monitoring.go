@@ -15,6 +15,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Hostname implements the machine.MachineServer interface.
@@ -88,13 +90,7 @@ func (s *Server) SystemStat(ctx context.Context, in *emptypb.Empty) (*machine.Sy
 	}
 
 	translateListOfCPUStat := func(in []procfs.CPUStat) []*machine.CPUStat {
-		res := make([]*machine.CPUStat, len(in))
-
-		for i := range in {
-			res[i] = translateCPUStat(in[i])
-		}
-
-		return res
+		return slices.Map(in, translateCPUStat)
 	}
 
 	translateSoftIRQ := func(in procfs.SoftIRQStat) *machine.SoftIRQStat {
@@ -175,17 +171,11 @@ func (s *Server) CPUInfo(ctx context.Context, in *emptypb.Empty) (*machine.CPUIn
 		}
 	}
 
-	resp := machine.CPUsInfo{
-		CpuInfo: make([]*machine.CPUInfo, len(info)),
-	}
-
-	for i := range info {
-		resp.CpuInfo[i] = translateCPUInfo(info[i])
-	}
-
 	reply := &machine.CPUInfoResponse{
 		Messages: []*machine.CPUsInfo{
-			&resp,
+			{
+				CpuInfo: slices.Map(info, translateCPUInfo),
+			},
 		},
 	}
 
@@ -226,21 +216,12 @@ func (s *Server) NetworkDeviceStats(ctx context.Context, in *emptypb.Empty) (*ma
 		}
 	}
 
-	resp := machine.NetworkDeviceStats{
-		Devices: make([]*machine.NetDev, len(info)),
-		Total:   translateNetDevLine(info.Total()),
-	}
-
-	i := 0
-
-	for _, line := range info {
-		resp.Devices[i] = translateNetDevLine(line)
-		i++
-	}
-
 	reply := &machine.NetworkDeviceStatsResponse{
 		Messages: []*machine.NetworkDeviceStats{
-			&resp,
+			{
+				Devices: maps.ValuesFunc(info, translateNetDevLine),
+				Total:   translateNetDevLine(info.Total()),
+			},
 		},
 	}
 

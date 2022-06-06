@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	stdnet "net"
 	"os"
 	"sort"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 )
@@ -54,17 +56,11 @@ func showCluster(cluster provision.Cluster) error {
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
 	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
 
-	cidrs := make([]string, len(cluster.Info().Network.CIDRs))
-	for i := range cidrs {
-		cidrs[i] = net.FormatCIDR(cluster.Info().Network.CIDRs[i].IP, cluster.Info().Network.CIDRs[i])
-	}
+	cidrs := slices.Map(cluster.Info().Network.CIDRs, func(v stdnet.IPNet) string { return net.FormatCIDR(v.IP, v) })
 
 	fmt.Fprintf(w, "NETWORK CIDR\t%s\n", strings.Join(cidrs, ","))
 
-	gateways := make([]string, len(cluster.Info().Network.GatewayAddrs))
-	for i := range gateways {
-		gateways[i] = cluster.Info().Network.GatewayAddrs[i].String()
-	}
+	gateways := slices.Map(cluster.Info().Network.GatewayAddrs, stdnet.IP.String)
 
 	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
@@ -98,10 +94,7 @@ func showCluster(cluster provision.Cluster) error {
 			disk = humanize.Bytes(node.DiskSize)
 		}
 
-		ips := make([]string, len(node.IPs))
-		for i := range ips {
-			ips[i] = node.IPs[i].String()
-		}
+		ips := slices.Map(node.IPs, stdnet.IP.String)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			node.Name,

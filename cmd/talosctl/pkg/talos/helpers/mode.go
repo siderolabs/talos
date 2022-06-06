@@ -13,6 +13,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 // InteractiveMode fake mode value for the interactive config mode.
@@ -71,11 +72,7 @@ func (m *Mode) Set(value string) error {
 
 // Type implements Flag interface.
 func (m *Mode) Type() string {
-	options := make([]string, 0, len(m.options))
-	for s := range m.options {
-		options = append(options, s)
-	}
-
+	options := maps.Keys(m.options)
 	sort.Strings(options)
 
 	return strings.Join(options, ", ")

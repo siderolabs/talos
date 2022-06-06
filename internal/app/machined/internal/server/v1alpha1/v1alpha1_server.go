@@ -35,6 +35,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/talos-systems/go-kmsg"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"golang.org/x/sys/unix"
@@ -78,6 +79,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/version"
@@ -610,13 +612,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 		return nil
 	}
 
-	result := make([]runtime.PartitionTarget, len(opt.systemDiskTargets))
-
-	for i := range result {
-		result[i] = opt.systemDiskTargets[i]
-	}
-
-	return result
+	return slices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
 }
 
 // Reset resets the node.
@@ -700,13 +696,9 @@ func (s *Server) ServiceList(ctx context.Context, in *emptypb.Empty) (result *ma
 	result = &machine.ServiceListResponse{
 		Messages: []*machine.ServiceList{
 			{
-				Services: make([]*machine.ServiceInfo, len(services)),
+				Services: slices.Map(services, (*system.ServiceRunner).AsProto),
 			},
 		},
-	}
-
-	for i := range services {
-		result.Messages[0].Services[i] = services[i].AsProto()
 	}
 
 	return result, nil
@@ -1799,28 +1791,19 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 		return nil, err
 	}
 
-	members := make([]*machine.EtcdMember, 0, len(resp.Members))
-	legacyMembers := make([]string, 0, len(resp.Members))
-
-	for _, member := range resp.Members {
-		members = append(members,
-			&machine.EtcdMember{
-				Id:         member.GetID(),
-				Hostname:   member.GetName(),
-				PeerUrls:   member.GetPeerURLs(),
-				ClientUrls: member.GetClientURLs(),
-				IsLearner:  member.GetIsLearner(),
-			},
-		)
-
-		legacyMembers = append(legacyMembers, member.GetName())
-	}
-
 	reply = &machine.EtcdMemberListResponse{
 		Messages: []*machine.EtcdMembers{
 			{
-				LegacyMembers: legacyMembers,
-				Members:       members,
+				LegacyMembers: slices.Map(resp.Members, (*etcdserverpb.Member).GetName),
+				Members: slices.Map(resp.Members, func(member *etcdserverpb.Member) *machine.EtcdMember {
+					return &machine.EtcdMember{
+						Id:         member.GetID(),
+						Hostname:   member.GetName(),
+						PeerUrls:   member.GetPeerURLs(),
+						ClientUrls: member.GetClientURLs(),
+						IsLearner:  member.GetIsLearner(),
+					}
+				}),
 			},
 		},
 	}

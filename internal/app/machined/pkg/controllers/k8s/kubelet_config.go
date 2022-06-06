@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -87,11 +88,7 @@ func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runti
 						return fmt.Errorf("error building DNS service IPs: %w", err)
 					}
 
-					kubeletConfig.ClusterDNS = make([]string, 0, len(addrs))
-
-					for _, addr := range addrs {
-						kubeletConfig.ClusterDNS = append(kubeletConfig.ClusterDNS, addr.String())
-					}
+					kubeletConfig.ClusterDNS = slices.Map(addrs, net.IP.String)
 				}
 
 				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()
