@@ -30,17 +30,17 @@ require (
 require (
 	cloud.google.com/go/compute v1.6.1
 	github.com/BurntSushi/toml v1.1.0
-	github.com/aws/aws-sdk-go v1.44.24
+	github.com/aws/aws-sdk-go v1.44.27
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
-	github.com/containerd/containerd v1.6.4
+	github.com/containerd/containerd v1.6.5
 	github.com/containerd/typeurl v1.0.2
-	github.com/containernetworking/cni v1.1.0
+	github.com/containernetworking/cni v1.1.1
 	github.com/containernetworking/plugins v1.1.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20220527181155-95d06feaf8b5
+	github.com/cosi-project/runtime v0.0.0-20220606135937-3230452b9eb0
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.16+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -89,7 +89,7 @@ require (
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/talos-systems/crypto v0.3.5
 	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/discovery-client v0.1.0
@@ -106,7 +106,7 @@ require (
 	github.com/talos-systems/siderolink v0.1.2
 	github.com/talos-systems/talos/pkg/machinery v1.1.0-alpha.2
 	github.com/u-root/u-root v0.8.0
-	github.com/vishvananda/netlink v1.2.0-beta
+	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.56.6
 	github.com/vmware/govmomi v0.28.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
@@ -117,16 +117,16 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
-	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
+	golang.org/x/net v0.0.0-20220531201128-c960675eff93
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 	k8s.io/klog/v2 v2.60.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64
@@ -146,7 +146,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
-	github.com/Microsoft/hcsshim v0.9.2 // indirect
+	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
@@ -159,7 +159,7 @@ require (
 	github.com/cilium/ebpf v0.8.1 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
-	github.com/containerd/go-cni v1.1.5 // indirect
+	github.com/containerd/go-cni v1.1.6 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
@@ -231,7 +231,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/runc v1.1.1 // indirect
+	github.com/opencontainers/runc v1.1.2 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -278,7 +278,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.75.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220531134929-86cf59382f1b // indirect
+	google.golang.org/genproto v0.0.0-20220602131408-e326c6e8e9c8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
