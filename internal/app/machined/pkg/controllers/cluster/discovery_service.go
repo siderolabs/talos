@@ -22,6 +22,7 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
@@ -279,11 +280,11 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 }
 
 func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
-	addresses := make([][]byte, len(affiliate.Addresses))
+	addresses := slices.Map(affiliate.Addresses, func(address netaddr.IP) []byte {
+		result, _ := address.MarshalBinary() //nolint:errcheck // doesn't fail
 
-	for i := range addresses {
-		addresses[i], _ = affiliate.Addresses[i].MarshalBinary() //nolint:errcheck // doesn't fail
-	}
+		return result
+	})
 
 	var kubeSpan *pb.KubeSpan
 

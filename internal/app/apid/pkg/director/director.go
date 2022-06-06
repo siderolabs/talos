@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Router wraps grpc-proxy StreamDirector.
@@ -79,13 +81,7 @@ func (r *Router) aggregateDirector(targets []string) (proxy.Mode, []proxy.Backen
 
 // StreamedDetector implements proxy.StreamedDetector.
 func (r *Router) StreamedDetector(fullMethodName string) bool {
-	for _, re := range r.streamedMatchers {
-		if re.MatchString(fullMethodName) {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(r.streamedMatchers, func(regex *regexp.Regexp) bool { return regex.MatchString(fullMethodName) })
 }
 
 // RegisterStreamedRegex register regex for streamed method.

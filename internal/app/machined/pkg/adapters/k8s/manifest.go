@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -75,13 +76,7 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 
 // Objects returns list of unstructured object.
 func (a manifest) Objects() []*unstructured.Unstructured {
-	result := make([]*unstructured.Unstructured, len(a.Manifest.TypedSpec().Items))
-
-	for i := range result {
-		result[i] = &unstructured.Unstructured{
-			Object: a.Manifest.TypedSpec().Items[i],
-		}
-	}
-
-	return result
+	return slices.Map(a.Manifest.TypedSpec().Items, func(item map[string]interface{}) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: item}
+	})
 }

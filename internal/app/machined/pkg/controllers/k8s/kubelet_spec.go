@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
+	"inet.af/netaddr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -23,6 +24,7 @@ import (
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/kubelet"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -137,12 +139,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 			nodeIPSpec := nodeIP.(*k8s.NodeIP).TypedSpec()
 
-			nodeIPsString := make([]string, len(nodeIPSpec.Addresses))
-
-			for i := range nodeIPSpec.Addresses {
-				nodeIPsString[i] = nodeIPSpec.Addresses[i].String()
-			}
-
+			nodeIPsString := slices.Map(nodeIPSpec.Addresses, netaddr.IP.String)
 			args["node-ip"] = strings.Join(nodeIPsString, ",")
 		}
 

@@ -4,7 +4,10 @@
 
 package data
 
-import "github.com/talos-systems/talos/pkg/machinery/api/machine"
+import (
+	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+)
 
 // Node represents data gathered from a single node.
 type Node struct {
@@ -186,15 +189,11 @@ func (node *Node) UpdateDiff(old *Node) {
 		Total: diskStatDiff(old.DiskStats.GetTotal(), node.DiskStats.GetTotal()),
 	}
 
-	node.ProcsDiff = make(map[int32]*machine.ProcessInfo)
+	index := slices.ToMap(old.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+		return proc.Pid, proc
+	})
 
-	index := make(map[int32]*machine.ProcessInfo)
-
-	for _, proc := range old.Processes.GetProcesses() {
-		index[proc.Pid] = proc
-	}
-
-	for _, proc := range node.Processes.GetProcesses() {
-		node.ProcsDiff[proc.Pid] = procDiff(index[proc.Pid], proc)
-	}
+	node.ProcsDiff = slices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+		return proc.Pid, procDiff(index[proc.Pid], proc)
+	})
 }

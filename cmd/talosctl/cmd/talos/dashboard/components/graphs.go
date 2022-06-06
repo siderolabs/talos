@@ -8,6 +8,7 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // BaseGraph represents the widget with some usage graph.
@@ -25,12 +26,8 @@ func NewBaseGraph(title string, labels []string) *BaseGraph {
 	widget.Title = title
 	widget.DataLabels = labels
 	widget.ShowAxes = false
-	widget.Data = make([][]float64, len(labels))
-
 	// TODO: looks to be a bug as it requires at least 2 points
-	for i := range widget.Data {
-		widget.Data[i] = []float64{0, 0}
-	}
+	widget.Data = slices.Map(labels, func(label string) []float64 { return []float64{0, 0} })
 
 	return widget
 }

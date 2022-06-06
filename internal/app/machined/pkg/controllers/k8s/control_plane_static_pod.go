@@ -25,6 +25,8 @@ import (
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -228,34 +230,26 @@ func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r 
 }
 
 func volumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
-	result := make([]v1.VolumeMount, 0, len(volumes))
-
-	for _, volume := range volumes {
-		result = append(result, v1.VolumeMount{
-			Name:      volume.Name,
-			MountPath: volume.MountPath,
-			ReadOnly:  volume.ReadOnly,
-		})
-	}
-
-	return result
+	return slices.Map(volumes, func(vol k8s.ExtraVolume) v1.VolumeMount {
+		return v1.VolumeMount{
+			Name:      vol.Name,
+			MountPath: vol.MountPath,
+			ReadOnly:  vol.ReadOnly,
+		}
+	})
 }
 
 func volumes(volumes []k8s.ExtraVolume) []v1.Volume {
-	result := make([]v1.Volume, 0, len(volumes))
-
-	for _, volume := range volumes {
-		result = append(result, v1.Volume{
-			Name: volume.Name,
+	return slices.Map(volumes, func(vol k8s.ExtraVolume) v1.Volume {
+		return v1.Volume{
+			Name: vol.Name,
 			VolumeSource: v1.VolumeSource{
 				HostPath: &v1.HostPathVolumeSource{
-					Path: volume.HostPath,
+					Path: vol.HostPath,
 				},
 			},
-		})
-	}
-
-	return result
+		}
+	})
 }
 
 func envVars(environment map[string]string) []v1.EnvVar {
@@ -263,25 +257,16 @@ func envVars(environment map[string]string) []v1.EnvVar {
 		return nil
 	}
 
-	keys := make([]string, 0, len(environment))
-
-	for k := range environment {
-		keys = append(keys, k)
-	}
-
+	keys := maps.Keys(environment)
 	sort.Strings(keys)
 
-	result := make([]v1.EnvVar, 0, len(environment))
-
-	for _, k := range keys {
+	return slices.Map(keys, func(key string) v1.EnvVar {
 		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
-		result = append(result, v1.EnvVar{
-			Name:  k,
-			Value: strings.ReplaceAll(environment[k], "$", "$$"),
-		})
-	}
-
-	return result
+		return v1.EnvVar{
+			Name:  key,
+			Value: strings.ReplaceAll(environment[key], "$", "$$"),
+		}
+	})
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
