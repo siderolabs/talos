@@ -7,6 +7,7 @@ package perf
 import (
 	"github.com/prometheus/procfs"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
 )
 
@@ -41,13 +42,7 @@ func (a cpu) Update(stat *procfs.Stat) {
 	}
 
 	translateListOfCPUStat := func(in []procfs.CPUStat) []perf.CPUStat {
-		res := make([]perf.CPUStat, len(in))
-
-		for i := range in {
-			res[i] = translateCPUStat(in[i])
-		}
-
-		return res
+		return slices.Map(in, translateCPUStat)
 	}
 
 	*a.CPU.TypedSpec() = perf.CPUSpec{

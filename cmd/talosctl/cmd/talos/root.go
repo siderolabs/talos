@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 var kubernetes bool
@@ -163,13 +164,7 @@ func completePathFromNode(inputPath string) []string {
 
 	paths = getPathFromNode(pathToSearch, inputPath)
 
-	result := make([]string, 0, len(paths))
-
-	for k := range paths {
-		result = append(result, k)
-	}
-
-	return result
+	return maps.Keys(paths)
 }
 
 //nolint:gocyclo

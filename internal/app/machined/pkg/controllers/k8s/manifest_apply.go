@@ -33,6 +33,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
@@ -164,11 +165,9 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		if err = r.Modify(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
 			status := r.(*k8s.ManifestStatus).TypedSpec()
 
-			status.ManifestsApplied = make([]string, 0, len(manifests.Items))
-
-			for _, manifest := range manifests.Items {
-				status.ManifestsApplied = append(status.ManifestsApplied, manifest.Metadata().ID())
-			}
+			status.ManifestsApplied = slices.Map(manifests.Items, func(m resource.Resource) string {
+				return m.Metadata().ID()
+			})
 
 			return nil
 		}); err != nil {

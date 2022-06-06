@@ -28,6 +28,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
@@ -203,12 +204,7 @@ var configGetContextsCmd = &cobra.Command{
 			return fmt.Errorf("error reading config: %w", err)
 		}
 
-		keys := make([]string, len(c.Contexts))
-		i := 0
-		for key := range c.Contexts {
-			keys[i] = key
-			i++
-		}
+		keys := maps.Keys(c.Contexts)
 		sort.Strings(keys)
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
@@ -418,11 +414,7 @@ func CompleteConfigContext(cmd *cobra.Command, args []string, toComplete string)
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	contextnames := make([]string, 0, len(c.Contexts))
-	for contextname := range c.Contexts {
-		contextnames = append(contextnames, contextname)
-	}
-
+	contextnames := maps.Keys(c.Contexts)
 	sort.Strings(contextnames)
 
 	return contextnames, cobra.ShellCompDirectiveNoFileComp

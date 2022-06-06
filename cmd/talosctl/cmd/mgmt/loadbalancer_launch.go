@@ -11,6 +11,7 @@ import (
 	"github.com/talos-systems/go-loadbalancer/loadbalancer"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 var loadbalancerLaunchCmdFlags struct {
@@ -30,10 +31,9 @@ var loadbalancerLaunchCmd = &cobra.Command{
 		var lb loadbalancer.TCP
 
 		for _, port := range []int{constants.DefaultControlPlanePort} {
-			upstreams := make([]string, len(loadbalancerLaunchCmdFlags.upstreams))
-			for i := range upstreams {
-				upstreams[i] = fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.upstreams[i], port)
-			}
+			upstreams := slices.Map(loadbalancerLaunchCmdFlags.upstreams, func(upstream string) string {
+				return fmt.Sprintf("%s:%d", upstream, port)
+			})
 
 			if err := lb.AddRoute(fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.addr, port), upstreams); err != nil {
 				return err

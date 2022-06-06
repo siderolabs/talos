@@ -21,6 +21,7 @@ import (
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -142,18 +143,14 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 }
 
 func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
-	result := make([]k8s.ExtraVolume, 0, len(volumes))
-
-	for _, volume := range volumes {
-		result = append(result, k8s.ExtraVolume{
-			Name:      volume.Name(),
-			HostPath:  volume.HostPath(),
-			MountPath: volume.MountPath(),
-			ReadOnly:  volume.ReadOnly(),
-		})
-	}
-
-	return result
+	return slices.Map(volumes, func(v talosconfig.VolumeMount) k8s.ExtraVolume {
+		return k8s.ExtraVolume{
+			Name:      v.Name(),
+			HostPath:  v.HostPath(),
+			MountPath: v.MountPath(),
+			ReadOnly:  v.ReadOnly(),
+		}
+	})
 }
 
 func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {

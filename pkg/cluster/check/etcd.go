@@ -14,6 +14,8 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // EtcdConsistentAssertion checks that etcd membership is consistent across nodes.
@@ -62,8 +64,8 @@ func EtcdConsistentAssertion(ctx context.Context, cluster ClusterInfo) error {
 		node := message.Metadata.GetHostname()
 
 		if len(message.Members) != len(knownMembers) {
-			expected := mapCollect(knownMembers, func(k data, v struct{}) string { return k.hostname })
-			actual := sliceCollect(message.Members, func(v *machineapi.EtcdMember) string { return v.GetHostname() })
+			expected := maps.ToSlice(knownMembers, func(k data, v struct{}) string { return k.hostname })
+			actual := slices.Map(message.Members, (*machineapi.EtcdMember).GetHostname)
 
 			return fmt.Errorf("%s: expected to have %v members, got %v", node, expected, actual)
 		}
@@ -109,48 +111,9 @@ func EtcdControlPlaneNodesAssertion(ctx context.Context, cluster ClusterInfo) er
 		}
 	}
 
-	if !isSubset(controlPlaneNodes, memberIPs) {
+	if !maps.Contains(slices.ToSet(controlPlaneNodes), memberIPs) {
 		return errors.New("mismatch between etcd member and control plane nodes")
 	}
 
 	return nil
-}
-
-func mapCollect[M ~map[K]V, Z any, K comparable, V any](m M, fn func(K, V) Z) []Z {
-	r := make([]Z, 0, len(m))
-	for k, v := range m {
-		r = append(r, fn(k, v))
-	}
-
-	return r
-}
-
-func sliceCollect[S ~[]V, V any, R any](slc S, fn func(V) R) []R {
-	r := make([]R, 0, len(slc))
-	for _, v := range slc {
-		r = append(r, fn(v))
-	}
-
-	return r
-}
-
-func isSubset[S ~[]V, V comparable](set S, subset S) bool {
-	inputMap := toKeyMap(set)
-	for _, v := range subset {
-		if _, found := inputMap[v]; !found {
-			return false
-		}
-	}
-
-	return true
-}
-
-func toKeyMap[S ~[]V, V comparable](input S) map[V]struct{} {
-	m := make(map[V]struct{}, len(input))
-
-	for _, val := range input {
-		m[val] = struct{}{}
-	}
-
-	return m
 }

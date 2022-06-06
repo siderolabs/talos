@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -20,6 +21,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 )
@@ -157,11 +159,7 @@ func (ctrl *CRIRegistryConfigController) syncHosts(shadowPath string, criHosts *
 			return err
 		}
 
-		fileListMap := make(map[string]struct{}, len(fileList))
-
-		for _, file := range fileList {
-			fileListMap[file.Name()] = struct{}{}
-		}
+		fileListMap := slices.ToSetFunc(fileList, fs.DirEntry.Name)
 
 		for _, file := range directory.Files {
 			delete(fileListMap, file.Name)
