@@ -7,7 +7,7 @@ go 1.18
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/containerd/go-cni v1.1.5
+	github.com/containerd/go-cni v1.1.6
 	github.com/cosi-project/runtime v0.0.0-20220527181155-95d06feaf8b5
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	github.com/containernetworking/cni v1.1.0 // indirect
+	github.com/containernetworking/cni v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

@@ -17,10 +17,10 @@ github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4/go.mod h1:6pvJx4me5XP
 github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
-github.com/containerd/go-cni v1.1.5 h1:WUkuZ6kDkmECdd/qEPetq1czj6ivDkAoaOpL8yv8vO8=
-github.com/containerd/go-cni v1.1.5/go.mod h1:Rf2ZrMycr1El589IyuRzn7RkfdRZVKaFGaxSDHVAjj0=
-github.com/containernetworking/cni v1.1.0 h1:T00oIz4hef+/p9gpRZa57SnIN+QnbmAHBjbxaOSFo9U=
-github.com/containernetworking/cni v1.1.0/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8dMxakj/u+i9ht9vw=
+github.com/containerd/go-cni v1.1.6 h1:el5WPymG5nRRLQF1EfB97FWob4Tdc8INg8RZMaXWZlo=
+github.com/containerd/go-cni v1.1.6/go.mod h1:BWtoWl5ghVymxu6MBjg79W9NZrCRyHIdUtk4cauMe34=
+github.com/containernetworking/cni v1.1.1 h1:ky20T7c0MvKvbMOwS/FrlbNwjEoqJEUUYfsL4b0mc4k=
+github.com/containernetworking/cni v1.1.1/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8dMxakj/u+i9ht9vw=
 github.com/cosi-project/runtime v0.0.0-20220527181155-95d06feaf8b5 h1:zXTujl83iIvKi/xRDZ9XnLZFJQk+YRJ48dR2ciEAA50=
 github.com/cosi-project/runtime v0.0.0-20220527181155-95d06feaf8b5/go.mod h1:Kayyo8X84ukWG4E4jg8mGRdXEn6boKkX+n5e9wZd40Y=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
