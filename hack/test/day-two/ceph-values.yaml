@@ -1,0 +1,8 @@
+cephClusterSpec:
+  resources:
+    mgr:
+      limits: {}
+      requests: {}
+    osd:
+      limits: {}
+      requests: {}
