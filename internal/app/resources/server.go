@@ -89,7 +89,7 @@ func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*
 			continue
 		}
 
-		spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
+		spec := rd.TypedSpec()
 
 		for _, alias := range spec.AllAliases {
 			if strings.EqualFold(alias, kind.Type) {
@@ -102,10 +102,10 @@ func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*
 
 	switch {
 	case len(matched) == 1:
-		kind.Type = matched[0].Spec().(meta.ResourceDefinitionSpec).Type
+		kind.Type = matched[0].TypedSpec().Type
 
 		if kind.Namespace == "" {
-			kind.Namespace = matched[0].Spec().(meta.ResourceDefinitionSpec).DefaultNamespace
+			kind.Namespace = matched[0].TypedSpec().DefaultNamespace
 		}
 
 		return matched[0], nil
@@ -124,7 +124,7 @@ func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*
 
 func (s *Server) checkReadAccess(ctx context.Context, kind *resourceKind, rd *meta.ResourceDefinition) error {
 	roles := authz.GetRoles(ctx)
-	spec := rd.Spec().(meta.ResourceDefinitionSpec) //nolint:errcheck,forcetypeassert
+	spec := rd.TypedSpec()
 
 	switch spec.Sensitivity {
 	case meta.Sensitive:

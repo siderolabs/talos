@@ -33,6 +33,7 @@ message Metadata {
   google.protobuf.Timestamp created = 8;
   google.protobuf.Timestamp updated = 9;
   repeated string finalizers = 6;
+  map<string, string> labels = 10;
 }
 
 message Spec {

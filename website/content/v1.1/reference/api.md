@@ -176,6 +176,7 @@ description: Talos gRPC API reference.
     - [ListRequest](#resource.ListRequest)
     - [ListResponse](#resource.ListResponse)
     - [Metadata](#resource.Metadata)
+    - [Metadata.LabelsEntry](#resource.Metadata.LabelsEntry)
     - [Resource](#resource.Resource)
     - [Spec](#resource.Spec)
     - [WatchRequest](#resource.WatchRequest)
@@ -2950,6 +2951,23 @@ The ListResponse message contains the Resource returned.
 | created | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
 | updated | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
 | finalizers | [string](#string) | repeated |  |
+| labels | [Metadata.LabelsEntry](#resource.Metadata.LabelsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="resource.Metadata.LabelsEntry"></a>
+
+### Metadata.LabelsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

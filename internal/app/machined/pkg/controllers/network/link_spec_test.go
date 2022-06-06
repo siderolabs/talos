@@ -816,8 +816,8 @@ func toSpecs(slice []resource.Resource) []network.LinkSpecSpec {
 	result := make([]network.LinkSpecSpec, 0, len(slice))
 
 	for _, elem := range slice {
-		v := elem.Spec().(network.LinkSpecSpec) //nolint:errcheck
-		result = append(result, v)
+		v := elem.Spec().(*network.LinkSpecSpec) //nolint:errcheck
+		result = append(result, *v)
 	}
 
 	return result

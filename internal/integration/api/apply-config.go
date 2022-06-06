@@ -488,7 +488,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	}
 
 	provider, err := getMachineConfig(nodeCtx)
-	suite.Require().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfg, ok := provider.Raw().(*v1alpha1.Config)
 	suite.Require().True(ok)
@@ -506,7 +506,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	)
 
 	cfgDataOut, err := cfg.Bytes()
-	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
 
 	_, err = suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -515,7 +515,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 			TryModeTimeout: durationpb.New(time.Second * 1),
 		},
 	)
-	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
+	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %s", node, err)
 
 	provider, err = getMachineConfig(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
@@ -537,7 +537,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	for i := 0; i < 100; i++ {
 		provider, err = getMachineConfig(nodeCtx)
-		suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+		suite.Assert().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
 		if provider.Machine().Network() == nil {
 			return
