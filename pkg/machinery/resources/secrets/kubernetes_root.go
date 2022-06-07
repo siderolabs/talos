@@ -25,11 +25,12 @@ type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
 
 // KubernetesRootSpec describes root Kubernetes secrets.
 type KubernetesRootSpec struct {
-	Name         string   `yaml:"name"`
-	Endpoint     *url.URL `yaml:"endpoint"`
-	CertSANs     []string `yaml:"certSANs"`
-	APIServerIPs []net.IP `yaml:"apiServerIPs"`
-	DNSDomain    string   `yaml:"dnsDomain"`
+	Name          string   `yaml:"name"`
+	Endpoint      *url.URL `yaml:"endpoint"`
+	LocalEndpoint *url.URL `yaml:"local_endpoint"`
+	CertSANs      []string `yaml:"certSANs"`
+	APIServerIPs  []net.IP `yaml:"apiServerIPs"`
+	DNSDomain     string   `yaml:"dnsDomain"`
 
 	CA             *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 	ServiceAccount *x509.PEMEncodedKey               `yaml:"serviceAccount"`

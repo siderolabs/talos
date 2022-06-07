@@ -15,6 +15,7 @@ import (
 
 var loadbalancerLaunchCmdFlags struct {
 	addr             string
+	ports            []int
 	upstreams        []string
 	apidOnlyInitNode bool
 }
@@ -29,7 +30,7 @@ var loadbalancerLaunchCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var lb loadbalancer.TCP
 
-		for _, port := range []int{constants.DefaultControlPlanePort} {
+		for _, port := range loadbalancerLaunchCmdFlags.ports {
 			upstreams := make([]string, len(loadbalancerLaunchCmdFlags.upstreams))
 			for i := range upstreams {
 				upstreams[i] = fmt.Sprintf("%s:%d", loadbalancerLaunchCmdFlags.upstreams[i], port)
@@ -46,6 +47,7 @@ var loadbalancerLaunchCmd = &cobra.Command{
 
 func init() {
 	loadbalancerLaunchCmd.Flags().StringVar(&loadbalancerLaunchCmdFlags.addr, "loadbalancer-addr", "localhost", "load balancer listen address (IP or host)")
+	loadbalancerLaunchCmd.Flags().IntSliceVar(&loadbalancerLaunchCmdFlags.ports, "loadbalancer-ports", []int{constants.DefaultControlPlanePort}, "load balancer ports")
 	loadbalancerLaunchCmd.Flags().StringSliceVar(&loadbalancerLaunchCmdFlags.upstreams, "loadbalancer-upstreams", []string{}, "load balancer upstreams (nodes to proxy to)")
 	addCommand(loadbalancerLaunchCmd)
 }

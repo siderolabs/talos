@@ -79,6 +79,8 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 	rootSecrets.TypedSpec().DNSDomain = "cluster.remote"
 	rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.url:6443/")
 	suite.Require().NoError(err)
+	rootSecrets.TypedSpec().LocalEndpoint, err = url.Parse("https://localhost:6443/")
+	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
 

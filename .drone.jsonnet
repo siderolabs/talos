@@ -381,13 +381,12 @@ local integration_disk_image = Step("e2e-disk-image", target="e2e-qemu", privile
         "IMAGE_REGISTRY": local_registry,
         "WITH_DISK_ENCRYPTION": "true",
 });
-local integration_canal_reset = Step("e2e-canal-disabled-reset", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
-        "INTEGRATION_TEST_RUN": "TestIntegration/api.ResetSuite/TestResetWithSpec",
-        // TODO: re-enable when https://github.com/projectcalico/cni-plugin/issues/1214 is fixed
-        // "CUSTOM_CNI_URL": "https://docs.projectcalico.org/manifests/canal.yaml",
+local integration_control_plane_port = Step("e2e-cp-port", target="e2e-qemu", privileged=true, depends_on=[integration_disk_image], environment={
+        "SHORT_INTEGRATION_TEST": "yes",
         "REGISTRY": local_registry,
+        "WITH_CONTROL_PLANE_PORT": "443",
 });
-local integration_no_cluster_discovery = Step("e2e-no-cluster-discovery", target="e2e-qemu", privileged=true, depends_on=[integration_canal_reset], environment={
+local integration_no_cluster_discovery = Step("e2e-no-cluster-discovery", target="e2e-qemu", privileged=true, depends_on=[integration_control_plane_port], environment={
         "SHORT_INTEGRATION_TEST": "yes",
         "WITH_CLUSTER_DISCOVERY": "false",
         "IMAGE_REGISTRY": local_registry,
@@ -452,7 +451,7 @@ local integration_pipelines = [
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),
   Pipeline('integration-misc', default_pipeline_steps + [integration_extensions
-, integration_cilium, integration_bios, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan]) + integration_trigger(['integration-misc']),
+, integration_cilium, integration_bios, integration_disk_image, integration_control_plane_port, integration_no_cluster_discovery, integration_kubespan]) + integration_trigger(['integration-misc']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
   Pipeline('integration-qemu-day-two', default_pipeline_steps + [integration_qemu_day_two]) + integration_trigger(['integration-qemu-day-two']),
@@ -464,7 +463,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-misc', default_pipeline_steps + [integration_extensions
-, integration_cilium, integration_bios, integration_disk_image, integration_canal_reset, integration_no_cluster_discovery, integration_kubespan], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+, integration_cilium, integration_bios, integration_disk_image, integration_control_plane_port, integration_no_cluster_discovery, integration_kubespan], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-day-two', default_pipeline_steps + [integration_qemu_day_two], [default_cron_pipeline]) + cron_trigger(['nightly']),

@@ -58,6 +58,8 @@ type Input struct {
 	// multi-valued.  It may optionally specify the port.
 	ControlPlaneEndpoint string
 
+	LocalAPIServerPort int
+
 	AdditionalSubjectAltNames []string
 	AdditionalMachineCertSANs []string
 
@@ -491,6 +493,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		Certs:                      secrets.Certs,
 		VersionContract:            options.VersionContract,
 		ControlPlaneEndpoint:       endpoint,
+		LocalAPIServerPort:         options.LocalAPIServerPort,
 		PodNet:                     []string{podNet},
 		ServiceNet:                 []string{serviceNet},
 		ServiceDomain:              options.DNSDomain,

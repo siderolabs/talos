@@ -246,7 +246,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 		CommonName:   constants.KubernetesControllerManagerOrganization,
 		Organization: constants.KubernetesControllerManagerOrganization,
 
-		Endpoint:    "https://localhost:6443/",
+		Endpoint:    k8sRoot.LocalEndpoint.String(),
 		Username:    constants.KubernetesControllerManagerOrganization,
 		ContextName: "default",
 	}, &buf); err != nil {
@@ -266,7 +266,7 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 		CommonName:   constants.KubernetesSchedulerOrganization,
 		Organization: constants.KubernetesSchedulerOrganization,
 
-		Endpoint:    "https://localhost:6443/",
+		Endpoint:    k8sRoot.LocalEndpoint.String(),
 		Username:    constants.KubernetesSchedulerOrganization,
 		ContextName: "default",
 	}, &buf); err != nil {
@@ -288,11 +288,9 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 
 	buf.Reset()
 
-	localhost, _ := url.Parse("https://localhost:6443/") //nolint:errcheck
-
 	if err = kubeconfig.GenerateAdmin(&generateAdminAdapter{
 		k8sRoot:  k8sRoot,
-		endpoint: localhost,
+		endpoint: k8sRoot.LocalEndpoint,
 	}, &buf); err != nil {
 		return fmt.Errorf("failed to generate admin kubeconfig: %w", err)
 	}

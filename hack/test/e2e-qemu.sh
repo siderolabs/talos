@@ -55,6 +55,14 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_CONTROL_PLANE_PORT:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS="${QEMU_FLAGS} --control-plane-port=${WITH_CONTROL_PLANE_PORT}"
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     DISK_IMAGE_FLAG=

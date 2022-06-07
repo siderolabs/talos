@@ -52,6 +52,8 @@ type NetworkRequest struct {
 	MTU          int
 	Nameservers  []net.IP
 
+	LoadBalancerPorts []int
+
 	// CNI-specific parameters.
 	CNI CNIConfig
 

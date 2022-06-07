@@ -86,6 +86,7 @@ const (
 	enableKubeSpanFlag            = "with-kubespan"
 	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
+	controlPlanePortFlag          = "control-plane-port"
 )
 
 var (
@@ -150,6 +151,7 @@ var (
 	badRTC                    bool
 	extraBootKernelArgs       string
 	dockerDisableIPv6         bool
+	controlPlanePort          int
 )
 
 // createCmd represents the cluster up command.
@@ -272,11 +274,12 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		Name: clusterName,
 
 		Network: provision.NetworkRequest{
-			Name:         clusterName,
-			CIDRs:        cidrs,
-			GatewayAddrs: gatewayIPs,
-			MTU:          networkMTU,
-			Nameservers:  nameserverIPs,
+			Name:              clusterName,
+			CIDRs:             cidrs,
+			GatewayAddrs:      gatewayIPs,
+			MTU:               networkMTU,
+			Nameservers:       nameserverIPs,
+			LoadBalancerPorts: []int{controlPlanePort},
 			CNI: provision.CNIConfig{
 				BinPath:  cniBinPath,
 				ConfDir:  cniConfDir,
@@ -448,6 +451,12 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			)
 		}
 
+		if controlPlanePort != constants.DefaultControlPlanePort {
+			genOptions = append(genOptions,
+				generate.WithLocalAPIServerPort(controlPlanePort),
+			)
+		}
+
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {
@@ -487,7 +496,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort),
+					Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, controlPlanePort),
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
@@ -576,7 +585,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		}
 
 		if i == 0 {
-			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", constants.DefaultControlPlanePort, constants.DefaultControlPlanePort)}
+			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -729,7 +738,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range config.Clusters {
-			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, constants.DefaultControlPlanePort)
+			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, controlPlanePort)
 		}
 	}
 
@@ -910,6 +919,7 @@ func init() {
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, dockerDisableIPv6Flag, false, "skip enabling IPv6 in containers (Docker only)")
+	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
 
 	Cmd.AddCommand(createCmd)
 }
@@ -943,6 +953,7 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		enableKubeSpanFlag,
 		bootloaderEnabledFlag,
 		forceEndpointFlag,
+		controlPlanePortFlag,
 	}
 	for _, genFlag := range genOptionFlags {
 		if flags.Lookup(genFlag).Changed {
