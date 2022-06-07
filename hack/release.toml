@@ -120,6 +120,21 @@ Talos machine configuration supports specifying network interfaces by selectors 
 See [documentation](https://www.talos.dev/v1.1/talos-guides/network/device-selector/) for more details.
 """
 
+    [notes.anonymous]
+        title = "Kubernetes API Server Anonymous Auth"
+        description="""\
+Anonymous authentication is now disabled by default for the `kube-apiserver` (CIS compliance).
+
+To enable anonymous authentication, update the machine config with:
+
+```yaml
+cluster:
+    apiServer:
+        extraArgs:
+            anonymous-auth: true
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

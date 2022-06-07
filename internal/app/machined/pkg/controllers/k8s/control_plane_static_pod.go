@@ -300,9 +300,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"admission-control-config-file":      filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml"),
-		"advertise-address":                  "$(POD_IP)",
-		"allow-privileged":                   "true",
+		"admission-control-config-file": filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml"),
+		"advertise-address":             "$(POD_IP)",
+		"allow-privileged":              "true",
+		// Do not accept anonymous requests by default. Otherwise the kube-apiserver will set the request's group to system:unauthenticated exposing endpoints like /version etc.
+		"anonymous-auth":                     "false",
 		"api-audiences":                      cfg.ControlPlaneEndpoint,
 		"authorization-mode":                 "Node,RBAC",
 		"bind-address":                       "0.0.0.0",
