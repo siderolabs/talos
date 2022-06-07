@@ -40,6 +40,7 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
+IMAGER_SYSTEM_EXTENSIONS ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
@@ -232,9 +233,12 @@ talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
+	@ . ./hack/imager.sh && \
+	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=$$(basename "$${platform}") && \
+		tmpdir=$$(prepare_extension_images "$${platform}" $(IMAGER_SYSTEM_EXTENSIONS)) && \
+		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
+		rm -rf "$${tmpdir}"; \
 	done
 
 images-essential: image-aws image-gcp image-metal ## Builds only essential images used in the CI (AWS, GCP, and Metal).
@@ -243,7 +247,10 @@ images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-m
 
 sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4, rockpi_4c, pine64 and jetson_nano (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@docker run --rm -v /dev:/dev --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)
+	@ . ./hack/imager.sh && \
+	    tmpdir=$$(prepare_extension_images linux/arm64 $(IMAGER_SYSTEM_EXTENSIONS)) && \
+		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
+		rm -rf "$${tmpdir}"
 
 sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-rockpi_4c sbc-pine64 sbc-jetson_nano ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, Radxa ROCK Pi 4c, pine64, Libre Computer Board ALL-H3-CC and Jetson Nano).
 
