@@ -94,6 +94,8 @@ func (suite *KubernetesSuite) TestReconcile() {
 	rootSecrets.TypedSpec().Name = "cluster1"
 	rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.url:6443/")
 	suite.Require().NoError(err)
+	rootSecrets.TypedSpec().LocalEndpoint, err = url.Parse("https://localhost:6443/")
+	suite.Require().NoError(err)
 
 	rootSecrets.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
 		Crt: k8sCA.CrtPEM,

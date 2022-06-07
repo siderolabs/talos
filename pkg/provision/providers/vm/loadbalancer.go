@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
@@ -32,17 +33,17 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 
 	defer logFile.Close() //nolint:errcheck
 
-	masterNodes := clusterReq.Nodes.MasterNodes()
-	masterIPs := make([]string, len(masterNodes))
-
-	for i := range masterIPs {
-		masterIPs[i] = masterNodes[i].IPs[0].String()
-	}
+	masterIPs := slices.Map(clusterReq.Nodes.MasterNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
+	ports := slices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
 
 	args := []string{
 		"loadbalancer-launch",
 		"--loadbalancer-addr", clusterReq.Network.GatewayAddrs[0].String(),
 		"--loadbalancer-upstreams", strings.Join(masterIPs, ","),
+	}
+
+	if len(ports) > 0 {
+		args = append(args, "--loadbalancer-ports", strings.Join(ports, ","))
 	}
 
 	cmd := exec.Command(clusterReq.SelfExecutable, args...)

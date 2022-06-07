@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -161,12 +162,16 @@ func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, 
 }
 
 func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k8sSecrets *secrets.KubernetesRootSpec) error {
+	localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+	if err != nil {
+		return err
+	}
+
 	k8sSecrets.Name = cfgProvider.Cluster().Name()
 	k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+	k8sSecrets.LocalEndpoint = localEndpoint
 	k8sSecrets.CertSANs = cfgProvider.Cluster().CertSANs()
 	k8sSecrets.DNSDomain = cfgProvider.Cluster().Network().DNSDomain()
-
-	var err error
 
 	k8sSecrets.APIServerIPs, err = cfgProvider.Cluster().Network().APIServerIPs()
 	if err != nil {

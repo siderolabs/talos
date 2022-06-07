@@ -24,6 +24,15 @@ func WithEndpointList(endpoints []string) GenOption {
 	}
 }
 
+// WithLocalAPIServerPort specifies the local API server port for the cluster.
+func WithLocalAPIServerPort(port int) GenOption {
+	return func(o *GenOptions) error {
+		o.LocalAPIServerPort = port
+
+		return nil
+	}
+}
+
 // WithInstallDisk specifies install disk to use in Talos cluster.
 func WithInstallDisk(disk string) GenOption {
 	return func(o *GenOptions) error {
@@ -250,6 +259,7 @@ type GenOptions struct {
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 	Roles                      role.Set
 	DiscoveryEnabled           *bool
+	LocalAPIServerPort         int
 }
 
 // DefaultGenOptions returns default options.

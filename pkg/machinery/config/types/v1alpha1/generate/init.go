@@ -100,7 +100,8 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterName:   in.ClusterName,
 		ClusterSecret: in.ClusterSecret,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
-			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
+			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
+			LocalAPIServerPort: in.LocalAPIServerPort,
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
 			CertSANs:                       certSANs,
