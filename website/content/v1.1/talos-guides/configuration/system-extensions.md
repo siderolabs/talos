@@ -29,9 +29,16 @@ System extensions will be activated on boot and overlaid on top of the Talos roo
 In order to update the system extensions for a running instance, update `.machine.install.extensions` and upgrade Talos.
 (Note: upgrading to the same version of Talos is fine).
 
-> Note: in the next releases of Talos there will be a way to build a Talos image with system extensions included.
+## Building a Talos Image with System Extensions
 
-## Creating System Extensions
+System extensions can be installed into the Talos disk image (e.g. AWS AMI or VMWare OVF) by running the following command to generate the image
+from the Talos source tree:
+
+```sh
+make image-metal IMAGER_SYSTEM_EXTENSIONS="ghcr.io/siderolabs/amd-ucode:20220411 ghcr.io/siderolabs/gvisor:20220405.0-v1.0.0-10-g82b41ad"
+```
+
+## Authoring System Extensions
 
 A Talos system extension is a container image with the [specific folder structure](https://github.com/siderolabs/extensions#readme).
 System extensions can be built and managed using any tool that produces container images, e.g. `docker build`.
