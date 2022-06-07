@@ -9,6 +9,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Image implements the config.Scheduler interface.
@@ -29,13 +30,7 @@ func (s *SchedulerConfig) ExtraArgs() map[string]string {
 
 // ExtraVolumes implements the config.Scheduler interface.
 func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
-	volumes := make([]config.VolumeMount, 0, len(s.ExtraVolumesConfig))
-
-	for _, volume := range s.ExtraVolumesConfig {
-		volumes = append(volumes, volume)
-	}
-
-	return volumes
+	return slices.Map(s.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
 }
 
 // Env implements the config.Scheduler interface.

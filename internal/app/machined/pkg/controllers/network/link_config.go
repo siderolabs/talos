@@ -16,6 +16,7 @@ import (
 	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -340,13 +341,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		SetBondSlave(linkMap[slaveName], bondData)
 	}
 
-	links := make([]network.LinkSpecSpec, 0, len(linkMap))
-
-	for _, link := range linkMap {
-		links = append(links, *link)
-	}
-
-	return links
+	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })
 }
 
 func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {

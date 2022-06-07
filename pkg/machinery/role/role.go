@@ -7,6 +7,8 @@ package role
 import (
 	"sort"
 	"strings"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 // Role represents Talos user role.
@@ -87,12 +89,7 @@ func Parse(str []string) (Set, []string) {
 
 // Strings returns a set as a slice of strings.
 func (s Set) Strings() []string {
-	res := make([]string, 0, len(s.roles))
-
-	for r := range s.roles {
-		res = append(res, string(r))
-	}
-
+	res := maps.KeysFunc(s.roles, func(r Role) string { return string(r) })
 	sort.Strings(res)
 
 	return res

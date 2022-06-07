@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // DmesgSuite verifies dmesg command.
@@ -36,13 +37,11 @@ func (suite *DmesgSuite) TestClusterHasOutput() {
 	nodes := suite.DiscoverNodes(context.TODO()).Nodes()
 	suite.Require().NotEmpty(nodes)
 
-	matchers := make([]base.RunOption, 0, len(nodes))
-
-	for _, node := range nodes {
-		matchers = append(matchers,
-			base.StdoutShouldMatch(
-				regexp.MustCompile(fmt.Sprintf(`(?m)^%s:`, regexp.QuoteMeta(node)))))
-	}
+	matchers := slices.Map(nodes, func(node string) base.RunOption {
+		return base.StdoutShouldMatch(
+			regexp.MustCompile(fmt.Sprintf(`(?m)^%s:`, regexp.QuoteMeta(node))),
+		)
+	})
 
 	suite.RunCLI([]string{"--nodes", strings.Join(nodes, ","), "dmesg"},
 		matchers...)

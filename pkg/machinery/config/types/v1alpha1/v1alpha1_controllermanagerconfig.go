@@ -9,6 +9,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Image implements the config.ControllerManager interface.
@@ -29,13 +30,7 @@ func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
 
 // ExtraVolumes implements the config.ControllerManager interface.
 func (c *ControllerManagerConfig) ExtraVolumes() []config.VolumeMount {
-	volumes := make([]config.VolumeMount, 0, len(c.ExtraVolumesConfig))
-
-	for _, volume := range c.ExtraVolumesConfig {
-		volumes = append(volumes, volume)
-	}
-
-	return volumes
+	return slices.Map(c.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
 }
 
 // Env implements the config.ControllerManager interface.

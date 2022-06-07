@@ -12,6 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // CertSANType is type of CertSAN resource.
@@ -121,13 +123,7 @@ func (spec *CertSANSpec) AppendDNSNames(dnsNames ...string) {
 
 // StdIPs returns a list of converted std.IPs.
 func (spec *CertSANSpec) StdIPs() []net.IP {
-	result := make([]net.IP, len(spec.IPs))
-
-	for i := range spec.IPs {
-		result[i] = spec.IPs[i].IPAddr().IP
-	}
-
-	return result
+	return slices.Map(spec.IPs, func(ip netaddr.IP) net.IP { return ip.IPAddr().IP })
 }
 
 // Sort the CertSANs.

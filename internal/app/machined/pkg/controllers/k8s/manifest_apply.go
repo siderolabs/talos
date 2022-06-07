@@ -209,11 +209,9 @@ func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *zap.L
 //nolint:gocyclo
 func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
 	// flatten list of objects to be applied
-	objects := make([]*unstructured.Unstructured, 0, len(manifests.Items))
-
-	for _, manifest := range manifests.Items {
-		objects = append(objects, k8sadapter.Manifest(manifest.(*k8s.Manifest)).Objects()...)
-	}
+	objects := slices.FlatMap(manifests.Items, func(m resource.Resource) []*unstructured.Unstructured {
+		return k8sadapter.Manifest(m.(*k8s.Manifest)).Objects()
+	})
 
 	// sort the list so that namespaces come first, followed by CRDs and everything else after that
 	sort.SliceStable(objects, func(i, j int) bool {

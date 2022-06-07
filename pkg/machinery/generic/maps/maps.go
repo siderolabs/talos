@@ -74,6 +74,18 @@ func KeysFunc[K comparable, V, R any](m map[K]V, fn func(K) R) []R {
 	return r
 }
 
+// Values returns the values of the map m.
+// The values will be in an indeterminate order.
+func Values[K comparable, V any](m map[K]V) []V {
+	r := make([]V, 0, len(m))
+
+	for _, v := range m {
+		r = append(r, v)
+	}
+
+	return r
+}
+
 // ValuesFunc applies the function fn to each value of the map m and returns a new slice with the results.
 // The values will be in an indeterminate order.
 func ValuesFunc[K comparable, V, R any](m map[K]V, fn func(V) R) []R {

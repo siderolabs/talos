@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 type EventsSuite struct {
@@ -18,12 +19,7 @@ type EventsSuite struct {
 }
 
 func (suite *EventsSuite) assertEvents(expectedMessages []string, evs []events.ServiceEvent) {
-	messages := make([]string, len(evs))
-
-	for i := range evs {
-		messages[i] = evs[i].Message
-	}
-
+	messages := slices.Map(evs, func(ev events.ServiceEvent) string { return ev.Message })
 	suite.Assert().Equal(expectedMessages, messages)
 }
 

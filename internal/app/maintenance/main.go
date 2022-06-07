@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -161,11 +162,7 @@ func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, p
 
 	ips = append(ips, netaddr.MustParseIP("127.0.0.1"), netaddr.MustParseIP("::1"))
 
-	netIPs := make([]net.IP, len(ips))
-
-	for i := range netIPs {
-		netIPs[i] = ips[i].IPAddr().IP
-	}
+	netIPs := slices.Map(ips, func(ip netaddr.IP) net.IP { return ip.IPAddr().IP })
 
 	var generator ttls.Generator
 

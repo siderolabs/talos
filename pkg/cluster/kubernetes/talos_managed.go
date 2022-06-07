@@ -39,6 +39,7 @@ import (
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -756,11 +757,7 @@ func checkDeprecated(ctx context.Context, cluster UpgradeProvider, options Upgra
 		probeResources := func(namespaces ...v1.Namespace) error {
 			r := k8sClient.Resource(*gvr)
 
-			namespaceNames := make([]string, 0, len(namespaces))
-
-			for _, ns := range namespaces {
-				namespaceNames = append(namespaceNames, ns.Name)
-			}
+			namespaceNames := slices.Map(namespaces, func(ns v1.Namespace) string { return ns.Name })
 
 			if len(namespaceNames) == 0 {
 				namespaceNames = append(namespaceNames, "default")

@@ -22,6 +22,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
@@ -67,11 +68,7 @@ func (suite *KubeSpanSuite) assertResourceIDs(md resource.Metadata, expectedIDs 
 			return err
 		}
 
-		actualIDs := make([]resource.ID, 0, len(l.Items))
-
-		for _, r := range l.Items {
-			actualIDs = append(actualIDs, r.Metadata().ID())
-		}
+		actualIDs := slices.Map(l.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 		sort.Strings(expectedIDs)
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // MaxEventsToKeep is maximum number of events to keep per service before dropping old entries.
@@ -120,21 +121,19 @@ func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 	eventList := events.Get(count)
 
-	result := &machineapi.ServiceEvents{
-		Events: make([]*machineapi.ServiceEvent, len(eventList)),
-	}
+	fn := func(event ServiceEvent) *machineapi.ServiceEvent {
+		tspb := timestamppb.New(event.Timestamp)
 
-	for i := range eventList {
-		tspb := timestamppb.New(eventList[i].Timestamp)
-
-		result.Events[i] = &machineapi.ServiceEvent{
-			Msg:   eventList[i].Message,
-			State: eventList[i].State.String(),
+		return &machineapi.ServiceEvent{
+			Msg:   event.Message,
+			State: event.State.String(),
 			Ts:    tspb,
 		}
 	}
 
-	return result
+	return &machineapi.ServiceEvents{
+		Events: slices.Map(eventList, fn),
+	}
 }
 
 // Recorder adds new event to the history of events, formatting message with args using Sprintf.

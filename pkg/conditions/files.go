@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 type file string
@@ -47,10 +49,7 @@ func WaitForFileToExist(filename string) Condition {
 
 // WaitForFilesToExist is a service condition that will wait for the existence of all the files.
 func WaitForFilesToExist(filenames ...string) Condition {
-	conditions := make([]Condition, len(filenames))
-	for i := range filenames {
-		conditions[i] = WaitForFileToExist(filenames[i])
-	}
+	conditions := slices.Map(filenames, WaitForFileToExist)
 
 	return WaitForAll(conditions...)
 }

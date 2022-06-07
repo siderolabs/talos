@@ -9,6 +9,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Image implements the config.APIServer interface.
@@ -29,13 +30,7 @@ func (a *APIServerConfig) ExtraArgs() map[string]string {
 
 // ExtraVolumes implements the config.APIServer interface.
 func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
-	volumes := make([]config.VolumeMount, 0, len(a.ExtraVolumesConfig))
-
-	for _, volume := range a.ExtraVolumesConfig {
-		volumes = append(volumes, volume)
-	}
-
-	return volumes
+	return slices.Map(a.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
 }
 
 // Env implements the config.APIServer interface.
@@ -50,15 +45,5 @@ func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
 
 // AdmissionControl implements the config.APIServer interface.
 func (a *APIServerConfig) AdmissionControl() []config.AdmissionPlugin {
-	if a.AdmissionControlConfig == nil {
-		return nil
-	}
-
-	res := make([]config.AdmissionPlugin, 0, len(a.AdmissionControlConfig))
-
-	for _, c := range a.AdmissionControlConfig {
-		res = append(res, c)
-	}
-
-	return res
+	return slices.Map(a.AdmissionControlConfig, func(c *AdmissionPluginConfig) config.AdmissionPlugin { return c })
 }

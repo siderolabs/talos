@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Server implements storage.StorageService.
@@ -26,20 +27,20 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 		return nil, err
 	}
 
-	diskList := make([]*storage.Disk, len(disks))
-
-	for i, disk := range disks {
-		diskList[i] = &storage.Disk{
-			DeviceName: disk.DeviceName,
-			Model:      disk.Model,
-			Size:       disk.Size,
-			Name:       disk.Name,
-			Serial:     disk.Serial,
-			Modalias:   disk.Modalias,
-			Type:       storage.Disk_DiskType(disk.Type),
-			BusPath:    disk.BusPath,
+	diskConv := func(d *disk.Disk) *storage.Disk {
+		return &storage.Disk{
+			DeviceName: d.DeviceName,
+			Model:      d.Model,
+			Size:       d.Size,
+			Name:       d.Name,
+			Serial:     d.Serial,
+			Modalias:   d.Modalias,
+			Type:       storage.Disk_DiskType(d.Type),
+			BusPath:    d.BusPath,
 		}
 	}
+
+	diskList := slices.Map(disks, diskConv)
 
 	reply = &storage.DisksResponse{
 		Messages: []*storage.Disks{

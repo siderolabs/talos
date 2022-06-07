@@ -22,6 +22,7 @@ import (
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -172,15 +173,15 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 	}
 
 	if len(reply.Options.DNS()) > 0 {
-		dns := make([]netaddr.IP, len(reply.Options.DNS()))
+		convertIP := func(ip net.IP) netaddr.IP {
+			result, _ := netaddr.FromStdIP(ip)
 
-		for i := range dns {
-			dns[i], _ = netaddr.FromStdIP(reply.Options.DNS()[i])
+			return result
 		}
 
 		d.resolvers = []network.ResolverSpecSpec{
 			{
-				DNSServers:  dns,
+				DNSServers:  slices.Map(reply.Options.DNS(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}
@@ -201,16 +202,15 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 	}
 
 	if len(reply.Options.NTPServers()) > 0 {
-		ntp := make([]string, len(reply.Options.NTPServers()))
+		convertIP := func(ip net.IP) string {
+			result, _ := netaddr.FromStdIP(ip)
 
-		for i := range ntp {
-			ip, _ := netaddr.FromStdIP(reply.Options.NTPServers()[i])
-			ntp[i] = ip.String()
+			return result.String()
 		}
 
 		d.timeservers = []network.TimeServerSpecSpec{
 			{
-				NTPServers:  ntp,
+				NTPServers:  slices.Map(reply.Options.NTPServers(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}

@@ -28,6 +28,7 @@ import (
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -800,25 +801,18 @@ func TestSortBonds(t *testing.T) {
 }
 
 func toResources(slice []network.LinkSpecSpec) []resource.Resource {
-	result := make([]resource.Resource, 0, len(slice))
-
-	for _, elem := range slice {
+	return slices.Map(slice, func(spec network.LinkSpecSpec) resource.Resource {
 		link := network.NewLinkSpec(network.NamespaceName, "bar")
-		*link.TypedSpec() = elem
+		*link.TypedSpec() = spec
 
-		result = append(result, link)
-	}
-
-	return result
+		return link
+	})
 }
 
 func toSpecs(slice []resource.Resource) []network.LinkSpecSpec {
-	result := make([]network.LinkSpecSpec, 0, len(slice))
+	return slices.Map(slice, func(r resource.Resource) network.LinkSpecSpec {
+		v := r.Spec().(*network.LinkSpecSpec) //nolint:errcheck
 
-	for _, elem := range slice {
-		v := elem.Spec().(*network.LinkSpecSpec) //nolint:errcheck
-		result = append(result, *v)
-	}
-
-	return result
+		return *v
+	})
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/talos-systems/go-blockdevice/blockdevice/partition/gpt"
 	talosnet "github.com/talos-systems/net"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"
@@ -110,10 +111,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		ips[j] = talosnet.FormatCIDR(config.IPs[j], config.CIDRs[j])
 	}
 
-	gatewayAddrs := make([]string, len(config.GatewayAddrs))
-	for j := range gatewayAddrs {
-		gatewayAddrs[j] = config.GatewayAddrs[j].String()
-	}
+	gatewayAddrs := slices.Map(config.GatewayAddrs, net.IP.String)
 
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,

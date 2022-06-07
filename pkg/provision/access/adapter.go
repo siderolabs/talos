@@ -7,6 +7,7 @@ package access
 import (
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
@@ -25,13 +26,7 @@ type infoWrapper struct {
 }
 
 func (wrapper *infoWrapper) Nodes() []string {
-	nodes := make([]string, len(wrapper.clusterInfo.Nodes))
-
-	for i := range nodes {
-		nodes[i] = wrapper.clusterInfo.Nodes[i].IPs[0].String()
-	}
-
-	return nodes
+	return slices.Map(wrapper.clusterInfo.Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
 }
 
 func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {

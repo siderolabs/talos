@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
@@ -178,12 +179,5 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 // dumpSet converts IPSet to a form suitable for logging.
 func dumpSet(set *netaddr.IPSet) []string {
-	ranges := set.Ranges()
-	res := make([]string, len(ranges))
-
-	for i, p := range ranges {
-		res[i] = p.String()
-	}
-
-	return res
+	return slices.Map(set.Ranges(), netaddr.IPRange.String)
 }

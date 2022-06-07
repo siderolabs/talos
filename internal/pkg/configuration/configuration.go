@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Generate config for GenerateConfiguration grpc.
@@ -45,15 +46,19 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 				networkConfig.NetworkInterfaces = make([]*v1alpha1.Device, len(networkInterfaces))
 
 				for i, device := range networkInterfaces {
-					routes := make([]*v1alpha1.Route, len(device.Routes))
-
 					iface := &v1alpha1.Device{
 						DeviceInterface: device.Interface,
 						DeviceMTU:       int(device.Mtu),
 						DeviceCIDR:      device.Cidr,
 						DeviceDHCP:      device.Dhcp,
 						DeviceIgnore:    device.Ignore,
-						DeviceRoutes:    routes,
+						DeviceRoutes: slices.Map(device.Routes, func(route *machine.RouteConfig) *v1alpha1.Route {
+							return &v1alpha1.Route{
+								RouteNetwork: route.Network,
+								RouteGateway: route.Gateway,
+								RouteMetric:  route.Metric,
+							}
+						}),
 					}
 
 					if device.DhcpOptions != nil {
