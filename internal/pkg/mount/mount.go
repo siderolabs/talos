@@ -140,6 +140,12 @@ func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 			case unix.ENOENT:
 				// if udevd triggers BLKRRPART ioctl, partition device entry might disappear temporarily
 				return retry.ExpectedError(err)
+			case unix.EUCLEAN:
+				if errRepair := p.Repair(); errRepair != nil {
+					return fmt.Errorf("error repairing: %w", errRepair)
+				}
+
+				return retry.ExpectedError(err)
 			case unix.EINVAL:
 				isMounted, checkErr := p.IsMounted()
 				if checkErr != nil {
@@ -385,6 +391,23 @@ func (p *Point) ResizePartition() (resized bool, err error) {
 func (p *Point) GrowFilesystem() (err error) {
 	if err = makefs.XFSGrow(p.Target()); err != nil {
 		return fmt.Errorf("xfs_growfs: %w", err)
+	}
+
+	return nil
+}
+
+// Repair repairs a partition's filesystem.
+func (p *Point) Repair() error {
+	if p.Logger != nil {
+		p.Logger.Printf("filesystem on %s needs cleaning, running repair", p.Source())
+	}
+
+	if err := makefs.XFSRepair(p.Source(), p.Fstype()); err != nil {
+		return fmt.Errorf("xfs_repair: %w", err)
+	}
+
+	if p.Logger != nil {
+		p.Logger.Printf("filesystem successfully repaired on %s", p.Source())
 	}
 
 	return nil

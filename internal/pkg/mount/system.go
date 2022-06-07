@@ -198,6 +198,8 @@ func SystemPartitionMount(r runtime.Runtime, logger *log.Logger, label string, o
 		opts = append(opts, WithEncryptionConfig(encryptionConfig))
 	}
 
+	opts = append(opts, WithLogger(logger))
+
 	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label, opts...)
 	if err != nil {
 		return err
