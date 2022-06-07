@@ -146,3 +146,15 @@ func IndexFunc[T any](slc []T, fn func(T) bool) int {
 func Contains[T any](s []T, fn func(T) bool) bool {
 	return IndexFunc(s, fn) >= 0
 }
+
+// Copy returns a slice of V with the last n elements removed.
+func Copy[S ~[]V, V any](s S, n int) S {
+	if s == nil {
+		return nil
+	}
+
+	result := make([]V, n)
+	copy(result, s)
+
+	return result
+}

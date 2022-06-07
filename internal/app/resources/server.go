@@ -20,6 +20,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
@@ -110,11 +111,7 @@ func (s *Server) resolveResourceKind(ctx context.Context, kind *resourceKind) (*
 
 		return matched[0], nil
 	case len(matched) > 1:
-		matchedTypes := make([]string, len(matched))
-
-		for i := range matched {
-			matchedTypes[i] = matched[i].Metadata().ID()
-		}
+		matchedTypes := slices.Map(matched, func(rd *meta.ResourceDefinition) string { return rd.Metadata().ID() })
 
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("resource type %q is ambiguous: %v", kind.Type, matchedTypes))
 	default:

@@ -11,6 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // NodeAddressType is type of NodeAddress resource.
@@ -68,13 +70,7 @@ func (NodeAddressRD) ResourceDefinition(resource.Metadata, NodeAddressSpec) meta
 
 // IPs returns IP without prefix.
 func (spec *NodeAddressSpec) IPs() []netaddr.IP {
-	result := make([]netaddr.IP, len(spec.Addresses))
-
-	for i := range spec.Addresses {
-		result[i] = spec.Addresses[i].IP()
-	}
-
-	return result
+	return slices.Map(spec.Addresses, netaddr.IPPrefix.IP)
 }
 
 // FilteredNodeAddressID returns resource ID for node addresses with filter applied.

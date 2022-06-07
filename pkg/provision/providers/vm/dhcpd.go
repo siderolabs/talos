@@ -23,6 +23,7 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
@@ -260,10 +261,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 		return err
 	}
 
-	gatewayAddrs := make([]string, len(clusterReq.Network.GatewayAddrs))
-	for j := range gatewayAddrs {
-		gatewayAddrs[j] = clusterReq.Network.GatewayAddrs[j].String()
-	}
+	gatewayAddrs := slices.Map(clusterReq.Network.GatewayAddrs, net.IP.String)
 
 	args := []string{
 		"dhcpd-launch",

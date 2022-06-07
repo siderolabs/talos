@@ -16,6 +16,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // singleton the system services API interface.
@@ -176,12 +178,7 @@ func (s *singleton) Start(serviceIDs ...string) error {
 // StartAll starts all the services.
 func (s *singleton) StartAll() {
 	s.mu.Lock()
-	serviceIDs := make([]string, 0, len(s.state))
-
-	for id := range s.state {
-		serviceIDs = append(serviceIDs, id)
-	}
-
+	serviceIDs := maps.Keys(s.state)
 	s.mu.Unlock()
 
 	//nolint:errcheck
@@ -335,13 +332,9 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
 
-			conds := make([]conditions.Condition, len(reverseDeps))
-
-			for i := range reverseDeps {
-				conds[i] = WaitForService(StateEventDown, reverseDeps[i])
-			}
-
+			conds := slices.Map(reverseDeps, func(dep string) conditions.Condition { return WaitForService(StateEventDown, dep) })
 			allDeps := conditions.WaitForAll(conds...)
+
 			if err := allDeps.Wait(shutdownCtx); err != nil {
 				log.Printf("gave up on %s while stopping %q", allDeps, svcrunner.id)
 			}
@@ -360,10 +353,7 @@ func (s *singleton) List() (result []*ServiceRunner) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result = make([]*ServiceRunner, 0, len(s.state))
-	for _, svcrunner := range s.state {
-		result = append(result, svcrunner)
-	}
+	result = maps.Values(s.state)
 
 	// TODO: results should be sorted properly with topological sort on dependencies
 	//       but, we don't have dependencies yet, so sort by service id for now to get stable order

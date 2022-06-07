@@ -20,7 +20,7 @@ func TestSet(t *testing.T) {
 	assert.Equal(t, role.MakeSet(role.Admin, role.Reader, role.Role("os:future"), role.Impersonator), roles)
 
 	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:reader"}, roles.Strings())
-	assert.Equal(t, []string{}, role.MakeSet().Strings())
+	assert.Equal(t, []string(nil), role.MakeSet().Strings())
 
 	assert.True(t, roles.Includes(role.Admin))
 	assert.False(t, roles.Includes(role.Role("wrong")))

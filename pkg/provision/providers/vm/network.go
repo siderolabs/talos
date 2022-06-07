@@ -21,6 +21,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	talosnet "github.com/talos-systems/net"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
@@ -81,10 +82,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		fakeIPs[j] = talosnet.FormatCIDR(fakeIP, network.CIDRs[j])
 	}
 
-	gatewayAddrs := make([]string, len(network.GatewayAddrs))
-	for j := range gatewayAddrs {
-		gatewayAddrs[j] = network.GatewayAddrs[j].String()
-	}
+	gatewayAddrs := slices.Map(network.GatewayAddrs, net.IP.String)
 
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{

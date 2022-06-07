@@ -6,20 +6,12 @@ package v1alpha1
 
 import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Modules implements config.Kernel interface.
 func (kc *KernelConfig) Modules() []config.KernelModule {
-	if kc.KernelModules == nil {
-		return nil
-	}
-
-	res := make([]config.KernelModule, len(kc.KernelModules))
-	for i, m := range kc.KernelModules {
-		res[i] = config.KernelModule(m)
-	}
-
-	return res
+	return slices.Map(kc.KernelModules, func(kmc *KernelModuleConfig) config.KernelModule { return kmc })
 }
 
 // Name implements config.KernelModule interface.

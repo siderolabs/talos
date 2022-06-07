@@ -12,6 +12,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Validate checks logging configuration for errors.
@@ -49,12 +50,7 @@ func (lc *LoggingConfig) Validate() error {
 
 // Destinations implements config.Logging interface.
 func (lc *LoggingConfig) Destinations() []config.LoggingDestination {
-	res := make([]config.LoggingDestination, len(lc.LoggingDestinations))
-	for i, ld := range lc.LoggingDestinations {
-		res[i] = config.LoggingDestination(ld)
-	}
-
-	return res
+	return slices.Map(lc.LoggingDestinations, func(ld LoggingDestination) config.LoggingDestination { return ld })
 }
 
 // Endpoint implements config.LoggingDestination interface.

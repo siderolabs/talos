@@ -8,6 +8,8 @@ package circular
 import (
 	"fmt"
 	"sync"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Buffer implements circular buffer with a thread-safe writer,
@@ -76,9 +78,7 @@ func (buf *Buffer) Write(p []byte) (int, error) {
 				size = buf.opt.MaxCapacity
 			}
 
-			data := make([]byte, size)
-			copy(data, buf.data)
-			buf.data = data
+			buf.data = slices.Copy(buf.data, size)
 		}
 	}
 

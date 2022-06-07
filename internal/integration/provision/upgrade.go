@@ -41,6 +41,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
@@ -524,12 +525,7 @@ func (suite *UpgradeSuite) runE2E(k8sVersion string) {
 }
 
 func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, expectedVersion string) {
-	nodes := make([]string, len(suite.Cluster.Info().Nodes))
-
-	for i, node := range suite.Cluster.Info().Nodes {
-		nodes[i] = node.IPs[0].String()
-	}
-
+	nodes := slices.Map(suite.Cluster.Info().Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
 	ctx := talosclient.WithNodes(suite.ctx, nodes...)
 
 	var v *machineapi.VersionResponse

@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
@@ -125,33 +126,15 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 }
 
 func ipsToString(in []netaddr.IP) string {
-	items := make([]string, len(in))
-
-	for i := range in {
-		items[i] = in[i].String()
-	}
-
-	return strings.Join(items, ",")
+	return strings.Join(slices.Map(in, netaddr.IP.String), ",")
 }
 
 func ipPrefixesToString(in []netaddr.IPPrefix) string {
-	items := make([]string, len(in))
-
-	for i := range in {
-		items[i] = in[i].String()
-	}
-
-	return strings.Join(items, ",")
+	return strings.Join(slices.Map(in, netaddr.IPPrefix.String), ",")
 }
 
 func ipPortsToString(in []netaddr.IPPort) string {
-	items := make([]string, len(in))
-
-	for i := range in {
-		items[i] = in[i].String()
-	}
-
-	return strings.Join(items, ",")
+	return strings.Join(slices.Map(in, netaddr.IPPort.String), ",")
 }
 
 func parseIPs(in string) []netaddr.IP {

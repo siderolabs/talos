@@ -38,6 +38,7 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	configresource "github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
@@ -320,10 +321,7 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig
 	var prevSenders []runtime.LogSender
 
 	if len(loggingEndpoints) > 0 {
-		senders := make([]runtime.LogSender, len(loggingEndpoints))
-		for i, u := range loggingEndpoints {
-			senders[i] = runtimelogging.NewJSONLines(u)
-		}
+		senders := slices.Map(loggingEndpoints, runtimelogging.NewJSONLines)
 
 		ctrl.logger.Info("enabling JSON logging")
 		prevSenders = ctrl.loggingManager.SetSenders(senders)

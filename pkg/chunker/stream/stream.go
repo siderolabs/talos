@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"github.com/talos-systems/talos/pkg/chunker"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Options is the functional options struct.
@@ -87,8 +88,7 @@ func (c *Stream) Read() <-chan []byte {
 
 			if n != 0 {
 				// Copy the buffer since we will modify it in the next loop.
-				b := make([]byte, n)
-				copy(b, buf[:n])
+				b := slices.Copy(buf, n)
 
 				select {
 				case <-c.ctx.Done():

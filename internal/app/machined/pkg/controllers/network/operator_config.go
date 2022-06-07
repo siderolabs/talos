@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -100,13 +101,9 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			specErrors *multierror.Error
 		)
 
-		devices := make([]talosconfig.Device, len(items.Items))
-
-		for i, item := range items.Items {
-			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
-
-			devices[i] = device
-		}
+		devices := slices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
+			return item.(*network.DeviceConfigSpec).TypedSpec().Device
+		})
 
 		// operators from the config
 		if len(devices) > 0 {

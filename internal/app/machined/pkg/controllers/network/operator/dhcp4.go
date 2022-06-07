@@ -19,6 +19,7 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -246,15 +247,15 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	}
 
 	if len(ack.DNS()) > 0 {
-		dns := make([]netaddr.IP, len(ack.DNS()))
+		convertIP := func(ip net.IP) netaddr.IP {
+			result, _ := netaddr.FromStdIP(ip)
 
-		for i := range dns {
-			dns[i], _ = netaddr.FromStdIP(ack.DNS()[i])
+			return result
 		}
 
 		d.resolvers = []network.ResolverSpecSpec{
 			{
-				DNSServers:  dns,
+				DNSServers:  slices.Map(ack.DNS(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}
@@ -283,16 +284,15 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	}
 
 	if len(ack.NTPServers()) > 0 {
-		ntp := make([]string, len(ack.NTPServers()))
+		convertIP := func(ip net.IP) string {
+			result, _ := netaddr.FromStdIP(ip)
 
-		for i := range ntp {
-			ip, _ := netaddr.FromStdIP(ack.NTPServers()[i])
-			ntp[i] = ip.String()
+			return result.String()
 		}
 
 		d.timeservers = []network.TimeServerSpecSpec{
 			{
-				NTPServers:  ntp,
+				NTPServers:  slices.Map(ack.NTPServers(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}

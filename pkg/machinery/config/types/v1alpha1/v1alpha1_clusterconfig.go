@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // ClusterConfig implements config.ClusterConfig, config.Token, and config.ClusterNetwork interfaces.
@@ -158,13 +159,7 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 
 // InlineManifests implements the config.ClusterConfig interface.
 func (c *ClusterConfig) InlineManifests() []config.InlineManifest {
-	manifests := make([]config.InlineManifest, len(c.ClusterInlineManifests))
-
-	for i := range manifests {
-		manifests[i] = c.ClusterInlineManifests[i]
-	}
-
-	return manifests
+	return slices.Map(c.ClusterInlineManifests, func(m ClusterInlineManifest) config.InlineManifest { return m })
 }
 
 // AdminKubeconfig implements the config.ClusterConfig interface.

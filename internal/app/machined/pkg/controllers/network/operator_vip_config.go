@@ -18,6 +18,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -72,13 +73,9 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 			}
 		}
 
-		devices := make([]talosconfig.Device, len(items.Items))
-
-		for i, item := range items.Items {
-			device := item.(*network.DeviceConfigSpec).TypedSpec().Device
-
-			devices[i] = device
-		}
+		devices := slices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
+			return item.(*network.DeviceConfigSpec).TypedSpec().Device
+		})
 
 		ignoredInterfaces := map[string]struct{}{}
 

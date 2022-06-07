@@ -53,7 +53,8 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 						DeviceCIDR:      device.Cidr,
 						DeviceDHCP:      device.Dhcp,
 						DeviceIgnore:    device.Ignore,
-						DeviceRoutes:    routes,
+						// TODO: this looks strange, since its always empty de-facto.
+						DeviceRoutes: routes,
 					}
 
 					if device.DhcpOptions != nil {

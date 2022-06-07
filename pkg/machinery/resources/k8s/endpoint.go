@@ -11,6 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // EndpointType is type of Endpoint resource.
@@ -78,11 +80,5 @@ func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 
 // Strings returns a slice of formatted endpoints to string.
 func (l EndpointList) Strings() []string {
-	res := make([]string, len(l))
-
-	for i := range l {
-		res[i] = l[i].String()
-	}
-
-	return res
+	return slices.Map(l, netaddr.IP.String)
 }

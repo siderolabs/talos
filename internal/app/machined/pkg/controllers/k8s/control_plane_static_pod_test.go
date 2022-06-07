@@ -28,6 +28,7 @@ import (
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -85,11 +86,7 @@ func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests 
 		return err
 	}
 
-	ids := make([]string, 0, len(resources.Items))
-
-	for _, res := range resources.Items {
-		ids = append(ids, res.Metadata().ID())
-	}
+	ids := slices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 	if !reflect.DeepEqual(manifests, ids) {
 		return retry.ExpectedError(fmt.Errorf("expected %q, got %q", manifests, ids))

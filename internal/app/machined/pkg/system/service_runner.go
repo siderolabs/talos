@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/conditions"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // WaitConditionCheckInterval is time between checking for wait condition
@@ -200,11 +201,7 @@ func (svcrunner *ServiceRunner) Start() {
 
 	dependencies := svcrunner.service.DependsOn(svcrunner.runtime)
 	if len(dependencies) > 0 {
-		serviceConditions := make([]conditions.Condition, len(dependencies))
-		for i := range dependencies {
-			serviceConditions[i] = WaitForService(StateEventUp, dependencies[i])
-		}
-
+		serviceConditions := slices.Map(dependencies, func(dep string) conditions.Condition { return WaitForService(StateEventUp, dep) })
 		serviceDependencies := conditions.WaitForAll(serviceConditions...)
 
 		if condition != nil {
