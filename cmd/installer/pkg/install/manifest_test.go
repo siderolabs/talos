@@ -27,7 +27,7 @@ import (
 // Some tests in this package cannot be run under buildkit, as buildkit doesn't propagate partition devices
 // like /dev/loopXpY into the sandbox. To run the tests on your local computer, do the following:
 //
-//	 sudo go test -v --count 1 ./cmd/installer/pkg/install/
+//	 go test -exec sudo -v --count 1 ./cmd/installer/pkg/install/
 
 type manifestSuite struct {
 	suite.Suite

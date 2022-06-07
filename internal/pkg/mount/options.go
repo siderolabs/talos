@@ -4,7 +4,11 @@
 
 package mount
 
-import "github.com/talos-systems/talos/pkg/machinery/config"
+import (
+	"log"
+
+	"github.com/talos-systems/talos/pkg/machinery/config"
+)
 
 const (
 	// ReadOnly is a flag for setting the mount point as readonly.
@@ -41,6 +45,7 @@ type Options struct {
 	PreMountHooks    []Hook
 	PostUnmountHooks []Hook
 	Encryption       config.Encryption
+	Logger           *log.Logger
 }
 
 // Option is the functional option func.
@@ -88,6 +93,13 @@ func WithPostUnmountHooks(hooks ...Hook) Option {
 func WithEncryptionConfig(cfg config.Encryption) Option {
 	return func(args *Options) {
 		args.Encryption = cfg
+	}
+}
+
+// WithLogger sets the logger.
+func WithLogger(logger *log.Logger) Option {
+	return func(args *Options) {
+		args.Logger = logger
 	}
 }
 
