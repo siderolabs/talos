@@ -10,10 +10,26 @@ import (
 	"github.com/talos-systems/go-cmd/pkg/cmd"
 )
 
+const (
+	// FilesystemTypeXFS is the filesystem type for XFS.
+	FilesystemTypeXFS = "xfs"
+)
+
 // XFSGrow expands a XFS filesystem to the maximum possible. The partition
 // MUST be mounted, or this will fail.
 func XFSGrow(partname string) error {
 	_, err := cmd.Run("xfs_growfs", "-d", partname)
+
+	return err
+}
+
+// XFSRepair repairs a XFS filesystem on the specified partition.
+func XFSRepair(partname, fsType string) error {
+	if fsType != FilesystemTypeXFS {
+		return fmt.Errorf("unsupported filesystem type: %s", fsType)
+	}
+
+	_, err := cmd.Run("xfs_repair", partname)
 
 	return err
 }
