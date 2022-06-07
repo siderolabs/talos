@@ -1,3 +1,86 @@
+## [Talos 1.0.6](https://github.com/siderolabs/talos/releases/tag/v1.0.6) (2022-06-07)
+
+Welcome to the v1.0.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.45
+* Containerd: v1.6.6
+
+Talos is built with Go 1.17.11
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+
+### Changes
+<details><summary>12 commits</summary>
+<p>
+
+* [`ca18010a9`](https://github.com/siderolabs/talos/commit/ca18010a977c78f27c9b6bff469d3750d7a56ab3) feat: update containerd 1.6.6, Linux 5.15.45
+* [`e65638ef4`](https://github.com/siderolabs/talos/commit/e65638ef4e3bb2a137159181338b9712f95b5425) fix: wait for `/var` to be mounted in kubelet service controller
+* [`8e4f58f3e`](https://github.com/siderolabs/talos/commit/8e4f58f3e79fecd23064a59ad2b5e49e096318a4) fix: improve vip operator shutdown sequence
+* [`097d89e6c`](https://github.com/siderolabs/talos/commit/097d89e6cc22ed56a095526b40d5d9d286a217eb) feat: enable passing custom kernel args to the ISO creator
+* [`ed4147b60`](https://github.com/siderolabs/talos/commit/ed4147b60a40c39a02eb67c65cb82ae4098f6652) docs: fix "double-base64-encode" in cert/key examples
+* [`71ddb2ee2`](https://github.com/siderolabs/talos/commit/71ddb2ee20ce06d4dad574c1d48cecdf09589701) fix: match for WSL platform in case-insentive way
+* [`9f476c47f`](https://github.com/siderolabs/talos/commit/9f476c47fa273b69943b9554149bd0c40e704a0e) fix: ignore completed pods in cluster health check
+* [`365dbd70d`](https://github.com/siderolabs/talos/commit/365dbd70dbe9cb863bc6b195542a75632a4b09bd) chore: bump golang to 1.17.11
+* [`d2a63238d`](https://github.com/siderolabs/talos/commit/d2a63238d275b910518f1c42f411cb458a797ae3) chore: bump kernel to 5.15.44
+* [`f1953a23a`](https://github.com/siderolabs/talos/commit/f1953a23a32887d17d19bb4782f7b96cc352c9aa) chore: bump kernel to 5.15.43
+* [`937e37763`](https://github.com/siderolabs/talos/commit/937e3776395ee0def554d67174489da759b7e6c9) chore: bump kernel to 5.15.41
+* [`79abbbdd3`](https://github.com/siderolabs/talos/commit/79abbbdd384769befb3a13aecdcd75b9187db3c2) chore: bump kernel to 5.15.40
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`05b0920`](https://github.com/siderolabs/extras/commit/05b09201633fe7a9e902f9a834b6fcdc8cfa3697) chore: bump golang to 1.17.11
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`cf9709e`](https://github.com/siderolabs/pkgs/commit/cf9709e77b4fe84e3651899324b4dcc27223d9f1) feat: update containerd to 1.6.6
+* [`600529e`](https://github.com/siderolabs/pkgs/commit/600529e8853c2a4f358338efc1856e08730b8b97) chore: bump kernel to 5.15.45
+* [`ebfac13`](https://github.com/siderolabs/pkgs/commit/ebfac13fb7fd59dafe54091449128e27327909e4) feat: update containerd to 1.6.5
+* [`b01e120`](https://github.com/siderolabs/pkgs/commit/b01e12036c93552acc36f44cccd3360c123e041c) chore: bump golang to 1.17.11
+* [`80fca56`](https://github.com/siderolabs/pkgs/commit/80fca56cb1ebd96900b4f168acab4707bdbb09b9) chore: bump kernel to 5.15.44
+* [`7e779c7`](https://github.com/siderolabs/pkgs/commit/7e779c7d0ced288bc473ab4eb2af286d7ce2e552) chore: bump kernel to 5.15.43
+* [`33d694c`](https://github.com/siderolabs/pkgs/commit/33d694c516adfea41833048623020777032e807d) chore: bump kernel to 5.15.41
+* [`56540b2`](https://github.com/siderolabs/pkgs/commit/56540b2dc13e068755eac7b684a4b7c046c401f7) chore: bump kernel to 5.15.40
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`06e7ef3`](https://github.com/siderolabs/tools/commit/06e7ef30ca90afce835ec2e01e043b12aea53261) chore: bump golang to 1.17.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**    v1.6.4 -> v1.6.6
+* **github.com/containernetworking/cni**  v1.1.0 -> v1.1.1
+* **github.com/siderolabs/extras**        v1.0.0-3-g6327c36 -> v1.0.0-4-g05b0920
+* **github.com/siderolabs/pkgs**          v1.0.0-17-g7567bf4 -> v1.0.0-25-gcf9709e
+* **github.com/siderolabs/tools**         v1.0.0-4-g943b5d0 -> v1.0.0-5-g06e7ef3
+* **golang.org/x/sys**                    4e6760a101f9 -> 33da011f77ad
+
+Previous release can be found at [v1.0.5](https://github.com/siderolabs/talos/releases/tag/v1.0.5)
+
 ## [Talos 1.0.5](https://github.com/siderolabs/talos/releases/tag/v1.0.5) (2022-05-13)
 
 Welcome to the v1.0.5 release of Talos!
