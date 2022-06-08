@@ -32,10 +32,10 @@ func (suite *ListSuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *ListSuite) TestSuccess() {
-	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/etc"},
+	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNodeInternalIP(), "/etc"},
 		base.StdoutShouldMatch(regexp.MustCompile(`os-release`)))
 
-	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNode(), "/"},
+	suite.RunCLI([]string{"list", "--nodes", suite.RandomDiscoveredNodeInternalIP(), "/"},
 		base.StdoutShouldNotMatch(regexp.MustCompile(`os-release`)))
 }
 
@@ -43,7 +43,7 @@ func (suite *ListSuite) TestSuccess() {
 func (suite *ListSuite) TestDepth() {
 	suite.T().Parallel()
 
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	// checks that enough separators are encountered in the output
 	runAndCheck := func(t *testing.T, expectedSeparators int, flags ...string) {

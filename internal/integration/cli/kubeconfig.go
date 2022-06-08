@@ -32,7 +32,7 @@ func (suite *KubeconfigSuite) SuiteName() string {
 func (suite *KubeconfigSuite) TestDirectory() {
 	tempDir := suite.T().TempDir()
 
-	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), tempDir},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), tempDir},
 		base.StdoutEmpty())
 
 	path := filepath.Join(tempDir, "kubeconfig")
@@ -53,7 +53,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 	suite.Require().NoError(os.Chdir(tempDir))
 
-	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "kubeconfig"))
@@ -63,7 +63,7 @@ func (suite *KubeconfigSuite) TestCwd() {
 func (suite *KubeconfigSuite) TestCustomName() {
 	tempDir := suite.T().TempDir()
 
-	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
+	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
 		base.StdoutEmpty())
 
 	suite.Require().FileExists(filepath.Join(tempDir, "k8sconfig"))
@@ -83,9 +83,9 @@ func (suite *KubeconfigSuite) TestMergeRename() {
 
 	path := filepath.Join(tempDir, "config")
 
-	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), path},
 		base.StdoutEmpty())
-	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path})
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), path})
 
 	config, err := clientcmd.LoadFromFile(path)
 	suite.Require().NoError(err)
@@ -99,9 +99,9 @@ func (suite *KubeconfigSuite) TestMergeOverwrite() {
 
 	path := filepath.Join(tempDir, "config")
 
-	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
+	suite.RunCLI([]string{"kubeconfig", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), path},
 		base.StdoutEmpty())
-	suite.RunCLI([]string{"kubeconfig", "--force", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane), path},
+	suite.RunCLI([]string{"kubeconfig", "--force", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), path},
 		base.StdoutEmpty())
 
 	config, err := clientcmd.LoadFromFile(path)

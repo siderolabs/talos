@@ -25,13 +25,13 @@ func (suite *MemorySuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *MemorySuite) TestSuccess() {
-	suite.RunCLI([]string{"memory", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"memory", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`FREE`)))
 }
 
 // TestVerbose verifies verbose mode.
 func (suite *MemorySuite) TestVerbose() {
-	suite.RunCLI([]string{"memory", "-v", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"memory", "-v", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`MemFree: \d+ kB`)))
 }
 

@@ -25,7 +25,7 @@ func EtcdConsistentAssertion(ctx context.Context, cluster ClusterInfo) error {
 	}
 
 	nodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	resp, err := cli.EtcdMemberList(nodesCtx, &machineapi.EtcdMemberListRequest{})
 	if err != nil {
@@ -109,7 +109,8 @@ func EtcdControlPlaneNodesAssertion(ctx context.Context, cluster ClusterInfo) er
 		}
 	}
 
-	if !isSubset(controlPlaneNodes, memberIPs) {
+	controlPlaneNodeIPs := mapIPsToStrings(flatMapNodeInfosToIPs(controlPlaneNodes))
+	if !isSubset(controlPlaneNodeIPs, memberIPs) {
 		return errors.New("mismatch between etcd member and control plane nodes")
 	}
 

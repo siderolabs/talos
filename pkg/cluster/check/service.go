@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -29,7 +30,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 	// by default, we check all control plane nodes. if some nodes don't have that service running,
 	// it won't be returned in the response
 	nodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {
@@ -67,7 +68,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 
 // ServiceHealthAssertion checks whether service reached some specified state.
 //nolint:gocyclo
-func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service string, setters ...Option) error {
+func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string, setters ...Option) error {
 	opts := DefaultOptions()
 
 	for _, setter := range setters {
@@ -76,24 +77,24 @@ func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service st
 		}
 	}
 
-	cli, err := cluster.Client()
+	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
-	var nodes []string
+	var nodes []cluster.NodeInfo
 
 	if len(opts.Types) > 0 {
 		for _, t := range opts.Types {
-			nodes = append(nodes, cluster.NodesByType(t)...)
+			nodes = append(nodes, cl.NodesByType(t)...)
 		}
 	} else {
-		nodes = cluster.Nodes()
+		nodes = cl.Nodes()
 	}
 
 	count := len(nodes)
 
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {

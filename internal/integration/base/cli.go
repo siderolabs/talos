@@ -52,11 +52,18 @@ func (cliSuite *CLISuite) DiscoverNodes(ctx context.Context) cluster.Info {
 	return nil
 }
 
-// RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
-func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
+// DiscoverNodeInternalIPs provides list of Talos node internal IPs in the cluster.
+func (cliSuite *CLISuite) DiscoverNodeInternalIPs(ctx context.Context) []string {
+	nodes := cliSuite.DiscoverNodes(ctx)
+
+	return mapNodeInfosToInternalIPs(nodes.Nodes())
+}
+
+// RandomDiscoveredNodeInternalIP returns the internal IP a random node of the specified type (or any type if no types are specified).
+func (cliSuite *CLISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) string {
 	nodeInfo := cliSuite.DiscoverNodes(context.TODO())
 
-	var nodes []string
+	var nodes []cluster.NodeInfo
 
 	if len(types) == 0 {
 		nodes = nodeInfo.Nodes()
@@ -68,7 +75,7 @@ func (cliSuite *CLISuite) RandomDiscoveredNode(types ...machine.Type) string {
 
 	cliSuite.Require().NotEmpty(nodes)
 
-	return nodes[rand.Intn(len(nodes))]
+	return nodes[rand.Intn(len(nodes))].InternalIP.String()
 }
 
 func (cliSuite *CLISuite) discoverKubectl() cluster.Info {

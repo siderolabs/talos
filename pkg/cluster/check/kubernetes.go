@@ -8,11 +8,10 @@ package check
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -21,13 +20,17 @@ import (
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
 //nolint:gocyclo
-func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) error {
-	clientset, err := cluster.K8sClient(ctx)
+func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
+	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	expectedNodes := cluster.Nodes()
+	expectedNodes := cl.Nodes()
+	expectedNodeIPs := sliceCollect(expectedNodes, func(v cluster.NodeInfo) string {
+		return v.IPs[0].String()
+	})
+	allExpectedNodeIPs := sliceFlatten(expectedNodeIPs)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -48,7 +51,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 
 			if nodeAddress.Type == v1.NodeInternalIP {
 				for _, expected := range expectedNodes {
-					if expected == nodeAddress.Address {
+					if slices.Contains(mapIPsToStrings(expected.IPs), nodeAddress.Address) {
 						nodeMatched = true
 
 						actualNodes = append(actualNodes, nodeAddress.Address)
@@ -66,10 +69,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 		}
 	}
 
-	sort.Strings(expectedNodes)
-	sort.Strings(actualNodes)
-
-	if reflect.DeepEqual(expectedNodes, actualNodes) {
+	if isSubset(allExpectedNodeIPs, actualNodes) {
 		return nil
 	}
 
@@ -79,13 +79,17 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) erro
 // K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
 //
 //nolint:gocyclo,cyclop
-func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
-	clientset, err := cluster.K8sClient(ctx)
+func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
+	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	expectedNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
+	expectedNodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
+	expectedNodeIPs := sliceCollect(expectedNodes, func(v cluster.NodeInfo) string {
+		return v.IPs[0].String()
+	})
+	allExpectedNodeIPs := sliceFlatten(expectedNodeIPs)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -110,10 +114,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		}
 	}
 
-	sort.Strings(expectedNodes)
-	sort.Strings(actualNodes)
-
-	if !reflect.DeepEqual(expectedNodes, actualNodes) {
+	if !isSubset(allExpectedNodeIPs, actualNodes) {
 		return fmt.Errorf("expected %v nodes, but got %v nodes", expectedNodes, actualNodes)
 	}
 
@@ -364,4 +365,15 @@ func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespa
 	}
 
 	return len(rss.Items) > 0, nil
+}
+
+// TODO: Move to common place.
+func sliceFlatten[S ~[]V, V any](slices ...S) S {
+	var result S
+
+	for _, slice := range slices {
+		result = append(result, slice...)
+	}
+
+	return result
 }

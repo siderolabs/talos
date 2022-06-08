@@ -18,7 +18,8 @@ func ApidReadyAssertion(ctx context.Context, cluster ClusterInfo) error {
 		return err
 	}
 
-	nodesCtx := client.WithNodes(ctx, cluster.Nodes()...)
+	nodeIPs := mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes()))
+	nodesCtx := client.WithNodes(ctx, nodeIPs...)
 
 	_, err = cli.Version(nodesCtx)
 

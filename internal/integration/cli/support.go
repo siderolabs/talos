@@ -33,7 +33,7 @@ func (suite *SupportSuite) TestSupport() {
 
 	output := filepath.Join(tempDir, "support.zip")
 
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	suite.RunCLI([]string{"support", "--nodes", node, "-w", "5", "-O", output})
 

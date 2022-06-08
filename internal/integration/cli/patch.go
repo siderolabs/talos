@@ -28,7 +28,7 @@ func (suite *PatchSuite) SuiteName() string {
 
 // TestSuccess successful run.
 func (suite *PatchSuite) TestSuccess() {
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	patch := []map[string]interface{}{
 		{
@@ -49,7 +49,7 @@ func (suite *PatchSuite) TestSuccess() {
 
 // TestError runs comand with error.
 func (suite *PatchSuite) TestError() {
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	patch := []map[string]interface{}{
 		{

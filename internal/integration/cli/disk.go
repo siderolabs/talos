@@ -23,7 +23,7 @@ func (suite *DisksSuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *DisksSuite) TestSuccess() {
-	suite.RunCLI([]string{"disks", "--nodes", suite.RandomDiscoveredNode()})
+	suite.RunCLI([]string{"disks", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 }
 
 func init() {

@@ -87,7 +87,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)
@@ -160,7 +160,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 	} {
 		suite.WaitForBootDone(suite.ctx)
 
-		node := suite.RandomDiscoveredNode()
+		node := suite.RandomDiscoveredNodeInternalIP()
 		suite.ClearConnectionRefused(suite.ctx, node)
 
 		nodeCtx := client.WithNodes(suite.ctx, node)
@@ -227,7 +227,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	node := suite.RandomDiscoveredNode(machine.TypeWorker)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
@@ -371,7 +371,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 // TestApplyNoReboot verifies the apply config API fails if NoReboot mode is requested on a field that can not be applied immediately.
 func (suite *ApplyConfigSuite) TestApplyNoReboot() {
-	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)
@@ -414,7 +414,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 
 // TestApplyDryRun verifies the apply config API with dry run enabled.
 func (suite *ApplyConfigSuite) TestApplyDryRun() {
-	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)
@@ -452,7 +452,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 // TestApplyTry applies the config in try mode with a short timeout.
 //nolint:gocyclo
 func (suite *ApplyConfigSuite) TestApplyTry() {
-	nodes := suite.DiscoverNodes(suite.ctx).NodesByType(machine.TypeWorker)
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)
 
 	suite.WaitForBootDone(suite.ctx)

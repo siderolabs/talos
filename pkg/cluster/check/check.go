@@ -7,6 +7,7 @@ package check
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/talos-systems/talos/pkg/cluster"
@@ -80,4 +81,37 @@ func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, repor
 	}
 
 	return nil
+}
+
+// TODO: replace usage with common generic method.
+func flatMapNodeInfosToIPs(nodes []cluster.NodeInfo) []net.IP {
+	var ips []net.IP
+
+	for _, node := range nodes {
+		ips = append(ips, node.IPs...)
+	}
+
+	return ips
+}
+
+// TODO: replace usage with common generic method.
+func mapNodeInfosToInternalIPs(nodes []cluster.NodeInfo) []net.IP {
+	ips := make([]net.IP, len(nodes))
+
+	for i, node := range nodes {
+		ips[i] = node.InternalIP
+	}
+
+	return ips
+}
+
+// TODO: replace usage with common generic method.
+func mapIPsToStrings(input []net.IP) []string {
+	output := make([]string, len(input))
+
+	for i, ip := range input {
+		output[i] = ip.String()
+	}
+
+	return output
 }

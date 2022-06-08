@@ -8,6 +8,7 @@ package cluster
 import (
 	"context"
 	"io"
+	"net"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -42,15 +43,42 @@ type CrashDumper interface {
 	CrashDump(ctx context.Context, out io.Writer)
 }
 
+// NodeInfo describes a Talos node.
+type NodeInfo struct {
+	InternalIP net.IP
+	IPs        []net.IP
+}
+
 // Info describes the Talos cluster.
 type Info interface {
-	// Nodes returns list of all node endpoints (IPs).
-	Nodes() []string
+	// Nodes returns list of all node infos.
+	Nodes() []NodeInfo
 	// NodesByType return list of node endpoints by type.
-	NodesByType(machine.Type) []string
+	NodesByType(machine.Type) []NodeInfo
 }
 
 // Bootstrapper performs Talos cluster bootstrap.
 type Bootstrapper interface {
 	Bootstrap(ctx context.Context, out io.Writer) error
+}
+
+// IPsToNodeInfos converts list of IPs to a list of NodeInfos.
+func IPsToNodeInfos(ips []string) []NodeInfo {
+	result := make([]NodeInfo, len(ips))
+
+	for i, ip := range ips {
+		result[i] = IPToNodeInfo(ip)
+	}
+
+	return result
+}
+
+// IPToNodeInfo converts a node internal IP to a NodeInfo.
+func IPToNodeInfo(ip string) NodeInfo {
+	parsed := net.ParseIP(ip)
+
+	return NodeInfo{
+		InternalIP: parsed,
+		IPs:        []net.IP{parsed},
+	}
 }

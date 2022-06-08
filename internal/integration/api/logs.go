@@ -41,7 +41,7 @@ func (suite *LogsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
 
-	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNode())
+	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
 }
 
 // TearDownTest ...

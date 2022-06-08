@@ -24,22 +24,23 @@ type infoWrapper struct {
 	clusterInfo provision.ClusterInfo
 }
 
-func (wrapper *infoWrapper) Nodes() []string {
-	nodes := make([]string, len(wrapper.clusterInfo.Nodes))
+func (wrapper *infoWrapper) Nodes() []cluster.NodeInfo {
+	nodes := make([]cluster.NodeInfo, len(wrapper.clusterInfo.Nodes))
 
 	for i := range nodes {
-		nodes[i] = wrapper.clusterInfo.Nodes[i].IPs[0].String()
+		node := wrapper.clusterInfo.Nodes[i]
+		nodes[i] = toNodeInfo(node)
 	}
 
 	return nodes
 }
 
-func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
-	var nodes []string
+func (wrapper *infoWrapper) NodesByType(t machine.Type) []cluster.NodeInfo {
+	var nodes []cluster.NodeInfo
 
 	for _, node := range wrapper.clusterInfo.Nodes {
 		if node.Type == t {
-			nodes = append(nodes, node.IPs[0].String())
+			nodes = append(nodes, toNodeInfo(node))
 		}
 	}
 
@@ -78,5 +79,12 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 			Info:           info,
 		},
 		Info: info,
+	}
+}
+
+func toNodeInfo(info provision.NodeInfo) cluster.NodeInfo {
+	return cluster.NodeInfo{
+		InternalIP: info.IPs[0],
+		IPs:        info.IPs,
 	}
 }

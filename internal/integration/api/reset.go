@@ -69,7 +69,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		}
 	}
 
-	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
 	sort.Strings(nodes)
@@ -113,7 +113,7 @@ func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	node := suite.RandomDiscoveredNode(nodeType)
+	node := suite.RandomDiscoveredNodeInternalIP(nodeType)
 
 	suite.T().Logf("Resetting %s node !graceful %s", nodeType, node)
 
@@ -159,7 +159,7 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.T().Log("Resetting node with spec=[EPHEMERAL]", node)
 
@@ -208,7 +208,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
 	}
 
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.T().Log("Resetting node with spec=[STATE]", node)
 
