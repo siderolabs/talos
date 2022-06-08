@@ -13,6 +13,10 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
+var rebootCmdFlags struct {
+	mode string
+}
+
 // rebootCmd represents the reboot command.
 var rebootCmd = &cobra.Command{
 	Use:   "reboot",
@@ -21,16 +25,15 @@ var rebootCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			mode, err := cmd.Flags().GetString("mode")
-			if err != nil {
-				return fmt.Errorf("error getting input value for --mode flag: %s", err)
-			}
-
 			opts := []client.RebootMode{}
 
+			switch rebootCmdFlags.mode {
 			// skips kexec and reboots with power cycle
-			if mode == "powercycle" {
+			case "powercycle":
 				opts = append(opts, client.WithPowerCycle)
+			case "default":
+			default:
+				return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
 			}
 
 			if err := c.Reboot(ctx, opts...); err != nil {
@@ -43,6 +46,6 @@ var rebootCmd = &cobra.Command{
 }
 
 func init() {
-	rebootCmd.Flags().StringP("mode", "m", "default", "select the reboot mode: \"default\", \"powercyle\" (skips kexec)")
+	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercyle\" (skips kexec)")
 	addCommand(rebootCmd)
 }
