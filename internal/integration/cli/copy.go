@@ -29,7 +29,7 @@ func (suite *CopySuite) SuiteName() string {
 func (suite *CopySuite) TestSuccess() {
 	tempDir := suite.T().TempDir()
 
-	suite.RunCLI([]string{"copy", "--nodes", suite.RandomDiscoveredNode(), "/etc/os-release", tempDir},
+	suite.RunCLI([]string{"copy", "--nodes", suite.RandomDiscoveredNodeInternalIP(), "/etc/os-release", tempDir},
 		base.StdoutEmpty())
 
 	_, err := os.Stat(filepath.Join(tempDir, "os-release"))

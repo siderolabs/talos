@@ -27,35 +27,54 @@ type clusterNodes struct {
 	InitNode          string
 	ControlPlaneNodes []string
 	WorkerNodes       []string
+
+	nodes       []cluster.NodeInfo
+	nodesByType map[machine.Type][]cluster.NodeInfo
 }
 
-func (cluster *clusterNodes) Nodes() []string {
+func (cl *clusterNodes) InitNodeInfos() error {
 	var initNodes []string
 
-	if cluster.InitNode != "" {
-		initNodes = []string{cluster.InitNode}
+	if cl.InitNode != "" {
+		initNodes = []string{cl.InitNode}
 	}
 
-	return append(initNodes, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
+	initNodeInfos, err := cluster.IPsToNodeInfos(initNodes)
+	if err != nil {
+		return err
+	}
+
+	controlPlaneNodeInfos, err := cluster.IPsToNodeInfos(cl.ControlPlaneNodes)
+	if err != nil {
+		return err
+	}
+
+	workerNodeInfos, err := cluster.IPsToNodeInfos(cl.WorkerNodes)
+	if err != nil {
+		return err
+	}
+
+	nodesByType := make(map[machine.Type][]cluster.NodeInfo)
+	nodesByType[machine.TypeInit] = initNodeInfos
+	nodesByType[machine.TypeControlPlane] = controlPlaneNodeInfos
+	nodesByType[machine.TypeWorker] = workerNodeInfos
+	cl.nodesByType = nodesByType
+
+	nodes := make([]cluster.NodeInfo, 0, len(initNodeInfos)+len(controlPlaneNodeInfos)+len(workerNodeInfos))
+	nodes = append(nodes, initNodeInfos...)
+	nodes = append(nodes, controlPlaneNodeInfos...)
+	nodes = append(nodes, workerNodeInfos...)
+	cl.nodes = nodes
+
+	return nil
 }
 
-func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
-	switch t {
-	case machine.TypeInit:
-		if cluster.InitNode == "" {
-			return nil
-		}
+func (cl *clusterNodes) Nodes() []cluster.NodeInfo {
+	return cl.nodes
+}
 
-		return []string{cluster.InitNode}
-	case machine.TypeControlPlane:
-		return append([]string(nil), cluster.ControlPlaneNodes...)
-	case machine.TypeWorker:
-		return append([]string(nil), cluster.WorkerNodes...)
-	case machine.TypeUnknown:
-		fallthrough
-	default:
-		panic(fmt.Sprintf("unexpected machine type %v", t))
-	}
+func (cl *clusterNodes) NodesByType(t machine.Type) []cluster.NodeInfo {
+	return cl.nodesByType[t]
 }
 
 var healthCmdFlags struct {
@@ -73,6 +92,11 @@ var healthCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		err := healthCmdFlags.clusterState.InitNodeInfos()
+		if err != nil {
+			return err
+		}
+
 		if err := runHealth(); err != nil {
 			return err
 		}

@@ -33,7 +33,7 @@ func (suite *RestartSuite) TestSystem() {
 	}
 
 	// trustd only runs on control plane nodes
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	suite.RunCLI([]string{"restart", "-n", node, "trustd"},
 		base.StdoutEmpty())

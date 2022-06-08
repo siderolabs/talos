@@ -43,12 +43,16 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 		return
 	}
 
-	for _, node := range s.Nodes() {
-		func(node string) {
-			nodeCtx, nodeCtxCancel := context.WithTimeout(client.WithNodes(ctx, node), 30*time.Second)
+	nodes := s.Nodes()
+
+	for _, node := range nodes {
+		func(node NodeInfo) {
+			nodeIP := node.InternalIP.String()
+
+			nodeCtx, nodeCtxCancel := context.WithTimeout(client.WithNodes(ctx, nodeIP), 30*time.Second)
 			defer nodeCtxCancel()
 
-			fmt.Fprintf(out, "\n%s\n%s\n\n", node, strings.Repeat("=", len(node)))
+			fmt.Fprintf(out, "\n%s\n%s\n\n", node, strings.Repeat("=", len(nodeIP)))
 
 			services, err := cli.ServiceList(nodeCtx)
 			if err != nil {

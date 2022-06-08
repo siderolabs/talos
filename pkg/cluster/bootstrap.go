@@ -39,14 +39,17 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	}
 
 	controlPlaneNodes := s.NodesByType(machine.TypeControlPlane)
+
 	if len(controlPlaneNodes) == 0 {
 		return fmt.Errorf("no control plane nodes to bootstrap")
 	}
 
-	sort.Strings(controlPlaneNodes)
+	sort.Slice(controlPlaneNodes, func(i, j int) bool {
+		return controlPlaneNodes[i].IPs[0].String() < controlPlaneNodes[j].IPs[0].String()
+	})
 
-	node := controlPlaneNodes[0]
-	nodeCtx := client.WithNodes(ctx, node)
+	nodeIP := controlPlaneNodes[0].IPs[0]
+	nodeCtx := client.WithNodes(ctx, nodeIP.String())
 
 	fmt.Fprintln(out, "waiting for API")
 

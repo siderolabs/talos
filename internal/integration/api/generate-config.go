@@ -80,7 +80,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		},
 	}
 
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	ctx := client.WithNodes(suite.ctx, node)
 
 	reply, err := suite.Client.GenerateConfiguration(

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"sort"
 
+	"github.com/talos-systems/talos/pkg/cluster"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -20,14 +21,21 @@ import (
 
 // EtcdConsistentAssertion checks that etcd membership is consistent across nodes.
 //nolint:gocyclo
-func EtcdConsistentAssertion(ctx context.Context, cluster ClusterInfo) error {
-	cli, err := cluster.Client()
+func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
+	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
-	nodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	var nodes []cluster.NodeInfo
+
+	initNodes := cl.NodesByType(machine.TypeInit)
+	nodes = append(nodes, initNodes...)
+	controlPlaneNodes := cl.NodesByType(machine.TypeControlPlane)
+
+	nodes = append(nodes, controlPlaneNodes...)
+
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	resp, err := cli.EtcdMemberList(nodesCtx, &machineapi.EtcdMemberListRequest{})
 	if err != nil {
@@ -82,13 +90,13 @@ func EtcdConsistentAssertion(ctx context.Context, cluster ClusterInfo) error {
 }
 
 // EtcdControlPlaneNodesAssertion checks that etcd nodes are control plane nodes.
-func EtcdControlPlaneNodesAssertion(ctx context.Context, cluster ClusterInfo) error {
-	cli, err := cluster.Client()
+func EtcdControlPlaneNodesAssertion(ctx context.Context, cl ClusterInfo) error {
+	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
-	controlPlaneNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
+	nodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
 
 	resp, err := cli.EtcdMemberList(ctx, &machineapi.EtcdMemberListRequest{})
 	if err != nil {
@@ -111,7 +119,8 @@ func EtcdControlPlaneNodesAssertion(ctx context.Context, cluster ClusterInfo) er
 		}
 	}
 
-	if !maps.Contains(slices.ToSet(controlPlaneNodes), memberIPs) {
+	controlPlaneNodeIPs := mapIPsToStrings(flatMapNodeInfosToIPs(nodes))
+	if !maps.Contains(slices.ToSet(controlPlaneNodeIPs), memberIPs) {
 		return errors.New("mismatch between etcd member and control plane nodes")
 	}
 

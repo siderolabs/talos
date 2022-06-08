@@ -26,7 +26,7 @@ func (suite *ServicesSuite) SuiteName() string {
 
 // TestList verifies service list.
 func (suite *ServicesSuite) TestList() {
-	suite.RunCLI([]string{"services", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"services", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 	)
@@ -34,7 +34,7 @@ func (suite *ServicesSuite) TestList() {
 
 // TestStatus verifies service status.
 func (suite *ServicesSuite) TestStatus() {
-	suite.RunCLI([]string{"service", "apid", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"service", "apid", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`STATE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`\[Running\]`)),
@@ -43,7 +43,7 @@ func (suite *ServicesSuite) TestStatus() {
 
 // TestRestart verifies kubelet restart.
 func (suite *ServicesSuite) TestRestart() {
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.RunCLI([]string{"service", "kubelet", "restart", "--nodes", node})
 

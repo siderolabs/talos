@@ -73,7 +73,7 @@ func parseLine(line string) (*duInfo, error) {
 // TestSuccess runs comand with success.
 func (suite *DiskUsageSuite) TestSuccess() {
 	folder := "/etc"
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	var folderSize int64 = 4096
 
@@ -129,7 +129,10 @@ func (suite *DiskUsageSuite) TestSuccess() {
 
 // TestError runs comand with error.
 func (suite *DiskUsageSuite) TestError() {
-	suite.RunCLI([]string{"usage", "--nodes", suite.RandomDiscoveredNode(), "/no/such/folder/here/just/for/sure"},
+	suite.RunCLI([]string{
+		"usage", "--nodes",
+		suite.RandomDiscoveredNodeInternalIP(), "/no/such/folder/here/just/for/sure",
+	},
 		base.StderrNotEmpty(),
 		base.StdoutEmpty())
 }

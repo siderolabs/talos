@@ -63,7 +63,7 @@ func (apiSuite *APISuite) SetupSuite() {
 	apiSuite.Require().NoError(err)
 
 	// clear any connection refused errors left after the previous tests
-	nodes := apiSuite.DiscoverNodes(context.TODO()).Nodes()
+	nodes := apiSuite.DiscoverNodeInternalIPs(context.TODO())
 
 	if len(nodes) > 0 {
 		// grpc might trigger backoff on reconnect attempts, so make sure we clear them
@@ -102,23 +102,43 @@ func (apiSuite *APISuite) DiscoverNodes(ctx context.Context) cluster.Info {
 	return apiSuite.discoveredNodes
 }
 
-// RandomDiscoveredNode returns a random node of the specified type (or any type if no types are specified).
-func (apiSuite *APISuite) RandomDiscoveredNode(types ...machine.Type) string {
+// DiscoverNodeInternalIPs provides list of Talos node internal IPs in the cluster.
+func (apiSuite *APISuite) DiscoverNodeInternalIPs(ctx context.Context) []string {
+	nodes := apiSuite.DiscoverNodes(ctx).Nodes()
+
+	return mapNodeInfosToInternalIPs(nodes)
+}
+
+// DiscoverNodeInternalIPsByType provides list of Talos node internal IPs in the cluster for given machine type.
+func (apiSuite *APISuite) DiscoverNodeInternalIPsByType(ctx context.Context, machineType machine.Type) []string {
+	nodesByType := apiSuite.DiscoverNodes(ctx).NodesByType(machineType)
+
+	return mapNodeInfosToInternalIPs(nodesByType)
+}
+
+// RandomDiscoveredNodeInternalIP returns the internal IP a random node of the specified type (or any type if no types are specified).
+//
+//nolint:dupl
+func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) string {
 	nodeInfo := apiSuite.DiscoverNodes(context.TODO())
 
-	var nodes []string
+	var nodes []cluster.NodeInfo
 
 	if len(types) == 0 {
-		nodes = nodeInfo.Nodes()
+		nodeInfos := nodeInfo.Nodes()
+
+		nodes = nodeInfos
 	} else {
 		for _, t := range types {
-			nodes = append(nodes, nodeInfo.NodesByType(t)...)
+			nodeInfosByType := nodeInfo.NodesByType(t)
+
+			nodes = append(nodes, nodeInfosByType...)
 		}
 	}
 
 	apiSuite.Require().NotEmpty(nodes)
 
-	return nodes[rand.Intn(len(nodes))]
+	return nodes[rand.Intn(len(nodes))].InternalIP.String()
 }
 
 // Capabilities describes current cluster allowed actions.
@@ -245,7 +265,7 @@ func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, reboo
 
 // WaitForBootDone waits for boot phase done event.
 func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
-	nodes := apiSuite.DiscoverNodes(ctx).Nodes()
+	nodes := apiSuite.DiscoverNodeInternalIPs(ctx)
 
 	nodesNotDoneBooting := make(map[string]struct{})
 
@@ -280,7 +300,10 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 	ctx, cancel := context.WithTimeout(ctx, backoff.DefaultConfig.MaxDelay)
 	defer cancel()
 
-	numMasterNodes := len(apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeControlPlane)) + len(apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeInit))
+	controlPlaneNodes := apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeControlPlane)
+	initNodes := apiSuite.DiscoverNodes(ctx).NodesByType(machine.TypeInit)
+
+	numMasterNodes := len(controlPlaneNodes) + len(initNodes)
 	if numMasterNodes == 0 {
 		numMasterNodes = 3
 	}
@@ -391,4 +414,14 @@ func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {
 		apiSuite.Assert().NoError(apiSuite.Client.Close())
 	}
+}
+
+func mapNodeInfosToInternalIPs(nodes []cluster.NodeInfo) []string {
+	ips := make([]string, len(nodes))
+
+	for i, node := range nodes {
+		ips[i] = node.InternalIP.String()
+	}
+
+	return ips
 }

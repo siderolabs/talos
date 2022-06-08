@@ -19,6 +19,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -74,6 +75,26 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 		} else {
 			result.workerNodes = append(result.workerNodes, address)
 		}
+	}
+
+	controlPlaneNodeInfos, err := cluster.IPsToNodeInfos(result.masterNodes)
+	if err != nil {
+		return nil, err
+	}
+
+	workerNodeInfos, err := cluster.IPsToNodeInfos(result.workerNodes)
+	if err != nil {
+		return nil, err
+	}
+
+	var allNodeInfos []cluster.NodeInfo
+	allNodeInfos = append(allNodeInfos, controlPlaneNodeInfos...)
+	allNodeInfos = append(allNodeInfos, workerNodeInfos...)
+
+	result.nodeInfos = allNodeInfos
+	result.nodeInfosByType = map[machine.Type][]cluster.NodeInfo{
+		machine.TypeControlPlane: controlPlaneNodeInfos,
+		machine.TypeWorker:       workerNodeInfos,
 	}
 
 	return result, nil

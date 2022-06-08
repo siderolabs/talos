@@ -25,7 +25,7 @@ func (suite *ProcessesSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *ProcessesSuite) TestSuccess() {
-	suite.RunCLI([]string{"processes", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"processes", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`PID`)))
 }
 

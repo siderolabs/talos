@@ -8,31 +8,22 @@
 package base
 
 import (
-	"fmt"
-
+	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 type infoWrapper struct {
 	masterNodes []string
 	workerNodes []string
+
+	nodeInfos       []cluster.NodeInfo
+	nodeInfosByType map[machine.Type][]cluster.NodeInfo
 }
 
-func (wrapper *infoWrapper) Nodes() []string {
-	return append([]string(nil), append(wrapper.masterNodes, wrapper.workerNodes...)...)
+func (wrapper *infoWrapper) Nodes() []cluster.NodeInfo {
+	return wrapper.nodeInfos
 }
 
-func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
-	switch t {
-	case machine.TypeInit:
-		return nil
-	case machine.TypeControlPlane:
-		return append([]string(nil), wrapper.masterNodes...)
-	case machine.TypeWorker:
-		return append([]string(nil), wrapper.workerNodes...)
-	case machine.TypeUnknown:
-		fallthrough
-	default:
-		panic(fmt.Sprintf("unexpected machine type %v", t))
-	}
+func (wrapper *infoWrapper) NodesByType(t machine.Type) []cluster.NodeInfo {
+	return wrapper.nodeInfosByType[t]
 }

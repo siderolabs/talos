@@ -8,8 +8,7 @@ package check
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"sort"
+	"net/netip"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,104 +16,119 @@ import (
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
 //nolint:gocyclo
-func K8sAllNodesReportedAssertion(ctx context.Context, cluster ClusterInfo) error {
-	clientset, err := cluster.K8sClient(ctx)
+func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
+	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	expectedNodes := cluster.Nodes()
+	expectedNodeInfos := cl.Nodes()
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	var actualNodes []string
+	actualNodeInfos := make([]cluster.NodeInfo, 0, len(nodes.Items))
 
 	for _, node := range nodes.Items {
-		var nodeMatched bool
+		var internalIP netip.Addr
 
-		var nodeInternalIPs []string
+		var ips []netip.Addr
 
 		for _, nodeAddress := range node.Status.Addresses {
-			if nodeMatched {
-				break
-			}
-
 			if nodeAddress.Type == v1.NodeInternalIP {
-				for _, expected := range expectedNodes {
-					if expected == nodeAddress.Address {
-						nodeMatched = true
-
-						actualNodes = append(actualNodes, nodeAddress.Address)
-
-						break
-					}
+				internalIP, err = netip.ParseAddr(nodeAddress.Address)
+				if err != nil {
+					return err
 				}
+
+				ips = append(ips, internalIP)
+			} else if nodeAddress.Type == v1.NodeExternalIP {
+				externalIP, err := netip.ParseAddr(nodeAddress.Address)
+				if err != nil {
+					return err
+				}
+
+				ips = append(ips, externalIP)
 			}
 		}
 
-		// We did not match any expected node, so store the first internal IP we encountered into the actualNodes set.
-		// NB: we only store a single address so as not to indicate multiple nodes in the report.
-		if !nodeMatched && len(nodeInternalIPs) > 0 {
-			actualNodes = append(actualNodes, nodeInternalIPs[0])
+		actualNodeInfo := cluster.NodeInfo{
+			InternalIP: internalIP,
+			IPs:        ips,
 		}
+
+		actualNodeInfos = append(actualNodeInfos, actualNodeInfo)
 	}
 
-	sort.Strings(expectedNodes)
-	sort.Strings(actualNodes)
-
-	if reflect.DeepEqual(expectedNodes, actualNodes) {
-		return nil
-	}
-
-	return fmt.Errorf("expected %v nodes, but got %v nodes", expectedNodes, actualNodes)
+	return assertNodes(expectedNodeInfos, actualNodeInfos)
 }
 
 // K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
 //
 //nolint:gocyclo,cyclop
-func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) error {
-	clientset, err := cluster.K8sClient(ctx)
+func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
+	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
 		return err
 	}
 
-	expectedNodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
+	expectedNodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
 
 	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	var actualNodes []string
+	actualNodes := make([]cluster.NodeInfo, 0, len(nodes.Items))
 
 	for _, node := range nodes.Items {
 		for label := range node.Labels {
-			if label == constants.LabelNodeRoleMaster {
+			if label == constants.LabelNodeRoleMaster || label == constants.LabelNodeRoleControlPlane {
+				var internalIP netip.Addr
+
+				var ips []netip.Addr
+
 				for _, nodeAddress := range node.Status.Addresses {
 					if nodeAddress.Type == v1.NodeInternalIP {
-						actualNodes = append(actualNodes, nodeAddress.Address)
+						internalIP, err = netip.ParseAddr(nodeAddress.Address)
+						if err != nil {
+							return err
+						}
 
-						break
+						ips = append(ips, internalIP)
+					} else if nodeAddress.Type == v1.NodeExternalIP {
+						externalIP, err2 := netip.ParseAddr(nodeAddress.Address)
+						if err2 != nil {
+							return err2
+						}
+
+						ips = append(ips, externalIP)
 					}
 				}
+
+				actualNodeInfo := cluster.NodeInfo{
+					InternalIP: internalIP,
+					IPs:        ips,
+				}
+
+				actualNodes = append(actualNodes, actualNodeInfo)
 
 				break
 			}
 		}
 	}
 
-	sort.Strings(expectedNodes)
-	sort.Strings(actualNodes)
-
-	if !reflect.DeepEqual(expectedNodes, actualNodes) {
-		return fmt.Errorf("expected %v nodes, but got %v nodes", expectedNodes, actualNodes)
+	err = assertNodes(expectedNodes, actualNodes)
+	if err != nil {
+		return err
 	}
 
 	// NB: We run the control plane check after node readiness check in order to
@@ -165,7 +179,8 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cluster ClusterInfo) erro
 		pods.Items = pods.Items[:n]
 
 		if len(pods.Items) != len(actualNodes) {
-			return fmt.Errorf("expected number of pods for %s to be %d, got %d", k8sApp, len(actualNodes), len(pods.Items))
+			return fmt.Errorf("expected number of pods for %s to be %d, got %d",
+				k8sApp, len(actualNodes), len(pods.Items))
 		}
 
 		var notReadyPods []string
@@ -364,4 +379,37 @@ func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespa
 	}
 
 	return len(rss.Items) > 0, nil
+}
+
+// assertNodes asserts that the provided expected set of nodes match the actual set of nodes.
+// For the assertion to pass, the actual set of nodes
+// must be equal to the expected set of nodes, compared by their internal IPs.
+//
+// Additionally, for each node, the IPs of the actual node must be a *subset* of the IPs of the expected node.
+func assertNodes(expected []cluster.NodeInfo, actual []cluster.NodeInfo) error {
+	toMapFunc := func(t cluster.NodeInfo) (string, []string) {
+		return t.InternalIP.String(), mapIPsToStrings(t.IPs)
+	}
+
+	expectedNodeInternalIPToNodeIPs := slices.ToMap(expected, toMapFunc)
+	actualNodeInternalIPToNodeIPs := slices.ToMap(actual, toMapFunc)
+
+	if len(expectedNodeInternalIPToNodeIPs) != len(actualNodeInternalIPToNodeIPs) {
+		return fmt.Errorf("expected %v nodes, but got %v nodes",
+			len(expectedNodeInternalIPToNodeIPs), len(actualNodeInternalIPToNodeIPs))
+	}
+
+	for internalIP, ips := range expectedNodeInternalIPToNodeIPs {
+		actualIPs, found := actualNodeInternalIPToNodeIPs[internalIP]
+		if !found {
+			return fmt.Errorf("couldn't find expected node with internal IP: %v", internalIP)
+		}
+
+		if !maps.Contains(slices.ToSet(ips), actualIPs) {
+			return fmt.Errorf("expected IPs for node does not match the actual IPs: expected: %q, actual: %q",
+				ips, actualIPs)
+		}
+	}
+
+	return nil
 }

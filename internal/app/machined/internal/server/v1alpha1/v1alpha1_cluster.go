@@ -30,9 +30,27 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 	}
 	defer k8sProvider.K8sClose() //nolint:errcheck
 
+	controlPlaneNodes := in.GetClusterInfo().GetControlPlaneNodes()
+	workerNodes := in.GetClusterInfo().GetWorkerNodes()
+
+	controlPlaneNodeInfos, err := cluster.IPsToNodeInfos(controlPlaneNodes)
+	if err != nil {
+		return err
+	}
+
+	workerNodeInfos, err := cluster.IPsToNodeInfos(workerNodes)
+	if err != nil {
+		return err
+	}
+
 	clusterState := clusterState{
-		controlPlaneNodes: in.GetClusterInfo().GetControlPlaneNodes(),
-		workerNodes:       in.GetClusterInfo().GetWorkerNodes(),
+		controlPlaneNodes: controlPlaneNodes,
+		workerNodes:       workerNodes,
+		nodeInfos:         append(controlPlaneNodeInfos, workerNodeInfos...),
+		nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
+			machine.TypeControlPlane: controlPlaneNodeInfos,
+			machine.TypeWorker:       workerNodeInfos,
+		},
 	}
 
 	state := struct {
@@ -87,47 +105,59 @@ func (hr *healthReporter) Update(condition conditions.Condition) {
 type clusterState struct {
 	controlPlaneNodes []string
 	workerNodes       []string
+
+	nodeInfos       []cluster.NodeInfo
+	nodeInfosByType map[machine.Type][]cluster.NodeInfo
 }
 
-func (cluster *clusterState) Nodes() []string {
-	return append([]string(nil), append(cluster.controlPlaneNodes, cluster.workerNodes...)...)
+func (cl *clusterState) Nodes() []cluster.NodeInfo {
+	return cl.nodeInfos
 }
 
-func (cluster *clusterState) NodesByType(t machine.Type) []string {
-	switch t {
-	case machine.TypeInit:
-		return nil
-	case machine.TypeControlPlane:
-		return append([]string(nil), cluster.controlPlaneNodes...)
-	case machine.TypeWorker:
-		return append([]string(nil), cluster.workerNodes...)
-	case machine.TypeUnknown:
-		fallthrough
-	default:
-		panic(fmt.Sprintf("unexpected machine type %v", t))
-	}
+func (cl *clusterState) NodesByType(t machine.Type) []cluster.NodeInfo {
+	return cl.nodeInfosByType[t]
 }
 
-func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
-	if len(cluster.controlPlaneNodes) == 0 && len(cluster.workerNodes) == 0 {
+func (cl *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
+	if len(cl.controlPlaneNodes) == 0 && len(cl.workerNodes) == 0 {
 		var err error
 
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
 			return err
 		}
 
-		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
+		if cl.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
 			return err
 		}
 
-		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeWorker); err != nil {
+		if cl.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeWorker); err != nil {
 			return err
+		}
+
+		controlPlaneNodeInfos, err := cluster.IPsToNodeInfos(cl.controlPlaneNodes)
+		if err != nil {
+			return err
+		}
+
+		workerNodeInfos, err := cluster.IPsToNodeInfos(cl.workerNodes)
+		if err != nil {
+			return err
+		}
+
+		var allNodeInfos []cluster.NodeInfo
+		allNodeInfos = append(allNodeInfos, controlPlaneNodeInfos...)
+		allNodeInfos = append(allNodeInfos, workerNodeInfos...)
+
+		cl.nodeInfos = allNodeInfos
+		cl.nodeInfosByType = map[machine.Type][]cluster.NodeInfo{
+			machine.TypeControlPlane: controlPlaneNodeInfos,
+			machine.TypeWorker:       workerNodeInfos,
 		}
 	}
 
 	return nil
 }
 
-func (cluster *clusterState) String() string {
-	return fmt.Sprintf("control plane: %q, worker: %q", cluster.controlPlaneNodes, cluster.workerNodes)
+func (cl *clusterState) String() string {
+	return fmt.Sprintf("control plane: %q, worker: %q", cl.controlPlaneNodes, cl.workerNodes)
 }

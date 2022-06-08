@@ -7,7 +7,6 @@ package access
 import (
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 
@@ -23,22 +22,16 @@ type Adapter struct {
 
 type infoWrapper struct {
 	clusterInfo provision.ClusterInfo
+	nodes       []cluster.NodeInfo
+	nodesByType map[machine.Type][]cluster.NodeInfo
 }
 
-func (wrapper *infoWrapper) Nodes() []string {
-	return slices.Map(wrapper.clusterInfo.Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
+func (wrapper *infoWrapper) Nodes() []cluster.NodeInfo {
+	return wrapper.nodes
 }
 
-func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
-	var nodes []string
-
-	for _, node := range wrapper.clusterInfo.Nodes {
-		if node.Type == t {
-			nodes = append(nodes, node.IPs[0].String())
-		}
-	}
-
-	return nodes
+func (wrapper *infoWrapper) NodesByType(t machine.Type) []cluster.NodeInfo {
+	return wrapper.nodesByType[t]
 }
 
 // NewAdapter returns ClusterAccess object from Cluster.
@@ -51,7 +44,23 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		}
 	}
 
-	info := &infoWrapper{clusterInfo: clusterInfo.Info()}
+	c := clusterInfo.Info()
+
+	nodeInfos, err := cluster.MapProvisionNodeInfosToClusterNodeInfos(c.Nodes)
+	if err != nil {
+		panic(err)
+	}
+
+	nodeInfosByType, err := cluster.MapProvisionNodeInfosToNodeInfosByType(c.Nodes)
+	if err != nil {
+		panic(err)
+	}
+
+	infoW := &infoWrapper{
+		clusterInfo: c,
+		nodes:       nodeInfos,
+		nodesByType: nodeInfosByType,
+	}
 
 	configProvider := cluster.ConfigClientProvider{
 		DefaultClient: options.TalosClient,
@@ -66,12 +75,12 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		},
 		APICrashDumper: cluster.APICrashDumper{
 			ClientProvider: &configProvider,
-			Info:           info,
+			Info:           infoW,
 		},
 		APIBootstrapper: cluster.APIBootstrapper{
 			ClientProvider: &configProvider,
-			Info:           info,
+			Info:           infoW,
 		},
-		Info: info,
+		Info: infoW,
 	}
 }

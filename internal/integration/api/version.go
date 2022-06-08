@@ -55,7 +55,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 
 // TestSameVersionCluster verifies that all the nodes are on the same version.
 func (suite *VersionSuite) TestSameVersionCluster() {
-	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
 	ctx := client.WithNodes(suite.ctx, nodes...)
