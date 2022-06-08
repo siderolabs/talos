@@ -5,6 +5,8 @@
 package access
 
 import (
+	"net/netip"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/provision"
@@ -24,26 +26,38 @@ type infoWrapper struct {
 	clusterInfo provision.ClusterInfo
 }
 
-func (wrapper *infoWrapper) Nodes() []string {
-	nodes := make([]string, len(wrapper.clusterInfo.Nodes))
+func (wrapper *infoWrapper) Nodes() ([]cluster.NodeInfo, error) {
+	nodes := make([]cluster.NodeInfo, len(wrapper.clusterInfo.Nodes))
 
 	for i := range nodes {
-		nodes[i] = wrapper.clusterInfo.Nodes[i].IPs[0].String()
+		node := wrapper.clusterInfo.Nodes[i]
+
+		nodeInfo, err := toNodeInfo(node)
+		if err != nil {
+			return nil, err
+		}
+
+		nodes[i] = *nodeInfo
 	}
 
-	return nodes
+	return nodes, nil
 }
 
-func (wrapper *infoWrapper) NodesByType(t machine.Type) []string {
-	var nodes []string
+func (wrapper *infoWrapper) NodesByType(t machine.Type) ([]cluster.NodeInfo, error) {
+	var nodes []cluster.NodeInfo
 
 	for _, node := range wrapper.clusterInfo.Nodes {
 		if node.Type == t {
-			nodes = append(nodes, node.IPs[0].String())
+			nodeInfo, err := toNodeInfo(node)
+			if err != nil {
+				return nil, err
+			}
+
+			nodes = append(nodes, *nodeInfo)
 		}
 	}
 
-	return nodes
+	return nodes, nil
 }
 
 // NewAdapter returns ClusterAccess object from Cluster.
@@ -79,4 +93,27 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		},
 		Info: info,
 	}
+}
+
+func toNodeInfo(info provision.NodeInfo) (*cluster.NodeInfo, error) {
+	internalIP, err := netip.ParseAddr(info.IPs[0].String())
+	if err != nil {
+		return nil, err
+	}
+
+	ips := make([]netip.Addr, len(info.IPs))
+
+	for i, ip := range info.IPs {
+		addr, err2 := netip.ParseAddr(ip.String())
+		if err2 != nil {
+			return nil, err2
+		}
+
+		ips[i] = addr
+	}
+
+	return &cluster.NodeInfo{
+		InternalIP: internalIP,
+		IPs:        ips,
+	}, nil
 }

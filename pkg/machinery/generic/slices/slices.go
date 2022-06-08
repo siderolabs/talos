@@ -4,7 +4,7 @@
 
 package slices
 
-// NOTE(DmitriyMV): I tried to implement this generic functions to be as perfomant as possible.
+// NOTE(DmitriyMV): I tried to implement this generic functions to be as performant as possible.
 // However, I couldn't find a way to do it, since Go (1.18 at the time of writing) cannot inline closures if (generic)
 // function, which accepts the closure, was not inlined itself.
 // And inlining budget of 80 is quite small, since most of it is going towards closure call.

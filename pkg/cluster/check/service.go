@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -20,16 +21,31 @@ import (
 var ErrServiceNotFound = fmt.Errorf("service not found")
 
 // ServiceStateAssertion checks whether service reached some specified state.
-func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service string, states ...string) error {
-	cli, err := cluster.Client()
+func ServiceStateAssertion(ctx context.Context, cl ClusterInfo, service string, states ...string) error {
+	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
+	var nodes []cluster.NodeInfo
+
 	// by default, we check all control plane nodes. if some nodes don't have that service running,
 	// it won't be returned in the response
-	nodes := append(cluster.NodesByType(machine.TypeInit), cluster.NodesByType(machine.TypeControlPlane)...)
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	initNodes, err := cl.NodesByType(machine.TypeInit)
+	if err != nil {
+		return err
+	}
+
+	nodes = append(nodes, initNodes...)
+
+	controlPlaneNodes, err := cl.NodesByType(machine.TypeControlPlane)
+	if err != nil {
+		return err
+	}
+
+	nodes = append(nodes, controlPlaneNodes...)
+
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {
@@ -67,7 +83,7 @@ func ServiceStateAssertion(ctx context.Context, cluster ClusterInfo, service str
 
 // ServiceHealthAssertion checks whether service reached some specified state.
 //nolint:gocyclo
-func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service string, setters ...Option) error {
+func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string, setters ...Option) error {
 	opts := DefaultOptions()
 
 	for _, setter := range setters {
@@ -76,24 +92,32 @@ func ServiceHealthAssertion(ctx context.Context, cluster ClusterInfo, service st
 		}
 	}
 
-	cli, err := cluster.Client()
+	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
-	var nodes []string
+	var nodes []cluster.NodeInfo
 
 	if len(opts.Types) > 0 {
 		for _, t := range opts.Types {
-			nodes = append(nodes, cluster.NodesByType(t)...)
+			nodesByType, err2 := cl.NodesByType(t)
+			if err2 != nil {
+				return err2
+			}
+
+			nodes = append(nodes, nodesByType...)
 		}
 	} else {
-		nodes = cluster.Nodes()
+		nodes, err = cl.Nodes()
+		if err != nil {
+			return err
+		}
 	}
 
 	count := len(nodes)
 
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
 
 	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
 	if err != nil {

@@ -28,7 +28,7 @@ func (suite *TimeSuite) SuiteName() string {
 
 // TestDefault runs default time check.
 func (suite *TimeSuite) TestDefault() {
-	suite.RunCLI([]string{"time", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"time", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`NTP-SERVER`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`UTC`)),
 		base.WithRetry(retry.Constant(time.Minute, retry.WithUnits(time.Second))),

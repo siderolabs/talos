@@ -25,10 +25,15 @@ func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 		return err
 	}
 
-	nodes := cluster.Nodes()
+	nodes, err := cluster.Nodes()
+	if err != nil {
+		return err
+	}
+
+	nodeInternalIPs := mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))
 
 	ctx, cancel := context.WithCancel(ctx)
-	nodesCtx := client.WithNodes(ctx, nodes...)
+	nodesCtx := client.WithNodes(ctx, nodeInternalIPs...)
 
 	nodesBootStarted := map[string]struct{}{}
 	nodesBootStopped := map[string]struct{}{}

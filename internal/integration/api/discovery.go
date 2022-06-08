@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
@@ -43,7 +46,7 @@ func (suite *DiscoverySuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 15*time.Second)
 
 	// check that cluster has discovery enabled
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
@@ -66,30 +69,35 @@ func (suite *DiscoverySuite) TearDownTest() {
 //
 //nolint:gocyclo
 func (suite *DiscoverySuite) TestMembers() {
-	nodes := suite.DiscoverNodes(suite.ctx)
+	nodes, err := suite.DiscoverNodes(suite.ctx).Nodes()
+	suite.Require().NoError(err)
+
 	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)
 
-	for _, node := range nodes.Nodes() {
-		nodeCtx := client.WithNodes(suite.ctx, node)
+	for _, node := range nodes {
+		nodeCtx := client.WithNodes(suite.ctx, node.InternalIP.String())
 
 		members := suite.getMembers(nodeCtx)
 
-		suite.Assert().Len(members, len(nodes.Nodes()))
+		suite.Assert().Len(members, len(nodes))
 
 		// do basic check against discovered nodes
-		for _, expectedNode := range nodes.Nodes() {
-			addr, err := netaddr.ParseIP(expectedNode)
-			suite.Require().NoError(err)
+		for _, expectedNode := range nodes {
+			nodeAddresses := slices.Map(expectedNode.IPs, func(t netip.Addr) string {
+				return t.String()
+			})
 
 			found := false
 
 			for _, member := range members {
-				for _, memberAddr := range member.TypedSpec().Addresses {
-					if memberAddr.Compare(addr) == 0 {
-						found = true
+				memberAddresses := slices.Map(member.TypedSpec().Addresses, func(t netaddr.IP) string {
+					return t.String()
+				})
 
-						break
-					}
+				if maps.Contains(slices.ToSet(memberAddresses), nodeAddresses) {
+					found = true
+
+					break
 				}
 
 				if found {
@@ -97,10 +105,10 @@ func (suite *DiscoverySuite) TestMembers() {
 				}
 			}
 
-			suite.Assert().True(found, "addr %s", addr)
+			suite.Assert().True(found, "addr %q", nodeAddresses)
 		}
 
-		// if cluster informantion is available, perform additional checks
+		// if cluster information is available, perform additional checks
 		if suite.Cluster == nil {
 			continue
 		}
@@ -145,9 +153,9 @@ func (suite *DiscoverySuite) TestMembers() {
 func (suite *DiscoverySuite) TestRegistries() {
 	registries := []string{"k8s/", "service/"}
 
-	nodes := suite.DiscoverNodes(suite.ctx)
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
-	for _, node := range nodes.Nodes() {
+	for _, node := range nodes {
 		nodeCtx := client.WithNodes(suite.ctx, node)
 
 		members := suite.getMembers(nodeCtx)
@@ -208,7 +216,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	}
 
 	// check that cluster has KubeSpan enabled
-	node := suite.RandomDiscoveredNode()
+	node := suite.RandomDiscoveredNodeInternalIP()
 	suite.ClearConnectionRefused(suite.ctx, node)
 
 	nodeCtx := client.WithNodes(suite.ctx, node)
@@ -219,7 +227,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 		suite.T().Skip("KubeSpan is disabled")
 	}
 
-	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
 	for _, node := range nodes {
 		nodeCtx := client.WithNodes(suite.ctx, node)

@@ -27,7 +27,7 @@ func (suite *MountsSuite) SuiteName() string {
 
 // TestSuccess verifies successful execution.
 func (suite *MountsSuite) TestSuccess() {
-	suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`(?s)FILESYSTEM.*`)))
 }
 
@@ -40,7 +40,7 @@ func (suite *MountsSuite) TestUserDisksMounted() {
 	}
 
 	for _, path := range strings.Split(paths, ",") {
-		suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNode()},
+		suite.RunCLI([]string{"mounts", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 			base.StdoutShouldMatch(regexp.MustCompile(path)))
 	}
 }

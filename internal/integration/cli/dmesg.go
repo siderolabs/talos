@@ -28,12 +28,12 @@ func (suite *DmesgSuite) SuiteName() string {
 
 // TestHasOutput verifies that dmesg is displayed.
 func (suite *DmesgSuite) TestHasOutput() {
-	suite.RunCLI([]string{"dmesg", "--nodes", suite.RandomDiscoveredNode()}) // default checks for stdout not empty
+	suite.RunCLI([]string{"dmesg", "--nodes", suite.RandomDiscoveredNodeInternalIP()}) // default checks for stdout not empty
 }
 
 // TestClusterHasOutput verifies that each node in the cluster has some output.
 func (suite *DmesgSuite) TestClusterHasOutput() {
-	nodes := suite.DiscoverNodes(context.TODO()).Nodes()
+	nodes := suite.DiscoverNodeInternalIPs(context.TODO())
 	suite.Require().NotEmpty(nodes)
 
 	matchers := make([]base.RunOption, 0, len(nodes))

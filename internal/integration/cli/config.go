@@ -69,7 +69,7 @@ func (suite *TalosconfigSuite) TestMerge() {
 
 // TestNew checks `talosctl config new`.
 func (suite *TalosconfigSuite) TestNew() {
-	stdout := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNode()})
+	stdout := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 
 	var v machineapi.Version
 	err := protojson.Unmarshal([]byte(stdout), &v)
@@ -79,7 +79,7 @@ func (suite *TalosconfigSuite) TestNew() {
 
 	tempDir := suite.T().TempDir()
 
-	node := suite.RandomDiscoveredNode(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	readerConfig := filepath.Join(tempDir, "talosconfig")
 	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", readerConfig},

@@ -7,10 +7,12 @@ package check
 
 import (
 	"context"
+	"net/netip"
 	"time"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 const updateInterval = 100 * time.Millisecond
@@ -80,4 +82,16 @@ func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, repor
 	}
 
 	return nil
+}
+
+func flatMapNodeInfosToIPs(nodes []cluster.NodeInfo) []netip.Addr {
+	return slices.FlatMap(nodes, func(node cluster.NodeInfo) []netip.Addr { return node.IPs })
+}
+
+func mapNodeInfosToInternalIPs(nodes []cluster.NodeInfo) []netip.Addr {
+	return slices.Map(nodes, func(node cluster.NodeInfo) netip.Addr { return node.InternalIP })
+}
+
+func mapIPsToStrings(input []netip.Addr) []string {
+	return slices.Map(input, func(ip netip.Addr) string { return ip.String() })
 }

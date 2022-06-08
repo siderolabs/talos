@@ -28,18 +28,19 @@ func (suite *EtcdSuite) SuiteName() string {
 
 // TestMembers etcd members should have some output.
 func (suite *EtcdSuite) TestMembers() {
-	suite.RunCLI([]string{"etcd", "members", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)}) // default checks for stdout not empty
+	suite.RunCLI([]string{"etcd", "members", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)}) // default checks for stdout not empty
 }
 
 // TestForfeitLeadership etcd forfeit-leadership check.
 func (suite *EtcdSuite) TestForfeitLeadership() {
-	nodes := suite.DiscoverNodes(context.TODO()).NodesByType(machine.TypeControlPlane)
+	nodes, err := suite.DiscoverNodes(context.TODO()).NodesByType(machine.TypeControlPlane)
+	suite.Require().NoError(err)
 
 	if len(nodes) < 3 {
 		suite.T().Skip("test only can be run on HA etcd clusters")
 	}
 
-	suite.RunCLI([]string{"etcd", "forfeit-leadership", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{"etcd", "forfeit-leadership", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutEmpty(),
 	)
 }
@@ -50,7 +51,7 @@ func (suite *EtcdSuite) TestSnapshot() {
 
 	dbPath := filepath.Join(tempDir, "snapshot.db")
 
-	suite.RunCLI([]string{"etcd", "snapshot", dbPath, "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{"etcd", "snapshot", dbPath, "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`etcd snapshot saved to .+\d+ bytes.+`)),
 	)
 }

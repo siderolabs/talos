@@ -26,7 +26,7 @@ func (suite *ContainersSuite) SuiteName() string {
 
 // TestContainerd inspects containers via containerd driver.
 func (suite *ContainersSuite) TestContainerd() {
-	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNode()},
+	suite.RunCLI([]string{"containers", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE`)),
 		base.StdoutShouldMatch(regexp.MustCompile(`apid`)),
 	)
@@ -34,7 +34,10 @@ func (suite *ContainersSuite) TestContainerd() {
 
 // TestCRI inspects containers via CRI driver.
 func (suite *ContainersSuite) TestCRI() {
-	suite.RunCLI([]string{"containers", "-k", "--nodes", suite.RandomDiscoveredNode(machine.TypeControlPlane)},
+	suite.RunCLI([]string{
+		"containers", "-k", "--nodes",
+		suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane),
+	},
 		base.StdoutShouldMatch(regexp.MustCompile(`kube-system/kube-apiserver`)),
 	)
 }

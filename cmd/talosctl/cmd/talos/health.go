@@ -29,28 +29,28 @@ type clusterNodes struct {
 	WorkerNodes       []string
 }
 
-func (cluster *clusterNodes) Nodes() []string {
+func (cl *clusterNodes) Nodes() ([]cluster.NodeInfo, error) {
 	var initNodes []string
 
-	if cluster.InitNode != "" {
-		initNodes = []string{cluster.InitNode}
+	if cl.InitNode != "" {
+		initNodes = []string{cl.InitNode}
 	}
 
-	return append(initNodes, append(cluster.ControlPlaneNodes, cluster.WorkerNodes...)...)
+	return cluster.IPsToNodeInfos(append(initNodes, append(cl.ControlPlaneNodes, cl.WorkerNodes...)...))
 }
 
-func (cluster *clusterNodes) NodesByType(t machine.Type) []string {
+func (cl *clusterNodes) NodesByType(t machine.Type) ([]cluster.NodeInfo, error) {
 	switch t {
 	case machine.TypeInit:
-		if cluster.InitNode == "" {
-			return nil
+		if cl.InitNode == "" {
+			return nil, nil
 		}
 
-		return []string{cluster.InitNode}
+		return cluster.IPsToNodeInfos([]string{cl.InitNode})
 	case machine.TypeControlPlane:
-		return append([]string(nil), cluster.ControlPlaneNodes...)
+		return cluster.IPsToNodeInfos(cl.ControlPlaneNodes)
 	case machine.TypeWorker:
-		return append([]string(nil), cluster.WorkerNodes...)
+		return cluster.IPsToNodeInfos(cl.WorkerNodes)
 	case machine.TypeUnknown:
 		fallthrough
 	default:

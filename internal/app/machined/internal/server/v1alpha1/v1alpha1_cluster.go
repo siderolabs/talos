@@ -89,18 +89,18 @@ type clusterState struct {
 	workerNodes       []string
 }
 
-func (cluster *clusterState) Nodes() []string {
-	return append([]string(nil), append(cluster.controlPlaneNodes, cluster.workerNodes...)...)
+func (cl *clusterState) Nodes() ([]cluster.NodeInfo, error) {
+	return cluster.IPsToNodeInfos(append(cl.controlPlaneNodes, cl.workerNodes...))
 }
 
-func (cluster *clusterState) NodesByType(t machine.Type) []string {
+func (cl *clusterState) NodesByType(t machine.Type) ([]cluster.NodeInfo, error) {
 	switch t {
 	case machine.TypeInit:
-		return nil
+		return nil, nil
 	case machine.TypeControlPlane:
-		return append([]string(nil), cluster.controlPlaneNodes...)
+		return cluster.IPsToNodeInfos(cl.controlPlaneNodes)
 	case machine.TypeWorker:
-		return append([]string(nil), cluster.workerNodes...)
+		return cluster.IPsToNodeInfos(cl.workerNodes)
 	case machine.TypeUnknown:
 		fallthrough
 	default:
@@ -108,19 +108,19 @@ func (cluster *clusterState) NodesByType(t machine.Type) []string {
 	}
 }
 
-func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
-	if len(cluster.controlPlaneNodes) == 0 && len(cluster.workerNodes) == 0 {
+func (cl *clusterState) resolve(ctx context.Context, k8sProvider *cluster.KubernetesClient) error {
+	if len(cl.controlPlaneNodes) == 0 && len(cl.workerNodes) == 0 {
 		var err error
 
 		if _, err = k8sProvider.K8sClient(ctx); err != nil {
 			return err
 		}
 
-		if cluster.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
+		if cl.controlPlaneNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeControlPlane); err != nil {
 			return err
 		}
 
-		if cluster.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeWorker); err != nil {
+		if cl.workerNodes, err = k8sProvider.KubeHelper.NodeIPs(ctx, machine.TypeWorker); err != nil {
 			return err
 		}
 	}
@@ -128,6 +128,6 @@ func (cluster *clusterState) resolve(ctx context.Context, k8sProvider *cluster.K
 	return nil
 }
 
-func (cluster *clusterState) String() string {
-	return fmt.Sprintf("control plane: %q, worker: %q", cluster.controlPlaneNodes, cluster.workerNodes)
+func (cl *clusterState) String() string {
+	return fmt.Sprintf("control plane: %q, worker: %q", cl.controlPlaneNodes, cl.workerNodes)
 }
