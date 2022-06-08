@@ -225,26 +225,20 @@ function run_extensions_test {
   curl http://172.20.1.2/ | grep Hello
 }
 
-function run_day_two_tests {
-  rm -rf "${TMP}/day-two-state"
-  # pulumi needs to be in $PATH temporarily
-  PATH="${PATH}:$(dirname ${PULUMI})" ${D2CTL} up --state-path "${TMP}/day-two-state" --config-path "${PWD}/hack/test/day-two/config.yaml"
-
-  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-kube-state-metrics
-  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-prometheus-server
-  ${KUBECTL} --namespace loki wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/loki-grafana
-
-  ${KUBECTL} --namespace metallb wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/metallb-controller
-
-  ${KUBECTL} --namespace ingress wait --timeout 900s --for=jsonpath='{.status.availableReplicas}=1' deployment/ingress-nginx-controller
-
+function run_csi_tests {
+  rm -rf "${TMP}/rook"
+  git clone --depth=1 --single-branch --branch v1.8.2 https://github.com/rook/rook.git "${TMP}/rook"
+  pushd "${TMP}/rook/deploy/examples"
+  ${KUBECTL} apply -f crds.yaml -f common.yaml -f operator.yaml
+  ${KUBECTL} apply -f cluster.yaml
   # wait for the controller to populate the status field
-  sleep 10
-  ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
-  ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
-  # .status.ceph is populated only after the cluster comes up
-  sleep 20
-  ${KUBECTL} --namespace rook-ceph wait --timeout=1800s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
+  sleep 30
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.state}=Created' cephclusters.ceph.rook.io/rook-ceph
+  # .status.ceph is populated later only
+  sleep 60
+  ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
+  ${KUBECTL} create -f csi/rbd/storageclass.yaml
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
-  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G
+  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass rook-ceph-block --size 10G
 }

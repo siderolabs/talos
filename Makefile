@@ -34,8 +34,6 @@ KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.24.1
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.31/kubestr_0.4.31_Linux_amd64.tar.gz
 CLUSTERCTL_VERSION ?= 1.1.3
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
-D2CTL_URL ?= https://github.com/siderolabs/day-two/releases/download/v0.1.0-alpha.2/d2ctl-$(OPERATING_SYSTEM)-amd64
-PULUMI_URL ?= https://get.pulumi.com/releases/sdk/pulumi-v3.26.1-$(OPERATING_SYSTEM)-x64.tar.gz
 TESTPKGS ?= github.com/talos-systems/talos/...
 RELEASES ?= v0.14.3 v1.0.0
 SHORT_INTEGRATION_TEST ?=
@@ -329,16 +327,7 @@ $(ARTIFACTS)/clusterctl:
 	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
 	@chmod +x $(ARTIFACTS)/clusterctl
 
-$(ARTIFACTS)/d2ctl:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L -o $(ARTIFACTS)/d2ctl "$(D2CTL_URL)"
-	@chmod +x $(ARTIFACTS)/d2ctl
-
-$(ARTIFACTS)/pulumi:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L "$(PULUMI_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components 1 pulumi/pulumi
-
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/d2ctl $(ARTIFACTS)/pulumi ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
@@ -353,9 +342,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubect
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
-		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
-		D2CTL=$(PWD)/$(ARTIFACTS)/d2ctl \
-		PULUMI=$(PWD)/$(ARTIFACTS)/pulumi
+		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
