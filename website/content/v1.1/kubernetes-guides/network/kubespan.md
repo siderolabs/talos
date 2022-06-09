@@ -8,6 +8,9 @@ aliases:
 KubeSpan is a feature of Talos that automates the setup and maintenance of a full mesh [WireGuard](https://www.wireguard.com) network for your cluster, giving you the ability to operate hybrid Kubernetes clusters that can span the edge, datacenter, and cloud.
 Management of keys and discovery of peers can be completely automated for a zero-touch experience that makes it simple and easy to create hybrid clusters.
 
+KubeSpan consists of client code in Talos Linux, as well as a discovery service that enables clients to securely find each other.
+Sidero Labs operates a free Discovery Service, but the discovery service may be operated by your organization and can be [downloaded here](https://github.com/siderolabs/discovery-service).
+
 ## Video Walkthrough
 
 To learn more about KubeSpan, see the video below:
