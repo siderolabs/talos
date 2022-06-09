@@ -4,4 +4,6 @@
 
 package siderolink
 
-var ParseJoinToken = parseJoinToken
+var ParseAPIEndpoint = parseAPIEndpoint
+
+type APIEndpoint = apiEndpoint
