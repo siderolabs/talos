@@ -7,6 +7,7 @@ package siderolink
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -21,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"inet.af/netaddr"
 
@@ -69,26 +71,36 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 
 var urlSchemeMatcher = regexp.MustCompile(`[a-zA-z]+\://`)
 
-// parseJoinToken parses the jointoken from the sidero link kernel parameter
-// and returns nil if no joinToken was specified.
-func parseJoinToken(sideroLinkParam string) (joinToken *string, err error) {
+type apiEndpoint struct {
+	Host      string
+	Insecure  bool
+	JoinToken *string
+}
+
+// parseAPIEndpoint parses the siderolink.api kernel parameter.
+func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
 	if !urlSchemeMatcher.Match([]byte(sideroLinkParam)) {
 		sideroLinkParam = "grpc://" + sideroLinkParam
 	}
 
 	u, err := url.Parse(sideroLinkParam)
 	if err != nil {
-		return nil, err
+		return apiEndpoint{}, err
+	}
+
+	result := apiEndpoint{
+		Host:     u.Host,
+		Insecure: u.Scheme == "grpc",
 	}
 
 	params := u.Query()
 
 	joinTokenStr, ok := params["jointoken"]
-	if !ok || len(joinTokenStr) < 1 {
-		return nil, nil
+	if ok && len(joinTokenStr) > 0 {
+		result.JoinToken = &joinTokenStr[0]
 	}
 
-	return &joinTokenStr[0], nil
+	return result, nil
 }
 
 // Run implements controller.Controller interface.
@@ -118,7 +130,20 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 	apiEndpoint := *ctrl.Cmdline.Get(constants.KernelParamSideroLink).First()
 
-	conn, err := grpc.DialContext(ctx, apiEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	parsedEndpoint, err := parseAPIEndpoint(apiEndpoint)
+	if err != nil {
+		logger.Warn("failed to parse siderolink kernel parameter", zap.Error(err))
+	}
+
+	var transportCredentials credentials.TransportCredentials
+
+	if parsedEndpoint.Insecure {
+		transportCredentials = insecure.NewCredentials()
+	} else {
+		transportCredentials = credentials.NewTLS(&tls.Config{})
+	}
+
+	conn, err := grpc.DialContext(ctx, parsedEndpoint.Host, grpc.WithTransportCredentials(transportCredentials))
 	if err != nil {
 		return fmt.Errorf("error dialing SideroLink endpoint %q: %w", apiEndpoint, err)
 	}
@@ -147,15 +172,10 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			continue
 		}
 
-		joinToken, err := parseJoinToken(apiEndpoint)
-		if err != nil {
-			logger.Warn("failed to parse join token from sidero link kernel parameter: %w", zap.Error(err))
-		}
-
 		resp, err := sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
 			NodeUuid:      nodeUUID,
 			NodePublicKey: ctrl.nodeKey.PublicKey().String(),
-			JoinToken:     joinToken,
+			JoinToken:     parsedEndpoint.JoinToken,
 		})
 		if err != nil {
 			return fmt.Errorf("error accessing SideroLink API: %w", err)
