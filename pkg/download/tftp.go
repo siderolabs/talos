@@ -16,14 +16,12 @@ import (
 // NewTFTPTransport returns an http.RoundTripper capable of handling the TFTP
 // protocol.
 func NewTFTPTransport() http.RoundTripper {
-	return &tftpRoundTripper{}
+	return tftpRoundTripper{}
 }
-
-var _ http.RoundTripper = &tftpRoundTripper{}
 
 type tftpRoundTripper struct{}
 
-func (t *tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	addr := req.URL.Host
 
 	if req.URL.Port() == "" {

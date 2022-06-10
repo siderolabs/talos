@@ -15,12 +15,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-getter"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/talos-systems/talos/pkg/httpdefaults"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -168,8 +170,10 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 	// Disable netrc since we don't have getent installed, and most likely
 	// never will.
 	httpGetter := &getter.HttpGetter{
-		Netrc:  false,
-		Client: http.DefaultClient,
+		Netrc: false,
+		Client: &http.Client{
+			Transport: httpdefaults.PatchTransport(cleanhttp.DefaultTransport()),
+		},
 	}
 
 	httpGetter.Header = make(http.Header)

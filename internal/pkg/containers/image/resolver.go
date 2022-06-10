@@ -7,16 +7,15 @@ package image
 import (
 	"encoding/base64"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
-	"golang.org/x/net/http/httpproxy"
+	"github.com/hashicorp/go-cleanhttp"
 
+	"github.com/talos-systems/talos/pkg/httpdefaults"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 )
 
@@ -159,19 +158,5 @@ func PrepareAuth(auth config.RegistryAuthConfig, host, expectedHost string) (str
 
 // newTransport creates HTTP transport with default settings.
 func newTransport() *http.Transport {
-	return &http.Transport{
-		// work around for  proxy.Do once bug.
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
-		},
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}).DialContext,
-		MaxIdleConns:          10,
-		IdleConnTimeout:       30 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 5 * time.Second,
-	}
+	return httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
 }

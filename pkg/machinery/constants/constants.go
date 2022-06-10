@@ -666,6 +666,9 @@ const (
 
 	// GoVersion is the version of Go compiler this release was built with.
 	GoVersion = "go1.18.3"
+
+	// DefaultTrustedCAFile is the default path to the trusted CA file.
+	DefaultTrustedCAFile = "/etc/ssl/certs/ca-certificates"
 )
 
 // See https://linux.die.net/man/3/klogctl

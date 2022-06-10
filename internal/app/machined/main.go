@@ -9,19 +9,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc"
 	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 	debug "github.com/talos-systems/go-debug"
 	"github.com/talos-systems/go-procfs/procfs"
-	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/apid"
@@ -32,6 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/trustd"
 	"github.com/talos-systems/talos/internal/pkg/mount"
+	"github.com/talos-systems/talos/pkg/httpdefaults"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -39,25 +38,8 @@ import (
 )
 
 func init() {
-	// Explicitly set the default http client transport to work around proxy.Do
-	// once. This is the http.DefaultTransport with the Proxy func overridden so
-	// that the environment variables with be reread/initialized each time the
-	// http call is made.
-	http.DefaultClient.Transport = &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
-		},
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-			DualStack: true,
-		}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	}
+	// Patch a default HTTP client with updated transport to handle cases when default client is being used.
+	http.DefaultClient.Transport = httpdefaults.PatchTransport(cleanhttp.DefaultPooledTransport())
 }
 
 func recovery() {
