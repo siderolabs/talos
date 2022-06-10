@@ -231,6 +231,8 @@ function run_csi_tests {
   pushd "${TMP}/rook/deploy/examples"
   ${KUBECTL} apply -f crds.yaml -f common.yaml -f operator.yaml
   ${KUBECTL} apply -f cluster.yaml
+  # mark namespace as privileged for Pod Security
+  ${KUBECTL} label ns rook-ceph pod-security.kubernetes.io/enforce=privileged
   # wait for the controller to populate the status field
   sleep 30
   ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.phase}=Ready' cephclusters.ceph.rook.io/rook-ceph
