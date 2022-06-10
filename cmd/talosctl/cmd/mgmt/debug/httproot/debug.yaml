@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: debug-container
+  name: debug-container
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: debug-container
+  template:
+    metadata:
+      labels:
+        app: debug-container
+    spec:
+      containers:
+      - args:
+        - "inf"
+        command:
+        - /bin/sleep
+        image: alpine:latest
+        imagePullPolicy: IfNotPresent
+        name: debug-container
+        resources: {}
+      terminationGracePeriodSeconds: 30
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate

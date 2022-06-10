@@ -19,6 +19,8 @@ import (
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/talos-systems/go-retry/retry"
+
+	"github.com/talos-systems/talos/pkg/httpdefaults"
 )
 
 const b64 = "base64"
@@ -167,7 +169,8 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 }
 
 func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err error) {
-	client := &http.Client{}
+	transport := httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
+	transport.RegisterProtocol("tftp", NewTFTPTransport())
 
 	if dlOpts.LowSrcPort {
 		port := 100 + rand.Intn(512)
@@ -184,8 +187,11 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 			LocalAddr: localTCPAddr,
 		}).DialContext
 
-		client.Transport = cleanhttp.DefaultTransport()
-		client.Transport.(*http.Transport).DialContext = d
+		transport.DialContext = d
+	}
+
+	client := &http.Client{
+		Transport: transport,
 	}
 
 	resp, err := client.Do(req)
@@ -213,9 +219,4 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 	}
 
 	return data, nil
-}
-
-func init() {
-	transport := (http.DefaultTransport.(*http.Transport))
-	transport.RegisterProtocol("tftp", NewTFTPTransport())
 }

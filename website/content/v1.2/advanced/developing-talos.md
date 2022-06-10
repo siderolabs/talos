@@ -233,3 +233,69 @@ The IP address `172.20.0.2` is the address of the Talos node, and port `:9982` d
 - 9981: `apid`
 - 9982: `machined`
 - 9983: `trustd`
+
+## Testing Air-gapped Environments
+
+There is a hidden `talosctl debug air-gapped` command which launches two components:
+
+- HTTP proxy capable of proxying HTTP and HTTPS requests
+- HTTPS server with a self-signed certificate
+
+The command also writes down Talos machine configuration patch to enable the HTTP proxy and add a self-signed certificate
+to the list of trusted certificates:
+
+```shell
+$ talosctl debug air-gapped --advertised-address 172.20.0.1
+2022/08/04 16:43:14 writing config patch to air-gapped-patch.yaml
+2022/08/04 16:43:14 starting HTTP proxy on :8002
+2022/08/04 16:43:14 starting HTTPS server with self-signed cert on :8001
+```
+
+The `--advertised-address` should match the bridge IP of the Talos node.
+
+Generated machine configuration patch looks like:
+
+```yaml
+machine:
+    files:
+        - content: |
+            -----BEGIN CERTIFICATE-----
+            MIIBijCCAS+gAwIBAgIBATAKBggqhkjOPQQDAjAUMRIwEAYDVQQKEwlUZXN0IE9u
+            bHkwHhcNMjIwODA0MTI0MzE0WhcNMjIwODA1MTI0MzE0WjAUMRIwEAYDVQQKEwlU
+            ZXN0IE9ubHkwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQfOJdaOFSOI1I+EeP1
+            RlMpsDZJaXjFdoo5zYM5VYs3UkLyTAXAmdTi7JodydgLhty0pwLEWG4NUQAEvip6
+            EmzTo3IwcDAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsG
+            AQUFBwMCMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFCwxL+BjG0pDwaH8QgKW
+            Ex0J2mVXMA8GA1UdEQQIMAaHBKwUAAEwCgYIKoZIzj0EAwIDSQAwRgIhAJoW0z0D
+            JwpjFcgCmj4zT1SbBFhRBUX64PHJpAE8J+LgAiEAvfozZG8Or6hL21+Xuf1x9oh4
+            /4Hx3jozbSjgDyHOLk4=
+            -----END CERTIFICATE-----
+          permissions: 0o644
+          path: /etc/ssl/certs/ca-certificates
+          op: append
+    env:
+        http_proxy: http://172.20.0.1:8002
+        https_proxy: http://172.20.0.1:8002
+        no_proxy: 172.20.0.1/24
+cluster:
+    extraManifests:
+        - https://172.20.0.1:8001/debug.yaml
+```
+
+The first section appends a self-signed certificate of the HTTPS server to the list of trusted certificates,
+followed by the HTTP proxy setup (in-cluster traffic is excluded from the proxy).
+The last section adds an extra Kubernetes manifest hosted on the HTTPS server.
+
+The machine configuration patch can now be used to launch a test Talos cluster:
+
+```shell
+talosctl cluster create ... --config-patch @air-gapped-patch.yaml
+```
+
+The following lines should appear in the output of the `talosctl debug air-gapped` command:
+
+- `CONNECT discovery.talos.dev:443`: the HTTP proxy is used to talk to the discovery service
+- `http: TLS handshake error from 172.20.0.2:53512: remote error: tls: bad certificate`: an expected error on Talos side, as self-signed cert is not written yet to the file
+- `GET /debug.yaml`: Talos successfully fetches the extra manifest successfully
+
+There might be more output depending on the registry caches being used or not.

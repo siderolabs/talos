@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/cluster"
+	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/debug"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 )
 
@@ -26,4 +27,5 @@ func addCommand(cmd *cobra.Command) {
 func init() {
 	addCommand(cluster.Cmd)
 	addCommand(gen.Cmd)
+	addCommand(debug.Cmd)
 }

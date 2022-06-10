@@ -713,6 +713,9 @@ const (
 
 	// ServiceAccountMountPath is the path of the directory in which the Talos service account secrets are mounted.
 	ServiceAccountMountPath = "/var/run/secrets/talos.dev/"
+
+	// DefaultTrustedCAFile is the default path to the trusted CA file.
+	DefaultTrustedCAFile = "/etc/ssl/certs/ca-certificates"
 )
 
 // See https://linux.die.net/man/3/klogctl
