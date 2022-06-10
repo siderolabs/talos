@@ -4,12 +4,12 @@ weight: 60
 description: "Table of supported Talos Linux versions and respective platforms."
 ---
 
-| Talos Version                                                                                                  | 1.1                                | 1.0                                |
+| Talos Version                                                                                                  | 1.2                                | 1.1                                |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2022-06-24, TBD                    | 2022-03-29 (1.0.0)                 |
-| End of Community Support                                                                                       | 1.2.0 release (2022-09-01, TBD)    | 1.1.0 release (2022-06-24, TBD)    |
+| Release Date                                                                                                   | 2022-09-01, TBD                    | 2022-06-24 (1.1.0)                 |
+| End of Community Support                                                                                       | 1.3.0 release (2022-12-01, TBD)    | 1.2.0 release (2022-06-24, TBD)    |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) |
-| Kubernetes                                                                                                     | 1.24, 1.23, 1.22                   | 1.23, 1.22, 1.21                   |
+| Kubernetes                                                                                                     | 1.24, 1.23, 1.22                                                        |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Hetzner, OpenStack, Scaleway, Vultr, Upcloud |
