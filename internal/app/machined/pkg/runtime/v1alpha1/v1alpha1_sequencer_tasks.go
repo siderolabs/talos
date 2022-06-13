@@ -583,7 +583,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
 	var b []byte
 
-	if b, err = r.State().Platform().Configuration(ctx); err != nil {
+	if b, err = r.State().Platform().Configuration(ctx, r.State().V1Alpha2().Resources()); err != nil {
 		return nil, err
 	}
 

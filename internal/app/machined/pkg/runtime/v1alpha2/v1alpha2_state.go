@@ -91,6 +91,7 @@ func NewState() (*State, error) {
 		&files.EtcFileStatus{},
 		&hardware.Processor{},
 		&hardware.MemoryModule{},
+		&hardware.SystemInformation{},
 		&k8s.AdmissionControlConfig{},
 		&k8s.APIServerConfig{},
 		&k8s.ConfigStatus{},
