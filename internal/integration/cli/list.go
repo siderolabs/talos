@@ -48,7 +48,7 @@ func (suite *ListSuite) TestDepth() {
 	// checks that enough separators are encountered in the output
 	runAndCheck := func(t *testing.T, expectedSeparators int, flags ...string) {
 		args := append([]string{"list", "--nodes", node, "/system"}, flags...)
-		stdout := suite.RunCLI(args)
+		stdout, _ := suite.RunCLI(args)
 
 		lines := strings.Split(strings.TrimSpace(stdout), "\n")
 		assert.Greater(t, len(lines), 2)

@@ -21,6 +21,7 @@ import (
 	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	clusterres "github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 type clusterNodes struct {
@@ -123,6 +124,11 @@ func healthOnClient(ctx context.Context, c *client.Client) error {
 	}
 	defer clientProvider.Close() //nolint:errcheck
 
+	clusterInfo, err := buildClusterInfo()
+	if err != nil {
+		return err
+	}
+
 	state := struct {
 		cluster.ClientProvider
 		cluster.K8sProvider
@@ -133,7 +139,7 @@ func healthOnClient(ctx context.Context, c *client.Client) error {
 			ClientProvider: clientProvider,
 			ForceEndpoint:  healthCmdFlags.forceEndpoint,
 		},
-		Info: &healthCmdFlags.clusterState,
+		Info: clusterInfo,
 	}
 
 	// Run cluster readiness checks
@@ -220,4 +226,24 @@ func init() {
 	healthCmd.Flags().StringVar(&healthCmdFlags.forceEndpoint, "k8s-endpoint", "", "use endpoint instead of kubeconfig default")
 	healthCmd.Flags().BoolVar(&healthCmdFlags.runOnServer, "server", true, "run server-side check")
 	healthCmd.Flags().BoolVar(&healthCmdFlags.runE2E, "run-e2e", false, "run Kubernetes e2e test")
+}
+
+func buildClusterInfo() (cluster.Info, error) {
+	clusterState := healthCmdFlags.clusterState
+
+	// if nodes are set explicitly via command line args, use them
+	if len(clusterState.ControlPlaneNodes) > 0 || len(clusterState.WorkerNodes) > 0 {
+		return &clusterState, nil
+	}
+
+	// read members from the Talos API
+
+	var members []*clusterres.Member
+
+	err := WithClientNoNodes(getResourcesOfType(clusterres.NamespaceName, clusterres.MemberType, &members))
+	if err != nil {
+		return nil, err
+	}
+
+	return check.NewDiscoveredClusterInfo(members)
 }

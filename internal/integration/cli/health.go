@@ -26,16 +26,10 @@ func (suite *HealthSuite) SuiteName() string {
 	return "cli.HealthSuite"
 }
 
-// TestClientSide does successful health check run from client-side.
+// TestClientSideWithExplicitNodes does successful health check run from client-side, providing the explicit set of nodes.
 //
 //nolint:gocyclo
-func (suite *HealthSuite) TestClientSide() {
-	if suite.Cluster == nil {
-		suite.T().Skip("Cluster is not available, skipping test")
-	}
-
-	args := []string{"--server=false"}
-
+func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
 	bootstrapAPIIsUsed := true
 
 	for _, node := range suite.Cluster.Info().Nodes {
@@ -44,6 +38,8 @@ func (suite *HealthSuite) TestClientSide() {
 		}
 	}
 
+	var args []string
+
 	if bootstrapAPIIsUsed {
 		for _, node := range suite.Cluster.Info().Nodes {
 			switch node.Type {
@@ -51,6 +47,7 @@ func (suite *HealthSuite) TestClientSide() {
 				args = append(args, "--control-plane-nodes", node.IPs[0].String())
 			case machine.TypeWorker:
 				args = append(args, "--worker-nodes", node.IPs[0].String())
+				// todo: add more
 			case machine.TypeInit, machine.TypeUnknown:
 				fallthrough
 			default:
@@ -74,20 +71,38 @@ func (suite *HealthSuite) TestClientSide() {
 		}
 	}
 
-	if suite.K8sEndpoint != "" {
-		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
-	}
+	suite.testClientSide(args...)
+}
 
-	suite.RunCLI(append([]string{"health"}, args...),
-		base.StdoutEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
-	)
+// TestClientSideWithDiscovery does a health check run from client-side without explicitly specifying the nodes.
+// It verifies that the check still passes, because the nodes get populated by the discovery service.
+//
+//nolint:gocyclo
+func (suite *HealthSuite) TestClientSideWithDiscovery() {
+	suite.testClientSide()
 }
 
 // TestServerSide does successful health check run from server-side.
 func (suite *HealthSuite) TestServerSide() {
 	randomControlPlaneNodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	suite.RunCLI([]string{"health", "--nodes", randomControlPlaneNodeInternalIP},
+		base.StdoutEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
+	)
+}
+
+func (suite *HealthSuite) testClientSide(extraArgs ...string) {
+	if suite.Cluster == nil {
+		suite.T().Skip("Cluster is not available, skipping test")
+	}
+
+	args := append([]string{"--server=false"}, extraArgs...)
+
+	if suite.K8sEndpoint != "" {
+		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
+	}
+
+	suite.RunCLI(append([]string{"health"}, args...),
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
 	)

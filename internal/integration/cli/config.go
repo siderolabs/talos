@@ -69,7 +69,7 @@ func (suite *TalosconfigSuite) TestMerge() {
 
 // TestNew checks `talosctl config new`.
 func (suite *TalosconfigSuite) TestNew() {
-	stdout := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
+	stdout, _ := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 
 	var v machineapi.Version
 	err := protojson.Unmarshal([]byte(stdout), &v)

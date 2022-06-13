@@ -168,7 +168,7 @@ func retryRunAndWait(suite *suite.Suite, cmdFunc func() *exec.Cmd, retryer retry
 // run executes command, asserts on its exit status/output, and returns stdout.
 //
 //nolint:gocyclo,nakedret
-func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout string) {
+func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (stdout, stderr string) {
 	var opts runOptions
 
 	for _, o := range options {
@@ -196,7 +196,6 @@ func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (st
 		stdout = stdoutBuf.String()
 	}
 
-	var stderr string
 	if stderrBuf != nil {
 		stderr = stderrBuf.String()
 	}

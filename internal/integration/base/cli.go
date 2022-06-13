@@ -114,7 +114,7 @@ func (cliSuite *CLISuite) buildCLICmd(args []string) *exec.Cmd {
 }
 
 // RunCLI runs talosctl binary with the options provided.
-func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout string) {
+func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout, stderr string) {
 	return run(&cliSuite.Suite, func() *exec.Cmd { return cliSuite.buildCLICmd(args) }, options...)
 }
 
