@@ -6,28 +6,22 @@
 package secrets_test
 
 import (
-	"context"
 	stdlibx509 "crypto/x509"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
@@ -36,41 +30,18 @@ import (
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
+func TestKubernetesSuite(t *testing.T) {
+	suite.Run(t, &KubernetesSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesController{}))
+			},
+		},
+	})
+}
+
 type KubernetesSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *KubernetesSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&secretsctrl.KubernetesController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *KubernetesSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *KubernetesSuite) TestReconcile() {
@@ -111,16 +82,16 @@ func (suite *KubernetesSuite) TestReconcile() {
 	rootSecrets.TypedSpec().CertSANs = []string{"example.com"}
 	rootSecrets.TypedSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
 	rootSecrets.TypedSpec().DNSDomain = "cluster.remote"
-	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	networkStatus := network.NewStatus(network.NamespaceName, network.StatusID)
 	networkStatus.TypedSpec().AddressReady = true
 	networkStatus.TypedSpec().HostnameReady = true
-	suite.Require().NoError(suite.state.Create(suite.ctx, networkStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), networkStatus))
 
 	certSANs := secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANKubernetesID)
 	certSANs.TypedSpec().Append(
@@ -137,128 +108,112 @@ func (suite *KubernetesSuite) TestReconcile() {
 		"10.4.3.2",
 		"172.16.0.1",
 	)
-	suite.Require().NoError(suite.state.Create(suite.ctx, certSANs))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), certSANs))
 
 	timeSync := timeresource.NewStatus()
 	*timeSync.TypedSpec() = timeresource.StatusSpec{
 		Synced: true,
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, timeSync))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), timeSync))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				certs, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(
-						secrets.NamespaceName,
-						secrets.KubernetesType,
-						secrets.KubernetesID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return retry.ExpectedError(err)
-					}
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		certs, err := ctest.Get[*secrets.Kubernetes](
+			suite,
+			resource.NewMetadata(
+				secrets.NamespaceName,
+				secrets.KubernetesType,
+				secrets.KubernetesID,
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return retry.ExpectedError(err)
+			}
 
-					return err
-				}
+			return err
+		}
 
-				kubernetesCerts := certs.(*secrets.Kubernetes).TypedSpec()
+		kubernetesCerts := certs.TypedSpec()
 
-				apiCert, err := kubernetesCerts.APIServer.GetCert()
-				suite.Require().NoError(err)
+		apiCert, err := kubernetesCerts.APIServer.GetCert()
+		suite.Require().NoError(err)
 
-				suite.Assert().Equal(
-					[]string{
-						"example.com",
-						"foo",
-						"foo.example.com",
-						"kubernetes",
-						"kubernetes.default",
-						"kubernetes.default.svc",
-						"kubernetes.default.svc.cluster.remote",
-						"localhost",
-						"some.url",
-					}, apiCert.DNSNames,
-				)
-				suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", apiCert.IPAddresses))
+		suite.Assert().Equal(
+			[]string{
+				"example.com",
+				"foo",
+				"foo.example.com",
+				"kubernetes",
+				"kubernetes.default",
+				"kubernetes.default.svc",
+				"kubernetes.default.svc.cluster.remote",
+				"localhost",
+				"some.url",
+			}, apiCert.DNSNames,
+		)
+		suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", apiCert.IPAddresses))
 
-				suite.Assert().Equal("kube-apiserver", apiCert.Subject.CommonName)
-				suite.Assert().Equal([]string{"kube-master"}, apiCert.Subject.Organization)
+		suite.Assert().Equal("kube-apiserver", apiCert.Subject.CommonName)
+		suite.Assert().Equal([]string{"kube-master"}, apiCert.Subject.Organization)
 
-				suite.Assert().Equal(
-					stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
-					apiCert.KeyUsage,
-				)
-				suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, apiCert.ExtKeyUsage)
+		suite.Assert().Equal(
+			stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+			apiCert.KeyUsage,
+		)
+		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, apiCert.ExtKeyUsage)
 
-				clientCert, err := kubernetesCerts.APIServerKubeletClient.GetCert()
-				suite.Require().NoError(err)
+		clientCert, err := kubernetesCerts.APIServerKubeletClient.GetCert()
+		suite.Require().NoError(err)
 
-				suite.Assert().Empty(clientCert.DNSNames)
-				suite.Assert().Empty(clientCert.IPAddresses)
+		suite.Assert().Empty(clientCert.DNSNames)
+		suite.Assert().Empty(clientCert.IPAddresses)
 
-				suite.Assert().Equal(
-					constants.KubernetesAPIServerKubeletClientCommonName,
-					clientCert.Subject.CommonName,
-				)
-				suite.Assert().Equal(
-					[]string{constants.KubernetesAdminCertOrganization},
-					clientCert.Subject.Organization,
-				)
+		suite.Assert().Equal(
+			constants.KubernetesAPIServerKubeletClientCommonName,
+			clientCert.Subject.CommonName,
+		)
+		suite.Assert().Equal(
+			[]string{constants.KubernetesAdminCertOrganization},
+			clientCert.Subject.Organization,
+		)
 
-				suite.Assert().Equal(
-					stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
-					clientCert.KeyUsage,
-				)
-				suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
+		suite.Assert().Equal(
+			stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+			clientCert.KeyUsage,
+		)
+		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
 
-				frontProxyCert, err := kubernetesCerts.FrontProxy.GetCert()
-				suite.Require().NoError(err)
+		frontProxyCert, err := kubernetesCerts.FrontProxy.GetCert()
+		suite.Require().NoError(err)
 
-				suite.Assert().Empty(frontProxyCert.DNSNames)
-				suite.Assert().Empty(frontProxyCert.IPAddresses)
+		suite.Assert().Empty(frontProxyCert.DNSNames)
+		suite.Assert().Empty(frontProxyCert.IPAddresses)
 
-				suite.Assert().Equal("front-proxy-client", frontProxyCert.Subject.CommonName)
-				suite.Assert().Empty(frontProxyCert.Subject.Organization)
+		suite.Assert().Equal("front-proxy-client", frontProxyCert.Subject.CommonName)
+		suite.Assert().Empty(frontProxyCert.Subject.Organization)
 
-				suite.Assert().Equal(
-					stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
-					frontProxyCert.KeyUsage,
-				)
-				suite.Assert().Equal(
-					[]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth},
-					frontProxyCert.ExtKeyUsage,
-				)
+		suite.Assert().Equal(
+			stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+			frontProxyCert.KeyUsage,
+		)
+		suite.Assert().Equal(
+			[]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth},
+			frontProxyCert.ExtKeyUsage,
+		)
 
-				for _, kubeconfig := range []string{
-					kubernetesCerts.ControllerManagerKubeconfig,
-					kubernetesCerts.SchedulerKubeconfig,
-					kubernetesCerts.LocalhostAdminKubeconfig,
-					kubernetesCerts.AdminKubeconfig,
-				} {
-					config, err := clientcmd.Load([]byte(kubeconfig))
-					suite.Require().NoError(err)
+		for _, kubeconfig := range []string{
+			kubernetesCerts.ControllerManagerKubeconfig,
+			kubernetesCerts.SchedulerKubeconfig,
+			kubernetesCerts.LocalhostAdminKubeconfig,
+			kubernetesCerts.AdminKubeconfig,
+		} {
+			config, err := clientcmd.Load([]byte(kubeconfig))
+			suite.Require().NoError(err)
 
-					suite.Assert().NoError(clientcmd.ConfirmUsable(*config, config.CurrentContext))
-				}
+			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, config.CurrentContext))
+		}
 
-				return nil
-			},
-		),
-	)
-}
-
-func (suite *KubernetesSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
-func TestKubernetesSuite(t *testing.T) {
-	suite.Run(t, new(KubernetesSuite))
+		return nil
+	})
 }

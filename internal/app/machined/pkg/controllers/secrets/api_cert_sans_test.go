@@ -6,65 +6,36 @@
 package secrets_test
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
+func TestAPICertSANsSuite(t *testing.T) {
+	suite.Run(t, &APICertSANsSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APICertSANsController{}))
+			},
+		},
+	})
+}
+
 type APICertSANsSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *APICertSANsSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&secretsctrl.APICertSANsController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *APICertSANsSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *APICertSANsSuite) TestReconcileControlPlane() {
@@ -72,12 +43,12 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"some.org"}
 	rootSecrets.TypedSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostnameStatus.TypedSpec().Hostname = "bar"
 	hostnameStatus.TypedSpec().Domainname = "some.org"
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostnameStatus))
 
 	nodeAddresses := network.NewNodeAddress(
 		network.NamespaceName,
@@ -87,84 +58,63 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 		netaddr.MustParseIPPrefix("10.2.1.3/24"),
 		netaddr.MustParseIPPrefix("172.16.0.1/32"),
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddresses))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeAddresses))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				certSANs, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(
-						secrets.NamespaceName,
-						secrets.CertSANType,
-						secrets.CertSANAPIID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return retry.ExpectedError(err)
-					}
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		certSANs, err := ctest.Get[*secrets.CertSAN](
+			suite,
+			resource.NewMetadata(
+				secrets.NamespaceName,
+				secrets.CertSANType,
+				secrets.CertSANAPIID,
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return retry.ExpectedError(err)
+			}
 
-					return err
-				}
+			return err
+		}
 
-				spec := certSANs.(*secrets.CertSAN).TypedSpec()
+		spec := certSANs.TypedSpec()
 
-				suite.Assert().Equal([]string{"bar", "bar.some.org", "some.org"}, spec.DNSNames)
-				suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
-				suite.Assert().Equal("bar.some.org", spec.FQDN)
-
-				return nil
-			},
-		),
-	)
-
-	_, err := suite.state.UpdateWithConflicts(suite.ctx, rootSecrets.Metadata(), func(r resource.Resource) error {
-		r.(*secrets.OSRoot).TypedSpec().CertSANDNSNames = []string{"other.org"}
+		suite.Assert().Equal([]string{"bar", "bar.some.org", "some.org"}, spec.DNSNames)
+		suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
+		suite.Assert().Equal("bar.some.org", spec.FQDN)
 
 		return nil
 	})
-	suite.Require().NoError(err)
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				certSANs, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(
-						secrets.NamespaceName,
-						secrets.CertSANType,
-						secrets.CertSANAPIID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					return err
-				}
+	ctest.UpdateWithConflicts(suite, rootSecrets, func(rootSecrets *secrets.OSRoot) error {
+		rootSecrets.TypedSpec().CertSANDNSNames = []string{"other.org"}
 
-				spec := certSANs.(*secrets.CertSAN).TypedSpec()
+		return nil
+	})
 
-				expectedDNSNames := []string{"bar", "bar.some.org", "other.org"}
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		certSANs, err := ctest.Get[*secrets.CertSAN](
+			suite,
+			resource.NewMetadata(
+				secrets.NamespaceName,
+				secrets.CertSANType,
+				secrets.CertSANAPIID,
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			return err
+		}
 
-				if !reflect.DeepEqual(expectedDNSNames, spec.DNSNames) {
-					return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
-				}
+		spec := certSANs.TypedSpec()
 
-				return nil
-			},
-		),
-	)
-}
+		expectedDNSNames := []string{"bar", "bar.some.org", "other.org"}
 
-func (suite *APICertSANsSuite) TearDownTest() {
-	suite.T().Log("tear down")
+		if !reflect.DeepEqual(expectedDNSNames, spec.DNSNames) {
+			return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
+		}
 
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-}
-
-func TestAPICertSANsSuite(t *testing.T) {
-	suite.Run(t, new(APICertSANsSuite))
+		return nil
+	})
 }
