@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"gopkg.in/yaml.v3"
 	"inet.af/netaddr"
@@ -158,7 +159,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, e
 }
 
 // Configuration implements the runtime.Platform interface.
-func (h *Hcloud) Configuration(ctx context.Context) ([]byte, error) {
+func (h *Hcloud) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", HCloudUserDataEndpoint)
 
 	return download.Download(ctx, HCloudUserDataEndpoint,

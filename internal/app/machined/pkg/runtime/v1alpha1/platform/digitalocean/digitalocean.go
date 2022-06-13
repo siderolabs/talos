@@ -9,6 +9,7 @@ import (
 	stderrors "errors"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -36,7 +37,7 @@ func (d *DigitalOcean) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (d *DigitalOcean) Configuration(ctx context.Context) ([]byte, error) {
+func (d *DigitalOcean) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", DigitalOceanUserDataEndpoint)
 
 	return download.Download(ctx, DigitalOceanUserDataEndpoint,

@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -51,7 +52,7 @@ func (a *AWS) Name() string {
 }
 
 // Configuration implements the runtime.Platform interface.
-func (a *AWS) Configuration(ctx context.Context) ([]byte, error) {
+func (a *AWS) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from AWS")
 
 	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)

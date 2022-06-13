@@ -10,6 +10,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
@@ -141,7 +142,7 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 }
 
 // Configuration implements the runtime.Platform interface.
-func (s *Scaleway) Configuration(ctx context.Context) ([]byte, error) {
+func (s *Scaleway) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from %q", ScalewayUserDataEndpoint)
 
 	machineConfigDl, err := download.Download(ctx, ScalewayUserDataEndpoint,

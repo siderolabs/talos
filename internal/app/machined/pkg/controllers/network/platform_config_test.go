@@ -616,7 +616,7 @@ func (mock *platformMock) Name() string {
 	return "mock"
 }
 
-func (mock *platformMock) Configuration(context.Context) ([]byte, error) {
+func (mock *platformMock) Configuration(context.Context, state.State) ([]byte, error) {
 	return nil, nil
 }
 

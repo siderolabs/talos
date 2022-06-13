@@ -42,6 +42,15 @@ See [documentation](https://www.talos.dev/v1.1/reference/configuration/#bridge) 
 * Linux: 5.15.49
 """
 
+    [notes.talos-config-kernel-param-variable-substitution]
+        title = "Variable substitution for URL query parameter in the talos.config kernel parameter"
+        description="""\
+        The kernel parameter talos.config can now substitute system information into placeholders inside its URL query values. This example shows all supported variables:
+
+```http://example.com/metadata?h=${hostname}&m=${mac}&s=${serial}&u=${uuid}```
+"""
+
+
 [make_deps]
 
     [make_deps.tools]

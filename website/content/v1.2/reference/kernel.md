@@ -83,6 +83,25 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 #### `talos.config`
 
   The URL at which the machine configuration data may be found.
+  
+  This parameter supports variable substitution inside URL query values for the following case-insensitive placeholders:
+  
+  * `${uuid}` the SMBIOS UUID
+  * `${serial}` the SMBIOS Serial Number
+  * `${mac}` the MAC address of the first network interface attaining link state `up`
+  * `${hostname}` the hostname of the machine
+  
+  The following example
+
+  `http://example.com/metadata?h=${hostname}&m=${mac}&s=${serial}&u=${uuid}`
+  
+  may translate to
+  
+  `http://example.com/metadata?h=myTestHostname&m=52%3A2f%3Afd%3Adf%3Afc%3Ac0&s=0OCZJ19N65&u=40dcbd19-3b10-444e-bfff-aaee44a51fda`
+  
+  For backwards compatibility we have a insert the UUID into the query parameter `uuid` if its value is empty. As in
+
+  `http://example.com/metadata?uuid=` => `http://example.com/metadata?uuid=40dcbd19-3b10-444e-bfff-aaee44a51fda`
 
 #### `talos.platform`
 
