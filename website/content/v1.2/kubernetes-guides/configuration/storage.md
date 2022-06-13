@@ -138,4 +138,6 @@ This system was designed long before containers caught on, and it is not well
 suited to the task, especially when coupled with a read-only host operating
 system.
 
-One day, we hope to work out a solution for facilitating iSCSI-based systems, but this is not yet available.
+OpenEBS Jiva works on Talos with the [iscsi-tools](https://github.com/orgs/siderolabs/packages?tab=packages&q=iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}) installed.
+
+Refer to [local storage]({{< relref "replicated-local-storage-with-openebs-jiva.md" >}}) installation guide for more information.

@@ -5,20 +5,20 @@ aliases:
   - ../../guides/storage
 ---
 
-If you want to use replicated storage leveraging disk space from local talos installed disk OpenEBS Jiva is the best option.
+If you want to use replicated storage leveraging disk space from a local disk with Talos Linux installed, OpenEBS Jiva is a great option.
 This requires installing the [iscsi-tools](https://github.com/orgs/siderolabs/packages?tab=packages&q=iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}).
 
-Since OpenEBS Jiva is a replicated storage it's recommended to have at least three nodes where sufficient local disk space is available.
-The documentation will follow installing OpenEBS Jiva via helm the offical helm chart.
-Since Talos is different from standard Operating Systems, the OpenEBS components would need a little tweaking after it's installed via helm.
-Refer to the OpenEBS Jiva [documentation](https://github.com/openebs/jiva-operator/blob/develop/docs/quickstart.md) if you need some further customization.
+Since OpenEBS Jiva is a replicated storage, it's recommended to have at least three nodes where sufficient local disk space is available.
+The documentation will follow installing OpenEBS Jiva via the offical Helm chart.
+Since Talos is different from standard Operating Systems, the OpenEBS components need a little tweaking after the Helm installation.
+Refer to the OpenEBS Jiva [documentation](https://github.com/openebs/jiva-operator/blob/develop/docs/quickstart.md) if you need further customization.
 
-> NB: Also note that the Talos nodes needs to be upgraded with `--preserve` set while running OpenEBS Jiva, otherwise you risk losing data.
-> Even though it's possible to recover data from other replicas if the node is wiped during an upgrade Talos doesn't reccommend it due to the extra operational knowlegde required to recover from such a scenario, so it's recommended to use `--preserve` to avoid data loss.
+> NB: Also note that the Talos nodes need to be upgraded with `--preserve` set while running OpenEBS Jiva, otherwise you risk losing data.
+> Even though it's possible to recover data from other replicas if the node is wiped during an upgrade, this can require extra operational knowledge to recover, so it's highly recommended to use `--preserve` to avoid data loss.
 
 ## Preparing the nodes
 
-Create a machine config patch of the as below as save as `patch.yaml`
+Create a machine config patch with the contents below and save as `patch.yaml`
 
 ```yaml
 - op: add
@@ -37,13 +37,13 @@ Create a machine config patch of the as below as save as `patch.yaml`
         - rw
 ```
 
-Apply the machine config to all the nodes as below:
+Apply the machine config to all the nodes using talosctl:
 
 ```bash
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> patch mc -p @patch.yaml
 ```
 
-To install the system extension the node needs to be upgraded.
+To install the system extension, the node needs to be upgraded.
 If there is no new release of Talos, the node can be upgraded to the same version as the existing Talos version.
 
 Run the following command on each nodes subsequently:
@@ -52,7 +52,7 @@ Run the following command on each nodes subsequently:
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
 ```
 
-Once the node has upgraded a booted successfully the extension status can be verfied by running the following command:
+Once the node has upgraded and booted successfully the extension status can be verfied by running the following command:
 
 ```bash
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> get extensions
@@ -96,30 +96,30 @@ helm repo update
 helm upgrade --install --create-namespace --namespace openebs --version 3.2.0 openebs-jiva openebs-jiva/jiva
 ```
 
-This will create a storage class named `openebs-jiva-csi-default` which cab be used for the workloads.
-The storage class named `openebs-hostpath` is used by jiva to create persistent volumes back by local storage and then used for replicated storage by the jiva controller.
+This will create a storage class named `openebs-jiva-csi-default` which can be used for workloads.
+The storage class named `openebs-hostpath` is used by jiva to create persistent volumes backed by local storage and then used for replicated storage by the jiva controller.
 
 ## Patching the jiva installation
 
-Since Jiva assumes `iscisd` to be running natively on the host and not as a Talos [extension service]({{< relref "../../advanced/extension-services.md" >}}) we need to modify the CSI node daemonset to enable it to find the PID of the `iscsid` service.
+Since Jiva assumes `iscisd` to be running natively on the host and not as a Talos [extension service]({{< relref "../../advanced/extension-services.md" >}}), we need to modify the CSI node daemonset to enable it to find the PID of the `iscsid` service.
 The default config map used by Jiva also needs to be modified so that it can execute `iscsiadm` commands inside the PID namespace of the `iscsid` service.
 
-Start by create a configmap definition named `config.yaml` as below:
+Start by creating a configmap definition named `config.yaml` as below:
 
 ```yaml
 apiVersion: v1
-data:
-  iscsiadm: |
-    #!/bin/sh
-    iscsid_pid=$(pgrep iscsid)
-
-    nsenter --mount="/proc/${iscsid_pid}/ns/mnt" --net="/proc/${iscsid_pid}/ns/net" -- /usr/local/sbin/iscsiadm "$@"
 kind: ConfigMap
 metadata:
   labels:
     app.kubernetes.io/managed-by: pulumi
   name: openebs-jiva-csi-iscsiadm
   namespace: openebs
+data:
+  iscsiadm: |
+    #!/bin/sh
+    iscsid_pid=$(pgrep iscsid)
+
+    nsenter --mount="/proc/${iscsid_pid}/ns/mnt" --net="/proc/${iscsid_pid}/ns/net" -- /usr/local/sbin/iscsiadm "$@"
 ```
 
 Replace the existing config map with the above config map by running the following command:
@@ -136,7 +136,7 @@ kubectl --namespace openebs patch daemonset openebs-jiva-csi-node --type=json --
 
 ## Testing a simple workload
 
-Now proceed on to testing the jiva installation, let's first create a PVC referencing the `openebs-jiva-csi-default` storage class:
+In order to test the Jiva installation, let's first create a PVC referencing the `openebs-jiva-csi-default` storage class:
 
 ```yaml
 kind: PersistentVolumeClaim
