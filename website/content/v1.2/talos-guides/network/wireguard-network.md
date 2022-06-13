@@ -92,10 +92,10 @@ network:
         privateKey: <privatekey file contents>
         listenPort: 51820
         peers:
-          allowedIPs:
-            - 192.168.88.0/24
-          endpoint: 209.202.254.14.8172
-          publicKey: ABCDEF...
+          - allowedIPs:
+              - 192.168.88.0/24
+            endpoint: 209.202.254.14:8172
+            publicKey: ABCDEF...
 ...
 ```
 
