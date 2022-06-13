@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/compute/metadata"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -26,7 +27,7 @@ func (g *GCP) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (g *GCP) Configuration(ctx context.Context) ([]byte, error) {
+func (g *GCP) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	userdata, err := metadata.InstanceAttributeValue("user-data")
 	if err != nil {
 		if _, ok := err.(metadata.NotDefinedError); ok {

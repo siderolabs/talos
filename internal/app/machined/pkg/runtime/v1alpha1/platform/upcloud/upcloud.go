@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -194,7 +195,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 }
 
 // Configuration implements the runtime.Platform interface.
-func (u *UpCloud) Configuration(ctx context.Context) ([]byte, error) {
+func (u *UpCloud) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", UpCloudUserDataEndpoint)
 
 	return download.Download(ctx, UpCloudUserDataEndpoint,

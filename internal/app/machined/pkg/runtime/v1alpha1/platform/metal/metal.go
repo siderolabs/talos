@@ -12,7 +12,10 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -23,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 const (
@@ -38,7 +42,7 @@ func (m *Metal) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
+func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, errors.ErrNoConfigSource
@@ -48,12 +52,14 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 		return nil, errors.ErrNoConfigSource
 	}
 
-	log.Printf("fetching machine config from: %q", *option)
-
-	downloadURL, err := PopulateURLParameters(*option, getSystemUUID)
+	downloadURL, err := PopulateURLParameters(ctx, *option, r, getSystemUUIDAndSerialNumber, getMACAddress, getHostname)
 	if err != nil {
+		log.Fatalf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
+
 		return nil, err
 	}
+
+	log.Printf("fetching machine config from: %q", downloadURL)
 
 	switch downloadURL {
 	case constants.MetalConfigISOLabel:
@@ -64,28 +70,91 @@ func (m *Metal) Configuration(ctx context.Context) ([]byte, error) {
 }
 
 // PopulateURLParameters fills in empty parameters in the download URL.
-func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, error)) (string, error) {
-	u, err := url.Parse(downloadURL)
+//nolint:gocyclo
+func PopulateURLParameters(ctx context.Context, downloadURL string, r state.State,
+	getSystemUUIDAndSerialNumberFunc func() (string, string, error),
+	getMACAddressFunc, getHostnameFunc func(ctx context.Context, r state.State) (string, error),
+) (string, error) {
+	populatedURL := downloadURL
+
+	const uuidKey = "uuid"
+
+	const serialNumberKey = "serial"
+
+	const hostnameKey = "hostname"
+
+	const macKey = "mac"
+
+	uid, serialNumber, getUUIDAndSerialNumberErr := getSystemUUIDAndSerialNumberFunc()
+
+	keyToVar := func(key string) string {
+		return `${` + key + `}`
+	}
+
+	genErr := func(varOfKey string, errToWrap error) error {
+		return fmt.Errorf("error while substituting %s: %w", varOfKey, errToWrap)
+	}
+
+	substituteSerialOrUUID := func(key, valToSubstitute string) error {
+		varOfKey := keyToVar(key)
+		if strings.Contains(populatedURL, varOfKey) {
+			if getUUIDAndSerialNumberErr != nil {
+				return genErr(varOfKey, getUUIDAndSerialNumberErr)
+			}
+
+			populatedURL = strings.ReplaceAll(populatedURL, varOfKey, valToSubstitute)
+		}
+
+		return nil
+	}
+
+	if err := substituteSerialOrUUID(uuidKey, uid); err != nil {
+		return "", err
+	}
+
+	if err := substituteSerialOrUUID(serialNumberKey, serialNumber); err != nil {
+		return "", err
+	}
+
+	substitute := func(key string, getFunc func(ctx context.Context, r state.State) (string, error)) error {
+		varOfKey := keyToVar(key)
+		if strings.Contains(populatedURL, varOfKey) {
+			val, err := getFunc(context.Background(), r)
+			if err != nil {
+				return genErr(varOfKey, err)
+			}
+
+			populatedURL = strings.ReplaceAll(populatedURL, varOfKey, val)
+		}
+
+		return nil
+	}
+
+	if err := substitute(macKey, getMACAddressFunc); err != nil {
+		return "", err
+	}
+
+	if err := substitute(hostnameKey, getHostnameFunc); err != nil {
+		return "", err
+	}
+
+	u, err := url.Parse(populatedURL)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse %s: %w", constants.KernelParamConfig, err)
+		return "", fmt.Errorf("failed to parse %s: %w", populatedURL, err)
 	}
 
 	values := u.Query()
 
+	// Although the UUID can be substituted via the ${uuid} variable, we keep the behavior that the empty uuid= parameter is filled in with the UUID. This is backwards compatible.
 	for key, qValues := range values {
-		switch key {
-		case "uuid":
+		if key == uuidKey {
+			if getUUIDAndSerialNumberErr != nil {
+				return "", fmt.Errorf("error while substituting UUID: %w", getUUIDAndSerialNumberErr)
+			}
 			// don't touch uuid field if it already has some value
 			if !(len(qValues) == 1 && len(strings.TrimSpace(qValues[0])) > 0) {
-				uid, err := getSystemUUID()
-				if err != nil {
-					return "", err
-				}
-
-				values.Set("uuid", uid)
+				values.Set(uuidKey, uid)
 			}
-		default:
-			log.Printf("unsupported query parameter: %q", key)
 		}
 	}
 
@@ -94,13 +163,80 @@ func PopulateURLParameters(downloadURL string, getSystemUUID func() (string, err
 	return u.String(), nil
 }
 
-func getSystemUUID() (string, error) {
-	s, err := smbios.New()
+func getResource(ctx context.Context, r state.State, namespace, typ string, checkAndGetFunc func(resource.Resource) string) (string, error) {
+	metadata := resource.NewMetadata(namespace, typ, "", resource.VersionUndefined)
+
+	list, err := r.List(ctx, metadata)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to list %s resources: %w", typ, err)
 	}
 
-	return s.SystemInformation.UUID, nil
+	for _, item := range list.Items {
+		val := checkAndGetFunc(item)
+		if val != "" {
+			return val, nil
+		}
+	}
+
+	watchCtx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	events := make(chan state.Event)
+
+	err = r.WatchKind(watchCtx, metadata, events)
+	if err != nil {
+		return "", fmt.Errorf("failed to watch %s resources: %w", typ, err)
+	}
+
+	for {
+		select {
+		case <-watchCtx.Done():
+			return "", fmt.Errorf("failed to determine %s: %w", typ, watchCtx.Err())
+		case event := <-events:
+			val := checkAndGetFunc(event.Resource)
+			if val != "" {
+				return val, nil
+			}
+		}
+	}
+}
+
+func getSystemUUIDAndSerialNumber() (string, string, error) {
+	s, err := smbios.New()
+	if err != nil {
+		return "", "", err
+	}
+
+	return s.SystemInformation.UUID, s.SystemInformation.SerialNumber, nil
+}
+
+func getAndCheckMACAddr(r resource.Resource) string {
+	if resource.IsTombstone(r) {
+		return ""
+	}
+
+	linkStatus := r.(*network.LinkStatus).TypedSpec() //nolint:forcetypeassert,errcheck
+	if linkStatus != nil && linkStatus.LinkState {
+		return linkStatus.HardwareAddr.String()
+	}
+
+	return ""
+}
+
+func getMACAddress(ctx context.Context, r state.State) (string, error) {
+	return getResource(ctx, r, network.NamespaceName, network.LinkStatusType, getAndCheckMACAddr)
+}
+
+func getAndCheckHostname(r resource.Resource) string {
+	if resource.IsTombstone(r) {
+		return ""
+	}
+
+	return r.(*network.HostnameSpec).TypedSpec().Hostname //nolint:forcetypeassert,errcheck
+}
+
+func getHostname(ctx context.Context, r state.State) (string, error) {
+	return getResource(ctx, r, network.NamespaceName, network.HostnameSpecType, getAndCheckHostname)
 }
 
 // Mode implements the platform.Platform interface.
@@ -108,10 +244,8 @@ func (m *Metal) Mode() runtime.Mode {
 	return runtime.ModeMetal
 }
 
-func readConfigFromISO() (b []byte, err error) {
-	var dev *probe.ProbedBlockDevice
-
-	dev, err = probe.GetDevWithFileSystemLabel(constants.MetalConfigISOLabel)
+func readConfigFromISO() ([]byte, error) {
+	dev, err := probe.GetDevWithFileSystemLabel(constants.MetalConfigISOLabel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)
 	}
@@ -125,14 +259,14 @@ func readConfigFromISO() (b []byte, err error) {
 	}
 
 	if sb == nil {
-		return nil, fmt.Errorf("failed to get filesystem type")
+		return nil, fmt.Errorf("error while substituting filesystem type")
 	}
 
 	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {
 		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}
 
-	b, err = ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
+	b, err := ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
 	if err != nil {
 		return nil, fmt.Errorf("read config: %s", err.Error())
 	}

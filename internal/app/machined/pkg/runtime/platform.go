@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -25,7 +26,7 @@ type Platform interface {
 	//
 	// On cloud-like platform it is user-data in metadata service.
 	// For metal platform that is either `talos.config=` URL or mounted ISO image.
-	Configuration(context.Context) ([]byte, error)
+	Configuration(context.Context, state.State) ([]byte, error)
 
 	// KernelArgs returns additional kernel arguments which should be injected for the kernel boot.
 	KernelArgs() procfs.Parameters

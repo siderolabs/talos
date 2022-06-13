@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
@@ -89,7 +90,7 @@ func (p *EquinixMetal) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (p *EquinixMetal) Configuration(ctx context.Context) ([]byte, error) {
+func (p *EquinixMetal) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", EquinixMetalUserDataEndpoint)
 
 	return download.Download(ctx, EquinixMetalUserDataEndpoint,
