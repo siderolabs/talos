@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -395,8 +396,14 @@ func assertNodes(expected []cluster.NodeInfo, actual []cluster.NodeInfo) error {
 	actualNodeInternalIPToNodeIPs := slices.ToMap(actual, toMapFunc)
 
 	if len(expectedNodeInternalIPToNodeIPs) != len(actualNodeInternalIPToNodeIPs) {
-		return fmt.Errorf("expected %v nodes, but got %v nodes",
-			len(expectedNodeInternalIPToNodeIPs), len(actualNodeInternalIPToNodeIPs))
+		expectedNodeInternalIPs := maps.Keys(expectedNodeInternalIPToNodeIPs)
+		sort.Strings(expectedNodeInternalIPs)
+
+		actualNodeInternalIPs := maps.Keys(actualNodeInternalIPToNodeIPs)
+		sort.Strings(actualNodeInternalIPs)
+
+		return fmt.Errorf("expected node internal IPs %q but got %q",
+			expectedNodeInternalIPs, actualNodeInternalIPs)
 	}
 
 	for internalIP, ips := range expectedNodeInternalIPToNodeIPs {
@@ -405,9 +412,11 @@ func assertNodes(expected []cluster.NodeInfo, actual []cluster.NodeInfo) error {
 			return fmt.Errorf("couldn't find expected node with internal IP: %v", internalIP)
 		}
 
+		sort.Strings(actualIPs)
+		sort.Strings(ips)
+
 		if !maps.Contains(slices.ToSet(ips), actualIPs) {
-			return fmt.Errorf("expected IPs for node does not match the actual IPs: expected: %q, actual: %q",
-				ips, actualIPs)
+			return fmt.Errorf("expected IPs %q for node but got %q", ips, actualIPs)
 		}
 	}
 

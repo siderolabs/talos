@@ -121,7 +121,8 @@ func EtcdControlPlaneNodesAssertion(ctx context.Context, cl ClusterInfo) error {
 
 	controlPlaneNodeIPs := mapIPsToStrings(flatMapNodeInfosToIPs(nodes))
 	if !maps.Contains(slices.ToSet(controlPlaneNodeIPs), memberIPs) {
-		return errors.New("mismatch between etcd member and control plane nodes")
+		return fmt.Errorf("etcd member ips %q are not subset of control plane node ips %q",
+			memberIPs, controlPlaneNodeIPs)
 	}
 
 	return nil
