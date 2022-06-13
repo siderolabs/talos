@@ -419,6 +419,8 @@ COPY --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kernel-amd64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
+RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
+RUN chmod +x /rootfs/sbin/poweroff
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -462,6 +464,8 @@ COPY --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kernel-arm64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
+RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
+RUN chmod +x /rootfs/sbin/poweroff
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
