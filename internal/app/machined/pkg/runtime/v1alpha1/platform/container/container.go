@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -28,7 +29,7 @@ func (c *Container) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (c *Container) Configuration(context.Context) ([]byte, error) {
+func (c *Container) Configuration(context.Context, state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: USERDATA environment variable")
 
 	s := os.Getenv("USERDATA")

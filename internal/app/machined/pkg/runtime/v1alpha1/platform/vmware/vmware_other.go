@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -25,7 +26,7 @@ func (v *VMware) Name() string {
 }
 
 // Configuration implements the platform.Platform interface.
-func (v *VMware) Configuration(context.Context) ([]byte, error) {
+func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 	return nil, fmt.Errorf("arch not supported")
 }
 

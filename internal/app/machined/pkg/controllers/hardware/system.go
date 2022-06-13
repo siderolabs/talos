@@ -44,6 +44,10 @@ func (ctrl *SystemInfoController) Outputs() []controller.Output {
 			Type: hardware.MemoryModuleType,
 			Kind: controller.OutputExclusive,
 		},
+		{
+			Type: hardware.SystemInformationType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
@@ -65,6 +69,15 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		ctrl.SMBIOS = s
+	}
+
+	const systemInfoID = "systeminformation"
+	if err := r.Modify(ctx, hardware.NewSystemInformation(systemInfoID), func(res resource.Resource) error {
+		hwadapter.SystemInformation(res.(*hardware.SystemInformation)).Update(&ctrl.SMBIOS.SystemInformation)
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating objects: %w", err)
 	}
 
 	for _, p := range ctrl.SMBIOS.ProcessorInformation {

@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
@@ -111,7 +112,7 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 
 // Configuration implements the platform.Platform interface.
 //nolint:gocyclo
-func (v *VMware) Configuration(context.Context) ([]byte, error) {
+func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 	var option *string
 	if option = procfs.ProcCmdline().Get(constants.KernelParamConfig).First(); option == nil {
 		return nil, fmt.Errorf("%s not found", constants.KernelParamConfig)

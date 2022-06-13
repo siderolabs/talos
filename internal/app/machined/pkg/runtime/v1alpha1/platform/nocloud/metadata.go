@@ -16,10 +16,10 @@ import (
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
-	"github.com/talos-systems/go-smbios/smbios"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
@@ -179,7 +179,7 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 
 //nolint:gocyclo
 func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, hostname string, err error) {
-	s, err := smbios.New()
+	s, err := hardware.GetSMBIOSInfo()
 	if err != nil {
 		return nil, nil, nil, "", err
 	}

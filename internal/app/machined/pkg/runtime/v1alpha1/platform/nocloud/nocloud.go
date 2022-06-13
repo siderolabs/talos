@@ -10,6 +10,7 @@ import (
 	stderrors "errors"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	yaml "gopkg.in/yaml.v3"
 
@@ -59,7 +60,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, hostna
 }
 
 // Configuration implements the runtime.Platform interface.
-func (n *Nocloud) Configuration(ctx context.Context) ([]byte, error) {
+func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	_, _, machineConfigDl, _, err := n.acquireConfig(ctx) //nolint:dogsled
 	if err != nil {
 		return nil, err

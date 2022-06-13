@@ -679,3 +679,11 @@ const (
 	//nolint:golint
 	SYSLOG_ACTION_READ_ALL = 3
 )
+
+// names of variable that can be substituted in the talos.config kernel parameter.
+const (
+	UUIDKey         = "uuid"
+	SerialNumberKey = "serial"
+	HostnameKey     = "hostname"
+	MacKey          = "mac"
+)

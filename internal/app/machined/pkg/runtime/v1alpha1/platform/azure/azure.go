@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 	"inet.af/netaddr"
@@ -159,7 +160,7 @@ func (a *Azure) ParseLoadBalancerIP(lbConfig LoadBalancerMetadata, exIP []netadd
 }
 
 // Configuration implements the platform.Platform interface.
-func (a *Azure) Configuration(ctx context.Context) ([]byte, error) {
+func (a *Azure) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	defer func() {
 		if err := linuxAgent(ctx); err != nil {
 			log.Printf("failed to update instance status, err: %s", err.Error())

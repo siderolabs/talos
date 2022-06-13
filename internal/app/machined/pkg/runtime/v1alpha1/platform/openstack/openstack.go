@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"inet.af/netaddr"
 
@@ -209,7 +210,7 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 }
 
 // Configuration implements the runtime.Platform interface.
-func (o *Openstack) Configuration(ctx context.Context) (machineConfig []byte, err error) {
+func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
 	_, _, machineConfig, err = o.configFromCD()
 	if err != nil {
 		_, _, machineConfig, err = o.configFromNetwork(ctx)

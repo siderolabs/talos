@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vultr/metadata"
 	"inet.af/netaddr"
@@ -121,7 +122,7 @@ func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.P
 }
 
 // Configuration implements the runtime.Platform interface.
-func (v *Vultr) Configuration(ctx context.Context) ([]byte, error) {
+func (v *Vultr) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", VultrUserDataEndpoint)
 
 	return download.Download(ctx, VultrUserDataEndpoint,
