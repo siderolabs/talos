@@ -60,5 +60,6 @@ func LayeredID(layer ConfigLayer, id string) string {
 const (
 	LinkKindVLAN      = "vlan"
 	LinkKindBond      = "bond"
+	LinkKindBridge    = "bridge"
 	LinkKindWireguard = "wireguard"
 )

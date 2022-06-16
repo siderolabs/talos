@@ -48,9 +48,10 @@ type LinkStatusSpec struct {
 	Port          nethelpers.Port   `yaml:"port"`
 	Duplex        nethelpers.Duplex `yaml:"duplex"`
 	// Following fields are only populated with respective Kind.
-	VLAN       VLANSpec       `yaml:"vlan,omitempty"`
-	BondMaster BondMasterSpec `yaml:"bondMaster,omitempty"`
-	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
+	VLAN         VLANSpec         `yaml:"vlan,omitempty"`
+	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty"`
+	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty"`
+	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty"`
 }
 
 // Physical checks if the link is physical ethernet.

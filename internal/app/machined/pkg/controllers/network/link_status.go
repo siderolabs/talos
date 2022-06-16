@@ -287,6 +287,10 @@ func (ctrl *LinkStatusController) reconcile(
 				if err = networkadapter.BondMasterSpec(&status.BondMaster).Decode(link.Attributes.Info.Data); err != nil {
 					logger.Warn("failure decoding bond attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
+			case network.LinkKindBridge:
+				if err = networkadapter.BridgeMasterSpec(&status.BridgeMaster).Decode(link.Attributes.Info.Data); err != nil {
+					logger.Warn("failure decoding bridge attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
 			case network.LinkKindWireguard:
 				if wgClient == nil {
 					return fmt.Errorf("wireguard client not available, but wireguard interface was discovered: %q", link.Attributes.Name)
