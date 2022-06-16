@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.0.0"
+previous = "v1.1.0"
 
 pre_release = true
 
@@ -14,6 +14,27 @@ preface = """\
 """
 
 [notes]
+
+    [notes.network-bridge]
+        title = "Network bridge support"
+        description = """\
+Talos now supports configuring Linux bridges. It can be configured in the machine config like the following:
+```yaml
+spec:
+  machine:
+    network:
+      interfaces:
+        - interface: br0
+          bridge:
+            stp:
+              enabled: true
+            interfaces:
+              - eth0
+              - eth1
+```
+
+See [documentation](https://www.talos.dev/v1.1/reference/configuration/#bridge) for more details.
+"""
 
     [notes.updates]
         title = "Component Updates"

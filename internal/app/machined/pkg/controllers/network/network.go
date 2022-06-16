@@ -116,3 +116,25 @@ func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 
 	return nil
 }
+
+// SetBridgeSlave sets the bridge slave spec.
+func SetBridgeSlave(link *network.LinkSpecSpec, bridge string) {
+	link.BridgeSlave = network.BridgeSlave{
+		MasterName: bridge,
+	}
+}
+
+// SetBridgeMaster sets the bridge master spec.
+//nolint:gocyclo
+func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) error {
+	link.Logical = true
+	link.Kind = network.LinkKindBridge
+	link.Type = nethelpers.LinkEther
+	link.BridgeMaster = network.BridgeMasterSpec{
+		STP: network.STPSpec{
+			Enabled: bridge.STP().Enabled(),
+		},
+	}
+
+	return nil
+}

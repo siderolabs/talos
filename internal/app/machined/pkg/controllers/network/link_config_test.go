@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -239,6 +240,31 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 							},
 						},
 						{
+							DeviceInterface: "eth4",
+							DeviceAddresses: []string{"192.168.0.42/24"},
+						},
+						{
+							DeviceInterface: "eth5",
+							DeviceAddresses: []string{"192.168.0.43/24"},
+						},
+						{
+							DeviceInterface: "br0",
+							DeviceBridge: &v1alpha1.Bridge{
+								BridgedInterfaces: []string{"eth4", "eth5"},
+								BridgeSTP: &v1alpha1.STP{
+									STPEnabled: pointer.To(false),
+								},
+							},
+						},
+						{
+							DeviceInterface: "br0",
+							DeviceBridge: &v1alpha1.Bridge{
+								BridgeSTP: &v1alpha1.STP{
+									STPEnabled: pointer.To(true),
+								},
+							},
+						},
+						{
 							DeviceInterface: "dummy0",
 							DeviceDummy:     true,
 						},
@@ -285,6 +311,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						"configuration/eth2",
 						"configuration/eth3",
 						"configuration/bond0",
+						"configuration/br0",
 						"configuration/dummy0",
 						"configuration/wireguard0",
 					}, func(r *network.LinkSpec) error {
@@ -326,6 +353,16 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 							suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
 							suite.Assert().Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
 							suite.Assert().True(r.TypedSpec().BondMaster.UseCarrier)
+						case "eth4", "eth5":
+							suite.Assert().True(r.TypedSpec().Up)
+							suite.Assert().False(r.TypedSpec().Logical)
+							suite.Assert().Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
+						case "br0":
+							suite.Assert().True(r.TypedSpec().Up)
+							suite.Assert().True(r.TypedSpec().Logical)
+							suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+							suite.Assert().Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+							suite.Assert().Equal(true, r.TypedSpec().BridgeMaster.STP.Enabled)
 						case "wireguard0":
 							suite.Assert().True(r.TypedSpec().Up)
 							suite.Assert().True(r.TypedSpec().Logical)

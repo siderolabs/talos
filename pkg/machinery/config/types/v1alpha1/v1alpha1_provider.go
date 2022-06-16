@@ -523,6 +523,15 @@ func (d *Device) Bond() config.Bond {
 	return d.DeviceBond
 }
 
+// Bridge implements the MachineNetwork interface.
+func (d *Device) Bridge() config.Bridge {
+	if d.DeviceBridge == nil {
+		return nil
+	}
+
+	return d.DeviceBridge
+}
+
 // Vlans implements the MachineNetwork interface.
 func (d *Device) Vlans() []config.Vlan {
 	return slices.Map(d.DeviceVlans, func(v *Vlan) config.Vlan { return v })
@@ -873,6 +882,29 @@ func (b *Bond) ADUserPortKey() uint16 {
 // PeerNotifyDelay implements the MachineNetwork interface.
 func (b *Bond) PeerNotifyDelay() uint32 {
 	return b.BondPeerNotifyDelay
+}
+
+// Enabled implements the config.STP interface.
+func (s *STP) Enabled() bool {
+	if s == nil || s.STPEnabled == nil {
+		return true
+	}
+
+	return *s.STPEnabled
+}
+
+// Interfaces implements the config.Bridge interface.
+func (b *Bridge) Interfaces() []string {
+	return b.BridgedInterfaces
+}
+
+// STP implements the config.Bridge interface.
+func (b *Bridge) STP() config.STP {
+	if b.BridgeSTP == nil {
+		return nil
+	}
+
+	return b.BridgeSTP
 }
 
 // Addresses implements the MachineNetwork interface.
