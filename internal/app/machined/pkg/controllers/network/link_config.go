@@ -169,6 +169,12 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 						configuredLinks[link] = struct{}{}
 					}
 				}
+
+				if device.Bridge() != nil {
+					for _, link := range device.Bridge().Interfaces() {
+						configuredLinks[link] = struct{}{}
+					}
+				}
 			}
 		}
 
@@ -264,26 +270,47 @@ func (ctrl *LinkConfigController) parseCmdline(logger *zap.Logger) ([]network.Li
 	return settings.NetworkLinkSpecs, settings.IgnoreInterfaces
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device) []network.LinkSpecSpec {
-	// scan for the bonds
+	// scan for the bonds or bridges
 	bondedLinks := map[string]ordered.Pair[string, int]{} // mapping physical interface -> bond interface
+	bridgedLinks := map[string]string{}                   // mapping physical interface -> bridge interface
 
 	for _, device := range devices {
 		if device.Ignore() {
 			continue
 		}
 
-		if device.Bond() == nil {
+		if device.Bond() == nil && device.Bridge() == nil {
 			continue
 		}
 
-		for idx, linkName := range device.Bond().Interfaces() {
-			if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
-				logger.Sugar().Warnf("link %q is included into more than two bonds", linkName)
-			}
+		if device.Bond() != nil {
+			for idx, linkName := range device.Bond().Interfaces() {
+				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
+					logger.Sugar().Warnf("link %q is included into more than two bonds", linkName)
+				}
 
-			bondedLinks[linkName] = ordered.MakePair(device.Interface(), idx)
+				if bridgeIface, exists := bridgedLinks[linkName]; exists && bridgeIface != device.Interface() {
+					logger.Sugar().Warnf("link %q is included into both a bond and a bridge", linkName)
+				}
+
+				bondedLinks[linkName] = ordered.MakePair(device.Interface(), idx)
+			}
+		}
+
+		if device.Bridge() != nil {
+			for _, linkName := range device.Bridge().Interfaces() {
+				if iface, exists := bridgedLinks[linkName]; exists && iface != device.Interface() {
+					logger.Sugar().Warnf("link %q is included into more than two bridges", linkName)
+				}
+
+				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {
+					logger.Sugar().Warnf("link %q is included into both a bond and a bridge", linkName)
+				}
+
+				bridgedLinks[linkName] = device.Interface()
+			}
 		}
 	}
 
@@ -309,6 +336,12 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		if device.Bond() != nil {
 			if err := SetBondMaster(linkMap[device.Interface()], device.Bond()); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
+			}
+		}
+
+		if device.Bridge() != nil {
+			if err := SetBridgeMaster(linkMap[device.Interface()], device.Bridge()); err != nil {
+				logger.Error("error parsing bridge config", zap.Error(err))
 			}
 		}
 
@@ -339,6 +372,18 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		}
 
 		SetBondSlave(linkMap[slaveName], bondData)
+	}
+
+	for slaveName, bridgeIface := range bridgedLinks {
+		if _, exists := linkMap[slaveName]; !exists {
+			linkMap[slaveName] = &network.LinkSpecSpec{
+				Name:        slaveName,
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
+		}
+
+		SetBridgeSlave(linkMap[slaveName], bridgeIface)
 	}
 
 	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })

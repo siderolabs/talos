@@ -616,6 +616,164 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 	)
 }
 
+//nolint:gocyclo
+func (suite *LinkSpecSuite) TestBridge() {
+	bridgeName := suite.uniqueDummyInterface()
+	bridge := network.NewLinkSpec(network.NamespaceName, bridgeName)
+	*bridge.TypedSpec() = network.LinkSpecSpec{
+		Name:    bridgeName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindBridge,
+		Up:      true,
+		Logical: true,
+		BridgeMaster: network.BridgeMasterSpec{
+			STP: network.STPSpec{
+				Enabled: false,
+			},
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dummy0Name := suite.uniqueDummyInterface()
+	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
+	*dummy0.TypedSpec() = network.LinkSpecSpec{
+		Name:    dummy0Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		BridgeSlave: network.BridgeSlave{
+			MasterName: bridgeName,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dummy1Name := suite.uniqueDummyInterface()
+	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
+	*dummy1.TypedSpec() = network.LinkSpecSpec{
+		Name:    dummy1Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		BridgeSlave: network.BridgeSlave{
+			MasterName: bridgeName,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{dummy0, dummy1, bridge} {
+		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{dummy0Name, dummy1Name, bridgeName}, func(r *network.LinkStatus) error {
+						switch r.Metadata().ID() {
+						case bridgeName:
+							suite.Assert().Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+
+							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown && r.TypedSpec().OperationalState != nethelpers.OperStateUp {
+								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
+							}
+						case dummy0Name, dummy1Name:
+							suite.Assert().Equal("dummy", r.TypedSpec().Kind)
+
+							if r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
+								return retry.ExpectedErrorf("link is not up: %s", r.TypedSpec().OperationalState)
+							}
+
+							if r.TypedSpec().MasterIndex == 0 {
+								return retry.ExpectedErrorf("masterIndex should be non-zero")
+							}
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// attempt to enable STP
+	_, err := suite.state.UpdateWithConflicts(
+		suite.ctx, bridge.Metadata(), func(r resource.Resource) error {
+			r.(*network.LinkSpec).TypedSpec().BridgeMaster.STP.Enabled = true
+
+			return nil
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{bridgeName}, func(r *network.LinkStatus) error {
+						if !r.TypedSpec().BridgeMaster.STP.Enabled {
+							return retry.ExpectedErrorf(
+								"stp is not enabled on bridge %s", r.Metadata().ID(),
+							)
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// unslave one of the interfaces
+	_, err = suite.state.UpdateWithConflicts(
+		suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
+			r.(*network.LinkSpec).TypedSpec().BridgeSlave.MasterName = ""
+
+			return nil
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{dummy0Name}, func(r *network.LinkStatus) error {
+						if r.TypedSpec().MasterIndex != 0 {
+							return retry.ExpectedErrorf("iface not unslaved yet")
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// teardown the links
+	for _, r := range []resource.Resource{dummy0, dummy1, bridge} {
+		for {
+			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			suite.Require().NoError(err)
+
+			if ready {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoInterface(bridgeName)
+			},
+		),
+	)
+}
+
 func (suite *LinkSpecSuite) TestWireguard() {
 	priv, err := wgtypes.GeneratePrivateKey()
 	suite.Require().NoError(err)

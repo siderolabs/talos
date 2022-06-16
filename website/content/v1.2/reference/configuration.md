@@ -179,6 +179,16 @@ network:
           #     mode: 802.3ad # A bond option.
           #     lacpRate: fast # A bond option.
 
+          # # Bridge specific options.
+          # bridge:
+          #     # The interfaces that make up the bond.
+          #     interfaces:
+          #         - eth0
+          #         - eth1
+          #     # A bridge option.
+          #     stp:
+          #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+
           # # Indicates if DHCP should be used to configure the interface.
           # dhcp: true
 
@@ -804,6 +814,16 @@ interfaces:
       #     mode: 802.3ad # A bond option.
       #     lacpRate: fast # A bond option.
 
+      # # Bridge specific options.
+      # bridge:
+      #     # The interfaces that make up the bond.
+      #     interfaces:
+      #         - eth0
+      #         - eth1
+      #     # A bridge option.
+      #     stp:
+      #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+
       # # Indicates if DHCP should be used to configure the interface.
       # dhcp: true
 
@@ -894,6 +914,16 @@ interfaces:
       #         - eth1
       #     mode: 802.3ad # A bond option.
       #     lacpRate: fast # A bond option.
+
+      # # Bridge specific options.
+      # bridge:
+      #     # The interfaces that make up the bond.
+      #     interfaces:
+      #         - eth0
+      #         - eth1
+      #     # A bridge option.
+      #     stp:
+      #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 
       # # Indicates if DHCP should be used to configure the interface.
       # dhcp: true
@@ -1861,6 +1891,16 @@ Appears in:
   #     mode: 802.3ad # A bond option.
   #     lacpRate: fast # A bond option.
 
+  # # Bridge specific options.
+  # bridge:
+  #     # The interfaces that make up the bond.
+  #     interfaces:
+  #         - eth0
+  #         - eth1
+  #     # A bridge option.
+  #     stp:
+  #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+
   # # Indicates if DHCP should be used to configure the interface.
   # dhcp: true
 
@@ -1934,6 +1974,16 @@ bond:
         - eth1
     mode: 802.3ad # A bond option.
     lacpRate: fast # A bond option.
+{{< /highlight >}}</details> | |
+|`bridge` |<a href="#bridge">Bridge</a> |Bridge specific options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+bridge:
+    # The interfaces that make up the bond.
+    interfaces:
+        - eth0
+        - eth1
+    # A bridge option.
+    stp:
+        enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
 {{< /highlight >}}</details> | |
 |`vlans` |[]<a href="#vlan">Vlan</a> |VLAN specific options.  | |
 |`mtu` |int |<details><summary>The interface's MTU.</summary>If used in combination with DHCP, this will override any MTU settings returned from DHCP server.</details>  | |
@@ -2171,6 +2221,51 @@ lacpRate: fast # A bond option.
 |`adActorSysPrio` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
 |`adUserPortKey` |uint16 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
 |`peerNotifyDelay` |uint32 |<details><summary>A bond option.</summary>Please see the official kernel documentation.</details>  | |
+
+
+
+---
+## STP
+STP contains the various options for configuring the STP properties of a bridge interface.
+
+Appears in:
+
+- <code><a href="#bridge">Bridge</a>.stp</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Whether Spanning Tree Protocol (STP) is enabled.  | |
+
+
+
+---
+## Bridge
+Bridge contains the various options for configuring a bridge interface.
+
+Appears in:
+
+- <code><a href="#device">Device</a>.bridge</code>
+
+
+
+{{< highlight yaml >}}
+# The interfaces that make up the bond.
+interfaces:
+    - eth0
+    - eth1
+# A bridge option.
+stp:
+    enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`interfaces` |[]string |The interfaces that make up the bond.  | |
+|`stp` |<a href="#stp">STP</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
 
 
 

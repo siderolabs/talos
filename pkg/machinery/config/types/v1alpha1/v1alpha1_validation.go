@@ -142,15 +142,38 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 
 	if c.MachineConfig.MachineNetwork != nil {
 		bondedInterfaces := map[string]string{}
+		bridgedInterfaces := map[string]string{}
 
 		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+			if device.Bond() != nil && device.Bridge() != nil {
+				result = multierror.Append(result, fmt.Errorf("interface has both bridge and bond sections set %q: %w", device.Interface(), ErrMutuallyExclusive))
+			}
+
 			if device.Bond() != nil {
 				for _, iface := range device.Bond().Interfaces() {
 					if otherIface, exists := bondedInterfaces[iface]; exists && otherIface != device.Interface() {
 						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of two bonds: %q and %q", iface, otherIface, device.Interface()))
 					}
 
+					if bridgeIface, exists := bridgedInterfaces[iface]; exists {
+						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of an interface and a bond: %q and %q", iface, bridgeIface, device.Interface()))
+					}
+
 					bondedInterfaces[iface] = device.Interface()
+				}
+			}
+
+			if device.Bridge() != nil {
+				for _, iface := range device.Bridge().Interfaces() {
+					if otherIface, exists := bridgedInterfaces[iface]; exists && otherIface != device.Interface() {
+						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of two bridges: %q and %q", iface, otherIface, device.Interface()))
+					}
+
+					if bondIface, exists := bondedInterfaces[iface]; exists {
+						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of an interface and a bond: %q and %q", iface, bondIface, device.Interface()))
+					}
+
+					bridgedInterfaces[iface] = device.Interface()
 				}
 			}
 		}
@@ -403,7 +426,8 @@ func (c ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
-func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, checks ...NetworkDeviceCheck) ([]string, error) {
+func ValidateNetworkDevices(d *Device, pairedInterfaces map[string]string, checks ...NetworkDeviceCheck) ([]string, error) {
+	// todo utku
 	var result *multierror.Error
 
 	if d == nil {
@@ -417,7 +441,7 @@ func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, check
 	var warnings []string
 
 	for _, check := range checks {
-		warn, err := check(d, bondedInterfaces)
+		warn, err := check(d, pairedInterfaces)
 		warnings = append(warnings, warn...)
 		result = multierror.Append(result, err)
 	}
@@ -427,7 +451,7 @@ func ValidateNetworkDevices(d *Device, bondedInterfaces map[string]string, check
 
 // CheckDeviceInterface ensures that the interface has been specified.
 //nolint:gocyclo
-func CheckDeviceInterface(d *Device, bondedInterfaces map[string]string) ([]string, error) {
+func CheckDeviceInterface(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
@@ -698,7 +722,7 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]str
 // CheckDeviceRoutes ensures that the specified routes are valid.
 //
 //nolint:gocyclo
-func CheckDeviceRoutes(d *Device, bondedInterfaces map[string]string) ([]string, error) {
+func CheckDeviceRoutes(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
