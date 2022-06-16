@@ -156,6 +156,7 @@ type Device interface {
 	Addresses() []string
 	Routes() []Route
 	Bond() Bond
+	Bridge() Bridge
 	Vlans() []Vlan
 	MTU() int
 	DHCP() bool
@@ -238,6 +239,12 @@ type Bond interface {
 	ADActorSysPrio() uint16
 	ADUserPortKey() uint16
 	PeerNotifyDelay() uint32
+}
+
+// Bridge contains the options for configuring a bridged interface.
+type Bridge interface {
+	Interfaces() []string
+	STPEnabled() bool
 }
 
 // Vlan represents vlan settings for a device.

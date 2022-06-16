@@ -44,10 +44,14 @@ type LinkSpecSpec struct {
 	// MasterName indicates master link for enslaved bonded interfaces.
 	BondSlave BondSlave `yaml:",omitempty,inline"`
 
-	// These structures are present depending on "Kind" for Logical intefaces.
-	VLAN       VLANSpec       `yaml:"vlan,omitempty"`
-	BondMaster BondMasterSpec `yaml:"bondMaster,omitempty"`
-	Wireguard  WireguardSpec  `yaml:"wireguard,omitempty"`
+	// BridgeSlave indicates master link for bridged interfaces.
+	BridgeSlave BridgeSlave `yaml:"bridgeSlave,omitempty"`
+
+	// These structures are present depending on "Kind" for Logical interfaces.
+	VLAN         VLANSpec         `yaml:"vlan,omitempty"`
+	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty"`
+	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty"`
+	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty"`
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer"`
@@ -60,6 +64,12 @@ type BondSlave struct {
 
 	// SlaveIndex indicates a slave's position in bond.
 	SlaveIndex int `yaml:"slaveIndex,omitempty"`
+}
+
+// BridgeSlave contains a bond's master name and slave index.
+type BridgeSlave struct {
+	// MasterName indicates master link for enslaved bridged interfaces.
+	MasterName string `yaml:"masterName,omitempty"`
 }
 
 // Merge with other, overwriting fields from other if set.
@@ -76,6 +86,8 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.BondSlave, other.BondSlave)
 	updateIfNotZero(&spec.VLAN, other.VLAN)
 	updateIfNotZero(&spec.BondMaster, other.BondMaster)
+	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
+	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
 
 	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
 	// Thus, we handle each Wireguard configuration value discretely.

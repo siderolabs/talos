@@ -50,6 +50,11 @@ type BondMasterSpec struct {
 	PeerNotifyDelay uint32                        `yaml:"peerNotifyDelay,omitempty"`
 }
 
+// BridgeMasterSpec describes bridge settings if Kind == "bridge".
+type BridgeMasterSpec struct {
+	STPEnabled bool `yaml:"stpEnabled,omitempty"`
+}
+
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
 type WireguardSpec struct {
 	// PrivateKey is used to configure the link, present only in the LinkSpec.
