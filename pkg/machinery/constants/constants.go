@@ -257,7 +257,7 @@ const (
 	KubeletShutdownGracePeriodCriticalPods = 10 * time.Second
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.24.1"
+	DefaultKubernetesVersion = "1.24.2"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
