@@ -12,8 +12,11 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
 // HealthSuite verifies health command.
@@ -79,6 +82,13 @@ func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
 //
 //nolint:gocyclo
 func (suite *HealthSuite) TestClientSideWithDiscovery() {
+	discoveryEnabled, err := suite.isDiscoveryEnabled()
+	suite.Require().NoError(err)
+
+	if !discoveryEnabled {
+		suite.T().Skip()
+	}
+
 	suite.testClientSide()
 }
 
@@ -106,6 +116,22 @@ func (suite *HealthSuite) testClientSide(extraArgs ...string) {
 		base.StdoutEmpty(),
 		base.StderrShouldMatch(regexp.MustCompile(`waiting for all k8s nodes to report ready`)),
 	)
+}
+
+func (suite *HealthSuite) isDiscoveryEnabled() (bool, error) {
+	temp := struct {
+		Spec cluster.ConfigSpec `yaml:"spec"`
+	}{}
+
+	randomControlPlaneNodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	stdout, _ := suite.RunCLI([]string{"--nodes", randomControlPlaneNodeInternalIP, "get", "discoveryconfigs", "-oyaml"})
+
+	err := yaml.Unmarshal([]byte(stdout), &temp)
+	if err != nil {
+		return false, err
+	}
+
+	return temp.Spec.DiscoveryEnabled, nil
 }
 
 func init() {
