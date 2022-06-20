@@ -113,6 +113,33 @@ func Contains[K comparable](m map[K]struct{}, slc []K) bool {
 	return true
 }
 
+// Intersect returns a list of keys contained in both maps.
+func Intersect[K comparable](maps ...map[K]struct{}) []K {
+	var intersection []K
+
+	if len(maps) == 0 {
+		return intersection
+	}
+
+	for k := range maps[0] {
+		containedInAll := true
+
+		for _, m := range maps[1:] {
+			if _, ok := m[k]; !ok {
+				containedInAll = false
+
+				break
+			}
+		}
+
+		if containedInAll {
+			intersection = append(intersection, k)
+		}
+	}
+
+	return intersection
+}
+
 // Filter returns a map containing all the elements of m that satisfy fn.
 func Filter[M ~map[K]V, K comparable, V any](m M, fn func(K, V) bool) M {
 	// NOTE(DmitriyMV): We use type parameter M here to return exactly the same tyoe as the input map.

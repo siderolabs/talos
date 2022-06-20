@@ -316,3 +316,107 @@ func TestValuesFunc(t *testing.T) {
 		})
 	}
 }
+
+func TestIntersection(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		maps []map[int]struct{}
+	}
+
+	tests := map[string]struct {
+		args args
+		want []int
+	}{
+		"nil": {
+			args: args{
+				maps: nil,
+			},
+			want: nil,
+		},
+		"empty": {
+			args: args{
+				maps: []map[int]struct{}{
+					{},
+				},
+			},
+			want: nil,
+		},
+		"single": {
+			args: args{
+				maps: []map[int]struct{}{
+					{
+						1: {},
+						2: {},
+					},
+				},
+			},
+			want: []int{1, 2},
+		},
+		"first empty": {
+			args: args{
+				maps: []map[int]struct{}{
+					{},
+					{
+						1: {},
+						2: {},
+					},
+				},
+			},
+			want: nil,
+		},
+		"multiple": {
+			args: args{
+				maps: []map[int]struct{}{
+					{
+						1: {},
+						2: {},
+						4: {},
+					},
+					{
+						3: {},
+						2: {},
+						4: {},
+					},
+					{
+						2: {},
+						4: {},
+					},
+				},
+			},
+			want: []int{2, 4},
+		},
+		"empty intersection": {
+			args: args{
+				maps: []map[int]struct{}{
+					{
+						4: {},
+						5: {},
+						6: {},
+					},
+					{
+						5: {},
+						6: {},
+					},
+					{
+						1: {},
+						2: {},
+						3: {},
+					},
+				},
+			},
+			want: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			got := maps.Intersect(tt.args.maps...)
+			sort.Ints(got)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

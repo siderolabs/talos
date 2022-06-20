@@ -13,11 +13,28 @@ import (
 )
 
 type infoWrapper struct {
-	masterNodes []string
-	workerNodes []string
-
 	nodeInfos       []cluster.NodeInfo
 	nodeInfosByType map[machine.Type][]cluster.NodeInfo
+}
+
+func newNodeInfo(masterNodes, workerNodes []string) (*infoWrapper, error) {
+	controlPlaneNodeInfos, err := cluster.IPsToNodeInfos(masterNodes)
+	if err != nil {
+		return nil, err
+	}
+
+	workerNodeInfos, err := cluster.IPsToNodeInfos(workerNodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &infoWrapper{
+		nodeInfos: append(append([]cluster.NodeInfo(nil), controlPlaneNodeInfos...), workerNodeInfos...),
+		nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
+			machine.TypeControlPlane: controlPlaneNodeInfos,
+			machine.TypeWorker:       workerNodeInfos,
+		},
+	}, nil
 }
 
 func (wrapper *infoWrapper) Nodes() []cluster.NodeInfo {

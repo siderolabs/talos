@@ -7,8 +7,10 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/netip"
+	"sort"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -16,6 +18,8 @@ import (
 	k8s "github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // ClientProvider builds Talos client by endpoint.
@@ -89,4 +93,40 @@ func IPToNodeInfo(ip string) (*NodeInfo, error) {
 		InternalIP: parsed,
 		IPs:        []netip.Addr{parsed},
 	}, nil
+}
+
+// NodesMatch asserts that the provided expected set of nodes match the actual set of nodes.
+//
+// Each expectedNode IPs should have a non-empty intersection with actualNode IPs.
+func NodesMatch(expected, actual []NodeInfo) error {
+	actualNodes := slices.ToMap(actual, func(n NodeInfo) (*NodeInfo, struct{}) { return &n, struct{}{} })
+
+	for _, expectedNodeInfo := range expected {
+		found := false
+
+		for actualNodeInfo := range actualNodes {
+			// expectedNodeInfo.IPs intersection with actualNodeInfo.IPs is not empty
+			if len(maps.Intersect(slices.ToSet(actualNodeInfo.IPs), slices.ToSet(expectedNodeInfo.IPs))) > 0 {
+				delete(actualNodes, actualNodeInfo)
+
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("can't find expected node with IPs %q", expectedNodeInfo.IPs)
+		}
+	}
+
+	if len(actualNodes) > 0 {
+		unexpectedIPs := slices.FlatMap(maps.Keys(actualNodes), func(n *NodeInfo) []netip.Addr { return n.IPs })
+
+		sort.Slice(unexpectedIPs, func(i, j int) bool { return unexpectedIPs[i].Less(unexpectedIPs[j]) })
+
+		return fmt.Errorf("unexpected nodes with IPs %q", unexpectedIPs)
+	}
+
+	return nil
 }

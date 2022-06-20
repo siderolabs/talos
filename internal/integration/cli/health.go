@@ -8,6 +8,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -33,33 +34,13 @@ func (suite *HealthSuite) SuiteName() string {
 //
 //nolint:gocyclo
 func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
-	bootstrapAPIIsUsed := true
-
-	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeInit {
-			bootstrapAPIIsUsed = false
-		}
-	}
+	info := suite.DiscoverNodes(context.TODO())
 
 	var args []string
 
-	if bootstrapAPIIsUsed {
-		for _, node := range suite.Cluster.Info().Nodes {
-			switch node.Type {
-			case machine.TypeControlPlane:
-				args = append(args, "--control-plane-nodes", node.IPs[0].String())
-			case machine.TypeWorker:
-				args = append(args, "--worker-nodes", node.IPs[0].String())
-				// todo: add more
-			case machine.TypeInit, machine.TypeUnknown:
-				fallthrough
-			default:
-				panic(fmt.Sprintf("unexpected machine type %v", node.Type))
-			}
-		}
-	} else {
-		for _, node := range suite.Cluster.Info().Nodes {
-			switch node.Type {
+	for _, machineType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+		for _, node := range info.NodesByType(machineType) {
+			switch machineType {
 			case machine.TypeInit:
 				args = append(args, "--init-node", node.IPs[0].String())
 			case machine.TypeControlPlane:
@@ -67,9 +48,9 @@ func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
 			case machine.TypeWorker:
 				args = append(args, "--worker-nodes", node.IPs[0].String())
 			case machine.TypeUnknown:
-				fallthrough
+				// skip it
 			default:
-				panic(fmt.Sprintf("unexpected machine type %v", node.Type))
+				panic(fmt.Sprintf("unexpected machine type: %v", machineType))
 			}
 		}
 	}
@@ -102,10 +83,6 @@ func (suite *HealthSuite) TestServerSide() {
 }
 
 func (suite *HealthSuite) testClientSide(extraArgs ...string) {
-	if suite.Cluster == nil {
-		suite.T().Skip("Cluster is not available, skipping test")
-	}
-
 	args := append([]string{"--server=false"}, extraArgs...)
 
 	if suite.K8sEndpoint != "" {

@@ -95,10 +95,13 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=!%s", constants.LabelNodeRoleMaster))
 	cliSuite.Require().NoError(err)
 
-	return &infoWrapper{
-		masterNodes: strings.Fields(strings.TrimSpace(masterNodes)),
-		workerNodes: strings.Fields(strings.TrimSpace(workerNodes)),
-	}
+	nodeInfo, err := newNodeInfo(
+		strings.Fields(strings.TrimSpace(masterNodes)),
+		strings.Fields(strings.TrimSpace(workerNodes)),
+	)
+	cliSuite.Require().NoError(err)
+
+	return nodeInfo
 }
 
 // buildCLICmd builds exec.Cmd from TalosSuite and args.

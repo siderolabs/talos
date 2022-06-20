@@ -95,9 +95,6 @@ func (hr *healthReporter) Update(condition conditions.Condition) {
 }
 
 type clusterState struct {
-	controlPlaneNodes []string
-	workerNodes       []string
-
 	nodeInfos       []cluster.NodeInfo
 	nodeInfosByType map[machine.Type][]cluster.NodeInfo
 }
@@ -111,7 +108,13 @@ func (cl *clusterState) NodesByType(t machine.Type) []cluster.NodeInfo {
 }
 
 func (cl *clusterState) String() string {
-	return fmt.Sprintf("control plane: %q, worker: %q", cl.controlPlaneNodes, cl.workerNodes)
+	return fmt.Sprintf("control plane: %q, worker: %q",
+		slices.Map(cl.nodeInfosByType[machine.TypeControlPlane], func(info cluster.NodeInfo) string {
+			return info.InternalIP.String()
+		}),
+		slices.Map(cl.nodeInfosByType[machine.TypeWorker], func(info cluster.NodeInfo) string {
+			return info.InternalIP.String()
+		}))
 }
 
 //nolint:gocyclo,cyclop
@@ -136,9 +139,7 @@ func buildClusterInfo(ctx context.Context,
 		}
 
 		return &clusterState{
-			controlPlaneNodes: controlPlaneNodes,
-			workerNodes:       workerNodes,
-			nodeInfos:         append(controlPlaneNodeInfos, workerNodeInfos...),
+			nodeInfos: append(append([]cluster.NodeInfo(nil), controlPlaneNodeInfos...), workerNodeInfos...),
 			nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
 				machine.TypeControlPlane: controlPlaneNodeInfos,
 				machine.TypeWorker:       workerNodeInfos,

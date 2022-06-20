@@ -32,7 +32,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -461,14 +460,9 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	p, err := platform.CurrentPlatform()
-	if err != nil {
-		return err
-	}
-
 	var upgraded bool
 
-	if p.Mode() != runtime.ModeContainer {
+	if r.State().Platform().Mode() != runtime.ModeContainer {
 		var meta *bootloader.Meta
 
 		if meta, err = bootloader.NewMeta(); err != nil {
