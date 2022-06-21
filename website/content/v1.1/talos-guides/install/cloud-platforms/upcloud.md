@@ -19,7 +19,7 @@ The best way to create an image for UpCloud, is to build one using
 Using the general ISO is also possible, but the UpCloud image has some UpCloud
 specific features implemented, such as the fetching of metadata and user data to configure the nodes.
 
-To create an this, you need a few things locally installed:
+To create the cluster, you need a few things locally installed:
 
 1. [UpCloud CLI](https://github.com/UpCloudLtd/upcloud-cli)
 2. [Hashicorp Packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli)
@@ -206,7 +206,7 @@ We only add one node IP, as that is the entry into our cluster against which our
 All requests to other nodes are proxied through the endpoint, and therefore not
 all nodes need to be manually added to the config.
 You don't want to run your commands against all nodes, as this can destroy your
-cluster if you are not careful [further documentation](/v1.1/introduction/getting-started/#configure-your-talosctl-client).
+cluster if you are not careful [(further documentation)](https://www.talos.dev/v1.0/introduction/getting-started/#configure-your-talosctl-client).
 
 Set the `endpoints` and `nodes`:
 
@@ -226,7 +226,7 @@ talosctl --talosconfig talosconfig bootstrap
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig talosconfig kubeconfig .
+talosctl --talosconfig talosconfig kubeconfig
 ```
 
 It will take a few minutes before Kubernetes has been fully bootstrapped, and is accessible.
