@@ -168,7 +168,7 @@ Run the following to create three total control plane nodes:
 
 ```bash
 for ID in $(seq 3); do
-    upctl server create \                                                              INT  5%  3.36G 21:04:16
+    upctl server create \
       --zone us-nyc1 \
       --title talos-us-nyc1-master-$ID \
       --hostname talos-us-nyc1-master-$ID \
@@ -189,7 +189,7 @@ Note the IP address of the first control plane node, as we will need it later.
 Run the following to create a worker node:
 
 ```bash
-upctl server create \                                                              INT  5%  3.36G 21:04:16
+upctl server create \
   --zone us-nyc1 \
   --title talos-us-nyc1-worker-1 \
   --hostname talos-us-nyc1-worker-1 \
