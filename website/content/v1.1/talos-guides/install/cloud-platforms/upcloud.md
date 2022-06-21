@@ -1,7 +1,7 @@
 ---
 title: "UpCloud"
 description: "Creating a cluster via the CLI (upctl) on UpCloud.com."
-aliases: 
+aliases:
   - ../../../cloud-platforms/upcloud
 ---
 
@@ -13,19 +13,20 @@ If you need more information on UpCloud specifics, please see the [official UpCl
 
 ### Create the Image
 
-The best way to create an image for UpCloud, is to build one using 
-[Hashicorp packer](https://www.packer.io/docs/builders/hetzner-cloud), with the 
+The best way to create an image for UpCloud, is to build one using
+[Hashicorp packer](https://www.packer.io/docs/builders/hetzner-cloud), with the
 `upcloud-amd64.raw.xz` image found on the [Talos Releases](https://github.com/siderolabs/talos/releases).
-Using the general ISO is also possible, but the UpCloud image has some UpCloud 
+Using the general ISO is also possible, but the UpCloud image has some UpCloud
 specific features implemented, such as the fetching of metadata and user data to configure the nodes.
 
 To create an this, you need a few things locally installed:
+
 1. [UpCloud CLI](https://github.com/UpCloudLtd/upcloud-cli)
 2. [Hashicorp Packer](https://learn.hashicorp.com/tutorials/packer/get-started-install-cli)
 
 > NOTE: Make sure your account allows API connections. To do so, log into
 > [UpCloud control panel](https://hub.upcloud.com/login) and go to **People**
-> -> **Account** -> **Permissions** -> **Allow API connections** checkbox. It is recommended 
+> -> **Account** -> **Permissions** -> **Allow API connections** checkbox. It is recommended
 > to create a separate subaccount for your API access and _only_ set the API permission.
 
 To use the UpCloud CLI, you need to create a config in `$HOME/.config/upctl.yaml`
@@ -35,7 +36,7 @@ username: your_upcloud_username
 password: your_upcloud_password
 ```
 
-To use the UpCloud packer plugin, you need to also export these credentials your 
+To use the UpCloud packer plugin, you need to also export these credentials your
 environment variables, by e.g. putting the following in your `.bashrc` or `.zshrc`
 
 ```
@@ -119,22 +120,22 @@ After doing this, you can find the custom image in the console interface under s
 
 ### Create an Endpoint
 
-To communicate with the Talos cluster you will need a single endpoint that is used 
-to access the cluster. This can either be a loadbalancer that will sit in front of 
-all your control plane nodes, a DNS name with one or more A or AAAA records pointing 
+To communicate with the Talos cluster you will need a single endpoint that is used
+to access the cluster. This can either be a loadbalancer that will sit in front of
+all your control plane nodes, a DNS name with one or more A or AAAA records pointing
 to the control plane nodes, or directly the IP of a control plane node.
 
-Which option is best for you will depend on your needs. Endpoint selection has 
+Which option is best for you will depend on your needs. Endpoint selection has
 been further documented [here](/v1.1/introduction/getting-started/#decide-the-kubernetes-endpoint).
 
-After you decide on which endpoint to use, note down the domain name or IP, as 
+After you decide on which endpoint to use, note down the domain name or IP, as
 we will need it in the next step.
 
 ### Create the Machine Configuration Files
 
 #### Generating Base Configurations
 
-Using the DNS name of the endpoint created earlier, generate the base 
+Using the DNS name of the endpoint created earlier, generate the base
 configuration files for the Talos machines:
 
 ```bash
@@ -147,7 +148,7 @@ created talosconfig
 At this point, you can modify the generated configs to your liking.
 Depending on the Kubernetes version you want to run, you might need to select a different Talos version, as not all versions are compatible. You can find the support matrix [here](/v1.1/introduction/support-matrix/).
 
-Optionally, you can specify `--config-patch` with RFC6902 jsonpatch or yamlpatch 
+Optionally, you can specify `--config-patch` with RFC6902 jsonpatch or yamlpatch
 which will be applied during the config generation.
 
 #### Validate the Configuration Files
@@ -178,7 +179,7 @@ for ID in $(seq 3); do
 done
 ```
 
-> Note: modify the zone and OS depending on your preferences. 
+> Note: modify the zone and OS depending on your preferences.
 > The OS should match the template name generated with packer in the previous step.
 
 Note the IP address of the first control plane node, as we will need it later.
@@ -201,10 +202,10 @@ upctl server create \                                                           
 ### Bootstrap Etcd
 
 To configure `talosctl` we will need the first control plane node's IP, as noted earlier.
-We only add one node IP, as that is the entry into our cluster against which our commands will be run. 
-All requests to other nodes are proxied through the endpoint, and therefore not 
+We only add one node IP, as that is the entry into our cluster against which our commands will be run.
+All requests to other nodes are proxied through the endpoint, and therefore not
 all nodes need to be manually added to the config.
-You don't want to run your commands against all nodes, as this can destroy your 
+You don't want to run your commands against all nodes, as this can destroy your
 cluster if you are not careful [further documentation](/v1.1/introduction/getting-started/#configure-your-talosctl-client).
 
 Set the `endpoints` and `nodes`:
@@ -236,7 +237,7 @@ You can check if the nodes are registered in Talos by running
 talosctl --talosconfig talosconfig get members
 ```
 
-To check if your nodes are ready, run 
+To check if your nodes are ready, run
 
 ```bash
 kubectl get nodes
