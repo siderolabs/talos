@@ -36,7 +36,7 @@ username: your_upcloud_username
 password: your_upcloud_password
 ```
 
-To use the UpCloud packer plugin, you need to also export these credentials your
+To use the UpCloud packer plugin, you need to also export these credentials to your
 environment variables, by e.g. putting the following in your `.bashrc` or `.zshrc`
 
 ```
