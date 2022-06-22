@@ -79,7 +79,29 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+Talos 1.1.0 provides a default configuration for [Pod Security Admission]({{< relref "../kubernetes-guides/configuration/pod-security" >}}):
+
+```yaml
+cluster:
+    apiServer:
+        admissionControl:
+            - name: PodSecurity
+              configuration:
+                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+                defaults:
+                    audit: restricted
+                    audit-version: latest
+                    enforce: baseline
+                    enforce-version: latest
+                    warn: restricted
+                    warn-version: latest
+                exemptions:
+                    namespaces:
+                        - kube-system
+                    runtimeClasses: []
+                    usernames: []
+                kind: PodSecurityConfiguration
+```
 
 ## Upgrade Sequence
 
