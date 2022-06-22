@@ -14,7 +14,6 @@ import (
 
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/hashicorp/go-getter"
-	"github.com/talos-systems/go-cmd/pkg/cmd"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/provision"
@@ -68,8 +67,8 @@ func (check *preflightCheckContext) checkKVM(ctx context.Context) error {
 }
 
 func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
-	if _, err := cmd.Run(check.arch.QemuExecutable(), "--version"); err != nil {
-		return fmt.Errorf("error running QEMU %q, please install QEMU with package manager: %w", check.arch.QemuExecutable(), err)
+	if check.arch.QemuExecutable() == "" {
+		return fmt.Errorf("QEMU executable (qemu-system-%s or qemu-kvm) not found, please install QEMU with package manager", check.arch.QemuArch())
 	}
 
 	return nil
