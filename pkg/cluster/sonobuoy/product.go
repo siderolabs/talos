@@ -25,7 +25,7 @@ var talos = product{
 	WebsiteURL:       "https://www.siderolabs.com/",
 	RepoURL:          "https://github.com/siderolabs/talos",
 	DocumentationURL: "https://www.talos.dev",
-	ProductLogoURL:   "https://www.talos.dev/images/Sidero_stacked_darkbkgd_RGB.png",
+	ProductLogoURL:   "https://www.talos.dev/images/Sidero_stacked_darkbkgd_RGB.svg",
 	Type:             "installer",
 	Description:      "Talos Linux is Linux designed for Kubernetes - secure, immutable, and minimal.",
 }
