@@ -5,7 +5,7 @@
 package qemu
 
 import (
-	"fmt"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -111,5 +111,17 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 
 // QemuExecutable returns name of qemu executable for the arch.
 func (arch Arch) QemuExecutable() string {
-	return fmt.Sprintf("qemu-system-%s", arch.QemuArch())
+	binaries := []string{
+		"qemu-system-" + arch.QemuArch(),
+		"qemu-kvm",
+		"/usr/libexec/qemu-kvm",
+	}
+
+	for _, binary := range binaries {
+		if path, err := exec.LookPath(binary); err == nil {
+			return path
+		}
+	}
+
+	return ""
 }
