@@ -232,6 +232,19 @@ func TestParseJoinToken(t *testing.T) {
 		}, endpoint)
 	})
 
+	t.Run("parses a join token from a secure URL without port", func(t *testing.T) {
+		// when
+		endpoint, err := siderolinkctrl.ParseAPIEndpoint("https://10.5.0.2?jointoken=ttt&jointoken=xxx")
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, siderolinkctrl.APIEndpoint{
+			Host:      "10.5.0.2:443",
+			Insecure:  false,
+			JoinToken: pointer.To("ttt"),
+		}, endpoint)
+	})
+
 	t.Run("parses a join token from an URL without a scheme", func(t *testing.T) {
 		// when
 		endpoint, err := siderolinkctrl.ParseAPIEndpoint("10.5.0.2:3445?jointoken=ttt")
