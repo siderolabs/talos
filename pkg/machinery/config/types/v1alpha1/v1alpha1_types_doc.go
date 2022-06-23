@@ -57,6 +57,8 @@ var (
 	VIPEquinixMetalConfigDoc          encoder.Doc
 	VIPHCloudConfigDoc                encoder.Doc
 	BondDoc                           encoder.Doc
+	STPDoc                            encoder.Doc
+	BridgeDoc                         encoder.Doc
 	VlanDoc                           encoder.Doc
 	RouteDoc                          encoder.Doc
 	RegistryMirrorConfigDoc           encoder.Doc
@@ -1576,7 +1578,7 @@ func init() {
 			FieldName: "interfaces",
 		},
 	}
-	DeviceDoc.Fields = make([]encoder.Doc, 14)
+	DeviceDoc.Fields = make([]encoder.Doc, 15)
 	DeviceDoc.Fields[0].Name = "interface"
 	DeviceDoc.Fields[0].Type = "string"
 	DeviceDoc.Fields[0].Note = ""
@@ -1614,56 +1616,63 @@ func init() {
 	DeviceDoc.Fields[5].Comments[encoder.LineComment] = "Bond specific options."
 
 	DeviceDoc.Fields[5].AddExample("", networkConfigBondExample)
-	DeviceDoc.Fields[6].Name = "vlans"
-	DeviceDoc.Fields[6].Type = "[]Vlan"
+	DeviceDoc.Fields[6].Name = "bridge"
+	DeviceDoc.Fields[6].Type = "Bridge"
 	DeviceDoc.Fields[6].Note = ""
-	DeviceDoc.Fields[6].Description = "VLAN specific options."
-	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "VLAN specific options."
-	DeviceDoc.Fields[7].Name = "mtu"
-	DeviceDoc.Fields[7].Type = "int"
-	DeviceDoc.Fields[7].Note = ""
-	DeviceDoc.Fields[7].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
-	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "The interface's MTU."
-	DeviceDoc.Fields[8].Name = "dhcp"
-	DeviceDoc.Fields[8].Type = "bool"
-	DeviceDoc.Fields[8].Note = ""
-	DeviceDoc.Fields[8].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
-	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+	DeviceDoc.Fields[6].Description = "Bridge specific options."
+	DeviceDoc.Fields[6].Comments[encoder.LineComment] = "Bridge specific options."
 
-	DeviceDoc.Fields[8].AddExample("", true)
-	DeviceDoc.Fields[9].Name = "ignore"
+	DeviceDoc.Fields[6].AddExample("", networkConfigBridgeExample)
+	DeviceDoc.Fields[7].Name = "vlans"
+	DeviceDoc.Fields[7].Type = "[]Vlan"
+	DeviceDoc.Fields[7].Note = ""
+	DeviceDoc.Fields[7].Description = "VLAN specific options."
+	DeviceDoc.Fields[7].Comments[encoder.LineComment] = "VLAN specific options."
+	DeviceDoc.Fields[8].Name = "mtu"
+	DeviceDoc.Fields[8].Type = "int"
+	DeviceDoc.Fields[8].Note = ""
+	DeviceDoc.Fields[8].Description = "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
+	DeviceDoc.Fields[8].Comments[encoder.LineComment] = "The interface's MTU."
+	DeviceDoc.Fields[9].Name = "dhcp"
 	DeviceDoc.Fields[9].Type = "bool"
 	DeviceDoc.Fields[9].Note = ""
-	DeviceDoc.Fields[9].Description = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
-	DeviceDoc.Fields[10].Name = "dummy"
+	DeviceDoc.Fields[9].Description = "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
+	DeviceDoc.Fields[9].Comments[encoder.LineComment] = "Indicates if DHCP should be used to configure the interface."
+
+	DeviceDoc.Fields[9].AddExample("", true)
+	DeviceDoc.Fields[10].Name = "ignore"
 	DeviceDoc.Fields[10].Type = "bool"
 	DeviceDoc.Fields[10].Note = ""
-	DeviceDoc.Fields[10].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
-	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
-	DeviceDoc.Fields[11].Name = "dhcpOptions"
-	DeviceDoc.Fields[11].Type = "DHCPOptions"
+	DeviceDoc.Fields[10].Description = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[10].Comments[encoder.LineComment] = "Indicates if the interface should be ignored (skips configuration)."
+	DeviceDoc.Fields[11].Name = "dummy"
+	DeviceDoc.Fields[11].Type = "bool"
 	DeviceDoc.Fields[11].Note = ""
-	DeviceDoc.Fields[11].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
-	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "DHCP specific options."
-
-	DeviceDoc.Fields[11].AddExample("", networkConfigDHCPOptionsExample)
-	DeviceDoc.Fields[12].Name = "wireguard"
-	DeviceDoc.Fields[12].Type = "DeviceWireguardConfig"
+	DeviceDoc.Fields[11].Description = "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
+	DeviceDoc.Fields[11].Comments[encoder.LineComment] = "Indicates if the interface is a dummy interface."
+	DeviceDoc.Fields[12].Name = "dhcpOptions"
+	DeviceDoc.Fields[12].Type = "DHCPOptions"
 	DeviceDoc.Fields[12].Note = ""
-	DeviceDoc.Fields[12].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
-	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "Wireguard specific configuration."
+	DeviceDoc.Fields[12].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+	DeviceDoc.Fields[12].Comments[encoder.LineComment] = "DHCP specific options."
 
-	DeviceDoc.Fields[12].AddExample("wireguard server example", networkConfigWireguardHostExample)
-
-	DeviceDoc.Fields[12].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
-	DeviceDoc.Fields[13].Name = "vip"
-	DeviceDoc.Fields[13].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[12].AddExample("", networkConfigDHCPOptionsExample)
+	DeviceDoc.Fields[13].Name = "wireguard"
+	DeviceDoc.Fields[13].Type = "DeviceWireguardConfig"
 	DeviceDoc.Fields[13].Note = ""
-	DeviceDoc.Fields[13].Description = "Virtual (shared) IP address configuration."
-	DeviceDoc.Fields[13].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[13].Description = "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
+	DeviceDoc.Fields[13].Comments[encoder.LineComment] = "Wireguard specific configuration."
 
-	DeviceDoc.Fields[13].AddExample("layer2 vip example", networkConfigVIPLayer2Example)
+	DeviceDoc.Fields[13].AddExample("wireguard server example", networkConfigWireguardHostExample)
+
+	DeviceDoc.Fields[13].AddExample("wireguard peer example", networkConfigWireguardPeerExample)
+	DeviceDoc.Fields[14].Name = "vip"
+	DeviceDoc.Fields[14].Type = "DeviceVIPConfig"
+	DeviceDoc.Fields[14].Note = ""
+	DeviceDoc.Fields[14].Description = "Virtual (shared) IP address configuration."
+	DeviceDoc.Fields[14].Comments[encoder.LineComment] = "Virtual (shared) IP address configuration."
+
+	DeviceDoc.Fields[14].AddExample("layer2 vip example", networkConfigVIPLayer2Example)
 
 	DHCPOptionsDoc.Type = "DHCPOptions"
 	DHCPOptionsDoc.Comments[encoder.LineComment] = "DHCPOptions contains options for configuring the DHCP settings for a given interface."
@@ -1975,6 +1984,45 @@ func init() {
 	BondDoc.Fields[26].Note = ""
 	BondDoc.Fields[26].Description = "A bond option.\nPlease see the official kernel documentation."
 	BondDoc.Fields[26].Comments[encoder.LineComment] = "A bond option."
+
+	STPDoc.Type = "STP"
+	STPDoc.Comments[encoder.LineComment] = "STP contains the various options for configuring the STP properties of a bridge interface."
+	STPDoc.Description = "STP contains the various options for configuring the STP properties of a bridge interface."
+	STPDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Bridge",
+			FieldName: "stp",
+		},
+	}
+	STPDoc.Fields = make([]encoder.Doc, 1)
+	STPDoc.Fields[0].Name = "enabled"
+	STPDoc.Fields[0].Type = "bool"
+	STPDoc.Fields[0].Note = ""
+	STPDoc.Fields[0].Description = "Whether Spanning Tree Protocol (STP) is enabled."
+	STPDoc.Fields[0].Comments[encoder.LineComment] = "Whether Spanning Tree Protocol (STP) is enabled."
+
+	BridgeDoc.Type = "Bridge"
+	BridgeDoc.Comments[encoder.LineComment] = "Bridge contains the various options for configuring a bridge interface."
+	BridgeDoc.Description = "Bridge contains the various options for configuring a bridge interface."
+
+	BridgeDoc.AddExample("", networkConfigBridgeExample)
+	BridgeDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "Device",
+			FieldName: "bridge",
+		},
+	}
+	BridgeDoc.Fields = make([]encoder.Doc, 2)
+	BridgeDoc.Fields[0].Name = "interfaces"
+	BridgeDoc.Fields[0].Type = "[]string"
+	BridgeDoc.Fields[0].Note = ""
+	BridgeDoc.Fields[0].Description = "The interfaces that make up the bond."
+	BridgeDoc.Fields[0].Comments[encoder.LineComment] = "The interfaces that make up the bond."
+	BridgeDoc.Fields[1].Name = "stp"
+	BridgeDoc.Fields[1].Type = "STP"
+	BridgeDoc.Fields[1].Note = ""
+	BridgeDoc.Fields[1].Description = "A bridge option.\nPlease see the official kernel documentation."
+	BridgeDoc.Fields[1].Comments[encoder.LineComment] = "A bridge option."
 
 	VlanDoc.Type = "Vlan"
 	VlanDoc.Comments[encoder.LineComment] = "Vlan represents vlan settings for a device."
@@ -2686,6 +2734,14 @@ func (_ Bond) Doc() *encoder.Doc {
 	return &BondDoc
 }
 
+func (_ STP) Doc() *encoder.Doc {
+	return &STPDoc
+}
+
+func (_ Bridge) Doc() *encoder.Doc {
+	return &BridgeDoc
+}
+
 func (_ Vlan) Doc() *encoder.Doc {
 	return &VlanDoc
 }
@@ -2821,6 +2877,8 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&VIPEquinixMetalConfigDoc,
 			&VIPHCloudConfigDoc,
 			&BondDoc,
+			&STPDoc,
+			&BridgeDoc,
 			&VlanDoc,
 			&RouteDoc,
 			&RegistryMirrorConfigDoc,

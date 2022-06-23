@@ -657,6 +657,120 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "BridgeDoubleBridge",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "br0",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgedInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+							},
+							{
+								DeviceInterface: "br1",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgedInterfaces: []string{
+										"eth1",
+										"eth2",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* interface \"eth1\" is declared as part of two bridges: \"br0\" and \"br1\"\n\n",
+		},
+		{
+			name: "InterfaceIsBothBridgeAndBond",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bridgebond0",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgedInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth2",
+										"eth3",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* interface has both bridge and bond sections set \"bridgebond0\": config sections are mutually exclusive\n\n",
+		},
+		{
+			name: "InterfacePartOfBridgeAndBond",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "br0",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgedInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+								},
+							},
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth1",
+										"eth2",
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* interface \"eth1\" is declared as part of an interface and a bond: \"br0\" and \"bond0\"\n\n",
+		},
+		{
 			name: "Wireguard",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",

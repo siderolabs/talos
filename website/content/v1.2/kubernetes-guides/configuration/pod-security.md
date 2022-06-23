@@ -14,27 +14,22 @@ In this guide we are going to enable and configure Pod Security Admission in Tal
 
 ## Configuration
 
-Prepare the following machine configuration patch and store it in the `pod-security-patch.yaml`:
+Talos provides default Pod Security Admission in the machine configuration:
 
 ```yaml
-- op: add
-  path: /cluster/apiServer/admissionControl
-  value:
-    - name: PodSecurity
-      configuration:
-        apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-        kind: PodSecurityConfiguration
-        defaults:
-            enforce: "baseline"
-            enforce-version: "latest"
-            audit: "restricted"
-            audit-version: "latest"
-            warn: "restricted"
-            warn-version: "latest"
-        exemptions:
-            usernames: []
-            runtimeClasses: []
-            namespaces: [kube-system]
+apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+kind: PodSecurityConfiguration
+defaults:
+    enforce: "baseline"
+    enforce-version: "latest"
+    audit: "restricted"
+    audit-version: "latest"
+    warn: "restricted"
+    warn-version: "latest"
+exemptions:
+    usernames: []
+    runtimeClasses: []
+    namespaces: [kube-system]
 ```
 
 This is a cluster-wide configuration for the Pod Security Admission plugin:
@@ -42,13 +37,7 @@ This is a cluster-wide configuration for the Pod Security Admission plugin:
 * by default `baseline` [Pod Security Standard](https://kubernetes.io/docs/concepts/security/pod-security-standards/) profile is enforced
 * more strict `restricted` profile is not enforced, but API server warns about found issues
 
-Generate Talos machine configuration applying the patch above:
-
-```shell
-talosctl gen config cluster1 https://<IP>:6443/ --config-patch-control-plane @../pod-security-patch.yaml
-```
-
-Deploy Talos using the generated machine configuration.
+This default policy can be modified by updating the generated machine configuration before the cluster is created or on the fly by using the `talosctl` CLI utility.
 
 Verify current admission plugin configuration with:
 

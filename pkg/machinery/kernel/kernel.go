@@ -24,7 +24,6 @@ var DefaultArgs = []string{
 	// AWS recommends setting the nvme_core.io_timeout to the highest value possible.
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
 	"nvme_core.io_timeout=4294967295",
-	"random.trust_cpu=on",
 	// Disable rate limited printk
 	"printk.devkmsg=on",
 	"ima_template=ima-ng",

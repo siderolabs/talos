@@ -68,6 +68,25 @@ machine:
             - eth1
 ```
 
+## Setting Up a Bridge
+
+The following example shows how to set up a bridge between two interfaces with an assigned static address.
+
+```yaml
+machine:
+  network:
+    interfaces:
+      - interface: br0
+        addresses:
+          - 192.168.0.42/24
+        bridge:
+          stp:
+            enabled: true
+          interfaces:
+              - eth0
+              - eth1
+```
+
 ## VLANs
 
 To setup vlans on a specific device use an array of VLANs to add.

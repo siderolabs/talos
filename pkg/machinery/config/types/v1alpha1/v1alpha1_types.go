@@ -413,6 +413,13 @@ var (
 		BondInterfaces: []string{"eth0", "eth1"},
 	}
 
+	networkConfigBridgeExample = &Bridge{
+		BridgedInterfaces: []string{"eth0", "eth1"},
+		BridgeSTP: &STP{
+			STPEnabled: pointer.To(true),
+		},
+	}
+
 	networkConfigDHCPOptionsExample = &DHCPOptions{
 		DHCPRouteMetric: 1024,
 	}
@@ -1819,6 +1826,10 @@ type Device struct {
 	//   examples:
 	//     - value: networkConfigBondExample
 	DeviceBond *Bond `yaml:"bond,omitempty"`
+	//   description: Bridge specific options.
+	//   examples:
+	//     - value: networkConfigBridgeExample
+	DeviceBridge *Bridge `yaml:"bridge,omitempty"`
 	//   description: VLAN specific options.
 	DeviceVlans []*Vlan `yaml:"vlans,omitempty"`
 	//   description: |
@@ -2039,6 +2050,22 @@ type Bond struct {
 	//     A bond option.
 	//     Please see the official kernel documentation.
 	BondPeerNotifyDelay uint32 `yaml:"peerNotifyDelay,omitempty"`
+}
+
+// STP contains the various options for configuring the STP properties of a bridge interface.
+type STP struct {
+	//   description: Whether Spanning Tree Protocol (STP) is enabled.
+	STPEnabled *bool `yaml:"enabled"`
+}
+
+// Bridge contains the various options for configuring a bridge interface.
+type Bridge struct {
+	//   description: The interfaces that make up the bond.
+	BridgedInterfaces []string `yaml:"interfaces"`
+	//   description: |
+	//     A bridge option.
+	//     Please see the official kernel documentation.
+	BridgeSTP *STP `yaml:"stp,omitempty"`
 }
 
 // Vlan represents vlan settings for a device.

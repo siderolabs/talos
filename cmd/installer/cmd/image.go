@@ -132,7 +132,15 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 			return err
 		}
 	case "digital-ocean":
-		if err = tar(fmt.Sprintf("digital-ocean-%s.tar.gz", arch), file, dir); err != nil {
+		file = filepath.Join(outputArg, fmt.Sprintf("digital-ocean-%s.raw", arch))
+
+		if err = os.Rename(img, file); err != nil {
+			return err
+		}
+
+		log.Println("compressing image")
+
+		if err = gz(file); err != nil {
 			return err
 		}
 	case "gcp":
@@ -257,6 +265,14 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 
 func tar(filename, src, dir string) error {
 	if _, err := cmd.Run("tar", "-czvf", filepath.Join(outputArg, filename), src, "-C", dir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func gz(filename string) error {
+	if _, err := cmd.Run("gzip", "-6", filename); err != nil {
 		return err
 	}
 

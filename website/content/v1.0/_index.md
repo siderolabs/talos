@@ -8,7 +8,6 @@ preRelease: false
 lastRelease: v1.0.6
 kubernetesRelease: "1.23.5"
 prevKubernetesRelease: "1.23.1"
-menu: main
 ---
 
 ## Welcome

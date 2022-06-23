@@ -93,6 +93,10 @@ func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
 		Insecure: u.Scheme == "grpc",
 	}
 
+	if u.Port() == "" && u.Scheme == "https" {
+		result.Host += ":443"
+	}
+
 	params := u.Query()
 
 	joinTokenStr, ok := params["jointoken"]

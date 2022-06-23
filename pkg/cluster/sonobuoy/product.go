@@ -19,13 +19,13 @@ type product struct {
 }
 
 var talos = product{
-	Vendor:           "Talos Systems",
-	Name:             "Talos",
+	Vendor:           "Sidero Labs",
+	Name:             "Talos Linux",
 	Version:          version.Tag,
 	WebsiteURL:       "https://www.siderolabs.com/",
-	RepoURL:          "https://github.com/talos-systems/talos",
+	RepoURL:          "https://github.com/siderolabs/talos",
 	DocumentationURL: "https://www.talos.dev",
-	ProductLogoURL:   "https://www.talos.dev/images/SideroLabs_horizontal_darkbkgd_RGB.png",
+	ProductLogoURL:   "https://www.talos.dev/images/Sidero_stacked_darkbkgd_RGB.svg",
 	Type:             "installer",
-	Description:      "Talos is a modern Kubernetes-focused OS designed to be secure, immutable, and minimal.",
+	Description:      "Talos Linux is Linux designed for Kubernetes - secure, immutable, and minimal.",
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/mdlayher/netlink"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
@@ -282,6 +283,66 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 			},
 		),
 	)
+}
+
+func (suite *LinkStatusSuite) TestBridgeInterface() {
+	bridgeInteface := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	bridgeData, err := encodeBridgeData(true)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: bridgeInteface,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "bridge",
+						Data: bridgeData,
+					},
+				},
+			},
+		),
+	)
+
+	bridgeIface, err := net.InterfaceByName(bridgeInteface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(bridgeIface.Index)) //nolint:errcheck
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertInterfaces(
+					[]string{bridgeInteface}, func(r *network.LinkStatus) error {
+						suite.Assert().Equal("ether", r.TypedSpec().Type.String())
+						suite.Assert().True(r.TypedSpec().BridgeMaster.STP.Enabled)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+}
+
+func encodeBridgeData(stpEnabled bool) ([]byte, error) {
+	encoder := netlink.NewAttributeEncoder()
+
+	var stpState uint32
+	if stpEnabled {
+		stpState = 1
+	}
+
+	encoder.Uint32(unix.IFLA_BR_STP_STATE, stpState)
+
+	return encoder.Encode()
 }
 
 func (suite *LinkStatusSuite) TearDownTest() {

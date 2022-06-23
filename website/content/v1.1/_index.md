@@ -4,11 +4,12 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
-preRelease: true
-lastRelease: v1.1.0-beta.2
-kubernetesRelease: "1.24.1"
+preRelease: false
+lastRelease: v1.1.0
+kubernetesRelease: "1.24.2"
 prevKubernetesRelease: "1.23.5"
 iscsiToolsRelease: "v0.1.1"
+menu: main
 ---
 
 ## Welcome
