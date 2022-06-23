@@ -17,6 +17,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -27,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -143,6 +145,74 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	r, err := suite.state.Get(suite.ctx, k8s.NewControllerManagerConfig().Metadata())
 	suite.Require().NoError(err)
 	suite.Assert().Empty(r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
+
+	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
+	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					PodSubnet:     []string{constants.DefaultIPv6PodNet},
+					ServiceSubnet: []string{constants.DefaultIPv6ServiceNet},
+				},
+			},
+		},
+	)
+
+	suite.setupMachine(cfg)
+
+	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIP)
+	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
+					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
+				},
+			},
+		},
+	)
+
+	suite.setupMachine(cfg)
+
+	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
+	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {

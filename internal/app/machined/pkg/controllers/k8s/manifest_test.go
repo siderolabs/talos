@@ -21,6 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -231,6 +232,70 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("--bind-address=\"::\"", args[len(args)-1])
+}
+
+func (suite *ManifestSuite) TestReconcileIPv6() {
+	rootSecrets := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
+	manifestConfig := k8s.NewBootstrapManifestsConfig()
+	spec := defaultManifestSpec
+	spec.PodCIDRs = []string{constants.DefaultIPv6PodNet}
+	spec.DNSServiceIP = ""
+	spec.DNSServiceIPv6 = "fc00:db8:10::10"
+	*manifestConfig.TypedSpec() = spec
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, rootSecrets))
+	suite.Require().NoError(suite.state.Create(suite.ctx, manifestConfig))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertManifests(
+					[]string{
+						"00-kubelet-bootstrapping-token",
+						"01-csr-approver-role-binding",
+						"01-csr-node-bootstrap",
+						"01-csr-renewal-role-binding",
+						"02-kube-system-sa-role-binding",
+						"03-default-pod-security-policy",
+						"05-flannel",
+						"10-kube-proxy",
+						"11-core-dns",
+						"11-core-dns-svc",
+						"11-kube-config-in-cluster",
+					},
+				)
+			},
+		),
+	)
+
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(
+			k8s.ControlPlaneNamespaceName,
+			k8s.ManifestType,
+			"11-core-dns-svc",
+			resource.VersionUndefined,
+		),
+	)
+	suite.Require().NoError(err)
+
+	manifest := r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 1)
+
+	service := k8sadapter.Manifest(manifest).Objects()[0]
+	suite.Assert().Equal("Service", service.GetKind())
+
+	v, _, _ := unstructured.NestedString(service.Object, "spec", "clusterIP") //nolint:errcheck
+	suite.Assert().Equal(spec.DNSServiceIPv6, v)
+
+	vv, _, _ := unstructured.NestedStringSlice(service.Object, "spec", "clusterIPs") //nolint:errcheck
+	suite.Assert().Equal([]string{spec.DNSServiceIPv6}, vv)
+
+	vv, _, _ = unstructured.NestedStringSlice(service.Object, "spec", "ipFamilies") //nolint:errcheck
+	suite.Assert().Equal([]string{"IPv6"}, vv)
+
+	v, _, _ = unstructured.NestedString(service.Object, "spec", "ipFamilyPolicy") //nolint:errcheck
+	suite.Assert().Equal("SingleStack", v)
 }
 
 func (suite *ManifestSuite) TestReconcileDisablePSP() {
