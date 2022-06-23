@@ -244,17 +244,13 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 	dnsServiceIP := ""
 	dnsServiceIPv6 := ""
 
-	if len(dnsServiceIPs) == 1 {
-		dnsServiceIP = dnsServiceIPs[0].String()
-	} else {
-		for _, ip := range dnsServiceIPs {
-			if dnsServiceIP == "" && ip.To4().Equal(ip) {
-				dnsServiceIP = ip.String()
-			}
+	for _, ip := range dnsServiceIPs {
+		if dnsServiceIP == "" && ip.To4().Equal(ip) {
+			dnsServiceIP = ip.String()
+		}
 
-			if dnsServiceIPv6 == "" && talosnet.IsNonLocalIPv6(ip) {
-				dnsServiceIPv6 = ip.String()
-			}
+		if dnsServiceIPv6 == "" && talosnet.IsNonLocalIPv6(ip) {
+			dnsServiceIPv6 = ip.String()
 		}
 	}
 
