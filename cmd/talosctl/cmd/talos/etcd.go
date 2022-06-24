@@ -187,6 +187,10 @@ var etcdSnapshotCmd = &cobra.Command{
 				return fmt.Errorf("sha256 checksum not found (size %d)", size)
 			}
 
+			if err = dest.Close(); err != nil {
+				return fmt.Errorf("failed to close: %w", err)
+			}
+
 			if err = os.Rename(partPath, dbPath); err != nil {
 				return fmt.Errorf("error renaming to final location: %w", err)
 			}
