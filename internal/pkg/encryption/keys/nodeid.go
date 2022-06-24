@@ -7,7 +7,7 @@ package keys
 import (
 	"fmt"
 
-	"github.com/talos-systems/go-smbios/smbios"
+	"github.com/talos-systems/talos/internal/pkg/smbios"
 )
 
 // NodeIDKeyHandler generates the key based on current node information
@@ -26,7 +26,7 @@ func (h *NodeIDKeyHandler) GetKey(options ...KeyOption) ([]byte, error) {
 		return nil, err
 	}
 
-	s, err := smbios.New()
+	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -83,7 +84,7 @@ func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, hostname stri
 }
 
 // Configuration implements the platform.Platform interface.
-func (o *Oracle) Configuration(ctx context.Context) ([]byte, error) {
+func (o *Oracle) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", OracleUserDataEndpoint)
 
 	machineConfigDl, err := download.Download(ctx, OracleUserDataEndpoint,

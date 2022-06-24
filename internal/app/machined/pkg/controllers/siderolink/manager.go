@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-procfs/procfs"
-	"github.com/talos-systems/go-smbios/smbios"
 	pb "github.com/talos-systems/siderolink/api/siderolink"
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -26,6 +25,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/internal/pkg/smbios"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -116,7 +116,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		return nil
 	}
 
-	s, err := smbios.New()
+	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
 		return fmt.Errorf("error reading node UUID: %w", err)
 	}
