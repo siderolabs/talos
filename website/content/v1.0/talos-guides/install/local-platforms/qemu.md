@@ -1,7 +1,7 @@
 ---
 title: QEMU
 description: "Creating Talos Kubernetes cluster using QEMU VMs."
-aliases: 
+aliases:
   - ../../../local-platforms/qemu
 ---
 
@@ -85,7 +85,7 @@ mkdir -p ~/.talos/clusters
 Create the cluster:
 
 ```bash
-sudo -E talosctl cluster create --provisioner qemu
+sudo --preserve-env=HOME talosctl cluster create --provisioner qemu
 ```
 
 Before the first cluster is created, `talosctl` will download the CNI bundle for the VM provisioning and install it to `~/.talos/cni` directory.
@@ -130,7 +130,7 @@ talos-default-worker-1   Worker         10.5.0.5   1.00   1.6 GB   4.3 GB
 To cleanup, run:
 
 ```bash
-sudo -E talosctl cluster destroy --provisioner qemu
+sudo --preserve-env=HOME talosctl cluster destroy --provisioner qemu
 ```
 
 > Note: In that case that the host machine is rebooted before destroying the cluster, you may need to manually remove `~/.talos/clusters/talos-default`.

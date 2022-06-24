@@ -112,7 +112,7 @@ needs to be repeated for each of the identified registry prefixes above.
 The endpoint being used is `10.5.0.1`, as this is the default bridge interface address which will be routable from the QEMU VMs (`127.0.0.1` IP will be pointing to the VM itself).
 
 ```bash
-$ sudo -E talosctl cluster create --provisioner=qemu --install-image=ghcr.io/siderolabs/installer:{{< release >}} \
+$ sudo --preserve-env=HOME talosctl cluster create --provisioner=qemu --install-image=ghcr.io/siderolabs/installer:{{< release >}} \
   --registry-mirror docker.io=http://10.5.0.1:6000 \
   --registry-mirror gcr.io=http://10.5.0.1:6000 \
   --registry-mirror ghcr.io=http://10.5.0.1:6000 \

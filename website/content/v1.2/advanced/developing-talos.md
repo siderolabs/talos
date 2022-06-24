@@ -62,7 +62,7 @@ bash hack/start-registry-proxies.sh
 Start your local cluster with:
 
 ```bash
-sudo -E _out/talosctl-linux-amd64 cluster create \
+sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
     --provisioner=qemu \
     --cidr=172.20.0.0/24 \
     --registry-mirror docker.io=http://172.20.0.1:5000 \
@@ -181,7 +181,7 @@ Specfic tests can be run with `-test.run=TestIntegration/api.ResetSuite`.
 ## Destroying Cluster
 
 ```bash
-sudo -E ../talos/_out/talosctl-linux-amd64 cluster destroy --provisioner=qemu
+sudo --preserve-env=HOME ../talos/_out/talosctl-linux-amd64 cluster destroy --provisioner=qemu
 ```
 
 This command stops QEMU and helper processes, tears down bridged network on the host, and cleans up
