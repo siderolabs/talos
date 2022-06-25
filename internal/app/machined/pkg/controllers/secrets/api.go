@@ -129,7 +129,7 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo,cyclop,dupl
 func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger, isControlplane bool) error {
 	inputs := []controller.Input{
 		{

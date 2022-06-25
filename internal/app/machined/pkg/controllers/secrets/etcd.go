@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	stdlibnet "net"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -14,7 +15,9 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/net"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/resources/time"
@@ -30,6 +33,8 @@ func (ctrl *EtcdController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
+//
+//nolint:dupl
 func (ctrl *EtcdController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
@@ -48,6 +53,12 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 			Namespace: v1alpha1.NamespaceName,
 			Type:      time.StatusType,
 			ID:        pointer.To(time.StatusID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.To(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -96,7 +107,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 				continue
 			}
 
-			return err
+			return fmt.Errorf("error getting network status: %w", err)
 		}
 
 		networkStatus := networkResource.(*network.Status).TypedSpec()
@@ -119,15 +130,66 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
+		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting machine config: %w", err)
+		}
+
+		cfgProvider := cfg.(*config.MachineConfig).Config()
+		subnet := cfgProvider.Cluster().Etcd().Subnet()
+
+		sanIPs, err := ctrl.findSanIPs(subnet)
+		if err != nil {
+			return err
+		}
+
 		if err = r.Modify(ctx, secrets.NewEtcd(), func(r resource.Resource) error {
-			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).TypedSpec())
+			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).TypedSpec(), sanIPs)
 		}); err != nil {
 			return err
 		}
 	}
 }
 
-func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCerts *secrets.EtcdCertsSpec) error {
+func (ctrl *EtcdController) findSanIPs(subnet string) ([]stdlibnet.IP, error) {
+	if subnet != "" {
+		peerListenAddr := ""
+
+		ips, err := net.IPAddrs()
+		if err != nil {
+			return nil, fmt.Errorf("error listing IPs: %w", err)
+		}
+
+		ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
+
+		network, err := net.ParseCIDR(subnet)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse subnet: %w", err)
+		}
+
+		for _, ip := range ips {
+			if network.Contains(ip) {
+				peerListenAddr = ip.String()
+
+				break
+			}
+		}
+
+		if peerListenAddr == "" {
+			return nil, fmt.Errorf("no address matched the provided subnet")
+		}
+
+		return []stdlibnet.IP{stdlibnet.ParseIP(peerListenAddr)}, nil
+	}
+
+	return nil, nil
+}
+
+func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCerts *secrets.EtcdCertsSpec, sanIPs []stdlibnet.IP) error {
 	var err error
 
 	etcdCerts.Etcd, err = etcd.GenerateCert(etcdRoot.EtcdCA)
@@ -135,7 +197,7 @@ func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCe
 		return fmt.Errorf("error generating etcd client certs: %w", err)
 	}
 
-	etcdCerts.EtcdPeer, err = etcd.GeneratePeerCert(etcdRoot.EtcdCA)
+	etcdCerts.EtcdPeer, err = etcd.GeneratePeerCert(etcdRoot.EtcdCA, sanIPs)
 	if err != nil {
 		return fmt.Errorf("error generating etcd peer certs: %w", err)
 	}

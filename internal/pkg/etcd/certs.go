@@ -17,8 +17,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
-// NewCommonOptions set common certificate options.
-func NewCommonOptions() ([]x509.Option, error) {
+// newCommonOptions set common certificate options.
+func newCommonOptions() ([]x509.Option, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
@@ -36,16 +36,8 @@ func NewCommonOptions() ([]x509.Option, error) {
 		return nil, fmt.Errorf("failed to get hostname: %w", err)
 	}
 
-	dnsNames, err := net.DNSNames()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get host DNS names: %w", err)
-	}
-
-	dnsNames = append(dnsNames, "localhost")
-
 	return []x509.Option{
 		x509.CommonName(hostname),
-		x509.DNSNames(dnsNames),
 		x509.IPAddresses(ips),
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
@@ -55,8 +47,8 @@ func NewCommonOptions() ([]x509.Option, error) {
 // GeneratePeerCert generates etcd peer certificate and key from etcd CA.
 //
 //nolint:dupl
-func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey, sansIP []stdlibnet.IP) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts, err := newCommonOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +59,17 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 			stdlibx509.ExtKeyUsageClientAuth,
 		}),
 	)
+
+	if len(sansIP) > 0 {
+		ips := []stdlibnet.IP{
+			stdlibnet.ParseIP("127.0.0.1"),
+			stdlibnet.ParseIP("::1"),
+		}
+
+		opts = append(opts,
+			x509.IPAddresses(append(ips, sansIP...)),
+		)
+	}
 
 	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
 	if err != nil {
@@ -85,12 +88,20 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 //
 //nolint:dupl
 func GenerateCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+	opts, err := newCommonOptions()
 	if err != nil {
 		return nil, err
 	}
 
+	dnsNames, err := net.DNSNames()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get host DNS names: %w", err)
+	}
+
+	dnsNames = append(dnsNames, "localhost")
+
 	opts = append(opts,
+		x509.DNSNames(dnsNames),
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
 			stdlibx509.ExtKeyUsageServerAuth,
 			stdlibx509.ExtKeyUsageClientAuth,
@@ -112,7 +123,7 @@ func GenerateCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCer
 
 // GenerateClientCert generates client certificate and key from etcd CA.
 func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey, commonName string) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+	opts, err := newCommonOptions()
 	if err != nil {
 		return nil, err
 	}
