@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -186,31 +187,42 @@ func (c *Client) LeaveCluster(ctx context.Context) error {
 	return nil
 }
 
-// RemoveMember removes the member from the etcd cluster.
-func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
+// RemoveMember removes the member by hostname/id from the etcd cluster.
+func (c *Client) RemoveMember(ctx context.Context, name string) error {
 	resp, err := c.MemberList(ctx)
 	if err != nil {
 		return err
 	}
 
+	var memberID uint64
+
+	if memberID, err = strconv.ParseUint(name, 16, 64); err != nil {
+		memberID = 0
+	}
+
 	var id *uint64
 
 	for _, member := range resp.Members {
-		if member.Name == hostname {
-			member := member
+		if member.Name == name {
 			id = &member.ID
+
+			break
+		}
+
+		if memberID != 0 && member.ID == memberID {
+			id = &memberID
 
 			break
 		}
 	}
 
 	if id == nil {
-		return fmt.Errorf("failed to find %q in list of etcd members", hostname)
+		return fmt.Errorf("failed to find %q in list of etcd members", name)
 	}
 
 	_, err = c.MemberRemove(ctx, *id)
 	if err != nil {
-		return fmt.Errorf("failed to remove member %d: %w", *id, err)
+		return fmt.Errorf("failed to remove member %x: %w", *id, err)
 	}
 
 	return nil

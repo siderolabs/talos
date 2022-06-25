@@ -44,7 +44,7 @@ var etcdLeaveCmd = &cobra.Command{
 }
 
 var etcdMemberRemoveCmd = &cobra.Command{
-	Use:   "remove-member <hostname>",
+	Use:   "remove-member <hostname/id>",
 	Short: "Remove the node from etcd cluster",
 	Long: `Use this command only if you want to remove a member which is in broken state.
 If there is no access to the node, or the node can't access etcd to call etcd leave.

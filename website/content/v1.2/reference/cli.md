@@ -935,7 +935,7 @@ If there is no access to the node, or the node can't access etcd to call etcd le
 Always prefer etcd leave over this command.
 
 ```
-talosctl etcd remove-member <hostname> [flags]
+talosctl etcd remove-member <hostname/id> [flags]
 ```
 
 ### Options
