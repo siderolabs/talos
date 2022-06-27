@@ -317,13 +317,13 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 	podsSeen := map[string]struct{}{}
 
 	for _, pod := range podList.Items {
-		if pod.OwnerReferences != nil {
+		if pod.Metadata.Annotations.ConfigSource != "file" {
 			continue
 		}
 
 		pod := pod
 
-		statusID := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+		statusID := fmt.Sprintf("%s/%s", pod.Metadata.Namespace, pod.Metadata.Name)
 
 		podsSeen[statusID] = struct{}{}
 

@@ -7,6 +7,7 @@ package kubelet
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -65,10 +66,43 @@ func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, e
 }
 
 // Pods returns list of pods running on the kubelet.
-func (c *Client) Pods(ctx context.Context) (*v1.PodList, error) {
-	var podList v1.PodList
+func (c *Client) Pods(ctx context.Context) (*PodList, error) {
+	var podList PodList
 
-	err := c.client.Get().AbsPath("/pods/").Timeout(30 * time.Second).Do(ctx).Into(&podList)
+	bytes, err := c.client.Get().AbsPath("/pods/").Timeout(30 * time.Second).Do(ctx).Raw()
+	if err != nil {
+		return nil, err
+	}
 
-	return &podList, err
+	err = json.Unmarshal(bytes, &podList)
+	if err != nil {
+		return nil, err
+	}
+
+	return &podList, nil
+}
+
+// PodList is a list of pods.
+type PodList struct {
+	Items []Pod `json:"items"`
+}
+
+// Pod returns pod details.
+type Pod struct {
+	Metadata Metadata     `json:"metadata"`
+	Status   v1.PodStatus `json:"status"`
+}
+
+// Metadata is a pod metadata.
+type Metadata struct {
+	Name        string      `json:"name"`
+	Namespace   string      `json:"namespace"`
+	Annotations Annotations `json:"annotations"`
+}
+
+// Annotations are the annotations on a pod.
+type Annotations struct {
+	// ConfigMapSource indicates where the resource is coming from.
+	// Its value is "file" for static pods and "api" for resources came from kube-apiserver.
+	ConfigSource string `json:"kubernetes.io/config.source"`
 }
