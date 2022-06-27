@@ -18,7 +18,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.49
+* Linux: 5.15.50
 """
 
 [make_deps]
