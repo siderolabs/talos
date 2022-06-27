@@ -6,6 +6,7 @@ github.com/containernetworking/cni v1.1.0/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8d
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e h1:Wf6HqHfScWJN9/ZjdUKyjop4mf3Qdd+1TvvltAvM3m8=
 github.com/cpuguy83/go-md2man v1.0.10 h1:BSKMNlYxDvnunlTymqtgONjNnaRV1sTpcovwwjF22jk=
 github.com/godbus/dbus v0.0.0-20190422162347-ade71ed3457e h1:BWhy2j3IXJhjCbC68FptL43tDKIq8FladmaTs3Xs7Z8=
+github.com/grpc-ecosystem/grpc-gateway v1.16.0 h1:gmcG1KaJ57LophUzW0Hy8NmPhnMZb4M0+kPpLofRdBo=
 github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1FQKckRals=
 github.com/talos-systems/siderolink v0.1.1/go.mod h1:1PLRyKRx+MAkz1vWJXIP19p5wChF0TejbIbX/CQMWuw=
 github.com/vishvananda/netlink v1.2.0-beta h1:CTNzkunO9iTkRaupF540+w47mexyQgNkA/ibnuKc39w=
