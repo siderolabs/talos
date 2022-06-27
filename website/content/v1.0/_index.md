@@ -8,6 +8,7 @@ preRelease: false
 lastRelease: v1.0.6
 kubernetesRelease: "1.23.5"
 prevKubernetesRelease: "1.23.1"
+theilaRelease: "v0.2.1"
 ---
 
 ## Welcome
