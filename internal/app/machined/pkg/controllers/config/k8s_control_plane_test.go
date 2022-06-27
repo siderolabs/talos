@@ -17,7 +17,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -146,8 +145,10 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	suite.Require().NoError(err)
 	suite.Assert().Empty(r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	r, err = suite.state.Get(suite.ctx, k8s.NewBootstrapManifestsConfig().Metadata())
 	suite.Require().NoError(err)
+
+	bootstrapConfig := r.(*k8s.BootstrapManifestsConfig) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
 	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIPv6)
@@ -177,8 +178,10 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 
 	suite.setupMachine(cfg)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	r, err := suite.state.Get(suite.ctx, k8s.NewBootstrapManifestsConfig().Metadata())
 	suite.Require().NoError(err)
+
+	bootstrapConfig := r.(*k8s.BootstrapManifestsConfig) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIP)
 	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
@@ -208,8 +211,10 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 
 	suite.setupMachine(cfg)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	r, err := suite.state.Get(suite.ctx, k8s.NewBootstrapManifestsConfig().Metadata())
 	suite.Require().NoError(err)
+
+	bootstrapConfig := r.(*k8s.BootstrapManifestsConfig) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
 	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
