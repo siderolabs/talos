@@ -24,7 +24,26 @@ import (
 
 // Containerd implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Containerd struct{}
+type Containerd struct {
+	// client is a lazy-initialized containerd client. It should be accessed using the Client() method.
+	client *containerd.Client
+}
+
+// Client lazy-initializes the containerd client if needed and returns it.
+func (c *Containerd) Client() (*containerd.Client, error) {
+	if c.client != nil {
+		return c.client, nil
+	}
+
+	client, err := containerd.New(constants.SystemContainerdAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	c.client = client
+
+	return c.client, err
+}
 
 // ID implements the Service interface.
 func (c *Containerd) ID(r runtime.Runtime) string {
@@ -38,6 +57,10 @@ func (c *Containerd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 // PostFunc implements the Service interface.
 func (c *Containerd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if c.client != nil {
+		return c.client.Close()
+	}
+
 	return nil
 }
 
@@ -87,12 +110,10 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface.
 func (c *Containerd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
-		client, err := containerd.New(constants.SystemContainerdAddress)
+		client, err := c.Client()
 		if err != nil {
 			return err
 		}
-		//nolint:errcheck
-		defer client.Close()
 
 		resp, err := client.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{})
 		if err != nil {
