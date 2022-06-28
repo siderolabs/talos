@@ -42,12 +42,12 @@ This default policy can be modified by updating the generated machine configurat
 Verify current admission plugin configuration with:
 
 ```shell
-$ talosctl get kubernetescontrolplaneconfigs apiserver-admission-control -o yaml
+$ talosctl get admissioncontrolconfigs.kubernetes.talos.dev admission-control -o yaml
 node: 172.20.0.2
 metadata:
-    namespace: config
-    type: KubernetesControlPlaneConfigs.config.talos.dev
-    id: apiserver-admission-control
+    namespace: controlplane
+    type: AdmissionControlConfigs.kubernetes.talos.dev
+    id: admission-control
     version: 1
     owner: config.K8sControlPlaneController
     phase: running
