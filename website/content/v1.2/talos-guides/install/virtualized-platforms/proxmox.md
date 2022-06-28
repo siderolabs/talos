@@ -86,6 +86,9 @@ Keep the defaults in the "Hard Disk" tab as well, only changing the size if desi
 
 In the "CPU" section, give at least 2 cores to the VM:
 
+> Note: As of Talos v1.0 it will be unable to boot on the default Processor Type "kvm64".
+> Talos v1.0 requires the x86-64-v2 microarchitecture, which you may be able to provide by setting Processor Type to "host".
+
 <img src="/images/proxmox-guide/edit-cpu.png" width="500px">
 
 Verify that the RAM is set to at least 2GB:
