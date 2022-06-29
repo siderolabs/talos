@@ -39,7 +39,7 @@ See [documentation](https://www.talos.dev/v1.1/reference/configuration/#bridge) 
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.50
+* Linux: 5.15.51
 """
 
     [notes.talos-config-kernel-param-variable-substitution]
