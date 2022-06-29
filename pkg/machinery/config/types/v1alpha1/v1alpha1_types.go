@@ -34,6 +34,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/merge"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -1056,7 +1057,7 @@ type NetworkConfig struct {
 	//     This can be further tuned through this configuration parameter.
 	//   examples:
 	//     - value: machineNetworkConfigExample.NetworkInterfaces
-	NetworkInterfaces []*Device `yaml:"interfaces,omitempty"`
+	NetworkInterfaces NetworkDeviceList `yaml:"interfaces,omitempty"`
 	//   description: |
 	//     Used to statically set the nameservers for the machine.
 	//     Defaults to `1.1.1.1` and `8.8.8.8`
@@ -1083,6 +1084,58 @@ type NetworkConfig struct {
 	//     - false
 	//     - no
 	NetworkDisableSearchDomain *bool `yaml:"disableSearchDomain,omitempty"`
+}
+
+// NetworkDeviceList is a list of *Device structures with overridden merge process.
+//
+//docgen:alias
+type NetworkDeviceList []*Device
+
+// Merge the network interface configuration intelligently.
+func (devices *NetworkDeviceList) Merge(other interface{}) error {
+	otherDevices, ok := other.(NetworkDeviceList)
+	if !ok {
+		return fmt.Errorf("unexpected type for device merge %T", other)
+	}
+
+	for _, device := range otherDevices {
+		if err := devices.mergeDevice(device); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (devices *NetworkDeviceList) mergeDevice(device *Device) error {
+	var existing *Device
+
+	switch {
+	case device.DeviceInterface != "":
+		for _, d := range *devices {
+			if d.DeviceInterface == device.DeviceInterface {
+				existing = d
+
+				break
+			}
+		}
+	case device.DeviceSelector != nil:
+		for _, d := range *devices {
+			if d.DeviceSelector != nil && *d.DeviceSelector == *device.DeviceSelector {
+				existing = d
+
+				break
+			}
+		}
+	}
+
+	if existing != nil {
+		return merge.Merge(existing, device)
+	}
+
+	*devices = append(*devices, device)
+
+	return nil
 }
 
 // InstallConfig represents the installation options for preparing a node.
@@ -1572,13 +1625,13 @@ type ClusterNetworkConfig struct {
 	//   examples:
 	//     -  value: >
 	//          []string{"10.244.0.0/16"}
-	PodSubnet []string `yaml:"podSubnets"`
+	PodSubnet []string `yaml:"podSubnets" merge:"replace"`
 	//   description: |
 	//     The service subnet CIDR.
 	//   examples:
 	//     -  value: >
 	//          []string{"10.96.0.0/12"}
-	ServiceSubnet []string `yaml:"serviceSubnets"`
+	ServiceSubnet []string `yaml:"serviceSubnets" merge:"replace"`
 }
 
 // CNIConfig represents the CNI configuration options.

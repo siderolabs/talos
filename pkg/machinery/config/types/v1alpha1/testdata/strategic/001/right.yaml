@@ -1,0 +1,25 @@
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        addresses:
+          - 10.3.5.7/24
+        dhcp: false
+  features:
+    rbac: false
+  env:
+    http_proxy: http://127.0.0.1:3128/
+  install:
+    wipe: true
+cluster:
+  controlPlane:
+    endpoint: https://10.0.0.1
+  discovery:
+    registries:
+      kubernetes:
+        disabled: true
+  network:
+    podSubnets: ["10.0.0.0/24"]
+    serviceSubnets: ["192.168.0.0/24", "ff:08::/64"]
+  serviceAccount:
+      key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUd6VlpnLzlmdityQW9DNmZmRmRRZzdKMzk0ZFMxc3p2cmFTRklBZVJsV0lvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVjYwUVgwN0hOVCtIbjJRNkJaQ1BPeVNqMExqS2FvMDM2TUJqMG5PMFFKNVVnZkhhaDVMUwp3QzRLajMwNU52bmZ4bnNnUnI5MWUrbjJreDMxTnJIaFF3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=

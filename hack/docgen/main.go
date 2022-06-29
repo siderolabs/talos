@@ -168,8 +168,14 @@ type structType struct {
 	node *ast.StructType
 }
 
-func collectStructs(node ast.Node) []*structType {
+type aliasType struct {
+	fieldType    string
+	fieldTypeRef string
+}
+
+func collectStructs(node ast.Node) ([]*structType, map[string]aliasType) {
 	structs := []*structType{}
+	aliases := map[string]aliasType{}
 
 	collectStructs := func(n ast.Node) bool {
 		g, ok := n.(*ast.GenDecl)
@@ -177,10 +183,16 @@ func collectStructs(node ast.Node) []*structType {
 			return true
 		}
 
+		isAlias := false
+
 		if g.Doc != nil {
 			for _, comment := range g.Doc.List {
 				if strings.Contains(comment.Text, "docgen:nodoc") {
 					return true
+				}
+
+				if strings.Contains(comment.Text, "docgen:alias") {
+					isAlias = true
 				}
 			}
 		}
@@ -197,6 +209,13 @@ func collectStructs(node ast.Node) []*structType {
 
 			x, ok := t.Type.(*ast.StructType)
 			if !ok {
+				if isAlias {
+					aliases[t.Name.Name] = aliasType{
+						fieldType:    formatFieldType(t.Type),
+						fieldTypeRef: getFieldType(t.Type),
+					}
+				}
+
 				return true
 			}
 
@@ -225,7 +244,7 @@ func collectStructs(node ast.Node) []*structType {
 
 	ast.Inspect(node, collectStructs)
 
-	return structs
+	return structs, aliases
 }
 
 func parseComment(comment []byte) *Text {
@@ -307,7 +326,7 @@ func escape(value string) string {
 	return strings.TrimSpace(value)
 }
 
-func collectFields(s *structType) (fields []*Field) {
+func collectFields(s *structType, aliases map[string]aliasType) (fields []*Field) {
 	fields = []*Field{}
 
 	for _, f := range s.node.Fields.List {
@@ -333,7 +352,16 @@ func collectFields(s *structType) (fields []*Field) {
 		}
 
 		fieldType := formatFieldType(f.Type)
+
+		if alias, ok := aliases[fieldType]; ok {
+			fieldType = alias.fieldType
+		}
+
 		fieldTypeRef := getFieldType(f.Type)
+
+		if alias, ok := aliases[fieldTypeRef]; ok {
+			fieldTypeRef = alias.fieldTypeRef
+		}
 
 		tag := reflect.StructTag(strings.Trim(f.Tag.Value, "`"))
 		yamlTag := tag.Get("yaml")
@@ -405,8 +433,6 @@ func processFile(inputFile, outputFile, typeName string) {
 		log.Fatal(err)
 	}
 
-	var structs []*structType
-
 	packageName := node.Name.Name
 
 	tokenFile := fset.File(node.Pos())
@@ -416,7 +442,7 @@ func processFile(inputFile, outputFile, typeName string) {
 
 	fmt.Printf("parsing file in package %q: %s\n", packageName, tokenFile.Name())
 
-	structs = append(structs, collectStructs(node)...)
+	structs, aliases := collectStructs(node)
 
 	if len(structs) == 0 {
 		log.Fatalf("failed to find types that could be documented in %s", abs)
@@ -433,7 +459,7 @@ func processFile(inputFile, outputFile, typeName string) {
 	for _, s := range structs {
 		fmt.Printf("generating docs for type: %q\n", s.name)
 
-		fields := collectFields(s)
+		fields := collectFields(s, aliases)
 
 		s := &Struct{
 			Name:   s.name,
