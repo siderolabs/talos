@@ -127,7 +127,7 @@ func WithRegistryInsecureSkipVerify(host string) GenOption {
 			o.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{}
 		}
 
-		o.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = true
+		o.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = pointer.To(true)
 
 		return nil
 	}

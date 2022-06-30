@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -501,7 +502,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	cfg.MachineConfig.MachineNetwork.NetworkInterfaces = append(cfg.MachineConfig.MachineNetwork.NetworkInterfaces,
 		&v1alpha1.Device{
 			DeviceInterface: "dummy0",
-			DeviceDummy:     true,
+			DeviceDummy:     pointer.To(true),
 		},
 	)
 

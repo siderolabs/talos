@@ -7,12 +7,14 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // Enabled implements the config.Proxy interface.
 func (p *ProxyConfig) Enabled() bool {
-	return !p.Disabled
+	return !pointer.SafeDeref(p.Disabled)
 }
 
 // Image implements the config.Proxy interface.

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 
@@ -30,8 +31,8 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkKubeSpan: v1alpha1.NetworkKubeSpan{
-					KubeSpanEnabled: true,
+				NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+					KubeSpanEnabled: pointer.To(true),
 				},
 			},
 		},

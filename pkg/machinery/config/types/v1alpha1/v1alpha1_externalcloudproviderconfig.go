@@ -4,9 +4,11 @@
 
 package v1alpha1
 
+import "github.com/siderolabs/go-pointer"
+
 // Enabled implements the config.ExternalCloudProvider interface.
 func (ecp *ExternalCloudProviderConfig) Enabled() bool {
-	return ecp.ExternalEnabled
+	return pointer.SafeDeref(ecp.ExternalEnabled)
 }
 
 // ManifestURLs implements the config.ExternalCloudProvider interface.

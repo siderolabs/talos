@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
@@ -50,8 +52,8 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 						DeviceInterface: device.Interface,
 						DeviceMTU:       int(device.Mtu),
 						DeviceCIDR:      device.Cidr,
-						DeviceDHCP:      device.Dhcp,
-						DeviceIgnore:    device.Ignore,
+						DeviceDHCP:      pointer.To(device.Dhcp),
+						DeviceIgnore:    pointer.To(device.Ignore),
 						DeviceRoutes: slices.Map(device.Routes, func(route *machine.RouteConfig) *v1alpha1.Route {
 							return &v1alpha1.Route{
 								RouteNetwork: route.Network,

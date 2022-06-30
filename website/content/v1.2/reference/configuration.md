@@ -504,6 +504,9 @@ proxy:
     # Extra arguments to supply to kube-proxy.
     extraArgs:
         proxy-mode: iptables
+
+    # # Disable kube-proxy deployment on cluster bootstrap.
+    # disabled: false
 {{< /highlight >}}</details> | |
 |`scheduler` |<a href="#schedulerconfig">SchedulerConfig</a> |Scheduler server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 scheduler:
@@ -1449,6 +1452,9 @@ mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
     proxy-mode: iptables
+
+# # Disable kube-proxy deployment on cluster bootstrap.
+# disabled: false
 {{< /highlight >}}
 
 

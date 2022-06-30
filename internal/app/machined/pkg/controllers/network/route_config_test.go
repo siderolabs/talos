@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -162,7 +163,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 							},
 						},
 						{
-							DeviceIgnore:    true,
+							DeviceIgnore:    pointer.To(true),
 							DeviceInterface: "eth4",
 							DeviceAddresses: []string{"192.168.0.24/28"},
 							DeviceRoutes: []*v1alpha1.Route{

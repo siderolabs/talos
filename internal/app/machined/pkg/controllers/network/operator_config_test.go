@@ -280,16 +280,16 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 						},
 						{
 							DeviceInterface: "eth1",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 						},
 						{
-							DeviceIgnore:    true,
+							DeviceIgnore:    pointer.To(true),
 							DeviceInterface: "eth2",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 						},
 						{
 							DeviceInterface: "eth3",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
 								DHCPIPv4:        pointer.To(true),
 								DHCPRouteMetric: 256,
@@ -300,7 +300,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 							DeviceVlans: []*v1alpha1.Vlan{
 								{
 									VlanID:   25,
-									VlanDHCP: true,
+									VlanDHCP: pointer.To(true),
 								},
 								{
 									VlanID: 26,
@@ -309,7 +309,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 						},
 						{
 							DeviceInterface: "eth5",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 						},
 					},
 				},
@@ -390,21 +390,21 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 					NetworkInterfaces: []*v1alpha1.Device{
 						{
 							DeviceInterface: "eth1",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
 								DHCPIPv4: pointer.To(true),
 							},
 						},
 						{
 							DeviceInterface: "eth2",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
 								DHCPIPv6: pointer.To(true),
 							},
 						},
 						{
 							DeviceInterface: "eth3",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
 								DHCPIPv6:        pointer.To(true),
 								DHCPRouteMetric: 512,

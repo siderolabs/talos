@@ -13,6 +13,7 @@ import (
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 
@@ -35,12 +36,12 @@ func (c *Config) Version() string {
 
 // Debug implements the config.Provider interface.
 func (c *Config) Debug() bool {
-	return c.ConfigDebug
+	return pointer.SafeDeref(c.ConfigDebug)
 }
 
 // Persist implements the config.Provider interface.
 func (c *Config) Persist() bool {
-	return c.ConfigPersist
+	return pointer.SafeDeref(c.ConfigPersist)
 }
 
 // Machine implements the config.Provider interface.
@@ -157,12 +158,12 @@ func (m *MachineControlPlaneConfig) Scheduler() config.MachineScheduler {
 
 // Disabled implements the config.Provider interface.
 func (m *MachineControllerManagerConfig) Disabled() bool {
-	return m.MachineControllerManagerDisabled
+	return pointer.SafeDeref(m.MachineControllerManagerDisabled)
 }
 
 // Disabled implements the config.Provider interface.
 func (m *MachineSchedulerConfig) Disabled() bool {
-	return m.MachineSchedulerDisabled
+	return pointer.SafeDeref(m.MachineSchedulerDisabled)
 }
 
 // Kubelet implements the config.Provider interface.
@@ -320,16 +321,20 @@ func (k *KubeletConfig) ExtraConfig() map[string]interface{} {
 
 // RegisterWithFQDN implements the config.Provider interface.
 func (k *KubeletConfig) RegisterWithFQDN() bool {
-	return k.KubeletRegisterWithFQDN
+	return pointer.SafeDeref(k.KubeletRegisterWithFQDN)
 }
 
 // NodeIP implements the config.Provider interface.
 func (k *KubeletConfig) NodeIP() config.KubeletNodeIP {
+	if k.KubeletNodeIP == nil {
+		return &KubeletNodeIPConfig{}
+	}
+
 	return k.KubeletNodeIP
 }
 
 // ValidSubnets implements the config.Provider interface.
-func (k KubeletNodeIPConfig) ValidSubnets() []string {
+func (k *KubeletNodeIPConfig) ValidSubnets() []string {
 	return k.KubeletNodeIPValidSubnets
 }
 
@@ -405,7 +410,7 @@ func (r *RegistryTLSConfig) CA() []byte {
 
 // InsecureSkipVerify implements the Registries interface.
 func (r *RegistryTLSConfig) InsecureSkipVerify() bool {
-	return r.TLSInsecureSkipVerify
+	return pointer.SafeDeref(r.TLSInsecureSkipVerify)
 }
 
 // GetTLSConfig prepares TLS configuration for connection.
@@ -426,7 +431,7 @@ func (r *RegistryTLSConfig) GetTLSConfig() (*tls.Config, error) {
 		tlsConfig.RootCAs.AppendCertsFromPEM(r.TLSCA)
 	}
 
-	if r.TLSInsecureSkipVerify {
+	if r.InsecureSkipVerify() {
 		tlsConfig.InsecureSkipVerify = true
 	}
 
@@ -440,7 +445,7 @@ func (n *NetworkConfig) Hostname() string {
 
 // DisableSearchDomain implements the config.Provider interface.
 func (n *NetworkConfig) DisableSearchDomain() bool {
-	return n.NetworkDisableSearchDomain
+	return pointer.SafeDeref(n.NetworkDisableSearchDomain)
 }
 
 // Devices implements the config.Provider interface.
@@ -479,6 +484,10 @@ func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
 
 // KubeSpan implements the config.Provider interface.
 func (n *NetworkConfig) KubeSpan() config.KubeSpan {
+	if n.NetworkKubeSpan == nil {
+		return &NetworkKubeSpan{}
+	}
+
 	return n.NetworkKubeSpan
 }
 
@@ -544,17 +553,17 @@ func (d *Device) MTU() int {
 
 // DHCP implements the MachineNetwork interface.
 func (d *Device) DHCP() bool {
-	return d.DeviceDHCP
+	return pointer.SafeDeref(d.DeviceDHCP)
 }
 
 // Ignore implements the MachineNetwork interface.
 func (d *Device) Ignore() bool {
-	return d.DeviceIgnore
+	return pointer.SafeDeref(d.DeviceIgnore)
 }
 
 // Dummy implements the MachineNetwork interface.
 func (d *Device) Dummy() bool {
-	return d.DeviceDummy
+	return pointer.SafeDeref(d.DeviceDummy)
 }
 
 // DHCPOptions implements the MachineNetwork interface.
@@ -940,7 +949,7 @@ func (v *Vlan) Routes() []config.Route {
 
 // DHCP implements the MachineNetwork interface.
 func (v *Vlan) DHCP() bool {
-	return v.VlanDHCP
+	return pointer.SafeDeref(v.VlanDHCP)
 }
 
 // ID implements the MachineNetwork interface.
@@ -949,18 +958,18 @@ func (v *Vlan) ID() uint16 {
 }
 
 // Enabled implements KubeSpan interface.
-func (k NetworkKubeSpan) Enabled() bool {
-	return k.KubeSpanEnabled
+func (k *NetworkKubeSpan) Enabled() bool {
+	return pointer.SafeDeref(k.KubeSpanEnabled)
 }
 
 // ForceRouting implements KubeSpan interface.
-func (k NetworkKubeSpan) ForceRouting() bool {
-	return !k.KubeSpanAllowDownPeerBypass
+func (k *NetworkKubeSpan) ForceRouting() bool {
+	return !pointer.SafeDeref(k.KubeSpanAllowDownPeerBypass)
 }
 
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
-	return t.TimeDisabled
+	return pointer.SafeDeref(t.TimeDisabled)
 }
 
 // Servers implements the config.Provider interface.
@@ -1058,17 +1067,17 @@ func (i *InstallConfig) ExtraKernelArgs() []string {
 
 // Zero implements the config.Provider interface.
 func (i *InstallConfig) Zero() bool {
-	return i.InstallWipe
+	return pointer.SafeDeref(i.InstallWipe)
 }
 
 // LegacyBIOSSupport implements the config.Provider interface.
 func (i *InstallConfig) LegacyBIOSSupport() bool {
-	return i.InstallLegacyBIOSSupport
+	return pointer.SafeDeref(i.InstallLegacyBIOSSupport)
 }
 
 // WithBootloader implements the config.Provider interface.
 func (i *InstallConfig) WithBootloader() bool {
-	return i.InstallBootloader
+	return pointer.SafeDeref(i.InstallBootloader)
 }
 
 // Image implements the config.Provider interface.
@@ -1078,7 +1087,7 @@ func (i InstallExtensionConfig) Image() string {
 
 // Enabled implements the config.Provider interface.
 func (c *CoreDNS) Enabled() bool {
-	return !c.CoreDNSDisabled
+	return c.CoreDNSDisabled == nil || !*c.CoreDNSDisabled
 }
 
 // Image implements the config.Provider interface.

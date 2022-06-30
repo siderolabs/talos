@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/crypto/x509"
 	talosnet "github.com/talos-systems/net"
 
@@ -173,7 +174,7 @@ func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 
 // ScheduleOnMasters implements the config.ClusterConfig interface.
 func (c *ClusterConfig) ScheduleOnMasters() bool {
-	return c.AllowSchedulingOnMasters
+	return pointer.SafeDeref(c.AllowSchedulingOnMasters)
 }
 
 // ID returns the unique identifier for the cluster.
@@ -256,6 +257,10 @@ func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
 
 // Discovery implements the config.Cluster interface.
 func (c *ClusterConfig) Discovery() config.Discovery {
+	if c.ClusterDiscoveryConfig == nil {
+		return &ClusterDiscoveryConfig{}
+	}
+
 	return c.ClusterDiscoveryConfig
 }
 

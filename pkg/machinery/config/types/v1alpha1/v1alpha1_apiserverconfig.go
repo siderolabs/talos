@@ -7,6 +7,8 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
@@ -40,7 +42,7 @@ func (a *APIServerConfig) Env() Env {
 
 // DisablePodSecurityPolicy implements the config.APIServer interface.
 func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
-	return a.DisablePodSecurityPolicyConfig
+	return pointer.SafeDeref(a.DisablePodSecurityPolicyConfig)
 }
 
 // AdmissionControl implements the config.APIServer interface.
