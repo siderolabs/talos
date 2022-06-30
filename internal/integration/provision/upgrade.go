@@ -72,12 +72,12 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v0.14.3"
-	stableRelease   = "v1.0.0" // or soon-to-be-stable
+	previousRelease = "v1.0.6"
+	stableRelease   = "v1.1.0" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.23.1" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.23.5" // constants.DefaultKubernetesVersion in the stableRelease
+	previousK8sVersion = "1.23.6" // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.24.2" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 
@@ -102,9 +102,6 @@ func upgradePreviousToStable() upgradeSpec {
 		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
-
-		// TODO: remove when StableVersion >= 0.14.0-beta.0
-		SkipKubeletUpgrade: true,
 
 		MasterNodes: DefaultSettings.MasterNodes,
 		WorkerNodes: DefaultSettings.WorkerNodes,
