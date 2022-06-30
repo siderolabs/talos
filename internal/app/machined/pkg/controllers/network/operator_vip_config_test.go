@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"inet.af/netaddr"
@@ -119,21 +120,21 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 					NetworkInterfaces: []*v1alpha1.Device{
 						{
 							DeviceInterface: "eth1",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 								SharedIP: "2.3.4.5",
 							},
 						},
 						{
 							DeviceInterface: "eth2",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 								SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
 							},
 						},
 						{
 							DeviceInterface: "eth3",
-							DeviceDHCP:      true,
+							DeviceDHCP:      pointer.To(true),
 							DeviceVlans: []*v1alpha1.Vlan{
 								{
 									VlanID: 26,

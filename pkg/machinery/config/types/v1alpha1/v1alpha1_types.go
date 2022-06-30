@@ -107,7 +107,7 @@ var (
 	machineConfigRegistryConfigExample = map[string]*RegistryConfig{
 		"registry.insecure": {
 			RegistryTLS: &RegistryTLSConfig{
-				TLSInsecureSkipVerify: true,
+				TLSInsecureSkipVerify: pointer.To(true),
 			},
 		},
 	}
@@ -117,7 +117,7 @@ var (
 	}
 
 	machineConfigRegistryTLSConfigExample2 = &RegistryTLSConfig{
-		TLSInsecureSkipVerify: true,
+		TLSInsecureSkipVerify: pointer.To(true),
 	}
 
 	machineConfigRegistryAuthConfigExample = &RegistryAuthConfig{
@@ -135,8 +135,12 @@ var (
 	}
 
 	machineControlplaneExample = &MachineControlPlaneConfig{
-		MachineControllerManager: &MachineControllerManagerConfig{},
-		MachineScheduler:         &MachineSchedulerConfig{MachineSchedulerDisabled: true},
+		MachineControllerManager: &MachineControllerManagerConfig{
+			MachineControllerManagerDisabled: pointer.To(false),
+		},
+		MachineScheduler: &MachineSchedulerConfig{
+			MachineSchedulerDisabled: pointer.To(true),
+		},
 	}
 
 	machineKubeletExample = &KubeletConfig{
@@ -149,8 +153,7 @@ var (
 	kubeletImageExample = (&KubeletConfig{}).Image()
 
 	machineNetworkConfigExample = &NetworkConfig{
-		NetworkHostname:            "worker-1",
-		NetworkDisableSearchDomain: false,
+		NetworkHostname: "worker-1",
 		NetworkInterfaces: []*Device{
 			{
 				DeviceInterface: "eth0",
@@ -183,8 +186,8 @@ var (
 		InstallDisk:            "/dev/sda",
 		InstallExtraKernelArgs: []string{"console=ttyS1", "panic=10"},
 		InstallImage:           "ghcr.io/siderolabs/installer:latest",
-		InstallBootloader:      true,
-		InstallWipe:            false,
+		InstallBootloader:      pointer.To(true),
+		InstallWipe:            pointer.To(false),
 	}
 
 	machineInstallDiskSelectorExample = &InstallDiskSelector{
@@ -231,6 +234,7 @@ var (
 	}
 
 	machineTimeExample = &TimeConfig{
+		TimeDisabled:    pointer.To(false),
 		TimeServers:     []string{"time.cloudflare.com"},
 		TimeBootTimeout: 2 * time.Minute,
 	}
@@ -352,7 +356,7 @@ var (
 	}
 
 	clusterExternalCloudProviderConfigExample = &ExternalCloudProviderConfig{
-		ExternalEnabled: true,
+		ExternalEnabled: pointer.To(true),
 		ExternalManifests: []string{
 			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
 			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
@@ -471,8 +475,8 @@ metadata:
 		},
 	}
 
-	networkKubeSpanExample = NetworkKubeSpan{
-		KubeSpanEnabled: true,
+	networkKubeSpanExample = &NetworkKubeSpan{
+		KubeSpanEnabled: pointer.To(true),
 	}
 
 	networkDeviceSelectorExamples = []NetworkDeviceSelector{
@@ -486,7 +490,7 @@ metadata:
 	}
 
 	clusterDiscoveryExample = ClusterDiscoveryConfig{
-		DiscoveryEnabled: true,
+		DiscoveryEnabled: pointer.To(true),
 		DiscoveryRegistries: DiscoveryRegistriesConfig{
 			RegistryService: RegistryServiceConfig{
 				RegistryEndpoint: constants.DefaultDiscoveryServiceEndpoint,
@@ -599,7 +603,7 @@ type Config struct {
 	//     - yes
 	//     - false
 	//     - no
-	ConfigDebug bool `yaml:"debug"`
+	ConfigDebug *bool `yaml:"debug"`
 	//   description: |
 	//     Indicates whether to pull the machine config upon every boot.
 	//   values:
@@ -607,7 +611,7 @@ type Config struct {
 	//     - yes
 	//     - false
 	//     - no
-	ConfigPersist bool `yaml:"persist"`
+	ConfigPersist *bool `yaml:"persist"`
 	//   description: |
 	//     Provides machine specific configuration options.
 	MachineConfig *MachineConfig `yaml:"machine"`
@@ -876,7 +880,7 @@ type ClusterConfig struct {
 	//     Configures cluster member discovery.
 	//   examples:
 	//     - value: clusterDiscoveryExample
-	ClusterDiscoveryConfig ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
+	ClusterDiscoveryConfig *ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
@@ -930,7 +934,7 @@ type ClusterConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	AllowSchedulingOnMasters bool `yaml:"allowSchedulingOnMasters,omitempty"`
+	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
 }
 
 // ExtraMount wraps OCI Mount specification.
@@ -969,14 +973,14 @@ type MachineControlPlaneConfig struct {
 type MachineControllerManagerConfig struct {
 	//   description: |
 	//     Disable kube-controller-manager on the node.
-	MachineControllerManagerDisabled bool `yaml:"disabled"`
+	MachineControllerManagerDisabled *bool `yaml:"disabled,omitempty"`
 }
 
 // MachineSchedulerConfig represents the machine specific Scheduler config values.
 type MachineSchedulerConfig struct {
 	//   description: |
 	//     Disable kube-scheduler on the node.
-	MachineSchedulerDisabled bool `yaml:"disabled"`
+	MachineSchedulerDisabled *bool `yaml:"disabled,omitempty"`
 }
 
 // KubeletConfig represents the kubelet config values.
@@ -1021,13 +1025,13 @@ type KubeletConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	KubeletRegisterWithFQDN bool `yaml:"registerWithFQDN,omitempty"`
+	KubeletRegisterWithFQDN *bool `yaml:"registerWithFQDN,omitempty"`
 	//   description: |
 	//     The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
 	//     This is used when a node has multiple addresses to choose from.
 	//   examples:
 	//     - value: kubeletNodeIPExample
-	KubeletNodeIP KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
+	KubeletNodeIP *KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
 }
 
 // KubeletNodeIPConfig represents the kubelet node IP configuration.
@@ -1068,7 +1072,7 @@ type NetworkConfig struct {
 	//     Configures KubeSpan feature.
 	//   examples:
 	//     - value: networkKubeSpanExample
-	NetworkKubeSpan NetworkKubeSpan `yaml:"kubespan,omitempty"`
+	NetworkKubeSpan *NetworkKubeSpan `yaml:"kubespan,omitempty"`
 	//   description: |
 	//     Disable generating a default search domain in /etc/resolv.conf
 	//     based on the machine hostname.
@@ -1078,7 +1082,7 @@ type NetworkConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	NetworkDisableSearchDomain bool `yaml:"disableSearchDomain,omitempty"`
+	NetworkDisableSearchDomain *bool `yaml:"disableSearchDomain,omitempty"`
 }
 
 // InstallConfig represents the installation options for preparing a node.
@@ -1119,7 +1123,7 @@ type InstallConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	InstallBootloader bool `yaml:"bootloader,omitempty"`
+	InstallBootloader *bool `yaml:"bootloader,omitempty"`
 	//   description: |
 	//     Indicates if the installation disk should be wiped at installation time.
 	//     Defaults to `true`.
@@ -1128,11 +1132,11 @@ type InstallConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	InstallWipe bool `yaml:"wipe"`
+	InstallWipe *bool `yaml:"wipe"`
 	//   description: |
 	//     Indicates if MBR partition should be marked as bootable (active).
 	//     Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.
-	InstallLegacyBIOSSupport bool `yaml:"legacyBIOSSupport,omitempty"`
+	InstallLegacyBIOSSupport *bool `yaml:"legacyBIOSSupport,omitempty"`
 }
 
 // InstallDiskSizeMatcher disk size condition parser.
@@ -1284,7 +1288,7 @@ type TimeConfig struct {
 	//   description: |
 	//     Indicates if the time service is disabled for the machine.
 	//     Defaults to `false`.
-	TimeDisabled bool `yaml:"disabled"`
+	TimeDisabled *bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     Specifies time (NTP) servers to use for setting the system time.
 	//     Defaults to `pool.ntp.org`
@@ -1330,7 +1334,7 @@ type PodCheckpointer struct {
 type CoreDNS struct {
 	//   description: |
 	//     Disable coredns deployment on cluster bootstrap.
-	CoreDNSDisabled bool `yaml:"disabled,omitempty"`
+	CoreDNSDisabled *bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     The `image` field is an override to the default coredns image.
 	CoreDNSImage string `yaml:"image,omitempty"`
@@ -1424,7 +1428,7 @@ type APIServerConfig struct {
 	CertSANs []string `yaml:"certSANs,omitempty"`
 	//   description: |
 	//     Disable PodSecurityPolicy in the API server and default manifests.
-	DisablePodSecurityPolicyConfig bool `yaml:"disablePodSecurityPolicy,omitempty"`
+	DisablePodSecurityPolicyConfig *bool `yaml:"disablePodSecurityPolicy,omitempty"`
 	//   description: |
 	//     Configure the API server admission plugins.
 	//   examples:
@@ -1467,8 +1471,8 @@ type ProxyConfig struct {
 	//   description: |
 	//     Disable kube-proxy deployment on cluster bootstrap.
 	//   examples:
-	//     - value: false
-	Disabled bool `yaml:"disabled,omitempty"`
+	//     - value: pointer.To(false)
+	Disabled *bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     The container image used in the kube-proxy manifest.
 	//   examples:
@@ -1601,7 +1605,7 @@ type ExternalCloudProviderConfig struct {
 	//     - yes
 	//     - false
 	//     - no
-	ExternalEnabled bool `yaml:"enabled,omitempty"`
+	ExternalEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
 	//     A list of urls that point to additional manifests for an external cloud provider.
 	//     These will get automatically deployed as part of the bootstrap.
@@ -1847,13 +1851,13 @@ type Device struct {
 	//
 	//   examples:
 	//     - value: true
-	DeviceDHCP bool `yaml:"dhcp,omitempty"`
+	DeviceDHCP *bool `yaml:"dhcp,omitempty"`
 	//   description: Indicates if the interface should be ignored (skips configuration).
-	DeviceIgnore bool `yaml:"ignore,omitempty"`
+	DeviceIgnore *bool `yaml:"ignore,omitempty"`
 	//   description: |
 	//     Indicates if the interface is a dummy interface.
 	//     `dummy` is used to specify that this interface should be a virtual-only, dummy interface.
-	DeviceDummy bool `yaml:"dummy,omitempty"`
+	DeviceDummy *bool `yaml:"dummy,omitempty"`
 	//   description: |
 	//     DHCP specific options.
 	//     `dhcp` *must* be set to true for these to take effect.
@@ -2055,7 +2059,7 @@ type Bond struct {
 // STP contains the various options for configuring the STP properties of a bridge interface.
 type STP struct {
 	//   description: Whether Spanning Tree Protocol (STP) is enabled.
-	STPEnabled *bool `yaml:"enabled"`
+	STPEnabled *bool `yaml:"enabled,omitempty"`
 }
 
 // Bridge contains the various options for configuring a bridge interface.
@@ -2077,7 +2081,7 @@ type Vlan struct {
 	//   description: A list of routes associated with the VLAN.
 	VlanRoutes []*Route `yaml:"routes"`
 	//   description: Indicates if DHCP should be used.
-	VlanDHCP bool `yaml:"dhcp"`
+	VlanDHCP *bool `yaml:"dhcp,omitempty"`
 	//   description: The VLAN's ID.
 	VlanID uint16 `yaml:"vlanId"`
 	//   description: The VLAN's MTU.
@@ -2157,7 +2161,7 @@ type RegistryTLSConfig struct {
 	TLSCA Base64Bytes `yaml:"ca,omitempty"`
 	//   description: |
 	//     Skip TLS server certificate verification (not recommended).
-	TLSInsecureSkipVerify bool `yaml:"insecureSkipVerify,omitempty"`
+	TLSInsecureSkipVerify *bool `yaml:"insecureSkipVerify,omitempty"`
 }
 
 // SystemDiskEncryptionConfig specifies system disk partitions encryption settings.
@@ -2219,13 +2223,13 @@ type NetworkKubeSpan struct {
 	// description: |
 	//   Enable the KubeSpan feature.
 	//   Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
-	KubeSpanEnabled bool `yaml:"enabled"`
+	KubeSpanEnabled *bool `yaml:"enabled,omitempty"`
 	// description: |
 	//   Skip sending traffic via KubeSpan if the peer connection state is not up.
 	//   This provides configurable choice between connectivity and security: either traffic is always
 	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
 	//   to the peer if Wireguard connection can't be established.
-	KubeSpanAllowDownPeerBypass bool `yaml:"allowDownPeerBypass,omitempty"`
+	KubeSpanAllowDownPeerBypass *bool `yaml:"allowDownPeerBypass,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.
@@ -2245,7 +2249,7 @@ type ClusterDiscoveryConfig struct {
 	// description: |
 	//   Enable the cluster membership discovery feature.
 	//   Cluster discovery is based on individual registries which are configured under the registries field.
-	DiscoveryEnabled bool `yaml:"enabled"`
+	DiscoveryEnabled *bool `yaml:"enabled,omitempty"`
 	// description: |
 	//   Configure registries used for cluster member discovery.
 	DiscoveryRegistries DiscoveryRegistriesConfig `yaml:"registries"`
@@ -2266,14 +2270,14 @@ type DiscoveryRegistriesConfig struct {
 type RegistryKubernetesConfig struct {
 	// description: |
 	//   Disable Kubernetes discovery registry.
-	RegistryDisabled bool `yaml:"disabled,omitempty"`
+	RegistryDisabled *bool `yaml:"disabled,omitempty"`
 }
 
 // RegistryServiceConfig struct configures Kubernetes discovery registry.
 type RegistryServiceConfig struct {
 	// description: |
 	//   Disable external service discovery registry.
-	RegistryDisabled bool `yaml:"disabled,omitempty"`
+	RegistryDisabled *bool `yaml:"disabled,omitempty"`
 	// description: |
 	//   External service endpoint.
 	// examples:

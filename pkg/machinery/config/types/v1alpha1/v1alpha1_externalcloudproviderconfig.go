@@ -6,7 +6,7 @@ package v1alpha1
 
 // Enabled implements the config.ExternalCloudProvider interface.
 func (ecp *ExternalCloudProviderConfig) Enabled() bool {
-	return ecp.ExternalEnabled
+	return ecp.ExternalEnabled != nil && *ecp.ExternalEnabled
 }
 
 // ManifestURLs implements the config.ExternalCloudProvider interface.

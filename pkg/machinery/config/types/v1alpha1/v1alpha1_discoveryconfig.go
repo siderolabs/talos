@@ -10,12 +10,12 @@ import (
 )
 
 // Enabled implements the config.ClusterDiscovery interface.
-func (c ClusterDiscoveryConfig) Enabled() bool {
-	return c.DiscoveryEnabled
+func (c *ClusterDiscoveryConfig) Enabled() bool {
+	return c.DiscoveryEnabled != nil && *c.DiscoveryEnabled
 }
 
 // Registries implements the config.ClusterDiscovery interface.
-func (c ClusterDiscoveryConfig) Registries() config.DiscoveryRegistries {
+func (c *ClusterDiscoveryConfig) Registries() config.DiscoveryRegistries {
 	return c.DiscoveryRegistries
 }
 
@@ -31,12 +31,12 @@ func (c DiscoveryRegistriesConfig) Service() config.ServiceRegistry {
 
 // Enabled implements the config.KubernetesRegistry interface.
 func (c RegistryKubernetesConfig) Enabled() bool {
-	return !c.RegistryDisabled
+	return c.RegistryDisabled == nil || !*c.RegistryDisabled
 }
 
 // Enabled implements the config.ServiceRegistry interface.
 func (c RegistryServiceConfig) Enabled() bool {
-	return !c.RegistryDisabled
+	return c.RegistryDisabled == nil || !*c.RegistryDisabled
 }
 
 // Endpoint implements the config.ServiceRegistry interface.

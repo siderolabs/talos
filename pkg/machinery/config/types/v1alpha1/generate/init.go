@@ -18,8 +18,8 @@ import (
 func initUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
-		ConfigDebug:   in.Debug,
-		ConfigPersist: in.Persist,
+		ConfigDebug:   pointer.To(in.Debug),
+		ConfigPersist: pointer.To(in.Persist),
 	}
 
 	networkConfig := &v1alpha1.NetworkConfig{}
@@ -42,7 +42,8 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.InstallDisk,
 			InstallImage:           in.InstallImage,
-			InstallBootloader:      true,
+			InstallBootloader:      pointer.To(true),
+			InstallWipe:            pointer.To(false),
 			InstallExtraKernelArgs: in.InstallExtraKernelArgs,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
@@ -104,10 +105,9 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			LocalAPIServerPort: in.LocalAPIServerPort,
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
-			CertSANs:                       certSANs,
-			ContainerImage:                 emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
-			DisablePodSecurityPolicyConfig: !in.VersionContract.PodSecurityPolicyEnabled(),
-			AdmissionControlConfig:         admissionControlConfig,
+			CertSANs:               certSANs,
+			ContainerImage:         emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
+			AdmissionControlConfig: admissionControlConfig,
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
 			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),
@@ -134,10 +134,20 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
 		ExtraManifests:                []string{},
 		ClusterInlineManifests:        v1alpha1.ClusterInlineManifests{},
-		ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
-			DiscoveryEnabled: in.DiscoveryEnabled,
-		},
-		AllowSchedulingOnMasters: in.AllowSchedulingOnMasters,
+	}
+
+	if in.AllowSchedulingOnMasters {
+		cluster.AllowSchedulingOnMasters = pointer.To(in.AllowSchedulingOnMasters)
+	}
+
+	if in.DiscoveryEnabled {
+		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
+			DiscoveryEnabled: pointer.To(in.DiscoveryEnabled),
+		}
+	}
+
+	if !in.VersionContract.PodSecurityPolicyEnabled() {
+		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
 	}
 
 	config.MachineConfig = machine
