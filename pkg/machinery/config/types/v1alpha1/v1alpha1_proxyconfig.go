@@ -12,7 +12,7 @@ import (
 
 // Enabled implements the config.Proxy interface.
 func (p *ProxyConfig) Enabled() bool {
-	return !p.Disabled
+	return p.Disabled == nil || !*p.Disabled
 }
 
 // Image implements the config.Proxy interface.

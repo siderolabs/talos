@@ -40,7 +40,7 @@ func (a *APIServerConfig) Env() Env {
 
 // DisablePodSecurityPolicy implements the config.APIServer interface.
 func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
-	return a.DisablePodSecurityPolicyConfig
+	return a.DisablePodSecurityPolicyConfig == nil || *a.DisablePodSecurityPolicyConfig
 }
 
 // AdmissionControl implements the config.APIServer interface.

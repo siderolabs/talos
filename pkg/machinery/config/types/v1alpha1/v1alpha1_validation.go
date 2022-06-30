@@ -350,7 +350,7 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 
 // Validate validates external cloud provider configuration.
 func (ecp *ExternalCloudProviderConfig) Validate() error {
-	if !ecp.ExternalEnabled && (len(ecp.ExternalManifests) != 0) {
+	if !ecp.Enabled() && (len(ecp.ExternalManifests) != 0) {
 		return fmt.Errorf("external cloud provider is disabled, but manifests are provided")
 	}
 
@@ -388,10 +388,12 @@ func (manifests ClusterInlineManifests) Validate() error {
 }
 
 // Validate the discovery config.
-func (c ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
+//
+//nolint:gocyclo
+func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 	var result *multierror.Error
 
-	if !c.Enabled() {
+	if c == nil || !c.Enabled() {
 		return nil
 	}
 
@@ -434,7 +436,7 @@ func ValidateNetworkDevices(d *Device, pairedInterfaces map[string]string, check
 		return nil, fmt.Errorf("empty device")
 	}
 
-	if d.DeviceIgnore {
+	if d.Ignore() {
 		return nil, result.ErrorOrNil()
 	}
 
@@ -683,7 +685,7 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]str
 	var warnings []string
 
 	if _, bonded := bondedInterfaces[d.Interface()]; bonded {
-		if d.DeviceDHCP || d.DeviceCIDR != "" || len(d.DeviceAddresses) > 0 || d.DeviceVIPConfig != nil {
+		if d.DHCP() || d.DeviceCIDR != "" || len(d.DeviceAddresses) > 0 || d.DeviceVIPConfig != nil {
 			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded interface shouldn't have any addressing methods configured"))
 		}
 	}
@@ -764,11 +766,13 @@ func CheckDeviceRoutes(d *Device, _ map[string]string) ([]string, error) {
 func (k *KubeletConfig) Validate() ([]string, error) {
 	var result *multierror.Error
 
-	for _, cidr := range k.KubeletNodeIP.KubeletNodeIPValidSubnets {
-		cidr = strings.TrimPrefix(cidr, "!")
+	if k.KubeletNodeIP != nil {
+		for _, cidr := range k.KubeletNodeIP.KubeletNodeIPValidSubnets {
+			cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, err := talosnet.ParseCIDR(cidr); err != nil {
-			result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
+			if _, err := talosnet.ParseCIDR(cidr); err != nil {
+				result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
+			}
 		}
 	}
 

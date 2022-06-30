@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 
@@ -104,7 +105,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					},
 				},
 				ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-					ExternalEnabled: true,
+					ExternalEnabled: pointer.To(true),
 				},
 				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 					DNSDomain: "service.svc",

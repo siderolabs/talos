@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"go.uber.org/zap"
@@ -164,7 +165,7 @@ func (suite *SyncSuite) TestReconcileSyncDisabled() {
 			ConfigVersion: "v1alpha1",
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineTime: &v1alpha1.TimeConfig{
-					TimeDisabled: true,
+					TimeDisabled: pointer.To(true),
 				},
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{},
@@ -357,7 +358,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	_, err = suite.state.UpdateWithConflicts(
 		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
 			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
-				TimeDisabled: true,
+				TimeDisabled: pointer.To(true),
 			}
 
 			return nil

@@ -225,7 +225,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 							DeviceMTU:       9001,
 						},
 						{
-							DeviceIgnore:    true,
+							DeviceIgnore:    pointer.To(true),
 							DeviceInterface: "eth2",
 							DeviceAddresses: []string{"192.168.0.24/28"},
 						},
@@ -266,7 +266,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						},
 						{
 							DeviceInterface: "dummy0",
-							DeviceDummy:     true,
+							DeviceDummy:     pointer.To(true),
 						},
 						{
 							DeviceInterface: "wireguard0",

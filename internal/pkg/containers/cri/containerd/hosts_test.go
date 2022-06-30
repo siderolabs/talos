@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/talos-systems/crypto/x509"
@@ -32,7 +33,7 @@ func TestGenerateHosts(t *testing.T) {
 					RegistryIdentityToken: "token",
 				},
 				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: true,
+					TLSInsecureSkipVerify: pointer.To(true),
 					TLSCA:                 []byte("cacert"),
 					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
 						Crt: []byte("clientcert"),
@@ -42,7 +43,7 @@ func TestGenerateHosts(t *testing.T) {
 			},
 			"registry-2.docker.io": {
 				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: true,
+					TLSInsecureSkipVerify: pointer.To(true),
 				},
 			},
 		},

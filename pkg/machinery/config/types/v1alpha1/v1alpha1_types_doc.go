@@ -7,6 +7,8 @@
 package v1alpha1
 
 import (
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -1127,7 +1129,7 @@ func init() {
 	ProxyConfigDoc.Fields[0].Description = "Disable kube-proxy deployment on cluster bootstrap."
 	ProxyConfigDoc.Fields[0].Comments[encoder.LineComment] = "Disable kube-proxy deployment on cluster bootstrap."
 
-	ProxyConfigDoc.Fields[0].AddExample("", false)
+	ProxyConfigDoc.Fields[0].AddExample("", pointer.To(false))
 	ProxyConfigDoc.Fields[1].Name = "image"
 	ProxyConfigDoc.Fields[1].Type = "string"
 	ProxyConfigDoc.Fields[1].Note = ""

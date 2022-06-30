@@ -19,8 +19,8 @@ import (
 func workerUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
-		ConfigDebug:   in.Debug,
-		ConfigPersist: in.Persist,
+		ConfigDebug:   pointer.To(in.Debug),
+		ConfigPersist: pointer.To(in.Persist),
 	}
 
 	networkConfig := &v1alpha1.NetworkConfig{}
@@ -43,7 +43,7 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.InstallDisk,
 			InstallImage:           in.InstallImage,
-			InstallBootloader:      true,
+			InstallBootloader:      pointer.To(true),
 			InstallExtraKernelArgs: in.InstallExtraKernelArgs,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
@@ -79,9 +79,12 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 			ServiceSubnet: in.ServiceNet,
 			CNI:           in.CNIConfig,
 		},
-		ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
-			DiscoveryEnabled: in.DiscoveryEnabled,
-		},
+	}
+
+	if in.DiscoveryEnabled {
+		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
+			DiscoveryEnabled: pointer.To(in.DiscoveryEnabled),
+		}
 	}
 
 	config.MachineConfig = machine

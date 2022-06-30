@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -199,7 +200,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: true,
+						ExternalEnabled: pointer.To(true),
 						ExternalManifests: []string{
 							"https://www.example.com/manifest1.yaml",
 							"https://www.example.com/manifest2.yaml",
@@ -222,7 +223,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: true,
+						ExternalEnabled: pointer.To(true),
 					},
 				},
 			},
@@ -281,7 +282,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: true,
+						ExternalEnabled: pointer.To(true),
 						ExternalManifests: []string{
 							"/manifest.yaml",
 						},
@@ -627,7 +628,7 @@ func TestValidate(t *testing.T) {
 							},
 							{
 								DeviceInterface: "eth0",
-								DeviceDHCP:      true,
+								DeviceDHCP:      pointer.To(true),
 							},
 							{
 								DeviceInterface: "eth1",
@@ -882,8 +883,8 @@ func TestValidate(t *testing.T) {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
 					MachineNetwork: &v1alpha1.NetworkConfig{
-						NetworkKubeSpan: v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: true,
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
 						},
 					},
 				},
@@ -914,8 +915,8 @@ func TestValidate(t *testing.T) {
 							endpointURL,
 						},
 					},
-					ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: true,
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
 						DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{
 							RegistryService: v1alpha1.RegistryServiceConfig{
 								RegistryEndpoint: "foo",
@@ -939,8 +940,8 @@ func TestValidate(t *testing.T) {
 							endpointURL,
 						},
 					},
-					ClusterDiscoveryConfig: v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: true,
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
 					},
 				},
 			},
@@ -993,7 +994,7 @@ func TestValidate(t *testing.T) {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
 					MachineKubelet: &v1alpha1.KubeletConfig{
-						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
+						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
 								"10.0.0.0/8",
 								"!10.0.0.3/32",
@@ -1019,7 +1020,7 @@ func TestValidate(t *testing.T) {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
 					MachineKubelet: &v1alpha1.KubeletConfig{
-						KubeletNodeIP: v1alpha1.KubeletNodeIPConfig{
+						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
 								"10.0.0.0.3",
 								"[fd00::169:254:2:53]:344",

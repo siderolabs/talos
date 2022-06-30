@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/crypto/x509"
 
@@ -66,7 +67,7 @@ func (suite *ConfigSuite) TestGenerateRegistriesConfig() {
 					RegistryIdentityToken: "token",
 				},
 				RegistryTLS: &v1alpha1.RegistryTLSConfig{
-					TLSInsecureSkipVerify: true,
+					TLSInsecureSkipVerify: pointer.To(true),
 					TLSCA:                 []byte("cacert"),
 					TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
 						Crt: []byte("clientcert"),
