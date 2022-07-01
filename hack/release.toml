@@ -33,7 +33,7 @@ spec:
               - eth1
 ```
 
-See [documentation](https://www.talos.dev/v1.1/reference/configuration/#bridge) for more details.
+See [documentation](https://www.talos.dev/v1.2/reference/configuration/#bridge) for more details.
 """
 
     [notes.updates]

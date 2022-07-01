@@ -2060,7 +2060,7 @@ type STP struct {
 
 // Bridge contains the various options for configuring a bridge interface.
 type Bridge struct {
-	//   description: The interfaces that make up the bond.
+	//   description: The interfaces that make up the bridge.
 	BridgedInterfaces []string `yaml:"interfaces"`
 	//   description: |
 	//     A bridge option.

@@ -181,7 +181,7 @@ network:
 
           # # Bridge specific options.
           # bridge:
-          #     # The interfaces that make up the bond.
+          #     # The interfaces that make up the bridge.
           #     interfaces:
           #         - eth0
           #         - eth1
@@ -816,7 +816,7 @@ interfaces:
 
       # # Bridge specific options.
       # bridge:
-      #     # The interfaces that make up the bond.
+      #     # The interfaces that make up the bridge.
       #     interfaces:
       #         - eth0
       #         - eth1
@@ -917,7 +917,7 @@ interfaces:
 
       # # Bridge specific options.
       # bridge:
-      #     # The interfaces that make up the bond.
+      #     # The interfaces that make up the bridge.
       #     interfaces:
       #         - eth0
       #         - eth1
@@ -1893,7 +1893,7 @@ Appears in:
 
   # # Bridge specific options.
   # bridge:
-  #     # The interfaces that make up the bond.
+  #     # The interfaces that make up the bridge.
   #     interfaces:
   #         - eth0
   #         - eth1
@@ -1977,7 +1977,7 @@ bond:
 {{< /highlight >}}</details> | |
 |`bridge` |<a href="#bridge">Bridge</a> |Bridge specific options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 bridge:
-    # The interfaces that make up the bond.
+    # The interfaces that make up the bridge.
     interfaces:
         - eth0
         - eth1
@@ -2252,7 +2252,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-# The interfaces that make up the bond.
+# The interfaces that make up the bridge.
 interfaces:
     - eth0
     - eth1
@@ -2264,7 +2264,7 @@ stp:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`interfaces` |[]string |The interfaces that make up the bond.  | |
+|`interfaces` |[]string |The interfaces that make up the bridge.  | |
 |`stp` |<a href="#stp">STP</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
 
 
