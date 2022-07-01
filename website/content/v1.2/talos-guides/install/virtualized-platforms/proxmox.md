@@ -1,7 +1,7 @@
 ---
 title: Proxmox
 description: "Creating Talos Kubernetes cluster using Proxmox."
-aliases: 
+aliases:
   - ../../../virtualized-platforms/proxmox
 ---
 
@@ -86,8 +86,18 @@ Keep the defaults in the "Hard Disk" tab as well, only changing the size if desi
 
 In the "CPU" section, give at least 2 cores to the VM:
 
-> Note: As of Talos v1.0 it will be unable to boot on the default Processor Type "kvm64".
-> Talos v1.0 requires the x86-64-v2 microarchitecture, which you may be able to provide by setting Processor Type to "host".
+> Note: As of Talos v1.0 (which requires the x86-64-v2 microarchitecture), booting
+> with the default Processor Type `kvm64` will not work.
+> You can enable the required
+> CPU features after creating the VM by adding the following line in the corresponding
+> `/etc/pve/qemu-server/<vmid>.conf` file:
+>
+> ```text
+> args: -cpu kvm64,+cx16,+lahf_lm,+popcnt,+sse3,+ssse3,+sse4.1,+sse4.2
+> ```
+>
+> Alternatively, you can set the Processor Type to `host` if your Proxmox host supports
+> these CPU features, this however prevents using live VM migration.
 
 <img src="/images/proxmox-guide/edit-cpu.png" width="500px">
 
