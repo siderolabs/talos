@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/go-smbios/smbios"
 
 	hardwarectrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
+	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 )
 
@@ -122,6 +123,20 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 			),
 		)
 	}
+}
+
+func (suite *SystemInfoSuite) TestPopulateSystemInformationIsDisabledInContainerMode() {
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&hardwarectrl.SystemInfoController{
+				V1Alpha1Mode: runtimetalos.ModeContainer,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Assert().NoError(retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(suite.assertNoResource(*hardware.NewSystemInformation("systeminformation").Metadata())))
 }
 
 func TestSystemInfoSyncSuite(t *testing.T) {

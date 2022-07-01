@@ -109,7 +109,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			EtcPath:    "/etc",
 			ShadowPath: constants.SystemEtcPath,
 		},
-		&hardware.SystemInfoController{},
+		&hardware.SystemInfoController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},

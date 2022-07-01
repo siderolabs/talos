@@ -15,13 +15,15 @@ import (
 	"go.uber.org/zap"
 
 	hwadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/hardware"
+	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	pkgSMBIOS "github.com/talos-systems/talos/internal/pkg/smbios"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 )
 
 // SystemInfoController populates CPU information of the underlying hardware.
 type SystemInfoController struct {
-	SMBIOS *smbios.SMBIOS
+	V1Alpha1Mode runtimetalos.Mode
+	SMBIOS       *smbios.SMBIOS
 }
 
 // Name implements controller.Controller interface.
@@ -62,48 +64,51 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 	case <-r.EventCh():
 	}
 
-	// controller runs only once
-	if ctrl.SMBIOS == nil {
-		s, err := pkgSMBIOS.GetSMBIOSInfo()
-		if err != nil {
-			return err
+	if ctrl.V1Alpha1Mode != runtimetalos.ModeContainer {
+
+		// controller runs only once
+		if ctrl.SMBIOS == nil {
+			s, err := pkgSMBIOS.GetSMBIOSInfo()
+			if err != nil {
+				return err
+			}
+
+			ctrl.SMBIOS = s
 		}
 
-		ctrl.SMBIOS = s
-	}
-
-	const systemInfoID = "systeminformation"
-	if err := r.Modify(ctx, hardware.NewSystemInformation(systemInfoID), func(res resource.Resource) error {
-		hwadapter.SystemInformation(res.(*hardware.SystemInformation)).Update(&ctrl.SMBIOS.SystemInformation)
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("error updating objects: %w", err)
-	}
-
-	for _, p := range ctrl.SMBIOS.ProcessorInformation {
-		// replaces `CPU 0` with `CPU-0`
-		id := strings.ReplaceAll(p.SocketDesignation, " ", "-")
-
-		if err := r.Modify(ctx, hardware.NewProcessorInfo(id), func(res resource.Resource) error {
-			hwadapter.Processor(res.(*hardware.Processor)).Update(&p)
+		const systemInfoID = "systeminformation"
+		if err := r.Modify(ctx, hardware.NewSystemInformation(systemInfoID), func(res resource.Resource) error {
+			hwadapter.SystemInformation(res.(*hardware.SystemInformation)).Update(&ctrl.SMBIOS.SystemInformation)
 
 			return nil
 		}); err != nil {
 			return fmt.Errorf("error updating objects: %w", err)
 		}
-	}
 
-	for _, m := range ctrl.SMBIOS.MemoryDevices {
-		// replaces `SIMM 0` with `SIMM-0`
-		id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
+		for _, p := range ctrl.SMBIOS.ProcessorInformation {
+			// replaces `CPU 0` with `CPU-0`
+			id := strings.ReplaceAll(p.SocketDesignation, " ", "-")
 
-		if err := r.Modify(ctx, hardware.NewMemoryModuleInfo(id), func(res resource.Resource) error {
-			hwadapter.MemoryModule(res.(*hardware.MemoryModule)).Update(&m)
+			if err := r.Modify(ctx, hardware.NewProcessorInfo(id), func(res resource.Resource) error {
+				hwadapter.Processor(res.(*hardware.Processor)).Update(&p)
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating objects: %w", err)
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error updating objects: %w", err)
+			}
+		}
+
+		for _, m := range ctrl.SMBIOS.MemoryDevices {
+			// replaces `SIMM 0` with `SIMM-0`
+			id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
+
+			if err := r.Modify(ctx, hardware.NewMemoryModuleInfo(id), func(res resource.Resource) error {
+				hwadapter.MemoryModule(res.(*hardware.MemoryModule)).Update(&m)
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error updating objects: %w", err)
+			}
 		}
 	}
 
