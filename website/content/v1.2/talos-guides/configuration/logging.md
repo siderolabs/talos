@@ -118,6 +118,9 @@ Sample message:
 }
 ```
 
+> `extraKernelArgs` in the machine configuration are only applied on Talos upgrades, not just by applying the config.
+> (Upgrading to the same version is fine).
+
 ### Filebeat example
 
 To forward logs to other Log collection services, one way to do this is sending
