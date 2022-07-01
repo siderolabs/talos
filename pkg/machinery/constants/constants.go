@@ -80,6 +80,9 @@ const (
 	// KernelParamNetworkInterfaceIgnore is the kernel parameter for specifying network interfaces which should be ignored by talos.
 	KernelParamNetworkInterfaceIgnore = "talos.network.interface.ignore"
 
+	// KernelParamVlan is the kernel parameter for specifying vlan for the interface.
+	KernelParamVlan = "vlan"
+
 	// KernelParamBonding is the kernel parameter for specifying bonded network interfaces.
 	KernelParamBonding = "bond"
 

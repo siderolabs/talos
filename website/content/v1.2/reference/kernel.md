@@ -68,6 +68,23 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
   This will create a bond interface named `bond1` with `eth3` and `eth4` as slaves and set the bond mode to `802.3ad`, the transmit hash policy to `layer2+3` and bond interface MTU to 1450.
 
+#### `vlan`
+
+  The interface vlan configuration.
+
+  Full documentation is available in the [Dracut kernel docs](https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html).
+
+  Talos will use the `vlan=` kernel parameter if supplied to set the initial vlan configuration.
+  This parameter is useful in environments where the switch ports are VLAN tagged with no native VLAN.
+
+  Only one vlan can be configured at this stage.
+
+  An example of a vlan configuration including static ip configuration:
+
+  `vlan=eth0.100:eth0 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth0.100:::::`
+
+  This will create a vlan interface named `eth0.100` with `eth0` as the underlying interface and set the vlan id to 100 with static IP 172.20.0.2/24 and 172.20.0.1 as default gateway.
+
 #### `panic`
 
   The amount of time to wait after a panic before a reboot is issued.

@@ -5,6 +5,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sort"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -253,6 +255,75 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			}
 			SetBondSlave(&slaveLinkSpec, ordered.MakePair(bondName, idx))
 			linkSpecSpecs = append(linkSpecSpecs, slaveLinkSpec)
+		}
+	}
+	// dracut vlan=<vlanname>:<phydevice>
+	vlanSettings := cmdline.Get(constants.KernelParamVlan).First()
+
+	if vlanSettings != nil {
+		fields := strings.SplitN(*vlanSettings, ":", 2)
+
+		vlanName := fields[0]
+		phyDevice := fields[1]
+		vlanID, err := func(name string) (uint16, error) {
+			numStart := len(name)
+
+			for i := numStart - 1; i >= 0; i-- {
+				if name[i] >= '0' && name[i] <= '9' {
+					numStart = i
+
+					continue
+				}
+
+				break
+			}
+
+			vlanNumberString := vlanName[numStart:]
+
+			vlanNumber, err := strconv.Atoi(vlanNumberString)
+			if err != nil || vlanNumberString == "" {
+				return 0, errors.New("unable to parse vlan")
+			}
+
+			return uint16(vlanNumber), nil
+		}(vlanName)
+		if err != nil {
+			return settings, err
+		}
+
+		linkSpecUpdated := false
+
+		for i, linkSpec := range linkSpecSpecs {
+			if linkSpec.Name == vlanName {
+				linkSpecSpecs[i].VLAN = network.VLANSpec{
+					VID:      vlanID,
+					Protocol: nethelpers.VLANProtocol8021Q,
+				}
+
+				linkSpecSpecs[i].Kind = network.LinkKindVLAN
+				linkSpecSpecs[i].ParentName = phyDevice
+				linkSpecSpecs[i].Logical = true
+				linkSpecUpdated = true
+
+				break
+			}
+		}
+
+		if !linkSpecUpdated {
+			vlanLinkSpec := network.LinkSpecSpec{
+				Name:        vlanName,
+				Logical:     true,
+				Up:          true,
+				Kind:        network.LinkKindVLAN,
+				ParentName:  phyDevice,
+				ConfigLayer: network.ConfigCmdline,
+				VLAN: network.VLANSpec{
+					VID:      vlanID,
+					Protocol: nethelpers.VLANProtocol8021Q,
+				},
+			}
+
+			linkSpecSpecs = append(linkSpecSpecs, vlanLinkSpec)
 		}
 	}
 

@@ -311,6 +311,49 @@ func (suite *CmdlineSuite) TestParse() {
 
 			expectedError: "unknown bond option: mod",
 		},
+		{
+			name:    "vlan configuration",
+			cmdline: "vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::",
+			expectedSettings: network.CmdlineNetworking{
+				Address:  netaddr.MustParseIPPrefix("172.20.0.2/24"),
+				Gateway:  netaddr.MustParseIP("172.20.0.1"),
+				LinkName: "eth1.5",
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1.5",
+						Logical:     true,
+						Up:          true,
+						Kind:        netconfig.LinkKindVLAN,
+						ParentName:  "eth1",
+						ConfigLayer: netconfig.ConfigCmdline,
+						VLAN: netconfig.VLANSpec{
+							VID:      5,
+							Protocol: nethelpers.VLANProtocol8021Q,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "vlan configuration without ip configuration",
+			cmdline: "vlan=eth1.5:eth1",
+			expectedSettings: network.CmdlineNetworking{
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1.5",
+						Logical:     true,
+						Up:          true,
+						Kind:        netconfig.LinkKindVLAN,
+						ParentName:  "eth1",
+						ConfigLayer: netconfig.ConfigCmdline,
+						VLAN: netconfig.VLANSpec{
+							VID:      5,
+							Protocol: nethelpers.VLANProtocol8021Q,
+						},
+					},
+				},
+			},
+		},
 	} {
 		test := test
 
