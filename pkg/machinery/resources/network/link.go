@@ -80,6 +80,16 @@ type WireguardPeer struct {
 	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs"`
 }
 
+// ID Returns the VID for type VLANSpec.
+func (vlan VLANSpec) ID() uint16 {
+	return vlan.VID
+}
+
+// MTU Returns MTU=0 for type VLANSpec.
+func (vlan VLANSpec) MTU() uint32 {
+	return 0
+}
+
 // Equal checks two WireguardPeer structs for equality.
 //
 // `spec` is considered to be the result of getting current Wireguard configuration,

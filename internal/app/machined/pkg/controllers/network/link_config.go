@@ -356,9 +356,15 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		}
 
 		for _, vlan := range device.Vlans() {
-			vlanSpec := vlanLink(device.Interface(), vlan)
+			vlanName := fmt.Sprintf("%s.%d", device.Interface(), vlan.ID())
 
-			linkMap[vlanSpec.Name] = &vlanSpec
+			linkMap[vlanName] = &network.LinkSpecSpec{
+				Name:        device.Interface(),
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
+
+			vlanLink(linkMap[vlanName], device.Interface(), vlan)
 		}
 	}
 
@@ -389,20 +395,22 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })
 }
 
-func vlanLink(linkName string, vlan talosconfig.Vlan) network.LinkSpecSpec {
-	return network.LinkSpecSpec{
-		Name:       fmt.Sprintf("%s.%d", linkName, vlan.ID()),
-		Logical:    true,
-		Up:         true,
-		MTU:        vlan.MTU(),
-		Kind:       network.LinkKindVLAN,
-		Type:       nethelpers.LinkEther,
-		ParentName: linkName,
-		VLAN: network.VLANSpec{
-			VID:      vlan.ID(),
-			Protocol: nethelpers.VLANProtocol8021Q,
-		},
-		ConfigLayer: network.ConfigMachineConfiguration,
+type vlaner interface {
+	ID() uint16
+	MTU() uint32
+}
+
+func vlanLink(link *network.LinkSpecSpec, linkName string, vlan vlaner) {
+	link.Name = fmt.Sprintf("%s.%d", linkName, vlan.ID())
+	link.Logical = true
+	link.Up = true
+	link.MTU = vlan.MTU()
+	link.Kind = network.LinkKindVLAN
+	link.Type = nethelpers.LinkEther
+	link.ParentName = linkName
+	link.VLAN = network.VLANSpec{
+		VID:      vlan.ID(),
+		Protocol: nethelpers.VLANProtocol8021Q,
 	}
 }
 

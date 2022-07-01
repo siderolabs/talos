@@ -5,6 +5,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sort"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -253,6 +255,57 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			}
 			SetBondSlave(&slaveLinkSpec, ordered.MakePair(bondName, idx))
 			linkSpecSpecs = append(linkSpecSpecs, slaveLinkSpec)
+		}
+	}
+	// dracut vlan=<vlanname>:<phydevice>
+	vlanSettings := cmdline.Get(constants.KernelParamVlan).First()
+	if vlanSettings != nil {
+		vlanName, phyDevice, ok := strings.Cut(*vlanSettings, ":")
+		if !ok {
+			return settings, fmt.Errorf("malformed vlan commandline argument: %s", *vlanSettings)
+		}
+
+		numStart := strings.LastIndexFunc(vlanName, func(c rune) bool { return c >= '0' && c <= '9' })
+		if numStart == -1 {
+			return settings, fmt.Errorf("malformed vlan commandline argument: %s", *vlanSettings)
+		}
+
+		vlanNumberString := vlanName[numStart:]
+		vlanID, err := strconv.Atoi(vlanNumberString)
+
+		if err != nil || vlanNumberString == "" {
+			return settings, errors.New("unable to parse vlan")
+		}
+
+		vlanSpec := network.VLANSpec{
+			VID:      uint16(vlanID),
+			Protocol: nethelpers.VLANProtocol8021Q,
+		}
+
+		vlanName = fmt.Sprintf("%s.%d", phyDevice, vlanID)
+
+		linkSpecUpdated := false
+
+		for i, linkSpec := range linkSpecSpecs {
+			if linkSpec.Name == vlanName {
+				vlanLink(&linkSpecSpecs[i], phyDevice, vlanSpec)
+
+				linkSpecUpdated = true
+
+				break
+			}
+		}
+
+		if !linkSpecUpdated {
+			linkSpec := network.LinkSpecSpec{
+				Name:        vlanName,
+				Up:          true,
+				ConfigLayer: network.ConfigCmdline,
+			}
+
+			vlanLink(&linkSpec, phyDevice, vlanSpec)
+
+			linkSpecSpecs = append(linkSpecSpecs, linkSpec)
 		}
 	}
 

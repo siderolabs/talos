@@ -36,6 +36,19 @@ spec:
 See [documentation](https://www.talos.dev/v1.2/reference/configuration/#bridge) for more details.
 """
 
+    [notes.network-vlan-cmdline]
+        title = "VLAN support in cmdline arguments"
+        description = """\
+Talos now supports dracut-style `vlan` kernel argument to allow
+installing Talos Linux in networks where ports are not tagged
+with a default VLAN:
+
+```
+vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
+```
+
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\
