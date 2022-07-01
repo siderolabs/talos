@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
+	"github.com/talos-systems/talos/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 

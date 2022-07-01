@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/talos-systems/talos/internal/pkg/kubeconfig"
+	"github.com/talos-systems/talos/pkg/kubeconfig"
 )
 
 func TestMerger(t *testing.T) {
