@@ -15,13 +15,15 @@ import (
 	"go.uber.org/zap"
 
 	hwadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/hardware"
+	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	pkgSMBIOS "github.com/talos-systems/talos/internal/pkg/smbios"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 )
 
 // SystemInfoController populates CPU information of the underlying hardware.
 type SystemInfoController struct {
-	SMBIOS *smbios.SMBIOS
+	V1Alpha1Mode runtimetalos.Mode
+	SMBIOS       *smbios.SMBIOS
 }
 
 // Name implements controller.Controller interface.
@@ -62,6 +64,10 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 	case <-r.EventCh():
 	}
 
+	// smbios info is not available inside container, so skip the controller
+	if ctrl.V1Alpha1Mode == runtimetalos.ModeContainer {
+		return nil
+	}
 	// controller runs only once
 	if ctrl.SMBIOS == nil {
 		s, err := pkgSMBIOS.GetSMBIOSInfo()
