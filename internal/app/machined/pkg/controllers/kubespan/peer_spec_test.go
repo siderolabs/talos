@@ -208,8 +208,8 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 		MachineType: machine.TypeWorker,
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "Zr5ewpUm2Ywo1c+/59WFKIBjZ3c/nVbIWsT5elbjwCU=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.128/28"), netaddr.MustParseIPPrefix("192.168.3.0/24")},
+			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"),
+			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.2.0/23"), netaddr.MustParseIPPrefix("192.168.3.0/24")},
 			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
 		},
 	}
@@ -218,18 +218,37 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, r))
 	}
 
-	// affiliate2 shouldn't be rendered as a peer, as its AdditionalAddresses overlap with affiliate1 addresses
+	// affiliate2 should be rendered as a peer, but with reduced address as its AdditionalAddresses overlap with affiliate1 addresses
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResourceIDs(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined),
 			[]resource.ID{
 				affiliate1.TypedSpec().KubeSpan.PublicKey,
+				affiliate2.TypedSpec().KubeSpan.PublicKey,
 			},
 		),
 	))
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(
-			resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate2.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
+		suite.assertResource(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate1.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
+			func(res resource.Resource) error {
+				spec := res.(*kubespan.PeerSpec).TypedSpec()
+
+				suite.Assert().Equal(`["10.244.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
+
+				return nil
+			},
+		),
+	))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, affiliate2.TypedSpec().KubeSpan.PublicKey, resource.VersionUndefined),
+			func(res resource.Resource) error {
+				spec := res.(*kubespan.PeerSpec).TypedSpec()
+
+				suite.Assert().Equal(`["10.244.2.0/24" "192.168.3.0/24" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e1/128"]`, fmt.Sprintf("%q", spec.AllowedIPs))
+
+				return nil
+			},
 		),
 	))
 }

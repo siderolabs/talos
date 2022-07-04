@@ -130,10 +130,27 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 					for otherPublicKey, otherIPSet := range peerIPSets {
 						if otherIPSet.Overlaps(ipSet) {
-							logger.Warn("peer address overlap", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
-								zap.Strings("ignored_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
+							logger.Warn("peer address overlap", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
+								zap.Strings("this_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
 
-							continue affiliateLoop
+							// exclude overlapping IPs from the ipSet
+							var bldr netaddr.IPSetBuilder
+
+							// ipSet = ipSet & ~otherIPSet
+							bldr.AddSet(otherIPSet)
+							bldr.Complement()
+							bldr.Intersect(ipSet)
+
+							ipSet, err = bldr.IPSet()
+							if err != nil {
+								logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
+
+								continue affiliateLoop
+							}
+
+							if len(ipSet.Ranges()) == 0 {
+								logger.Warn("conflict resolution removed all ranges", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
+							}
 						}
 					}
 
