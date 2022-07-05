@@ -128,7 +128,7 @@ func (i *Input) GetAPIServerSANs() []string {
 
 // Certs holds the base64 encoded keys and certificates.
 type Certs struct {
-	Admin             *x509.PEMEncodedCertificateAndKey `json:"Admin,omitempty"`
+	Admin             *x509.PEMEncodedCertificateAndKey `json:"Admin,omitempty" yaml:",omitempty"`
 	Etcd              *x509.PEMEncodedCertificateAndKey `json:"Etcd"`
 	K8s               *x509.PEMEncodedCertificateAndKey `json:"K8s"`
 	K8sAggregator     *x509.PEMEncodedCertificateAndKey `json:"K8sAggregator"`
@@ -191,7 +191,7 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 	c.Time = t
 }
 
-// NewSecretsBundle creates secrets bundle generating all secrets.
+// NewSecretsBundle creates secrets bundle generating all secrets or reading from the input options if provided.
 //
 //nolint:gocyclo
 func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
@@ -201,6 +201,11 @@ func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 		if err := opt(&options); err != nil {
 			return nil, err
 		}
+	}
+
+	// if secrets bundle is provided via gen options, just return it
+	if options.Secrets != nil {
+		return options.Secrets, nil
 	}
 
 	var (

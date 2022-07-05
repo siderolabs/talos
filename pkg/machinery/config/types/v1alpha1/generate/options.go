@@ -5,7 +5,10 @@
 package generate
 
 import (
+	"io/ioutil"
+
 	"github.com/siderolabs/go-pointer"
+	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
@@ -238,6 +241,29 @@ func WithSysctls(params map[string]string) GenOption {
 	}
 }
 
+// WithSecrets reads secrets from a provided file.
+func WithSecrets(file string) GenOption {
+	return func(o *GenOptions) error {
+		yamlBytes, err := ioutil.ReadFile(file)
+		if err != nil {
+			return err
+		}
+
+		var secrets SecretsBundle
+
+		err = yaml.Unmarshal(yamlBytes, &secrets)
+		if err != nil {
+			return err
+		}
+
+		secrets.Clock = NewClock()
+
+		o.Secrets = &secrets
+
+		return nil
+	}
+}
+
 // GenOptions describes generate parameters.
 type GenOptions struct {
 	EndpointList               []string
@@ -260,6 +286,7 @@ type GenOptions struct {
 	Roles                      role.Set
 	DiscoveryEnabled           *bool
 	LocalAPIServerPort         int
+	Secrets                    *SecretsBundle
 }
 
 // DefaultGenOptions returns default options.
