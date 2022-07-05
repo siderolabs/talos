@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package mgmt
+package gen
 
 import (
 	"fmt"
@@ -15,9 +15,8 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	talosnet "github.com/talos-systems/net"
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/talos-systems/talos/pkg/images"
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -48,6 +47,7 @@ var genConfigCmdFlags struct {
 	withDocs                bool
 	withClusterDiscovery    bool
 	withKubeSpan            bool
+	withSecrets             string
 }
 
 // genConfigCmd represents the `gen config` command.
@@ -60,33 +60,9 @@ this is the port that the API server binds to on every control plane node. For a
 setup, usually involving a load balancer, use the IP and port of the load balancer.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Validate url input to ensure it has https:// scheme before we attempt to gen
-		u, err := url.Parse(args[1])
+		err := validateClusterEndpoint(args[1])
 		if err != nil {
-			if !strings.Contains(args[1], "/") {
-				// not a URL, could be just host:port
-				u = &url.URL{
-					Host: args[1],
-				}
-			} else {
-				return fmt.Errorf("failed to parse the cluster endpoint URL: %w", err)
-			}
-		}
-
-		if u.Scheme == "" {
-			if u.Port() == "" {
-				return fmt.Errorf("no scheme and port specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
-			}
-
-			return fmt.Errorf("no scheme specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
-		}
-
-		if u.Scheme != "https" {
-			return fmt.Errorf("the control plane endpoint URL should have scheme https://\ntry: %q", fixControlPlaneEndpoint(u))
-		}
-
-		if err = talosnet.ValidateEndpointURI(args[1]); err != nil {
-			return fmt.Errorf("error validating the cluster endpoint URL: %w", err)
+			return err
 		}
 
 		switch genConfigCmdFlags.configVersion {
@@ -114,10 +90,10 @@ func fixControlPlaneEndpoint(u *url.URL) *url.URL {
 	return u
 }
 
-// GenV1Alpha1Config generates the Talos config bundle
+// V1Alpha1Config generates the Talos config bundle
 //
-// GenV1Alpha1Config is useful for integration with external tooling options.
-func GenV1Alpha1Config(genOptions []generate.GenOption,
+// V1Alpha1Config is useful for integration with external tooling options.
+func V1Alpha1Config(genOptions []generate.GenOption,
 	clusterName string,
 	endpoint string,
 	kubernetesVersion string,
@@ -216,6 +192,10 @@ func writeV1Alpha1Config(args []string) error {
 		)
 	}
 
+	if genConfigCmdFlags.withSecrets != "" {
+		genOptions = append(genOptions, generate.WithSecrets(genConfigCmdFlags.withSecrets))
+	}
+
 	genOptions = append(genOptions,
 		generate.WithInstallDisk(genConfigCmdFlags.installDisk),
 		generate.WithInstallImage(genConfigCmdFlags.installImage),
@@ -234,7 +214,7 @@ func writeV1Alpha1Config(args []string) error {
 		commentsFlags |= encoder.CommentsExamples
 	}
 
-	configBundle, err := GenV1Alpha1Config(
+	configBundle, err := V1Alpha1Config(
 		genOptions,
 		args[0],
 		args[1],
@@ -266,6 +246,39 @@ func writeV1Alpha1Config(args []string) error {
 	return nil
 }
 
+func validateClusterEndpoint(endpoint string) error {
+	// Validate url input to ensure it has https:// scheme before we attempt to gen
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		if !strings.Contains(endpoint, "/") {
+			// not a URL, could be just host:port
+			u = &url.URL{
+				Host: endpoint,
+			}
+		} else {
+			return fmt.Errorf("failed to parse the cluster endpoint URL: %w", err)
+		}
+	}
+
+	if u.Scheme == "" {
+		if u.Port() == "" {
+			return fmt.Errorf("no scheme and port specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+		}
+
+		return fmt.Errorf("no scheme specified for the cluster endpoint URL\ntry: %q", fixControlPlaneEndpoint(u))
+	}
+
+	if u.Scheme != "https" {
+		return fmt.Errorf("the control plane endpoint URL should have scheme https://\ntry: %q", fixControlPlaneEndpoint(u))
+	}
+
+	if err = talosnet.ValidateEndpointURI(endpoint); err != nil {
+		return fmt.Errorf("error validating the cluster endpoint URL: %w", err)
+	}
+
+	return nil
+}
+
 func init() {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the image used to perform an installation")
@@ -284,6 +297,7 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.withSecrets, "with-secrets", "", "use a secrets file generated using 'gen secrets'")
 
-	gen.Cmd.AddCommand(genConfigCmd)
+	Cmd.AddCommand(genConfigCmd)
 }

@@ -1108,6 +1108,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --with-docs                                renders all machine configs adding the documentation for each field (default true)
       --with-examples                            renders all machine configs with the commented examples (default true)
       --with-kubespan                            enable KubeSpan feature
+      --with-secrets string                      use a secrets file generated using 'gen secrets'
 ```
 
 ### Options inherited from parent commands
@@ -1241,6 +1242,35 @@ talosctl gen keypair [flags]
 
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 
+## talosctl gen secrets
+
+Generates a secrets bundle file which can later be used to generate a config
+
+```
+talosctl gen secrets [flags]
+```
+
+### Options
+
+```
+  -h, --help                   help for secrets
+  -o, --output-file string     path of the output file (default "secrets.yaml")
+      --talos-version string   the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+
 ## talosctl gen
 
 Generate CAs, certificates, and private keys
@@ -1269,6 +1299,7 @@ Generate CAs, certificates, and private keys
 * [talosctl gen csr](#talosctl-gen-csr)	 - Generates a CSR using an Ed25519 private key
 * [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
 * [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
+* [talosctl gen secrets](#talosctl-gen-secrets)	 - Generates a secrets bundle file which can later be used to generate a config
 
 ## talosctl get
 
