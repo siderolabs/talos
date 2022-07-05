@@ -9,11 +9,15 @@ package cli
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"regexp"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 )
 
 // GenSuite verifies dmesg command.
@@ -182,6 +186,38 @@ func (suite *GenSuite) TestGenConfigPatch() {
 			}
 		})
 	}
+}
+
+// TestSecrets ...
+func (suite *GenSuite) TestSecrets() {
+	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty())
+	suite.Assert().FileExists("secrets.yaml")
+
+	suite.RunCLI([]string{"gen", "secrets", "--output-file", "/tmp/secrets2.yaml"}, base.StdoutEmpty())
+	suite.Assert().FileExists("/tmp/secrets2.yaml")
+
+	suite.RunCLI([]string{"gen", "secrets", "-o", "secrets3.yaml", "--talos-version", "v0.8"}, base.StdoutEmpty())
+	suite.Assert().FileExists("secrets3.yaml")
+}
+
+// TestConfigWithSecrets tests the gen config command with secrets provided.
+func (suite *GenSuite) TestConfigWithSecrets() {
+	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty())
+	suite.Assert().FileExists("secrets.yaml")
+
+	secretsYaml, err := ioutil.ReadFile("secrets.yaml")
+	suite.Assert().NoError(err)
+
+	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--with-secrets", "secrets.yaml"})
+
+	config, err := configloader.NewFromFile("controlplane.yaml")
+	suite.Assert().NoError(err)
+
+	configSecretsBundle := generate.NewSecretsBundleFromConfig(generate.NewClock(), config)
+	configSecretsBundleBytes, err := yaml.Marshal(configSecretsBundle)
+
+	suite.Assert().NoError(err)
+	suite.Assert().YAMLEq(string(secretsYaml), string(configSecretsBundleBytes))
 }
 
 func init() {

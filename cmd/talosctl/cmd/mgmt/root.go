@@ -14,6 +14,11 @@ import (
 // Commands is a list of commands published by the package.
 var Commands []*cobra.Command
 
+// GenV1Alpha1Config generates the Talos config bundle
+//
+// Kept with this name in this package for backwards-compatibility.
+var GenV1Alpha1Config = gen.V1Alpha1Config
+
 func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)
 }
