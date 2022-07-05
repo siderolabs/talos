@@ -54,7 +54,11 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 		return err
 	}
 
-	if err = cmdline.AppendAll(opts.ExtraKernelArgs, procfs.WithOverwriteArgs("console")); err != nil {
+	if err = cmdline.AppendAll(
+		opts.ExtraKernelArgs,
+		procfs.WithOverwriteArgs("console"),
+		procfs.WithOverwriteArgs(constants.KernelParamPlatform),
+	); err != nil {
 		return err
 	}
 
