@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/time/rate"
 
-	"github.com/talos-systems/talos/internal/pkg/circular"
+	circular2 "github.com/talos-systems/talos/pkg/circular"
 )
 
 type CircularSuite struct {
@@ -25,7 +25,7 @@ type CircularSuite struct {
 }
 
 func (suite *CircularSuite) TestWrites() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(100000))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(100000))
 	suite.Require().NoError(err)
 
 	n, err := buf.Write(nil)
@@ -63,7 +63,7 @@ func (suite *CircularSuite) TestWrites() {
 }
 
 func (suite *CircularSuite) TestStreamingReadWriter() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536))
 	suite.Require().NoError(err)
 
 	r := buf.GetStreamingReader()
@@ -118,7 +118,7 @@ func (suite *CircularSuite) TestStreamingReadWriter() {
 	go func() {
 		_, err = r.Read(make([]byte, 1))
 
-		suite.Assert().Equal(err, circular.ErrClosed)
+		suite.Assert().Equal(err, circular2.ErrClosed)
 
 		close(s)
 	}()
@@ -131,16 +131,16 @@ func (suite *CircularSuite) TestStreamingReadWriter() {
 	<-s
 
 	_, err = r.Read(nil)
-	suite.Require().Equal(circular.ErrClosed, err)
+	suite.Require().Equal(circular2.ErrClosed, err)
 }
 
 func (suite *CircularSuite) TestStreamingMultipleReaders() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536))
 	suite.Require().NoError(err)
 
 	n := 5
 
-	readers := make([]*circular.StreamingReader, n)
+	readers := make([]*circular2.StreamingReader, n)
 
 	for i := 0; i < n; i++ {
 		readers[i] = buf.GetStreamingReader()
@@ -197,7 +197,7 @@ func (suite *CircularSuite) TestStreamingMultipleReaders() {
 }
 
 func (suite *CircularSuite) TestStreamingLateAndIdleReaders() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536), circular.WithSafetyGap(256))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536), circular2.WithSafetyGap(256))
 	suite.Require().NoError(err)
 
 	idleR := buf.GetStreamingReader()
@@ -222,7 +222,7 @@ func (suite *CircularSuite) TestStreamingLateAndIdleReaders() {
 	}()
 
 	actual, err := ioutil.ReadAll(lateR)
-	suite.Require().Equal(circular.ErrClosed, err)
+	suite.Require().Equal(circular2.ErrClosed, err)
 	suite.Require().Equal(65536-256, len(actual))
 
 	suite.Require().Equal(data[size-65536+256:], actual)
@@ -234,14 +234,14 @@ func (suite *CircularSuite) TestStreamingLateAndIdleReaders() {
 	}()
 
 	actual, err = ioutil.ReadAll(idleR)
-	suite.Require().Equal(circular.ErrClosed, err)
+	suite.Require().Equal(circular2.ErrClosed, err)
 	suite.Require().Equal(65536, len(actual))
 
 	suite.Require().Equal(data[size-65536:], actual)
 }
 
 func (suite *CircularSuite) TestStreamingSeek() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536), circular.WithSafetyGap(256))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536), circular2.WithSafetyGap(256))
 	suite.Require().NoError(err)
 
 	_, err = buf.Write(bytes.Repeat([]byte{0xff}, 512))
@@ -295,11 +295,11 @@ func (suite *CircularSuite) TestStreamingSeek() {
 	suite.Assert().EqualValues(2048, off)
 
 	_, err = r.Seek(-100, io.SeekStart)
-	suite.Require().Equal(circular.ErrSeekBeforeStart, err)
+	suite.Require().Equal(circular2.ErrSeekBeforeStart, err)
 }
 
 func (suite *CircularSuite) TestRegularReaderEmpty() {
-	buf, err := circular.NewBuffer()
+	buf, err := circular2.NewBuffer()
 	suite.Require().NoError(err)
 
 	n, err := buf.GetReader().Read(nil)
@@ -308,7 +308,7 @@ func (suite *CircularSuite) TestRegularReaderEmpty() {
 }
 
 func (suite *CircularSuite) TestRegularReader() {
-	buf, err := circular.NewBuffer()
+	buf, err := circular2.NewBuffer()
 	suite.Require().NoError(err)
 
 	_, err = buf.Write(bytes.Repeat([]byte{0xff}, 512))
@@ -325,7 +325,7 @@ func (suite *CircularSuite) TestRegularReader() {
 }
 
 func (suite *CircularSuite) TestRegularReaderOutOfSync() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536), circular.WithSafetyGap(256))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536), circular2.WithSafetyGap(256))
 	suite.Require().NoError(err)
 
 	_, err = buf.Write(bytes.Repeat([]byte{0xff}, 512))
@@ -337,11 +337,11 @@ func (suite *CircularSuite) TestRegularReaderOutOfSync() {
 	suite.Require().NoError(err)
 
 	_, err = r.Read(nil)
-	suite.Require().Equal(err, circular.ErrOutOfSync)
+	suite.Require().Equal(err, circular2.ErrOutOfSync)
 }
 
 func (suite *CircularSuite) TestRegularReaderFull() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(4096), circular.WithSafetyGap(256))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(4096), circular2.WithSafetyGap(256))
 	suite.Require().NoError(err)
 
 	_, err = buf.Write(bytes.Repeat([]byte{0xff}, 6146))
@@ -359,11 +359,11 @@ func (suite *CircularSuite) TestRegularReaderFull() {
 	suite.Require().NoError(r.Close())
 
 	_, err = r.Read(nil)
-	suite.Require().Equal(err, circular.ErrClosed)
+	suite.Require().Equal(err, circular2.ErrClosed)
 }
 
 func (suite *CircularSuite) TestRegularSeek() {
-	buf, err := circular.NewBuffer(circular.WithInitialCapacity(2048), circular.WithMaxCapacity(65536), circular.WithSafetyGap(256))
+	buf, err := circular2.NewBuffer(circular2.WithInitialCapacity(2048), circular2.WithMaxCapacity(65536), circular2.WithSafetyGap(256))
 	suite.Require().NoError(err)
 
 	_, err = buf.Write(bytes.Repeat([]byte{0xff}, 512))
@@ -413,10 +413,10 @@ func (suite *CircularSuite) TestRegularSeek() {
 	suite.Assert().EqualValues(0, off)
 
 	_, err = r.Seek(-100, io.SeekStart)
-	suite.Require().Equal(circular.ErrSeekBeforeStart, err)
+	suite.Require().Equal(circular2.ErrSeekBeforeStart, err)
 
 	_, err = r.Read(nil)
-	suite.Require().Equal(circular.ErrOutOfSync, err)
+	suite.Require().Equal(circular2.ErrOutOfSync, err)
 }
 
 func TestCircularSuite(t *testing.T) {

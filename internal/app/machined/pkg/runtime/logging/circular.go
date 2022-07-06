@@ -18,7 +18,7 @@ import (
 	"github.com/talos-systems/go-debug"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/circular"
+	"github.com/talos-systems/talos/pkg/circular"
 	"github.com/talos-systems/talos/pkg/tail"
 )
 
