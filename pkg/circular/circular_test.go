@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/time/rate"
 
-	"github.com/talos-systems/talos/internal/pkg/circular"
+	"github.com/talos-systems/talos/pkg/circular"
 )
 
 type CircularSuite struct {
