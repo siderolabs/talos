@@ -44,6 +44,7 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
@@ -399,7 +400,8 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 
 			// we "allow" a failure here since we want to fallthrough and attempt to add the etcd member regardless of
 			// whether we can print our IPs
-			currentAddresses, addrErr := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined))
+			currentAddresses, addrErr := r.State().V1Alpha2().Resources().Get(ctx,
+				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
 			if addrErr != nil {
 				log.Printf("error getting node addresses: %s", addrErr.Error())
 			} else {

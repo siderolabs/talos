@@ -17,8 +17,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
-// NewCommonOptions set common certificate options.
-func NewCommonOptions() ([]x509.Option, error) {
+// buildOptions set common certificate options.
+func buildOptions(autoSANs, includeLocalhost bool) ([]x509.Option, error) {
 	ips, err := net.IPAddrs()
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
@@ -26,9 +26,11 @@ func NewCommonOptions() ([]x509.Option, error) {
 
 	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
 
-	ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
-	if net.IsIPv6(ips...) {
-		ips = append(ips, stdlibnet.ParseIP("::1"))
+	if includeLocalhost {
+		ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
+		if net.IsIPv6(ips...) {
+			ips = append(ips, stdlibnet.ParseIP("::1"))
+		}
 	}
 
 	hostname, err := os.Hostname()
@@ -41,22 +43,31 @@ func NewCommonOptions() ([]x509.Option, error) {
 		return nil, fmt.Errorf("failed to get host DNS names: %w", err)
 	}
 
-	dnsNames = append(dnsNames, "localhost")
+	if includeLocalhost {
+		dnsNames = append(dnsNames, "localhost")
+	}
 
-	return []x509.Option{
-		x509.CommonName(hostname),
-		x509.DNSNames(dnsNames),
-		x509.IPAddresses(ips),
+	result := []x509.Option{
 		x509.NotAfter(time.Now().Add(87600 * time.Hour)),
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature | stdlibx509.KeyUsageKeyEncipherment),
-	}, nil
+	}
+
+	if autoSANs {
+		result = append(result,
+			x509.CommonName(hostname),
+			x509.DNSNames(dnsNames),
+			x509.IPAddresses(ips),
+		)
+	}
+
+	return result, nil
 }
 
 // GeneratePeerCert generates etcd peer certificate and key from etcd CA.
 //
 //nolint:dupl
 func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+	opts, err := buildOptions(true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -81,11 +92,11 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 	return x509.NewCertificateAndKeyFromKeyPair(keyPair), nil
 }
 
-// GenerateCert generates etcd certificate and key from etcd CA.
+// GenerateServerCert generates server etcd certificate and key from etcd CA.
 //
 //nolint:dupl
-func GenerateCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+func GenerateServerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts, err := buildOptions(true, true)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +123,7 @@ func GenerateCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCer
 
 // GenerateClientCert generates client certificate and key from etcd CA.
 func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey, commonName string) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := NewCommonOptions()
+	opts, err := buildOptions(false, false)
 	if err != nil {
 		return nil, err
 	}

@@ -130,7 +130,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCerts *secrets.EtcdCertsSpec) error {
 	var err error
 
-	etcdCerts.Etcd, err = etcd.GenerateCert(etcdRoot.EtcdCA)
+	etcdCerts.Etcd, err = etcd.GenerateServerCert(etcdRoot.EtcdCA)
 	if err != nil {
 		return fmt.Errorf("error generating etcd client certs: %w", err)
 	}
