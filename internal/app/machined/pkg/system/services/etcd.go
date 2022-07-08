@@ -337,7 +337,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 		return nil, 0, fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
-	client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.State().V1Alpha2().Resources())
+	client, err := etcd.NewClientFromControlPlaneIPsNoDiscovery(ctx, r.State().V1Alpha2().Resources())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -681,11 +681,11 @@ func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) erro
 	// try to promote a member until it succeeds (call might fail until the member catches up with the leader)
 	// promote member call will fail until member catches up with the master
 	return retry.Constant(10*time.Minute,
-		retry.WithUnits(10*time.Second),
+		retry.WithUnits(15*time.Second),
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
-		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.State().V1Alpha2().Resources())
+		client, err := etcd.NewClientFromControlPlaneIPsNoDiscovery(ctx, r.State().V1Alpha2().Resources())
 		if err != nil {
 			return retry.ExpectedError(err)
 		}
