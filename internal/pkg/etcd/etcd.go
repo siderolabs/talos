@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"time"
 
@@ -73,6 +74,18 @@ func NewLocalClient() (client *Client, err error) {
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
 func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (client *Client, err error) {
+	return newClientFromControlPlaneIPs(ctx, resources, "")
+}
+
+// NewClientFromControlPlaneIPsNoDiscovery initializes and returns an etcd client
+// configured to talk to all members, but ignores discovery service data.
+//
+// Note: this is a temporary workaround for etcd join issues which will be removed once backported to Talos 1.1.x.
+func NewClientFromControlPlaneIPsNoDiscovery(ctx context.Context, resources state.State) (client *Client, err error) {
+	return newClientFromControlPlaneIPs(ctx, resources, k8s.ControlPlaneDiscoveredEndpointsID)
+}
+
+func newClientFromControlPlaneIPs(ctx context.Context, resources state.State, ignoreEndpointID string) (client *Client, err error) {
 	endpointResources, err := resources.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
@@ -82,6 +95,10 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (c
 
 	// merge all endpoints into a single list
 	for _, res := range endpointResources.Items {
+		if res.Metadata().ID() == ignoreEndpointID {
+			continue
+		}
+
 		endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
 	}
 
@@ -95,6 +112,9 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (c
 	for i := 0; i < len(endpoints); i++ {
 		endpoints[i] = net.FormatAddress(endpoints[i]) + ":2379"
 	}
+
+	// Shuffle endpoints to establish random order on each call to avoid patterns based on sorted IP list.
+	rand.Shuffle(len(endpoints), func(i, j int) { endpoints[i], endpoints[j] = endpoints[j], endpoints[i] })
 
 	return NewClient(endpoints)
 }
