@@ -26,7 +26,7 @@ import (
 	"inet.af/netaddr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/component-base/config/v1alpha1"
+	v1 "k8s.io/component-base/logs/api/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -440,7 +440,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			"pid":               constants.KubeletSystemReservedPid,
 			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
 		},
-		Logging: v1alpha1.LoggingConfiguration{
+		Logging: v1.LoggingConfiguration{
 			Format: "json",
 		},
 		ShutdownGracePeriod:             metav1.Duration{Duration: constants.KubeletShutdownGracePeriod},

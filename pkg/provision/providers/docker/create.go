@@ -35,9 +35,9 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	var nodeInfo []provision.NodeInfo
 
-	fmt.Fprintln(options.LogWriter, "creating master nodes")
+	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
-	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.MasterNodes(), &options); err != nil {
+	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.ControlPlaneNodes(), &options); err != nil {
 		return nil, err
 	}
 

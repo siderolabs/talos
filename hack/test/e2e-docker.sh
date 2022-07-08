@@ -15,7 +15,7 @@ function create_cluster {
     --name="${CLUSTER_NAME}" \
     --kubernetes-version=${KUBERNETES_VERSION} \
     --image="${IMAGE}" \
-    --masters=1 \
+    --controlplanes=1 \
     --workers=1 \
     --mtu=1450 \
     --memory=2048 \

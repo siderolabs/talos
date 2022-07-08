@@ -172,8 +172,12 @@ func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	return c.AdminKubeconfigConfig
 }
 
-// ScheduleOnMasters implements the config.ClusterConfig interface.
-func (c *ClusterConfig) ScheduleOnMasters() bool {
+// ScheduleOnControlPlanes implements the config.ClusterConfig interface.
+func (c *ClusterConfig) ScheduleOnControlPlanes() bool {
+	if c.AllowSchedulingOnControlPlanes != nil {
+		return pointer.SafeDeref(c.AllowSchedulingOnControlPlanes)
+	}
+
 	return pointer.SafeDeref(c.AllowSchedulingOnMasters)
 }
 

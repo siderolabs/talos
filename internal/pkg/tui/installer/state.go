@@ -200,9 +200,9 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 				&opts.MachineConfig.KubernetesVersion,
 			),
 			components.NewItem(
-				"Allow Scheduling on Masters",
-				v1alpha1.ClusterConfigDoc.Describe("allowSchedulingOnMasters", true),
-				&opts.ClusterConfig.AllowSchedulingOnMasters,
+				"Allow Scheduling on Control Planes",
+				v1alpha1.ClusterConfigDoc.Describe("allowSchedulingOnControlPlanes", true),
+				&opts.ClusterConfig.AllowSchedulingOnControlPlanes,
 			),
 		),
 		NewPage("Network Config",

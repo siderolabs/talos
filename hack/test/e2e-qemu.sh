@@ -99,7 +99,7 @@ function create_cluster {
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version=${KUBERNETES_VERSION} \
-    --masters=3 \
+    --controlplanes=3 \
     --workers="${QEMU_WORKERS:-1}" \
     --disk=15360 \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \

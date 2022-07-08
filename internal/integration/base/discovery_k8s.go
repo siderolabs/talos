@@ -69,7 +69,7 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 			continue
 		}
 
-		if _, ok := node.Labels[constants.LabelNodeRoleMaster]; ok {
+		if _, ok := node.Labels[constants.LabelNodeRoleControlPlane]; ok {
 			masterNodes = append(masterNodes, address)
 		} else {
 			workerNodes = append(workerNodes, address)

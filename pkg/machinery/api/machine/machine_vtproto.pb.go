@@ -7673,9 +7673,9 @@ func (m *ClusterConfig) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.AllowSchedulingOnMasters {
+	if m.AllowSchedulingOnControlPlanes {
 		i--
-		if m.AllowSchedulingOnMasters {
+		if m.AllowSchedulingOnControlPlanes {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -11474,7 +11474,7 @@ func (m *ClusterConfig) SizeVT() (n int) {
 		l = m.ClusterNetwork.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.AllowSchedulingOnMasters {
+	if m.AllowSchedulingOnControlPlanes {
 		n += 2
 	}
 	if m.unknownFields != nil {
@@ -28980,7 +28980,7 @@ func (m *ClusterConfig) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllowSchedulingOnMasters", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AllowSchedulingOnControlPlanes", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -28997,7 +28997,7 @@ func (m *ClusterConfig) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.AllowSchedulingOnMasters = bool(v != 0)
+			m.AllowSchedulingOnControlPlanes = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

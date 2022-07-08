@@ -30,7 +30,7 @@ export TALOS_VERSION=v1.1
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.24.3}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.25.0-beta.0}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -113,9 +113,9 @@ function create_cluster_capi {
 
   # Verify that we have an HA controlplane
   timeout=$(($(date +%s) + ${TIMEOUT}))
-  until ${KUBECTL} get nodes -l node-role.kubernetes.io/master='' -o go-template='{{ len .items }}' | grep 3 > /dev/null; do
+  until ${KUBECTL} get nodes -l node-role.kubernetes.io/control-plane='' -o go-template='{{ len .items }}' | grep 3 > /dev/null; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
-    ${KUBECTL} get nodes -l node-role.kubernetes.io/master='' && :
+    ${KUBECTL} get nodes -l node-role.kubernetes.io/control-plane='' && :
     sleep 10
   done
 }
@@ -226,12 +226,11 @@ function run_extensions_test {
 }
 
 function run_csi_tests {
-  rm -rf "${TMP}/rook"
-  git clone --depth=1 --single-branch --branch v1.8.2 https://github.com/rook/rook.git "${TMP}/rook"
-  pushd "${TMP}/rook/deploy/examples"
-  ${KUBECTL} apply -f crds.yaml -f common.yaml -f operator.yaml
-  ${KUBECTL} apply -f cluster.yaml
-  # mark namespace as privileged for Pod Security
+  ${HELM} repo add rook-release https://charts.rook.io/release
+  ${HELM} repo update
+  ${HELM} upgrade --install --version=v1.8.2 --set=pspEnable=false --create-namespace --namespace rook-ceph rook-ceph rook-release/rook-ceph
+  ${HELM} upgrade --install --version=v1.8.2 --set=pspEnable=false --create-namespace --namespace rook-ceph rook-ceph-cluster rook-release/rook-ceph-cluster
+
   ${KUBECTL} label ns rook-ceph pod-security.kubernetes.io/enforce=privileged
   # wait for the controller to populate the status field
   sleep 30
@@ -240,7 +239,6 @@ function run_csi_tests {
   # .status.ceph is populated later only
   sleep 60
   ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
-  ${KUBECTL} create -f csi/rbd/storageclass.yaml
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
-  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass rook-ceph-block --size 10G
+  KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G
 }

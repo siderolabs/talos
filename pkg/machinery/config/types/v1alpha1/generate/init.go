@@ -145,8 +145,13 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		ClusterInlineManifests:        v1alpha1.ClusterInlineManifests{},
 	}
 
-	if in.AllowSchedulingOnMasters {
-		cluster.AllowSchedulingOnMasters = pointer.To(in.AllowSchedulingOnMasters)
+	if in.AllowSchedulingOnControlPlanes {
+		if in.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
+			cluster.AllowSchedulingOnControlPlanes = pointer.To(in.AllowSchedulingOnControlPlanes)
+		} else {
+			// backwards compatibility for Talos versions older than 1.2
+			cluster.AllowSchedulingOnMasters = pointer.To(in.AllowSchedulingOnControlPlanes) //nolint:staticcheck
+		}
 	}
 
 	if in.DiscoveryEnabled {
@@ -157,6 +162,21 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	if !in.VersionContract.PodSecurityPolicyEnabled() {
 		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
+	}
+
+	if machine.MachineRegistries.RegistryMirrors == nil {
+		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{}
+	}
+
+	if in.VersionContract.KubernetesAlternateImageRegistries() {
+		if _, ok := machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"]; !ok {
+			machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"] = &v1alpha1.RegistryMirrorConfig{
+				MirrorEndpoints: []string{
+					"https://registry.k8s.io",
+					"https://k8s.gcr.io",
+				},
+			}
+		}
 	}
 
 	config.MachineConfig = machine

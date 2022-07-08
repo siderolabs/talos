@@ -99,7 +99,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			}
 		}
 
-		options = append(options, generate.WithAllowSchedulingOnMasters(in.ClusterConfig.AllowSchedulingOnMasters))
+		options = append(options, generate.WithAllowSchedulingOnControlPlanes(in.ClusterConfig.AllowSchedulingOnControlPlanes))
 
 		var (
 			input         *generate.Input

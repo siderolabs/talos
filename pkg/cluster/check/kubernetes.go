@@ -70,7 +70,7 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 	return cluster.NodesMatch(expectedNodeInfos, actualNodeInfos)
 }
 
-// K8sFullControlPlaneAssertion checks whether all the master nodes are k8s master nodes.
+// K8sFullControlPlaneAssertion checks whether all the controlplane nodes are k8s controlplane nodes.
 //
 //nolint:gocyclo,cyclop
 func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
@@ -131,7 +131,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 	}
 
 	// NB: We run the control plane check after node readiness check in order to
-	// ensure that all control plane nodes have been labeled with the master
+	// ensure that all control plane nodes have been labeled with the controlplane
 	// label.
 
 	// daemonset check only there for pre-0.9 clusters with self-hosted control plane

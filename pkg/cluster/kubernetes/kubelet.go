@@ -37,7 +37,7 @@ func upgradeKubelet(ctx context.Context, cluster UpgradeProvider, options Upgrad
 
 	options.Log("updating kubelet to version %q", options.ToVersion)
 
-	for _, node := range append(append([]string(nil), options.masterNodes...), options.workerNodes...) {
+	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
 		if err := upgradeKubeletOnNode(ctx, cluster, options, node); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}

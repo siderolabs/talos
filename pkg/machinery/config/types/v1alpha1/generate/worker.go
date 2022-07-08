@@ -16,6 +16,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+//nolint:gocyclo
 func workerUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -93,6 +94,21 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 	if in.DiscoveryEnabled {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
 			DiscoveryEnabled: pointer.To(in.DiscoveryEnabled),
+		}
+	}
+
+	if machine.MachineRegistries.RegistryMirrors == nil {
+		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{}
+	}
+
+	if in.VersionContract.KubernetesAlternateImageRegistries() {
+		if _, ok := machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"]; !ok {
+			machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"] = &v1alpha1.RegistryMirrorConfig{
+				MirrorEndpoints: []string{
+					"https://registry.k8s.io",
+					"https://k8s.gcr.io",
+				},
+			}
 		}
 	}
 

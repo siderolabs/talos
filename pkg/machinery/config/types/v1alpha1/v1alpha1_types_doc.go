@@ -149,7 +149,7 @@ func init() {
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
-	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated."
+	MachineConfigDoc.Fields[0].Description = "Defines the role of the machine within the cluster.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated."
 	MachineConfigDoc.Fields[0].Comments[encoder.LineComment] = "Defines the role of the machine within the cluster."
 	MachineConfigDoc.Fields[0].Values = []string{
 		"controlplane",
@@ -348,7 +348,7 @@ func init() {
 			FieldName: "cluster",
 		},
 	}
-	ClusterConfigDoc.Fields = make([]encoder.Doc, 23)
+	ClusterConfigDoc.Fields = make([]encoder.Doc, 24)
 	ClusterConfigDoc.Fields[0].Name = "id"
 	ClusterConfigDoc.Fields[0].Type = "string"
 	ClusterConfigDoc.Fields[0].Note = ""
@@ -503,12 +503,12 @@ func init() {
 	ClusterConfigDoc.Fields[21].Comments[encoder.LineComment] = "Settings for admin kubeconfig generation."
 
 	ClusterConfigDoc.Fields[21].AddExample("", clusterAdminKubeconfigExample)
-	ClusterConfigDoc.Fields[22].Name = "allowSchedulingOnMasters"
-	ClusterConfigDoc.Fields[22].Type = "bool"
-	ClusterConfigDoc.Fields[22].Note = ""
-	ClusterConfigDoc.Fields[22].Description = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[22].Comments[encoder.LineComment] = "Allows running workload on master nodes."
-	ClusterConfigDoc.Fields[22].Values = []string{
+	ClusterConfigDoc.Fields[23].Name = "allowSchedulingOnControlPlanes"
+	ClusterConfigDoc.Fields[23].Type = "bool"
+	ClusterConfigDoc.Fields[23].Note = ""
+	ClusterConfigDoc.Fields[23].Description = "Allows running workload on control-plane nodes."
+	ClusterConfigDoc.Fields[23].Comments[encoder.LineComment] = "Allows running workload on control-plane nodes."
+	ClusterConfigDoc.Fields[23].Values = []string{
 		"true",
 		"yes",
 		"false",

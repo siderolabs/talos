@@ -113,7 +113,7 @@ var (
 	nameservers               []string
 	dnsDomain                 string
 	workers                   int
-	masters                   int
+	controlplanes             int
 	controlPlaneCpus          string
 	workersCpus               string
 	controlPlaneMemory        int
@@ -169,8 +169,8 @@ var createCmd = &cobra.Command{
 
 //nolint:gocyclo,cyclop
 func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
-	if masters < 1 {
-		return fmt.Errorf("number of masters can't be less than 1")
+	if controlplanes < 1 {
+		return fmt.Errorf("number of controlplanes can't be less than 1")
 	}
 
 	controlPlaneNanoCPUs, err := parseCPUShare(controlPlaneCpus)
@@ -232,7 +232,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	ips := make([][]net.IP, len(cidrs))
 
 	for j := range cidrs {
-		ips[j] = make([]net.IP, masters+workers)
+		ips[j] = make([]net.IP, controlplanes+workers)
 
 		for i := range ips[j] {
 			ips[j][i], err = talosnet.NthIPInNetwork(&cidrs[j], nodesOffset+i)
@@ -460,7 +460,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
 		if defaultInternalLB == "" {
-			// provisioner doesn't provide internal LB, so use first master node
+			// provisioner doesn't provide internal LB, so use first controlplane node
 			defaultInternalLB = ips[0][0].String()
 		}
 
@@ -486,7 +486,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			endpointList = []string{ips[0][0].String()}
 		default:
 			// use control plane nodes as endpoints, client-side load-balancing
-			for i := 0; i < masters; i++ {
+			for i := 0; i < controlplanes; i++ {
 				endpointList = append(endpointList, ips[0][i].String())
 			}
 		}
@@ -548,7 +548,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	// Wireguard configuration.
 	var wireguardConfigBundle *helpers.WireguardConfigBundle
 	if wireguardCIDR != "" {
-		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips[0], wireguardCIDR, 51111, masters)
+		wireguardConfigBundle, err = helpers.NewWireguardConfigBundle(ips[0], wireguardCIDR, 51111, controlplanes)
 		if err != nil {
 			return err
 		}
@@ -563,8 +563,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	// Add talosconfig to provision options so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
-	// Create the master nodes.
-	for i := 0; i < masters; i++ {
+	// Create the controlplane nodes.
+	for i := 0; i < controlplanes; i++ {
 		var cfg config.Provider
 
 		nodeIPs := make([]net.IP, len(cidrs))
@@ -573,7 +573,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		}
 
 		nodeReq := provision.NodeRequest{
-			Name:                fmt.Sprintf("%s-master-%d", clusterName, i+1),
+			Name:                fmt.Sprintf("%s-controlplane-%d", clusterName, i+1),
 			Type:                machine.TypeControlPlane,
 			IPs:                 nodeIPs,
 			Memory:              controlPlaneMemory,
@@ -620,7 +620,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 
 		nodeIPs := make([]net.IP, len(cidrs))
 		for j := range nodeIPs {
-			nodeIPs[j] = ips[j][masters+i-1]
+			nodeIPs[j] = ips[j][controlplanes+i-1]
 		}
 
 		if wireguardConfigBundle != nil {
@@ -877,7 +877,9 @@ func init() {
 	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")
 	createCmd.Flags().StringSliceVar(&nameservers, nameserversFlag, []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888", "2606:4700:4700::1111"}, "list of nameservers to use")
 	createCmd.Flags().IntVar(&workers, "workers", 1, "the number of workers to create")
-	createCmd.Flags().IntVar(&masters, "masters", 1, "the number of masters to create")
+	createCmd.Flags().IntVar(&controlplanes, "masters", 1, "the number of masters to create")
+	createCmd.Flags().MarkDeprecated("masters", "use --controlplanes instead") //nolint:errcheck
+	createCmd.Flags().IntVar(&controlplanes, "controlplanes", 1, "the number of controlplanes to create")
 	createCmd.Flags().StringVar(&controlPlaneCpus, "cpus", "2.0", "the share of CPUs as fraction (each control plane/VM)")
 	createCmd.Flags().StringVar(&workersCpus, "cpus-workers", "2.0", "the share of CPUs as fraction (each worker/VM)")
 	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")

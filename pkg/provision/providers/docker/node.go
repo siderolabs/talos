@@ -142,7 +142,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		containerConfig.Volumes[constants.EtcdDataPath] = struct{}{}
 
 		if nodeReq.IPs == nil {
-			return provision.NodeInfo{}, errors.New("an IP address must be provided when creating a master node")
+			return provision.NodeInfo{}, errors.New("an IP address must be provided when creating a controlplane node")
 		}
 	}
 

@@ -314,6 +314,11 @@ func (in *ClusterConfig) DeepCopyInto(out *ClusterConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AllowSchedulingOnControlPlanes != nil {
+		in, out := &in.AllowSchedulingOnControlPlanes, &out.AllowSchedulingOnControlPlanes
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

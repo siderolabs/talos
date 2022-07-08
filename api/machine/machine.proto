@@ -1026,7 +1026,7 @@ message ClusterConfig {
   string name = 1;
   ControlPlaneConfig control_plane = 2;
   ClusterNetworkConfig cluster_network = 3;
-  bool allow_scheduling_on_masters = 4;
+  bool allow_scheduling_on_control_planes = 4;
 }
 
 // GenerateConfigurationRequest describes a request to generate a new configuration

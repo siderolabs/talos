@@ -32,13 +32,13 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 
 	defer logFile.Close() //nolint:errcheck
 
-	masterIPs := slices.Map(clusterReq.Nodes.MasterNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
+	controlPlaneIPs := slices.Map(clusterReq.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
 	ports := slices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
 
 	args := []string{
 		"loadbalancer-launch",
 		"--loadbalancer-addr", clusterReq.Network.GatewayAddrs[0].String(),
-		"--loadbalancer-upstreams", strings.Join(masterIPs, ","),
+		"--loadbalancer-upstreams", strings.Join(controlPlaneIPs, ","),
 	}
 
 	if len(ports) > 0 {

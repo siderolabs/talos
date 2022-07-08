@@ -659,7 +659,7 @@ type MachineConfig struct {
 	//     **Control Plane**
 	//
 	//     Control Plane node type designates the node as a control plane member.
-	//     This means it will host etcd along with the Kubernetes master components such as API Server, Controller Manager, Scheduler.
+	//     This means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.
 	//
 	//     **Worker**
 	//
@@ -970,14 +970,18 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterAdminKubeconfigExample
 	AdminKubeconfigConfig *AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `AllowSchedulingOnControlPlanes` instead.
+	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
 	//   description: |
-	//     Allows running workload on master nodes.
+	//     Allows running workload on control-plane nodes.
 	//   values:
 	//     - true
 	//     - yes
 	//     - false
 	//     - no
-	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
+	AllowSchedulingOnControlPlanes *bool `yaml:"allowSchedulingOnControlPlanes,omitempty"`
 }
 
 // ExtraMount wraps OCI Mount specification.

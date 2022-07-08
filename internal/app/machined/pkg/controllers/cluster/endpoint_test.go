@@ -29,20 +29,20 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 
 	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.EndpointController{}))
 
-	member1 := cluster.NewMember(cluster.NamespaceName, "talos-default-master-1")
+	member1 := cluster.NewMember(cluster.NamespaceName, "talos-default-controlplane-1")
 	*member1.TypedSpec() = cluster.MemberSpec{
 		NodeID:          "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
 		Addresses:       []netaddr.IP{netaddr.MustParseIP("172.20.0.2"), netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0")},
-		Hostname:        "talos-default-master-1",
+		Hostname:        "talos-default-controlplane-1",
 		MachineType:     machine.TypeControlPlane,
 		OperatingSystem: "Talos (v1.0.0)",
 	}
 
-	member2 := cluster.NewMember(cluster.NamespaceName, "talos-default-master-2")
+	member2 := cluster.NewMember(cluster.NamespaceName, "talos-default-controlplane-2")
 	*member2.TypedSpec() = cluster.MemberSpec{
 		NodeID:          "9dwHNUViZlPlIervqX9Qo256RUhrfhgO0xBBnKcKl4F",
 		Addresses:       []netaddr.IP{netaddr.MustParseIP("172.20.0.3"), netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1")},
-		Hostname:        "talos-default-master-2",
+		Hostname:        "talos-default-controlplane-2",
 		MachineType:     machine.TypeControlPlane,
 		OperatingSystem: "Talos (v1.0.0)",
 	}

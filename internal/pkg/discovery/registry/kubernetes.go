@@ -94,12 +94,11 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	}
 
 	// Machine type is derived from node roles.
-	_, labelMaster := node.Labels[constants.LabelNodeRoleMaster]
 	_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
 
 	affiliate.MachineType = machine.TypeWorker
 
-	if labelMaster || labelControlPlane {
+	if labelControlPlane {
 		affiliate.MachineType = machine.TypeControlPlane
 	}
 

@@ -61,6 +61,15 @@ var deprecations = map[string][]string{
 		"ingresses.v1beta1.extensions",
 		"ingresses.v1beta1.networking.k8s.io",
 	},
+	"1.24->1.25": {
+		"cronjobs.v1beta1.batch",
+		"endpointslices.v1beta1.discovery.k8s.io",
+		"events.v1beta1.events.k8s.io",
+		"horizontalpodautoscalers.v2beta1.autoscaling",
+		"poddisruptionbudgets.v1beta1.policy",
+		"podsecuritypolicies.v1beta1.policy",
+		"runtimeclasses.v1beta1.node.k8s.io",
+	},
 }
 
 // UpgradeTalosManaged the Kubernetes control plane.
@@ -84,6 +93,8 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 	case "1.23->1.23":
 	case "1.23->1.24":
 	case "1.24->1.24":
+	case "1.24->1.25":
+	case "1.25->1.25":
 
 	default:
 		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
@@ -98,16 +109,16 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
 
-	options.masterNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeControlPlane)
+	options.controlPlaneNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeControlPlane)
 	if err != nil {
-		return fmt.Errorf("error fetching master nodes: %w", err)
+		return fmt.Errorf("error fetching controlplane nodes: %w", err)
 	}
 
-	if len(options.masterNodes) == 0 {
-		return fmt.Errorf("no master nodes discovered")
+	if len(options.controlPlaneNodes) == 0 {
+		return fmt.Errorf("no controlplane nodes discovered")
 	}
 
-	options.Log("discovered master nodes %q", options.masterNodes)
+	options.Log("discovered controlplane nodes %q", options.controlPlaneNodes)
 
 	if options.UpgradeKubelet {
 		options.workerNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeWorker)
@@ -147,7 +158,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {
 	options.Log("updating %q to version %q", service, options.ToVersion)
 
-	for _, node := range options.masterNodes {
+	for _, node := range options.controlPlaneNodes {
 		if err := upgradeStaticPodOnNode(ctx, cluster, options, service, node); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}

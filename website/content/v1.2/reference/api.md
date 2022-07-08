@@ -728,7 +728,7 @@ Enable this when recovering from data directory copy to skip integrity check. |
 | name | [string](#string) |  |  |
 | control_plane | [ControlPlaneConfig](#machine.ControlPlaneConfig) |  |  |
 | cluster_network | [ClusterNetworkConfig](#machine.ClusterNetworkConfig) |  |  |
-| allow_scheduling_on_masters | [bool](#bool) |  |  |
+| allow_scheduling_on_control_planes | [bool](#bool) |  |  |
 
 
 

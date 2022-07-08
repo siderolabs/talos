@@ -92,8 +92,8 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 	return
 }
 
-// MasterNodes returns subset of nodes which are Init/ControlPlane type.
-func (reqs NodeRequests) MasterNodes() (nodes []NodeRequest) {
+// ControlPlaneNodes returns subset of nodes which are Init/ControlPlane type.
+func (reqs NodeRequests) ControlPlaneNodes() (nodes []NodeRequest) {
 	for i := range reqs {
 		if reqs[i].Type == machine.TypeInit || reqs[i].Type == machine.TypeControlPlane {
 			nodes = append(nodes, reqs[i])

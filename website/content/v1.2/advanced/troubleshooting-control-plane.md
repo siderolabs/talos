@@ -200,7 +200,7 @@ and the controller runtime logs (`talosctl logs controller-runtime`).
 This is expected during initial cluster bootstrap and sometimes after a reboot:
 
 ```bash
-[   70.093289] [talos] task labelNodeAsMaster (1/1): starting
+[   70.093289] [talos] task labelNodeAsControlPlane (1/1): starting
 [   80.094038] [talos] retrying error: an error on the server ("") has prevented the request from succeeding (get nodes talos-default-master-1)
 ```
 

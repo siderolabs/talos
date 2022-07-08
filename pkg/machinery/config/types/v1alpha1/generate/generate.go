@@ -56,7 +56,7 @@ type Input struct {
 
 	// ControlplaneEndpoint is the canonical address of the kubernetes control
 	// plane.  It can be a DNS name, the IP address of a load balancer, or
-	// (default) the IP address of the first master node.  It is NOT
+	// (default) the IP address of the first controlplane node.  It is NOT
 	// multi-valued.  It may optionally specify the port.
 	ControlPlaneEndpoint string
 
@@ -90,10 +90,10 @@ type Input struct {
 	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
 	Sysctls                    map[string]string
 
-	Debug                    bool
-	Persist                  bool
-	AllowSchedulingOnMasters bool
-	DiscoveryEnabled         bool
+	Debug                          bool
+	Persist                        bool
+	AllowSchedulingOnControlPlanes bool
+	DiscoveryEnabled               bool
 }
 
 // GetAPIServerEndpoint returns the formatted host:port of the API server endpoint.
@@ -105,10 +105,10 @@ func (i *Input) GetAPIServerEndpoint(port string) string {
 	return net.JoinHostPort(i.ControlPlaneEndpoint, port)
 }
 
-// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first master IP.
+// GetControlPlaneEndpoint returns the formatted host:port of the canonical controlplane address, defaulting to the first controlplane IP.
 func (i *Input) GetControlPlaneEndpoint() string {
 	if i == nil || i.ControlPlaneEndpoint == "" {
-		panic("cannot GetControlPlaneEndpoint without any Master IPs")
+		panic("cannot GetControlPlaneEndpoint without any controlplane IPs")
 	}
 
 	return i.ControlPlaneEndpoint
@@ -636,35 +636,35 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 	}
 
 	input = &Input{
-		Certs:                      secrets.Certs,
-		VersionContract:            options.VersionContract,
-		ControlPlaneEndpoint:       endpoint,
-		LocalAPIServerPort:         options.LocalAPIServerPort,
-		PodNet:                     []string{podNet},
-		ServiceNet:                 []string{serviceNet},
-		ServiceDomain:              options.DNSDomain,
-		ClusterID:                  secrets.Cluster.ID,
-		ClusterName:                clustername,
-		ClusterSecret:              secrets.Cluster.Secret,
-		KubernetesVersion:          kubernetesVersion,
-		Secrets:                    secrets.Secrets,
-		TrustdInfo:                 secrets.TrustdInfo,
-		AdditionalSubjectAltNames:  additionalSubjectAltNames,
-		AdditionalMachineCertSANs:  additionalSubjectAltNames,
-		InstallDisk:                options.InstallDisk,
-		InstallImage:               options.InstallImage,
-		InstallExtraKernelArgs:     options.InstallExtraKernelArgs,
-		NetworkConfigOptions:       options.NetworkConfigOptions,
-		CNIConfig:                  options.CNIConfig,
-		RegistryMirrors:            options.RegistryMirrors,
-		RegistryConfig:             options.RegistryConfig,
-		Sysctls:                    options.Sysctls,
-		Debug:                      options.Debug,
-		Persist:                    options.Persist,
-		AllowSchedulingOnMasters:   options.AllowSchedulingOnMasters,
-		MachineDisks:               options.MachineDisks,
-		SystemDiskEncryptionConfig: options.SystemDiskEncryptionConfig,
-		DiscoveryEnabled:           discoveryEnabled,
+		Certs:                          secrets.Certs,
+		VersionContract:                options.VersionContract,
+		ControlPlaneEndpoint:           endpoint,
+		LocalAPIServerPort:             options.LocalAPIServerPort,
+		PodNet:                         []string{podNet},
+		ServiceNet:                     []string{serviceNet},
+		ServiceDomain:                  options.DNSDomain,
+		ClusterID:                      secrets.Cluster.ID,
+		ClusterName:                    clustername,
+		ClusterSecret:                  secrets.Cluster.Secret,
+		KubernetesVersion:              kubernetesVersion,
+		Secrets:                        secrets.Secrets,
+		TrustdInfo:                     secrets.TrustdInfo,
+		AdditionalSubjectAltNames:      additionalSubjectAltNames,
+		AdditionalMachineCertSANs:      additionalSubjectAltNames,
+		InstallDisk:                    options.InstallDisk,
+		InstallImage:                   options.InstallImage,
+		InstallExtraKernelArgs:         options.InstallExtraKernelArgs,
+		NetworkConfigOptions:           options.NetworkConfigOptions,
+		CNIConfig:                      options.CNIConfig,
+		RegistryMirrors:                options.RegistryMirrors,
+		RegistryConfig:                 options.RegistryConfig,
+		Sysctls:                        options.Sysctls,
+		Debug:                          options.Debug,
+		Persist:                        options.Persist,
+		AllowSchedulingOnControlPlanes: options.AllowSchedulingOnControlPlanes,
+		MachineDisks:                   options.MachineDisks,
+		SystemDiskEncryptionConfig:     options.SystemDiskEncryptionConfig,
+		DiscoveryEnabled:               discoveryEnabled,
 	}
 
 	return input, nil

@@ -14,10 +14,54 @@ preface = """\
 """
 
 [notes]
+
+    [notes.kubernetes]
+        title = "Kubernetes Control Plane labels and taints"
+        description = """\
+Talos now defaults to `node-role.kubernetes.io/control-plane` label/taint.
+On upgrades Talos now removes the `node-role.kubernetes.io/master` label/taint on control-plane nodes and replaces it with the `node-role.kubernetes.io/control-plane` label/taint.
+Workloads that tolerate the old taints or having node selectors with the old labels will need to be updated.
+"""
+
+    [notes.machineconfigcontrolplanescheduling]
+        title = "MachineConfig `.cluster.allowSchedulingOnMasters` deprecated"
+        description = """
+The `.cluster.allowSchedulingOnMasters` is deprecated and replaced by `.cluster.allowSchedulingOnControlPlanes`.
+The `.cluster.allowSchedulingOnMasters` will be removed in a future release of Talos.
+If both `.cluster.allowSchedulingOnMasters` and `.cluster.allowSchedulingOnControlPlanes` are set to `true`, the `.cluster.allowSchedulingOnControlPlanes` will be used.
+"""
+
+    [notes.machineconfigregistrymirrors]
+        title = "`k8s.gcr.io` mirror configuration"
+        description = """
+Talos now defaults to adding a registry mirror configuration in the machineconfig for `k8s.gcr.io` pointing to both `registry.k8s.io` and `k8s.gcr.io` unless overridden.
+This is in line with the Kubernetes 1.25 release having the new `registry.k8s.io` registry endpoint.
+
+This is only enabled by default on newly generated configurations and not on upgrades.
+This can be enabled with a machine configuration as follows:
+
+```yaml
+machine:
+  registries:
+    mirrors:
+      k8s.gcr.io:
+        endpoints:
+          - https://registry.k8s.io
+          - https://k8s.gcr.io
+```
+"""
+
+    [notes.talosctl]
+        title = "talosctl"
+        description = """\
+`--masters` flag on `talosctl cluster create` is deprecated. Use `--controlplanes` instead.
+"""
+
     [notes.api-access-from-kubernetes]
         title = "Talos API access from Kubernetes"
         description = """\
 Talos now supports access to its API from within Kubernetes. It can be configured in the machine config as below:
+
 ```yaml
 machine:
   features:
@@ -120,6 +164,7 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
 * Linux: 5.15.59
 * Flannel 0.19.1
 * containerd 1.16.7
+* Kubernetes: v1.25.0-beta.0
 
 Talos is built with Go 1.19.
 """

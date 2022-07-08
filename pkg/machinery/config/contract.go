@@ -120,3 +120,14 @@ func (contract *VersionContract) StableHostnameEnabled() bool {
 func (contract *VersionContract) KubeletDefaultRuntimeSeccompProfileEnabled() bool {
 	return contract.Greater(TalosVersion1_1)
 }
+
+// KubernetesAlternateImageRegistries returns true if alternate image registries should be enabled by default.
+// https://github.com/kubernetes/kubernetes/pull/109938
+func (contract *VersionContract) KubernetesAlternateImageRegistries() bool {
+	return contract.Greater(TalosVersion1_1)
+}
+
+// KubernetesAllowSchedulingOnControlPlanes returns true if scheduling on control planes should be enabled by default.
+func (contract *VersionContract) KubernetesAllowSchedulingOnControlPlanes() bool {
+	return contract.Greater(TalosVersion1_1)
+}

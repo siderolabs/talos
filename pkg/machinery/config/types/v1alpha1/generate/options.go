@@ -181,10 +181,10 @@ func WithUserDisks(disks []*v1alpha1.MachineDisk) GenOption {
 	}
 }
 
-// WithAllowSchedulingOnMasters specifies AllowSchedulingOnMasters flag.
-func WithAllowSchedulingOnMasters(enabled bool) GenOption {
+// WithAllowSchedulingOnControlPlanes specifies AllowSchedulingOnControlPlane flag.
+func WithAllowSchedulingOnControlPlanes(enabled bool) GenOption {
 	return func(o *GenOptions) error {
-		o.AllowSchedulingOnMasters = enabled
+		o.AllowSchedulingOnControlPlanes = enabled
 
 		return nil
 	}
@@ -266,27 +266,27 @@ func WithSecrets(file string) GenOption {
 
 // GenOptions describes generate parameters.
 type GenOptions struct {
-	EndpointList               []string
-	InstallDisk                string
-	InstallImage               string
-	InstallExtraKernelArgs     []string
-	AdditionalSubjectAltNames  []string
-	NetworkConfigOptions       []v1alpha1.NetworkConfigOption
-	CNIConfig                  *v1alpha1.CNIConfig
-	RegistryMirrors            map[string]*v1alpha1.RegistryMirrorConfig
-	RegistryConfig             map[string]*v1alpha1.RegistryConfig
-	Sysctls                    map[string]string
-	DNSDomain                  string
-	Debug                      bool
-	Persist                    bool
-	AllowSchedulingOnMasters   bool
-	MachineDisks               []*v1alpha1.MachineDisk
-	VersionContract            *config.VersionContract
-	SystemDiskEncryptionConfig *v1alpha1.SystemDiskEncryptionConfig
-	Roles                      role.Set
-	DiscoveryEnabled           *bool
-	LocalAPIServerPort         int
-	Secrets                    *SecretsBundle
+	EndpointList                   []string
+	InstallDisk                    string
+	InstallImage                   string
+	InstallExtraKernelArgs         []string
+	AdditionalSubjectAltNames      []string
+	NetworkConfigOptions           []v1alpha1.NetworkConfigOption
+	CNIConfig                      *v1alpha1.CNIConfig
+	RegistryMirrors                map[string]*v1alpha1.RegistryMirrorConfig
+	RegistryConfig                 map[string]*v1alpha1.RegistryConfig
+	Sysctls                        map[string]string
+	DNSDomain                      string
+	Debug                          bool
+	Persist                        bool
+	AllowSchedulingOnControlPlanes bool
+	MachineDisks                   []*v1alpha1.MachineDisk
+	VersionContract                *config.VersionContract
+	SystemDiskEncryptionConfig     *v1alpha1.SystemDiskEncryptionConfig
+	Roles                          role.Set
+	DiscoveryEnabled               *bool
+	LocalAPIServerPort             int
+	Secrets                        *SecretsBundle
 }
 
 // DefaultGenOptions returns default options.

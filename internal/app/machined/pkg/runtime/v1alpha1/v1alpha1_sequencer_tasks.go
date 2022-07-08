@@ -1589,8 +1589,8 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 	}, "upgrade"
 }
 
-// LabelNodeAsMaster represents the LabelNodeAsMaster task.
-func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+// LabelNodeAsControlPlane represents the LabelNodeAsControlPlane task.
+func LabelNodeAsControlPlane(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		h, err := kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
 		if err != nil {
@@ -1606,7 +1606,7 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 		}
 
 		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
-			if err = h.LabelNodeAsMaster(ctx, nodename, !r.Config().Cluster().ScheduleOnMasters()); err != nil {
+			if err = h.LabelNodeAsControlPlane(ctx, nodename, !r.Config().Cluster().ScheduleOnControlPlanes()); err != nil {
 				return retry.ExpectedError(err)
 			}
 
@@ -1614,11 +1614,11 @@ func LabelNodeAsMaster(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 		})
 
 		if err != nil {
-			return fmt.Errorf("failed to label node as master: %w", err)
+			return fmt.Errorf("failed to label node as control-plane: %w", err)
 		}
 
 		return nil
-	}, "labelNodeAsMaster"
+	}, "labelNodeAsControlPlane"
 }
 
 // UpdateBootloader represents the UpdateBootloader task.
