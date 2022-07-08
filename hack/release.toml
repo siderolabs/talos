@@ -53,6 +53,7 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
         title = "Component Updates"
         description="""\
 * Linux: 5.15.53
+* Kubernetes: v1.25.0-alpha.2
 """
 
     [notes.talos-config-kernel-param-variable-substitution]

@@ -30,7 +30,7 @@ export TALOS_VERSION=v1.1
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.24.2}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.25.0-alpha.2}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200

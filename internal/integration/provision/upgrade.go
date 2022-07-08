@@ -76,8 +76,8 @@ const (
 	stableRelease   = "v1.1.0" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.23.6" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.24.2" // constants.DefaultKubernetesVersion in the stableRelease
+	previousK8sVersion = "1.24.2"         // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.25.0-alpha.2" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 
