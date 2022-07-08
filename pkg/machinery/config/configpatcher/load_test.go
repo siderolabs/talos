@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"testing"
 
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,9 +21,15 @@ var jsonPatch []byte
 //go:embed testdata/patch.yaml
 var yamlPatch []byte
 
+//go:embed testdata/strategic.yaml
+var strategicPatch []byte
+
 func TestLoadJSON(t *testing.T) {
-	p, err := configpatcher.LoadPatch(jsonPatch)
+	raw, err := configpatcher.LoadPatch(jsonPatch)
 	require.NoError(t, err)
+
+	p, ok := raw.(jsonpatch.Patch)
+	require.True(t, ok)
 
 	assert.Len(t, p, 1)
 	assert.Equal(t, p[0].Kind(), "add")
@@ -35,8 +42,11 @@ func TestLoadJSON(t *testing.T) {
 }
 
 func TestLoadYAML(t *testing.T) {
-	p, err := configpatcher.LoadPatch(yamlPatch)
+	raw, err := configpatcher.LoadPatch(yamlPatch)
 	require.NoError(t, err)
+
+	p, ok := raw.(jsonpatch.Patch)
+	require.True(t, ok)
 
 	assert.Len(t, p, 1)
 	assert.Equal(t, p[0].Kind(), "add")
@@ -53,16 +63,49 @@ func TestLoadYAML(t *testing.T) {
 	assert.Equal(t, v, []interface{}{"a", "b", "c"})
 }
 
-func TestLoadPatches(t *testing.T) {
-	p, err := configpatcher.LoadPatches([]string{
+func TestLoadStrategic(t *testing.T) {
+	raw, err := configpatcher.LoadPatch(strategicPatch)
+	require.NoError(t, err)
+
+	p, ok := raw.(configpatcher.StrategicMergePatch)
+	require.True(t, ok)
+
+	assert.Equal(t, "foo.bar", p.Machine().Network().Hostname())
+}
+
+func TestLoadJSONPatches(t *testing.T) {
+	patchList, err := configpatcher.LoadPatches([]string{
 		"@testdata/patch.json",
 		"@testdata/patch.yaml",
 		`[{"op":"replace","path":"/some","value": []}]`,
 	})
 	require.NoError(t, err)
 
+	require.Len(t, patchList, 1)
+
+	raw := patchList[0]
+
+	p, ok := raw.(jsonpatch.Patch)
+	require.True(t, ok)
+
 	assert.Len(t, p, 3)
 	assert.Equal(t, p[0].Kind(), "add")
 	assert.Equal(t, p[1].Kind(), "add")
 	assert.Equal(t, p[2].Kind(), "replace")
+}
+
+func TestLoadMixedPatches(t *testing.T) {
+	patchList, err := configpatcher.LoadPatches([]string{
+		"@testdata/patch.json",
+		"@testdata/strategic.yaml",
+		"@testdata/patch.yaml",
+		`[{"op":"replace","path":"/some","value": []}]`,
+	})
+	require.NoError(t, err)
+
+	require.Len(t, patchList, 3)
+
+	assert.IsType(t, jsonpatch.Patch{}, patchList[0])
+	assert.IsType(t, configpatcher.StrategicMergePatch{}, patchList[1])
+	assert.IsType(t, jsonpatch.Patch{}, patchList[2])
 }

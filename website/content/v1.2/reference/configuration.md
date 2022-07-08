@@ -69,7 +69,8 @@ install:
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
+    # extensions:
+    #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -275,7 +276,8 @@ install:
     #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
     # # Allows for supplying additional system extension images to install on top of base Talos image.
-    # extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
+    # extensions:
+    #     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`files` |[]<a href="#machinefile">MachineFile</a> |<details><summary>Allows the addition of user specified files.</summary>The value of `op` can be `create`, `overwrite`, or `append`.<br />In the case of `create`, `path` must not exist.<br />In the case of `overwrite`, and `append`, `path` must be a valid file.<br />If an `op` value of `append` is used, the existing file will be appended.<br />Note that the file contents are not required to be base64 encoded.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 files:
@@ -1014,7 +1016,8 @@ wipe: false # Indicates if the installation disk should be wiped at installation
 #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 
 # # Allows for supplying additional system extension images to install on top of base Talos image.
-# extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
+# extensions:
+#     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 
@@ -1040,7 +1043,8 @@ extraKernelArgs:
 image: ghcr.io/siderolabs/installer:latest
 {{< /highlight >}}</details> | |
 |`extensions` |[]<a href="#installextensionconfig">InstallExtensionConfig</a> |Allows for supplying additional system extension images to install on top of base Talos image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extensions: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
+extensions:
+    - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
 |`bootloader` |bool |Indicates if a bootloader should be installed.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
@@ -1100,7 +1104,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0
+- image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}
 
 

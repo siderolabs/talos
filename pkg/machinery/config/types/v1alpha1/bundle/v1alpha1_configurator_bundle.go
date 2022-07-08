@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package v1alpha1
+package bundle
 
 import (
 	"fmt"
@@ -10,13 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	yaml "gopkg.in/yaml.v3"
-
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -24,9 +22,9 @@ import (
 // docgen: nodoc
 // +k8s:deepcopy-gen=false
 type ConfigBundle struct {
-	InitCfg         *Config
-	ControlPlaneCfg *Config
-	WorkerCfg       *Config
+	InitCfg         *v1alpha1.Config
+	ControlPlaneCfg *v1alpha1.Config
+	WorkerCfg       *v1alpha1.Config
 	TalosCfg        *clientconfig.Config
 }
 
@@ -93,31 +91,29 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 	return nil
 }
 
-// ApplyJSONPatch patches every config type with a patch.
-func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, patchWorker bool) error {
-	if len(patch) == 0 {
+// ApplyPatches patches every config type with a patch.
+func (c *ConfigBundle) ApplyPatches(patches []configpatcher.Patch, patchControlPlane, patchWorker bool) error {
+	if len(patches) == 0 {
 		return nil
 	}
 
-	apply := func(in *Config) (out *Config, err error) {
-		var marshaled []byte
-
-		marshaled, err = in.Bytes()
+	apply := func(in *v1alpha1.Config) (*v1alpha1.Config, error) {
+		patched, err := configpatcher.Apply(configpatcher.WithConfig(in), patches)
 		if err != nil {
 			return nil, err
 		}
 
-		var patched []byte
-
-		patched, err = configpatcher.JSON6902(marshaled, patch)
+		cfg, err := patched.Config()
 		if err != nil {
 			return nil, err
 		}
 
-		out = &Config{}
-		err = yaml.Unmarshal(patched, out)
+		out, ok := cfg.Raw().(*v1alpha1.Config)
+		if !ok {
+			return nil, fmt.Errorf("unexpected config type %T", cfg.Raw())
+		}
 
-		return out, err
+		return out, nil
 	}
 
 	var err error

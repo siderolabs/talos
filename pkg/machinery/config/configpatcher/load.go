@@ -5,19 +5,31 @@
 package configpatcher
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"gopkg.in/yaml.v3"
+
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 )
 
 type patch []map[string]interface{}
 
-// LoadPatch loads the JSON patch either from JSON or YAML.
-func LoadPatch(in []byte) (p jsonpatch.Patch, err error) {
-	var jsonErr error
+// LoadPatch loads the strategic merge patch or JSON patch (JSON/YAML for JSON patch).
+func LoadPatch(in []byte) (Patch, error) {
+	// try configloader first, it is more strict about config format
+	cfg, strategicErr := configloader.NewFromBytes(in)
+	if strategicErr == nil {
+		return StrategicMergePatch{cfg}, nil
+	}
+
+	var (
+		jsonErr error
+		p       jsonpatch.Patch
+	)
 
 	// try JSON first
 	if p, jsonErr = jsonpatch.DecodePatch(in); jsonErr == nil {
@@ -27,9 +39,15 @@ func LoadPatch(in []byte) (p jsonpatch.Patch, err error) {
 	// try YAML
 	var yamlPatch patch
 
-	if err = yaml.Unmarshal(in, &yamlPatch); err != nil {
-		// not YAML either, return JSON error
-		return p, jsonErr
+	if err := yaml.Unmarshal(in, &yamlPatch); err != nil {
+		// not YAML either, return previous error
+		// see if input looks like JSON Patch as JSON
+		if bytes.HasPrefix(bytes.TrimSpace(in), []byte("[")) {
+			return nil, jsonErr
+		}
+
+		// nope, return config loading error (assume it was strategic merge patch)
+		return nil, strategicErr
 	}
 
 	p = make(jsonpatch.Patch, 0, len(yamlPatch))
@@ -53,12 +71,12 @@ func LoadPatch(in []byte) (p jsonpatch.Patch, err error) {
 }
 
 // LoadPatches loads the JSON patch either from value literal or from a file if the patch starts with '@'.
-func LoadPatches(in []string) (jsonpatch.Patch, error) {
-	var result jsonpatch.Patch
+func LoadPatches(in []string) ([]Patch, error) {
+	var result []Patch
 
 	for _, patchString := range in {
 		var (
-			p        jsonpatch.Patch
+			p        Patch
 			contents []byte
 			err      error
 		)
@@ -79,7 +97,21 @@ func LoadPatches(in []string) (jsonpatch.Patch, error) {
 			return result, err
 		}
 
-		result = append(result, p...)
+		// merge JSON patches if they come one after another
+		_, isJSONPatch := p.(jsonpatch.Patch)
+		lastJSONPatch := false
+
+		if len(result) > 0 {
+			if _, ok := result[len(result)-1].(jsonpatch.Patch); ok {
+				lastJSONPatch = true
+			}
+		}
+
+		if isJSONPatch && lastJSONPatch {
+			result[len(result)-1] = append(result[len(result)-1].(jsonpatch.Patch), p.(jsonpatch.Patch)...)
+		} else {
+			result = append(result, p)
+		}
 	}
 
 	return result, nil

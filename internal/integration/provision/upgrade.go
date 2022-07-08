@@ -227,7 +227,7 @@ type UpgradeSuite struct {
 
 	provisioner provision.Provisioner
 
-	configBundle *v1alpha1.ConfigBundle
+	configBundle *bundle.ConfigBundle
 
 	clusterAccess        *access.Adapter
 	controlPlaneEndpoint string

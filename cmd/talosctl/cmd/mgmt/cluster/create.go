@@ -19,7 +19,6 @@ import (
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
@@ -503,28 +502,28 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		)
 	}
 
-	addConfigPatch := func(configPatches []string, configOpt func(jsonpatch.Patch) bundle.Option) error {
-		var jsonPatch jsonpatch.Patch
+	addConfigPatch := func(configPatches []string, configOpt func([]configpatcher.Patch) bundle.Option) error {
+		var patches []configpatcher.Patch
 
-		jsonPatch, err = configpatcher.LoadPatches(configPatches)
+		patches, err = configpatcher.LoadPatches(configPatches)
 		if err != nil {
 			return fmt.Errorf("error parsing config JSON patch: %w", err)
 		}
 
-		configBundleOpts = append(configBundleOpts, configOpt(jsonPatch))
+		configBundleOpts = append(configBundleOpts, configOpt(patches))
 
 		return nil
 	}
 
-	if err = addConfigPatch(configPatch, bundle.WithJSONPatch); err != nil {
+	if err = addConfigPatch(configPatch, bundle.WithPatch); err != nil {
 		return err
 	}
 
-	if err = addConfigPatch(configPatchControlPlane, bundle.WithJSONPatchControlPlane); err != nil {
+	if err = addConfigPatch(configPatchControlPlane, bundle.WithPatchControlPlane); err != nil {
 		return err
 	}
 
-	if err = addConfigPatch(configPatchWorker, bundle.WithJSONPatchWorker); err != nil {
+	if err = addConfigPatch(configPatchWorker, bundle.WithPatchWorker); err != nil {
 		return err
 	}
 

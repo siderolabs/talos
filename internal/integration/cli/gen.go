@@ -129,8 +129,8 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 		base.StderrShouldMatch(regexp.MustCompile(`\Qtry: "https://192.168.0.1:2000"`)))
 }
 
-// TestGenConfigPatch verifies that gen config --config-patch works.
-func (suite *GenSuite) TestGenConfigPatch() {
+// TestGenConfigPatchJSON6902 verifies that gen config --config-patch works with JSON patches.
+func (suite *GenSuite) TestGenConfigPatchJSON6902() {
 	patch, err := json.Marshal([]map[string]interface{}{
 		{
 			"op":    "replace",
@@ -141,6 +141,23 @@ func (suite *GenSuite) TestGenConfigPatch() {
 
 	suite.Assert().NoError(err)
 
+	suite.testGenConfigPatch(patch)
+}
+
+// TestGenConfigPatchStrategic verifies that gen config --config-patch works with strategic merge patches.
+func (suite *GenSuite) TestGenConfigPatchStrategic() {
+	patch, err := yaml.Marshal(map[string]interface{}{
+		"cluster": map[string]interface{}{
+			"clusterName": "bar",
+		},
+	})
+
+	suite.Assert().NoError(err)
+
+	suite.testGenConfigPatch(patch)
+}
+
+func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 	for _, tt := range []struct {
 		flag         string
 		shouldAffect map[string]bool
@@ -172,8 +189,7 @@ func (suite *GenSuite) TestGenConfigPatch() {
 
 			for _, configName := range []string{"controlplane.yaml", "worker.yaml"} {
 				cfg, err := configloader.NewFromFile(configName)
-
-				suite.Assert().NoError(err)
+				suite.Require().NoError(err)
 
 				switch {
 				case tt.shouldAffect[configName]:

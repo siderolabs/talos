@@ -7,6 +7,7 @@ package bundle
 import (
 	jsonpatch "github.com/evanphx/json-patch"
 
+	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 )
 
@@ -27,9 +28,9 @@ type Options struct {
 	Verbose         bool   // wheither to write any logs during generate
 	InputOptions    *InputOptions
 
-	JSONPatch             jsonpatch.Patch
-	JSONPatchControlPlane jsonpatch.Patch
-	JSONPatchWorker       jsonpatch.Patch
+	Patches             []configpatcher.Patch
+	PatchesControlPlane []configpatcher.Patch
+	PatchesWorker       []configpatcher.Patch
 }
 
 // DefaultOptions returns default options.
@@ -67,27 +68,60 @@ func WithVerbose(verbose bool) Option {
 }
 
 // WithJSONPatch allows patching every config in a bundle with a patch.
+//
+// Deprecated: use WithPatch instead.
 func WithJSONPatch(patch jsonpatch.Patch) Option {
 	return func(o *Options) error {
-		o.JSONPatch = append(o.JSONPatch, patch...)
+		o.Patches = append(o.Patches, patch)
+
+		return nil
+	}
+}
+
+// WithPatch allows patching every config in a bundle with a patch.
+func WithPatch(patch []configpatcher.Patch) Option {
+	return func(o *Options) error {
+		o.Patches = append(o.Patches, patch...)
 
 		return nil
 	}
 }
 
 // WithJSONPatchControlPlane allows patching init and controlplane config in a bundle with a patch.
+//
+// Deprecated: use WithPatchControlPlane instead.
 func WithJSONPatchControlPlane(patch jsonpatch.Patch) Option {
 	return func(o *Options) error {
-		o.JSONPatchControlPlane = append(o.JSONPatchControlPlane, patch...)
+		o.PatchesControlPlane = append(o.PatchesControlPlane, patch)
+
+		return nil
+	}
+}
+
+// WithPatchControlPlane allows patching init and controlplane config in a bundle with a patch.
+func WithPatchControlPlane(patch []configpatcher.Patch) Option {
+	return func(o *Options) error {
+		o.PatchesControlPlane = append(o.PatchesControlPlane, patch...)
 
 		return nil
 	}
 }
 
 // WithJSONPatchWorker allows patching worker config in a bundle with a patch.
+//
+// Deprecated: use WithPatchWorker instead.
 func WithJSONPatchWorker(patch jsonpatch.Patch) Option {
 	return func(o *Options) error {
-		o.JSONPatchWorker = append(o.JSONPatchWorker, patch...)
+		o.PatchesWorker = append(o.PatchesWorker, patch)
+
+		return nil
+	}
+}
+
+// WithPatchWorker allows patching worker config in a bundle with a patch.
+func WithPatchWorker(patch []configpatcher.Patch) Option {
+	return func(o *Options) error {
+		o.PatchesWorker = append(o.PatchesWorker, patch...)
 
 		return nil
 	}

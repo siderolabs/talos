@@ -499,7 +499,7 @@ metadata:
 		},
 	}
 
-	kubeletNodeIPExample = KubeletNodeIPConfig{
+	kubeletNodeIPExample = &KubeletNodeIPConfig{
 		KubeletNodeIPValidSubnets: []string{
 			"10.0.0.0/8",
 			"!10.0.0.3/32",
@@ -582,6 +582,12 @@ metadata:
 			},
 		},
 	}
+
+	installExtensionsExample = []InstallExtensionConfig{
+		{
+			ExtensionImage: "ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0",
+		},
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -604,7 +610,7 @@ type Config struct {
 	//     - yes
 	//     - false
 	//     - no
-	ConfigDebug *bool `yaml:"debug"`
+	ConfigDebug *bool `yaml:"debug,omitempty"`
 	//   description: |
 	//     Indicates whether to pull the machine config upon every boot.
 	//   values:
@@ -612,7 +618,7 @@ type Config struct {
 	//     - yes
 	//     - false
 	//     - no
-	ConfigPersist *bool `yaml:"persist"`
+	ConfigPersist *bool `yaml:"persist,omitempty"`
 	//   description: |
 	//     Provides machine specific configuration options.
 	MachineConfig *MachineConfig `yaml:"machine"`
@@ -1167,7 +1173,7 @@ type InstallConfig struct {
 	//   description: |
 	//     Allows for supplying additional system extension images to install on top of base Talos image.
 	//   examples:
-	//     - value: '"ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0"'
+	//     - value: installExtensionsExample
 	InstallExtensions []InstallExtensionConfig `yaml:"extensions,omitempty"`
 	//   description: |
 	//     Indicates if a bootloader should be installed.

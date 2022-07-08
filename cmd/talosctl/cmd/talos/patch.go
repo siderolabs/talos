@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 	yaml "gopkg.in/yaml.v3"
@@ -34,7 +33,7 @@ var patchCmdFlags struct {
 	configTryTimeout time.Duration
 }
 
-func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, client.ResourceResponse) error {
+func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, client.ResourceResponse) error {
 	return func(ctx context.Context, msg client.ResourceResponse) error {
 		if msg.Resource == nil {
 			if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
@@ -49,7 +48,12 @@ func patchFn(c *client.Client, patch jsonpatch.Patch) func(context.Context, clie
 			return err
 		}
 
-		patched, err := configpatcher.JSON6902(body, patch)
+		cfg, err := configpatcher.Apply(configpatcher.WithBytes(body), patches)
+		if err != nil {
+			return err
+		}
+
+		patched, err := cfg.Bytes()
 		if err != nil {
 			return err
 		}
@@ -99,14 +103,14 @@ var patchCmd = &cobra.Command{
 				return fmt.Errorf("either --patch or --patch-file should be defined")
 			}
 
-			patch, err := configpatcher.LoadPatches(patchCmdFlags.patch)
+			patches, err := configpatcher.LoadPatches(patchCmdFlags.patch)
 			if err != nil {
 				return err
 			}
 
 			for _, node := range Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
-				if err := helpers.ForEachResource(nodeCtx, c, patchFn(c, patch), patchCmdFlags.namespace, args...); err != nil {
+				if err := helpers.ForEachResource(nodeCtx, c, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {
 					return err
 				}
 			}

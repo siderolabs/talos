@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	talosnet "github.com/talos-systems/net"
 	"gopkg.in/yaml.v3"
@@ -100,7 +99,7 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 	configPatch []string,
 	configPatchControlPlane []string,
 	configPatchWorker []string,
-) (*v1alpha1.ConfigBundle, error) {
+) (*bundle.ConfigBundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
@@ -112,26 +111,26 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 		),
 	}
 
-	addConfigPatch := func(configPatches []string, configOpt func(jsonpatch.Patch) bundle.Option) error {
-		jsonPatch, err := configpatcher.LoadPatches(configPatches)
+	addConfigPatch := func(configPatches []string, configOpt func([]configpatcher.Patch) bundle.Option) error {
+		patches, err := configpatcher.LoadPatches(configPatches)
 		if err != nil {
 			return fmt.Errorf("error parsing config JSON patch: %w", err)
 		}
 
-		configBundleOpts = append(configBundleOpts, configOpt(jsonPatch))
+		configBundleOpts = append(configBundleOpts, configOpt(patches))
 
 		return nil
 	}
 
-	if err := addConfigPatch(configPatch, bundle.WithJSONPatch); err != nil {
+	if err := addConfigPatch(configPatch, bundle.WithPatch); err != nil {
 		return nil, err
 	}
 
-	if err := addConfigPatch(configPatchControlPlane, bundle.WithJSONPatchControlPlane); err != nil {
+	if err := addConfigPatch(configPatchControlPlane, bundle.WithPatchControlPlane); err != nil {
 		return nil, err
 	}
 
-	if err := addConfigPatch(configPatchWorker, bundle.WithJSONPatchWorker); err != nil {
+	if err := addConfigPatch(configPatchWorker, bundle.WithPatchWorker); err != nil {
 		return nil, err
 	}
 

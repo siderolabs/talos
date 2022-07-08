@@ -63,6 +63,21 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
 ```http://example.com/metadata?h=${hostname}&m=${mac}&s=${serial}&u=${uuid}```
 """
 
+    [notes.strategic-merge]
+        title = "Strategic merge machine configuration patching"
+        description="""\
+In addition to JSON (RFC6902) patches Talos now supports [strategic merge patching](https://www.talos.dev/v1.2/talos-guides/configuration/patching/).
+
+For example, machine hostname can be set with the following patch:
+
+```yaml
+machine:
+  network:
+    hostname: worker1
+```
+
+Patch format is detected automatically.
+"""
 
 [make_deps]
 
