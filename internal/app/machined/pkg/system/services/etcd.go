@@ -243,12 +243,6 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 
 //nolint:gocyclo
 func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
-	// remove legacy etcd PKI directory to handle upgrades with `--preserve` to Talos 0.12
-	// TODO: remove me in Talos 0.13
-	if err = os.RemoveAll("/etc/kubernetes/pki/etcd"); err != nil {
-		return err
-	}
-
 	if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
 		return err
 	}
@@ -580,8 +574,8 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		"listen-peer-urls":                   "https://" + net.FormatAddress(listenAddress) + ":2380",
 		"listen-client-urls":                 "https://" + net.FormatAddress(listenAddress) + ":2379",
 		"client-cert-auth":                   "true",
-		"cert-file":                          constants.KubernetesEtcdPeerCert,
-		"key-file":                           constants.KubernetesEtcdPeerKey,
+		"cert-file":                          constants.KubernetesEtcdCert,
+		"key-file":                           constants.KubernetesEtcdKey,
 		"trusted-ca-file":                    constants.KubernetesEtcdCACert,
 		"peer-client-cert-auth":              "true",
 		"peer-cert-file":                     constants.KubernetesEtcdPeerCert,
