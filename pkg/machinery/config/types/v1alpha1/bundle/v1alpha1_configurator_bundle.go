@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package v1alpha1
+package bundle
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -24,9 +25,9 @@ import (
 // docgen: nodoc
 // +k8s:deepcopy-gen=false
 type ConfigBundle struct {
-	InitCfg         *Config
-	ControlPlaneCfg *Config
-	WorkerCfg       *Config
+	InitCfg         *v1alpha1.Config
+	ControlPlaneCfg *v1alpha1.Config
+	WorkerCfg       *v1alpha1.Config
 	TalosCfg        *clientconfig.Config
 }
 
@@ -99,7 +100,7 @@ func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, 
 		return nil
 	}
 
-	apply := func(in *Config) (out *Config, err error) {
+	apply := func(in *v1alpha1.Config) (out *v1alpha1.Config, err error) {
 		var marshaled []byte
 
 		marshaled, err = in.Bytes()
@@ -114,7 +115,7 @@ func (c *ConfigBundle) ApplyJSONPatch(patch jsonpatch.Patch, patchControlPlane, 
 			return nil, err
 		}
 
-		out = &Config{}
+		out = &v1alpha1.Config{}
 		err = yaml.Unmarshal(patched, out)
 
 		return out, err

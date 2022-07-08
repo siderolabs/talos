@@ -1,0 +1,7 @@
+version: v1alpha1
+machine:
+  network:
+    hostname: hostname1
+    interfaces:
+      - interface: eth0
+        dhcp: true

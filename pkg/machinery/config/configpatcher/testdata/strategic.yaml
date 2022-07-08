@@ -1,0 +1,3 @@
+machine:
+  network:
+    hostname: foo.bar

@@ -1,0 +1,6 @@
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        vip:
+          ip: 10.3.5.6

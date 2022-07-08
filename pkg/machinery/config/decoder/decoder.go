@@ -31,10 +31,16 @@ const (
 	ManifestVersionKey = "version"
 	// ManifestKindKey is the string indicating a manifest's kind.
 	ManifestKindKey = "kind"
-	// ManifestSpecKey is represents a manifest's spec.
+	// ManifestSpecKey represents a manifest's spec.
 	ManifestSpecKey = "spec"
-	// ManifestDeprecatedKey is represents the deprected v1alpha1 manifest.
-	ManifestDeprecatedKey = "machine"
+	// ManifestDeprecatedKeyMachine represents the deprecated v1alpha1 manifest.
+	ManifestDeprecatedKeyMachine = "machine"
+	// ManifestDeprecatedKeyCluster represents the deprecated v1alpha1 manifest.
+	ManifestDeprecatedKeyCluster = "cluster"
+	// ManifestDeprecatedKeyDebug represents the deprecated v1alpha1 manifest.
+	ManifestDeprecatedKeyDebug = "debug"
+	// ManifestDeprecatedKeyPersist represents the deprecated v1alpha1 manifest.
+	ManifestDeprecatedKeyPersist = "persist"
 )
 
 // Decoder represents a multi-doc YAML decoder.
@@ -134,7 +140,11 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 			}
 
 			spec = manifest.Content[i+1]
-		case ManifestDeprecatedKey:
+		case
+			ManifestDeprecatedKeyMachine,
+			ManifestDeprecatedKeyCluster,
+			ManifestDeprecatedKeyDebug,
+			ManifestDeprecatedKeyPersist:
 			if target, err = config.New("v1alpha1", ""); err != nil {
 				return nil, fmt.Errorf("new deprecated config: %w", err)
 			}

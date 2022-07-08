@@ -100,7 +100,7 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 	configPatch []string,
 	configPatchControlPlane []string,
 	configPatchWorker []string,
-) (*v1alpha1.ConfigBundle, error) {
+) (*bundle.ConfigBundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
