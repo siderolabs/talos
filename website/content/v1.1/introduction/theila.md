@@ -21,7 +21,7 @@ You can download the correct binary for your system from the [releases](https://
 
 ```bash
 curl -Lo /usr/local/bin/theila https://github.com/siderolabs/thelia/releases/download/{{< thelia_release >}}/thelia-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
-chmod +x /usr/local/bin/talosctl
+chmod +x /usr/local/bin/theila
 ```
 
 ## Use
