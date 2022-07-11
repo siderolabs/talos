@@ -36,10 +36,12 @@ machine:
   ...
   systemDiskEncryption:
     ephemeral:
+      provider: luks2
       keys:
         - nodeID: {}
           slot: 0
     state:
+      provider: luks2
       keys:
         - nodeID: {}
           slot: 0
