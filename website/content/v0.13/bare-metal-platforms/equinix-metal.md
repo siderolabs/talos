@@ -44,7 +44,7 @@ Some of the known ways are:
 
 - DNS
 - Load Balancer
-- BPG
+- BGP
 
 ### Create the Machine Configuration Files
 
