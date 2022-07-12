@@ -18,7 +18,7 @@ import (
 // GenOption controls generate options specific to input generation.
 type GenOption func(o *GenOptions) error
 
-// WithEndpointList specifies endpoints to use when acessing Talos cluster.
+// WithEndpointList specifies endpoints to use when accessing Talos cluster.
 func WithEndpointList(endpoints []string) GenOption {
 	return func(o *GenOptions) error {
 		o.EndpointList = endpoints

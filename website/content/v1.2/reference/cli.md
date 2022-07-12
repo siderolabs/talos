@@ -1253,9 +1253,11 @@ talosctl gen secrets [flags]
 ### Options
 
 ```
-  -h, --help                   help for secrets
-  -o, --output-file string     path of the output file (default "secrets.yaml")
-      --talos-version string   the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)
+  -p, --from-kubernetes-pki string          use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input
+  -h, --help                                help for secrets
+  -t, --kubernetes-bootstrap-token string   use the provided bootstrap token as input
+  -o, --output-file string                  path of the output file (default "secrets.yaml")
+      --talos-version string                the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)
 ```
 
 ### Options inherited from parent commands

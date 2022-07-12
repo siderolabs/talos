@@ -16,8 +16,10 @@ import (
 )
 
 var genSecretsCmdFlags struct {
-	outputFile   string
-	talosVersion string
+	outputFile               string
+	talosVersion             string
+	fromKubernetesPki        string
+	kubernetesBootstrapToken string
 }
 
 // genSecretsCmd represents the `gen secrets` command.
@@ -27,18 +29,32 @@ var genSecretsCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		genOptions := make([]generate.GenOption, 0, 1)
+		var (
+			secretsBundle   *generate.SecretsBundle
+			versionContract *config.VersionContract
+			err             error
+		)
 
 		if genSecretsCmdFlags.talosVersion != "" {
-			versionContract, err := config.ParseContractFromVersion(genSecretsCmdFlags.talosVersion)
+			versionContract, err = config.ParseContractFromVersion(genSecretsCmdFlags.talosVersion)
 			if err != nil {
 				return fmt.Errorf("invalid talos-version: %w", err)
 			}
-
-			genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 		}
 
-		secretsBundle, err := generate.NewSecretsBundle(generate.NewClock(), genOptions...)
+		if genSecretsCmdFlags.fromKubernetesPki != "" {
+			secretsBundle, err = generate.NewSecretsBundleFromKubernetesPKI(genSecretsCmdFlags.fromKubernetesPki,
+				genSecretsCmdFlags.kubernetesBootstrapToken, versionContract)
+			if err != nil {
+				return fmt.Errorf("failed to create secrets bundle: %w", err)
+			}
+
+			return writeSecretsBundleToFile(secretsBundle)
+		}
+
+		secretsBundle, err = generate.NewSecretsBundle(generate.NewClock(),
+			generate.WithVersionContract(versionContract),
+		)
 		if err != nil {
 			return fmt.Errorf("failed to create secrets bundle: %w", err)
 		}
@@ -59,6 +75,8 @@ func writeSecretsBundleToFile(bundle *generate.SecretsBundle) error {
 func init() {
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.outputFile, "output-file", "o", "secrets.yaml", "path of the output file")
 	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)")
+	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.fromKubernetesPki, "from-kubernetes-pki", "p", "", "use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input")
+	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.kubernetesBootstrapToken, "kubernetes-bootstrap-token", "t", "", "use the provided bootstrap token as input")
 
 	Cmd.AddCommand(genSecretsCmd)
 }

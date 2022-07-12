@@ -16,6 +16,8 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/talos-systems/crypto/x509"
@@ -192,8 +194,6 @@ func (c *SystemClock) SetFixedTimestamp(t time.Time) {
 }
 
 // NewSecretsBundle creates secrets bundle generating all secrets or reading from the input options if provided.
-//
-//nolint:gocyclo
 func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 	options := DefaultGenOptions()
 
@@ -208,115 +208,256 @@ func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 		return options.Secrets, nil
 	}
 
+	bundle := SecretsBundle{
+		Clock: clock,
+	}
+
+	err := populateSecretsBundle(options.VersionContract, &bundle)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bundle, nil
+}
+
+// NewSecretsBundleFromKubernetesPKI creates secrets bundle by reading the contents
+// of a Kubernetes PKI directory (typically `/etc/kubernetes/pki`) and using the provided bootstrapToken as input.
+//
+//nolint:gocyclo
+func NewSecretsBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *config.VersionContract) (*SecretsBundle, error) {
+	dirStat, err := os.Stat(pkiDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if !dirStat.IsDir() {
+		return nil, fmt.Errorf("%q is not a directory", pkiDir)
+	}
+
 	var (
-		etcd           *x509.CertificateAuthority
-		kubernetesCA   *x509.CertificateAuthority
-		aggregatorCA   *x509.CertificateAuthority
-		serviceAccount *x509.ECDSAKey
-		talosCA        *x509.CertificateAuthority
-		trustdInfo     *TrustdInfo
-		kubeadmTokens  *Secrets
-		err            error
+		ca           *x509.PEMEncodedCertificateAndKey
+		etcdCA       *x509.PEMEncodedCertificateAndKey
+		aggregatorCA *x509.PEMEncodedCertificateAndKey
+		sa           *x509.PEMEncodedKey
 	)
 
-	etcd, err = NewEtcdCA(clock.Now(), options.VersionContract)
+	ca, err = x509.NewCertificateAndKeyFromFiles(filepath.Join(pkiDir, "ca.crt"), filepath.Join(pkiDir, "ca.key"))
 	if err != nil {
 		return nil, err
 	}
 
-	kubernetesCA, err = NewKubernetesCA(clock.Now(), options.VersionContract)
+	err = validatePEMEncodedCertificateAndKey(ca)
 	if err != nil {
 		return nil, err
 	}
 
-	if options.VersionContract.SupportsAggregatorCA() {
-		aggregatorCA, err = NewAggregatorCA(clock.Now(), options.VersionContract)
+	etcdDir := filepath.Join(pkiDir, "etcd")
+
+	etcdCA, err = x509.NewCertificateAndKeyFromFiles(filepath.Join(etcdDir, "ca.crt"), filepath.Join(etcdDir, "ca.key"))
+	if err != nil {
+		return nil, err
+	}
+
+	err = validatePEMEncodedCertificateAndKey(etcdCA)
+	if err != nil {
+		return nil, err
+	}
+
+	aggregatorCACrtPath := filepath.Join(pkiDir, "front-proxy-ca.crt")
+	_, err = os.Stat(aggregatorCACrtPath)
+
+	aggregatorCAFound := err == nil
+	if aggregatorCAFound && !versionContract.SupportsAggregatorCA() {
+		return nil, fmt.Errorf("aggregator CA found in pki dir but is not supported by the requested version")
+	}
+
+	if versionContract.SupportsAggregatorCA() {
+		aggregatorCA, err = x509.NewCertificateAndKeyFromFiles(aggregatorCACrtPath, filepath.Join(pkiDir, "front-proxy-ca.key"))
+		if err != nil {
+			return nil, err
+		}
+
+		err = validatePEMEncodedCertificateAndKey(aggregatorCA)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if options.VersionContract.SupportsServiceAccount() {
-		serviceAccount, err = x509.NewECDSAKey()
+	saKeyPath := filepath.Join(pkiDir, "sa.key")
+	_, err = os.Stat(saKeyPath)
+
+	saKeyFound := err == nil
+	if saKeyFound && !versionContract.SupportsServiceAccount() {
+		return nil, fmt.Errorf("service account key found in pki dir but is not supported by the requested version")
+	}
+
+	if versionContract.SupportsServiceAccount() {
+		var saBytes []byte
+
+		saBytes, err = os.ReadFile(filepath.Join(pkiDir, "sa.key"))
+		if err != nil {
+			return nil, err
+		}
+
+		sa = &x509.PEMEncodedKey{
+			Key: saBytes,
+		}
+
+		_, err = sa.GetKey()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	talosCA, err = NewTalosCA(clock.Now())
-	if err != nil {
-		return nil, err
-	}
-
-	kubeadmTokens = &Secrets{}
-
-	// Gen trustd token strings
-	kubeadmTokens.BootstrapToken, err = genToken(6, 16)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeadmTokens.AESCBCEncryptionSecret, err = cis.CreateEncryptionToken()
-	if err != nil {
-		return nil, err
-	}
-
-	trustdInfo = &TrustdInfo{}
-
-	// Gen trustd token strings
-	trustdInfo.Token, err = genToken(6, 16)
-	if err != nil {
-		return nil, err
-	}
-
-	clusterID, err := randBytes(constants.DefaultClusterIDSize)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate cluster ID: %w", err)
-	}
-
-	clusterSecret, err := randBytes(constants.DefaultClusterSecretSize)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate cluster secret: %w", err)
-	}
-
-	result := &SecretsBundle{
-		Cluster: &Cluster{
-			ID:     base64.URLEncoding.EncodeToString(clusterID),
-			Secret: base64.StdEncoding.EncodeToString(clusterSecret),
+	bundle := SecretsBundle{
+		Secrets: &Secrets{
+			BootstrapToken: bootstrapToken,
 		},
-		Clock:      clock,
-		Secrets:    kubeadmTokens,
-		TrustdInfo: trustdInfo,
 		Certs: &Certs{
-			Etcd: &x509.PEMEncodedCertificateAndKey{
-				Crt: etcd.CrtPEM,
-				Key: etcd.KeyPEM,
-			},
-			K8s: &x509.PEMEncodedCertificateAndKey{
-				Crt: kubernetesCA.CrtPEM,
-				Key: kubernetesCA.KeyPEM,
-			},
-			OS: &x509.PEMEncodedCertificateAndKey{
-				Crt: talosCA.CrtPEM,
-				Key: talosCA.KeyPEM,
-			},
+			Etcd:              etcdCA,
+			K8s:               ca,
+			K8sAggregator:     aggregatorCA,
+			K8sServiceAccount: sa,
 		},
 	}
 
-	if aggregatorCA != nil {
-		result.Certs.K8sAggregator = &x509.PEMEncodedCertificateAndKey{
+	err = populateSecretsBundle(versionContract, &bundle)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bundle, nil
+}
+
+// populateSecretsBundle fills all the missing fields in the secrets bundle.
+//
+//nolint:gocyclo,cyclop
+func populateSecretsBundle(versionContract *config.VersionContract, bundle *SecretsBundle) error {
+	if bundle.Clock == nil {
+		bundle.Clock = NewClock()
+	}
+
+	if bundle.Certs == nil {
+		bundle.Certs = &Certs{}
+	}
+
+	if bundle.Certs.Etcd == nil {
+		etcd, err := NewEtcdCA(bundle.Clock.Now(), versionContract)
+		if err != nil {
+			return err
+		}
+
+		bundle.Certs.Etcd = &x509.PEMEncodedCertificateAndKey{
+			Crt: etcd.CrtPEM,
+			Key: etcd.KeyPEM,
+		}
+	}
+
+	if bundle.Certs.K8s == nil {
+		kubernetesCA, err := NewKubernetesCA(bundle.Clock.Now(), versionContract)
+		if err != nil {
+			return err
+		}
+
+		bundle.Certs.K8s = &x509.PEMEncodedCertificateAndKey{
+			Crt: kubernetesCA.CrtPEM,
+			Key: kubernetesCA.KeyPEM,
+		}
+	}
+
+	if versionContract.SupportsAggregatorCA() && bundle.Certs.K8sAggregator == nil {
+		aggregatorCA, err := NewAggregatorCA(bundle.Clock.Now(), versionContract)
+		if err != nil {
+			return err
+		}
+
+		bundle.Certs.K8sAggregator = &x509.PEMEncodedCertificateAndKey{
 			Crt: aggregatorCA.CrtPEM,
 			Key: aggregatorCA.KeyPEM,
 		}
 	}
 
-	if serviceAccount != nil {
-		result.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+	if versionContract.SupportsServiceAccount() && bundle.Certs.K8sServiceAccount == nil {
+		serviceAccount, err := x509.NewECDSAKey()
+		if err != nil {
+			return err
+		}
+
+		bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
 			Key: serviceAccount.KeyPEM,
 		}
 	}
 
-	return result, nil
+	if bundle.Certs.OS == nil {
+		talosCA, err := NewTalosCA(bundle.Clock.Now())
+		if err != nil {
+			return err
+		}
+
+		bundle.Certs.OS = &x509.PEMEncodedCertificateAndKey{
+			Crt: talosCA.CrtPEM,
+			Key: talosCA.KeyPEM,
+		}
+	}
+
+	if bundle.Secrets == nil {
+		bundle.Secrets = &Secrets{}
+	}
+
+	if bundle.Secrets.BootstrapToken == "" {
+		token, err := genToken(6, 16)
+		if err != nil {
+			return err
+		}
+
+		bundle.Secrets.BootstrapToken = token
+	}
+
+	if bundle.Secrets.AESCBCEncryptionSecret == "" {
+		aesCBCEncryptionSecret, err := cis.CreateEncryptionToken()
+		if err != nil {
+			return err
+		}
+
+		bundle.Secrets.AESCBCEncryptionSecret = aesCBCEncryptionSecret
+	}
+
+	if bundle.TrustdInfo == nil {
+		bundle.TrustdInfo = &TrustdInfo{}
+	}
+
+	if bundle.TrustdInfo.Token == "" {
+		token, err := genToken(6, 16)
+		if err != nil {
+			return err
+		}
+
+		bundle.TrustdInfo.Token = token
+	}
+
+	if bundle.Cluster == nil {
+		bundle.Cluster = &Cluster{}
+	}
+
+	if bundle.Cluster.ID == "" {
+		clusterID, err := randBytes(constants.DefaultClusterIDSize)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster ID: %w", err)
+		}
+
+		bundle.Cluster.ID = base64.URLEncoding.EncodeToString(clusterID)
+	}
+
+	if bundle.Cluster.Secret == "" {
+		clusterSecret, err := randBytes(constants.DefaultClusterSecretSize)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster secret: %w", err)
+		}
+
+		bundle.Cluster.Secret = base64.StdEncoding.EncodeToString(clusterSecret)
+	}
+
+	return nil
 }
 
 // NewSecretsBundleFromConfig creates secrets bundle using existing config.
@@ -607,4 +748,15 @@ func randBytes(size int) ([]byte, error) {
 	}
 
 	return buf, nil
+}
+
+func validatePEMEncodedCertificateAndKey(certs *x509.PEMEncodedCertificateAndKey) error {
+	_, err := certs.GetKey()
+	if err != nil {
+		return err
+	}
+
+	_, err = certs.GetCert()
+
+	return err
 }

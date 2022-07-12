@@ -81,6 +81,23 @@ machine:
 Patch format is detected automatically.
 """
 
+    [notes.gen-secrets-from-pki]
+        title = "Generating Talos secrets from PKI directory"
+        description="""\
+It is now possible to generate a secrets bundle from a Kubernetes PKI directory (e.g. `/etc/kubernetes/pki`).
+
+You can also specify a bootstrap token to be used in the secrets bundle.
+
+This secrets bundle can then be used to generate a machine config.
+
+This facilitates migrating clusters (e.g. created using `kubeadm`) to Talos.
+
+```
+talosctl gen secrets --kubernetes-bootstrap-token znzio1.1ifu15frz7jd59pv --from-kubernetes-pki /etc/kubernetes/pki
+talosctl gen config --with-secrets secrets.yaml my-cluster https://172.20.0.1:6443
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
