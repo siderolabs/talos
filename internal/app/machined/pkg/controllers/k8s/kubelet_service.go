@@ -8,8 +8,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -21,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/client-go/tools/clientcmd"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -184,6 +187,14 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
+		err = updateKubeconfig(secretSpec.Endpoint)
+
+		// there is no problem if the file does not exist yet since
+		// it will be created by kubelet on start with correct endpoint
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+
 		if err = ctrl.V1Alpha1Services.Start("kubelet"); err != nil {
 			return fmt.Errorf("error starting kubelet service: %w", err)
 		}
@@ -268,4 +279,21 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 	}
 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+// updateKubeconfig updates the kubeconfig of kubelet with the given endpoint.
+func updateKubeconfig(newEndpoint *url.URL) error {
+	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
+	if err != nil {
+		return err
+	}
+
+	cluster := config.Clusters[config.Contexts[config.CurrentContext].Cluster]
+	if cluster.Server == newEndpoint.String() {
+		return nil
+	}
+
+	cluster.Server = newEndpoint.String()
+
+	return clientcmd.WriteToFile(*config, constants.KubeletKubeconfig)
 }
