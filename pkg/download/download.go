@@ -26,6 +26,7 @@ type downloadOptions struct {
 	Headers    map[string]string
 	Format     string
 	LowSrcPort bool
+	Endpoint   string
 
 	ErrorOnNotFound      error
 	ErrorOnEmptyResponse error
@@ -84,32 +85,20 @@ func WithErrorOnEmptyResponse(e error) Option {
 	}
 }
 
+// WithEndpointFunc provides a function that sets the endpoint of the download options.
+func WithEndpointFunc(endpointFunc func() string) Option {
+	return func(d *downloadOptions) {
+		d.Endpoint = endpointFunc()
+	}
+}
+
 // Download downloads a config.
+//
+//nolint:gocyclo
 func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return b, err
-	}
-
-	if u.Scheme == "file" {
-		return ioutil.ReadFile(u.Path)
-	}
-
 	dlOpts := downloadDefaults()
 
-	for _, opt := range opts {
-		opt(dlOpts)
-	}
-
-	var req *http.Request
-
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
-		return b, err
-	}
-
-	for k, v := range dlOpts.Headers {
-		req.Header.Set(k, v)
-	}
+	dlOpts.Endpoint = endpoint
 
 	err = retry.Exponential(180*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second), retry.WithErrorLogging(true)).Retry(func() error {
 		select {
@@ -118,12 +107,48 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 		default:
 		}
 
+		dlOpts = downloadDefaults()
+
+		dlOpts.Endpoint = endpoint
+
+		for _, opt := range opts {
+			opt(dlOpts)
+		}
+
+		var u *url.URL
+		u, err = url.Parse(dlOpts.Endpoint)
+		if err != nil {
+			return err
+		}
+
+		if u.Scheme == "file" {
+			var fileContent []byte
+			fileContent, err = ioutil.ReadFile(u.Path)
+			if err != nil {
+				return err
+			}
+
+			b = fileContent
+
+			return nil
+		}
+
+		var req *http.Request
+
+		if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
+			return err
+		}
+
+		for k, v := range dlOpts.Headers {
+			req.Header.Set(k, v)
+		}
+
 		b, err = download(req, dlOpts)
 
 		return err
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to download config from %q: %w", u.String(), err)
+		return nil, fmt.Errorf("failed to download config from %q: %w", dlOpts.Endpoint, err)
 	}
 
 	if dlOpts.Format == b64 {

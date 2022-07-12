@@ -8,19 +8,68 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
+	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
+
+func createOrUpdate(ctx context.Context, st state.State, r resource.Resource) error {
+	oldRes, err := st.Get(ctx, r.Metadata())
+
+	if oldRes != nil && err != nil {
+		return err
+	}
+
+	if oldRes == nil {
+		err = st.Create(ctx, r)
+		if err != nil {
+			return err
+		}
+	} else {
+		r.Metadata().BumpVersion()
+		err = st.Update(ctx, oldRes.Metadata().Version(), r)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setup(ctx context.Context, t *testing.T, st state.State, mockUUID, mockSerialNumber, mockHostname, mockMAC string) {
+	testID := "testID"
+	sysInfo := hardware.NewSystemInformation(testID)
+	sysInfo.TypedSpec().UUID = mockUUID
+	sysInfo.TypedSpec().SerialNumber = mockSerialNumber
+	assert.NoError(t, createOrUpdate(ctx, st, sysInfo))
+
+	hostnameSpec := network.NewHostnameSpec(network.NamespaceName, testID)
+	hostnameSpec.TypedSpec().Hostname = mockHostname
+	assert.NoError(t, createOrUpdate(ctx, st, hostnameSpec))
+
+	linkStatusSpec := network.NewLinkStatus(network.NamespaceName, testID)
+	parsedMockMAC, err := net.ParseMAC(mockMAC)
+	assert.NoError(t, err)
+
+	linkStatusSpec.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(parsedMockMAC)
+	linkStatusSpec.TypedSpec().LinkState = true
+	assert.NoError(t, createOrUpdate(ctx, st, linkStatusSpec))
+}
 
 func TestPopulateURLParameters(t *testing.T) {
 	mockUUID := "40dcbd19-3b10-444e-bfff-aaee44a51fda"
@@ -125,23 +174,7 @@ func TestPopulateURLParameters(t *testing.T) {
 
 			st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-			testID := "testID"
-			sysInfo := hardware.NewSystemInformation(testID)
-			sysInfo.TypedSpec().UUID = mockUUID
-			sysInfo.TypedSpec().SerialNumber = mockSerialNumber
-			assert.NoError(t, st.Create(ctx, sysInfo))
-
-			hostnameSpec := network.NewHostnameSpec(network.NamespaceName, testID)
-			hostnameSpec.TypedSpec().Hostname = mockHostname
-			assert.NoError(t, st.Create(ctx, hostnameSpec))
-
-			linkStatusSpec := network.NewLinkStatus(network.NamespaceName, testID)
-			parsedMockMAC, err := net.ParseMAC(mockMAC)
-			assert.NoError(t, err)
-
-			linkStatusSpec.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(parsedMockMAC)
-			linkStatusSpec.TypedSpec().LinkState = true
-			assert.NoError(t, st.Create(ctx, linkStatusSpec))
+			setup(ctx, t, st, mockUUID, mockSerialNumber, mockHostname, mockMAC)
 
 			output, err := metal.PopulateURLParameters(ctx, tt.url, st)
 
@@ -155,4 +188,61 @@ func TestPopulateURLParameters(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRepopulateOnRetry(t *testing.T) {
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	nCalls := 0
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch nCalls {
+		case 0:
+			assert.Equal(t, "h=myTestHostname&m=52%3A2f%3Afd%3Adf%3Afc%3Ac0&s=0OCZJ19N65&u=40dcbd19-3b10-444e-bfff-aaee44a51fda", r.URL.RawQuery)
+			w.WriteHeader(http.StatusNotFound)
+
+			// After the first call we change the resources that should be substituted in the next call.
+			uuid2 := "9fba530f-767d-40f9-9410-bb1fed5d2134"
+			mac2 := "aa:aa:bb:bb:cc:cc"
+			serialNumber2 := "111AAA9N65"
+			hostname2 := "anotherHostname"
+
+			setup(ctx, t, st, uuid2, serialNumber2, hostname2, mac2)
+		case 1:
+			// Before the second call Configuration() should have resubstituted all the new parameters in the URL.
+			assert.Equal(t, "h=anotherHostname&m=aa%3Aaa%3Abb%3Abb%3Acc%3Acc&s=111AAA9N65&u=9fba530f-767d-40f9-9410-bb1fed5d2134", r.URL.RawQuery)
+			w.WriteHeader(http.StatusOK)
+		}
+
+		nCalls++
+	}))
+	defer server.Close()
+
+	uuid1 := "40dcbd19-3b10-444e-bfff-aaee44a51fda"
+	mac1 := "52:2f:fd:df:fc:c0"
+	serialNumber1 := "0OCZJ19N65"
+	hostname1 := "myTestHostname"
+
+	setup(ctx, t, st, uuid1, serialNumber1, hostname1, mac1)
+
+	downloadURL := server.URL + "/metadata?h=${hostname}&m=${mac}&s=${serial}&u=${uuid}"
+
+	param := procfs.NewParameter(constants.KernelParamConfig)
+	param.Append(downloadURL)
+
+	procfs.ProcCmdline().Set(constants.KernelParamConfig, param)
+	defer procfs.ProcCmdline().Set(constants.KernelParamConfig, nil)
+
+	go func() {
+		testObj := metal.Metal{}
+		_, err := testObj.Configuration(ctx, st)
+		assert.NoError(t, err)
+
+		cancel()
+	}()
+
+	<-ctx.Done()
 }

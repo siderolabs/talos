@@ -54,20 +54,22 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 		return nil, errors.ErrNoConfigSource
 	}
 
-	downloadURL, err := PopulateURLParameters(ctx, *option, r)
-	if err != nil {
-		log.Fatalf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
+	getURL := func() string {
+		downloadEndpoint, err := PopulateURLParameters(ctx, *option, r)
+		if err != nil {
+			log.Fatalf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
+		}
 
-		return nil, err
+		log.Printf("fetching machine config from: %q", downloadEndpoint)
+
+		return downloadEndpoint
 	}
 
-	log.Printf("fetching machine config from: %q", downloadURL)
-
-	switch downloadURL {
+	switch *option {
 	case constants.MetalConfigISOLabel:
 		return readConfigFromISO()
 	default:
-		return download.Download(ctx, downloadURL)
+		return download.Download(ctx, *option, download.WithEndpointFunc(getURL))
 	}
 }
 
