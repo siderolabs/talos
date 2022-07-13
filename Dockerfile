@@ -386,6 +386,23 @@ RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD6
 FROM scratch AS talosctl-windows
 COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
 
+FROM base AS talosctl-freebsd-amd64-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+ARG GOAMD64
+RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
+
+FROM base AS talosctl-freebsd-arm64-build
+WORKDIR /src/cmd/talosctl
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
+
+FROM scratch AS talosctl-freebsd
+COPY --from=talosctl-freebsd-amd64-build /talosctl-freebsd-amd64 /talosctl-freebsd-amd64
+COPY --from=talosctl-freebsd-arm64-build /talosctl-freebsd-arm64 /talosctl-freebsd-arm64
+
 # The kernel target is the linux kernel.
 
 FROM scratch AS kernel
