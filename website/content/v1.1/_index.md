@@ -5,7 +5,7 @@ linkTitle: "Documentation"
 cascade:
   type: docs
 preRelease: false
-lastRelease: v1.1.0
+lastRelease: v1.1.1
 kubernetesRelease: "1.24.2"
 prevKubernetesRelease: "1.23.5"
 iscsiToolsRelease: "v0.1.1"
