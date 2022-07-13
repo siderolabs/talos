@@ -1,3 +1,82 @@
+## [Talos 1.1.1](https://github.com/siderolabs/talos/releases/tag/v1.1.1) (2022-07-13)
+
+Welcome to the v1.1.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.54
+
+Talos is built with Go 1.18.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Davincible
+* Tim Jones
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`2a2eba470`](https://github.com/siderolabs/talos/commit/2a2eba4705e0fb8ba057a753028173b79dd53af5) feat: update Go to 1.18.4, Linux to 5.15.54
+* [`6b7c6110c`](https://github.com/siderolabs/talos/commit/6b7c6110c2de2a2d3bfc9cedeeac9ae73a1ce3f6) fix: stabilize etcd join and promote sequences
+* [`6dbc086b0`](https://github.com/siderolabs/talos/commit/6dbc086b0dc286da19eab64a7a0e183320cc9b7f) fix: use correct etcd cert path
+* [`56daca8f3`](https://github.com/siderolabs/talos/commit/56daca8f3151947d37b2d1ea9cc27b83b651ae2d) fix: siderlink api assume port 443 with https schema
+* [`f9f1c432f`](https://github.com/siderolabs/talos/commit/f9f1c432f8ad52d2b73cc5d66fe59514385fc811) fix: provide CA certificates in `/etc/ssl/certs/ca-certificates.crt`
+* [`2cd61a544`](https://github.com/siderolabs/talos/commit/2cd61a544a104edffce6f9c36f7688ae2cb78d6c) chore: update blockdevice library to v0.3.3
+* [`a76a90a43`](https://github.com/siderolabs/talos/commit/a76a90a43029aff9a5ea7bf30781444010dd51ed) fix: generate correct bootstrap manifests when only IPv6 CIDR is used
+* [`76d048ffc`](https://github.com/siderolabs/talos/commit/76d048ffc836aeea1854d3e3b0f3974e6192c5c1) fix: look for qemu-kvm binary
+* [`e80ea3ebf`](https://github.com/siderolabs/talos/commit/e80ea3ebf18a6a7938009875bd3f9e1a994432cc) chore: bump kernel to 5.15.51
+* [`01637362d`](https://github.com/siderolabs/talos/commit/01637362d87f617ebed2a498426fddea4640c5df) chore: bump kernel to 5.15.50
+* [`b8b553212`](https://github.com/siderolabs/talos/commit/b8b5532127cbab5274876b58d1588852a9b330df) chore: bump kernel to 5.15.49
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`cb03a5d`](https://github.com/siderolabs/extras/commit/cb03a5db2612b436a16083161b00755d274f1a9a) chore: update Go to 1.18.4
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`f171197`](https://github.com/siderolabs/pkgs/commit/f17119735437083dfb1229455d9df6c754f8a022) chore: update Go to 1.18.4
+* [`049489d`](https://github.com/siderolabs/pkgs/commit/049489d29551bcf6941c86e821e42b047f79f221) chore: bump kernel to 5.15.54
+* [`9bbe83d`](https://github.com/siderolabs/pkgs/commit/9bbe83d21f195ca1fe0fadb401f50ddd978614aa) chore: bump kernel to 5.15.53
+* [`d63072d`](https://github.com/siderolabs/pkgs/commit/d63072dd1740064ea5a6a5718eede8a09a117d0c) chore: bump kernel to 5.15.52
+* [`7bd80cb`](https://github.com/siderolabs/pkgs/commit/7bd80cb274fa465aa513a6b1d8b7136418955d3d) chore: bump kernel to 5.15.51
+* [`cddc8c1`](https://github.com/siderolabs/pkgs/commit/cddc8c1e0009c63986c6539b88acd5b163bcfc15) chore: bump kernel to 5.15.50
+* [`94831b3`](https://github.com/siderolabs/pkgs/commit/94831b39e45ba5f8c148b12ebd6ccdb563128e1e) chore: bump kernel to 5.15.49
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`9edfc1f`](https://github.com/siderolabs/tools/commit/9edfc1fe5858a7fdd7b14a57ff94ecab1df3fd48) feat: update Go 1.18.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.1.0-1-g5800284 -> v1.1.0-2-gcb03a5d
+* **github.com/siderolabs/pkgs**    v1.1.0-8-gfa9a488 -> v1.1.0-15-gf171197
+* **github.com/siderolabs/tools**   v1.1.0-1-g134974c -> v1.1.0-2-g9edfc1f
+
+Previous release can be found at [v1.1.0](https://github.com/siderolabs/talos/releases/tag/v1.1.0)
+
 ## [Talos 1.1.0](https://github.com/siderolabs/talos/releases/tag/v1.1.0) (2022-06-21)
 
 Welcome to the v1.1.0 release of Talos!
