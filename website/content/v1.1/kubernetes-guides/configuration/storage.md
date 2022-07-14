@@ -132,12 +132,10 @@ One of the most popular open source add-on object stores is [MinIO](https://min.
 
 The most common remaining systems involve iSCSI in one form or another.
 These include the original OpenEBS, Rancher's Longhorn, and many proprietary systems.
-Unfortunately, Talos does _not_ support iSCSI-based systems.
 iSCSI in Linux is facilitated by [open-iscsi](https://github.com/open-iscsi/open-iscsi).
 This system was designed long before containers caught on, and it is not well
 suited to the task, especially when coupled with a read-only host operating
 system.
 
-OpenEBS Jiva works on Talos with the [iscsi-tools](https://github.com/orgs/siderolabs/packages?tab=packages&q=iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}) installed.
-
-Refer to [local storage]({{< relref "replicated-local-storage-with-openebs-jiva.md" >}}) installation guide for more information.
+iSCSI support in Talos is now supported via the [iscsi-tools](https://github.com/siderolabs/extensions/pkgs/container/iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}) installed.
+The extension enables compatibility with OpenEBS Jiva - refer to the [local storage]({{< relref "replicated-local-storage-with-openebs-jiva.md" >}}) installation guide for more information.
