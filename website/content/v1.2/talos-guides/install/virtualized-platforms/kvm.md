@@ -5,5 +5,8 @@ aliases:
 ---
 
 Talos is known to work on KVM.
-We don't yet have a documented guide specific to KVM; however, you can follow the [General Getting Started Guide]({{< relref "../../../introduction/getting-started" >}}).
+
+We don't yet have a documented guide specific to KVM; however, you can have a look at our
+[Vagrant & Libvirt guide]({{< relref "./vagrant-libvirt" >}}) which uses KVM for virtualization.
+
 If you run into any issues, our [community](https://slack.dev.talos-systems.io/) can probably help!
