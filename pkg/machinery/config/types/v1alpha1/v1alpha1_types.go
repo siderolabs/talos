@@ -1492,7 +1492,48 @@ type APIServerConfig struct {
 	//     Configure the API server admission plugins.
 	//   examples:
 	//     - value: admissionControlConfigExample
-	AdmissionControlConfig []*AdmissionPluginConfig `yaml:"admissionControl,omitempty"`
+	AdmissionControlConfig AdmissionPluginConfigList `yaml:"admissionControl,omitempty"`
+}
+
+// AdmissionPluginConfigList represents the admission plugin configuration list.
+//
+//docgen:alias
+type AdmissionPluginConfigList []*AdmissionPluginConfig
+
+// Merge the admission plugin configuration intelligently.
+func (configs *AdmissionPluginConfigList) Merge(other interface{}) error {
+	otherConfigs, ok := other.(AdmissionPluginConfigList)
+	if !ok {
+		return fmt.Errorf("unexpected type for device merge %T", other)
+	}
+
+	for _, config := range otherConfigs {
+		if err := configs.mergeConfig(config); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (configs *AdmissionPluginConfigList) mergeConfig(config *AdmissionPluginConfig) error {
+	var existing *AdmissionPluginConfig
+
+	for _, c := range *configs {
+		if c.PluginName == config.PluginName {
+			existing = c
+
+			break
+		}
+	}
+
+	if existing != nil {
+		return merge.Merge(existing, config)
+	}
+
+	*configs = append(*configs, config)
+
+	return nil
 }
 
 // AdmissionPluginConfig represents the API server admission plugin configuration.

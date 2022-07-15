@@ -42,6 +42,10 @@ var (
 
 //nolint:gocyclo,cyclop
 func merge(vl, vr reflect.Value, replace bool) error {
+	if vl == zeroValue && vr == zeroValue {
+		return nil
+	}
+
 	tl, tr := vl.Type(), vr.Type()
 
 	if tl != tr {
@@ -53,7 +57,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 	}
 
 	switch tl.Kind() { //nolint:exhaustive
-	case reflect.Pointer:
+	case reflect.Pointer, reflect.Interface:
 		if vr.IsZero() {
 			return nil
 		}
@@ -102,11 +106,32 @@ func merge(vl, vr reflect.Value, replace bool) error {
 
 		for _, k := range vr.MapKeys() {
 			if vl.MapIndex(k) != zeroValue {
-				v := reflect.New(tl.Elem()).Elem()
-				v.Set(vl.MapIndex(k))
+				valueType := tl.Elem()
 
-				if err := merge(v, vr.MapIndex(k), false); err != nil {
-					return err
+				var v, rightV reflect.Value
+
+				if valueType.Kind() == reflect.Interface { // special case for map[string]interface{}
+					// here we have to instantiate the actual type behind in the `interface{}`, otherwise it's not settable
+					valueType = vl.MapIndex(k).Elem().Type()
+
+					if valueType != vr.MapIndex(k).Elem().Type() {
+						return fmt.Errorf("merge type mismatch left %v right %v", valueType, vr.MapIndex(k).Elem().Type())
+					}
+
+					v = reflect.New(valueType).Elem()
+					v.Set(vl.MapIndex(k).Elem())
+
+					rightV = reflect.New(valueType).Elem()
+					rightV.Set(vr.MapIndex(k).Elem())
+				} else { // "normal" maps
+					v = reflect.New(valueType).Elem()
+					v.Set(vl.MapIndex(k))
+
+					rightV = vr.MapIndex(k)
+				}
+
+				if err := merge(v, rightV, false); err != nil {
+					return fmt.Errorf("merge map key %v[%v]: %w", tl, k, err)
 				}
 
 				vl.SetMapIndex(k, v)
@@ -135,7 +160,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 			fr := vr.FieldByIndex(tr.Field(i).Index)
 
 			if err := merge(fl, fr, replace); err != nil {
-				return fmt.Errorf("merge field %v.%v: %v", tl, tl.Field(i).Name, err)
+				return fmt.Errorf("merge field %v.%v: %w", tl, tl.Field(i).Name, err)
 			}
 		}
 	case

@@ -1,0 +1,11 @@
+cluster:
+    apiServer:
+        image: k8s.gcr.io/kube-apiserver:v1.24.2
+        admissionControl:
+            - name: PodSecurity
+              configuration:
+                defaults:
+                    enforce: restricted
+                exemptions:
+                    namespaces:
+                        - rook-system

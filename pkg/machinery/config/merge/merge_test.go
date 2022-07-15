@@ -45,18 +45,20 @@ func (s *CustomSlice) Merge(other interface{}) error {
 	return nil
 }
 
+type Unstructured map[string]interface{}
+
 func TestMerge(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
-		left, right Config
-		expected    Config
+		left, right interface{}
+		expected    interface{}
 	}{
 		{
 			name: "zero",
 		},
 		{
 			name: "partial merge",
-			left: Config{
+			left: &Config{
 				A: "a",
 				B: 3,
 				C: pointer.To(true),
@@ -75,7 +77,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			right: Config{
+			right: &Config{
 				A: "aa",
 				B: 4,
 				Slice: []Struct{
@@ -97,7 +99,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			expected: Config{
+			expected: &Config{
 				A: "aa",
 				B: 4,
 				C: pointer.To(true),
@@ -127,7 +129,7 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "merge with zero",
-			left: Config{
+			left: &Config{
 				A: "a",
 				B: 3,
 				C: pointer.To(true),
@@ -146,8 +148,8 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			right: Config{},
-			expected: Config{
+			right: &Config{},
+			expected: &Config{
 				A: "a",
 				B: 3,
 				C: pointer.To(true),
@@ -169,8 +171,8 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "merge from zero",
-			left: Config{},
-			right: Config{
+			left: &Config{},
+			right: &Config{
 				A: "a",
 				B: 3,
 				C: pointer.To(true),
@@ -189,7 +191,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			expected: Config{
+			expected: &Config{
 				A: "a",
 				B: 3,
 				C: pointer.To(true),
@@ -211,41 +213,74 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "replace slice",
-			left: Config{
+			left: &Config{
 				ReplacedSlice: []string{"a", "b"},
 			},
-			right: Config{
+			right: &Config{
 				ReplacedSlice: []string{"c", "d"},
 			},
-			expected: Config{
+			expected: &Config{
 				ReplacedSlice: []string{"c", "d"},
 			},
 		},
 		{
 			name: "zero slice",
-			left: Config{},
-			right: Config{
+			left: &Config{},
+			right: &Config{
 				Slice: []Struct{},
 			},
-			expected: Config{
+			expected: &Config{
 				Slice: []Struct{},
 			},
 		},
 		{
 			name: "custom slice",
-			left: Config{
+			left: &Config{
 				CustomSlice: []string{"a", "c"},
 			},
-			right: Config{
+			right: &Config{
 				CustomSlice: []string{"b", "d"},
 			},
-			expected: Config{
+			expected: &Config{
 				CustomSlice: []string{"a", "b", "c", "d"},
+			},
+		},
+		{
+			name: "unstructured",
+			left: &Unstructured{
+				"a": "aa",
+				"map": map[string]interface{}{
+					"slice": []interface{}{
+						"s1",
+					},
+					"some": "value",
+				},
+			},
+			right: &Unstructured{
+				"b": "bb",
+				"map": map[string]interface{}{
+					"slice": []interface{}{
+						"s2",
+					},
+					"other": "thing",
+				},
+			},
+			expected: &Unstructured{
+				"a": "aa",
+				"b": "bb",
+				"map": map[string]interface{}{
+					"slice": []interface{}{
+						"s1",
+						"s2",
+					},
+					"some":  "value",
+					"other": "thing",
+				},
 			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			err := merge.Merge(&tt.left, &tt.right)
+			err := merge.Merge(tt.left, tt.right)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expected, tt.left)
