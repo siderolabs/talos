@@ -95,7 +95,7 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 	// Allow only one sequence to run at a time with the exception of bootstrap
 	// and reset sequences.
 	switch seq { //nolint:exhaustive
-	case runtime.SequenceBootstrap, runtime.SequenceReset:
+	case runtime.SequenceReset:
 		// Do not attempt to lock.
 	default:
 		if opts.Force {
@@ -384,8 +384,6 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	switch seq {
 	case runtime.SequenceBoot:
 		phases = c.s.Boot(c.r)
-	case runtime.SequenceBootstrap:
-		phases = c.s.Bootstrap(c.r)
 	case runtime.SequenceInitialize:
 		phases = c.s.Initialize(c.r)
 	case runtime.SequenceInstall:

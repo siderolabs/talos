@@ -32,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -42,6 +43,7 @@ import (
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/logging"
+	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
@@ -754,4 +756,45 @@ func primaryAndListenAddresses(subnet string) (primary, listen string, err error
 	}
 
 	return primary, listen, nil
+}
+
+// BootstrapEtcd bootstraps the etcd cluster.
+//
+// Current instance of etcd (not joined yet) is stopped, and new instance is started in bootstrap mode.
+func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.BootstrapRequest) error {
+	if err := system.Services(r).Stop(ctx, "etcd"); err != nil {
+		return fmt.Errorf("failed to stop etcd: %w", err)
+	}
+
+	// This is hack. We need to fake a finished state so that we can get the
+	// wait in the boot sequence to unblock.
+	for _, svc := range system.Services(r).List() {
+		if svc.AsProto().GetId() == "etcd" {
+			svc.UpdateState(events.StateFinished, "Bootstrap requested")
+
+			break
+		}
+	}
+
+	if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
+		return fmt.Errorf("etcd data directory is not empty")
+	}
+
+	svc := &Etcd{
+		Bootstrap:            true,
+		RecoverFromSnapshot:  req.RecoverEtcd,
+		RecoverSkipHashCheck: req.RecoverSkipHashCheck,
+	}
+
+	if err := system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
+		return err
+	}
+
+	system.Services(r).Load(svc)
+
+	if err := system.Services(r).Start(svc.ID(r)); err != nil {
+		return fmt.Errorf("error starting etcd in bootstrap mode: %w", err)
+	}
+
+	return nil
 }

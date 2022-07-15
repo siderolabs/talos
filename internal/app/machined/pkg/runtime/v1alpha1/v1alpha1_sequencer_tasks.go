@@ -51,7 +51,6 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	perrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/pkg/cri"
@@ -1856,55 +1855,6 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 
 		return nil
 	}, "install"
-}
-
-// BootstrapEtcd represents the task for bootstrapping etcd.
-func BootstrapEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		req, ok := data.(*machineapi.BootstrapRequest)
-		if !ok {
-			return fmt.Errorf("failed to typecast boostrap request")
-		}
-
-		if err = system.Services(r).Stop(ctx, "etcd"); err != nil {
-			return fmt.Errorf("failed to stop etcd: %w", err)
-		}
-
-		// This is hack. We need to fake a finished state so that we can get the
-		// wait in the boot sequence to unblock.
-		for _, svc := range system.Services(r).List() {
-			if svc.AsProto().GetId() == "etcd" {
-				svc.UpdateState(events.StateFinished, "Bootstrap requested")
-
-				break
-			}
-		}
-
-		if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
-			return fmt.Errorf("etcd data directory is not empty")
-		}
-
-		svc := &services.Etcd{
-			Bootstrap:            true,
-			RecoverFromSnapshot:  req.RecoverEtcd,
-			RecoverSkipHashCheck: req.RecoverSkipHashCheck,
-		}
-
-		if err = system.Services(r).Unload(ctx, svc.ID(r)); err != nil {
-			return err
-		}
-
-		system.Services(r).Load(svc)
-
-		if err = system.Services(r).Start(svc.ID(r)); err != nil {
-			return fmt.Errorf("error starting etcd in bootstrap mode: %w", err)
-		}
-
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-		defer cancel()
-
-		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
-	}, "bootstrapEtcd"
 }
 
 // ActivateLogicalVolumes represents the task for activating logical volumes.

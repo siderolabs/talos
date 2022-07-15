@@ -101,6 +101,8 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	server := factory.NewServer(
 		&v1alpha1server.Server{
 			Controller: s.c,
+			// breaking the import loop cycle between services/ package and v1alpha1_server.go
+			EtcdBootstrapper: BootstrapEtcd,
 		},
 		factory.WithLog("machined ", logWriter),
 

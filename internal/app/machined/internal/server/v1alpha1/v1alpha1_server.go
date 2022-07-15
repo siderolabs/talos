@@ -101,6 +101,8 @@ type Server struct {
 	machine.UnimplementedMachineServiceServer
 
 	Controller runtime.Controller
+	// breaking the import loop cycle between services/ package and v1alpha1_server.go
+	EtcdBootstrapper func(context.Context, runtime.Runtime, *machine.BootstrapRequest) error
 
 	server *grpc.Server
 }
@@ -425,17 +427,9 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, status.Error(codes.AlreadyExists, "etcd data directory is not empty")
 	}
 
-	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceBootstrap, in); err != nil {
-			log.Println("bootstrap failed:", err)
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
-			}
-		}
-	}()
+	if err := s.EtcdBootstrapper(ctx, s.Controller.Runtime(), in); err != nil {
+		return nil, err
+	}
 
 	reply = &machine.BootstrapResponse{
 		Messages: []*machine.Bootstrap{
