@@ -20,7 +20,9 @@ This will simply update the boot reference and reboot.
 Unless explicitly told to `preserve` data, an upgrade will cause the node to wipe the [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition, remove itself from the etcd cluster (if it is a control node), and generally make itself as pristine as is possible.
 (This is generally the desired behavior, except in specialised use cases such as single-node clusters.)
 
-*Note* that unless the Kubernetes version has been specified in the machine config, an upgrade of the Talos Linux OS will also apply an upgrade of the Kubernetes version.
+*Note* that the default since Talos version 1.0 is to specify the Kubernetes version in the machine config.
+This means an upgrade of the Talos Linux OS will not apply an upgrade of the Kubernetes version by default.
+Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{ relref "../kubernetes-guides/upgrading-kubernetes" }}).
 Each release of Talos Linux includes the latest stable Kubernetes version by default.
 
 ## Video Walkthrough
