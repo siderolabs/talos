@@ -144,12 +144,16 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		for _, pod := range []struct {
 			name      string
 			directory string
+			uid       int
+			gid       int
 			secrets   []secret
 			templates []template
 		}{
 			{
 				name:      "kube-apiserver",
 				directory: constants.KubernetesAPIServerSecretsDir,
+				uid:       constants.KubernetesAPIServerRunUser,
+				gid:       constants.KubernetesAPIServerRunGroup,
 				secrets: []secret{
 					{
 						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootEtcdSecrets.EtcdCA },
@@ -208,6 +212,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			{
 				name:      "kube-controller-manager",
 				directory: constants.KubernetesControllerManagerSecretsDir,
+				uid:       constants.KubernetesControllerManagerRunUser,
+				gid:       constants.KubernetesControllerManagerRunGroup,
 				secrets: []secret{
 					{
 						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.CA },
@@ -234,6 +240,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			{
 				name:      "kube-scheduler",
 				directory: constants.KubernetesSchedulerSecretsDir,
+				uid:       constants.KubernetesSchedulerRunUser,
+				gid:       constants.KubernetesSchedulerRunGroup,
 				templates: []template{
 					{
 						filename: "kubeconfig",
@@ -254,7 +262,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						return fmt.Errorf("error writing certificate %q for %q: %w", secret.certFilename, pod.name, err)
 					}
 
-					if err = os.Chown(filepath.Join(pod.directory, secret.certFilename), constants.KubernetesRunUser, -1); err != nil {
+					if err = os.Chown(filepath.Join(pod.directory, secret.certFilename), pod.uid, pod.gid); err != nil {
 						return fmt.Errorf("error chowning %q for %q: %w", secret.certFilename, pod.name, err)
 					}
 				}
@@ -264,7 +272,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						return fmt.Errorf("error writing key %q for %q: %w", secret.keyFilename, pod.name, err)
 					}
 
-					if err = os.Chown(filepath.Join(pod.directory, secret.keyFilename), constants.KubernetesRunUser, -1); err != nil {
+					if err = os.Chown(filepath.Join(pod.directory, secret.keyFilename), pod.uid, pod.gid); err != nil {
 						return fmt.Errorf("error chowning %q for %q: %w", secret.keyFilename, pod.name, err)
 					}
 				}
@@ -298,7 +306,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					return fmt.Errorf("error writing template %q for %q: %w", templ.filename, pod.name, err)
 				}
 
-				if err = os.Chown(filepath.Join(pod.directory, templ.filename), constants.KubernetesRunUser, -1); err != nil {
+				if err = os.Chown(filepath.Join(pod.directory, templ.filename), pod.uid, pod.gid); err != nil {
 					return fmt.Errorf("error chowning %q for %q: %w", templ.filename, pod.name, err)
 				}
 			}

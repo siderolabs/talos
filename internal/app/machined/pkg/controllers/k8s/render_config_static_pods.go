@@ -93,11 +93,15 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		for _, pod := range []struct {
 			name      string
 			directory string
+			uid       int
+			gid       int
 			configs   []configFile
 		}{
 			{
 				name:      "kube-apiserver",
 				directory: constants.KubernetesAPIServerConfigDir,
+				uid:       constants.KubernetesAPIServerRunUser,
+				gid:       constants.KubernetesAPIServerRunGroup,
 				configs: []configFile{
 					{
 						filename: "admission-control-config.yaml",
@@ -128,7 +132,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					return fmt.Errorf("error writing configuration %q for %q: %w", configFile.filename, pod.name, err)
 				}
 
-				if err = os.Chown(filepath.Join(pod.directory, configFile.filename), constants.KubernetesRunUser, -1); err != nil {
+				if err = os.Chown(filepath.Join(pod.directory, configFile.filename), pod.uid, pod.gid); err != nil {
 					return fmt.Errorf("error chowning %q for %q: %w", configFile.filename, pod.name, err)
 				}
 			}

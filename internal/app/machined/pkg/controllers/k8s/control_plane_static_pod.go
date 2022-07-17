@@ -423,12 +423,26 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								v1.ResourceMemory: apiresource.MustParse("512Mi"),
 							},
 						},
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.To(false),
+							Capabilities: &v1.Capabilities{
+								Drop: []v1.Capability{"ALL"},
+								// kube-apiserver binary has cap_net_bind_service=+ep set.
+								// It does not matter if ports < 1024 are configured, the setcap flag causes a capability dependency.
+								// https://github.com/kubernetes/kubernetes/blob/5b92e46b2238b4d84358451013e634361084ff7d/build/server-image/kube-apiserver/Dockerfile#L26
+								Add: []v1.Capability{"NET_BIND_SERVICE"},
+							},
+							SeccompProfile: &v1.SeccompProfile{
+								Type: v1.SeccompProfileTypeRuntimeDefault,
+							},
+						},
 					},
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
 					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
+					RunAsUser:    pointer.To[int64](constants.KubernetesAPIServerRunUser),
+					RunAsGroup:   pointer.To[int64](constants.KubernetesAPIServerRunGroup),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -568,12 +582,22 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 								v1.ResourceMemory: apiresource.MustParse("256Mi"),
 							},
 						},
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.To(false),
+							Capabilities: &v1.Capabilities{
+								Drop: []v1.Capability{"ALL"},
+							},
+							SeccompProfile: &v1.SeccompProfile{
+								Type: v1.SeccompProfileTypeRuntimeDefault,
+							},
+						},
 					},
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
 					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
+					RunAsUser:    pointer.To[int64](constants.KubernetesControllerManagerRunUser),
+					RunAsGroup:   pointer.To[int64](constants.KubernetesControllerManagerRunGroup),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -678,12 +702,22 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 								v1.ResourceMemory: apiresource.MustParse("64Mi"),
 							},
 						},
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.To(false),
+							Capabilities: &v1.Capabilities{
+								Drop: []v1.Capability{"ALL"},
+							},
+							SeccompProfile: &v1.SeccompProfile{
+								Type: v1.SeccompProfileTypeRuntimeDefault,
+							},
+						},
 					},
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
 					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesRunUser),
+					RunAsUser:    pointer.To[int64](constants.KubernetesSchedulerRunUser),
+					RunAsGroup:   pointer.To[int64](constants.KubernetesSchedulerRunGroup),
 				},
 				Volumes: append([]v1.Volume{
 					{

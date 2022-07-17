@@ -232,8 +232,23 @@ const (
 	// KubernetesSchedulerSecretsDir defines ephemeral directory with kube-scheduler secrets.
 	KubernetesSchedulerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-scheduler"
 
-	// KubernetesRunUser defines UID to run control plane components.
-	KubernetesRunUser = 65534
+	// KubernetesAPIServerRunUser defines UID to the API Server.
+	KubernetesAPIServerRunUser = 65534
+
+	// KubernetesAPIServerRunGroup defines GID to run the API Server.
+	KubernetesAPIServerRunGroup = 65534
+
+	// KubernetesControllerManagerRunUser defines UID to the Controller Manager.
+	KubernetesControllerManagerRunUser = 65535
+
+	// KubernetesControllerManagerRunGroup defines GID to run the Controller Manager.
+	KubernetesControllerManagerRunGroup = 65535
+
+	// KubernetesSchedulerRunUser defines UID to the Scheduler.
+	KubernetesSchedulerRunUser = 65536
+
+	// KubernetesSchedulerRunGroup defines GID to run the Scheduler.
+	KubernetesSchedulerRunGroup = 65536
 
 	// KubeletBootstrapKubeconfig is the path to the kubeconfig required to
 	// bootstrap the kubelet.

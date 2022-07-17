@@ -856,7 +856,7 @@ func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 				return err
 			}
 
-			if err = os.Chown(p, constants.KubernetesRunUser, -1); err != nil {
+			if err = os.Chown(p, constants.KubernetesAPIServerRunUser, constants.KubernetesAPIServerRunGroup); err != nil {
 				return fmt.Errorf("failed to chown %s: %w", p, err)
 			}
 		}
